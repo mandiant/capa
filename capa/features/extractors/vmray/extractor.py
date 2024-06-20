@@ -86,7 +86,6 @@ class VMRayExtractor(DynamicFeatureExtractor):
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[Tuple[Feature, Address]]:
-        # TODO (meh)
         yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:
