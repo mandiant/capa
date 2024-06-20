@@ -8,11 +8,11 @@
 from typing import Dict
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import File, Analysis, SummaryV2, StaticData
+from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData
 
 
 class VMRayAnalysis:
-    def __init__(self, sv2: SummaryV2, flog: Analysis):
+    def __init__(self, sv2: SummaryV2, flog: Flog):
         self.sv2 = sv2  # logs/summary_v2.json
         self.flog = flog  # logs/flog.xml
         self.exports: Dict[int, str] = {}
