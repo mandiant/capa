@@ -313,6 +313,10 @@ class StaticFeatureExtractorFilter:
     def __class__(self, value) -> None:
         self.inner.__class__ = value
 
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, StaticFeatureExtractor)
+
 
 class FunctionFilter(StaticFeatureExtractorFilter):
     def __init__(self, inner: StaticFeatureExtractor, functions: Set[int]):
@@ -510,6 +514,10 @@ class DynamicFeatureExtractorFilter:
     @__class__.setter
     def __class__(self, value) -> None:
         self.inner.__class__ = value
+
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, DynamicFeatureExtractor)
 
 
 class ProcessFilter(DynamicFeatureExtractorFilter):
