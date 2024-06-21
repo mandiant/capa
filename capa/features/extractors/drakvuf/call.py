@@ -34,7 +34,7 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
     call: Call = ch.inner
 
     # list similar to disassembly: arguments right-to-left, call
-    for arg_value in call.arguments.values():
+    for arg_value in reversed(call.arguments.values()):
         if arg_value.isdecimal():
             yield Number(int(arg_value)), ch.address
         else:
