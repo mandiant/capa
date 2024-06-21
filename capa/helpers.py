@@ -11,7 +11,7 @@ import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import Dict, Iterator, NoReturn
+from typing import Dict, Union, BinaryIO, Iterator, NoReturn
 from pathlib import Path
 
 import tqdm
@@ -84,8 +84,8 @@ def load_json_from_path(json_path: Path):
 
 
 def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
-    def decode_json_lines(fd):
-        for line in f:
+    def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
+        for line in fd:
             try:
                 line_s = line.strip().decode()
                 obj = msgspec.json.decode(line_s)
@@ -95,8 +95,8 @@ def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
                 continue
 
     try:
-        with gzip.open(jsonl_path, "rb") as f:
-            yield from decode_json_lines(f)
+        with gzip.open(jsonl_path, "rb") as fg:
+            yield from decode_json_lines(fg)
     except gzip.BadGzipFile:
         with jsonl_path.open(mode="rb") as f:
             yield from decode_json_lines(f)
