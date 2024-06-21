@@ -9,7 +9,6 @@
 import abc
 import hashlib
 import dataclasses
-from types import MethodType
 from typing import Any, Set, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
@@ -297,14 +296,31 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
 
-def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticFeatureExtractor:
-    get_functions = extractor.get_functions  # fetch original get_functions()
+class StaticFeatureExtractorFilter:
+    def __init__(self, inner: StaticFeatureExtractor):
+        self.inner = inner
 
-    def filtered_get_functions(self):
-        yield from (f for f in get_functions() if f.address in functions)
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
+        return getattr(self.inner, attr)
 
-    extractor.get_functions = MethodType(filtered_get_functions, extractor)  # type: ignore
-    return extractor
+    @property
+    def __class__(self):
+        return self.inner.__class__
+
+    @__class__.setter
+    def __class__(self, value) -> None:
+        self.inner.__class__ = value
+
+
+class FunctionFilter(StaticFeatureExtractorFilter):
+    def __init__(self, inner: StaticFeatureExtractor, functions: Set[Address]):
+        super().__init__(inner)
+        self.functions = functions
+
+    def get_functions(self):
+        yield from (f for f in self.inner.get_functions() if f.address in self.functions)
 
 
 @dataclass
@@ -478,14 +494,31 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
 
-def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> DynamicFeatureExtractor:
-    get_processes = extractor.get_processes  # fetch original get_functions()
+class DynamicFeatureExtractorFilter:
+    def __init__(self, inner: DynamicFeatureExtractor):
+        self.inner = inner
 
-    def filtered_get_processes(self):
-        yield from (f for f in get_processes() if f.address.pid in processes)
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
+        return getattr(self.inner, attr)
 
-    extractor.get_processes = MethodType(filtered_get_processes, extractor)  # type: ignore
-    return extractor
+    @property
+    def __class__(self):
+        return self.inner.__class__
+
+    @__class__.setter
+    def __class__(self, value) -> None:
+        self.inner.__class__ = value
+
+
+class ProcessFilter(DynamicFeatureExtractorFilter):
+    def __init__(self, inner: DynamicFeatureExtractor, processes: Set[Address]):
+        super().__init__(inner)
+        self.processes = processes
+
+    def get_processes(self):
+        yield from (p for p in self.inner.get_processes() if p.address.pid in self.processes)
 
 
 FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]

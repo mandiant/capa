@@ -783,7 +783,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
-def get_target_elements_from_cli(args, input_format) -> Optional[Set]:
+def get_extractor_filters_from_cli(args, input_format) -> Optional[Set]:
     if input_format in STATIC_FORMATS:
         if args.processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
@@ -854,7 +854,7 @@ def main(argv: Optional[List[str]] = None):
         handle_common_args(args)
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
-        target_elements = get_target_elements_from_cli(args, input_format)
+        extractor_filters = get_extractor_filters_from_cli(args, input_format)
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
         found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
@@ -885,9 +885,9 @@ def main(argv: Optional[List[str]] = None):
         except ShouldExitError as e:
             return e.status_code
 
-        if target_elements:
+        if extractor_filters:
             # if the user specified function/process filters, apply them here.
-            extractor = apply_extractor_filters(extractor, target_elements)
+            extractor = apply_extractor_filters(extractor, extractor_filters)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
