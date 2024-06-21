@@ -331,7 +331,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
         import capa.features.extractors.drakvuf.extractor
 
         report = capa.helpers.load_jsonl_from_path(input_file)
-        logger.info(f"collected {gc.collect()} objects after loading jsonl")
+        logger.debug(f"collected {gc.collect()} objects after loading jsonl")
         file_extractors.append(capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report))
 
     return file_extractors
