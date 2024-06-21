@@ -32,7 +32,7 @@ from capa.features.common import (
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log")
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
@@ -84,7 +84,7 @@ def load_json_from_path(json_path: Path):
 
 
 def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
-    with jsonl_path.open(mode="rb") as f:
+    def decode_json_lines(fd):
         for line in f:
             try:
                 line_s = line.strip().decode()
@@ -93,6 +93,13 @@ def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
             except ValueError:
                 # ignore erroneous lines
                 continue
+
+    try:
+        with gzip.open(jsonl_path, "rb") as f:
+            yield from decode_json_lines(f)
+    except gzip.BadGzipFile:
+        with jsonl_path.open(mode="rb") as f:
+            yield from decode_json_lines(f)
 
 
 def load_one_jsonl_from_path(jsonl_path: Path):
@@ -104,7 +111,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
 
 
 def get_format_from_report(sample: Path) -> str:
-    if sample.name.endswith(".log"):
+    if sample.name.endswith((".log", "log.gz")):
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
