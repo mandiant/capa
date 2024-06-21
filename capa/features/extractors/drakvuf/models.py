@@ -95,10 +95,10 @@ class SystemCall(Call):
 
 
 class DrakvufReport(ConciseModel):
-    syscalls: List[SystemCall] = None
-    apicalls: List[WinApiCall] = None
-    discovered_dlls: List[DiscoveredDLL] = None
-    loaded_dlls: List[LoadedDLL] = None
+    syscalls: List[SystemCall] = []
+    apicalls: List[WinApiCall] = []
+    discovered_dlls: List[DiscoveredDLL] = []
+    loaded_dlls: List[LoadedDLL] = []
 
     @model_validator(mode="after")
     def validate_arguments(self) -> "DrakvufReport":
@@ -108,7 +108,7 @@ class DrakvufReport(ConciseModel):
 
     @classmethod
     def from_raw_report(cls, entries: List[Dict]) -> "DrakvufReport":
-        values = {"syscalls": [], "apicalls": [], "discovered_dlls": [], "loaded_dlls": []}
+        values: Dict[str, List] = {"syscalls": [], "apicalls": [], "discovered_dlls": [], "loaded_dlls": []}
 
         for entry in entries:
             plugin = entry.get("Plugin")

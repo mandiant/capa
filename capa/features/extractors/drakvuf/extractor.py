@@ -39,14 +39,14 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         self.report: DrakvufReport = report
 
         # sort the api calls to prevent going through the entire list each time
-        self.sorted_calls: Dict[ProcessAddress, Dict[ThreadAddress, Call]] = sort_calls(report)
+        self.sorted_calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = sort_calls(report)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features = list(capa.features.extractors.drakvuf.global_.extract_features(self.report))
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # DRAKVUF currently does not yield information about the PE's address
-        return _NoAddress
+        return NO_ADDRESS
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features

@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator
 
 from capa.features.file import Import
 from capa.features.common import String, Feature
@@ -19,12 +19,12 @@ from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 logger = logging.getLogger(__name__)
 
 
-def get_processes(calls: Dict[ProcessAddress, Dict[ThreadAddress, Call]]) -> Iterator[ProcessHandle]:
+def get_processes(calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]) -> Iterator[ProcessHandle]:
     """
     Get all the created processes for a sample.
     """
     for proc_addr, calls_per_thread in calls.items():
-        sample_call: Call = next(iter(calls_per_thread.values()))[0]  # get process name
+        sample_call = next(iter(calls_per_thread.values()))[0]  # get process name
         yield ProcessHandle(proc_addr, inner={"process_name": sample_call.process_name})
 
 

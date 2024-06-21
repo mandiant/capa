@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator
 
 from capa.features.common import String, Feature
 from capa.features.address import Address, ThreadAddress, ProcessAddress
@@ -17,7 +17,9 @@ from capa.features.extractors.drakvuf.models import Call
 logger = logging.getLogger(__name__)
 
 
-def get_threads(calls: Dict[ProcessAddress, Dict[ThreadAddress, Call]], ph: ProcessHandle) -> Iterator[ThreadHandle]:
+def get_threads(
+    calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]], ph: ProcessHandle
+) -> Iterator[ThreadHandle]:
     """
     Get the threads associated with a given process.
     """

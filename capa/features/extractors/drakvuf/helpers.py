@@ -6,14 +6,14 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Dict
+from typing import Dict, List
 
 from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 
 
-def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, Call]]:
-    result = {}
+def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]:
+    result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
     for call in (*report.syscalls, *report.apicalls):
         if call.pid == 0:
             # ignore Drakvuf's null pids
