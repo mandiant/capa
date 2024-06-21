@@ -315,7 +315,7 @@ class StaticFeatureExtractorFilter:
 
 
 class FunctionFilter(StaticFeatureExtractorFilter):
-    def __init__(self, inner: StaticFeatureExtractor, functions: Set[Address]):
+    def __init__(self, inner: StaticFeatureExtractor, functions: Set[int]):
         super().__init__(inner)
         self.functions = functions
 
@@ -513,7 +513,7 @@ class DynamicFeatureExtractorFilter:
 
 
 class ProcessFilter(DynamicFeatureExtractorFilter):
-    def __init__(self, inner: DynamicFeatureExtractor, processes: Set[Address]):
+    def __init__(self, inner: DynamicFeatureExtractor, processes: Set[int]):
         super().__init__(inner)
         self.processes = processes
 
