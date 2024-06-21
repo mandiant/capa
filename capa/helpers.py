@@ -227,17 +227,9 @@ def log_unsupported_drakvuf_report_error(error: str):
     logger.error("-" * 80)
 
 
-def log_empty_cape_report_error(error: str):
+def log_empty_sandbox_report_error(error: str, sandbox_name: str = "Dynamic"):
     logger.error("-" * 80)
-    logger.error(" CAPE report is empty or only contains little useful data: %s", error)
-    logger.error(" ")
-    logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
-    logger.error("-" * 80)
-
-
-def log_empty_drakvuf_report_error(error: str):
-    logger.error("-" * 80)
-    logger.error(" DRAKVUF report is empty or only contains little useful data: %s", error)
+    logger.error(f" {sandbox_name} report is empty or only contains little useful data: %s", error)
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
