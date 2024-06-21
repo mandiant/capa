@@ -529,4 +529,6 @@ class ProcessFilter(DynamicFeatureExtractorFilter):
         yield from (p for p in self.inner.get_processes() if p.address.pid in self.processes)
 
 
-FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]
+FeatureExtractor: TypeAlias = Union[
+    StaticFeatureExtractor, DynamicFeatureExtractor, StaticFeatureExtractorFilter, DynamicFeatureExtractorFilter
+]
