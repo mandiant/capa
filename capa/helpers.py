@@ -15,7 +15,7 @@ from typing import Dict, Iterator, NoReturn
 from pathlib import Path
 
 import tqdm
-from msgspec import json
+import msgspec.json
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
@@ -77,9 +77,9 @@ def load_json_from_path(json_path: Path):
         try:
             report_json = compressed_report.read()
         except gzip.BadGzipFile:
-            report = json.decode(json_path.read_text(encoding="utf-8"))
+            report = msgspec.json.decode(json_path.read_text(encoding="utf-8"))
         else:
-            report = json.decode(report_json)
+            report = msgspec.json.decode(report_json)
     return report
 
 
@@ -88,7 +88,7 @@ def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
         for line in f:
             try:
                 line_s = line.strip().decode()
-                obj = json.decode(line_s)
+                obj = msgspec.json.decode(line_s)
                 yield obj
             except:
                 # ignore erroneous lines
@@ -99,7 +99,7 @@ def load_one_jsonl_from_path(jsonl_path: Path) -> str:
     # this loads one json line to avoid the overhead of loading the entire file
     with open(jsonl_path, "rb") as f:
         line = next(iter(f))
-        line = json.decode(line.decode(errors="ignore"))
+        line = msgspec.json.decode(line.decode(errors="ignore"))
     return line
 
 
