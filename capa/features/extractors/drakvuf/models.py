@@ -73,7 +73,7 @@ class WinApiCall(Call):
     @classmethod
     def build_arguments(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         args = values["Arguments"]
-        values["Arguments"] = {name: val for name, val in (arg.split("=", 1) for arg in args)}
+        values["Arguments"] = dict(arg.split("=", 1) for arg in args)
         return values
 
 
