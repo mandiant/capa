@@ -56,9 +56,8 @@ from capa.helpers import (
     get_auto_format,
     log_unsupported_os_error,
     log_unsupported_arch_error,
-    log_empty_cape_report_error,
     log_unsupported_format_error,
-    log_empty_drakvuf_report_error,
+    log_empty_sandbox_report_error,
     log_unsupported_cape_report_error,
     log_unsupported_drakvuf_report_error,
 )
@@ -655,10 +654,10 @@ def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtract
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
     except EmptyReportError as e:
         if input_format == FORMAT_CAPE:
-            log_empty_cape_report_error(str(e))
+            log_empty_sandbox_report_error(str(e), sandbox_name="CAPE")
             raise ShouldExitError(E_EMPTY_REPORT) from e
         elif input_format == FORMAT_DRAKVUF:
-            log_empty_drakvuf_report_error(str(e))
+            log_empty_sandbox_report_error(str(e), sandbox_name="DRAKVUF")
             raise ShouldExitError(E_EMPTY_REPORT) from e
         else:
             log_unsupported_format_error()
