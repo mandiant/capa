@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Iterator
 
 from pydantic import Field, BaseModel, ConfigDict, model_validator
 
@@ -73,7 +73,7 @@ class WinApiCall(Call):
     @classmethod
     def build_arguments(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         args = values["Arguments"]
-        values["Arguments"] = {name: val for name, val in map(lambda arg: arg.split("=", 1), args)}
+        values["Arguments"] = {name: val for name, val in (arg.split("=", 1) for arg in args)}
         return values
 
 
@@ -107,7 +107,7 @@ class DrakvufReport(ConciseModel):
         return self
 
     @classmethod
-    def from_raw_report(cls, entries: List[Dict]) -> "DrakvufReport":
+    def from_raw_report(cls, entries: Iterator[Dict]) -> "DrakvufReport":
         values: Dict[str, List] = {"syscalls": [], "apicalls": [], "discovered_dlls": [], "loaded_dlls": []}
 
         for entry in entries:
@@ -115,7 +115,7 @@ class DrakvufReport(ConciseModel):
             if plugin == "syscall":
                 values["syscalls"].append(SystemCall(**entry))
             elif plugin == "apimon":
-                event = entry.get("Event", None)
+                event = entry.get("Event")
                 if event == "api_called":
                     values["apicalls"].append(WinApiCall(**entry))
                 elif event == "dll_loaded":

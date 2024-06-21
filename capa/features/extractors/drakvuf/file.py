@@ -57,7 +57,7 @@ def extract_features(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]
 
 
 FILE_HANDLERS = (
-    # TODO: extract more file features from other drakvuf plugins
+    # TODO(yelhamer): extract more file features from other drakvuf plugins
     extract_import_names,
     extract_file_strings,
 )

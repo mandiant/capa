@@ -84,20 +84,20 @@ def load_json_from_path(json_path: Path):
 
 
 def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
-    with open(jsonl_path, "rb") as f:
+    with jsonl_path.open(mode="rb") as f:
         for line in f:
             try:
                 line_s = line.strip().decode()
                 obj = msgspec.json.decode(line_s)
                 yield obj
-            except:
+            except ValueError:
                 # ignore erroneous lines
                 continue
 
 
-def load_one_jsonl_from_path(jsonl_path: Path) -> str:
+def load_one_jsonl_from_path(jsonl_path: Path):
     # this loads one json line to avoid the overhead of loading the entire file
-    with open(jsonl_path, "rb") as f:
+    with jsonl_path.open(mode="rb") as f:
         line = next(iter(f))
         line = msgspec.json.decode(line.decode(errors="ignore"))
     return line
@@ -229,7 +229,7 @@ def log_unsupported_drakvuf_report_error(error: str):
 
 def log_empty_sandbox_report_error(error: str, sandbox_name: str = "Dynamic"):
     logger.error("-" * 80)
-    logger.error(f" {sandbox_name} report is empty or only contains little useful data: %s", error)
+    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)

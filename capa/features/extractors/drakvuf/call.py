@@ -40,7 +40,7 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
         else:
             try:
                 yield Number(int(arg_value, 16)), ch.address
-            except:
+            except ValueError:
                 # yield it as a string
                 yield String(arg_value), ch.address
 

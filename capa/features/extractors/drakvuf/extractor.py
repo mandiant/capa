@@ -93,6 +93,6 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.drakvuf.call.extract_features(ph, th, ch)
 
     @classmethod
-    def from_report(cls, report: List[Dict]) -> "DrakvufExtractor":
+    def from_report(cls, report: Iterator[Dict]) -> "DrakvufExtractor":
         dr = DrakvufReport.from_raw_report(report)
         return DrakvufExtractor(report=dr)
