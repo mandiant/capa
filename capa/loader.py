@@ -52,6 +52,8 @@ from capa.features.extractors.base_extractor import (
     FeatureExtractor,
     StaticFeatureExtractor,
     DynamicFeatureExtractor,
+    StaticFeatureExtractorFilter,
+    DynamicFeatureExtractorFilter,
 )
 
 logger = logging.getLogger(__name__)
@@ -405,9 +407,9 @@ def collect_metadata(
     arch = str(extractor_arch[0]) if extractor_arch else "unknown"
     os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
 
-    if isinstance(extractor, StaticFeatureExtractor):
+    if isinstance(extractor, StaticFeatureExtractor) or isinstance(extractor, StaticFeatureExtractorFilter):
         meta_class: type = rdoc.StaticMetadata
-    elif isinstance(extractor, DynamicFeatureExtractor):
+    elif isinstance(extractor, DynamicFeatureExtractor) or isinstance(extractor, DynamicFeatureExtractorFilter):
         meta_class = rdoc.DynamicMetadata
     else:
         assert_never(extractor)
