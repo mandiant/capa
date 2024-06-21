@@ -15,8 +15,8 @@ from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, Call]]:
     result = {}
     for call in (*report.syscalls, *report.apicalls):
-        if call.pid < 1:
-            # ignore pid's with zero
+        if call.pid == 0:
+            # ignore Drakvuf's null pids
             continue
         proc_addr = ProcessAddress(pid=call.pid, ppid=call.ppid)
         thread_addr = ThreadAddress(process=proc_addr, tid=call.tid)
