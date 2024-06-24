@@ -1,3 +1,10 @@
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
 import logging
 from typing import Tuple, Iterator
 
@@ -5,12 +12,13 @@ from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
+
 from capa.features.extractors.vmray.models import Analysis, FunctionCall, Param, In, Out
 
 logger = logging.getLogger(__name__)
 
-
 def extract_function_calls(fncall: FunctionCall) -> Iterator[Tuple[Feature, Address]]:
+
     """
     this method extracts the given call's features (such as API name and arguments),
     and returns them as API, Number, and String features.
@@ -20,6 +28,10 @@ def extract_function_calls(fncall: FunctionCall) -> Iterator[Tuple[Feature, Addr
 
       yields: Feature, address; where Feature is either: API, Number, or String.
     """
+
+    # TODO (meh): update for new models https://github.com/mandiant/capa/issues/2148
+    # print(ch)
+    return
 
     # Extract API name
     yield API(fncall.name), Address(fncall.address)
@@ -49,9 +61,10 @@ def extract_function_calls(fncall: FunctionCall) -> Iterator[Tuple[Feature, Addr
                     assert_never(value)
 
 
-def extract_features(analysis: Analysis) -> Iterator[Tuple[Feature, Address]]:
-    """
-    Extract features from the Analysis object in models.py
-    """
-    for fncall in analysis.fncalls:
-        yield from extract_function_calls(fncall)
+def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
+    for handler in CALL_HANDLERS:
+        for feature, addr in handler(ph, th, ch):
+            yield feature, addr
+
+
+CALL_HANDLERS = (extract_call_features,)

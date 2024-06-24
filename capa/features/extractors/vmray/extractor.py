@@ -11,15 +11,16 @@ from typing import Tuple, Iterator
 from pathlib import Path
 from zipfile import ZipFile
 
-from devtools import debug, pprint
+import xmltodict
 
 import capa.helpers
+import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.common import Feature, Characteristic
+from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Process, Analysis, SummaryV2
+from capa.features.extractors.vmray.models import Flog, Process, SummaryV2
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -27,8 +28,6 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
-
-# TODO also/or look into xmltodict?
 
 
 class VMRayExtractor(DynamicFeatureExtractor):
@@ -60,7 +59,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
-        # TODO (meh)
+        # TODO (meh): https://github.com/mandiant/capa/issues/2148
         yield from []
 
     def get_process_name(self, ph) -> str:
@@ -68,46 +67,40 @@ class VMRayExtractor(DynamicFeatureExtractor):
         return process.image_name
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
-        # TODO (meh)
-        yield from []
+        for thread in self.analysis.process_threads[ph.address.pid]:
+            address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
+            yield ThreadHandle(address=address, inner={})
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-        # force this routine to be a generator,
-        # but we don't actually have any elements to generate.
-        yield from []
+        if False:
+            # force this routine to be a generator,
+            # but we don't actually have any elements to generate.
+            yield Characteristic("never"), NO_ADDRESS
+        return
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
-        # TODO (meh)
-        yield from []
+        for function_call in self.analysis.process_calls[ph.address.pid][th.address.tid]:
+            addr = DynamicCallAddress(thread=th.address, id=int(function_call.fncall_id))
+            yield CallHandle(address=addr, inner=function_call)
 
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[Tuple[Feature, Address]]:
-        # TODO (meh)
-        yield from []
+        yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:
-        # TODO (meh)
+        # TODO (meh): https://github.com/mandiant/capa/issues/2148
         raise NotImplementedError()
 
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
         with ZipFile(zipfile_path, "r") as zipfile:
+            # TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
             sv2_json = json.loads(zipfile.read("logs/summary_v2.json", pwd=b"infected"))
             sv2 = SummaryV2.model_validate(sv2_json)
 
             flog_xml = zipfile.read("logs/flog.xml", pwd=b"infected")
-            flog = Analysis.from_xml(flog_xml)
-
-            debug(flog.processes[1])
-            pprint(flog.processes[0])
+            flog_json = xmltodict.parse(flog_xml, attr_prefix="")
+            flog = Flog.model_validate(flog_json)
 
         return cls(VMRayAnalysis(sv2, flog))
-
-
-if __name__ == "__main__":
-    # TODO(mr): for testing, removeme
-    import sys
-
-    input_path = Path(sys.argv[1])
-    VMRayExtractor.from_zipfile(input_path)
