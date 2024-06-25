@@ -79,6 +79,23 @@ class WinApiCall(Call):
 
 class SystemCall(Call):
     # This class models native Windows api calls captured by Drakvuf.
+    # Schema: {
+    #   "Plugin": "syscall",
+    #   "TimeStamp": "1716999134.582553",
+    #   "PID": 3888, "PPID": 2852, "TID": 368, "UserName": "SessionID", "UserId": 2,
+    #   "ProcessName": "\\Device\\HarddiskVolume2\\Windows\\explorer.exe",
+    #   "Method": "NtSetIoCompletionEx",
+    #   "EventUID": "0x27",
+    #   "Module": "nt",
+    #   "vCPU": 0,
+    #   "CR3": "0x119b1002",
+    #   "Syscall": 419,
+    #   "NArgs": 6,
+    #   "IoCompletionHandle": "0xffffffff80001ac0", "IoCompletionReserveHandle": "0xffffffff8000188c",
+    #   "KeyContext": "0x0", "ApcContext": "0x2", "IoStatus": "0x7ffb00000000", "IoStatusInformation": "0x0"
+    # }
+    # The keys up until "NArgs" are common to all the native calls that Drakvuf reports, with
+    # the remaining keys representing the call's specific arguments.
     syscall_number: int = Field(alias="Syscall")
     module: str = Field(alias="Module")
     nargs: int = Field(alias="NArgs")

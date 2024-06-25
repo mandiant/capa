@@ -9,6 +9,7 @@
 import logging
 from typing import Tuple, Iterator
 
+from capa.helpers import str_to_number
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
@@ -35,14 +36,11 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
 
     # list similar to disassembly: arguments right-to-left, call
     for arg_value in reversed(call.arguments.values()):
-        if arg_value.isdecimal():
-            yield Number(int(arg_value)), ch.address
-        else:
-            try:
-                yield Number(int(arg_value, 16)), ch.address
-            except ValueError:
-                # yield it as a string
-                yield String(arg_value), ch.address
+        try:
+            yield Number(str_to_number(arg_value)), ch.address
+        except ValueError:
+            # yield argument as a string
+            yield String(arg_value), ch.address
 
     yield API(call.name), ch.address
 
