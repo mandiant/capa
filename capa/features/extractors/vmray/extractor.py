@@ -17,7 +17,7 @@ import capa.helpers
 import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import String, Feature, Characteristic, Feature
+from capa.features.common import String, Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.vmray.models import Flog, Process, SummaryV2, FunctionCall
