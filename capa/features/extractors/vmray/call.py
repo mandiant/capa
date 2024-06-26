@@ -12,8 +12,13 @@ from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
+from capa.features.extractors.vmray.models import FunctionCall
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
+)
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +35,7 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
 
     # TODO (meh): update for new models https://github.com/mandiant/capa/issues/2148
     # print(ch)
-    return
+    
 
     # Extract API name
     yield API(ch.inner.name), ch.inner.address
@@ -66,4 +71,6 @@ def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Ite
             yield feature, addr
 
 
-CALL_HANDLERS = (extract_call_features,)
+CALL_HANDLERS = (
+    extract_function_calls,
+    extract_features,)
