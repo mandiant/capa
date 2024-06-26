@@ -17,10 +17,10 @@ import capa.helpers
 import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import Feature, Characteristic, String
+from capa.features.common import String, Feature, Characteristic, Feature
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Flog, FunctionCall, Process, SummaryV2
+from capa.features.extractors.vmray.models import Flog, Process, SummaryV2, FunctionCall
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -28,6 +28,7 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
+
 
 class VMRayExtractor(DynamicFeatureExtractor):
     def __init__(self, analysis: VMRayAnalysis):
