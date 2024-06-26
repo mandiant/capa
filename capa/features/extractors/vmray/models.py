@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 
 from pydantic import Field, BaseModel
 
+
 # models flog.xml files
 class FunctionCall(BaseModel):
     ts: str

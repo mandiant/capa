@@ -14,11 +14,8 @@ from capa.features.common import String, Feature
 from capa.features.address import Address
 
 from capa.features.extractors.vmray.models import FunctionCall
-from capa.features.extractors.base_extractor import (
-    CallHandle,
-    ThreadHandle,
-    ProcessHandle,
-)
+from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
+
 logger = logging.getLogger(__name__)
 
 def extract_function_calls(fncall: FunctionCall) -> Iterator[Tuple[Feature, Address]]:
