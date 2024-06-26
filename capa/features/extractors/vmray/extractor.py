@@ -41,7 +41,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
         self.analysis = analysis
 
-        # pre-compute these because we'll yield them at *every* scope.
+        ## pre-compute these because we'll yield them at *every* scope.
         self.global_features = list(capa.features.extractors.vmray.global_.extract_features(self.analysis))
 
     def get_base_address(self) -> Address:
