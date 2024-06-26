@@ -6,15 +6,15 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator, Tuple
 
 from capa.helpers import assert_never
 from capa.features.insn import API, Number
-from capa.features.common import String, Feature
+from capa.features.common import Feature, String
 from capa.features.address import Address
 
 from capa.features.extractors.vmray.models import FunctionCall
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
+from capa.features.extractors.base_extractor import CallHandle, ProcessHandle, ThreadHandle
 
 logger = logging.getLogger(__name__)
 
