@@ -117,7 +117,7 @@ class File(BaseModel):
     # categories: List[str]
     hash_values: FileHashes
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     is_sample: bool
     # size: int
     # is_truncated: bool
@@ -133,7 +133,7 @@ class File(BaseModel):
 class Process(BaseModel):
     # bitness: int
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     monitor_id: int
     # monitor_reason: str
     os_pid: int
@@ -145,14 +145,14 @@ class Process(BaseModel):
 class Filename(BaseModel):
     filename: str
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     # verdict: str
 
 
 class Mutex(BaseModel):
     name: str
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     # verdict: str
 
 
@@ -160,21 +160,21 @@ class Registry(BaseModel):
     reg_key_name: str
     # reg_key_value_type: Optional[str] = None
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     # verdict: str
 
 
 class Domain(BaseModel):
     domain: str
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     # verdict: str
 
 
 class IPAddress(BaseModel):
     ip_address: str
     # is_artifact: bool
-    # is_ioc: bool
+    is_ioc: bool
     # verdict: str
 
 
