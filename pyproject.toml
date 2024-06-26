@@ -165,7 +165,7 @@ scripts = [
     "psutil==5.9.2",
     "stix2==3.0.1",
     "sarif_om==1.0.4",
-    "requests==2.31.0",
+    "requests==2.32.3",
 ]
 
 [tool.deptry]
