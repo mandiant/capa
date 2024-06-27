@@ -124,7 +124,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
             line = next(iter(f))
     finally:
         line = msgspec.json.decode(line.decode(errors="ignore"))
-        return line
+    return line
 
 
 def get_format_from_report(sample: Path) -> str:

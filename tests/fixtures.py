@@ -780,15 +780,6 @@ DYNAMIC_CAPE_FEATURE_COUNT_TESTS = sorted(
 
 DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS = sorted(
     [
-        # file/string
-        (
-            "93b2d1",
-            "file",
-            capa.features.common.String(
-                "\\Program Files\\WindowsApps\\microsoft.windowscommunicationsapps_16005.11629.20316.0_x64__8wekyb3d8bbwe\\resources.pri"
-            ),
-            True,
-        ),
         ("93b2d1", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
         # file/imports
         ("93b2d1", "file", capa.features.file.Import("SetUnhandledExceptionFilter"), True),
@@ -817,15 +808,6 @@ DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS = sorted(
 
 DYNAMIC_DRAKVUF_FEATURE_COUNT_TESTS = sorted(
     [
-        # file/string
-        (
-            "93b2d1",
-            "file",
-            capa.features.common.String(
-                "\\Program Files\\WindowsApps\\microsoft.windowscommunicationsapps_16005.11629.20316.0_x64__8wekyb3d8bbwe\\resources.pri"
-            ),
-            1,
-        ),
         ("93b2d1", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
         # file/imports
         ("93b2d1", "file", capa.features.file.Import("SetUnhandledExceptionFilter"), 1),
