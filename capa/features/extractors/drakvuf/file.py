@@ -10,8 +10,8 @@ import logging
 from typing import Dict, List, Tuple, Iterator
 
 from capa.features.file import Import
-from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress
+from capa.features.common import Feature
+from capa.features.address import Address, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.base_extractor import ProcessHandle
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
@@ -43,13 +43,6 @@ def extract_import_names(report: DrakvufReport) -> Iterator[Tuple[Feature, Addre
                 yield Import(name), AbsoluteVirtualAddress(function_address)
 
 
-def extract_file_strings(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
-    if report.discovered_dlls is None:
-        return
-    for dll in report.discovered_dlls:
-        yield String(dll.name), NO_ADDRESS
-
-
 def extract_features(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(report):
@@ -60,5 +53,4 @@ FILE_HANDLERS = (
     # TODO(yelhamer): extract more file features from other drakvuf plugins
     # https://github.com/mandiant/capa/issues/2169
     extract_import_names,
-    extract_file_strings,
 )
