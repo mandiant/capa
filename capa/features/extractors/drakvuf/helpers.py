@@ -13,6 +13,8 @@ from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 
 
 def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]:
+    # this method organizes calls into processes and threads, and then sorts them based on
+    # timestamp so that we can address individual calls per index (CallAddress requires call index)
     result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
     for call in (*report.syscalls, *report.apicalls):
         if call.pid == 0:
