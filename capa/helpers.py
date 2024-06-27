@@ -32,6 +32,8 @@ from capa.features.common import (
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+# CAPE extensions: .json, .json_, .json.gz
+# Drakvuf Sandbox extensions: .log, .log.gz
 EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
