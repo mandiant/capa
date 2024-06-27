@@ -94,17 +94,18 @@ def load_json_from_path(json_path: Path):
     return report
 
 
-def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
-    def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
-        for line in fd:
-            try:
-                line_s = line.strip().decode()
-                obj = msgspec.json.decode(line_s)
-                yield obj
-            except (msgspec.DecodeError, UnicodeDecodeError):
-                # sometimes Drakvuf reports bad method names and/or malformed JSON
-                logger.debug("bad drakvuf log line: %s", line)
+def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
+    for line in fd:
+        try:
+            line_s = line.strip().decode()
+            obj = msgspec.json.decode(line_s)
+            yield obj
+        except (msgspec.DecodeError, UnicodeDecodeError):
+            # sometimes Drakvuf reports bad method names and/or malformed JSON
+            logger.debug("bad drakvuf log line: %s", line)
 
+
+def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
     try:
         with gzip.open(jsonl_path, "rb") as fg:
             yield from decode_json_lines(fg)
@@ -115,10 +116,15 @@ def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
 
 def load_one_jsonl_from_path(jsonl_path: Path):
     # this loads one json line to avoid the overhead of loading the entire file
-    with jsonl_path.open(mode="rb") as f:
-        line = next(iter(f))
+    try:
+        with gzip.open(jsonl_path, "rb") as f:
+            line = next(iter(f))
+    except gzip.BadGzipFile:
+        with jsonl_path.open(mode="rb") as f:
+            line = next(iter(f))
+    finally:
         line = msgspec.json.decode(line.decode(errors="ignore"))
-    return line
+        return line
 
 
 def get_format_from_report(sample: Path) -> str:
