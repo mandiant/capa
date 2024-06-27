@@ -16,7 +16,9 @@ def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress
     result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
     for call in (*report.syscalls, *report.apicalls):
         if call.pid == 0:
-            # ignore Drakvuf's null pids
+            # Drakvuf captures api/native calls from all processes running on the system.
+            # we ignore the pid 0 since it's a system process and it's unlikely for it to
+            # be hijacked or so on, in addition to capa addresses not supporting null pids
             continue
         proc_addr = ProcessAddress(pid=call.pid, ppid=call.ppid)
         thread_addr = ThreadAddress(process=proc_addr, tid=call.tid)
