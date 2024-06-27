@@ -129,6 +129,8 @@ class DrakvufReport(ConciseModel):
 
         for entry in entries:
             plugin = entry.get("Plugin")
+            # TODO(yelhamer): add support for more drakvuf plugins
+            # https://github.com/mandiant/capa/issues/2181
             if plugin == "syscall":
                 values["syscalls"].append(SystemCall(**entry))
             elif plugin == "apimon":
