@@ -101,9 +101,9 @@ def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
                 line_s = line.strip().decode()
                 obj = msgspec.json.decode(line_s)
                 yield obj
-            except ValueError:
-                # ignore erroneous lines
-                continue
+            except (msgspec.DecodeError, UnicodeDecodeError):
+                # sometimes Drakvuf reports bad method names and/or malformed JSON
+                logger.debug("bad drakvuf log line: %s", line)
 
     try:
         with gzip.open(jsonl_path, "rb") as fg:
