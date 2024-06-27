@@ -738,6 +738,8 @@ DYNAMIC_CAPE_FEATURE_PRESENCE_TESTS = sorted(
 )
 
 DYNAMIC_CAPE_FEATURE_COUNT_TESTS = sorted(
+    # TODO(yelhamer): use the same sample for testing CAPE and Drakvuf extractors
+    # https://github.com/mandiant/capa/issues/2180
     [
         # file/string
         ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), 1),
