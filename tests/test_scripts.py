@@ -23,8 +23,19 @@ def get_script_path(s: str):
     return str(CD / ".." / "scripts" / s)
 
 
-def get_file_path():
+def get_binary_file_path():
     return str(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
+
+
+def get_report_file_path():
+    return str(
+        CD
+        / "data"
+        / "dynamic"
+        / "cape"
+        / "v2.4"
+        / "fb7ade52dc5a1d6128b9c217114a46d0089147610f99f5122face29e429a1e74.json.gz"
+    )
 
 
 def get_rules_path():
@@ -48,12 +59,13 @@ def get_rule_path():
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
         # `create directory` rule has native and .NET example PEs
         pytest.param("lint.py", ["--thorough", "-t", "create directory", get_rules_path()]),
-        pytest.param("match-function-id.py", [get_file_path()]),
-        pytest.param("show-capabilities-by-function.py", [get_file_path()]),
-        pytest.param("show-features.py", [get_file_path()]),
-        pytest.param("show-features.py", ["-F", "0x407970", get_file_path()]),
-        pytest.param("show-unused-features.py", [get_file_path()]),
-        pytest.param("capa_as_library.py", [get_file_path()]),
+        pytest.param("match-function-id.py", [get_binary_file_path()]),
+        pytest.param("show-capabilities-by-function.py", [get_binary_file_path()]),
+        pytest.param("show-features.py", [get_binary_file_path()]),
+        pytest.param("show-features.py", ["-F", "0x407970", get_binary_file_path()]),
+        pytest.param("show-features.py", ["-P", "MicrosoftEdgeUpdate.exe", get_report_file_path]),
+        pytest.param("show-unused-features.py", [get_binary_file_path()]),
+        pytest.param("capa_as_library.py", [get_binary_file_path()]),
     ],
 )
 def test_scripts(script, args):
