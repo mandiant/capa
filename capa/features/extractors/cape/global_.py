@@ -46,9 +46,11 @@ def extract_format(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
     elif "ELF" in report.target.file.type:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
-        logger.warning("unknown file format, file command output: %s", report.target.file.type)
+        logger.warning(
+            "unknown file format, file command output: %s", report.target.file.type
+        )
         raise ValueError(
-            "unrecognized file format from the CAPE report; output of file command: {report.target.file.type}"
+            f"unrecognized file format from the CAPE report; output of file command: {report.target.file.type}"
         )
 
 
@@ -73,7 +75,9 @@ def extract_os(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
         else:
             # if the operating system information is missing from the cape report, it's likely a bug
             logger.warning("unrecognized OS: %s", file_output)
-            raise ValueError("unrecognized OS from the CAPE report; output of file command: {file_output}")
+            raise ValueError(
+                f"unrecognized OS from the CAPE report; output of file command: {file_output}"
+            )
     else:
         # the sample is shellcode
         logger.debug("unsupported file format, file command output: %s", file_output)
