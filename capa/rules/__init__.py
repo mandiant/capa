@@ -1918,7 +1918,6 @@ class RuleSet:
         # This strategy is described here:
         # https://github.com/mandiant/capa/issues/2129
         if feature_index.string_rules:
-
             # This is a FeatureSet that contains only String features.
             # Since we'll only be evaluating String/Regex features below, we don't care about
             # other sorts of features (Mnemonic, Number, etc.) and therefore can save some time

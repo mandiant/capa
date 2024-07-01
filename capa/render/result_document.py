@@ -160,7 +160,8 @@ class CompoundStatementType:
     OPTIONAL = "optional"
 
 
-class StatementModel(FrozenModel): ...
+class StatementModel(FrozenModel):
+    ...
 
 
 class CompoundStatement(StatementModel):
@@ -649,9 +650,9 @@ class ResultDocument(FrozenModel):
         return ResultDocument(meta=meta, rules=rule_matches)
 
     def to_capa(self) -> Tuple[Metadata, Dict]:
-        capabilities: Dict[str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]] = (
-            collections.defaultdict(list)
-        )
+        capabilities: Dict[
+            str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
+        ] = collections.defaultdict(list)
 
         # this doesn't quite work because we don't have the rule source for rules that aren't matched.
         rules_by_name = {
