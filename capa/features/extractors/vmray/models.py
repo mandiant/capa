@@ -8,10 +8,18 @@
 
 from typing import Dict, List, Optional
 
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 
 # models flog.xml files
+class Param(BaseModel):
+    name: str
+    type: str
+    value: str
+
+class In_Out(BaseModel):
+    param: Param
+    
 class FunctionCall(BaseModel):
     ts: str
     fncall_id: str
@@ -20,6 +28,8 @@ class FunctionCall(BaseModel):
     name: str
     addr: str
     from_addr: str = Field(alias="from")
+    in_: Optional[In_Out] = None
+    out: Optional[In_Out] = None
 
 class FunctionReturn(BaseModel):
     ts: str
@@ -47,7 +57,8 @@ class GenericReference(BaseModel):
     source: str
 
 
-class StaticDataReference(GenericReference): ...
+class StaticDataReference(GenericReference):
+    ...
 
 
 class PEFileBasicInfo(BaseModel):
@@ -118,7 +129,7 @@ class File(BaseModel):
     # categories: List[str]
     hash_values: FileHashes
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     is_sample: bool
     # size: int
     # is_truncated: bool
@@ -134,7 +145,7 @@ class File(BaseModel):
 class Process(BaseModel):
     # bitness: int
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     monitor_id: int
     # monitor_reason: str
     os_pid: int
@@ -146,14 +157,14 @@ class Process(BaseModel):
 class Filename(BaseModel):
     filename: str
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     # verdict: str
 
 
 class Mutex(BaseModel):
     name: str
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     # verdict: str
 
 
@@ -161,21 +172,21 @@ class Registry(BaseModel):
     reg_key_name: str
     # reg_key_value_type: Optional[str] = None
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     # verdict: str
 
 
 class Domain(BaseModel):
     domain: str
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     # verdict: str
 
 
 class IPAddress(BaseModel):
     ip_address: str
     # is_artifact: bool
-    is_ioc: bool
+    #is_ioc: bool
     # verdict: str
 
 

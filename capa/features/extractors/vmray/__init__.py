@@ -5,11 +5,17 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, List
 from collections import defaultdict
+from typing import Dict, List
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall
+from capa.features.extractors.vmray.models import (
+    File,
+    Flog,
+    FunctionCall,
+    StaticData,
+    SummaryV2,
+)
 
 
 class VMRayAnalysis:
@@ -20,7 +26,9 @@ class VMRayAnalysis:
         self.imports: Dict[int, str] = {}
         self.sections: Dict[int, str] = {}
         self.process_threads: Dict[int, List[int]] = defaultdict(list)
-        self.process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
+        self.process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
         self.base_address: int
 
         self.sample_file_name: str
@@ -35,7 +43,9 @@ class VMRayAnalysis:
         self._compute_process_calls()
 
         if not self.sample_file_static_data.pe:
-            raise UnsupportedFormatError("VMRay feature extractor only supports PE at this time")
+            raise UnsupportedFormatError(
+                "VMRay feature extractor only supports PE at this time"
+            )
 
     def _find_sample_file(self):
         for file_name, file_analysis in self.sv2.files.items():
@@ -45,7 +55,9 @@ class VMRayAnalysis:
                 self.sample_file_analysis = file_analysis
 
                 if file_analysis.ref_static_data:
-                    self.sample_file_static_data = self.sv2.static_data[file_analysis.ref_static_data.path[1]]
+                    self.sample_file_static_data = self.sv2.static_data[
+                        file_analysis.ref_static_data.path[1]
+                    ]
 
                 break
 

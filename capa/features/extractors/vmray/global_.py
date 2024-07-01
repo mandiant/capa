@@ -7,10 +7,19 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator, Tuple
 
-from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, Address
+from capa.features.common import (
+    ARCH_AMD64,
+    ARCH_I386,
+    FORMAT_PE,
+    OS,
+    OS_WINDOWS,
+    Arch,
+    Feature,
+    Format,
+)
 from capa.features.extractors.vmray import VMRayAnalysis
 
 logger = logging.getLogger(__name__)
@@ -32,7 +41,9 @@ def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]
     if analysis.sample_file_static_data.pe:
         yield Format(FORMAT_PE), NO_ADDRESS
     else:
-        logger.warning("unrecognized file format: %s", analysis.sv2.analysis_metadata.sample_type)
+        logger.warning(
+            "unrecognized file format: %s", analysis.sv2.analysis_metadata.sample_type
+        )
         raise ValueError(
             f"unrecognized file format from the VMRay report: {analysis.sv2.analysis_metadata.sample_type}"
         )
