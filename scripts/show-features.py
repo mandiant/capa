@@ -171,8 +171,8 @@ def print_dynamic_analysis(extractor: DynamicFeatureExtractor, args):
     process_handles = tuple(extractor.get_processes())
 
     if args.process:
-        process_handles = tuple(filter(lambda ph: ph.inner["name"] == args.process, process_handles))
-        if args.process not in [ph.inner["name"] for ph in args.process]:
+        process_handles = tuple(filter(lambda ph: extractor.get_process_name(ph) == args.process, process_handles))
+        if args.process not in [extractor.get_process_name(ph) for ph in process_handles]:
             print(f"{args.process} not a process")
             return -1
 
@@ -227,13 +227,13 @@ def print_static_features(functions, extractor: StaticFeatureExtractor):
 
 def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
-        print(f"proc: {extractor.get_process_name(p)} (ppid={p.address.ppid}, pid={p.address.pid})")
+        print(f"proc: {p.inner.process_name} (ppid={p.address.ppid}, pid={p.address.pid})")
 
         for feature, addr in extractor.extract_process_features(p):
             if is_global_feature(feature):
                 continue
 
-            print(f" proc: {extractor.get_process_name(p)}: {feature}")
+            print(f" proc: {p.inner.process_name}: {feature}")
 
             for t in extractor.get_threads(p):
                 print(f"  thread: {t.address.tid}")
