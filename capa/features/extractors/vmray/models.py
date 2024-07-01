@@ -5,14 +5,28 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, List, Optional
 
 from typing import Dict, List, Optional
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, field_validator
+
+from capa.helpers import assert_never
+from capa.features.insn import API, Number
+from capa.features.common import String
+from capa.features.extractors.base_extractor import CallHandle
 
 
 # models flog.xml files
+class Param(BaseModel):
+    name: str
+    type: str
+    value: str
+
+
+class In_Out(BaseModel):
+    param: Param
+
+
 class FunctionCall(BaseModel):
     ts: str
     fncall_id: str
@@ -21,6 +35,77 @@ class FunctionCall(BaseModel):
     name: str
     addr: str
     from_addr: str = Field(alias="from")
+    in_: Optional[In_Out] = None
+    out_: Optional[In_Out] = None
+
+    @field_validator("in_", "out_")
+    def validate_in_out(cls, value, values):
+        if value is None:
+            if values.get("in_") is None or values.get("out_") is None:
+                raise ValueError(f"'in_' or 'out_' are None for {values['fncall_id']}")
+
+        else:
+            for param in value.param:
+                if param.type is not None:
+                    if param.type in [
+                        "signed_8bit",
+                        "unsigned_8bit",
+                        "signed_16bit",
+                        "unsigned_16bit",
+                        "signed_32bit",
+                        "unsigned_32bit",
+                        "signed_64bit",
+                        "unsigned_64bit",
+                        "double",
+                    ]:
+                        yield Number(int(param.value)), values['addr']
+                    elif param.type in [
+                        "unknown",
+                        "void",
+                        "bool",
+                        "void_ptr",
+                        "ptr",
+                        "str",
+                        "array",
+                        "container",
+                        "bindata",
+                        "undefined_type",
+                    ]:
+                        yield String(param.value), values['addr']
+
+                    else:
+                        assert_never(value)
+
+            for param in value.param:
+                if param.type is not None:
+                    if param.type in [
+                        "signed_8bit",
+                        "unsigned_8bit",
+                        "signed_16bit",
+                        "unsigned_16bit",
+                        "signed_32bit",
+                        "unsigned_32bit",
+                        "signed_64bit",
+                        "unsigned_64bit",
+                        "double",
+                    ]:
+                        yield Number(int(Param.value)), values['addr']
+                    elif param.type in [
+                        "unknown",
+                        "void",
+                        "bool",
+                        "void_ptr",
+                        "ptr",
+                        "str",
+                        "array",
+                        "container",
+                        "bindata",
+                        "undefined_type",
+                    ]:
+                        yield String(param.value), values['addr']
+
+                    else:
+                        assert_never(value)
 
 
 class FunctionReturn(BaseModel):
@@ -49,7 +134,8 @@ class GenericReference(BaseModel):
     source: str
 
 
-class StaticDataReference(GenericReference): ...
+class StaticDataReference(GenericReference):
+    ...
 
 
 class PEFileBasicInfo(BaseModel):
@@ -65,7 +151,7 @@ class PEFileBasicInfo(BaseModel):
     # imphash: Optional[str] = None
 
 
-class API(BaseModel):
+class Api(BaseModel):
     name: str
     ordinal: Optional[int] = None
 
@@ -120,7 +206,7 @@ class File(BaseModel):
     # categories: List[str]
     hash_values: FileHashes
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     is_sample: bool
     # size: int
     # is_truncated: bool
@@ -136,7 +222,7 @@ class File(BaseModel):
 class Process(BaseModel):
     # bitness: int
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     monitor_id: int
     # monitor_reason: str
     os_pid: int
@@ -148,14 +234,14 @@ class Process(BaseModel):
 class Filename(BaseModel):
     filename: str
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     # verdict: str
 
 
 class Mutex(BaseModel):
     name: str
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     # verdict: str
 
 
@@ -163,21 +249,21 @@ class Registry(BaseModel):
     reg_key_name: str
     # reg_key_value_type: Optional[str] = None
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     # verdict: str
 
 
 class Domain(BaseModel):
     domain: str
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     # verdict: str
 
 
 class IPAddress(BaseModel):
     ip_address: str
     # is_artifact: bool
-    is_ioc: bool
+    # is_ioc: bool
     # verdict: str
 
 

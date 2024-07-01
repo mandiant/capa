@@ -17,7 +17,7 @@ import capa.helpers
 import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import String, Feature, Characteristic, Feature
+from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.vmray.models import Flog, Process, SummaryV2, FunctionCall
@@ -46,7 +46,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
         self.global_features = list(capa.features.extractors.vmray.global_.extract_features(self.analysis))
 
     def get_base_address(self) -> Address:
-        # value according to the PE header, the actual trace may use a different imagebase
+        # value according to the PE header
+        # the actual trace may use a different imagebase
         return AbsoluteVirtualAddress(self.analysis.base_address)
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
@@ -54,10 +55,6 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
-
-    def get_import_names(self) -> Iterator[Tuple[Feature, Address]]:
-        for filename_id, filename_data in self.analysis.filenames.items():
-            yield String(filename_data["filename"]), NO_ADDRESS
 
     def get_processes(self) -> Iterator[ProcessHandle]:
         yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
@@ -92,15 +89,16 @@ class VMRayExtractor(DynamicFeatureExtractor):
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
-    
-    def get_call_name(ph, th, ch) -> str:
+
+    def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
         fncallname: FunctionCall = ch.inner
         return fncallname.name
-        
+
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
         with ZipFile(zipfile_path, "r") as zipfile:
-            # TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
+            # TODO (meh): is default password "infected" good enough?
+            # https://github.com/mandiant/capa/issues/2148
             sv2_json = json.loads(zipfile.read("logs/summary_v2.json", pwd=b"infected"))
             sv2 = SummaryV2.model_validate(sv2_json)
 

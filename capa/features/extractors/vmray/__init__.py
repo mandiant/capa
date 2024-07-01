@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+
 from typing import Dict, List
 from collections import defaultdict
 
@@ -59,8 +60,9 @@ class VMRayAnalysis:
                 self.exports[export.address] = export.api.name
 
     def _compute_imports(self):
-        # TODO (meh): https://github.com/mandiant/capa/issues/2148
-        ...
+        if self.sample_file_static_data.pe:
+            for imports in self.sample_file_static_data.pe.exports:
+                self.imports[imports.address] = imports.api.name
 
     def _compute_sections(self):
         if self.sample_file_static_data.pe:
@@ -68,7 +70,8 @@ class VMRayAnalysis:
                 self.sections[section.virtual_address] = section.name
 
     def _compute_process_threads(self):
-        # logs/flog.xml appears to be the only file that contains thread-related
+        # logs/flog.xml
+        # appears to be the only file that contains thread-related
         # so we use it here to map processes to threads
         for function_call in self.flog.analysis.function_calls:
             pid: int = int(function_call.process_id)

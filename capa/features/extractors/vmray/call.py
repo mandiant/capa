@@ -5,61 +5,50 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+
 import logging
 from typing import Tuple, Iterator
 
-from capa.helpers import assert_never
-from capa.features.insn import API, Number
-from capa.features.common import String, Feature
+from capa.features.insn import API
+from capa.features.common import Feature
 from capa.features.address import Address
-
 from capa.features.extractors.vmray.models import FunctionCall
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
     """
-    this method extracts the given call's features (such as API name and arguments),
-    and returns them as API, Number, and String features.
+    This method extracts the given call's features (such as API name and
+    arguments), and returns them as API, Number, and String features.
 
-    args:
-      call: FunctionCall object representing the XML fncall element
+    Args:
+        ph: process handle (for defining the extraction scope)
+        th: thread handle (for defining the extraction scope)
+        ch: call handle (for defining the extraction scope)
 
-      yields: Feature, address; where Feature is either: API, Number, or String.
+    Yields:
+        Feature, address; where Feature is either: API, Number, or String.
     """
 
-    # TODO (meh): update for new models https://github.com/mandiant/capa/issues/2148
-    # print(ch)
-    
+    # TODO(meh): update for new models
+    # https://github.com/mandiant/capa/issues/2148
 
-    # Extract API name
-    yield API(ch.inner.name), ch.inner.address
+    call: FunctionCall = ch.inner
 
     # Extract arguments from <in>
-    for param in ch.inner.in_:
-        value = param.value
-        if isinstance(value, str):
-            yield String(value), ch.inner.address
+    if call.in_ is not None:
+        for feature, address in call.validate_in_out(call.in_, call.dict()):  # Call validate_in_out through the instance
+            yield feature, address
 
-        elif isinstance(value, int):
-            yield Number(value), ch.inner.address
+    # Extract arguments from <out>
+    if call.out_ is not None:
+        for feature, address in call.validate_in_out(call.out_, call.dict()):  # Call validate_in_out through the instance
+            yield feature, address
 
-        else:
-            assert_never(value)
-
-    # Extract return value from <out>
-    if ch.inner.out is not None:
-        value = ch.inner.out.value
-        if isinstance(value, str):
-            yield String(value), ch.inner.address
-
-        elif isinstance(value, int):
-            yield Number(value), ch.inner.address
-
-        else:
-            assert_never(value)
+    # Extract API name
+    yield API(call.name), ch.address
 
 
 def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -68,6 +57,4 @@ def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Ite
             yield feature, addr
 
 
-CALL_HANDLERS = (
-    extract_function_calls,
-    extract_features,)
+CALL_HANDLERS = (extract_function_calls,)
