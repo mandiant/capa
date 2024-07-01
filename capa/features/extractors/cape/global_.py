@@ -46,9 +46,7 @@ def extract_format(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
     elif "ELF" in report.target.file.type:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
-        logger.warning(
-            "unknown file format, file command output: %s", report.target.file.type
-        )
+        logger.warning("unknown file format, file command output: %s", report.target.file.type)
         raise ValueError(
             f"unrecognized file format from the CAPE report; output of file command: {report.target.file.type}"
         )
