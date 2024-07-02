@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Dict, List, Optional
+from typing import Any, Set, Dict, List, Optional
 from pathlib import Path
 
 import colorama
@@ -44,6 +44,7 @@ from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
 from capa.helpers import (
+    str_to_number,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
@@ -53,6 +54,7 @@ from capa.helpers import (
     log_unsupported_cape_report_error,
 )
 from capa.exceptions import (
+    InvalidArgument,
     EmptyReportError,
     UnsupportedOSError,
     UnsupportedArchError,
@@ -73,9 +75,17 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    STATIC_FORMATS,
+    DYNAMIC_FORMATS,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    ProcessFilter,
+    FunctionFilter,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -96,6 +106,8 @@ E_MISSING_CAPE_STATIC_ANALYSIS = 21
 E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
 E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
+E_INVALID_INPUT_FORMAT = 25
+E_INVALID_FEATURE_EXTRACTOR = 26
 
 logger = logging.getLogger("capa")
 
@@ -262,6 +274,22 @@ def install_common_args(parser, wanted=None):
             choices=[f[0] for f in backends],
             default=BACKEND_AUTO,
             help=f"select backend, {backend_help}",
+        )
+
+    if "functions" in wanted:
+        parser.add_argument(
+            "--functions",
+            type=lambda s: s.replace(" ", "").split(","),
+            default=[],
+            help="provide a list of comma-separated functions to analyze (static analysis).",
+        )
+
+    if "processes" in wanted:
+        parser.add_argument(
+            "--processes",
+            type=lambda s: s.replace(" ", "").split(","),
+            default=[],
+            help="provide a list of comma-separaed processes to analyze (dynamic analysis).",
         )
 
     if "os" in wanted:
@@ -755,6 +783,28 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
+def get_extractor_filters_from_cli(args, input_format) -> Optional[Set]:
+    if input_format in STATIC_FORMATS:
+        if args.processes:
+            raise InvalidArgument("Cannot filter processes with static analysis.")
+        return set(map(str_to_number, args.functions))
+    elif input_format in DYNAMIC_FORMATS:
+        if args.functions:
+            raise InvalidArgument("Cannot filter functions with dynamic analysis.")
+        return set(map(str_to_number, args.processes))
+    else:
+        raise ShouldExitError(E_INVALID_INPUT_FORMAT)
+
+
+def apply_extractor_filters(extractor: FeatureExtractor, elements: Set):
+    if isinstance(extractor, StaticFeatureExtractor):
+        return FunctionFilter(extractor, elements)
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return ProcessFilter(extractor, elements)
+    else:
+        raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
+
+
 def main(argv: Optional[List[str]] = None):
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
@@ -794,7 +844,9 @@ def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag"})
+    install_common_args(
+        parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag", "functions", "processes"}
+    )
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
 
@@ -802,6 +854,7 @@ def main(argv: Optional[List[str]] = None):
         handle_common_args(args)
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
+        extractor_filters = get_extractor_filters_from_cli(args, input_format)
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
         found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
@@ -831,6 +884,10 @@ def main(argv: Optional[List[str]] = None):
             extractor = get_extractor_from_cli(args, input_format, backend)
         except ShouldExitError as e:
             return e.status_code
+
+        if extractor_filters:
+            # if the user specified function/process filters, apply them here.
+            extractor = apply_extractor_filters(extractor, extractor_filters)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 

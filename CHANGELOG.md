@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- Add the ability to select which specific functions or processes to analyze @yelhamer
 
 ### Breaking Changes
 

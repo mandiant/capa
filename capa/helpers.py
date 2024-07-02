@@ -46,6 +46,15 @@ def hex(n: int) -> str:
         return f"0x{(n):X}"
 
 
+def str_to_number(s: str) -> int:
+    if s.isdecimal():
+        return int(s)
+    try:
+        return int(s, 16)
+    except ValueError:
+        raise ValueError(f"{s} is not a valid number.")
+
+
 def get_file_taste(sample_path: Path) -> bytes:
     if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
