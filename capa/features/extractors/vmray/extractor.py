@@ -2,9 +2,13 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
-# Unless required by applicable law or agreed to in writing, software distributed under the License
-#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and limitations under the License.
+# Unless required by applicable law or agreed to in writing
+# software distributed under the License
+# is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND
+# , either express or implied.
+# See the License for the specific language governing permissions
+# and limitations under the License.
 
 import json
 from typing import Tuple, Iterator
@@ -20,7 +24,7 @@ import capa.features.extractors.vmray.global_
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Flog, Process, SummaryV2
+from capa.features.extractors.vmray.models import Flog, Process, SummaryV2, FunctionCall
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -46,7 +50,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
         self.global_features = list(capa.features.extractors.vmray.global_.extract_features(self.analysis))
 
     def get_base_address(self) -> Address:
-        # value according to the PE header, the actual trace may use a different imagebase
+        # value according to the PE header
+        # the actual trace may use a different imagebase
         return AbsoluteVirtualAddress(self.analysis.base_address)
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
@@ -55,12 +60,15 @@ class VMRayExtractor(DynamicFeatureExtractor):
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
+    def get_import_names(self) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.vmray.models.PEFileImport(self.analysis)
+
     def get_processes(self) -> Iterator[ProcessHandle]:
         yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
         # TODO (meh): https://github.com/mandiant/capa/issues/2148
-        yield from []
+        yield from capa.features.extractors.vmray.file.extract_features(self.analysis)
 
     def get_process_name(self, ph) -> str:
         process: Process = ph.inner
@@ -76,6 +84,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
             # force this routine to be a generator,
             # but we don't actually have any elements to generate.
             yield Characteristic("never"), NO_ADDRESS
+
         return
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
@@ -88,14 +97,15 @@ class VMRayExtractor(DynamicFeatureExtractor):
     ) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
-    def get_call_name(self, ph, th, ch) -> str:
-        # TODO (meh): https://github.com/mandiant/capa/issues/2148
-        raise NotImplementedError()
+    def get_call_name(ph, th, ch) -> str:
+        fncallname: FunctionCall = ch.inner
+        return fncallname.name
 
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
         with ZipFile(zipfile_path, "r") as zipfile:
-            # TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
+            # TODO (meh): is default password "infected" good enough?
+            # https://github.com/mandiant/capa/issues/2148
             sv2_json = json.loads(zipfile.read("logs/summary_v2.json", pwd=b"infected"))
             sv2 = SummaryV2.model_validate(sv2_json)
 
