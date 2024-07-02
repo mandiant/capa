@@ -11,17 +11,17 @@ import fixtures
 
 @fixtures.parametrize(
     "sample,scope,feature,expected",
-    fixtures.DYNAMIC_CAPE_FEATURE_PRESENCE_TESTS,
+    fixtures.DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],
 )
-def test_cape_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_cape_extractor, sample, scope, feature, expected)
+def test_drakvuf_features(sample, scope, feature, expected):
+    fixtures.do_test_feature_presence(fixtures.get_drakvuf_extractor, sample, scope, feature, expected)
 
 
 @fixtures.parametrize(
     "sample,scope,feature,expected",
-    fixtures.DYNAMIC_CAPE_FEATURE_COUNT_TESTS,
+    fixtures.DYNAMIC_DRAKVUF_FEATURE_COUNT_TESTS,
     indirect=["sample", "scope"],
 )
-def test_cape_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_cape_extractor, sample, scope, feature, expected)
+def test_drakvuf_feature_counts(sample, scope, feature, expected):
+    fixtures.do_test_feature_count(fixtures.get_drakvuf_extractor, sample, scope, feature, expected)
