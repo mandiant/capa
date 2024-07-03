@@ -18,7 +18,6 @@ from dataclasses import dataclass
 import capa.rules
 import capa.helpers
 import capa.version
-import capa.rules.utils
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +107,6 @@ def get_ruleset_content(ruleset: capa.rules.RuleSet) -> List[bytes]:
 
 def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdentifier:
     rule_contents = get_ruleset_content(ruleset)
-
     return compute_cache_identifier(rule_contents)
 
 
