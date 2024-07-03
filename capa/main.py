@@ -16,7 +16,6 @@ import logging
 import argparse
 import textwrap
 import contextlib
-from glob import glob
 from types import TracebackType
 from typing import Any, Dict, List, Optional
 from pathlib import Path
@@ -574,13 +573,10 @@ def get_rules_from_cli(args) -> RuleSet:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
         if capa.helpers.is_dev_environment():
-            # get newest cache
-            newest_cache_ts = max([os.path.getmtime(f) for f in glob(f"{cache_dir}/*.cache")])
-            for f in glob("rules/*.py"):
-                print(f)
-                if newest_cache_ts > os.path.getmtime(f):
-                    logger.warning("found a modified source file {f} that's newer than the most recent cache")
-                    enable_cache: bool = False
+            # using the rules cache during development may result in unexpected
+            # errors, this check tries to prevent issues if relevant rules code
+            # is newer than the newest rules cache
+            enable_cache = capa.helpers.should_enable_cache(cache_dir)
 
         rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:

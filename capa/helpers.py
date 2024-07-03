@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
 import sys
 import gzip
 import json
@@ -14,6 +15,7 @@ import contextlib
 import importlib.util
 from typing import NoReturn
 from pathlib import Path
+from datetime import datetime
 
 import tqdm
 
@@ -256,4 +258,42 @@ def is_dev_environment() -> bool:
         # .git directory doesn't exist
         return False
 
+    return True
+
+
+def should_enable_cache(cache_dir: Path) -> bool:
+    """
+    args:
+      cache_dir: the cache directory containing cache files
+
+    return:
+      True if latest cache file is older than the newest relevant rule code, else False
+    """
+
+    def ts_to_str(ts):
+        return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+    # retrieve the latest modified cache file
+    cache_files = list(cache_dir.glob("*.cache"))
+    if not cache_files:
+        logger.debug("no rule cache files found")
+        return False
+
+    latest_cache_file = max(cache_files, key=os.path.getmtime)
+    cache_timestamp = os.path.getmtime(latest_cache_file)
+
+    # these are the relevant rules code files that could conflict with using an outdated cache
+    rule_code_timestamp = max(
+        os.path.getmtime(p) for p in [Path("capa/rules/__init__.py"), Path("capa/rules/cache.py")]
+    )
+
+    if rule_code_timestamp > cache_timestamp:
+        logger.warning(
+            "not using cache: latest rule code (%s) is newer than the latest rule cache file (%s)",
+            ts_to_str(rule_code_timestamp),
+            ts_to_str(cache_timestamp),
+        )
+        return False
+
+    logger.debug("no potentially outdated cache files found, cache can be used")
     return True
