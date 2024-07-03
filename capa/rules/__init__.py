@@ -2123,12 +2123,14 @@ def get_rules(
     rule_paths: List[RulePath],
     cache_dir=None,
     on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
+    enable_cache: bool = True,
 ) -> RuleSet:
     """
     args:
       rule_paths: list of paths to rules files or directories containing rules files
       cache_dir: directory to use for caching rules, or will use the default detected cache directory if None
       on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
+      enable_cache: enable loading of a cached ruleset
     """
     if cache_dir is None:
         cache_dir = capa.rules.cache.get_default_cache_directory()
@@ -2140,9 +2142,10 @@ def get_rules(
     # rule_file_paths[i] corresponds to rule_contents[i].
     rule_contents = [file_path.read_bytes() for file_path in rule_file_paths]
 
-    ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
-    if ruleset is not None:
-        return ruleset
+    if enable_cache:
+        ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
+        if ruleset is not None:
+            return ruleset
 
     rules: List[Rule] = []
 

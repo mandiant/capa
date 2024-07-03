@@ -238,3 +238,22 @@ def is_running_standalone() -> bool:
     # so we keep this in a common area.
     # generally, other library code should not use this function.
     return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
+
+
+def is_dev_environment() -> bool:
+    if is_running_standalone():
+        return False
+
+    if "site-packages" in __file__:
+        # running from a site-packages installation
+        # we may need to double check this
+        return False
+
+    capa_root = Path(__file__).resolve().parent.parent
+    git_dir = capa_root / ".git"
+
+    if not git_dir.is_dir():
+        # .git directory doesn't exist
+        return False
+
+    return True

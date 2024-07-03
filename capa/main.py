@@ -16,6 +16,7 @@ import logging
 import argparse
 import textwrap
 import contextlib
+from glob import glob
 from types import TracebackType
 from typing import Any, Dict, List, Optional
 from pathlib import Path
@@ -565,13 +566,23 @@ def get_rules_from_cli(args) -> RuleSet:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
+    enable_cache: bool = True
     try:
         if capa.helpers.is_running_standalone() and args.is_default_rules:
             cache_dir = get_default_root() / "cache"
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir)
+        if capa.helpers.is_dev_environment():
+            # get newest cache
+            newest_cache_ts = max([os.path.getmtime(f) for f in glob(f"{cache_dir}/*.cache")])
+            for f in glob("rules/*.py"):
+                print(f)
+                if newest_cache_ts > os.path.getmtime(f):
+                    logger.warning("found a modified source file {f} that's newer than the most recent cache")
+                    enable_cache: bool = False
+
+        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
