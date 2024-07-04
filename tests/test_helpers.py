@@ -8,6 +8,7 @@
 
 import codecs
 
+import capa.helpers
 from capa.features.extractors import helpers
 
 
@@ -64,3 +65,8 @@ def test_generate_symbols():
     symbols = list(helpers.generate_symbols("ws2_32", "#1", include_dll=False))
     assert len(symbols) == 1
     assert "ws2_32.#1" in symbols
+
+
+def test_is_dev_environment():
+    # testing environment should be a dev environment
+    assert capa.helpers.is_dev_environment() is True
