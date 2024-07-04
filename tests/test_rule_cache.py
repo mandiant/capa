@@ -125,8 +125,11 @@ def test_rule_cache_dev_environment():
     id = capa.rules.cache.compute_cache_identifier(content)
     cache_dir = capa.rules.cache.get_default_cache_directory()
     cache_path = capa.rules.cache.get_cache_path(cache_dir, id)
-    with contextlib.suppress(OSError):
-        cache_path.unlink()
+
+    # clear existing cache files
+    for f in cache_dir.glob("*.cache"):
+        f.unlink()
+
     capa.rules.cache.cache_ruleset(cache_dir, rs)
     assert cache_path.exists()
 
@@ -136,7 +139,7 @@ def test_rule_cache_dev_environment():
     cachepy = capa_root / "capa" / "rules" / "cache.py"  # alternative: capa_root / "capa" / "rules" / "__init__.py"
 
     # set cache's last modified time prior to code file's modified time
-    os.utime(cache_path, (cache_path.stat().st_atime, cachepy.stat().st_mtime - 6000000))
+    os.utime(cache_path, (cache_path.stat().st_atime, cachepy.stat().st_mtime - 600000))
 
     # debug
     def ts_to_str(ts):
