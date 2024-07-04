@@ -135,7 +135,18 @@ def test_rule_cache_dev_environment():
     capa_root = Path(__file__).resolve().parent.parent
     cachepy = capa_root / "capa" / "rules" / "cache.py"  # alternative: capa_root / "capa" / "rules" / "__init__.py"
 
-    # set last modified time to older than code file
-    os.utime(cache_path, (cache_path.stat().st_atime, cachepy.stat().st_mtime - 100))
+    # set cache's last modified time prior to code file's modified time
+    os.utime(cache_path, (cache_path.stat().st_atime, cachepy.stat().st_mtime - 6000000))
+
+    # debug
+    def ts_to_str(ts):
+        from datetime import datetime
+
+        return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+    for g in ((capa_root / "capa" / "rules").glob("*.py"), cache_dir.glob("*.cache")):
+        for p in g:
+            print(p, "\t", ts_to_str(p.stat().st_mtime))  # noqa: T201
+
     assert capa.helpers.is_dev_environment() is True
     assert capa.helpers.is_cache_newer_than_rule_code(cache_dir) is False
