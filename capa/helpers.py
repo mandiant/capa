@@ -248,7 +248,6 @@ def is_dev_environment() -> bool:
 
     if "site-packages" in __file__:
         # running from a site-packages installation
-        # we may need to double check this
         return False
 
     capa_root = Path(__file__).resolve().parent.parent
@@ -261,17 +260,16 @@ def is_dev_environment() -> bool:
     return True
 
 
-def should_enable_cache(cache_dir: Path) -> bool:
+def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
     """
+    basic check to prevent issues if the rules cache is older than relevant rules code
+
     args:
       cache_dir: the cache directory containing cache files
 
-    return:
-      True if latest cache file is older than the newest relevant rule code, else False
+    returns:
+      True if latest cache file is newer than relevant rule cache code
     """
-
-    def ts_to_str(ts):
-        return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
 
     # retrieve the latest modified cache file
     cache_files = list(cache_dir.glob("*.cache"))
@@ -283,16 +281,22 @@ def should_enable_cache(cache_dir: Path) -> bool:
     cache_timestamp = os.path.getmtime(latest_cache_file)
 
     # these are the relevant rules code files that could conflict with using an outdated cache
-    rule_code_timestamp = max(
-        os.path.getmtime(p) for p in [Path("capa/rules/__init__.py"), Path("capa/rules/cache.py")]
-    )
+    latest_rule_code_file = max([Path("capa/rules/__init__.py"), Path("capa/rules/cache.py")], key=os.path.getmtime)
+    rule_code_timestamp = os.path.getmtime(latest_rule_code_file)
 
     if rule_code_timestamp > cache_timestamp:
+
+        def ts_to_str(ts):
+            return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
         logger.warning(
-            "not using cache: latest rule code (%s) is newer than the latest rule cache file (%s)",
+            "not using cache: latest rule code file %s (%s) is newer than the latest rule cache file %s (%s)",
+            latest_rule_code_file,
             ts_to_str(rule_code_timestamp),
+            latest_cache_file,
             ts_to_str(cache_timestamp),
         )
+        logger.debug("delete the cache file manually to use rule caching again")
         return False
 
     logger.debug("no potentially outdated cache files found, cache can be used")

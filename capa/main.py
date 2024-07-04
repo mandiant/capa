@@ -573,10 +573,8 @@ def get_rules_from_cli(args) -> RuleSet:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
         if capa.helpers.is_dev_environment():
-            # using the rules cache during development may result in unexpected
-            # errors, this check tries to prevent issues if relevant rules code
-            # is newer than the newest rules cache
-            enable_cache = capa.helpers.should_enable_cache(cache_dir)
+            # using the rules cache during development may result in unexpected errors, see #1898
+            enable_cache = capa.helpers.is_cache_newer_than_rule_code(cache_dir)
 
         rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
