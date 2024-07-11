@@ -69,7 +69,8 @@ def load_analysis(bv):
         return 0
     binaryninja.log_info(f"Using capa file {path}")
 
-    doc = json.loads(path.read_bytes().decode("utf-8"))
+    with Path(path).open("r", encoding="utf-8") as file:
+        doc = json.load(file)
 
     if "meta" not in doc or "rules" not in doc:
         binaryninja.log_error("doesn't appear to be a capa report")
@@ -83,20 +84,35 @@ def load_analysis(bv):
         binaryninja.log_error("sample mismatch")
         return -2
 
+    # Retreive base address
+    capa_base_address = 0
+    if "analysis" in doc["meta"] and "base_address" in doc["meta"]["analysis"]:
+        if doc["meta"]["analysis"]["base_address"]["type"] == "absolute":
+            capa_base_address = int(doc["meta"]["analysis"]["base_address"]["value"])
+
     rows = []
     for rule in doc["rules"].values():
         if rule["meta"].get("lib"):
             continue
         if rule["meta"].get("capa/subscope"):
             continue
-        if rule["meta"]["scope"] != "function":
+        if rule["meta"]["scopes"].get("static") != "function":
             continue
 
         name = rule["meta"]["name"]
         ns = rule["meta"].get("namespace", "")
-        for va in rule["matches"].keys():
-            va = int(va)
-            rows.append((ns, name, va))
+        for matches in rule["matches"]:
+            for match in matches:
+                if not "type" in match.keys():
+                    continue
+                if not "value" in match.keys():
+                    continue
+                va = match["value"]
+                # Substract va and CAPA base_address
+                va = int(va)-capa_base_address
+                # Add binja base address
+                va = va + bv.start
+                rows.append((ns, name, va))
 
     # order by (namespace, name) so that like things show up together
     rows = sorted(rows)
