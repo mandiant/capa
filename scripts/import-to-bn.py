@@ -103,9 +103,9 @@ def load_analysis(bv):
         ns = rule["meta"].get("namespace", "")
         for matches in rule["matches"]:
             for match in matches:
-                if not "type" in match.keys():
+                if "type" not in match.keys():
                     continue
-                if not "value" in match.keys():
+                if "value" not in match.keys():
                     continue
                 va = match["value"]
                 # Substract va and CAPA base_address
