@@ -12,6 +12,33 @@ from pydantic import Field, BaseModel
 from typing_extensions import Annotated
 from pydantic.functional_validators import BeforeValidator
 
+"""
+# possible param types, included for documentation
+PARAM_TYPE = (
+    "signed_8bit",
+    "unsigned_8bit",
+    "signed_16bit",
+    "unsigned_16bit",
+    "signed_32bit",
+    "unsigned_32bit",
+    "signed_64bit",
+    "unsigned_64bit",
+    "double",
+    "void_ptr",
+    "bool",
+    "unknown",
+    "ptr",
+    "void",
+    "str",
+    "array",
+    "container",
+    "bindata",
+    "undefined_type",
+)
+"""
+
+PARAM_TYPE_PTR = ("void_ptr", "ptr")
+
 
 def validate_hex_int(value):
     if isinstance(value, str):
@@ -20,7 +47,29 @@ def validate_hex_int(value):
         return value
 
 
+def validate_param_list(value):
+    if isinstance(value, list):
+        return value
+    else:
+        return [value]
+
+
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
+
+
+class Param(BaseModel):
+    name: str
+    type_: str = Field(alias="type")
+    value: HexInt
+
+
+# params may be stored as a list of Param or a single Param
+# so we ensure a list is used for single Param as well
+ParamList = Annotated[List[Param], BeforeValidator(validate_param_list)]
+
+
+class Params(BaseModel):
+    params: ParamList = Field(alias="param")
 
 
 # models flog.xml files
@@ -30,8 +79,9 @@ class FunctionCall(BaseModel):
     process_id: HexInt
     thread_id: HexInt
     name: str
-    addr: str
-    from_addr: str = Field(alias="from")
+    addr: HexInt
+    from_addr: HexInt = Field(alias="from")
+    params_in: Params = Field(alias="in", default=None)
 
 
 class FunctionReturn(BaseModel):

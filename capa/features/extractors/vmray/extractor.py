@@ -17,7 +17,7 @@ import capa.features.extractors.vmray.global_
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Process
+from capa.features.extractors.vmray.models import Process, FunctionCall
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -86,8 +86,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:
-        # TODO (meh): https://github.com/mandiant/capa/issues/2148
-        raise NotImplementedError()
+        call: FunctionCall = ch.inner
+        return call.name
 
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
