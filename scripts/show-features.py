@@ -171,8 +171,8 @@ def print_dynamic_analysis(extractor: DynamicFeatureExtractor, args):
     process_handles = tuple(extractor.get_processes())
 
     if args.process:
-        process_handles = tuple(filter(lambda ph: ph.inner["name"] == args.process, process_handles))
-        if args.process not in [ph.inner["name"] for ph in args.process]:
+        process_handles = tuple(filter(lambda ph: extractor.get_process_name(ph) == args.process, process_handles))
+        if args.process not in [extractor.get_process_name(ph) for ph in process_handles]:
             print(f"{args.process} not a process")
             return -1
 

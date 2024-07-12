@@ -17,6 +17,7 @@
 ### capa explorer IDA Pro plugin
 
 ### Development
+- CI: use macos-12 since macos-11 is deprecated and will be removed on June 28th, 2024 #2173 @mr-tz
 
 ### Raw diffs
 - [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)
