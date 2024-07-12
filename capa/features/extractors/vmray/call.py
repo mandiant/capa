@@ -22,7 +22,12 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
 
     if call.params_in:
         for param in call.params_in.params:
-            if param.type_ not in PARAM_TYPE_PTR:
+            if param.type_ not in PARAM_TYPE_PTR and param.value is not None:
+                yield Number(param.value), ch.address
+
+    if call.params_out:
+        for param in call.params_out.params:
+            if param.type_ not in PARAM_TYPE_PTR and param.value is not None:
                 yield Number(param.value), ch.address
 
     yield API(call.name), ch.address

@@ -60,7 +60,7 @@ HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 class Param(BaseModel):
     name: str
     type_: str = Field(alias="type")
-    value: HexInt
+    value: Optional[HexInt] = None
 
 
 # params may be stored as a list of Param or a single Param
@@ -82,6 +82,7 @@ class FunctionCall(BaseModel):
     addr: HexInt
     from_addr: HexInt = Field(alias="from")
     params_in: Params = Field(alias="in", default=None)
+    params_out: Params = Field(alias="out", default=None)
 
 
 class FunctionReturn(BaseModel):
