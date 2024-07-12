@@ -85,11 +85,14 @@ class FunctionCall(BaseModel):
     params_out: Params = Field(alias="out", default=None)
 
 
+"""
+# not useful for capa, but included for documentation in case
 class FunctionReturn(BaseModel):
     ts: HexInt
     fncall_id: HexInt
-    addr: str
-    from_addr: str = Field(alias="from")
+    addr: HexInt
+    from_addr: HexInt = Field(alias="from")
+"""
 
 
 class Analysis(BaseModel):
@@ -98,7 +101,7 @@ class Analysis(BaseModel):
     analysis_date: str
 
     function_calls: List[FunctionCall] = Field(alias="fncall", default=[])
-    function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
+    # function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
 
 
 class Flog(BaseModel):
