@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import json
 import logging
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from pathlib import Path
 from zipfile import ZipFile
 from collections import defaultdict
@@ -35,7 +35,7 @@ class VMRayAnalysis:
         self.flog = Flog.model_validate(flog_json)
 
         self.exports: Dict[int, str] = {}
-        self.imports: Dict[int, str] = {}
+        self.imports: Dict[int, Tuple[str, str]] = {}
         self.sections: Dict[int, str] = {}
         self.process_ids: Dict[int, int] = {}
         self.process_threads: Dict[int, List[int]] = defaultdict(list)
@@ -48,6 +48,7 @@ class VMRayAnalysis:
 
         self._find_sample_file()
         self._compute_base_address()
+        self._compute_imports()
         self._compute_exports()
         self._compute_sections()
         self._compute_process_ids()
@@ -86,8 +87,10 @@ class VMRayAnalysis:
                 self.exports[export.address] = export.api.name
 
     def _compute_imports(self):
-        # TODO (meh): https://github.com/mandiant/capa/issues/2148
-        ...
+        if self.sample_file_static_data.pe:
+            for module in self.sample_file_static_data.pe.imports:
+                for api in module.apis:
+                    self.imports[api.address] = (module.dll, api.api.name)
 
     def _compute_sections(self):
         if self.sample_file_static_data.pe:

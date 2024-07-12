@@ -9,10 +9,11 @@ import logging
 from typing import Dict, Tuple, Iterator
 
 import capa.features.extractors.common
-from capa.features.file import Export, Section
+from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
+from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.vmray.models import Process
 from capa.features.extractors.base_extractor import ProcessHandle
 
@@ -40,8 +41,9 @@ def extract_export_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Add
 
 
 def extract_import_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
-    # TODO (meh): https://github.com/mandiant/capa/issues/2148
-    yield from []
+    for addr, name in analysis.imports.items():
+        for symbol in generate_symbols(name[0], name[1], include_dll=True):
+            yield Import(symbol), AbsoluteVirtualAddress(addr)
 
 
 def extract_section_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
