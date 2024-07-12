@@ -108,9 +108,9 @@ def load_analysis(bv):
                 if "value" not in match.keys():
                     continue
                 va = match["value"]
-                # Substract va and CAPA base_address
-                va = int(va)-capa_base_address
-                # Add binja base address
+                # Substract va and CAPA base_address
+                va = int(va) - capa_base_address
+                # Add binja base address
                 va = va + bv.start
                 rows.append((ns, name, va))
 
