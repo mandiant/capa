@@ -23,11 +23,14 @@ def get_processes(analysis: VMRayAnalysis) -> Iterator[ProcessHandle]:
     processes: Dict[str, Process] = analysis.sv2.processes
 
     for process in processes.values():
-        # TODO (meh): should we use the OS process ID or vmray-assigned ID? https://github.com/mandiant/capa/issues/2148
-        pid = process.monitor_id
-        ppid = processes[process.ref_parent_process.path[1]].monitor_id if process.ref_parent_process else 0
+        pid: int = analysis.get_process_os_pid(process.monitor_id)
+        ppid: int = (
+            analysis.get_process_os_pid(processes[process.ref_parent_process.path[1]].monitor_id)
+            if process.ref_parent_process
+            else 0
+        )
 
-        addr = ProcessAddress(pid=int(pid), ppid=int(ppid))
+        addr: ProcessAddress = ProcessAddress(pid=pid, ppid=ppid)
         yield ProcessHandle(address=addr, inner=process)
 
 

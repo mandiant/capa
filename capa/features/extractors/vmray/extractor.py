@@ -77,7 +77,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         for function_call in self.analysis.process_calls[ph.address.pid][th.address.tid]:
-            addr = DynamicCallAddress(thread=th.address, id=int(function_call.fncall_id))
+            addr = DynamicCallAddress(thread=th.address, id=function_call.fncall_id)
             yield CallHandle(address=addr, inner=function_call)
 
     def extract_call_features(

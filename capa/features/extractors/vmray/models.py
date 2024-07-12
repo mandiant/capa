@@ -9,22 +9,34 @@
 from typing import Dict, List, Optional
 
 from pydantic import Field, BaseModel
+from typing_extensions import Annotated
+from pydantic.functional_validators import BeforeValidator
+
+
+def validate_hex_int(value):
+    if isinstance(value, str):
+        return int(value, 16) if value.startswith("0x") else int(value, 10)
+    else:
+        return value
+
+
+HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
 
 # models flog.xml files
 class FunctionCall(BaseModel):
-    ts: str
-    fncall_id: str
-    process_id: str
-    thread_id: str
+    ts: HexInt
+    fncall_id: HexInt
+    process_id: HexInt
+    thread_id: HexInt
     name: str
     addr: str
     from_addr: str = Field(alias="from")
 
 
 class FunctionReturn(BaseModel):
-    ts: str
-    fncall_id: str
+    ts: HexInt
+    fncall_id: HexInt
     addr: str
     from_addr: str = Field(alias="from")
 

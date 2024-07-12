@@ -37,6 +37,7 @@ class VMRayAnalysis:
         self.exports: Dict[int, str] = {}
         self.imports: Dict[int, str] = {}
         self.sections: Dict[int, str] = {}
+        self.process_ids: Dict[int, int] = {}
         self.process_threads: Dict[int, List[int]] = defaultdict(list)
         self.process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
         self.base_address: int
@@ -49,6 +50,7 @@ class VMRayAnalysis:
         self._compute_base_address()
         self._compute_exports()
         self._compute_sections()
+        self._compute_process_ids()
         self._compute_process_threads()
         self._compute_process_calls()
 
@@ -92,19 +94,35 @@ class VMRayAnalysis:
             for section in self.sample_file_static_data.pe.sections:
                 self.sections[section.virtual_address] = section.name
 
+    def _compute_process_ids(self):
+        for process in self.sv2.processes.values():
+            assert process.monitor_id not in self.process_ids.keys()
+            assert process.os_pid not in self.process_ids.values()
+
+            self.process_ids[process.monitor_id] = process.os_pid
+
     def _compute_process_threads(self):
         # logs/flog.xml appears to be the only file that contains thread-related
         # so we use it here to map processes to threads
         for function_call in self.flog.analysis.function_calls:
-            pid: int = int(function_call.process_id)
-            tid: int = int(function_call.thread_id)
+            pid: int = self.get_process_os_pid(function_call.process_id)  # flog.xml uses process monitor ID, not OS PID
+            tid: int = function_call.thread_id
+
+            assert isinstance(pid, int)
+            assert isinstance(tid, int)
 
             if tid not in self.process_threads[pid]:
                 self.process_threads[pid].append(tid)
 
     def _compute_process_calls(self):
         for function_call in self.flog.analysis.function_calls:
-            pid: int = int(function_call.process_id)
-            tid: int = int(function_call.thread_id)
+            pid: int = self.get_process_os_pid(function_call.process_id)  # flog.xml uses process monitor ID, not OS PID
+            tid: int = function_call.thread_id
+
+            assert isinstance(pid, int)
+            assert isinstance(tid, int)
 
             self.process_calls[pid][tid].append(function_call)
+
+    def get_process_os_pid(self, monitor_id: int) -> int:
+        return self.process_ids[monitor_id]
