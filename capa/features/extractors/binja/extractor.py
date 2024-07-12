@@ -28,7 +28,7 @@ from capa.features.extractors.base_extractor import (
 
 class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
-        super().__init__(hashes=SampleHashes.from_bytes(bv.file.raw.read(0, len(bv.file.raw))))
+        super().__init__(hashes=SampleHashes.from_bytes(bv.file.raw.read(0, bv.file.raw.length)))
         self.bv = bv
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))
