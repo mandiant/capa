@@ -8,6 +8,7 @@
 import logging
 from typing import Dict, Tuple, Iterator
 
+import capa.features.extractors.common
 from capa.features.file import Export, Section
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
@@ -70,6 +71,10 @@ def extract_referenced_registry_key_names(analysis: VMRayAnalysis) -> Iterator[T
         yield String(registry_record.reg_key_name), NO_ADDRESS
 
 
+def extract_file_strings(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.common.extract_file_strings(analysis.sample_file_buf)
+
+
 def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(analysis):
@@ -85,5 +90,5 @@ FILE_HANDLERS = (
     extract_referenced_domain_names,
     extract_referenced_ip_addresses,
     extract_referenced_registry_key_names,
-    # extract_file_strings,
+    extract_file_strings,
 )

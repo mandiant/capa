@@ -5,17 +5,35 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import json
+import logging
 from typing import Dict, List
+from pathlib import Path
+from zipfile import ZipFile
 from collections import defaultdict
+
+import xmltodict
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall
 
+logger = logging.getLogger(__name__)
+
+# TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
+DEFAULT_ARCHIVE_PASSWORD = b"infected"
+
 
 class VMRayAnalysis:
-    def __init__(self, sv2: SummaryV2, flog: Flog):
-        self.sv2 = sv2  # logs/summary_v2.json
-        self.flog = flog  # logs/flog.xml
+    def __init__(self, zipfile_path: Path):
+        self.zipfile = ZipFile(zipfile_path, "r")
+
+        sv2_json = json.loads(self.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD))
+        self.sv2 = SummaryV2.model_validate(sv2_json)
+
+        flog_xml = self.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
+        flog_json = xmltodict.parse(flog_xml, attr_prefix="")
+        self.flog = Flog.model_validate(flog_json)
+
         self.exports: Dict[int, str] = {}
         self.imports: Dict[int, str] = {}
         self.sections: Dict[int, str] = {}
@@ -36,6 +54,13 @@ class VMRayAnalysis:
 
         if not self.sample_file_static_data.pe:
             raise UnsupportedFormatError("VMRay feature extractor only supports PE at this time")
+
+        sample_sha256: str = self.sample_file_analysis.hash_values.sha256.lower()
+        sample_file_path: str = f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}"
+
+        logger.debug("sample file path: %s", sample_file_path)
+
+        self.sample_file_buf: bytes = self.zipfile.read(sample_file_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
 
     def _find_sample_file(self):
         for file_name, file_analysis in self.sv2.files.items():

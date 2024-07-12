@@ -6,12 +6,9 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import json
+
 from typing import Tuple, Iterator
 from pathlib import Path
-from zipfile import ZipFile
-
-import xmltodict
 
 import capa.helpers
 import capa.features.extractors.vmray.call
@@ -20,7 +17,7 @@ import capa.features.extractors.vmray.global_
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Flog, Process, SummaryV2
+from capa.features.extractors.vmray.models import Process
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -94,13 +91,4 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
-        with ZipFile(zipfile_path, "r") as zipfile:
-            # TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
-            sv2_json = json.loads(zipfile.read("logs/summary_v2.json", pwd=b"infected"))
-            sv2 = SummaryV2.model_validate(sv2_json)
-
-            flog_xml = zipfile.read("logs/flog.xml", pwd=b"infected")
-            flog_json = xmltodict.parse(flog_xml, attr_prefix="")
-            flog = Flog.model_validate(flog_json)
-
-        return cls(VMRayAnalysis(sv2, flog))
+        return cls(VMRayAnalysis(zipfile_path))
