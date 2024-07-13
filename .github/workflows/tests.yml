@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, vmray-extractor ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, vmray-extractor ]
+    branches: [ master ]
 
 permissions: read-all
 
