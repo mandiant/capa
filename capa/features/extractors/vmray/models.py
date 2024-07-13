@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Union, Optional
 
 from pydantic import Field, BaseModel
 from typing_extensions import Annotated
@@ -38,13 +38,31 @@ PARAM_TYPE = (
 """
 
 PARAM_TYPE_PTR = ("void_ptr", "ptr")
+PARAM_TYPE_STR = ("str",)
+PARAM_TYPE_INT = (
+    "signed_8bit",
+    "unsigned_8bit",
+    "signed_16bit",
+    "unsigned_16bit",
+    "signed_32bit",
+    "unsigned_32bit",
+    "signed_64bit",
+    "unsigned_64bit",
+    "double",
+    "bool",
+    "unknown",
+)
 
 
-def validate_hex_int(value):
+def hexint(value: Union[str, int]) -> int:
     if isinstance(value, str):
         return int(value, 16) if value.startswith("0x") else int(value, 10)
     else:
         return value
+
+
+def validate_hex_int(value: Union[str, int]) -> int:
+    return hexint(value)
 
 
 def validate_param_list(value):
@@ -57,10 +75,16 @@ def validate_param_list(value):
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
 
+class ParamDeref(BaseModel):
+    type_: str = Field(alias="type")
+    value: Optional[str] = None
+
+
 class Param(BaseModel):
     name: str
     type_: str = Field(alias="type")
-    value: Optional[HexInt] = None
+    value: Optional[str] = None
+    deref: Optional[ParamDeref] = None
 
 
 # params may be stored as a list of Param or a single Param

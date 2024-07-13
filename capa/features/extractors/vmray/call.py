@@ -9,12 +9,24 @@ import logging
 from typing import Tuple, Iterator
 
 from capa.features.insn import API, Number
-from capa.features.common import Feature
+from capa.features.common import String, Feature
 from capa.features.address import Address
-from capa.features.extractors.vmray.models import PARAM_TYPE_PTR, FunctionCall
+from capa.features.extractors.vmray.models import PARAM_TYPE_INT, PARAM_TYPE_STR, Param, FunctionCall, hexint
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
+
+
+def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
+    if param.deref is not None:
+        if param.deref.value is not None:
+            if param.deref.type_ in PARAM_TYPE_INT:
+                yield Number(hexint(param.deref.value)), ch.address
+            elif param.deref.type_ in PARAM_TYPE_STR:
+                yield String(param.deref.value), ch.address
+    elif param.value is not None:
+        if param.type_ in PARAM_TYPE_INT:
+            yield Number(hexint(param.value)), ch.address
 
 
 def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -22,13 +34,11 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
 
     if call.params_in:
         for param in call.params_in.params:
-            if param.type_ not in PARAM_TYPE_PTR and param.value is not None:
-                yield Number(param.value), ch.address
+            yield from get_call_param_features(param, ch)
 
     if call.params_out:
         for param in call.params_out.params:
-            if param.type_ not in PARAM_TYPE_PTR and param.value is not None:
-                yield Number(param.value), ch.address
+            yield from get_call_param_features(param, ch)
 
     yield API(call.name), ch.address
 
