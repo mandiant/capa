@@ -122,8 +122,8 @@ class FunctionReturn(BaseModel):
 
 
 class Analysis(BaseModel):
-    log_version: str
-    analyzer_version: str
+    log_version: str # tested 2
+    analyzer_version: str # tested 2024.2.1
     # analysis_date: str
 
     function_calls: List[FunctionCall] = Field(alias="fncall", default=[])
