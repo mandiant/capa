@@ -35,6 +35,7 @@ class VMRayAnalysis:
         # flog.xml contains all of the call information that VMRay captured during execution
         flog_xml = self.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
         flog_json = xmltodict.parse(flog_xml, attr_prefix="")
+        # TODO (meh): we may need to validate support for the analysis version https://github.com/mandiant/capa/issues/2148
         self.flog = Flog.model_validate(flog_json)
 
         self.exports: Dict[int, str] = {}
