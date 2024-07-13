@@ -98,13 +98,13 @@ class Params(BaseModel):
 
 # models flog.xml files
 class FunctionCall(BaseModel):
-    ts: HexInt
+    # ts: HexInt
     fncall_id: HexInt
     process_id: HexInt
     thread_id: HexInt
     name: str
-    addr: HexInt
-    from_addr: HexInt = Field(alias="from")
+    # addr: HexInt
+    # from_addr: HexInt = Field(alias="from")
     params_in: Params = Field(alias="in", default=None)
     # params_out: Params = Field(alias="out", default=None)
 
@@ -122,7 +122,7 @@ class FunctionReturn(BaseModel):
 class Analysis(BaseModel):
     log_version: str
     analyzer_version: str
-    analysis_date: str
+    # analysis_date: str
 
     function_calls: List[FunctionCall] = Field(alias="fncall", default=[])
     # function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
