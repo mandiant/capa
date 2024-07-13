@@ -24,6 +24,8 @@ def get_processes(analysis: VMRayAnalysis) -> Iterator[ProcessHandle]:
     processes: Dict[str, Process] = analysis.sv2.processes
 
     for process in processes.values():
+        # we map VMRay's monitor ID to the OS PID to make it easier for users
+        # to follow the processes in capa's output
         pid: int = analysis.get_process_os_pid(process.monitor_id)
         ppid: int = (
             analysis.get_process_os_pid(processes[process.ref_parent_process.path[1]].monitor_id)
