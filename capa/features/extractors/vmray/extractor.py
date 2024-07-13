@@ -60,6 +60,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from []
 
     def get_process_name(self, ph) -> str:
+        # TODO (meh): bring to parity with cape sandbox extractor https://github.com/mandiant/capa/issues/2148
         process: Process = ph.inner
         return process.image_name
 

@@ -72,6 +72,7 @@ def validate_param_list(value):
         return [value]
 
 
+# convert the input value to a Python int type before inner validation is called
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
 
@@ -87,8 +88,9 @@ class Param(BaseModel):
     deref: Optional[ParamDeref] = None
 
 
-# params may be stored as a list of Param or a single Param
-# so we ensure a list is used for single Param as well
+# params may be stored as a list of Param or a single Param so we ensure
+# the input value to Python list type before the inner validation is called
+# to make it much easier to parse later
 ParamList = Annotated[List[Param], BeforeValidator(validate_param_list)]
 
 

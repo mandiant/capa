@@ -27,9 +27,12 @@ class VMRayAnalysis:
     def __init__(self, zipfile_path: Path):
         self.zipfile = ZipFile(zipfile_path, "r")
 
+        # summary_v2.json is the entry point to the entire VMRay archive and
+        # we use its data to find everything else that we need for capa
         sv2_json = json.loads(self.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD))
         self.sv2 = SummaryV2.model_validate(sv2_json)
 
+        # flog.xml contains all of the call information that VMRay captured during execution
         flog_xml = self.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
         flog_json = xmltodict.parse(flog_xml, attr_prefix="")
         self.flog = Flog.model_validate(flog_json)
@@ -58,6 +61,8 @@ class VMRayAnalysis:
         if not self.sample_file_static_data.pe:
             raise UnsupportedFormatError("VMRay feature extractor only supports PE at this time")
 
+        # VMRay does not store static strings for the sample file so we must use the source file
+        # stored in the archive
         sample_sha256: str = self.sample_file_analysis.hash_values.sha256.lower()
         sample_file_path: str = f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}"
 
@@ -105,7 +110,7 @@ class VMRayAnalysis:
             self.process_ids[process.monitor_id] = process.os_pid
 
     def _compute_process_threads(self):
-        # logs/flog.xml appears to be the only file that contains thread-related
+        # logs/flog.xml appears to be the only file that contains thread-related data
         # so we use it here to map processes to threads
         for function_call in self.flog.analysis.function_calls:
             pid: int = self.get_process_os_pid(function_call.process_id)  # flog.xml uses process monitor ID, not OS PID
