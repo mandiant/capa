@@ -106,7 +106,7 @@ class FunctionCall(BaseModel):
     addr: HexInt
     from_addr: HexInt = Field(alias="from")
     params_in: Params = Field(alias="in", default=None)
-    params_out: Params = Field(alias="out", default=None)
+    # params_out: Params = Field(alias="out", default=None)
 
 
 """
