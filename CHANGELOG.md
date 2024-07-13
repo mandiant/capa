@@ -3,7 +3,7 @@
 ## master (unreleased)
 
 ### New Features
-
+- dynamic: add support for VMRay dynamic sandbox traces #2208 @mike-hunhoff @r-sm2024 @mr-tz
 ### Breaking Changes
 
 ### New Rules (0)
