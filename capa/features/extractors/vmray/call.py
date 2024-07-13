@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
     if param.deref is not None:
+        # pointer types contain a special "deref" member that stores the deref'd value
+        # so we check for this first and ignore Param.value as this always contains the
+        # deref'd pointer value
         if param.deref.value is not None:
             if param.deref.type_ in PARAM_TYPE_INT:
                 yield Number(hexint(param.deref.value)), ch.address
