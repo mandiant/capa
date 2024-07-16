@@ -16,7 +16,7 @@ def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress
     # this method organizes calls into processes and threads, and then sorts them based on
     # timestamp so that we can address individual calls per index (CallAddress requires call index)
     result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
-    for call in (*report.syscalls, *report.apicalls):
+    for call in itertools.chain(report.syscalls, report.apicalls):
         if call.pid == 0:
             # Drakvuf captures api/native calls from all processes running on the system.
             # we ignore the pid 0 since it's a system process and it's unlikely for it to
