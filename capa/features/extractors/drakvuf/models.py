@@ -119,7 +119,7 @@ class DrakvufReport(ConciseModel):
 
     @model_validator(mode="after")
     def validate_arguments(self) -> "DrakvufReport":
-        if any((self.syscalls, self.apicalls, self.discovered_dlls, self.loaded_dlls)) is False:
+        if not any((self.syscalls, self.apicalls, self.discovered_dlls, self.loaded_dlls)):
             raise EmptyReportError("Report is empty")
         return self
 
