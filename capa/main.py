@@ -289,7 +289,7 @@ def install_common_args(parser, wanted=None):
             "--processes",
             type=lambda s: s.replace(" ", "").split(","),
             default=[],
-            help="provide a list of comma-separaed processes to analyze (dynamic analysis).",
+            help="provide a list of comma-separated processes to analyze (dynamic analysis).",
         )
 
     if "os" in wanted:
