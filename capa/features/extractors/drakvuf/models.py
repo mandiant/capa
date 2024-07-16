@@ -64,7 +64,7 @@ class Call(ConciseModel):
 
 
 class WinApiCall(Call):
-    # This class models Windows api calls captured by Drakvuf (DLLs, etc.).
+    # This class models Windows API calls captured by DRAKVUF (DLLs, etc.).
     arguments: Dict[str, str] = Field(alias="Arguments")
     event: str = Field(alias="Event")
     return_value: str = Field(alias="ReturnValue")
