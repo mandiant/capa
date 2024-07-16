@@ -3,7 +3,7 @@
 ## master (unreleased)
 
 ### New Features
-- add a feature extractor for Drakvuf sandbox #2143 @yelhamer
+- support analyzing DRAKVUF sandbox traces #2143 @yelhamer
 
 ### Breaking Changes
 
