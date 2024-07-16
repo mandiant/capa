@@ -125,21 +125,21 @@ class DrakvufReport(ConciseModel):
 
     @classmethod
     def from_raw_report(cls, entries: Iterator[Dict]) -> "DrakvufReport":
-        values: Dict[str, List] = {"syscalls": [], "apicalls": [], "discovered_dlls": [], "loaded_dlls": []}
+        report = cls()
 
         for entry in entries:
             plugin = entry.get("Plugin")
             # TODO(yelhamer): add support for more drakvuf plugins
             # https://github.com/mandiant/capa/issues/2181
             if plugin == "syscall":
-                values["syscalls"].append(SystemCall(**entry))
+                report.syscalls.append(SystemCall(**entry))
             elif plugin == "apimon":
                 event = entry.get("Event")
                 if event == "api_called":
-                    values["apicalls"].append(WinApiCall(**entry))
+                    report.apicalls.append(WinApiCall(**entry))
                 elif event == "dll_loaded":
-                    values["loaded_dlls"].append(LoadedDLL(**entry))
+                    report.loaded_dlls.append(LoadedDLL(**entry))
                 elif event == "dll_discovered":
-                    values["discovered_dlls"].append(DiscoveredDLL(**entry))
+                    report.discovered_dlls.append(DiscoveredDLL(**entry))
 
-        return DrakvufReport(**values)
+        return report
