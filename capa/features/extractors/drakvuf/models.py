@@ -78,7 +78,7 @@ class WinApiCall(Call):
 
 
 class SystemCall(Call):
-    # This class models native Windows api calls captured by Drakvuf.
+    # This class models native Windows API calls captured by DRAKVUF.
     # Schema: {
     #   "Plugin": "syscall",
     #   "TimeStamp": "1716999134.582553",
