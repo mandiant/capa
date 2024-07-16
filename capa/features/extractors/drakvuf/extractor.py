@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -24,7 +24,7 @@ from capa.features.extractors.base_extractor import (
     DynamicFeatureExtractor,
 )
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
-from capa.features.extractors.drakvuf.helpers import sort_calls
+from capa.features.extractors.drakvuf.helpers import index_calls
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         self.report: DrakvufReport = report
 
         # sort the api calls to prevent going through the entire list each time
-        self.sorted_calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = sort_calls(report)
+        self.sorted_calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = index_calls(report)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features = list(capa.features.extractors.drakvuf.global_.extract_features(self.report))

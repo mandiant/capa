@@ -102,7 +102,7 @@ def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
             yield obj
         except (msgspec.DecodeError, UnicodeDecodeError):
             # sometimes Drakvuf reports bad method names and/or malformed JSON
-            logger.debug("bad drakvuf log line: %s", line)
+            logger.debug("bad DRAKVUF log line: %s", line)
 
 
 def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:

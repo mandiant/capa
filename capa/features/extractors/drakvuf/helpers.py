@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -6,13 +6,14 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import itertools
 from typing import Dict, List
 
 from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 
 
-def sort_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]:
+def index_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]:
     # this method organizes calls into processes and threads, and then sorts them based on
     # timestamp so that we can address individual calls per index (CallAddress requires call index)
     result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
