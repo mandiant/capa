@@ -81,9 +81,7 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         call_name = "{}({}){}".format(
             call.name,
             ", ".join(f"{arg_name}={arg_value}" for arg_name, arg_value in call.arguments.items()),
-            (
-                f" -> {getattr(call, 'return_value', '')}"
-            ),  # SysCalls don't have a return value, while WinApi calls do
+            (f" -> {getattr(call, 'return_value', '')}"),  # SysCalls don't have a return value, while WinApi calls do
         )
         return call_name
 
