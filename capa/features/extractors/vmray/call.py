@@ -39,13 +39,6 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
         for param in call.params_in.params:
             yield from get_call_param_features(param, ch)
 
-    """
-    # TODO (meh): params_out stores return value, not sure where to emit this?? https://github.com/mandiant/capa/issues/2148
-    if call.params_out:
-        for param in call.params_out.params:
-            yield from get_call_param_features(param, ch)
-    """
-
     yield API(call.name), ch.address
 
 
