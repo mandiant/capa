@@ -27,6 +27,8 @@ def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[Tuple[Feat
                 yield Number(hexint(param.deref.value)), ch.address
             elif param.deref.type_ in PARAM_TYPE_STR:
                 yield String(param.deref.value), ch.address
+            else:
+                logger.debug("skipping deref param type %s", param.deref.type_)
     elif param.value is not None:
         if param.type_ in PARAM_TYPE_INT:
             yield Number(hexint(param.value)), ch.address
