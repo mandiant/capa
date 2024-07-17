@@ -108,17 +108,14 @@ class FunctionCall(BaseModel):
     # addr: HexInt
     # from_addr: HexInt = Field(alias="from")
     params_in: Params = Field(alias="in", default=None)
-    # params_out: Params = Field(alias="out", default=None)
+    params_out: Params = Field(alias="out", default=None)
 
 
-"""
-# not useful for capa, but included for documentation in case
 class FunctionReturn(BaseModel):
     ts: HexInt
     fncall_id: HexInt
     addr: HexInt
     from_addr: HexInt = Field(alias="from")
-"""
 
 
 class Analysis(BaseModel):

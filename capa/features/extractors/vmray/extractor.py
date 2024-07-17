@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 
-from typing import Tuple, Iterator
+from typing import List, Tuple, Iterator
 from pathlib import Path
 
 import capa.helpers
@@ -17,7 +17,7 @@ import capa.features.extractors.vmray.global_
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Process, FunctionCall
+from capa.features.extractors.vmray.models import PARAM_TYPE_STR, Process, ParamList, FunctionCall
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -25,6 +25,20 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
+
+
+def format_params(params: ParamList) -> List[str]:
+    params_list: List[str] = []
+
+    for param in params:
+        if param.deref and param.deref.value is not None:
+            deref_value: str = f'"{param.deref.value}"' if param.deref.type_ in PARAM_TYPE_STR else param.deref.value
+            params_list.append(f"{param.name}: {deref_value}")
+        else:
+            value: str = "" if param.value is None else param.value
+            params_list.append(f"{param.name}: {value}")
+
+    return params_list
 
 
 class VMRayExtractor(DynamicFeatureExtractor):
@@ -90,7 +104,19 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def get_call_name(self, ph, th, ch) -> str:
         call: FunctionCall = ch.inner
-        return call.name
+        call_formatted: str = call.name
+
+        # format input parameters
+        if call.params_in:
+            call_formatted += f"({', '.join(format_params(call.params_in.params))})"
+        else:
+            call_formatted += "()"
+
+        # format output parameters
+        if call.params_out:
+            call_formatted += f" -> {', '.join(format_params(call.params_out.params))}"
+
+        return call_formatted
 
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
