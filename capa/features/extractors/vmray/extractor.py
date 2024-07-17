@@ -29,6 +29,8 @@ from capa.features.extractors.base_extractor import (
 
 class VMRayExtractor(DynamicFeatureExtractor):
     def __init__(self, analysis: VMRayAnalysis):
+        assert analysis.sample_file_analysis is not None
+
         super().__init__(
             hashes=SampleHashes(
                 md5=analysis.sample_file_analysis.hash_values.md5.lower(),

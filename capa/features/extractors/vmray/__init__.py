@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import json
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from zipfile import ZipFile
 from collections import defaultdict
@@ -54,20 +54,18 @@ class VMRayAnalysis:
         self.process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
         self.base_address: int
 
-        self.sample_file_name: str
-        self.sample_file_analysis: File
-        self.sample_file_static_data: StaticData
+        self.sample_file_name: Optional[str] = None
+        self.sample_file_analysis: Optional[File] = None
+        self.sample_file_static_data: Optional[StaticData] = None
 
         self._find_sample_file()
-        self._compute_base_address()
-        self._compute_imports()
-        self._compute_exports()
-        self._compute_sections()
-        self._compute_process_ids()
-        self._compute_process_threads()
-        self._compute_process_calls()
+
+        if self.sample_file_name is None or self.sample_file_analysis is None:
+            logger.warning("VMRay archive does not contain sample file")
+            raise UnsupportedFormatError("VMRay archive does not contain sample file")
 
         if not self.sample_file_static_data.pe:
+            logger.warning("VMRay feature extractor only supports PE at this time")
             raise UnsupportedFormatError("VMRay feature extractor only supports PE at this time")
 
         # VMRay does not store static strings for the sample file so we must use the source file
@@ -78,6 +76,15 @@ class VMRayAnalysis:
         logger.debug("sample file path: %s", sample_file_path)
 
         self.sample_file_buf: bytes = self.zipfile.read(sample_file_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
+
+        # only compute these if we've found a supported sample file type
+        self._compute_base_address()
+        self._compute_imports()
+        self._compute_exports()
+        self._compute_sections()
+        self._compute_process_ids()
+        self._compute_process_threads()
+        self._compute_process_calls()
 
     def _find_sample_file(self):
         for file_name, file_analysis in self.sv2.files.items():
@@ -92,21 +99,25 @@ class VMRayAnalysis:
                 break
 
     def _compute_base_address(self):
+        assert self.sample_file_static_data is not None
         if self.sample_file_static_data.pe:
             self.base_address = self.sample_file_static_data.pe.basic_info.image_base
 
     def _compute_exports(self):
+        assert self.sample_file_static_data is not None
         if self.sample_file_static_data.pe:
             for export in self.sample_file_static_data.pe.exports:
                 self.exports[export.address] = export.api.name
 
     def _compute_imports(self):
+        assert self.sample_file_static_data is not None
         if self.sample_file_static_data.pe:
             for module in self.sample_file_static_data.pe.imports:
                 for api in module.apis:
                     self.imports[api.address] = (module.dll, api.api.name)
 
     def _compute_sections(self):
+        assert self.sample_file_static_data is not None
         if self.sample_file_static_data.pe:
             for section in self.sample_file_static_data.pe.sections:
                 self.sections[section.virtual_address] = section.name

@@ -29,6 +29,7 @@ def extract_arch(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+    assert analysis.sample_file_static_data is not None
     if analysis.sample_file_static_data.pe:
         yield Format(FORMAT_PE), NO_ADDRESS
     else:
