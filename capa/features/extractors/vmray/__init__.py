@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 # TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
 DEFAULT_ARCHIVE_PASSWORD = b"infected"
 
+SUPPORTED_FLOG_VERSIONS = ("2",)
+
 
 class VMRayAnalysis:
     def __init__(self, zipfile_path: Path):
@@ -37,6 +39,12 @@ class VMRayAnalysis:
         flog_json = xmltodict.parse(flog_xml, attr_prefix="")
         # TODO (meh): we may need to validate support for the analysis version https://github.com/mandiant/capa/issues/2148
         self.flog = Flog.model_validate(flog_json)
+
+        if self.flog.analysis.log_version not in SUPPORTED_FLOG_VERSIONS:
+            logger.warning("VMRay feature extractor does not support flog version %s", self.flog.analysis.log_version)
+            raise UnsupportedFormatError(
+                "VMRay feature extractor does not support flog version %s", self.flog.analysis.log_version
+            )
 
         self.exports: Dict[int, str] = {}
         self.imports: Dict[int, Tuple[str, str]] = {}
