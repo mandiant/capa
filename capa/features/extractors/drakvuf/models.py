@@ -10,8 +10,6 @@ from typing import Any, Dict, List, Iterator
 
 from pydantic import Field, BaseModel, ConfigDict, model_validator
 
-from capa.exceptions import EmptyReportError
-
 logger = logging.getLogger(__name__)
 
 
@@ -116,12 +114,6 @@ class DrakvufReport(ConciseModel):
     apicalls: List[WinApiCall] = []
     discovered_dlls: List[DiscoveredDLL] = []
     loaded_dlls: List[LoadedDLL] = []
-
-    @model_validator(mode="after")
-    def validate_arguments(self) -> "DrakvufReport":
-        if not any((self.syscalls, self.apicalls, self.discovered_dlls, self.loaded_dlls)):
-            raise EmptyReportError("Report is empty")
-        return self
 
     @classmethod
     def from_raw_report(cls, entries: Iterator[Dict]) -> "DrakvufReport":
