@@ -56,7 +56,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
-        # TODO (meh): https://github.com/mandiant/capa/issues/2148
+        # we have not identified process-specific features for VMRay yet
         yield from []
 
     def get_process_name(self, ph) -> str:
