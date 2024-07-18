@@ -72,6 +72,13 @@ def validate_param_list(value):
         return [value]
 
 
+def validate_call_name(value):
+    if value.startswith("sys_"):
+        return value[4:]
+    else:
+        return value
+
+
 # convert the input value to a Python int type before inner validation (int) is called
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
@@ -98,13 +105,18 @@ class Params(BaseModel):
     params: ParamList = Field(alias="param")
 
 
+# call names may contain uneeded data so we remove that data before
+# the inner validation (str) is called
+CallName = Annotated[str, BeforeValidator(validate_call_name)]
+
+
 # models flog.xml files
 class FunctionCall(BaseModel):
     # ts: HexInt
     fncall_id: HexInt
     process_id: HexInt
     thread_id: HexInt
-    name: str
+    name: CallName
     # addr: HexInt
     # from_addr: HexInt = Field(alias="from")
     params_in: Params = Field(alias="in", default=None)
@@ -193,8 +205,34 @@ class PEFile(BaseModel):
     sections: List[PEFileSection] = []
 
 
+class ElfFileSectionHeader(BaseModel):
+    sh_name: str
+    sh_addr: int
+
+
+class ElfFileSection(BaseModel):
+    header: ElfFileSectionHeader
+
+
+"""
+class ElfFileHeader(BaseModel):
+    file_class: str
+    endianness: str
+    file_type: str
+    architecture: str
+    architecture_human_str: str
+    entry_point: int
+"""
+
+
+class ElfFile(BaseModel):
+    # file_header: ElfFileHeader
+    sections: List[ElfFileSection]
+
+
 class StaticData(BaseModel):
     pe: Optional[PEFile] = None
+    elf: Optional[ElfFile] = None
 
 
 class FileHashes(BaseModel):

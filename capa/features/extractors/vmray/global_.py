@@ -9,7 +9,18 @@
 import logging
 from typing import Tuple, Iterator
 
-from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Feature
+from capa.features.common import (
+    OS,
+    OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    Arch,
+    Format,
+    Feature,
+)
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.vmray import VMRayAnalysis
 
@@ -32,6 +43,8 @@ def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]
     assert analysis.sample_file_static_data is not None
     if analysis.sample_file_static_data.pe:
         yield Format(FORMAT_PE), NO_ADDRESS
+    elif analysis.sample_file_static_data.elf:
+        yield Format(FORMAT_ELF), NO_ADDRESS
     else:
         logger.warning("unrecognized file format: %s", analysis.sv2.analysis_metadata.sample_type)
         raise ValueError(
@@ -44,6 +57,8 @@ def extract_os(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
 
     if "windows" in sample_type.lower():
         yield OS(OS_WINDOWS), NO_ADDRESS
+    elif "linux" in sample_type.lower():
+        yield OS(OS_LINUX), NO_ADDRESS
     else:
         logger.warning("unrecognized OS: %s", sample_type)
         raise ValueError(f"unrecognized OS from the VMRay report: {sample_type}")

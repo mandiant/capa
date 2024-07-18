@@ -69,10 +69,12 @@ class VMRayAnalysis:
             logger.warning("VMRay archive does not contain static data (file_type: %s)", self.file_type)
             raise UnsupportedFormatError("VMRay archive does not contain static data (file_type: %s)", self.file_type)
 
-        if not self.sample_file_static_data.pe:
-            logger.warning("VMRay feature extractor only supports PE at this time (file_type: %s)", self.file_type)
+        if not self.sample_file_static_data.pe and not self.sample_file_static_data.elf:
+            logger.warning(
+                "VMRay feature extractor only supports PE and ELF at this time (file_type: %s)", self.file_type
+            )
             raise UnsupportedFormatError(
-                "VMRay feature extractor only supports PE at this time(file_type: %s)", self.file_type
+                "VMRay feature extractor only supports PE and ELF at this time(file_type: %s)", self.file_type
             )
 
         # VMRay does not store static strings for the sample file so we must use the source file
@@ -126,8 +128,11 @@ class VMRayAnalysis:
     def _compute_sections(self):
         assert self.sample_file_static_data is not None
         if self.sample_file_static_data.pe:
-            for section in self.sample_file_static_data.pe.sections:
-                self.sections[section.virtual_address] = section.name
+            for pefile_section in self.sample_file_static_data.pe.sections:
+                self.sections[pefile_section.virtual_address] = pefile_section.name
+        elif self.sample_file_static_data.elf:
+            for elffile_section in self.sample_file_static_data.elf.sections:
+                self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
 
     def _compute_process_ids(self):
         for process in self.sv2.processes.values():
