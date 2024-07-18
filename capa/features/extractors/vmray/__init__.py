@@ -123,9 +123,8 @@ class VMRayAnalysis:
 
     def _compute_process_ids(self):
         for process in self.sv2.processes.values():
+            # we expect VMRay's monitor IDs to be unique, but OS PIDs may be reused
             assert process.monitor_id not in self.process_ids.keys()
-            assert process.os_pid not in self.process_ids.values()
-
             self.process_ids[process.monitor_id] = process.os_pid
 
     def _compute_process_threads(self):
