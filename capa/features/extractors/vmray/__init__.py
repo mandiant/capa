@@ -33,6 +33,7 @@ class VMRayAnalysis:
         # we use its data to find everything else that we need for capa
         sv2_json = json.loads(self.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD))
         self.sv2 = SummaryV2.model_validate(sv2_json)
+        self.file_type: str = self.sv2.analysis_metadata.sample_type
 
         # flog.xml contains all of the call information that VMRay captured during execution
         flog_xml = self.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
@@ -60,19 +61,25 @@ class VMRayAnalysis:
         self._find_sample_file()
 
         if self.sample_file_name is None or self.sample_file_analysis is None:
-            logger.warning("VMRay archive does not contain sample file")
-            raise UnsupportedFormatError("VMRay archive does not contain sample file")
+            logger.warning("VMRay archive does not contain sample file (file_type: %s)", self.file_type)
+            raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)", self.file_type)
+
+        if not self.sample_file_static_data:
+            logger.warning("VMRay archive does not contain static data (file_type: %s)", self.file_type)
+            raise UnsupportedFormatError("VMRay archive does not contain static data (file_type: %s)", self.file_type)
 
         if not self.sample_file_static_data.pe:
-            logger.warning("VMRay feature extractor only supports PE at this time")
-            raise UnsupportedFormatError("VMRay feature extractor only supports PE at this time")
+            logger.warning("VMRay feature extractor only supports PE at this time (file_type: %s)", self.file_type)
+            raise UnsupportedFormatError(
+                "VMRay feature extractor only supports PE at this time(file_type: %s)", self.file_type
+            )
 
         # VMRay does not store static strings for the sample file so we must use the source file
         # stored in the archive
         sample_sha256: str = self.sample_file_analysis.hash_values.sha256.lower()
         sample_file_path: str = f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}"
 
-        logger.debug("sample file path: %s", sample_file_path)
+        logger.debug("file_type: %s, file_path: %s", self.file_type, sample_file_path)
 
         self.sample_file_buf: bytes = self.zipfile.read(sample_file_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
 
