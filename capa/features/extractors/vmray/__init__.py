@@ -65,6 +65,7 @@ class VMRayAnalysis:
             raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)", self.file_type)
 
         if not self.sample_file_static_data:
+            # we see this for text files e.g. JScript file types
             logger.warning("VMRay archive does not contain static data (file_type: %s)", self.file_type)
             raise UnsupportedFormatError("VMRay archive does not contain static data (file_type: %s)", self.file_type)
 
