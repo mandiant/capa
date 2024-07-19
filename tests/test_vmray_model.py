@@ -136,7 +136,7 @@ def test_vmray_model_pefile():
             "exports": [
                 {
                     "api": {
-                        "name": "HellWorld",
+                        "name": "HelloWorld",
                         "ordinal": 10
                     },
                     "address": 2863311530
@@ -154,3 +154,7 @@ def test_vmray_model_pefile():
 
     assert pefile.sections[0].name == ".text"
     assert pefile.sections[0].virtual_address == 2863311530
+
+    assert pefile.exports[0].address == 2863311530
+    assert pefile.exports[0].api.name == "HelloWorld"
+    assert pefile.exports[0].api.ordinal == 10
