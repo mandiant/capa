@@ -7,14 +7,13 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
 
-from capa.features.extractors.vmray.models import Param, FunctionCall, xml_to_dict
+from capa.features.extractors.vmray.models import Param, PEFile, ElfFile, FunctionCall, AnalysisMetadata, xml_to_dict
 
 
-def test_vmray_model_call():
-    call_xml = textwrap.dedent(
+def test_vmray_model_function_call():
+    param_str = textwrap.dedent(
         """
-        <fncall ts="9044" fncall_id="18" process_id="1" thread_id="1" name="sys_time" addr="0xaaaaaaaaaaaaaaaa" from="0xaaaaaaaa">
-            <kernel/>
+        <fncall fncall_id="18" process_id="1" thread_id="1" name="sys_time">
             <in>
                 <param name="tloc" type="unknown" value="0x0"/>
             </in>
@@ -24,7 +23,7 @@ def test_vmray_model_call():
         </fncall>
         """
     )
-    call: FunctionCall = FunctionCall.model_validate(xml_to_dict(call_xml)["fncall"])
+    call: FunctionCall = FunctionCall.model_validate(xml_to_dict(param_str)["fncall"])
 
     assert call.fncall_id == 18
     assert call.process_id == 1
@@ -34,26 +33,109 @@ def test_vmray_model_call():
     assert call.params_out is not None
 
 
-def test_vmray_model_call_param():
-    param_xml = textwrap.dedent(
+def test_vmray_model_param():
+    param_str = textwrap.dedent(
         """
         <param name="addrlen" type="signed_32bit" value="16"/>
         """
     )
-    param: Param = Param.model_validate(xml_to_dict(param_xml)["param"])
+    param: Param = Param.model_validate(xml_to_dict(param_str)["param"])
 
     assert param.value == "16"
 
 
-def test_vmray_model_call_param_deref():
-    param_xml = textwrap.dedent(
+def test_vmray_model_param_deref():
+    param_str = textwrap.dedent(
         """
         <param name="buf" type="ptr" value="0xaaaaaaaa">
             <deref type="str" value="Hello world"/>
         </param>
         """
     )
-    param: Param = Param.model_validate(xml_to_dict(param_xml)["param"])
+    param: Param = Param.model_validate(xml_to_dict(param_str)["param"])
 
     assert param.deref is not None
     assert param.deref.value == "Hello world"
+
+
+def test_vmray_model_analysis_metadata():
+    analysis_metadata: AnalysisMetadata = AnalysisMetadata.model_validate_json(
+        """
+        {
+            "sample_type": "Linux ELF Executable (x86-64)",
+            "submission_filename": "abcd1234"
+        }
+        """
+    )
+
+    assert analysis_metadata.sample_type == "Linux ELF Executable (x86-64)"
+    assert analysis_metadata.submission_filename == "abcd1234"
+
+
+def test_vmray_model_elffile():
+    elffile: ElfFile = ElfFile.model_validate_json(
+        """
+        {
+            "sections": [
+                {
+                    "header": {
+                        "sh_name": "abcd1234",
+                        "sh_addr": 2863311530
+                    }
+                }
+            ]
+        }
+        """
+    )
+
+    assert elffile.sections is not None
+    assert elffile.sections[0].header is not None
+    assert elffile.sections[0].header.sh_name == "abcd1234"
+    assert elffile.sections[0].header.sh_addr == 2863311530
+
+
+def test_vmray_model_pefile():
+    pefile: PEFile = PEFile.model_validate_json(
+        """
+        {
+            "basic_info": {
+                "image_base": 2863311530
+            },
+            "imports": [
+            {
+                "apis": [
+                    {
+                        "address": 2863311530,
+                        "api": {
+                            "name": "Sleep"
+                        }
+                    }
+                ],
+                "dll": "KERNEL32.dll"
+                }
+            ],
+            "sections": [
+                {
+                    "name": ".text",
+                    "virtual_address": 2863311530
+                }
+            ],
+            "exports": [
+                {
+                    "api": {
+                        "name": "HellWorld",
+                        "ordinal": 10
+                    },
+                    "address": 2863311530
+                }
+            ]
+        }
+        """
+    )
+
+    assert pefile.basic_info.image_base == 2863311530
+    assert pefile.imports[0].dll == "KERNEL32.dll"
+    assert pefile.imports[0].apis[0].address == 2863311530
+    assert pefile.imports[0].apis[0].api.name == "Sleep"
+    assert pefile.sections[0].name == ".text"
+    assert pefile.sections[0].virtual_address == 2863311530

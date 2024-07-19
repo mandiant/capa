@@ -159,9 +159,9 @@ class StaticDataReference(GenericReference): ...
 
 class PEFileBasicInfo(BaseModel):
     # compile_time: str
-    file_type: str
+    # file_type: str
     image_base: int
-    machine_type: str
+    # machine_type: str
     # size_of_code: int
     # size_of_initialized_data: int
     # size_of_uninitialized_data: int
