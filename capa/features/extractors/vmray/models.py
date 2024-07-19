@@ -8,6 +8,7 @@
 
 from typing import Dict, List, Union, Optional
 
+import xmltodict
 from pydantic import Field, BaseModel
 from typing_extensions import Annotated
 from pydantic.functional_validators import BeforeValidator
@@ -52,6 +53,10 @@ PARAM_TYPE_INT = (
     "bool",
     "unknown",
 )
+
+
+def xml_to_dict(xml):
+    return xmltodict.parse(xml, attr_prefix="")
 
 
 def hexint(value: Union[str, int]) -> int:

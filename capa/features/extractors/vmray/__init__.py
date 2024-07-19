@@ -12,10 +12,8 @@ from pathlib import Path
 from zipfile import ZipFile
 from collections import defaultdict
 
-import xmltodict
-
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall
+from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall, xml_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +35,8 @@ class VMRayAnalysis:
 
         # flog.xml contains all of the call information that VMRay captured during execution
         flog_xml = self.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
-        flog_json = xmltodict.parse(flog_xml, attr_prefix="")
-        self.flog = Flog.model_validate(flog_json)
+        flog_dict = xml_to_dict(flog_xml)
+        self.flog = Flog.model_validate(flog_dict)
 
         if self.flog.analysis.log_version not in SUPPORTED_FLOG_VERSIONS:
             logger.warning("VMRay feature extractor does not support flog version %s", self.flog.analysis.log_version)
