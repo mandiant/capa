@@ -147,8 +147,10 @@ def test_vmray_model_pefile():
     )
 
     assert pefile.basic_info.image_base == 2863311530
+
     assert pefile.imports[0].dll == "KERNEL32.dll"
     assert pefile.imports[0].apis[0].address == 2863311530
     assert pefile.imports[0].apis[0].api.name == "Sleep"
+
     assert pefile.sections[0].name == ".text"
     assert pefile.sections[0].virtual_address == 2863311530
