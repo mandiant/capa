@@ -92,7 +92,7 @@ class SystemCall(Call):
     #   "IoCompletionHandle": "0xffffffff80001ac0", "IoCompletionReserveHandle": "0xffffffff8000188c",
     #   "KeyContext": "0x0", "ApcContext": "0x2", "IoStatus": "0x7ffb00000000", "IoStatusInformation": "0x0"
     # }
-    # The keys up until "NArgs" are common to all the native calls that Drakvuf reports, with
+    # The keys up until "NArgs" are common to all the native calls that DRAKVUF reports, with
     # the remaining keys representing the call's specific arguments.
     syscall_number: int = Field(alias="Syscall")
     module: str = Field(alias="Module")
@@ -121,7 +121,7 @@ class DrakvufReport(ConciseModel):
 
         for entry in entries:
             plugin = entry.get("Plugin")
-            # TODO(yelhamer): add support for more drakvuf plugins
+            # TODO(yelhamer): add support for more DRAKVUF plugins
             # https://github.com/mandiant/capa/issues/2181
             if plugin == "syscall":
                 report.syscalls.append(SystemCall(**entry))

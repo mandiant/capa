@@ -33,7 +33,7 @@ from capa.features.common import (
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 # CAPE extensions: .json, .json_, .json.gz
-# Drakvuf Sandbox extensions: .log, .log.gz
+# DRAKVUF Sandbox extensions: .log, .log.gz
 EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
@@ -101,7 +101,7 @@ def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
             obj = msgspec.json.decode(line_s)
             yield obj
         except (msgspec.DecodeError, UnicodeDecodeError):
-            # sometimes Drakvuf reports bad method names and/or malformed JSON
+            # sometimes DRAKVUF reports bad method names and/or malformed JSON
             logger.debug("bad DRAKVUF log line: %s", line)
 
 

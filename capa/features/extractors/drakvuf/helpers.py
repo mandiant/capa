@@ -19,7 +19,7 @@ def index_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddres
     result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
     for call in itertools.chain(report.syscalls, report.apicalls):
         if call.pid == 0:
-            # Drakvuf captures api/native calls from all processes running on the system.
+            # DRAKVUF captures api/native calls from all processes running on the system.
             # we ignore the pid 0 since it's a system process and it's unlikely for it to
             # be hijacked or so on, in addition to capa addresses not supporting null pids
             continue
