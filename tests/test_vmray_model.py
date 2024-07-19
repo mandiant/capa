@@ -7,30 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
 
-from capa.features.extractors.vmray.models import Param, PEFile, ElfFile, FunctionCall, AnalysisMetadata, xml_to_dict
-
-
-def test_vmray_model_function_call():
-    param_str = textwrap.dedent(
-        """
-        <fncall fncall_id="18" process_id="1" thread_id="1" name="sys_time">
-            <in>
-                <param name="tloc" type="unknown" value="0x0"/>
-            </in>
-            <out>
-                <param name="ret_val" type="unknown" value="0xaaaaaaaa"/>
-            </out>
-        </fncall>
-        """
-    )
-    call: FunctionCall = FunctionCall.model_validate(xml_to_dict(param_str)["fncall"])
-
-    assert call.fncall_id == 18
-    assert call.process_id == 1
-    assert call.thread_id == 1
-    assert call.name == "time"
-    assert call.params_in is not None
-    assert call.params_out is not None
+from capa.features.extractors.vmray.models import (
+    Param,
+    PEFile,
+    ElfFile,
+    FunctionCall,
+    AnalysisMetadata,
+    hexint,
+    xml_to_dict,
+)
 
 
 def test_vmray_model_param():
@@ -41,7 +26,8 @@ def test_vmray_model_param():
     )
     param: Param = Param.model_validate(xml_to_dict(param_str)["param"])
 
-    assert param.value == "16"
+    assert param.value is not None
+    assert hexint(param.value) == 16
 
 
 def test_vmray_model_param_deref():
@@ -56,6 +42,35 @@ def test_vmray_model_param_deref():
 
     assert param.deref is not None
     assert param.deref.value == "Hello world"
+
+
+def test_vmray_model_function_call():
+    function_call_str = textwrap.dedent(
+        """
+        <fncall fncall_id="18" process_id="1" thread_id="1" name="sys_time">
+            <in>
+                <param name="tloc" type="unknown" value="0x0"/>
+            </in>
+            <out>
+                <param name="ret_val" type="unknown" value="0xaaaaaaaa"/>
+            </out>
+        </fncall>
+        """
+    )
+    function_call: FunctionCall = FunctionCall.model_validate(xml_to_dict(function_call_str)["fncall"])
+
+    assert function_call.fncall_id == 18
+    assert function_call.process_id == 1
+    assert function_call.thread_id == 1
+    assert function_call.name == "time"
+
+    assert function_call.params_in is not None
+    assert function_call.params_in.params[0].value is not None
+    assert hexint(function_call.params_in.params[0].value) == 0
+
+    assert function_call.params_out is not None
+    assert function_call.params_out.params[0].value is not None
+    assert hexint(function_call.params_out.params[0].value) == 2863311530
 
 
 def test_vmray_model_analysis_metadata():
@@ -88,8 +103,6 @@ def test_vmray_model_elffile():
         """
     )
 
-    assert elffile.sections is not None
-    assert elffile.sections[0].header is not None
     assert elffile.sections[0].header.sh_name == "abcd1234"
     assert elffile.sections[0].header.sh_addr == 2863311530
 
