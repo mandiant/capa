@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import json
 import logging
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
@@ -29,8 +28,9 @@ class VMRayAnalysis:
 
         # summary_v2.json is the entry point to the entire VMRay archive and
         # we use its data to find everything else that we need for capa
-        sv2_json = json.loads(self.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD))
-        self.sv2 = SummaryV2.model_validate(sv2_json)
+        self.sv2 = SummaryV2.model_validate_json(
+            self.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD)
+        )
         self.file_type: str = self.sv2.analysis_metadata.sample_type
 
         # flog.xml contains all of the call information that VMRay captured during execution
