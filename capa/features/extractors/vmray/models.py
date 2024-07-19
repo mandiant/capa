@@ -65,24 +65,11 @@ def validate_hex_int(value: Union[str, int]) -> int:
     return hexint(value)
 
 
-def validate_param_list(value):
-    if isinstance(value, list):
-        return value
-    else:
-        return [value]
-
-
-def validate_call_name(value):
-    if value.startswith("sys_"):
-        return value[4:]
-    else:
-        return value
-
-
 # convert the input value to a Python int type before inner validation (int) is called
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
 
+# models for summary_v2.json files
 class ParamDeref(BaseModel):
     type_: str = Field(alias="type")
     value: Optional[str] = None
@@ -95,6 +82,13 @@ class Param(BaseModel):
     deref: Optional[ParamDeref] = None
 
 
+def validate_param_list(value: Union[List[Param], Param]) -> List[Param]:
+    if isinstance(value, list):
+        return value
+    else:
+        return [value]
+
+
 # params may be stored as a list of Param or a single Param so we convert
 # the input value to Python list type before the inner validation (List[Param])
 # is called
@@ -103,6 +97,13 @@ ParamList = Annotated[List[Param], BeforeValidator(validate_param_list)]
 
 class Params(BaseModel):
     params: ParamList = Field(alias="param")
+
+
+def validate_call_name(value: str) -> str:
+    if value.startswith("sys_"):
+        return value[4:]
+    else:
+        return value
 
 
 # call names may contain uneeded data so we remove that data before
@@ -143,7 +144,6 @@ class Flog(BaseModel):
     analysis: Analysis
 
 
-# models for summary_v2.json files
 class GenericReference(BaseModel):
     path: List[str]
     source: str
