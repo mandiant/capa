@@ -54,7 +54,7 @@ DYNAMIC_CAPE_FEATURE_PRESENCE_TESTS = sorted(
 )
 
 DYNAMIC_CAPE_FEATURE_COUNT_TESTS = sorted(
-    # TODO(yelhamer): use the same sample for testing CAPE and Drakvuf extractors
+    # TODO(yelhamer): use the same sample for testing CAPE and DRAKVUF extractors
     # https://github.com/mandiant/capa/issues/2180
     [
         # file/string
