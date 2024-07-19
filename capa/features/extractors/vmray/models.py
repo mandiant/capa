@@ -69,7 +69,7 @@ def validate_hex_int(value: Union[str, int]) -> int:
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
 
-# models for summary_v2.json files
+# models flog.xml file
 class ParamDeref(BaseModel):
     type_: str = Field(alias="type")
     value: Optional[str] = None
@@ -111,7 +111,6 @@ def validate_call_name(value: str) -> str:
 CallName = Annotated[str, BeforeValidator(validate_call_name)]
 
 
-# models flog.xml files
 class FunctionCall(BaseModel):
     # ts: HexInt
     fncall_id: HexInt
@@ -144,6 +143,7 @@ class Flog(BaseModel):
     analysis: Analysis
 
 
+# models for summary_v2.json file
 class GenericReference(BaseModel):
     path: List[str]
     source: str
