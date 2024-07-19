@@ -22,7 +22,7 @@ def extract_format(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_os(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
-    # drakvuf sandbox currently supports only PE files: https://drakvuf-sandbox.readthedocs.io/en/latest/usage/getting_started.html
+    # DRAKVUF sandbox currently supports only PE files: https://drakvuf-sandbox.readthedocs.io/en/latest/usage/getting_started.html
     yield OS(OS_WINDOWS), NO_ADDRESS
 
 
