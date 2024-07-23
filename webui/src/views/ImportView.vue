@@ -9,8 +9,8 @@ import ProcessCapabilities from '../components/ProcessCapabilities.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import Toast from 'primevue/toast'
 
-import demoRdocStatic from '../assets/data/demo-rdoc.json'
-import demoRdocDynamic from '../assets/data/demo-rdoc-dynamic.json'
+import demoRdocStatic from '../../../tests/data/rd/al-khaser_x64.exe_.json'
+import demoRdocDynamic from '../../../tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json'
 
 import { useRdocLoader } from '../composables/useRdocLoader'
 
