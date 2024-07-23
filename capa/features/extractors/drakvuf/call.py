@@ -38,7 +38,12 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
         try:
             yield Number(int(arg_value, 0)), ch.address
         except ValueError:
-            # yield argument as a string
+            if ":" in arg_value and arg_value.startswith("0x"):
+                # if the argument is in the format: memory_address:str (e.g. '0xc6f217efe0:'"ntdll.dll"')
+                # then return the contents of that memory address on its own as well.
+                addr, val = arg_value.split(":", maxsplit=1)
+                yield String(val)
+            # yield the entire string regardless in case of unexpected argument value formats
             yield String(arg_value), ch.address
 
     yield API(call.name), ch.address
