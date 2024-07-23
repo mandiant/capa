@@ -106,7 +106,7 @@ class Params(BaseModel):
 
 def validate_call_name(value: str) -> str:
     if value.startswith("sys_"):
-        # VMRay appears to log kernel function calls ("sys_*") so we remove that
+        # VMRay appears to log kernel function calls ("sys_*") for Linux so we remove that
         # here to enable capa matching
         return value[4:]
     else:
