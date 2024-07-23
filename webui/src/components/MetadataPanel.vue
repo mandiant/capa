@@ -9,7 +9,11 @@
       <h1 class="text-xl m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap text-white">
         {{ fileName }}
       </h1>
-      <p class="text-xs mt-1 mb-0 text-white-alpha-70" :title="sha256">{{ `SHA256: ${sha256}` }}</p>
+      <p class="text-xs mt-1 mb-0 text-white-alpha-70">SHA256:
+        <a :href="`https://www.virustotal.com/gui/file/${sha256}`" target="_blank">{{ sha256 }}
+          <i class="pi pi-external-link ml-1 text-xs"></i>
+        </a>
+      </p>
     </div>
 
     <!-- Vertical divider -->
