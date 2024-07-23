@@ -23,3 +23,15 @@ class UnsupportedOSError(ValueError):
 
 class EmptyReportError(ValueError):
     pass
+
+
+class InvalidArgument(ValueError):
+    pass
+
+
+class NonExistantFunctionError(ValueError):
+    pass
+
+
+class NonExistantProcessError(ValueError):
+    pass

@@ -9,7 +9,7 @@
 import abc
 import hashlib
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator
+from typing import Any, Set, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
 # TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
@@ -296,6 +296,37 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
 
+class StaticFeatureExtractorFilter:
+    def __init__(self, inner: StaticFeatureExtractor):
+        self.inner = inner
+
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
+        return getattr(self.inner, attr)
+
+    @property
+    def __class__(self):
+        return self.inner.__class__
+
+    @__class__.setter
+    def __class__(self, value) -> None:
+        self.inner.__class__ = value
+
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, StaticFeatureExtractor)
+
+
+class FunctionFilter(StaticFeatureExtractorFilter):
+    def __init__(self, inner: StaticFeatureExtractor, functions: Set[int]):
+        super().__init__(inner)
+        self.functions = functions
+
+    def get_functions(self):
+        yield from (f for f in self.inner.get_functions() if f.address in self.functions)
+
+
 @dataclass
 class ProcessHandle:
     """
@@ -467,4 +498,37 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
 
-FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]
+class DynamicFeatureExtractorFilter:
+    def __init__(self, inner: DynamicFeatureExtractor):
+        self.inner = inner
+
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
+        return getattr(self.inner, attr)
+
+    @property
+    def __class__(self):
+        return self.inner.__class__
+
+    @__class__.setter
+    def __class__(self, value) -> None:
+        self.inner.__class__ = value
+
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, DynamicFeatureExtractor)
+
+
+class ProcessFilter(DynamicFeatureExtractorFilter):
+    def __init__(self, inner: DynamicFeatureExtractor, processes: Set[int]):
+        super().__init__(inner)
+        self.processes = processes
+
+    def get_processes(self):
+        yield from (p for p in self.inner.get_processes() if p.address.pid in self.processes)
+
+
+FeatureExtractor: TypeAlias = Union[
+    StaticFeatureExtractor, DynamicFeatureExtractor, StaticFeatureExtractorFilter, DynamicFeatureExtractorFilter
+]
