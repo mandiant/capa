@@ -106,13 +106,15 @@ class Params(BaseModel):
 
 def validate_call_name(value: str) -> str:
     if value.startswith("sys_"):
+        # VMRay appears to log kernel function calls ("sys_*") so we remove that
+        # here to enable capa matching
         return value[4:]
     else:
         return value
 
 
-# call names may contain uneeded data so we remove that data before
-# the inner validation (str) is called
+# function call names may need to be reformatted to remove data, etc. so we reformat
+# before calling the inner validation (str)
 CallName = Annotated[str, BeforeValidator(validate_call_name)]
 
 
