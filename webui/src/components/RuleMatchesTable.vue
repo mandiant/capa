@@ -129,7 +129,7 @@
         <template v-if="col.field === 'tactic'" #body="slotProps">
           <div v-if="slotProps.node.data.attack">
             <div v-for="(attack, index) in slotProps.node.data.attack" :key="index">
-              <a :href="'https://attack.mitre.org/techniques/' + attack.id" target="_blank">
+              <a :href="createATTACKHref(attack)" target="_blank">
                 {{ attack.technique }} ({{ attack.id }})
               </a>
               <div
@@ -137,15 +137,7 @@
                 :key="techIndex"
                 style="font-size: 0.8em; margin-left: 1em"
               >
-                <a
-                  :href="
-                    'https://attack.mitre.org/techniques/' +
-                    technique.id.split('.')[0] +
-                    '/' +
-                    technique.id.split('.')[1]
-                  "
-                  target="_blank"
-                >
+                <a :href="createATTACKHref(technique)" target="_blank">
                   ↳ {{ technique.technique }} ({{ technique.id }})
                 </a>
               </div>
@@ -157,7 +149,9 @@
         <template v-if="col.field === 'mbc'" #body="slotProps">
           <div v-if="slotProps.node.data.mbc">
             <div v-for="(mbc, index) in slotProps.node.data.mbc" :key="index">
-              {{ formatMBC(mbc) }}
+              <a :href="createMBCHref(mbc)" target="_blank">
+                {{ formatMBC(mbc) }}
+                </a>
             </div>
           </div>
         </template>
@@ -355,6 +349,49 @@ onMounted(() => {
 const formatMBC = (mbc) => {
   return `${mbc.parts.join('::')} [${mbc.id}]`
 }
+
+function createMBCHref(mbc) {
+  let baseUrl;
+
+  // Determine the base URL based on the id
+  if (mbc.id.startsWith('B')) {
+    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main';
+  } else if (mbc.id.startsWith('C')) {
+    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors';
+  } else {
+    return null
+  }
+
+  // Convert the objective and behavior to lowercase and replace spaces with hyphens
+  const objectivePath = mbc.objective.toLowerCase().replace(/\s+/g, '-');
+  const behaviorPath = mbc.behavior.toLowerCase().replace(/\s+/g, '-');
+
+  // Construct the final URL
+  return `${baseUrl}/${objectivePath}/${behaviorPath}.md`;
+}
+
+/**
+ * Creates a MITRE ATT&CK URL for a specific technique or sub-technique.
+ *
+ * @param {Object} attack - The ATT&CK object containing information about the technique.
+ * @param {string} attack.id - The ID of the ATT&CK technique or sub-technique.
+ * @returns {string} The formatted MITRE ATT&CK URL for the technique.
+ */
+ function createATTACKHref(attack) {
+  const baseUrl = 'https://attack.mitre.org/techniques/';
+  const idParts = attack.id.split('.');
+
+  if (idParts.length === 1) {
+    // It's a main technique
+    return `${baseUrl}${idParts[0]}`;
+  } else if (idParts.length === 2) {
+    // It's a sub-technique
+    return `${baseUrl}${idParts[0]}/${idParts[1]}`;
+  } else {
+    return null
+  }
+}
+
 </script>
 
 <style scoped>

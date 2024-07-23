@@ -54,7 +54,7 @@
             }}
             matches)</span
           >
-          <span class="font-italic" v-else>({{ slotProps.node.data.location }} match)</span>
+          <span class="font-italic" v-else>(1 {{ slotProps.node.data.location }} match)</span>
         </span>
         <Tag
           v-if="slotProps.node.data.type === 'rule' && slotProps.node.data.lib"
@@ -103,7 +103,7 @@
       </template>
     </Column>
 
-    <Column field="namespace" header="Namespace" filterMatchMode="contains">
+    <Column field="namespace"  header="Namespace" filterMatchMode="contains">
       <template #filter>
         <InputText
           v-model="filters['namespace']"
