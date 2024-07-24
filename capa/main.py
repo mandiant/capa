@@ -42,15 +42,24 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
+from capa.loader import (
+    BACKEND_VIV,
+    BACKEND_CAPE,
+    BACKEND_BINJA,
+    BACKEND_DOTNET,
+    BACKEND_FREEZE,
+    BACKEND_PEFILE,
+    BACKEND_DRAKVUF,
+)
 from capa.helpers import (
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
     log_unsupported_arch_error,
-    log_empty_cape_report_error,
     log_unsupported_format_error,
+    log_empty_sandbox_report_error,
     log_unsupported_cape_report_error,
+    log_unsupported_drakvuf_report_error,
 )
 from capa.exceptions import (
     EmptyReportError,
@@ -73,6 +82,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_DRAKVUF,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
@@ -232,6 +242,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_CAPE, "CAPE sandbox report"),
+            (FORMAT_DRAKVUF, "DRAKVUF sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
@@ -253,6 +264,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_DOTNET, ".NET"),
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
+            (BACKEND_DRAKVUF, "DRAKVUF"),
         ]
         backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
@@ -505,6 +517,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
+    if input_format == FORMAT_DRAKVUF:
+        return BACKEND_DRAKVUF
+
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
 
@@ -529,7 +544,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if backend == BACKEND_CAPE:
+    if backend in (BACKEND_CAPE, BACKEND_DRAKVUF):
         return None
     else:
         return args.input_file
@@ -632,12 +647,17 @@ def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtract
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
+        elif input_format == FORMAT_DRAKVUF:
+            log_unsupported_drakvuf_report_error(str(e))
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
     except EmptyReportError as e:
         if input_format == FORMAT_CAPE:
-            log_empty_cape_report_error(str(e))
+            log_empty_sandbox_report_error(str(e), sandbox_name="CAPE")
+            raise ShouldExitError(E_EMPTY_REPORT) from e
+        elif input_format == FORMAT_DRAKVUF:
+            log_empty_sandbox_report_error(str(e), sandbox_name="DRAKVUF")
             raise ShouldExitError(E_EMPTY_REPORT) from e
         else:
             log_unsupported_format_error()
@@ -744,6 +764,8 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
+        elif input_format == FORMAT_DRAKVUF:
+            log_unsupported_drakvuf_report_error(str(e))
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e

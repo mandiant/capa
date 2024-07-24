@@ -7,15 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
 import gzip
-import json
 import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import NoReturn
+from typing import Dict, Union, BinaryIO, Iterator, NoReturn
 from pathlib import Path
 
 import tqdm
+import msgspec.json
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
@@ -25,13 +25,16 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_DRAKVUF,
     FORMAT_UNKNOWN,
     Format,
 )
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz")
+# CAPE extensions: .json, .json_, .json.gz
+# DRAKVUF Sandbox extensions: .log, .log.gz
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
@@ -76,13 +79,52 @@ def load_json_from_path(json_path: Path):
         try:
             report_json = compressed_report.read()
         except gzip.BadGzipFile:
-            report = json.load(json_path.open(encoding="utf-8"))
+            report = msgspec.json.decode(json_path.read_text(encoding="utf-8"))
         else:
-            report = json.loads(report_json)
+            report = msgspec.json.decode(report_json)
     return report
 
 
+def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
+    for line in fd:
+        try:
+            line_s = line.strip().decode()
+            obj = msgspec.json.decode(line_s)
+            yield obj
+        except (msgspec.DecodeError, UnicodeDecodeError):
+            # sometimes DRAKVUF reports bad method names and/or malformed JSON
+            logger.debug("bad DRAKVUF log line: %s", line)
+
+
+def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
+    try:
+        with gzip.open(jsonl_path, "rb") as fg:
+            yield from decode_json_lines(fg)
+    except gzip.BadGzipFile:
+        with jsonl_path.open(mode="rb") as f:
+            yield from decode_json_lines(f)
+
+
+def load_one_jsonl_from_path(jsonl_path: Path):
+    # this loads one json line to avoid the overhead of loading the entire file
+    try:
+        with gzip.open(jsonl_path, "rb") as f:
+            line = next(iter(f))
+    except gzip.BadGzipFile:
+        with jsonl_path.open(mode="rb") as f:
+            line = next(iter(f))
+    finally:
+        line = msgspec.json.decode(line.decode(errors="ignore"))
+    return line
+
+
 def get_format_from_report(sample: Path) -> str:
+    if sample.name.endswith((".log", "log.gz")):
+        line = load_one_jsonl_from_path(sample)
+        if "Plugin" in line:
+            return FORMAT_DRAKVUF
+        return FORMAT_UNKNOWN
+
     report = load_json_from_path(sample)
     if "CAPE" in report:
         return FORMAT_CAPE
@@ -189,9 +231,20 @@ def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
 
 
-def log_empty_cape_report_error(error: str):
+def log_unsupported_drakvuf_report_error(error: str):
     logger.error("-" * 80)
-    logger.error(" CAPE report is empty or only contains little useful data: %s", error)
+    logger.error(" Input file is not a valid DRAKVUF output file: %s", error)
+    logger.error(" ")
+    logger.error(" capa currently only supports analyzing standard DRAKVUF outputs in JSONL format.")
+    logger.error(
+        " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
+    )
+    logger.error("-" * 80)
+
+
+def log_empty_sandbox_report_error(error: str, sandbox_name: str):
+    logger.error("-" * 80)
+    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
