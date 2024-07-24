@@ -58,46 +58,8 @@
             placeholder="Filter by Rule or Feature"
           />
         </template>
-        <template #body="slotProps">
-          <div
-            :style="{
-              color:
-                !slotProps.node.children || slotProps.node.children.length === 0
-                  ? 'green'
-                  : 'black',
-              fontWeight:
-                slotProps.node.children &&
-                slotProps.node.children.length > 0 &&
-                slotProps.node.key.includes('-') &&
-                !slotProps.node.data.isMatchLocation
-                  ? 'bold'
-                  : 'normal'
-            }"
-          >
-            {{ slotProps.node.data.name }}
-            <span
-              v-if="slotProps.node.data.description"
-              style="font-style: none; font-size: 90%; font-weight: normal; color: grey"
-            >
-              {{ '  ' + slotProps.node.data.description }}
-            </span>
-            <span v-if="slotProps.node.data.matchCount > 1" style="font-style: italic">{{
-              `(${slotProps.node.data.matchCount} matches)`
-            }}</span>
-
-            <Tag
-              v-if="slotProps.node.data.lib && slotProps.node.data.matchCount"
-              class="ml-2"
-              style="scale: 0.8"
-              v-tooltip.top="{
-                value: 'Library rules capture common logic',
-                showDelay: 100,
-                hideDelay: 100
-              }"
-              value="lib"
-              severity="info"
-            ></Tag>
-          </div>
+        <template #body="{ node }">
+          <RuleColumn :node="node" />
         </template>
       </Column>
 
@@ -130,7 +92,7 @@
           <div v-if="slotProps.node.data.attack">
             <div v-for="(attack, index) in slotProps.node.data.attack" :key="index">
               <a :href="createATTACKHref(attack)" target="_blank">
-                {{ attack.technique }} ({{ attack.id }})
+                {{ attack.technique }} <span class="text-500 text-sm font-normal ml-1">({{ attack.id }})</span>
               </a>
               <div
                 v-for="(technique, techIndex) in attack.techniques"
@@ -138,7 +100,7 @@
                 style="font-size: 0.8em; margin-left: 1em"
               >
                 <a :href="createATTACKHref(technique)" target="_blank">
-                  ↳ {{ technique.technique }} ({{ technique.id }})
+                  ↳ {{ technique.technique }} <span class="text-500 text-xs font-normal ml-1">({{ technique.id }})</span>
                 </a>
               </div>
             </div>
@@ -150,7 +112,7 @@
           <div v-if="slotProps.node.data.mbc">
             <div v-for="(mbc, index) in slotProps.node.data.mbc" :key="index">
               <a :href="createMBCHref(mbc)" target="_blank">
-                {{ formatMBC(mbc) }}
+                {{ mbc.parts.join('::') }} <span class="text-500 text-sm font-normal opacity-80 ml-1">[{{ mbc.id }}]</span>
                 </a>
             </div>
           </div>
@@ -188,13 +150,14 @@
 import { ref, onMounted, computed } from 'vue'
 import TreeTable from 'primevue/treetable'
 import InputText from 'primevue/inputtext'
-import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import MultiSelect from 'primevue/multiselect'
+
+import RuleColumn from './columns/RuleColumn.vue';
 
 import { parseRules } from '../utils/rdocParser'
 

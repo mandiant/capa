@@ -9,6 +9,11 @@ body {
 a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+  color: var(--primary-color);
 }
 
 /* Disable the toggle button for statement and features */

@@ -8,6 +8,7 @@ export function parseRules(rules, flavor) {
     const ruleNode = {
       key: index.toString(),
       data: {
+        type: 'rule',
         name: rule.meta.name,
         lib: rule.meta.lib,
         matchCount: rule.matches.length,
@@ -45,15 +46,15 @@ export function parseRules(rules, flavor) {
         const matchNode = {
           key: matchKey,
           data: {
+            type: 'match location',
             name:
               flavor === 'static'
-                ? `${rule.meta.scopes.static} @ ${formatAddress(match[0].value)}`
+                ? `${rule.meta.scopes.static} @ ${formatStaticAddress(match[0].value)}`
                 : `${formatDynamicAddress(match[0].value)}`,
             address:
               flavor === 'static'
-                ? `${formatAddress(match[0].value)}`
+                ? `${formatStaticAddress(match[0].value)}`
                 : formatDynamicAddress(match[0].value),
-            isMatchLocation: true
           },
           children: [parseNode(match[1], `${matchKey}-0`, rules, rule.meta.lib)]
         }
@@ -101,11 +102,11 @@ export function parseFunctionCapabilities(data, showLibraryRules) {
         matchingRules.push({
           key: `${functionAddress}-${matchingRules.length}`, // Unique key for each rule
           data: {
-            funcaddr: `${rule.meta.name}`, // Display rule name
-            lib: rule.meta.lib, // Indicate if it's a library rule
-            matchcount: null, // Matchcount is not used for individual rules
-            namespace: rule.meta.namespace, // Rule namespace
-            source: rule.source // Rule source code
+            funcaddr: `${rule.meta.name}`,
+            lib: rule.meta.lib,
+            matchcount: null,
+            namespace: rule.meta.namespace,
+            source: rule.source
           }
         })
       }
@@ -116,7 +117,7 @@ export function parseFunctionCapabilities(data, showLibraryRules) {
       result.push({
         key: functionAddress, // Use function address as key
         data: {
-          funcaddr: `function: 0x${functionAddress}`, // Display function address
+          funcaddr: `function: 0x${functionAddress}`,
           lib: false, // Functions are not library rules
           matchcount: matchingRules.length, // Number of matching rules for this function
           namespace: null, // Functions don't have a namespace
@@ -228,6 +229,8 @@ function parseNode(node, key, rules, lib) {
   const result = {
     key: key,
     data: {
+      type: processedNode.node.type, // statement or feature
+      typeValue: processedNode.node.statement ? processedNode.node.statement.type : processedNode.node.feature.type, // type value (eg. number, regex, api, or, and, optional ... etc)
       success: processedNode.success,
       name: getNodeName(processedNode),
       lib: lib,
@@ -333,7 +336,8 @@ function getStatementName(statement) {
     case 'some':
       return `${statement.count} or more`
     default:
-      return `${statement.type}: `
+      // statement (e.g. "and: ", "or: ", "optional:", ... etc)
+      return `${statement.type}:`
   }
 }
 
@@ -347,11 +351,14 @@ function getFeatureName(feature) {
     case 'number':
     case 'offset':
       // example: "number: 0x1234", "offset: 0x3C"
-      return `${feature.type}: 0x${feature[feature.type].toString(16).toUpperCase()}`
+      // return `${feature.type}: 0x${feature[feature.type].toString(16).toUpperCase()}`
+      return `0x${feature[feature.type].toString(16).toUpperCase()}`
+    case 'bytes':
+      return formatBytes(feature.bytes)
     case 'operand offset':
       return `operand[${feature.index}].offset: 0x${feature.operand_offset.toString(16).toUpperCase()}`
     default:
-      return `${feature.type}: ${feature[feature.type]}`
+      return `${feature[feature.type]}`
   }
 }
 
@@ -392,6 +399,19 @@ function getNodeAddress(node) {
 }
 
 /**
+ * Formats bytes string for display
+ * @param {Array} value - The bytes string
+ * @returns {string} - Formatted bytes string
+ */
+
+function formatBytes(byteString) {
+  // Use a regular expression to insert a space after every two characters
+  const formattedString = byteString.replace(/(.{2})/g, '$1 ').trim();
+  // convert to uppercase
+  return formattedString.toUpperCase();
+}
+
+/**
  * Formats the address for dynamic flavor
  * @param {Array} value - The address value array
  * @returns {string} - Formatted address string
@@ -404,6 +424,6 @@ function formatDynamicAddress(value) {
     .join(' ← ')
 }
 
-function formatAddress(address) {
+function formatStaticAddress(address) {
   return `0x${address.toString(16).toUpperCase()}`
 }
