@@ -3,7 +3,7 @@
 ## master (unreleased)
 
 ### New Features
-- support analyzing DRAKVUF sandbox traces #2143 @yelhamer
+- support analyzing DRAKVUF traces #2143 @yelhamer
 
 ### Breaking Changes
 
