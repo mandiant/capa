@@ -129,7 +129,7 @@ function @ 0x4011C0
 Additionally, capa also supports analyzing sandbox reports for dynamic capability extraction.
 In order to use this, you first submit your sample to one of supported sandboxes for analysis, and then run capa against the generated report file.
 
-Currently, capa supports the [CAPE sandbox](https://github.com/kevoreilly/CAPEv2) and the [DRAKVUF sandbox](https://github.com/CERT-Polska/drakvuf-sandbox/). In order to use either, simlpy run capa against the generated file (JSON for CAPE or LOG for DRAKVUF sandbox) and it will automatically detect the sandbox and extract capabilities from it.
+Currently, capa supports the [CAPE sandbox](https://github.com/kevoreilly/CAPEv2) and the [DRAKVUF sandbox](https://github.com/CERT-Polska/drakvuf-sandbox/). In order to use either, simply run capa against the generated file (JSON for CAPE or LOG for DRAKVUF sandbox) and it will automatically detect the sandbox and extract capabilities from it.
 
 Here's an example of running capa against a packed binary, and then running capa against the CAPE report of that binary:
 
