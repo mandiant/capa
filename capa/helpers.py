@@ -11,7 +11,7 @@ import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import Dict, Union, BinaryIO, Iterator, List, NoReturn
+from typing import Dict, List, Union, BinaryIO, Iterator, NoReturn
 from pathlib import Path
 from zipfile import ZipFile
 
