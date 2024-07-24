@@ -140,7 +140,7 @@ def get_format_from_report(sample: Path) -> str:
             # CAPE report that's missing the "CAPE" key,
             # which is not going to be much use, but its correct.
             return FORMAT_CAPE
-            
+
     return FORMAT_UNKNOWN
 
 
