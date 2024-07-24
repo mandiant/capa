@@ -39,7 +39,9 @@
       </template>
       <template #body="slotProps">
         <span v-if="slotProps.node.data.type === 'process'">
-          {{ `${slotProps.node.data.processname}` }}
+          <span class="text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-15rem">
+            {{ slotProps.node.data.processname }}
+          </span>
           <span v-if="slotProps.node.data.matchCount > 1" class="font-italic">
             ({{ slotProps.node.data.matchCount }} unique matches)
           </span>
