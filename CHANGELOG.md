@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+webui: explore capa analysis in the web #2224 @s-ff
 
 ### Breaking Changes
 
