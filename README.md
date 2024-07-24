@@ -127,9 +127,9 @@ function @ 0x4011C0
 ```
 
 capa also supports dynamic capabilities detection for multiple sandboxes including:
-* [CAPE sandbox](https://github.com/kevoreilly/CAPEv2): `.json`, `.json_`, `.json.gz`
-* [DRAKVUF sandbox](https://github.com/CERT-Polska/drakvuf-sandbox/): `.log`, `.log.gz`
-* [VMRay sandbox](https://www.vmray.com/): `.zip`
+* [CAPE](https://github.com/kevoreilly/CAPEv2) (supported report formats: `.json`, `.json_`, `.json.gz`)
+* [DRAKVUF](https://github.com/CERT-Polska/drakvuf-sandbox/) (supported report formats: `.log`, `.log.gz`)
+* [VMRay](https://www.vmray.com/) (supported report formats: analysis archive `.zip`)
 
 To use this feature, submit your file to a supported sandbox and then download and run capa against the generated report file. This feature enables capa to match capabilities against dynamic and static features that the sandbox captured during execution.
 
