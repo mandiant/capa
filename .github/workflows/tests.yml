@@ -77,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-11]
+        os: [ubuntu-20.04, windows-2019, macos-12]
         # across all operating systems
         python-version: ["3.8", "3.11"]
         include:
@@ -120,7 +120,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.9", "3.11"]
     steps:
     - name: Checkout capa with submodules
       # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118

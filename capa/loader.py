@@ -67,6 +67,10 @@ BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 
 
+class CorruptFile(ValueError):
+    pass
+
+
 def is_supported_format(sample: Path) -> bool:
     """
     Return if this is a supported file based on magic header values
@@ -140,21 +144,28 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
     import viv_utils.flirt
 
     logger.debug("generating vivisect workspace for: %s", path)
-    if input_format == FORMAT_AUTO:
-        if not is_supported_format(path):
-            raise UnsupportedFormatError()
 
-        # don't analyze, so that we can add our Flirt function analyzer first.
-        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-    elif input_format in {FORMAT_PE, FORMAT_ELF}:
-        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-    elif input_format == FORMAT_SC32:
-        # these are not analyzed nor saved.
-        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
-    elif input_format == FORMAT_SC64:
-        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
-    else:
-        raise ValueError("unexpected format: " + input_format)
+    try:
+        if input_format == FORMAT_AUTO:
+            if not is_supported_format(path):
+                raise UnsupportedFormatError()
+
+            # don't analyze, so that we can add our Flirt function analyzer first.
+            vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
+        elif input_format in {FORMAT_PE, FORMAT_ELF}:
+            vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
+        elif input_format == FORMAT_SC32:
+            # these are not analyzed nor saved.
+            vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
+        elif input_format == FORMAT_SC64:
+            vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
+        else:
+            raise ValueError("unexpected format: " + input_format)
+    except Exception as e:
+        # vivisect raises raw Exception instances, and we don't want
+        # to do a subclass check via isinstance.
+        if type(e) is Exception and "Couldn't convert rva" in e.args[0]:
+            raise CorruptFile(e.args[0]) from e
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 

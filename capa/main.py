@@ -782,6 +782,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     except UnsupportedOSError as e:
         log_unsupported_os_error()
         raise ShouldExitError(E_INVALID_FILE_OS) from e
+    except capa.loader.CorruptFile as e:
+        logger.error("Input file '%s' is not a valid file: %s", args.input_file, str(e))
+        raise ShouldExitError(E_CORRUPT_FILE) from e
 
 
 def main(argv: Optional[List[str]] = None):

@@ -12,9 +12,14 @@
 
 ### Bug Fixes
 
+- elf: extract import / export symbols from stripped binaries #2096 @ygasparis
+- elf: fix handling of symbols in corrupt ELF files #2226 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
+- CI: use macos-12 since macos-11 is deprecated and will be removed on June 28th, 2024 #2173 @mr-tz
+- CI: update Binary Ninja version to 4.1 and use Python 3.9 to test it #2211 @xusheng6
 
 ### Raw diffs
 - [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)
