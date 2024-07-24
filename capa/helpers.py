@@ -132,7 +132,7 @@ def get_format_from_report(sample: Path) -> str:
             if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
                 # assume VMRay zipfile at a minimum has these files
                 return FORMAT_VMRAY
-    else:
+    elif sample.name.endswith(("json", "json_", "json.gz")):
         report = load_json_from_path(sample)
         if "CAPE" in report:
             return FORMAT_CAPE
@@ -140,6 +140,7 @@ def get_format_from_report(sample: Path) -> str:
             # CAPE report that's missing the "CAPE" key,
             # which is not going to be much use, but its correct.
             return FORMAT_CAPE
+            
     return FORMAT_UNKNOWN
 
 
