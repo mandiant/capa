@@ -358,6 +358,17 @@ function createMBCHref(mbc) {
 </script>
 
 <style scoped>
+/* Disable the toggle button for statement and features */
+:deep(.p-treetable-tbody > tr:not(:is([aria-level='1'], [aria-level='2'])) > td > div > .p-treetable-node-toggle-button) {
+    visibility: hidden !important;
+    height: 1.3rem;
+}
+
+/* Make all matches nodes (i.e. not rule names) slightly smaller */
+.p-treetable-tbody > tr:not(:is([aria-level='1'])) > td {
+  font-size: 0.9rem;
+}
+
 /* Optional: Add a subtle background to root-level rows for better distinction  */
 :deep(.p-treetable-tbody > tr[aria-level='1']) {
   background-color: #f9f9f9;

@@ -1,159 +1,69 @@
 <template>
-  <TreeTable
-    :value="treeData"
-    v-model:expandedKeys="expandedKeys"
-    size="small"
-    :filters="filters"
-    :filterMode="filterMode.value"
-    sortField="ppid"
-    :sortOrder="1"
-    removableSort
-    :indentation="1.2"
-    :row-hover="true"
-  >
-    <template #header>
-      <div
-        style="
-          margin-bottom: 16px;
-          margin-left: 16px;
-          display: flex;
-          justify-content: space-between;
-        "
-      >
-        <Button icon="pi pi-expand" @click="toggleAll" label="Toggle All" />
-        <IconField>
-          <InputIcon class="pi pi-search" />
-          <InputText v-model="filters['global']" placeholder="Global search" />
-        </IconField>
-      </div>
-    </template>
-
-    <Column field="processname" sortable header="Process Name" expander filterMatchMode="contains">
-      <template #filter>
-        <InputText
-          v-model="filters['processname']"
-          type="text"
-          class="w-full"
-          placeholder="Filter by process"
-        />
-      </template>
-      <template #body="slotProps">
-        <span v-if="slotProps.node.data.type === 'process'">
-          <span class="text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-15rem">
-            {{ slotProps.node.data.processname }}
-          </span>
-          <span v-if="slotProps.node.data.matchCount > 1" class="font-italic">
-            ({{ slotProps.node.data.matchCount }} unique matches)
-          </span>
-        </span>
-
-        <span v-else>
-          {{ slotProps.node.data.processname }}
-
-          <span class="font-italic" v-if="slotProps.node.data.matchCount > 1"
-            >({{
-              slotProps.node.data.matchCount + ' ' + slotProps.node.data.location
-            }}
-            matches)</span
+  <div class="card">
+    <TreeTable
+      :value="processTree"
+      v-model:expandedKeys="expandedKeys"
+      :filters="filters"
+      filterMode="lenient"
+      sortField="pid"
+      :sortOrder="1"
+      rowHover="true"
+    >
+      <Column field="processname" header="Process" expander>
+        <template #body="slotProps">
+          <span
+            :id="'process-' + slotProps.node.key"
+            class="cursor-pointer flex align-items-center"
+            @mouseenter="showTooltip($event, slotProps.node)"
+            @mouseleave="hideTooltip"
           >
-          <span class="font-italic" v-else>(1 {{ slotProps.node.data.location }} match)</span>
-        </span>
-        <Tag
-          v-if="slotProps.node.data.type === 'rule' && slotProps.node.data.lib"
-          class="ml-2"
-          style="scale: 0.8"
-          v-tooltip.top="{
-            value: 'Library rules capture common logic',
-            showDelay: 100,
-            hideDelay: 100
-          }"
-          value="lib"
-          severity="info"
-        ></Tag>
-      </template>
-    </Column>
-    <!-- TODO(s-ff): pid and ppid columns are identical, consider creating a resuable componenet -->
-    <Column field="pid" sortable header="PID" style="width: 8%">
-      <template #filter>
-        <InputText
-          v-model="filters['pid']"
-          type="text"
-          class="w-full"
-          placeholder="Filter by PID"
-        />
-      </template>
-      <template #body="slotProps">
-        <span :style="{ color: getColorForId(slotProps.node.data.pid), fontWeight: 'bold' }">
-          {{ slotProps.node.data.pid }}
-        </span>
-      </template>
-    </Column>
+            <span class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-20rem" style="font-family: monospace;">
+              {{ slotProps.node.data.processname }}
+            </span>
+            <span class="ml-2">
+              - PID: {{ slotProps.node.data.pid }}
+            </span>
+            <span v-if="slotProps.node.data.uniqueMatchCount > 0" class="font-italic ml-2">
+              ({{ slotProps.node.data.uniqueMatchCount }} unique {{ slotProps.node.data.uniqueMatchCount > 1 ? 'matches' : 'match' }})
+            </span>
+          </span>
+        </template>
+      </Column>
+      <Column field="pid" header="PID" sortable>
+        <template #body="slotProps">
+          <span :style="{ color: getColorForId(slotProps.node.data.pid) }">
+            {{ slotProps.node.data.pid }}
+          </span>
+        </template>
+      </Column>
+      <Column field="ppid" header="PPID" sortable>
+        <template #body="slotProps">
+          <span :style="{ color: getColorForId(slotProps.node.data.ppid) }">
+            {{ slotProps.node.data.ppid }}
+          </span>
+        </template>
+      </Column>
+    </TreeTable>
 
-    <Column field="ppid" sortable header="PPID" style="width: 8%">
-      <template #filter>
-        <InputText
-          v-model="filters['ppid']"
-          type="text"
-          class="w-full"
-          placeholder="Filter by PPID"
-        />
-      </template>
-      <template #body="slotProps">
-        <span :style="{ color: getColorForId(slotProps.node.data.ppid), fontWeight: 'bold' }">
-          {{ slotProps.node.data.ppid }}
-        </span>
-      </template>
-    </Column>
-
-    <Column field="namespace"  header="Namespace" filterMatchMode="contains">
-      <template #filter>
-        <InputText
-          v-model="filters['namespace']"
-          type="text"
-          class="w-full"
-          placeholder="Filter by namespace"
-        />
-      </template>
-    </Column>
-
-    <Column field="source" header="Source">
-      <template #body="slotProps">
-        <Button
-          v-if="slotProps.node.data.source"
-          icon="pi pi-external-link"
-          size="small"
-          severity="secondary"
-          style="height: 1.5rem; width: 1.5rem"
-          @click="showSource(slotProps.node.data.source)"
-        />
-      </template>
-    </Column>
-  </TreeTable>
-
-  <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
-    <highlightjs autodetect :code="currentSource" />
-  </Dialog>
+    <div v-if="tooltipVisible" class="fixed bg-gray-800 text-white p-3 border-round-sm z-5 max-w-50rem shadow-2" :style="tooltipStyle">
+      <div v-for="rule in currentNode.data.uniqueRules" :key="rule.name">
+        •  {{ rule.name }} <span class="font-italic">({{ rule.matchCount }} {{ rule.scope }} {{ rule.matchCount > 1 ? 'matches' : 'match' }})</span>
+        <LibraryTag v-if="rule.lib" />
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TreeTable from 'primevue/treetable'
 import Column from 'primevue/column'
-import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import IconField from 'primevue/iconfield'
-import InputIcon from 'primevue/inputicon'
-import Tag from 'primevue/tag'
+import LibraryTag from './misc/LibraryTag.vue'
 
 const props = defineProps({
   data: {
     type: Object,
     required: true
-  },
-  showCapabilitiesByProcess: {
-    type: Boolean,
-    default: false
   },
   showLibraryRules: {
     type: Boolean,
@@ -162,132 +72,136 @@ const props = defineProps({
 })
 
 const filters = ref({})
-const filterMode = ref({ value: 'lenient' })
-const sourceDialogVisible = ref(false)
-const currentSource = ref('')
 const expandedKeys = ref({})
+const tooltipVisible = ref(false)
+const currentNode = ref(null)
+const tooltipStyle = ref({
+  position: 'fixed',
+  top: '0px',
+  left: '0px',
+})
 
-const showSource = (source) => {
-  currentSource.value = source
-  sourceDialogVisible.value = true
+const getProcessIds = (location) => {
+  if (!location || location.type === 'no address') {
+    return null;
+  }
+  if (Array.isArray(location.value) && location.value.length >= 2) {
+    return {
+      ppid: location.value[0],
+      pid: location.value[1]
+    };
+  }
+  return null;
 }
 
-const toggleAll = () => {
-  let _expandedKeys = {}
-
-  if (Object.keys(expandedKeys.value).length === 0) {
-    const expandAll = (node) => {
-      if (node.children && node.children.length) {
-        _expandedKeys[node.key] = true
-        node.children.forEach(expandAll)
-      }
-    }
-
-    treeData.value.forEach(expandAll)
+const processTree = computed(() => {
+  if (!props.data || !props.data.meta || !props.data.meta.analysis || !props.data.meta.analysis.layout || !props.data.meta.analysis.layout.processes) {
+    console.error('Invalid data structure')
+    return []
   }
 
-  expandedKeys.value = _expandedKeys
-}
-
-const mapMatchesToProcess = (processes, rules) => {
+  const processes = props.data.meta.analysis.layout.processes
+  const rules = props.data.rules || {}
   const processMap = new Map()
 
-  processes.forEach((process) => {
+  // create all process nodes
+  processes.forEach(process => {
+    if (!process.address || !Array.isArray(process.address.value) || process.address.value.length < 2) {
+      console.warn('Invalid process structure', process)
+      return
+    }
     const [ppid, pid] = process.address.value
-    processMap.set(`${ppid},${pid}`, {
-      process,
-      ruleMatches: new Map()
+    processMap.set(pid, {
+      key: `process-${pid}`,
+      data: {
+        processname: process.name || '<Unknown Process>',
+        pid,
+        ppid,
+        uniqueMatchCount: 0,
+        uniqueRules: new Map(),
+      },
+      children: []
     })
   })
 
-  for (const ruleId in rules) {
-    const rule = rules[ruleId]
-    if (!props.showLibraryRules && rule.meta.lib) {
-      continue
-    }
+  // build the tree structure and add rule matches
+  Object.entries(rules).forEach(([ruleName, rule]) => {
+    if (!props.showLibraryRules && rule.meta && rule.meta.lib) return
+    if (!rule.matches || !Array.isArray(rule.matches)) return
 
-    rule.matches.forEach((match) => {
-      // Deconstruct the match location to get the location (first item)
+    rule.matches.forEach(match => {
+      if (!Array.isArray(match) || match.length === 0) return
       const [location] = match
-      let processKey
-
-      if (location.type === 'process') {
-        const [ppid, pid] = location.value
-        processKey = `${ppid},${pid}`
-      } else if (location.type === 'thread' || location.type === 'call') {
-        const [ppid, pid] = location.value
-        processKey = `${ppid},${pid}`
-      }
-
-      if (processKey && processMap.has(processKey)) {
-        const processData = processMap.get(processKey)
-        const ruleKey = `${rule.meta.name}`
-
-        if (!processData.ruleMatches.has(ruleKey)) {
-          processData.ruleMatches.set(ruleKey, {
-            rule,
-            count: 0,
-            locations: new Set()
+      const ids = getProcessIds(location)
+      if (ids && processMap.has(ids.pid)) {
+        const processNode = processMap.get(ids.pid)
+        if (!processNode.data.uniqueRules.has(ruleName)) {
+          processNode.data.uniqueMatchCount++
+          processNode.data.uniqueRules.set(ruleName, {
+            name: ruleName,
+            lib: rule.meta && rule.meta.lib,
+            matchCount: 0,
+            scope: location.type
           })
         }
-
-        const ruleData = processData.ruleMatches.get(ruleKey)
-        ruleData.count++
-        ruleData.locations.add(location.type)
+        processNode.data.uniqueRules.get(ruleName).matchCount++
       }
     })
-  }
-
-  return processMap
-}
-
-const treeData = computed(() => {
-  const data = []
-  const processes = props.data.meta.analysis.layout.processes
-  const processMap = mapMatchesToProcess(processes, props.data.rules)
-
-  let processKey = 1
-
-  for (const [_, { process, ruleMatches }] of processMap) {
-    if (ruleMatches.size > 0) {
-      const matchingRules = Array.from(ruleMatches.values()).map((ruleData, index) => ({
-        key: `${process.name}-${index}`,
-        data: {
-          processname: `${ruleData.rule.meta.name}`,
-          type: 'rule',
-          lib: ruleData.rule.meta.lib,
-          matchCount: ruleData.count,
-          namespace: ruleData.rule.meta.namespace,
-          source: ruleData.rule.source,
-          location: Array.from(ruleData.locations).join(', ')
-        }
-      }))
-
-      data.push({
-        key: `process-${processKey++}`,
-        data: {
-          processname: process.name,
-          type: 'process',
-          lib: null,
-          matchCount: ruleMatches.size,
-          namespace: null,
-          pid: process.address.value[1],
-          ppid: process.address.value[0],
-          source: null
-        },
-        children: matchingRules
-      })
+  })
+  // build the final tree structure
+  const rootProcesses = []
+  processMap.forEach((processNode, pid) => {
+    processNode.data.uniqueRules = Array.from(processNode.data.uniqueRules.values())
+    const parentProcess = processMap.get(processNode.data.ppid)
+    if (parentProcess) {
+      parentProcess.children.push(processNode)
+    } else {
+      rootProcesses.push(processNode)
     }
-  }
+  })
 
-  return data
+  return rootProcesses
 })
 
-// Generate a color based on an integer value
 const getColorForId = (id) => {
-  // simple hash function to generate a hue value between 0 and 360
+  if (id === undefined || id === null) return 'black'
   const hue = Math.abs((id * 41) % 360)
-  // use a fixed saturation and lightness for consistency
   return `hsl(${hue}, 70%, 40%)`
 }
+
+const showTooltip = (event, node) => {
+  if (node.data.uniqueMatchCount > 0) {
+    currentNode.value = node
+    tooltipVisible.value = true
+    updateTooltipPosition(event)
+  }
+}
+
+const hideTooltip = () => {
+  tooltipVisible.value = false
+  currentNode.value = null
+}
+
+const updateTooltipPosition = (event) => {
+  const offset = 10
+  tooltipStyle.value = {
+    position: 'fixed',
+    top: `${event.clientY + offset}px`,
+    left: `${event.clientX + offset}px`,
+  }
+}
+
+const handleMouseMove = (event) => {
+  if (tooltipVisible.value) {
+    updateTooltipPosition(event)
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousemove', handleMouseMove)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+})
 </script>
