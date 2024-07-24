@@ -46,6 +46,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_VMRAY,
     FORMAT_DOTNET,
+    FORMAT_DRAKVUF,
 )
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import (
@@ -62,8 +63,13 @@ BACKEND_DOTNET = "dotnet"
 BACKEND_BINJA = "binja"
 BACKEND_PEFILE = "pefile"
 BACKEND_CAPE = "cape"
+BACKEND_DRAKVUF = "drakvuf"
 BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
+
+
+class CorruptFile(ValueError):
+    pass
 
 
 def is_supported_format(sample: Path) -> bool:
@@ -139,21 +145,28 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
     import viv_utils.flirt
 
     logger.debug("generating vivisect workspace for: %s", path)
-    if input_format == FORMAT_AUTO:
-        if not is_supported_format(path):
-            raise UnsupportedFormatError()
 
-        # don't analyze, so that we can add our Flirt function analyzer first.
-        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-    elif input_format in {FORMAT_PE, FORMAT_ELF}:
-        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-    elif input_format == FORMAT_SC32:
-        # these are not analyzed nor saved.
-        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
-    elif input_format == FORMAT_SC64:
-        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
-    else:
-        raise ValueError("unexpected format: " + input_format)
+    try:
+        if input_format == FORMAT_AUTO:
+            if not is_supported_format(path):
+                raise UnsupportedFormatError()
+
+            # don't analyze, so that we can add our Flirt function analyzer first.
+            vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
+        elif input_format in {FORMAT_PE, FORMAT_ELF}:
+            vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
+        elif input_format == FORMAT_SC32:
+            # these are not analyzed nor saved.
+            vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
+        elif input_format == FORMAT_SC64:
+            vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
+        else:
+            raise ValueError("unexpected format: " + input_format)
+    except Exception as e:
+        # vivisect raises raw Exception instances, and we don't want
+        # to do a subclass check via isinstance.
+        if type(e) is Exception and "Couldn't convert rva" in e.args[0]:
+            raise CorruptFile(e.args[0]) from e
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 
@@ -200,6 +213,12 @@ def get_extractor(
 
         report = capa.helpers.load_json_from_path(input_path)
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
+
+    elif backend == BACKEND_DRAKVUF:
+        import capa.features.extractors.drakvuf.extractor
+
+        report = capa.helpers.load_jsonl_from_path(input_path)
+        return capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report)
 
     elif backend == BACKEND_VMRAY:
         import capa.features.extractors.vmray.extractor
@@ -322,6 +341,13 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
 
         report = capa.helpers.load_json_from_path(input_file)
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
+
+    elif input_format == FORMAT_DRAKVUF:
+        import capa.helpers
+        import capa.features.extractors.drakvuf.extractor
+
+        report = capa.helpers.load_jsonl_from_path(input_file)
+        file_extractors.append(capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report))
 
     elif input_format == FORMAT_VMRAY:
         import capa.features.extractors.vmray.extractor

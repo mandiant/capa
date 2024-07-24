@@ -5,6 +5,7 @@
 Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmray.com/) integration! Simply provide a VMRay analysis archive, and capa will automatically extract and match capabilties, streamlining your workflow.
 
 ### New Features
+- support analyzing DRAKVUF traces #2143 @yelhamer
 - dynamic: add support for VMRay dynamic sandbox traces #2208 @mike-hunhoff @r-sm2024 @mr-tz
 ### Breaking Changes
 
@@ -15,6 +16,7 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 ### Bug Fixes
 
 - elf: extract import / export symbols from stripped binaries #2096 @ygasparis
+- elf: fix handling of symbols in corrupt ELF files #2226 @williballenthin
 
 ### capa explorer IDA Pro plugin
 

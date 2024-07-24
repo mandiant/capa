@@ -200,6 +200,16 @@ def get_cape_extractor(path):
 
 
 @lru_cache(maxsize=1)
+def get_drakvuf_extractor(path):
+    from capa.helpers import load_jsonl_from_path
+    from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
+
+    report = load_jsonl_from_path(path)
+
+    return DrakvufExtractor.from_report(report)
+
+
+@lru_cache(maxsize=1)
 def get_ghidra_extractor(path: Path):
     import capa.features.extractors.ghidra.extractor
 
@@ -384,6 +394,14 @@ def get_data_path_by_name(name) -> Path:
             / "cape"
             / "v2.2"
             / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
+        )
+    elif name.startswith("93b2d1"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "drakvuf"
+            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
@@ -679,84 +697,6 @@ def parametrize(params, values, **kwargs):
     ids = list(map(make_test_id, values))
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
-
-DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
-    [
-        # file/string
-        ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), True),
-        ("0000a657", "file", capa.features.common.String("GetNamedPipeClientSessionId"), True),
-        ("0000a657", "file", capa.features.common.String("nope"), False),
-        # file/sections
-        ("0000a657", "file", capa.features.file.Section(".rdata"), True),
-        ("0000a657", "file", capa.features.file.Section(".nope"), False),
-        # file/imports
-        ("0000a657", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), True),
-        ("0000a657", "file", capa.features.file.Import("Nope"), False),
-        # file/exports
-        ("0000a657", "file", capa.features.file.Export("Nope"), False),
-        # process/environment variables
-        (
-            "0000a657",
-            "process=(1180:3052)",
-            capa.features.common.String("C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"),
-            True,
-        ),
-        ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), False),
-        # thread/api calls
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), True),
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), False),
-        # thread/number call argument
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), True),
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), False),
-        # thread/string call argument
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("SetThreadUILanguage"), True),
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), False),
-        ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), True),
-        ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), False),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
-
-DYNAMIC_FEATURE_COUNT_TESTS = sorted(
-    [
-        # file/string
-        ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), 1),
-        ("0000a657", "file", capa.features.common.String("GetNamedPipeClientSessionId"), 1),
-        ("0000a657", "file", capa.features.common.String("nope"), 0),
-        # file/sections
-        ("0000a657", "file", capa.features.file.Section(".rdata"), 1),
-        ("0000a657", "file", capa.features.file.Section(".nope"), 0),
-        # file/imports
-        ("0000a657", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), 1),
-        ("0000a657", "file", capa.features.file.Import("Nope"), 0),
-        # file/exports
-        ("0000a657", "file", capa.features.file.Export("Nope"), 0),
-        # process/environment variables
-        (
-            "0000a657",
-            "process=(1180:3052)",
-            capa.features.common.String("C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"),
-            2,
-        ),
-        ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), 0),
-        # thread/api calls
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), 7),
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), 0),
-        # thread/number call argument
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), 1),
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), 0),
-        # thread/string call argument
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("SetThreadUILanguage"), 1),
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), 0),
-        ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), 1),
-        ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), 0),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
 
 FEATURE_PRESENCE_TESTS = sorted(
     [
