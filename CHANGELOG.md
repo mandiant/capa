@@ -13,6 +13,7 @@
 ### Bug Fixes
 
 - elf: extract import / export symbols from stripped binaries #2096 @ygasparis
+- elf: fix handling of symbols in corrupt ELF files #2226 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
