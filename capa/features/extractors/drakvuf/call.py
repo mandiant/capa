@@ -38,11 +38,10 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
         try:
             yield Number(int(arg_value, 0)), ch.address
         except ValueError:
-            if ":" in arg_value and arg_value.startswith("0x"):
-                # if the argument is in the format: memory_address:str (e.g. '0xc6f217efe0:'"ntdll.dll"')
-                # then return the contents of that memory address on its own as well.
-                yield String(arg_value.split(":", maxsplit=1)[1]), ch.address
-            # yield the entire string regardless in case of unexpected argument value formats
+            # DRAKVUF automatically resolves the contents of memory addresses, (e.g. Arg1="0xc6f217efe0:\"ntdll.dll\"").
+            # For those cases we yield the entire string as it, since yielding the address only would
+            # likely not provide any matches, and yielding just the memory contentswould probably be misleading,
+            # but yielding the entire string would be helpful for an analyst looking at the verbose output
             yield String(arg_value), ch.address
 
     yield API(call.name), ch.address
