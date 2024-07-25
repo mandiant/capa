@@ -16,7 +16,6 @@ from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticD
 
 logger = logging.getLogger(__name__)
 
-# TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
 DEFAULT_ARCHIVE_PASSWORD = b"infected"
 
 SUPPORTED_FLOG_VERSIONS = ("2",)
