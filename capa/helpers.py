@@ -249,6 +249,15 @@ def log_unsupported_drakvuf_report_error(error: str):
     logger.error("-" * 80)
 
 
+def log_unsupported_vmray_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error(" Input file is not a valid VMRay analysis archive: %s", error)
+    logger.error(" ")
+    logger.error(" capa only supports analyzing VMRay dynamic analysis archives.")
+    logger.error(" Please make sure you have downloaded a dynamic analysis archive from VMRay.")
+    logger.error("-" * 80)
+
+
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
     logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)

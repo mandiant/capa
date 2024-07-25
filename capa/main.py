@@ -60,6 +60,7 @@ from capa.helpers import (
     log_unsupported_format_error,
     log_empty_sandbox_report_error,
     log_unsupported_cape_report_error,
+    log_unsupported_vmray_report_error,
     log_unsupported_drakvuf_report_error,
 )
 from capa.exceptions import (
@@ -656,6 +657,9 @@ def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtract
             log_unsupported_cape_report_error(str(e))
         elif input_format == FORMAT_DRAKVUF:
             log_unsupported_drakvuf_report_error(str(e))
+        elif input_format == FORMAT_VMRAY:
+            log_unsupported_vmray_report_error(str(e))
+            print(e)
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
@@ -773,6 +777,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             log_unsupported_cape_report_error(str(e))
         elif input_format == FORMAT_DRAKVUF:
             log_unsupported_drakvuf_report_error(str(e))
+        elif input_format == FORMAT_VMRAY:
+            log_unsupported_vmray_report_error(str(e))
+            print(e)
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
