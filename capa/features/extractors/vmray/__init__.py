@@ -92,6 +92,8 @@ class VMRayAnalysis:
                 self.sample_file_analysis = file_analysis
 
                 if file_analysis.ref_static_data:
+                    # like "path": ["static_data","static_data_0"] where "static_data_0" is the summary_v2 static data
+                    # key for the file's static data
                     self.sample_file_static_data = self.sv2.static_data[file_analysis.ref_static_data.path[1]]
 
                 break
