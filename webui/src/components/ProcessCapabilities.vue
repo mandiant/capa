@@ -150,7 +150,8 @@ const processTree = computed(() => {
   })
   // build the final tree structure
   const rootProcesses = []
-  processMap.forEach((processNode, pid) => {
+  processMap.forEach((processNode) => {
+    console.log(processNode)
     processNode.data.uniqueRules = Array.from(processNode.data.uniqueRules.values())
     const parentProcess = processMap.get(processNode.data.ppid)
     if (parentProcess) {

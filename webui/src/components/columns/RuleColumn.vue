@@ -16,7 +16,7 @@
         <span>- {{ node.data.typeValue }}: <span class="text-green-700" style="font-family: monospace;">{{ node.data.name }}</span></span>
         
       </template>
-      <span v-if="node.data.description" class="text-gray-500" style="font-size: 90%;">
+      <span v-if="node.data.description" class="text-gray-500 text-sm" style="font-size: 90%;">
         = {{ node.data.description }}
       </span>
       <span v-if="node.data.matchCount > 1" class="font-italic">

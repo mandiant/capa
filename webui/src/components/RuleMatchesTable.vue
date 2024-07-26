@@ -301,25 +301,21 @@ onMounted(() => {
 })
 
 /**
- * Formats an MBC (Malware Behavior Catalog) object into a string representation.
+ * Creates an MBC (Malware Behavior Catalog) URL from an MBC object.
  *
  * @param {Object} mbc - The MBC object to format.
- * @returns {string} A string representation of the MBC object.
- *
- * e.g. "Anti-Behavioral Analysis::Virtual Machine Detection::Human User Check [B0009.012]"
+ * @returns {string} The MBC URL.
  */
-
-const formatMBC = (mbc) => {
-  return `${mbc.parts.join('::')} [${mbc.id}]`
-}
 
 function createMBCHref(mbc) {
   let baseUrl;
 
   // Determine the base URL based on the id
   if (mbc.id.startsWith('B')) {
+    // Behavior
     baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main';
   } else if (mbc.id.startsWith('C')) {
+    // Micro-Behavior
     baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors';
   } else {
     return null
@@ -345,7 +341,7 @@ function createMBCHref(mbc) {
   const idParts = attack.id.split('.');
 
   if (idParts.length === 1) {
-    // It's a main technique
+    // It's a technique
     return `${baseUrl}${idParts[0]}`;
   } else if (idParts.length === 2) {
     // It's a sub-technique
@@ -366,7 +362,7 @@ function createMBCHref(mbc) {
 
 /* Make all matches nodes (i.e. not rule names) slightly smaller */
 .p-treetable-tbody > tr:not(:is([aria-level='1'])) > td {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 /* Optional: Add a subtle background to root-level rows for better distinction  */

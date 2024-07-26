@@ -71,64 +71,59 @@ export function parseRules(rules, flavor) {
  * Parses rules data for the CapasByFunction component
  * @param {Object} data - The full JSON data object containing analysis results
  * @param {boolean} showLibraryRules - Whether to include library rules in the output
- * @returns {Array} - Parsed tree data for the CapasByFunction component
+ * @returns {Array} - Parsed data for the CapasByFunction DataTable component
  */
 export function parseFunctionCapabilities(data, showLibraryRules) {
-  const result = []
+  const result = [];
+  let id = 0;
 
   // Iterate through each function in the metadata
   for (const functionInfo of data.meta.analysis.layout.functions) {
     // Convert function address to uppercase hexadecimal string
-    const functionAddress = functionInfo.address.value.toString(16).toUpperCase()
-    const matchingRules = []
+    const functionAddress = functionInfo.address.value.toString(16).toUpperCase();
+    const matchingRules = [];
 
     // Iterate through all rules in the data
     for (const ruleId in data.rules) {
-      const rule = data.rules[ruleId]
+      const rule = data.rules[ruleId];
 
       // Skip library rules if showLibraryRules is false
       if (!showLibraryRules && rule.meta.lib) {
-        continue
+        continue;
       }
 
       // Find matches for this rule within the current function
       const matches = rule.matches.filter((match) =>
         // Check if any of the function's basic blocks match the rule
         functionInfo.matched_basic_blocks.some((block) => block.address.value === match[0].value)
-      )
+      );
 
       // If there are matches, add this rule to the matchingRules array
       if (matches.length > 0) {
         matchingRules.push({
-          key: `${functionAddress}-${matchingRules.length}`, // Unique key for each rule
-          data: {
-            funcaddr: `${rule.meta.name}`,
-            lib: rule.meta.lib,
-            matchcount: null,
-            namespace: rule.meta.namespace,
-            source: rule.source
-          }
-        })
+          ruleName: rule.meta.name,
+          lib: rule.meta.lib,
+          namespace: rule.meta.namespace,
+          source: rule.source
+        });
       }
     }
 
     // If there are matching rules for this function, add it to the result
     if (matchingRules.length > 0) {
-      result.push({
-        key: functionAddress, // Use function address as key
-        data: {
-          funcaddr: `function: 0x${functionAddress}`,
-          lib: false, // Functions are not library rules
-          matchcount: matchingRules.length, // Number of matching rules for this function
-          namespace: null, // Functions don't have a namespace
-          source: null // Functions don't have source code in this context
-        },
-        children: matchingRules // Add matching rules as children
-      })
+      // Add each matching rule as a separate row
+      matchingRules.forEach(rule => {
+        result.push({
+          id: id++,
+          funcaddr: `0x${functionAddress}`,
+          matchcount: matchingRules.length,
+          ...rule
+        });
+      });
     }
   }
 
-  return result
+  return result;
 }
 
 /**
