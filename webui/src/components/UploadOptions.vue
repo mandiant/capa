@@ -7,7 +7,7 @@
             mode="basic"
             name="model[]"
             accept="application/json"
-            :max-file-size="5000000"
+            :max-file-size="100000000"
             :auto="true"
             :custom-upload="true"
             choose-label="Upload from local"
