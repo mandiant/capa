@@ -1,7 +1,5 @@
 body {
-  /* max-width: 1280px; */
   margin: 0 auto;
-  /* padding: 20rem; */
   font-weight: normal;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -16,25 +14,7 @@ a:hover {
   color: var(--primary-color);
 }
 
-/* Disable the toggle button for statement and features 
-.p-treetable-tbody > tr:not(:is([aria-level='1'], [aria-level='2'])) > td {
-  div > .p-treetable-node-toggle-button {
-    visibility: hidden !important;
-    height: 1.3rem;
-  }
-} */
-
-/* Make all matches nodes (i.e. not rule names) slightly smaller
-.p-treetable-tbody > tr:not(:is([aria-level='1'])) > td {
-  font-size: 0.9rem;
-} */
-
 /* remove the border from rows other than rule names */
 .p-treetable-tbody > tr:not(:is([aria-level='1'])) > td {
   border: none !important;
-}
-
-/* tighten up the spacing between rows */
-.p-treetable-tbody > tr > td {
-  padding: 0rem 0.5rem !important;
 }

@@ -14,30 +14,20 @@
       selectionMode="single"
       @nodeExpand="onNodeSelect"
       @nodeSelect="onNodeSelect"
-      :metaKeySelection="false"
+      :pt="{
+        row: ({ instance }) => ({
+          oncontextmenu: (event) => onRightClick(event, instance),
+        }),
+      }"
     >
       <template #header>
         <div
           style="
             display: flex;
-            justify-content: space-between;
+            justify-content: end;
             align-items: center;
-            margin-bottom: 16px;
           "
         >
-          <Button icon="pi pi-expand" @click="toggleAll" label="Toggle All" />
-          <div style="display: flex; align-items: center; flex-direction: row; gap: 10px">
-            <label>Toggle columns:</label>
-            <MultiSelect
-              :modelValue="visibleColumns"
-              @update:modelValue="onToggle"
-              :options="togglableColumns"
-              optionLabel="header"
-              class="w-full sm:w-64"
-              display="chip"
-              placeholder="Toggle columns"
-            />
-          </div>
           <IconField>
             <InputIcon class="pi pi-search" />
             <InputText v-model="filters['global']" placeholder="Global search" />
@@ -73,10 +63,11 @@
           props.data.meta.flavor === 'dynamic' && col.field === 'address' ? 'Process' : col.header
         "
         :sortable="col.field !== 'source'"
+        :class="{ 'w-3': col.field === 'mbc' }"
         filterMatchMode="contains"
       >
         <!-- Filter template -->
-        <template #filter v-if="col.field !== 'source'">
+        <template #filter>
           <InputText
             v-model="filters[col.field]"
             type="text"
@@ -86,7 +77,9 @@
 
         <!-- Address column body template -->
         <template v-if="col.field === 'address'" #body="slotProps">
+          <span style="font-family: monospace">
           {{ slotProps.node.data.address }}
+          </span>
         </template>
 
         <!-- Tactic column body template -->
@@ -126,21 +119,19 @@
             {{ slotProps.node.data.namespace }}
           </span>
         </template>
-
-        <!-- Source column body template -->
-        <template v-if="col.field === 'source'" #body="slotProps">
-          <Button
-            v-if="slotProps.node.data.source"
-            rounded
-            icon="pi pi-external-link"
-            size="small"
-            severity="secondary"
-            style="height: 1.5rem; width: 1.5rem"
-            @click="showSource(slotProps.node.data.source)"
-          />
-        </template>
       </Column>
     </TreeTable>
+    <ContextMenu ref="menu" :model="contextMenuItems">
+      <template #item="{ item, props }">
+      <a v-ripple v-bind="props.action" :href="item.url" :target="item.target">
+        <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
+        <VTIcon v-else-if="item.icon === 'vt-icon'" />
+        <span>{{ item.label }}</span>
+      </a>
+    </template>
+    </ContextMenu>
+    
+    <Toast/>
 
     <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
       <highlightjs autodetect :code="currentSource" />
@@ -154,12 +145,14 @@ import TreeTable from 'primevue/treetable'
 import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
 import Column from 'primevue/column'
-import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
-import MultiSelect from 'primevue/multiselect'
+import ContextMenu from 'primevue/contextmenu'
+
 
 import RuleColumn from './columns/RuleColumn.vue';
+import VTIcon from './misc/VTIcon.vue';
+
 
 import { parseRules } from '../utils/rdocParser'
 
@@ -181,15 +174,43 @@ const sourceDialogVisible = ref(false)
 const currentSource = ref('')
 const expandedKeys = ref({})
 
-// Function to expand all children of a node
-const expandAllChildren = (node) => {
-  if (node.children) {
-    node.children.forEach((child) => {
-      expandedKeys.value[child.key] = true
-      expandAllChildren(child)
-    })
+const menu = ref();
+const selectedNode = ref({});
+
+const contextMenuItems = computed(() => [
+  {
+    label: 'View source',
+    icon: 'pi pi-eye',
+    command: () => {
+      showSource(selectedNode.value.data.source)
+    },
+  },
+  {
+    label: 'View rule in capa-rules',
+    icon: 'pi pi-external-link',
+    target: '_blank',
+    url: selectedNode.value.url,
+  },
+  {
+    label: 'Lookup rule in VirusTotal',
+    icon: 'vt-icon',
+    target: '_blank',
+    url: selectedNode.value.vturl,
+  },
+]);
+
+const onRightClick = (event, instance) => {
+  if (instance.node.data.source) {
+    selectedNode.value = instance.node;
+    // contrust capa-rules url
+    selectedNode.value.url = `https://github.com/mandiant/capa-rules/blob/master/${instance.node.data.namespace || 'lib'}/${instance.node.data.name.toLowerCase().replace(/\s+/g, '-')}.yml`
+    // construct VirusTotal deep link
+    const behaviourSignature = `behaviour_signature:"${instance.node.data.name}"`;
+    selectedNode.value.vturl = `https://www.virustotal.com/gui/search/${behaviourSignature}/files`
+
+    menu.value.show(event);
   }
-}
+};
 
 /* 
  * Expand node on click 
@@ -217,19 +238,15 @@ const togglableColumns = ref([
   { field: 'address', header: 'Address' },
   { field: 'namespace', header: 'Namespace' },
   { field: 'tactic', header: 'ATT&CK Tactic' },
-  { field: 'mbc', header: 'Malware Behaviour Catalogue' },
-  { field: 'source', header: 'Source' }
+  { field: 'mbc', header: 'Malware Behaviour Catalogue' }
 ])
 
 // Define initially visible columns (excluding 'mbc' and 'address')
 const visibleColumns = ref(
-  togglableColumns.value.filter((col) => col.field !== 'mbc' && col.field !== 'address')
+  togglableColumns.value
+  //togglableColumns.value.filter((col) => col.field !== 'mbc' && col.field !== 'address')
   //togglableColumns.value.filter((col) => col.field !== 'address')
 )
-
-const onToggle = (val) => {
-  visibleColumns.value = togglableColumns.value.filter((col) => val.includes(col))
-}
 
 // Filter out the treeData for showing/hiding lib rules
 const filteredTreeData = computed(() => {
@@ -255,28 +272,6 @@ const showSource = (source) => {
   sourceDialogVisible.value = true
 }
 
-// Expand/Collapse All nodes
-const toggleAll = () => {
-  const anyRootExpanded = treeData.value.some((rootNode) => expandedKeys.value[rootNode.key])
-
-  if (!anyRootExpanded) {
-    // Expand all root nodes and their first match node
-    treeData.value.forEach((rootNode) => {
-      expandedKeys.value[rootNode.key] = true
-      if (rootNode.children && rootNode.children.length > 0) {
-        // Expand only the first match node
-        expandedKeys.value[rootNode.children[0].key] = true
-        // Expand all children of the first match node
-        expandAllChildren(rootNode.children[0])
-      }
-    })
-  } else {
-    // Collapse only root
-    treeData.value.forEach((rootNode) => {
-      expandedKeys.value[rootNode.key] = false
-    })
-  }
-}
 
 onMounted(() => {
   if (props.data && props.data.rules) {
@@ -351,18 +346,15 @@ function createMBCHref(mbc) {
     height: 1.3rem;
 }
 
-/* Make all matches nodes (i.e. not rule names) slightly smaller */
-.p-treetable-tbody > tr:not(:is([aria-level='1'])) > td {
+/* Make all matches nodes (i.e. not rule names) slightly smaller,
+and tighten up the spacing between the rows  */
+:deep(.p-treetable-tbody > tr:not([aria-level='1']) > td) {
   font-size: 0.95rem;
+  padding: 0rem 0.5rem !important;
 }
 
 /* Optional: Add a subtle background to root-level rows for better distinction  */
 :deep(.p-treetable-tbody > tr[aria-level='1']) {
   background-color: #f9f9f9;
-}
-
-/* tighten up the spacing between rows */
-:deep(.p-treetable-tbody > tr > td) {
-  padding: 0rem 0.5rem !important;
 }
 </style>

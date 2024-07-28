@@ -21,6 +21,7 @@ import Checkbox from 'primevue/checkbox'
 import FloatLabel from 'primevue/floatlabel'
 import Tooltip from 'primevue/tooltip'
 import Divider from 'primevue/divider'
+import ContextMenu from 'primevue/contextmenu'
 import ToastService from 'primevue/toastservice'
 import Toast from 'primevue/toast'
 import router from './router'
@@ -102,5 +103,6 @@ app.component('MenuBar', MenuBar)
 app.component('Checkbox', Checkbox)
 app.component('FloatLabel', FloatLabel)
 app.component('Column', Column)
+app.component('ContextMenu', ContextMenu)
 
 app.mount('#app')
