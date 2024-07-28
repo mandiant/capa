@@ -1,18 +1,20 @@
 <template>
   <div class="card">
     <TreeTable
-      :value="filteredTreeData"
+      :value="filteredTreeData" 
       v-model:expandedKeys="expandedKeys"
       size="small"
       :filters="filters"
-      :filterMode="filterMode.value"
+      :filterMode="filterMode.value"  
       sortField="namespace"
       :sortOrder="-1"
       removableSort
       :rowHover="true"
       :indentation="1.3"
-      v-model:selectionKeys="selectedNodeKeys"
-      @node-expand="onNodeExpand"
+      selectionMode="single"
+      @nodeExpand="onNodeSelect"
+      @nodeSelect="onNodeSelect"
+      :metaKeySelection="false"
     >
       <template #header>
         <div
@@ -178,31 +180,6 @@ const filterMode = ref({ value: 'lenient' })
 const sourceDialogVisible = ref(false)
 const currentSource = ref('')
 const expandedKeys = ref({})
-const selectedNodeKeys = ref([])
-
-// Function to handle node expansion
-// If one match is is expanded,
-// it will collapse all the others
-const onNodeExpand = (event) => {
-  const expandedNodeKey = event.key
-  const keyParts = expandedNodeKey.split('-')
-
-  // Check if the expanded node is a match node (key format: n-m)
-  if (keyParts.length === 2) {
-    const parentKey = keyParts[0]
-
-    // Collapse all sibling match nodes
-    Object.keys(expandedKeys.value).forEach((key) => {
-      if (
-        key.startsWith(parentKey + '-') &&
-        key.split('-').length == 2 &&
-        key !== expandedNodeKey
-      ) {
-        expandedKeys.value[key] = false
-      }
-    })
-  }
-}
 
 // Function to expand all children of a node
 const expandAllChildren = (node) => {
@@ -214,11 +191,32 @@ const expandAllChildren = (node) => {
   }
 }
 
+/* 
+ * Expand node on click 
+ */
+const onNodeSelect = (node) => {
+  const nodeKey = node.key;
+  const nodeType = node.data.type;
+
+  if (nodeType === 'rule') {
+    // For rule nodes, clear existing expanded keys and set the clicked rule as expanded
+    // expand the first (child) match by default 
+    expandedKeys.value = { [nodeKey]: true, [`${nodeKey}-0`]: true };
+  } else if (nodeType === 'match location') {
+    // For match location nodes, we need to keep the parent expanded
+    // and toggle the clicked node while collapsing siblings
+    const [parentKey, _] = nodeKey.split('-');
+    expandedKeys.value = { [parentKey]: true, [`${nodeKey}`]: true};
+  } else {
+    return
+  }
+};
+
 // All available columns
 const togglableColumns = ref([
   { field: 'address', header: 'Address' },
-  { field: 'tactic', header: 'ATT&CK Tactic' },
   { field: 'namespace', header: 'Namespace' },
+  { field: 'tactic', header: 'ATT&CK Tactic' },
   { field: 'mbc', header: 'Malware Behaviour Catalogue' },
   { field: 'source', header: 'Source' }
 ])
@@ -226,6 +224,7 @@ const togglableColumns = ref([
 // Define initially visible columns (excluding 'mbc' and 'address')
 const visibleColumns = ref(
   togglableColumns.value.filter((col) => col.field !== 'mbc' && col.field !== 'address')
+  //togglableColumns.value.filter((col) => col.field !== 'address')
 )
 
 const onToggle = (val) => {
@@ -282,19 +281,6 @@ const toggleAll = () => {
 onMounted(() => {
   if (props.data && props.data.rules) {
     treeData.value = parseRules(props.data.rules, props.data.meta.flavor)
-    expandedKeys.value = {}
-    treeData.value.forEach((rootNode) => {
-      expandedKeys.value[rootNode.key] = false
-      if (rootNode.children) {
-        rootNode.children.forEach((matchNode) => {
-          expandedKeys.value[matchNode.key] = false
-          if (matchNode.children) {
-            expandAllChildren(matchNode)
-          }
-        })
-        expandedKeys.value[rootNode.children[0].key] = true
-      }
-    })
   } else {
     console.error('Invalid data prop:', props.data)
   }
@@ -357,6 +343,11 @@ function createMBCHref(mbc) {
 /* Disable the toggle button for statement and features */
 :deep(.p-treetable-tbody > tr:not(:is([aria-level='1'], [aria-level='2'])) > td > div > .p-treetable-node-toggle-button) {
     visibility: hidden !important;
+    height: 1.3rem;
+}
+/* Disable the toggle button for rules */
+:deep(.p-treetable-tbody > tr:is([aria-level='1']) > td > div > .p-treetable-node-toggle-button) {
+    visibility: collapse !important;
     height: 1.3rem;
 }
 

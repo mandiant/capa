@@ -56,7 +56,7 @@ export function parseRules(rules, flavor) {
                 ? `${formatStaticAddress(match[0].value)}`
                 : formatDynamicAddress(match[0].value),
           },
-          children: [parseNode(match[1], `${matchKey}-0`, rules, rule.meta.lib)]
+          children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib)]
         }
         matchCounter++
         return matchNode
@@ -219,8 +219,6 @@ function parseNode(node, key, rules, lib) {
     return null
   }
 
-  let childCounter = 0
-
   const result = {
     key: key,
     data: {
@@ -241,10 +239,7 @@ function parseNode(node, key, rules, lib) {
   if (processedNode.children && Array.isArray(processedNode.children)) {
     result.children = processedNode.children
       .map((child) => {
-        const childNode = parseNode(child, `${key}-${childCounter}`, rules, lib)
-        if (childNode) {
-          childCounter++
-        }
+        const childNode = parseNode(child, `${key}`, rules, lib)
         return childNode
       })
       .filter((child) => child !== null)
