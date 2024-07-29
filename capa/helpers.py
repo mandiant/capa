@@ -253,7 +253,9 @@ def log_unsupported_vmray_report_error(error: str):
     logger.error("-" * 80)
     logger.error(" Input file is not a valid VMRay analysis archive: %s", error)
     logger.error(" ")
-    logger.error(" capa only supports analyzing VMRay dynamic analysis archives.")
+    logger.error(
+        " capa only supports analyzing VMRay dynamic analysis archives containing summary_v2.json and flog.xml log files."
+    )
     logger.error(" Please make sure you have downloaded a dynamic analysis archive from VMRay.")
     logger.error("-" * 80)
 
