@@ -35,8 +35,7 @@ def extract_arch(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
     elif "x86-64" in file_type:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        logger.warning("unrecognized arch: %s", file_type)
-        raise ValueError(f"unrecognized arch from the VMRay report: {file_type}")
+        raise ValueError("unrecognized arch from the VMRay report: %s" % file_type)
 
 
 def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
@@ -46,8 +45,7 @@ def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]
     elif analysis.sample_file_static_data.elf:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
-        logger.warning("unrecognized file format: %s", analysis.file_type)
-        raise ValueError(f"unrecognized file format from the VMRay report: {analysis.file_type}")
+        raise ValueError("unrecognized file format from the VMRay report: %s" % analysis.file_type)
 
 
 def extract_os(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
@@ -58,8 +56,7 @@ def extract_os(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
     elif "linux" in file_type.lower():
         yield OS(OS_LINUX), NO_ADDRESS
     else:
-        logger.warning("unrecognized OS: %s", file_type)
-        raise ValueError(f"unrecognized OS from the VMRay report: {file_type}")
+        raise ValueError("unrecognized OS from the VMRay report: %s" % file_type)
 
 
 def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:

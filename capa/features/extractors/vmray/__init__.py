@@ -39,7 +39,7 @@ class VMRayAnalysis:
 
         if self.flog.analysis.log_version not in SUPPORTED_FLOG_VERSIONS:
             raise UnsupportedFormatError(
-                "VMRay feature extractor does not support flog version %s", self.flog.analysis.log_version
+                "VMRay feature extractor does not support flog version %s" % self.flog.analysis.log_version
             )
 
         self.exports: Dict[int, str] = {}
@@ -57,14 +57,14 @@ class VMRayAnalysis:
         self._find_sample_file()
 
         if self.sample_file_name is None or self.sample_file_analysis is None:
-            raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)", self.file_type)
+            raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)" % self.file_type)
 
         if not self.sample_file_static_data:
-            raise UnsupportedFormatError("VMRay archive does not contain static data (file_type: %s)", self.file_type)
+            raise UnsupportedFormatError("VMRay archive does not contain static data (file_type: %s)" % self.file_type)
 
         if not self.sample_file_static_data.pe and not self.sample_file_static_data.elf:
             raise UnsupportedFormatError(
-                "VMRay feature extractor only supports PE and ELF at this time (file_type: %s)", self.file_type
+                "VMRay feature extractor only supports PE and ELF at this time (file_type: %s)" % self.file_type
             )
 
         # VMRay does not store static strings for the sample file so we must use the source file
