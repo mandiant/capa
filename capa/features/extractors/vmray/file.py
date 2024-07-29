@@ -43,8 +43,8 @@ def extract_export_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Add
 
 
 def extract_import_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
-    for addr, name in analysis.imports.items():
-        for symbol in generate_symbols(name[0], name[1], include_dll=True):
+    for addr, (module, api) in analysis.imports.items():
+        for symbol in generate_symbols(module, api, include_dll=True):
             yield Import(symbol), AbsoluteVirtualAddress(addr)
 
 
