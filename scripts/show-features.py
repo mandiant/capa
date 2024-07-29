@@ -258,9 +258,6 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
                     if isinstance(feature, (Number, String)):
                         arguments.append(str(feature.value))
 
-                # if not apis:
-                #    print(f"    arguments=[{', '.join(arguments)}]")
-
                 for cid, api in apis:
                     print(f"    call {cid}: {api}({', '.join(arguments)})")
 
