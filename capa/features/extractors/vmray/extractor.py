@@ -27,7 +27,7 @@ from capa.features.extractors.base_extractor import (
 )
 
 
-def format_params(params: ParamList) -> List[str]:
+def get_formatted_params(params: ParamList) -> List[str]:
     params_list: List[str] = []
 
     for param in params:
@@ -107,13 +107,13 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
         # format input parameters
         if call.params_in:
-            call_formatted += f"({', '.join(format_params(call.params_in.params))})"
+            call_formatted += f"({', '.join(get_formatted_params(call.params_in.params))})"
         else:
             call_formatted += "()"
 
         # format output parameters
         if call.params_out:
-            call_formatted += f" -> {', '.join(format_params(call.params_out.params))}"
+            call_formatted += f" -> {', '.join(get_formatted_params(call.params_out.params))}"
 
         return call_formatted
 
