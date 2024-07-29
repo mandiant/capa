@@ -49,11 +49,11 @@ export function parseRules(rules, flavor) {
             type: 'match location',
             name:
               flavor === 'static'
-                ? `${rule.meta.scopes.static} @ ${formatStaticAddress(match[0].value)}`
+                ? `${rule.meta.scopes.static} @ ${formatHex(match[0].value)}`
                 : `${formatDynamicAddress(match[0].value)}`,
             address:
               flavor === 'static'
-                ? `${formatStaticAddress(match[0].value)}`
+                ? `${formatHex(match[0].value)}`
                 : formatDynamicAddress(match[0].value),
           },
           children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib)]
@@ -259,7 +259,60 @@ function parseNode(node, key, rules, lib) {
     if (result.children.length === 0) return null
   }
 
+  if (processedNode.node.feature && processedNode.node.feature.type === 'regex') {
+    result.children = processRegexCaptures(processedNode, key);
+  } 
+
   return result
+}
+
+function processRegexCaptures(node, key) {
+  if (!node.captures) return [];
+
+  return Object.entries(node.captures).map(([capture, locations]) => ({
+    key: key,
+    data: {
+      type: 'regex-capture',
+      name: `"${escape(capture)}"`,
+      address: formatAddress(locations[0])
+    }
+  }));
+}
+
+function formatAddress(address) {
+  switch (address.type) {
+    case 'absolute':
+      return formatHex(address.value);
+    case 'relative':
+      return `base address+${formatHex(address.value)}`;
+    case 'file':
+      return `file+${formatHex(address.value)}`;
+    case 'dn_token':
+      return `token(${formatHex(address.value)})`;
+    case 'dn_token_offset':
+      const [token, offset] = address.value;
+      return `token(${formatHex(token)})+${formatHex(offset)}`;
+    case 'process':
+      //const [ppid, pid] = address.value;
+      //return `process{pid:${pid}}`;
+      return formatDynamicAddress(address.value);
+    case 'thread':
+      //const [threadPpid, threadPid, tid] = address.value;
+      //return `process{pid:${threadPid},tid:${tid}}`;
+      return formatDynamicAddress(address.value);
+    case 'call':
+      //const [callPpid, callPid, callTid, id] = address.value;
+      //return `process{pid:${callPid},tid:${callTid},call:${id}}`;
+      return formatDynamicAddress(address.value);
+    case 'no address':
+      return '';
+    default:
+      throw new Error('Unexpected address type');
+  }
+}
+
+function escape(str) {
+  return str.replace(/"/g, '\\"');
 }
 
 /**
@@ -381,9 +434,12 @@ function getRangeName(statement) {
  * @returns {string|null} The formatted address or null if not found
  */
 function getNodeAddress(node) {
-  if (node.locations && node.locations.length > 0 && node.locations[0].type === 'absolute') {
+  if (node.node.feature && node.node.feature.type === 'regex') return null
+  if (node.locations && node.locations.length > 0) {
     // for example: 0x400000
-    return `0x${node.locations[0].value.toString(16).toUpperCase()}`
+    //return `0x${node.locations[0].value.toString(16).toUpperCase()}`
+    console.log(node.locations[0])
+    return formatAddress(node.locations[0]);
   }
   return null
 }
@@ -414,6 +470,6 @@ function formatDynamicAddress(value) {
     .join(' ← ')
 }
 
-function formatStaticAddress(address) {
+function formatHex(address) {
   return `0x${address.toString(16).toUpperCase()}`
 }

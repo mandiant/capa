@@ -63,7 +63,7 @@
           props.data.meta.flavor === 'dynamic' && col.field === 'address' ? 'Process' : col.header
         "
         :sortable="col.field !== 'source'"
-        :class="{ 'w-3': col.field === 'mbc' }"
+        :class="{ 'w-3': col.field === 'mbc', 'w-full': col.field === 'name' }"
         filterMatchMode="contains"
       >
         <!-- Filter template -->
@@ -78,7 +78,7 @@
         <!-- Address column body template -->
         <template v-if="col.field === 'address'" #body="slotProps">
           <span style="font-family: monospace">
-          {{ slotProps.node.data.address }}
+          {{  slotProps.node.data.type === 'match location' ? "" : slotProps.node.data.address}}
           </span>
         </template>
 

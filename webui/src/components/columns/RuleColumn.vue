@@ -12,7 +12,10 @@
         </span>
       </template>
       <template v-else-if="node.data.type === 'feature'">
-        <span>- {{ node.data.typeValue }}: <span class="text-green-700" style="font-family: monospace;">{{ node.data.name }}</span></span>
+        <span>- {{ node.data.typeValue }}: <span :class="{'text-green-700': node.data.typeValue !== 'regex'}" style="font-family: monospace;">{{ node.data.name }}</span></span>
+      </template>
+      <template v-else-if="node.data.type === 'regex-capture'">
+        - <span class="text-green-700" style="font-family: monospace;">{{ node.data.name }}</span>
       </template>
       <span v-if="node.data.description" class="text-gray-500 text-sm" style="font-size: 90%;">
         = {{ node.data.description }}
