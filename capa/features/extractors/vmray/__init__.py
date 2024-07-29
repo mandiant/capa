@@ -56,6 +56,9 @@ class VMRayAnalysis:
 
         self._find_sample_file()
 
+        # VMRay analysis archives in various shapes and sizes and file type does not definitively tell us what data
+        # we can expect to find in the archive, so to be explicit we check for the various pieces that we need at
+        # minimum to run capa analysis
         if self.sample_file_name is None or self.sample_file_analysis is None:
             raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)" % self.file_type)
 
