@@ -7,7 +7,6 @@
       sortMode="single"
       removableSort
       size="small"
-      :sortOrder="1"
       :filters="filters"
       :rowHover="true"
       :filterMode="filterMode"
@@ -20,14 +19,14 @@
 
       <Column field="funcaddr" sortable header="Function Address" :rowspan="3" class="w-min">
         <template #body="slotProps">
-          {{ slotProps.data.funcaddr }}
-          <span v-if="slotProps.data.matchcount > 1" class="font-italic">
-            ({{ slotProps.data.matchcount }} matches)
+          <span style="font-family: monospace">{{ slotProps.data.funcaddr }}</span>
+          <span v-if="slotProps.data.matchCount > 1" class="font-italic">
+            ({{ slotProps.data.matchCount }} matches)
           </span>
         </template>
       </Column>
 
-      <Column field="ruleName" sortable header="Matches" class="w-min">
+      <Column field="ruleName" header="Matches" class="w-min">
         <template #body="slotProps">
           {{ slotProps.data.ruleName }}
           <LibraryTag
@@ -36,21 +35,7 @@
         </template>
       </Column>
 
-      <Column field="namespace" sortable header="Namespace"></Column>
-
-      <Column field="source" header="Source">
-        <template #body="slotProps">
-          <Button
-            v-if="slotProps.data.source"
-            rounded
-            icon="pi pi-external-link"
-            size="small"
-            severity="secondary"
-            style="height: 1.5rem; width: 1.5rem"
-            @click="showSource(slotProps.data.source)"
-          />
-        </template>
-      </Column>
+      <Column field="namespace" header="Namespace"></Column>
     </DataTable>
 
     <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
@@ -64,7 +49,6 @@ import { ref, computed } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
 import LibraryTag from './misc/LibraryTag.vue'
 import InputText from 'primevue/inputtext'
 

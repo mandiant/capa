@@ -75,55 +75,91 @@ export function parseRules(rules, flavor) {
  */
 export function parseFunctionCapabilities(data, showLibraryRules) {
   const result = [];
-  let id = 0;
+  const matchesByFunction = new Map();
 
-  // Iterate through each function in the metadata
-  for (const functionInfo of data.meta.analysis.layout.functions) {
-    // Convert function address to uppercase hexadecimal string
-    const functionAddress = functionInfo.address.value.toString(16).toUpperCase();
-    const matchingRules = [];
-
-    // Iterate through all rules in the data
-    for (const ruleId in data.rules) {
-      const rule = data.rules[ruleId];
-
-      // Skip library rules if showLibraryRules is false
-      if (!showLibraryRules && rule.meta.lib) {
-        continue;
-      }
-
-      // Find matches for this rule within the current function
-      const matches = rule.matches.filter((match) =>
-        // Check if any of the function's basic blocks match the rule
-        functionInfo.matched_basic_blocks.some((block) => block.address.value === match[0].value)
-      );
-
-      // If there are matches, add this rule to the matchingRules array
-      if (matches.length > 0) {
-        matchingRules.push({
-          ruleName: rule.meta.name,
-          lib: rule.meta.lib,
-          namespace: rule.meta.namespace,
-          source: rule.source
-        });
-      }
-    }
-
-    // If there are matching rules for this function, add it to the result
-    if (matchingRules.length > 0) {
-      // Add each matching rule as a separate row
-      matchingRules.forEach(rule => {
-        result.push({
-          id: id++,
-          funcaddr: `0x${functionAddress}`,
-          matchcount: matchingRules.length,
-          ...rule
-        });
-      });
+  // Create a map of basic blocks to functions
+  const functionsByBB = new Map();
+  for (const func of data.meta.analysis.layout.functions) {
+    const funcAddress = func.address.value;
+    for (const bb of func.matched_basic_blocks) {
+      functionsByBB.set(bb.address.value, funcAddress);
     }
   }
 
-  return result;
+  // Iterate through all rules in the data
+  for (const ruleId in data.rules) {
+    const rule = data.rules[ruleId];
+
+    // Skip library rules if showLibraryRules is false
+    if (!showLibraryRules && rule.meta.lib) {
+      continue;
+    }
+
+    if (rule.meta.scopes.static === 'function') {
+      // Function scope
+      for (const [addr] of rule.matches) {
+        const funcAddr = addr.value;
+        if (!matchesByFunction.has(funcAddr)) {
+          matchesByFunction.set(funcAddr, new Map());
+        }
+        const funcMatches = matchesByFunction.get(funcAddr);
+        funcMatches.set(rule.meta.name, {
+          count: (funcMatches.get(rule.meta.name)?.count || 0) + 1,
+          namespace: rule.meta.namespace,
+          lib: rule.meta.lib
+        });
+      }
+    } else if (rule.meta.scopes.static === 'basic block') {
+      // Basic block scope
+      for (const [addr] of rule.matches) {
+        const bbAddr = addr.value;
+        const funcAddr = functionsByBB.get(bbAddr);
+        if (funcAddr) {
+          if (!matchesByFunction.has(funcAddr)) {
+            matchesByFunction.set(funcAddr, new Map());
+          }
+          const funcMatches = matchesByFunction.get(funcAddr);
+          funcMatches.set(rule.meta.name, {
+            count: (funcMatches.get(rule.meta.name)?.count || 0) + 1,
+            namespace: rule.meta.namespace,
+            lib: rule.meta.lib
+          });
+        }
+      }
+    }
+  }
+
+  // Convert the matchesByFunction map to the intermediate result array
+  for (const [funcAddr, matches] of matchesByFunction) {
+    const functionAddress = funcAddr.toString(16).toUpperCase();
+    const matchingRules = Array.from(matches, ([ruleName, data]) => ({
+      ruleName,
+      matchCount: data.count,
+      namespace: data.namespace,
+      lib: data.lib
+    }));
+
+    result.push({
+      funcaddr: `0x${functionAddress}`,
+      matchCount: matchingRules.length,
+      capabilities: matchingRules,
+      lib: data.lib
+    });
+  }
+
+  // Transform the intermediate result into the final format
+  const finalResult = result.flatMap(func => 
+    func.capabilities.map(cap => ({
+      funcaddr: func.funcaddr,
+      matchCount: func.matchCount,
+      ruleName: cap.ruleName,
+      ruleMatchCount: cap.matchCount,
+      namespace: cap.namespace,
+      lib: cap.lib,
+    }))
+  );
+
+  return finalResult;
 }
 
 /**
@@ -436,9 +472,6 @@ function getRangeName(statement) {
 function getNodeAddress(node) {
   if (node.node.feature && node.node.feature.type === 'regex') return null
   if (node.locations && node.locations.length > 0) {
-    // for example: 0x400000
-    //return `0x${node.locations[0].value.toString(16).toUpperCase()}`
-    console.log(node.locations[0])
     return formatAddress(node.locations[0]);
   }
   return null
