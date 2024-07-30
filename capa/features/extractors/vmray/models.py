@@ -74,7 +74,7 @@ def validate_hex_int(value: Union[str, int]) -> int:
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 
 
-# models flog.xml file
+# models flog.xml file, certain fields left as comments for documentation purposes
 class ParamDeref(BaseModel):
     type_: str = Field(alias="type")
     value: Optional[str] = None
@@ -150,7 +150,7 @@ class Flog(BaseModel):
     analysis: Analysis
 
 
-# models for summary_v2.json file
+# models for summary_v2.json file, certain fields left as comments for documentation purposes
 class GenericReference(BaseModel):
     path: List[str]
     source: str
