@@ -4,7 +4,7 @@
       {{ node.data.name }}
     </template>
     <template v-else-if="node.data.type === 'match location'">
-      <span class="text-sm font-italic">{{ node.data.name.processName || node.data.name }}</span>
+      <span class="text-sm font-italic">{{ node.data.name }}</span>
     </template>
     <template v-else-if="node.data.type === 'statement'"
       >-

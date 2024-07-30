@@ -29,9 +29,7 @@
       <Column field="ruleName" header="Matches" class="w-min">
         <template #body="slotProps">
           {{ slotProps.data.ruleName }}
-          <LibraryTag
-            v-if="slotProps.data.lib"
-            />
+          <LibraryTag v-if="slotProps.data.lib" />
         </template>
       </Column>
 
@@ -39,7 +37,7 @@
     </DataTable>
 
     <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
-      <highlightjs lang="yml" :code="currentSource" />
+      <highlightjs lang="yml" :code="currentSource" class="bg-white" />
     </Dialog>
   </div>
 </template>
@@ -64,7 +62,7 @@ const props = defineProps({
 })
 
 const filters = ref({
-  'global': { value: null, matchMode: 'contains' },
+  global: { value: null, matchMode: 'contains' }
 })
 const filterMode = ref('lenient')
 const sourceDialogVisible = ref(false)

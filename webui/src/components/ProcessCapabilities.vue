@@ -17,14 +17,16 @@
             @mouseenter="showTooltip($event, slotProps.node)"
             @mouseleave="hideTooltip"
           >
-            <span class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-20rem" style="font-family: monospace;">
+            <span
+              class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-20rem"
+              style="font-family: monospace"
+            >
               {{ slotProps.node.data.processname }}
             </span>
-            <span class="ml-2">
-              - PID: {{ slotProps.node.data.pid }}
-            </span>
+            <span class="ml-2"> - PID: {{ slotProps.node.data.pid }} </span>
             <span v-if="slotProps.node.data.uniqueMatchCount > 0" class="font-italic ml-2">
-              ({{ slotProps.node.data.uniqueMatchCount }} unique {{ slotProps.node.data.uniqueMatchCount > 1 ? 'matches' : 'match' }})
+              ({{ slotProps.node.data.uniqueMatchCount }} unique
+              {{ slotProps.node.data.uniqueMatchCount > 1 ? 'matches' : 'match' }})
             </span>
           </span>
         </template>
@@ -45,9 +47,16 @@
       </Column>
     </TreeTable>
 
-    <div v-if="tooltipVisible" class="fixed bg-gray-800 text-white p-3 border-round-sm z-5 max-w-50rem shadow-2" :style="tooltipStyle">
+    <div
+      v-if="tooltipVisible"
+      class="fixed bg-gray-800 text-white p-3 border-round-sm z-5 max-w-50rem shadow-2"
+      :style="tooltipStyle"
+    >
       <div v-for="rule in currentNode.data.uniqueRules" :key="rule.name">
-        •  {{ rule.name }} <span class="font-italic">({{ rule.matchCount }} {{ rule.scope }} {{ rule.matchCount > 1 ? 'matches' : 'match' }})</span>
+        • {{ rule.name }}
+        <span class="font-italic"
+          >({{ rule.matchCount }} {{ rule.scope }} {{ rule.matchCount > 1 ? 'matches' : 'match' }})</span
+        >
         <LibraryTag v-if="rule.lib" />
       </div>
     </div>
@@ -78,24 +87,30 @@ const currentNode = ref(null)
 const tooltipStyle = ref({
   position: 'fixed',
   top: '0px',
-  left: '0px',
+  left: '0px'
 })
 
 const getProcessIds = (location) => {
   if (!location || location.type === 'no address') {
-    return null;
+    return null
   }
   if (Array.isArray(location.value) && location.value.length >= 2) {
     return {
       ppid: location.value[0],
       pid: location.value[1]
-    };
+    }
   }
-  return null;
+  return null
 }
 
 const processTree = computed(() => {
-  if (!props.data || !props.data.meta || !props.data.meta.analysis || !props.data.meta.analysis.layout || !props.data.meta.analysis.layout.processes) {
+  if (
+    !props.data ||
+    !props.data.meta ||
+    !props.data.meta.analysis ||
+    !props.data.meta.analysis.layout ||
+    !props.data.meta.analysis.layout.processes
+  ) {
     console.error('Invalid data structure')
     return []
   }
@@ -105,7 +120,7 @@ const processTree = computed(() => {
   const processMap = new Map()
 
   // create all process nodes
-  processes.forEach(process => {
+  processes.forEach((process) => {
     if (!process.address || !Array.isArray(process.address.value) || process.address.value.length < 2) {
       console.warn('Invalid process structure', process)
       return
@@ -118,7 +133,7 @@ const processTree = computed(() => {
         pid,
         ppid,
         uniqueMatchCount: 0,
-        uniqueRules: new Map(),
+        uniqueRules: new Map()
       },
       children: []
     })
@@ -129,7 +144,7 @@ const processTree = computed(() => {
     if (!props.showLibraryRules && rule.meta && rule.meta.lib) return
     if (!rule.matches || !Array.isArray(rule.matches)) return
 
-    rule.matches.forEach(match => {
+    rule.matches.forEach((match) => {
       if (!Array.isArray(match) || match.length === 0) return
       const [location] = match
       const ids = getProcessIds(location)
@@ -188,7 +203,7 @@ const updateTooltipPosition = (event) => {
   tooltipStyle.value = {
     position: 'fixed',
     top: `${event.clientY + offset}px`,
-    left: `${event.clientX + offset}px`,
+    left: `${event.clientX + offset}px`
   }
 }
 
