@@ -55,7 +55,7 @@
 
         <!-- Address column body template -->
         <template v-if="col.field === 'address'" #body="slotProps">
-          <span style="font-family: monospace">
+          <span class="text-sm" style="font-family: monospace">
             {{ slotProps.node.data.type === 'match location' ? '' : slotProps.node.data.address }}
           </span>
         </template>
@@ -120,6 +120,8 @@
 </template>
 
 <script setup>
+import 'highlight.js/styles/stackoverflow-light.css'
+
 import { ref, onMounted, computed } from 'vue'
 import TreeTable from 'primevue/treetable'
 import InputText from 'primevue/inputtext'

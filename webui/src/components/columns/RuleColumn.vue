@@ -4,7 +4,7 @@
       {{ node.data.name }}
     </template>
     <template v-else-if="node.data.type === 'match location'">
-      <span class="text-sm font-italic">{{ node.data.name }}</span>
+      <span class="text-sm font-italic">{{ node.data.name.processName || node.data.name }}</span>
     </template>
     <template v-else-if="node.data.type === 'statement'"
       >-
@@ -26,8 +26,7 @@
       - <span class="text-green-700" style="font-family: monospace">{{ node.data.name }}</span>
     </template>
     <template v-else-if="node.data.type === 'call-info'">
-      <!-- <code class="text-gray-700">{{ node.data.name }}</code> -->
-      <highlightjs lang="c" :code="node.data.name" />
+      <highlightjs lang="c" :code="node.data.name.callInfo" style="background-color: #f0f0f0" />
     </template>
     <span v-if="node.data.description" class="text-gray-500 text-sm" style="font-size: 90%">
       = {{ node.data.description }}

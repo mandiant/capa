@@ -339,9 +339,9 @@ function getCallInfo(node, layout) {
   }
   s.push(`)${returnValueWithParen}`);
 
-  const callInfo = `${pname}{pid:${pid},tid:${tid},call:${callId}}\n${s.join('\n')}`;
+  //const callInfo = `${pname}{pid:${pid},tid:${tid},call:${callId}}\n${s.join('\n')}`;
 
-  return callInfo;
+  return {processName: pname, callInfo: s.join('\n')};
 }
 
 /**
