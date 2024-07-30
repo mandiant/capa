@@ -3,7 +3,7 @@
  * @param {Object} rules - The rules object from the rodc JSON data
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
-export function parseRules(rules, flavor) {
+export function parseRules(rules, flavor, layout) {
   return Object.entries(rules).map(([ruleName, rule], index) => {
     const ruleNode = {
       key: index.toString(),
@@ -34,7 +34,7 @@ export function parseRules(rules, flavor) {
     if (isFileScope) {
       // The scope for the rule is a file, so we don't need to show the match location address
       ruleNode.children = rule.matches.map((match, matchIndex) => {
-        return parseNode(match[1], `${index}-${matchIndex}`, rules, rule.meta.lib)
+        return parseNode(match[1], `${index}-${matchIndex}`, rules, rule.meta.lib, layout)
       })
     } else {
       // This is not a file-level match scope, we need to create intermediate nodes for each match
@@ -56,7 +56,7 @@ export function parseRules(rules, flavor) {
                 ? `${formatHex(match[0].value)}`
                 : formatDynamicAddress(match[0].value),
           },
-          children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib)]
+          children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib, layout)]
         }
         matchCounter++
         return matchNode
@@ -245,7 +245,7 @@ export function parseProcessCapabilities(data, showLibraryRules) {
  * @param {boolean} lib - Whether this is a library rule
  * @returns {Object} - Parsed node data
  */
-function parseNode(node, key, rules, lib) {
+function parseNode(node, key, rules, lib, layout) {
   if (!node) return null
 
   const isNotStatement = node.node.statement && node.node.statement.type === 'not'
@@ -275,7 +275,7 @@ function parseNode(node, key, rules, lib) {
   if (processedNode.children && Array.isArray(processedNode.children)) {
     result.children = processedNode.children
       .map((child) => {
-        const childNode = parseNode(child, `${key}`, rules, lib)
+        const childNode = parseNode(child, `${key}`, rules, lib, layout)
         return childNode
       })
       .filter((child) => child !== null)
@@ -297,9 +297,188 @@ function parseNode(node, key, rules, lib) {
 
   if (processedNode.node.feature && processedNode.node.feature.type === 'regex') {
     result.children = processRegexCaptures(processedNode, key);
-  } 
+  }
+
+  // Add call information for dynamic sandbox traces
+  if (processedNode.node.feature && processedNode.node.feature.type === 'api') {
+    const callInfo = getCallInfo(node, layout)
+    if (callInfo) {
+    result.children.push({
+      key: key,
+      data: {
+        type: 'call-info',
+        name: callInfo
+      },
+      children: []
+    });
+    }
+  }
 
   return result
+}
+
+function getCallInfo(node, layout) {
+  if (!node.locations || node.locations.length === 0) return null;
+
+  const location = node.locations[0];
+  if (location.type !== 'call') return null;
+
+  const [ppid, pid, tid, callId] = location.value;
+  const callName = node.node.feature.api;
+
+  const pname = getProcessName(layout, location);
+  const cname = getCallName(layout, location);
+
+  const [fname, separator, restWithArgs] = partition(cname, '(');
+  const [args, , returnValueWithParen] = rpartition(restWithArgs, ')');
+
+  const s = [];
+  s.push(`${fname}(`);
+  for (const arg of args.split(', ')) {
+    s.push(`  ${arg},`);
+  }
+  s.push(`)${returnValueWithParen}`);
+
+  const callInfo = `${pname}{pid:${pid},tid:${tid},call:${callId}}\n${s.join('\n')}`;
+
+  return callInfo;
+}
+
+/**
+ * Splits a string into three parts based on the first occurrence of a separator.
+ * This function mimics Python's str.partition() method.
+ *
+ * @param {string} str - The input string to be partitioned.
+ * @param {string} separator - The separator to use for partitioning.
+ * @returns {Array<string>} An array containing three elements:
+ *   1. The part of the string before the separator.
+ *   2. The separator itself.
+ *   3. The part of the string after the separator.
+ *   If the separator is not found, returns [str, '', ''].
+ *
+ * @example
+ * // Returns ["hello", ",", "world"]
+ * partition("hello,world", ",");
+ *
+ * @example
+ * // Returns ["hello world", "", ""]
+ * partition("hello world", ":");
+ */
+function partition(str, separator) {
+  const index = str.indexOf(separator);
+  if (index === -1) {
+    // Separator not found, return original string and two empty strings
+    return [str, '', ''];
+  }
+  return [
+    str.slice(0, index),
+    separator,
+    str.slice(index + separator.length)
+  ];
+}
+
+/**
+ * Get the process name from the layout
+ * @param {Object} layout - The DynamicLayout object
+ * @param {Object} address - The address object containing process information
+ * @returns {string} The process name
+ */
+function getProcessName(layout, address) {
+  if (!layout || !layout.processes || !Array.isArray(layout.processes)) {
+    console.error('Invalid layout structure');
+    return 'Unknown Process';
+  }
+
+  const [ppid, pid] = address.value;
+  
+  for (const process of layout.processes) {
+    if (process.address && 
+        process.address.type === 'process' && 
+        process.address.value && 
+        process.address.value[0] === ppid && 
+        process.address.value[1] === pid) {
+      return process.name || 'Unnamed Process';
+    }
+  }
+
+  return 'Unknown Process';
+}
+
+
+/**
+ * Splits a string into three parts based on the last occurrence of a separator.
+ * This function mimics Python's str.rpartition() method.
+ *
+ * @param {string} str - The input string to be partitioned.
+ * @param {string} separator - The separator to use for partitioning.
+ * @returns {Array<string>} An array containing three elements:
+ *   1. The part of the string before the last occurrence of the separator.
+ *   2. The separator itself.
+ *   3. The part of the string after the last occurrence of the separator.
+ *   If the separator is not found, returns ['', '', str].
+ *
+ * @example
+ * // Returns ["hello,", ",", "world"]
+ * rpartition("hello,world,", ",");
+ *
+ * @example
+ * // Returns ["", "", "hello world"]
+ * rpartition("hello world", ":");
+ */
+function rpartition(str, separator) {
+  const index = str.lastIndexOf(separator);
+  if (index === -1) {
+    // Separator not found, return two empty strings and the original string
+    return ['', '', str];
+  }
+  return [
+    str.slice(0, index),          // Part before the last separator
+    separator,                    // The separator itself
+    str.slice(index + separator.length)  // Part after the last separator
+  ];
+}
+
+/**
+ * Get the call name from the layout
+ * @param {Object} layout - The DynamicLayout object
+ * @param {Object} address - The address object containing call information
+ * @returns {string} The call name with arguments
+ */
+function getCallName(layout, address) {
+  if (!layout || !layout.processes || !Array.isArray(layout.processes)) {
+    console.error('Invalid layout structure');
+    return 'Unknown Call';
+  }
+  
+  const [ppid, pid, tid, callId] = address.value;
+  
+  for (const process of layout.processes) {
+    if (process.address && 
+        process.address.type === 'process' && 
+        process.address.value && 
+        process.address.value[0] === ppid && 
+        process.address.value[1] === pid) {
+      
+      for (const thread of process.matched_threads) {
+        if (thread.address && 
+            thread.address.type === 'thread' && 
+            thread.address.value && 
+            thread.address.value[2] === tid) {
+          
+          for (const call of thread.matched_calls) {
+            if (call.address && 
+                call.address.type === 'call' && 
+                call.address.value && 
+                call.address.value[3] === callId) {
+              return call.name || 'Unnamed Call';
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return 'Unknown Call';
 }
 
 function processRegexCaptures(node, key) {

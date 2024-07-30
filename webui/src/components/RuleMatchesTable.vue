@@ -1,11 +1,11 @@
 <template>
   <div class="card">
     <TreeTable
-      :value="filteredTreeData" 
+      :value="filteredTreeData"
       v-model:expandedKeys="expandedKeys"
       size="small"
       :filters="filters"
-      :filterMode="filterMode.value"  
+      :filterMode="filterMode.value"
       sortField="namespace"
       :sortOrder="-1"
       removableSort
@@ -16,18 +16,12 @@
       @nodeSelect="onNodeSelect"
       :pt="{
         row: ({ instance }) => ({
-          oncontextmenu: (event) => onRightClick(event, instance),
-        }),
+          oncontextmenu: (event) => onRightClick(event, instance)
+        })
       }"
     >
       <template #header>
-        <div
-          style="
-            display: flex;
-            justify-content: end;
-            align-items: center;
-          "
-        >
+        <div style="display: flex; justify-content: end; align-items: center">
           <IconField>
             <InputIcon class="pi pi-search" />
             <InputText v-model="filters['global']" placeholder="Global search" />
@@ -36,19 +30,9 @@
       </template>
 
       <!-- Name column (always visible) -->
-      <Column
-        field="name"
-        header="Rule"
-        :sortable="true"
-        :expander="true"
-        filterMatchMode="contains"
-      >
+      <Column field="name" header="Rule" :sortable="true" :expander="true" filterMatchMode="contains">
         <template #filter>
-          <InputText
-            v-model="filters['name']"
-            type="text"
-            placeholder="Filter by Rule or Feature"
-          />
+          <InputText v-model="filters['name']" type="text" placeholder="Filter by Rule or Feature" />
         </template>
         <template #body="{ node }">
           <RuleColumn :node="node" />
@@ -59,26 +43,20 @@
         v-for="col in visibleColumns"
         :key="col.field"
         :field="col.field"
-        :header="
-          props.data.meta.flavor === 'dynamic' && col.field === 'address' ? 'Process' : col.header
-        "
+        :header="props.data.meta.flavor === 'dynamic' && col.field === 'address' ? 'Process' : col.header"
         :sortable="col.field !== 'source'"
         :class="{ 'w-3': col.field === 'mbc', 'w-full': col.field === 'name' }"
         filterMatchMode="contains"
       >
         <!-- Filter template -->
         <template #filter>
-          <InputText
-            v-model="filters[col.field]"
-            type="text"
-            :placeholder="`Filter by ${col.header}`"
-          />
+          <InputText v-model="filters[col.field]" type="text" :placeholder="`Filter by ${col.header}`" />
         </template>
 
         <!-- Address column body template -->
         <template v-if="col.field === 'address'" #body="slotProps">
           <span style="font-family: monospace">
-          {{  slotProps.node.data.type === 'match location' ? "" : slotProps.node.data.address}}
+            {{ slotProps.node.data.type === 'match location' ? '' : slotProps.node.data.address }}
           </span>
         </template>
 
@@ -95,7 +73,8 @@
                 style="font-size: 0.8em; margin-left: 1em"
               >
                 <a :href="createATTACKHref(technique)" target="_blank">
-                  ↳ {{ technique.technique }} <span class="text-500 text-xs font-normal ml-1">({{ technique.id }})</span>
+                  ↳ {{ technique.technique }}
+                  <span class="text-500 text-xs font-normal ml-1">({{ technique.id }})</span>
                 </a>
               </div>
             </div>
@@ -107,8 +86,9 @@
           <div v-if="slotProps.node.data.mbc">
             <div v-for="(mbc, index) in slotProps.node.data.mbc" :key="index">
               <a :href="createMBCHref(mbc)" target="_blank">
-                {{ mbc.parts.join('::') }} <span class="text-500 text-sm font-normal opacity-80 ml-1">[{{ mbc.id }}]</span>
-                </a>
+                {{ mbc.parts.join('::') }}
+                <span class="text-500 text-sm font-normal opacity-80 ml-1">[{{ mbc.id }}]</span>
+              </a>
             </div>
           </div>
         </template>
@@ -123,15 +103,15 @@
     </TreeTable>
     <ContextMenu ref="menu" :model="contextMenuItems">
       <template #item="{ item, props }">
-      <a v-ripple v-bind="props.action" :href="item.url" :target="item.target">
-        <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
-        <VTIcon v-else-if="item.icon === 'vt-icon'" />
-        <span>{{ item.label }}</span>
-      </a>
-    </template>
+        <a v-ripple v-bind="props.action" :href="item.url" :target="item.target">
+          <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
+          <VTIcon v-else-if="item.icon === 'vt-icon'" />
+          <span>{{ item.label }}</span>
+        </a>
+      </template>
     </ContextMenu>
-    
-    <Toast/>
+
+    <Toast />
 
     <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
       <highlightjs autodetect :code="currentSource" />
@@ -149,10 +129,8 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import ContextMenu from 'primevue/contextmenu'
 
-
-import RuleColumn from './columns/RuleColumn.vue';
-import VTIcon from './misc/VTIcon.vue';
-
+import RuleColumn from './columns/RuleColumn.vue'
+import VTIcon from './misc/VTIcon.vue'
 
 import { parseRules } from '../utils/rdocParser'
 
@@ -174,8 +152,8 @@ const sourceDialogVisible = ref(false)
 const currentSource = ref('')
 const expandedKeys = ref({})
 
-const menu = ref();
-const selectedNode = ref({});
+const menu = ref()
+const selectedNode = ref({})
 
 const contextMenuItems = computed(() => [
   {
@@ -183,55 +161,55 @@ const contextMenuItems = computed(() => [
     icon: 'pi pi-eye',
     command: () => {
       showSource(selectedNode.value.data.source)
-    },
+    }
   },
   {
     label: 'View rule in capa-rules',
     icon: 'pi pi-external-link',
     target: '_blank',
-    url: selectedNode.value.url,
+    url: selectedNode.value.url
   },
   {
     label: 'Lookup rule in VirusTotal',
     icon: 'vt-icon',
     target: '_blank',
-    url: selectedNode.value.vturl,
-  },
-]);
+    url: selectedNode.value.vturl
+  }
+])
 
 const onRightClick = (event, instance) => {
   if (instance.node.data.source) {
-    selectedNode.value = instance.node;
+    selectedNode.value = instance.node
     // contrust capa-rules url
     selectedNode.value.url = `https://github.com/mandiant/capa-rules/blob/master/${instance.node.data.namespace || 'lib'}/${instance.node.data.name.toLowerCase().replace(/\s+/g, '-')}.yml`
     // construct VirusTotal deep link
-    const behaviourSignature = `behaviour_signature:"${instance.node.data.name}"`;
+    const behaviourSignature = `behaviour_signature:"${instance.node.data.name}"`
     selectedNode.value.vturl = `https://www.virustotal.com/gui/search/${behaviourSignature}/files`
 
-    menu.value.show(event);
+    menu.value.show(event)
   }
-};
+}
 
-/* 
- * Expand node on click 
+/*
+ * Expand node on click
  */
 const onNodeSelect = (node) => {
-  const nodeKey = node.key;
-  const nodeType = node.data.type;
+  const nodeKey = node.key
+  const nodeType = node.data.type
 
   if (nodeType === 'rule') {
     // For rule nodes, clear existing expanded keys and set the clicked rule as expanded
-    // expand the first (child) match by default 
-    expandedKeys.value = { [nodeKey]: true, [`${nodeKey}-0`]: true };
+    // expand the first (child) match by default
+    expandedKeys.value = { [nodeKey]: true, [`${nodeKey}-0`]: true }
   } else if (nodeType === 'match location') {
     // For match location nodes, we need to keep the parent expanded
     // and toggle the clicked node while collapsing siblings
-    const [parentKey, _] = nodeKey.split('-');
-    expandedKeys.value = { [parentKey]: true, [`${nodeKey}`]: true};
+    const [parentKey, _] = nodeKey.split('-')
+    expandedKeys.value = { [parentKey]: true, [`${nodeKey}`]: true }
   } else {
     return
   }
-};
+}
 
 // All available columns
 const togglableColumns = ref([
@@ -272,10 +250,9 @@ const showSource = (source) => {
   sourceDialogVisible.value = true
 }
 
-
 onMounted(() => {
   if (props.data && props.data.rules) {
-    treeData.value = parseRules(props.data.rules, props.data.meta.flavor)
+    treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout)
   } else {
     console.error('Invalid data prop:', props.data)
   }
@@ -289,25 +266,25 @@ onMounted(() => {
  */
 
 function createMBCHref(mbc) {
-  let baseUrl;
+  let baseUrl
 
   // Determine the base URL based on the id
   if (mbc.id.startsWith('B')) {
     // Behavior
-    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main';
+    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main'
   } else if (mbc.id.startsWith('C')) {
     // Micro-Behavior
-    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors';
+    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors'
   } else {
     return null
   }
 
   // Convert the objective and behavior to lowercase and replace spaces with hyphens
-  const objectivePath = mbc.objective.toLowerCase().replace(/\s+/g, '-');
-  const behaviorPath = mbc.behavior.toLowerCase().replace(/\s+/g, '-');
+  const objectivePath = mbc.objective.toLowerCase().replace(/\s+/g, '-')
+  const behaviorPath = mbc.behavior.toLowerCase().replace(/\s+/g, '-')
 
   // Construct the final URL
-  return `${baseUrl}/${objectivePath}/${behaviorPath}.md`;
+  return `${baseUrl}/${objectivePath}/${behaviorPath}.md`
 }
 
 /**
@@ -317,33 +294,34 @@ function createMBCHref(mbc) {
  * @param {string} attack.id - The ID of the ATT&CK technique or sub-technique.
  * @returns {string} The formatted MITRE ATT&CK URL for the technique.
  */
- function createATTACKHref(attack) {
-  const baseUrl = 'https://attack.mitre.org/techniques/';
-  const idParts = attack.id.split('.');
+function createATTACKHref(attack) {
+  const baseUrl = 'https://attack.mitre.org/techniques/'
+  const idParts = attack.id.split('.')
 
   if (idParts.length === 1) {
     // It's a technique
-    return `${baseUrl}${idParts[0]}`;
+    return `${baseUrl}${idParts[0]}`
   } else if (idParts.length === 2) {
     // It's a sub-technique
-    return `${baseUrl}${idParts[0]}/${idParts[1]}`;
+    return `${baseUrl}${idParts[0]}/${idParts[1]}`
   } else {
     return null
   }
 }
-
 </script>
 
 <style scoped>
 /* Disable the toggle button for statement and features */
-:deep(.p-treetable-tbody > tr:not(:is([aria-level='1'], [aria-level='2'])) > td > div > .p-treetable-node-toggle-button) {
-    visibility: hidden !important;
-    height: 1.3rem;
+:deep(
+    .p-treetable-tbody > tr:not(:is([aria-level='1'], [aria-level='2'])) > td > div > .p-treetable-node-toggle-button
+  ) {
+  visibility: hidden !important;
+  height: 1.3rem;
 }
 /* Disable the toggle button for rules */
 :deep(.p-treetable-tbody > tr:is([aria-level='1']) > td > div > .p-treetable-node-toggle-button) {
-    visibility: collapse !important;
-    height: 1.3rem;
+  visibility: collapse !important;
+  height: 1.3rem;
 }
 
 /* Make all matches nodes (i.e. not rule names) slightly smaller,
