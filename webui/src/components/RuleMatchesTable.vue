@@ -199,6 +199,12 @@ const onNodeSelect = (node) => {
   const nodeKey = node.key
   const nodeType = node.data.type
 
+  // If the node is already expanded, collapse it and its children
+  if (expandedKeys.value[nodeKey]) {
+    delete expandedKeys.value[nodeKey]
+    return
+  }
+
   if (nodeType === 'rule') {
     // For rule nodes, clear existing expanded keys and set the clicked rule as expanded
     // expand the first (child) match by default
