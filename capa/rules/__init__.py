@@ -456,7 +456,7 @@ DESCRIPTION_SEPARATOR = " = "
 
 def parse_bytes(s: str) -> bytes:
     try:
-        b = bytes.fromhex(s)
+        b = bytes.fromhex(s.replace(" ", ""))
     except binascii.Error:
         raise InvalidRule(f'unexpected bytes value: must be a valid hex sequence: "{s}"')
 
