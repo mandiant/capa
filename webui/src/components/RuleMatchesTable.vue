@@ -12,8 +12,7 @@
       :rowHover="true"
       :indentation="1.3"
       selectionMode="single"
-      @nodeExpand="onNodeSelect"
-      @nodeSelect="onNodeSelect"
+      @node-select="onNodeSelect"
       :pt="{
         row: ({ instance }) => ({
           oncontextmenu: (event) => onRightClick(event, instance)
@@ -198,6 +197,9 @@ const onRightClick = (event, instance) => {
 const onNodeSelect = (node) => {
   const nodeKey = node.key
   const nodeType = node.data.type
+
+  // We only expand rule and match locations, if not return
+  if (nodeType !== 'rule' && nodeType !== 'match location') return
 
   // If the node is already expanded, collapse it and its children
   if (expandedKeys.value[nodeKey]) {
