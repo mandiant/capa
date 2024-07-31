@@ -379,7 +379,7 @@ function partition(str, separator) {
 
 /**
  * Get the process name from the layout
- * @param {Object} layout - The DynamicLayout object
+ * @param {Object} layout - The layout object
  * @param {Object} address - The address object containing process information
  * @returns {string} The process name
  */
@@ -440,7 +440,7 @@ function rpartition(str, separator) {
 
 /**
  * Get the call name from the layout
- * @param {Object} layout - The DynamicLayout object
+ * @param {Object} layout - The layout object
  * @param {Object} address - The address object containing call information
  * @returns {string} The call name with arguments
  */

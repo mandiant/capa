@@ -20,7 +20,7 @@
       }"
     >
       <template #header>
-        <div style="display: flex; justify-content: end; align-items: center">
+        <div class="flex justify-content-end w-full">
           <IconField>
             <InputIcon class="pi pi-search" />
             <InputText v-model="filters['global']" placeholder="Global search" />
@@ -28,7 +28,7 @@
         </div>
       </template>
 
-      <!-- Name column (always visible) -->
+      <!-- Rule column (always visible) -->
       <Column field="name" header="Rule" :sortable="true" :expander="true" filterMatchMode="contains">
         <template #filter>
           <InputText v-model="filters['name']" type="text" placeholder="Filter by Rule or Feature" />
@@ -201,7 +201,7 @@ const onNodeSelect = (node) => {
   // We only expand rule and match locations, if not return
   if (nodeType !== 'rule' && nodeType !== 'match location') return
 
-  // If the node is already expanded, collapse it and its children
+  // If the node is already expanded, collapse it
   if (expandedKeys.value[nodeKey]) {
     delete expandedKeys.value[nodeKey]
     return
@@ -209,12 +209,12 @@ const onNodeSelect = (node) => {
 
   if (nodeType === 'rule') {
     // For rule nodes, clear existing expanded keys and set the clicked rule as expanded
-    // expand the first (child) match by default
+    // and expand the first (child) match by default
     expandedKeys.value = { [nodeKey]: true, [`${nodeKey}-0`]: true }
   } else if (nodeType === 'match location') {
     // For match location nodes, we need to keep the parent expanded
     // and toggle the clicked node while collapsing siblings
-    const [parentKey, _] = nodeKey.split('-')
+    const [parentKey] = nodeKey.split('-')
     expandedKeys.value = { [parentKey]: true, [`${nodeKey}`]: true }
   } else {
     return
@@ -222,19 +222,12 @@ const onNodeSelect = (node) => {
 }
 
 // All available columns
-const togglableColumns = ref([
+const visibleColumns = ref([
   { field: 'address', header: 'Address' },
   { field: 'namespace', header: 'Namespace' },
   { field: 'tactic', header: 'ATT&CK Tactic' },
   { field: 'mbc', header: 'Malware Behaviour Catalogue' }
 ])
-
-// Define initially visible columns (excluding 'mbc' and 'address')
-const visibleColumns = ref(
-  togglableColumns.value
-  //togglableColumns.value.filter((col) => col.field !== 'mbc' && col.field !== 'address')
-  //togglableColumns.value.filter((col) => col.field !== 'address')
-)
 
 // Filter out the treeData for showing/hiding lib rules
 const filteredTreeData = computed(() => {
