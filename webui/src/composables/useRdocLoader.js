@@ -17,7 +17,7 @@ export function useRdocLoader() {
   const checkVersion = (rdoc) => {
     const version = rdoc.meta.version
     if (version < MIN_SUPPORTED_VERSION) {
-      console.log(
+      console.error(
         `Version ${version} is not supported. Please use version ${MIN_SUPPORTED_VERSION} or higher.`
       )
       toast.add({
@@ -53,7 +53,7 @@ export function useRdocLoader() {
         }
         data = await response.json()
       } else if (typeof source === 'object') {
-        // Direct JSON object
+        // Direct JSON object (Preview options)
         data = source
       } else {
         throw new Error('Invalid source type')
@@ -67,7 +67,7 @@ export function useRdocLoader() {
           summary: 'Success',
           detail: 'JSON data loaded successfully',
           life: 3000,
-          group: 'bc'
+          group: 'bc' // bottom-center
         })
       } else {
         rdocData.value = null
@@ -80,7 +80,7 @@ export function useRdocLoader() {
         summary: 'Error',
         detail: error.message,
         life: 3000,
-        group: 'bc'
+        group: 'bc' // bottom-center
       })
     }
   }

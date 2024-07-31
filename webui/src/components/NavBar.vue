@@ -1,21 +1,13 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import Menubar from 'primevue/menubar'
-
-const router = useRouter()
 
 const items = ref([
   {
     label: 'Import Analysis',
     icon: 'pi pi-file-import',
-    command: () => {
-      router.push('/')
-      // Force a route change even if we're already on the home page
-      // we need to this to force the page to reload
-      router.go(0)
-    }
+    command: () => window.location.replace(window.location.origin)
   }
 ])
 </script>

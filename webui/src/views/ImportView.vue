@@ -61,7 +61,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- When rdocData is set to null or version is not valid, show the description panel and upload options. -->
   <Panel v-if="!rdocData || !isValidVersion">
     <DescriptionPanel />
     <UploadOptions
@@ -72,8 +71,6 @@ onMounted(() => {
     />
   </Panel>
 
-  <!-- When rdocData is set and version is valid, show the metadata, settings panel, rule matches table,
-  function capabilities or process capabilities. -->
   <Toast position="bottom-center" group="bc" />
   <template v-if="rdocData && isValidVersion">
     <MetadataPanel :data="rdocData" />
