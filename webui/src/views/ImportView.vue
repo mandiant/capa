@@ -7,6 +7,7 @@ import RuleMatchesTable from '../components/RuleMatchesTable.vue'
 import FunctionCapabilities from '../components/FunctionCapabilities.vue'
 import ProcessCapabilities from '../components/ProcessCapabilities.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
+import NamespaceChart from '../components/NamespaceChart.vue'
 import Toast from 'primevue/toast'
 
 import demoRdocStatic from '../../../tests/data/rd/al-khaser_x64.exe_.json'
@@ -18,6 +19,7 @@ const { rdocData, isValidVersion, loadRdoc } = useRdocLoader()
 
 const showCapabilitiesByFunctionOrProcess = ref(false)
 const showLibraryRules = ref(false)
+const showNamespaceChart = ref(true)
 
 const flavor = computed(() => rdocData.value?.meta.flavor)
 
@@ -32,6 +34,10 @@ const updateShowCapabilitiesByFunctionOrProcess = (value) => {
 
 const updateShowLibraryRules = (value) => {
   showLibraryRules.value = value
+}
+
+const updateShowNamespaceChart = (value) => {
+  showNamespaceChart.value = value
 }
 
 const loadFromLocal = (event) => {
@@ -79,23 +85,25 @@ onMounted(() => {
       :library-rule-matches-count="libraryRuleMatchesCount"
       @update:show-capabilities-by-function-or-process="updateShowCapabilitiesByFunctionOrProcess"
       @update:show-library-rules="updateShowLibraryRules"
+      @update:show-namespace-chart="updateShowNamespaceChart"
     />
 
     <RuleMatchesTable
-      v-if="!showCapabilitiesByFunctionOrProcess"
+      v-if="!showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
       :data="rdocData"
       :show-library-rules="showLibraryRules"
     />
     <FunctionCapabilities
-      v-if="flavor === 'static' && showCapabilitiesByFunctionOrProcess"
+      v-if="flavor === 'static' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
       :data="rdocData"
       :show-library-rules="showLibraryRules"
     />
     <ProcessCapabilities
-      v-else-if="flavor === 'dynamic' && showCapabilitiesByFunctionOrProcess"
+      v-else-if="flavor === 'dynamic' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
       :data="rdocData"
       :show-capabilities-by-process="showCapabilitiesByFunctionOrProcess"
       :show-library-rules="showLibraryRules"
     />
+    <NamespaceChart v-else-if="showNamespaceChart && !showCapabilitiesByFunctionOrProcess" :data="rdocData" />
   </template>
 </template>

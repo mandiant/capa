@@ -7,17 +7,25 @@
             v-model="showCapabilitiesByFunctionOrProcess"
             inputId="showCapabilitiesByFunctionOrProcess"
             :binary="true"
+            :disabled="showNamespaceChart"
           />
           <label for="showCapabilitiesByFunctionOrProcess">{{ capabilitiesLabel }}</label>
         </div>
         <div class="flex flex-row align-items-center gap-2">
-          <Checkbox v-model="showLibraryRules" inputId="showLibraryRules" :binary="true" />
+          <Checkbox
+            v-model="showLibraryRules"
+            inputId="showLibraryRules"
+            :binary="true"
+            :disabled="showNamespaceChart"
+          />
           <label for="showLibraryRules">
-            <span v-if="libraryRuleMatchesCount > 1">
-              Show {{ libraryRuleMatchesCount }} library rule matches
-            </span>
+            <span v-if="libraryRuleMatchesCount > 1"> Show {{ libraryRuleMatchesCount }} library rule matches </span>
             <span v-else>Show 1 library rule match</span>
           </label>
+        </div>
+        <div class="flex flex-row align-items-center gap-2">
+          <Checkbox v-model="showNamespaceChart" inputId="showNamespaceChart" :binary="true" />
+          <label for="showNamespaceChart"> Show namespace chart </label>
         </div>
       </div>
     </template>
@@ -41,16 +49,16 @@ const props = defineProps({
 
 const showCapabilitiesByFunctionOrProcess = ref(false)
 const showLibraryRules = ref(false)
+const showNamespaceChart = ref(false)
 
 const emit = defineEmits([
   'update:show-capabilities-by-function-or-process',
-  'update:show-library-rules'
+  'update:show-library-rules',
+  'update:show-namespace-chart'
 ])
 
 const capabilitiesLabel = computed(() => {
-  return props.flavor === 'static'
-    ? 'Show capabilities by function'
-    : 'Show capabilities by process'
+  return props.flavor === 'static' ? 'Show capabilities by function' : 'Show capabilities by process'
 })
 
 watch(showCapabilitiesByFunctionOrProcess, (newValue) => {
@@ -59,5 +67,9 @@ watch(showCapabilitiesByFunctionOrProcess, (newValue) => {
 
 watch(showLibraryRules, (newValue) => {
   emit('update:show-library-rules', newValue)
+})
+
+watch(showNamespaceChart, (newValue) => {
+  emit('update:show-namespace-chart', newValue)
 })
 </script>
