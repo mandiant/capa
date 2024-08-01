@@ -6,7 +6,7 @@
  * @param {number} [maxMatches=500] - Maximum number of matches to parse per rule
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
-export function parseRules(rules, flavor, layout, maxMatches = 20) {
+export function parseRules(rules, flavor, layout, maxMatches = 1) {
   return Object.entries(rules).map(([ruleName, rule], index) => {
     const ruleNode = {
       key: `${index}`,
