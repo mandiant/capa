@@ -1,5 +1,5 @@
 <template>
-  <div ref="chartRef" class="namespace-chart"></div>
+  <div ref="chartRef" class="w-screen h-screen"></div>
 </template>
 
 <script setup>
@@ -99,7 +99,7 @@ const renderChart = () => {
         parents: sunburstData.parents,
         values: sunburstData.values,
         outsidetextfont: { size: 20, color: '#377eb8' },
-        leaf: { opacity: 0.5 },
+        leaf: { opacity: 0.6 },
         marker: { line: { width: 2 } },
         branchvalues: 'total'
       }
@@ -124,10 +124,3 @@ watch(
   { deep: true }
 )
 </script>
-
-<style scoped>
-.namespace-chart {
-  width: 100%;
-  height: 600px;
-}
-</style>

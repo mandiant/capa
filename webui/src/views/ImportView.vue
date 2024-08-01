@@ -19,7 +19,7 @@ const { rdocData, isValidVersion, loadRdoc } = useRdocLoader()
 
 const showCapabilitiesByFunctionOrProcess = ref(false)
 const showLibraryRules = ref(false)
-const showNamespaceChart = ref(true)
+const showNamespaceChart = ref(false)
 
 const flavor = computed(() => rdocData.value?.meta.flavor)
 
@@ -104,6 +104,6 @@ onMounted(() => {
       :show-capabilities-by-process="showCapabilitiesByFunctionOrProcess"
       :show-library-rules="showLibraryRules"
     />
-    <NamespaceChart v-else-if="showNamespaceChart && !showCapabilitiesByFunctionOrProcess" :data="rdocData" />
+    <NamespaceChart v-else-if="showNamespaceChart" :data="rdocData" />
   </template>
 </template>
