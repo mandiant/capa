@@ -52,9 +52,8 @@ export function parseRules(rules, flavor, layout, maxMatches = 1) {
             type: 'match location',
             name:
               flavor === 'static'
-                ? `${rule.meta.scopes.static} @ ${formatHex(match[0].value)}`
-                : `${formatDynamicAddress(match[0].value)}`,
-            address: flavor === 'static' ? `${formatHex(match[0].value)}` : formatDynamicAddress(match[0].value)
+                ? `${rule.meta.scopes.static} @ ` + formatAddress(match[0])
+                : getProcessName(layout, match[0])
           },
           children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib, layout)]
         }
@@ -170,79 +169,6 @@ export function parseFunctionCapabilities(data, showLibraryRules) {
   )
 
   return finalResult
-}
-
-/**
- * Parses rules data for the CapasByProcess component
- * @param {Object} data - The full JSON data object containing analysis results
- * @param {boolean} showLibraryRules - Whether to include library rules in the output
- * @returns {Array} - Parsed tree data for the CapasByProcess component
- */
-export function parseProcessCapabilities(data, showLibraryRules) {
-  const result = []
-  const processes = data.meta.analysis.layout.processes
-
-  let processKey = 1
-
-  // Iterate through each process in the rdoc
-  for (const processInfo of processes) {
-    const processName = processInfo.name
-    const matchingRules = []
-
-    // Iterate through all rules in the data
-    for (const ruleId in data.rules) {
-      const rule = data.rules[ruleId]
-
-      // Skip library rules if showLibraryRules is false
-      if (!showLibraryRules && rule.meta.lib) {
-        continue
-      }
-
-      // Check if the rule's scope is 'process'
-      if (rule.meta.scopes.dynamic === 'process') {
-        // Find matches for this rule within the current process
-        const matches = rule.matches.filter(
-          (match) =>
-            match[0].type === 'process' &&
-            // Ensure all addresses in the match are included in the process's address
-            match[0].value.every((addr) => processInfo.address.value.includes(addr))
-        )
-
-        // If there are matches, add this rule to the matchingRules array
-        if (matches.length > 0) {
-          matchingRules.push({
-            key: `${processName}-${matchingRules.length}`, // Unique key for each rule
-            data: {
-              processname: `rule: ${rule.meta.name}`, // Display rule name
-              type: 'rule',
-              matchcount: null, // Matchcount is not relevant here
-              namespace: rule.meta.namespace,
-              procID: processInfo.address.value.join(', '), // PID, PPID
-              source: rule.source
-            }
-          })
-        }
-      }
-    }
-
-    // If there are matching rules for this process, add it to the result
-    if (matchingRules.length > 0) {
-      result.push({
-        key: `process-${processKey++}`, // Unique key for each process
-        data: {
-          processname: processName, // Process name
-          type: 'process',
-          matchcount: matchingRules.length, // Number of matching rules for this process
-          namespace: null, // Processes don't have a namespace
-          procID: processInfo.address.value.join(', '), // PID, PPID
-          source: null // Processes don't have source code in this context
-        },
-        children: matchingRules // Add matching rules as children
-      })
-    }
-  }
-
-  return result
 }
 
 // Helper functions
@@ -690,7 +616,7 @@ function formatDynamicAddress(value) {
   return value
     .map((item, index) => `${parts[index]}:${item}`)
     .reverse()
-    .join(' ← ')
+    .join(',')
 }
 
 function formatHex(address) {

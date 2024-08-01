@@ -55,7 +55,7 @@
         <!-- Address column body template -->
         <template v-if="col.field === 'address'" #body="slotProps">
           <span class="text-sm" style="font-family: monospace">
-            {{ slotProps.node.data.type === 'match location' ? '' : slotProps.node.data.address }}
+            {{ slotProps.node.data.address }}
           </span>
         </template>
 
