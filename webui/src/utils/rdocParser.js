@@ -7,7 +7,7 @@
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
 export function parseRules(rules, flavor, layout, maxMatches = 1) {
-  return Object.entries(rules).map(([ruleName, rule], index) => {
+  return Object.entries(rules).map(([, rule], index) => {
     const ruleNode = {
       key: `${index}`,
       data: {
@@ -253,18 +253,22 @@ function parseNode(node, key, rules, lib, layout) {
   return result
 }
 
+// TODO(s-ff): decide if we want to show call info or not
+// e.g. explorer.exe{id:0,tid:10,pid:100,ppid:1000}
 function getCallInfo(node, layout) {
   if (!node.locations || node.locations.length === 0) return null
 
   const location = node.locations[0]
   if (location.type !== 'call') return null
 
+  // eslint-disable-next-line no-unused-vars
   const [ppid, pid, tid, callId] = location.value
+  // eslint-disable-next-line no-unused-vars
   const callName = node.node.feature.api
 
   const pname = getProcessName(layout, location)
   const cname = getCallName(layout, location)
-
+  // eslint-disable-next-line no-unused-vars
   const [fname, separator, restWithArgs] = partition(cname, '(')
   const [args, , returnValueWithParen] = rpartition(restWithArgs, ')')
 
@@ -441,9 +445,10 @@ function formatAddress(address) {
       return `file+${formatHex(address.value)}`
     case 'dn_token':
       return `token(${formatHex(address.value)})`
-    case 'dn_token_offset':
+    case 'dn_token_offset': {
       const [token, offset] = address.value
       return `token(${formatHex(token)})+${formatHex(offset)}`
+    }
     case 'process':
       //const [ppid, pid] = address.value;
       //return `process{pid:${pid}}`;

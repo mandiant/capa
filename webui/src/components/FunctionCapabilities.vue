@@ -68,11 +68,6 @@ const filterMode = ref('lenient')
 const sourceDialogVisible = ref(false)
 const currentSource = ref('')
 
-const showSource = (source) => {
-  currentSource.value = source
-  sourceDialogVisible.value = true
-}
-
 import { parseFunctionCapabilities } from '../utils/rdocParser'
 
 const tableData = computed(() => parseFunctionCapabilities(props.data, props.showLibraryRules))

@@ -47,21 +47,17 @@
         :class="{ 'w-3': col.field === 'mbc', 'w-full': col.field === 'name' }"
         filterMatchMode="contains"
       >
-        <!-- Filter template -->
         <template #filter>
           <InputText v-model="filters[col.field]" type="text" :placeholder="`Filter by ${col.header}`" />
         </template>
-
-        <!-- Address column body template -->
-        <template v-if="col.field === 'address'" #body="slotProps">
-          <span class="text-sm" style="font-family: monospace">
-            {{ slotProps.node.data.address }}
+        <template #body="slotProps">
+          <!-- Address column -->
+          <span v-if="col.field === 'address'" class="text-sm" style="font-family: monospace">
+            {{ slotProps.node.data.type === 'match location' ? '' : slotProps.node.data.address }}
           </span>
-        </template>
 
-        <!-- Tactic column body template -->
-        <template v-if="col.field === 'tactic'" #body="slotProps">
-          <div v-if="slotProps.node.data.attack">
+          <!-- Tactic column -->
+          <div v-else-if="col.field === 'tactic' && slotProps.node.data.attack">
             <div v-for="(attack, index) in slotProps.node.data.attack" :key="index">
               <a :href="createATTACKHref(attack)" target="_blank">
                 {{ attack.technique }} <span class="text-500 text-sm font-normal ml-1">({{ attack.id }})</span>
@@ -78,11 +74,9 @@
               </div>
             </div>
           </div>
-        </template>
 
-        <!-- MBC column body template -->
-        <template v-if="col.field === 'mbc'" #body="slotProps">
-          <div v-if="slotProps.node.data.mbc">
+          <!-- MBC column -->
+          <div v-else-if="col.field === 'mbc' && slotProps.node.data.mbc">
             <div v-for="(mbc, index) in slotProps.node.data.mbc" :key="index">
               <a :href="createMBCHref(mbc)" target="_blank">
                 {{ mbc.parts.join('::') }}
@@ -90,16 +84,15 @@
               </a>
             </div>
           </div>
-        </template>
 
-        <!-- Namespace column body template -->
-        <template v-if="col.field === 'namespace'" #body="slotProps">
-          <span v-if="!slotProps.node.data.lib">
+          <!-- Namespace column -->
+          <span v-else-if="col.field === 'namespace' && !slotProps.node.data.lib">
             {{ slotProps.node.data.namespace }}
           </span>
         </template>
       </Column>
     </TreeTable>
+
     <ContextMenu ref="menu" :model="contextMenuItems">
       <template #item="{ item, props }">
         <a v-ripple v-bind="props.action" :href="item.url" :target="item.target">

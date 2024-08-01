@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRules, parseFunctionCapabilities, parseProcessCapabilities } from '../utils/rdocParser'
+import { parseRules, parseFunctionCapabilities } from '../utils/rdocParser'
 
 describe('parseRules', () => {
   it('should return an empty array for empty rules', () => {

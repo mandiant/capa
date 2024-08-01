@@ -28,7 +28,7 @@ const createSunburstData = (rules) => {
     let currentId = ''
     let parent = ''
 
-    parts.forEach((part, index) => {
+    parts.forEach((part) => {
       currentId = currentId ? `${currentId}/${part}` : part
 
       if (!data.ids.includes(currentId)) {
