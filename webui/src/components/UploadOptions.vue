@@ -6,8 +6,8 @@
           <FileUpload
             mode="basic"
             name="model[]"
-            accept="application/json"
-            :max-file-size="100000000"
+            accept=".json,.gz"
+            :max-file-size="10000000"
             :auto="true"
             :custom-upload="true"
             choose-label="Upload from local"
@@ -27,11 +27,7 @@
             <InputText id="url" type="text" v-model="loadURL" />
             <label for="url">Load from URL</label>
           </FloatLabel>
-          <Button
-            icon="pi pi-arrow-right"
-            @click="$emit('load-from-url', loadURL)"
-            :disabled="!loadURL"
-          />
+          <Button icon="pi pi-arrow-right" @click="$emit('load-from-url', loadURL)" :disabled="!loadURL" />
         </div>
 
         <Divider layout="vertical" class="hidden-mobile">

@@ -1,12 +1,15 @@
 /**
  * Parses rules data for the CapaTreeTable component
  * @param {Object} rules - The rules object from the rodc JSON data
+ * @param {string} flavor - The flavor of the analysis (static or dynamic)
+ * @param {Object} layout - The layout object from the rdoc JSON data
+ * @param {number} [maxMatches=500] - Maximum number of matches to parse per rule
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
-export function parseRules(rules, flavor, layout) {
+export function parseRules(rules, flavor, layout, maxMatches = 1) {
   return Object.entries(rules).map(([ruleName, rule], index) => {
     const ruleNode = {
-      key: index.toString(),
+      key: `${index}`,
       data: {
         type: 'rule',
         name: rule.meta.name,
@@ -21,28 +24,28 @@ export function parseRules(rules, flavor, layout) {
               tactic: attack.tactic,
               technique: attack.technique,
               id: attack.id.includes('.') ? attack.id.split('.')[0] : attack.id,
-              techniques: attack.subtechnique
-                ? [{ technique: attack.subtechnique, id: attack.id }]
-                : []
+              techniques: attack.subtechnique ? [{ technique: attack.subtechnique, id: attack.id }] : []
             }))
           : null
       }
     }
+
     // Is this a static rule with a file-level scope?
     const isFileScope = rule.meta.scopes && rule.meta.scopes.static === 'file'
 
+    // Limit the number of matches to process
+    // Dynamic matches can have thousands of matches, only show `maxMatches` for performance reasons
+    const limitedMatches = flavor === 'dynamic' ? rule.matches.slice(0, maxMatches) : rule.matches
+
     if (isFileScope) {
       // The scope for the rule is a file, so we don't need to show the match location address
-      ruleNode.children = rule.matches.map((match, matchIndex) => {
+      ruleNode.children = limitedMatches.map((match, matchIndex) => {
         return parseNode(match[1], `${index}-${matchIndex}`, rules, rule.meta.lib, layout)
       })
     } else {
       // This is not a file-level match scope, we need to create intermediate nodes for each match
-      // e.g. for a rule with a static scope of "function" we need to create a node for each function
-      // like function @ 0x400010, function @ 0x400020, etc.
-      let matchCounter = 0
-      ruleNode.children = rule.matches.map((match) => {
-        const matchKey = `${index}-${matchCounter}`
+      ruleNode.children = limitedMatches.map((match, matchIndex) => {
+        const matchKey = `${index}-${matchIndex}`
         const matchNode = {
           key: matchKey,
           data: {
@@ -51,15 +54,22 @@ export function parseRules(rules, flavor, layout) {
               flavor === 'static'
                 ? `${rule.meta.scopes.static} @ ${formatHex(match[0].value)}`
                 : `${formatDynamicAddress(match[0].value)}`,
-            address:
-              flavor === 'static'
-                ? `${formatHex(match[0].value)}`
-                : formatDynamicAddress(match[0].value),
+            address: flavor === 'static' ? `${formatHex(match[0].value)}` : formatDynamicAddress(match[0].value)
           },
           children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib, layout)]
         }
-        matchCounter++
         return matchNode
+      })
+    }
+
+    // Add a note if there are more matches than the limit
+    if (rule.matches.length > limitedMatches.length) {
+      ruleNode.children.push({
+        key: `${index}`,
+        data: {
+          type: 'match location',
+          name: `... and ${rule.matches.length - maxMatches} more matches`
+        }
       })
     }
 
@@ -74,56 +84,56 @@ export function parseRules(rules, flavor, layout) {
  * @returns {Array} - Parsed data for the CapasByFunction DataTable component
  */
 export function parseFunctionCapabilities(data, showLibraryRules) {
-  const result = [];
-  const matchesByFunction = new Map();
+  const result = []
+  const matchesByFunction = new Map()
 
   // Create a map of basic blocks to functions
-  const functionsByBB = new Map();
+  const functionsByBB = new Map()
   for (const func of data.meta.analysis.layout.functions) {
-    const funcAddress = func.address.value;
+    const funcAddress = func.address.value
     for (const bb of func.matched_basic_blocks) {
-      functionsByBB.set(bb.address.value, funcAddress);
+      functionsByBB.set(bb.address.value, funcAddress)
     }
   }
 
   // Iterate through all rules in the data
   for (const ruleId in data.rules) {
-    const rule = data.rules[ruleId];
+    const rule = data.rules[ruleId]
 
     // Skip library rules if showLibraryRules is false
     if (!showLibraryRules && rule.meta.lib) {
-      continue;
+      continue
     }
 
     if (rule.meta.scopes.static === 'function') {
       // Function scope
       for (const [addr] of rule.matches) {
-        const funcAddr = addr.value;
+        const funcAddr = addr.value
         if (!matchesByFunction.has(funcAddr)) {
-          matchesByFunction.set(funcAddr, new Map());
+          matchesByFunction.set(funcAddr, new Map())
         }
-        const funcMatches = matchesByFunction.get(funcAddr);
+        const funcMatches = matchesByFunction.get(funcAddr)
         funcMatches.set(rule.meta.name, {
           count: (funcMatches.get(rule.meta.name)?.count || 0) + 1,
           namespace: rule.meta.namespace,
           lib: rule.meta.lib
-        });
+        })
       }
     } else if (rule.meta.scopes.static === 'basic block') {
       // Basic block scope
       for (const [addr] of rule.matches) {
-        const bbAddr = addr.value;
-        const funcAddr = functionsByBB.get(bbAddr);
+        const bbAddr = addr.value
+        const funcAddr = functionsByBB.get(bbAddr)
         if (funcAddr) {
           if (!matchesByFunction.has(funcAddr)) {
-            matchesByFunction.set(funcAddr, new Map());
+            matchesByFunction.set(funcAddr, new Map())
           }
-          const funcMatches = matchesByFunction.get(funcAddr);
+          const funcMatches = matchesByFunction.get(funcAddr)
           funcMatches.set(rule.meta.name, {
             count: (funcMatches.get(rule.meta.name)?.count || 0) + 1,
             namespace: rule.meta.namespace,
             lib: rule.meta.lib
-          });
+          })
         }
       }
     }
@@ -131,35 +141,35 @@ export function parseFunctionCapabilities(data, showLibraryRules) {
 
   // Convert the matchesByFunction map to the intermediate result array
   for (const [funcAddr, matches] of matchesByFunction) {
-    const functionAddress = funcAddr.toString(16).toUpperCase();
+    const functionAddress = funcAddr.toString(16).toUpperCase()
     const matchingRules = Array.from(matches, ([ruleName, data]) => ({
       ruleName,
       matchCount: data.count,
       namespace: data.namespace,
       lib: data.lib
-    }));
+    }))
 
     result.push({
       funcaddr: `0x${functionAddress}`,
       matchCount: matchingRules.length,
       capabilities: matchingRules,
       lib: data.lib
-    });
+    })
   }
 
   // Transform the intermediate result into the final format
-  const finalResult = result.flatMap(func => 
-    func.capabilities.map(cap => ({
+  const finalResult = result.flatMap((func) =>
+    func.capabilities.map((cap) => ({
       funcaddr: func.funcaddr,
       matchCount: func.matchCount,
       ruleName: cap.ruleName,
       ruleMatchCount: cap.matchCount,
       namespace: cap.namespace,
-      lib: cap.lib,
+      lib: cap.lib
     }))
-  );
+  )
 
-  return finalResult;
+  return finalResult
 }
 
 /**
@@ -296,21 +306,21 @@ function parseNode(node, key, rules, lib, layout) {
   }
 
   if (processedNode.node.feature && processedNode.node.feature.type === 'regex') {
-    result.children = processRegexCaptures(processedNode, key);
+    result.children = processRegexCaptures(processedNode, key)
   }
 
   // Add call information for dynamic sandbox traces
   if (processedNode.node.feature && processedNode.node.feature.type === 'api') {
     const callInfo = getCallInfo(node, layout)
     if (callInfo) {
-    result.children.push({
-      key: key,
-      data: {
-        type: 'call-info',
-        name: callInfo
-      },
-      children: []
-    });
+      result.children.push({
+        key: key,
+        data: {
+          type: 'call-info',
+          name: callInfo
+        },
+        children: []
+      })
     }
   }
 
@@ -318,30 +328,30 @@ function parseNode(node, key, rules, lib, layout) {
 }
 
 function getCallInfo(node, layout) {
-  if (!node.locations || node.locations.length === 0) return null;
+  if (!node.locations || node.locations.length === 0) return null
 
-  const location = node.locations[0];
-  if (location.type !== 'call') return null;
+  const location = node.locations[0]
+  if (location.type !== 'call') return null
 
-  const [ppid, pid, tid, callId] = location.value;
-  const callName = node.node.feature.api;
+  const [ppid, pid, tid, callId] = location.value
+  const callName = node.node.feature.api
 
-  const pname = getProcessName(layout, location);
-  const cname = getCallName(layout, location);
+  const pname = getProcessName(layout, location)
+  const cname = getCallName(layout, location)
 
-  const [fname, separator, restWithArgs] = partition(cname, '(');
-  const [args, , returnValueWithParen] = rpartition(restWithArgs, ')');
+  const [fname, separator, restWithArgs] = partition(cname, '(')
+  const [args, , returnValueWithParen] = rpartition(restWithArgs, ')')
 
-  const s = [];
-  s.push(`${fname}(`);
+  const s = []
+  s.push(`${fname}(`)
   for (const arg of args.split(', ')) {
-    s.push(`  ${arg},`);
+    s.push(`  ${arg},`)
   }
-  s.push(`)${returnValueWithParen}`);
+  s.push(`)${returnValueWithParen}`)
 
   //const callInfo = `${pname}{pid:${pid},tid:${tid},call:${callId}}\n${s.join('\n')}`;
 
-  return {processName: pname, callInfo: s.join('\n')};
+  return { processName: pname, callInfo: s.join('\n') }
 }
 
 /**
@@ -365,16 +375,12 @@ function getCallInfo(node, layout) {
  * partition("hello world", ":");
  */
 function partition(str, separator) {
-  const index = str.indexOf(separator);
+  const index = str.indexOf(separator)
   if (index === -1) {
     // Separator not found, return original string and two empty strings
-    return [str, '', ''];
+    return [str, '', '']
   }
-  return [
-    str.slice(0, index),
-    separator,
-    str.slice(index + separator.length)
-  ];
+  return [str.slice(0, index), separator, str.slice(index + separator.length)]
 }
 
 /**
@@ -385,25 +391,26 @@ function partition(str, separator) {
  */
 function getProcessName(layout, address) {
   if (!layout || !layout.processes || !Array.isArray(layout.processes)) {
-    console.error('Invalid layout structure');
-    return 'Unknown Process';
+    console.error('Invalid layout structure')
+    return 'Unknown Process'
   }
 
-  const [ppid, pid] = address.value;
-  
+  const [ppid, pid] = address.value
+
   for (const process of layout.processes) {
-    if (process.address && 
-        process.address.type === 'process' && 
-        process.address.value && 
-        process.address.value[0] === ppid && 
-        process.address.value[1] === pid) {
-      return process.name || 'Unnamed Process';
+    if (
+      process.address &&
+      process.address.type === 'process' &&
+      process.address.value &&
+      process.address.value[0] === ppid &&
+      process.address.value[1] === pid
+    ) {
+      return process.name || 'Unnamed Process'
     }
   }
 
-  return 'Unknown Process';
+  return 'Unknown Process'
 }
-
 
 /**
  * Splits a string into three parts based on the last occurrence of a separator.
@@ -426,16 +433,16 @@ function getProcessName(layout, address) {
  * rpartition("hello world", ":");
  */
 function rpartition(str, separator) {
-  const index = str.lastIndexOf(separator);
+  const index = str.lastIndexOf(separator)
   if (index === -1) {
     // Separator not found, return two empty strings and the original string
-    return ['', '', str];
+    return ['', '', str]
   }
   return [
-    str.slice(0, index),          // Part before the last separator
-    separator,                    // The separator itself
-    str.slice(index + separator.length)  // Part after the last separator
-  ];
+    str.slice(0, index), // Part before the last separator
+    separator, // The separator itself
+    str.slice(index + separator.length) // Part after the last separator
+  ]
 }
 
 /**
@@ -446,31 +453,35 @@ function rpartition(str, separator) {
  */
 function getCallName(layout, address) {
   if (!layout || !layout.processes || !Array.isArray(layout.processes)) {
-    console.error('Invalid layout structure');
-    return 'Unknown Call';
+    console.error('Invalid layout structure')
+    return 'Unknown Call'
   }
-  
-  const [ppid, pid, tid, callId] = address.value;
-  
+
+  const [ppid, pid, tid, callId] = address.value
+
   for (const process of layout.processes) {
-    if (process.address && 
-        process.address.type === 'process' && 
-        process.address.value && 
-        process.address.value[0] === ppid && 
-        process.address.value[1] === pid) {
-      
+    if (
+      process.address &&
+      process.address.type === 'process' &&
+      process.address.value &&
+      process.address.value[0] === ppid &&
+      process.address.value[1] === pid
+    ) {
       for (const thread of process.matched_threads) {
-        if (thread.address && 
-            thread.address.type === 'thread' && 
-            thread.address.value && 
-            thread.address.value[2] === tid) {
-          
+        if (
+          thread.address &&
+          thread.address.type === 'thread' &&
+          thread.address.value &&
+          thread.address.value[2] === tid
+        ) {
           for (const call of thread.matched_calls) {
-            if (call.address && 
-                call.address.type === 'call' && 
-                call.address.value && 
-                call.address.value[3] === callId) {
-              return call.name || 'Unnamed Call';
+            if (
+              call.address &&
+              call.address.type === 'call' &&
+              call.address.value &&
+              call.address.value[3] === callId
+            ) {
+              return call.name || 'Unnamed Call'
             }
           }
         }
@@ -478,11 +489,11 @@ function getCallName(layout, address) {
     }
   }
 
-  return 'Unknown Call';
+  return 'Unknown Call'
 }
 
 function processRegexCaptures(node, key) {
-  if (!node.captures) return [];
+  if (!node.captures) return []
 
   return Object.entries(node.captures).map(([capture, locations]) => ({
     key: key,
@@ -491,43 +502,43 @@ function processRegexCaptures(node, key) {
       name: `"${escape(capture)}"`,
       address: formatAddress(locations[0])
     }
-  }));
+  }))
 }
 
 function formatAddress(address) {
   switch (address.type) {
     case 'absolute':
-      return formatHex(address.value);
+      return formatHex(address.value)
     case 'relative':
-      return `base address+${formatHex(address.value)}`;
+      return `base address+${formatHex(address.value)}`
     case 'file':
-      return `file+${formatHex(address.value)}`;
+      return `file+${formatHex(address.value)}`
     case 'dn_token':
-      return `token(${formatHex(address.value)})`;
+      return `token(${formatHex(address.value)})`
     case 'dn_token_offset':
-      const [token, offset] = address.value;
-      return `token(${formatHex(token)})+${formatHex(offset)}`;
+      const [token, offset] = address.value
+      return `token(${formatHex(token)})+${formatHex(offset)}`
     case 'process':
       //const [ppid, pid] = address.value;
       //return `process{pid:${pid}}`;
-      return formatDynamicAddress(address.value);
+      return formatDynamicAddress(address.value)
     case 'thread':
       //const [threadPpid, threadPid, tid] = address.value;
       //return `process{pid:${threadPid},tid:${tid}}`;
-      return formatDynamicAddress(address.value);
+      return formatDynamicAddress(address.value)
     case 'call':
       //const [callPpid, callPid, callTid, id] = address.value;
       //return `process{pid:${callPid},tid:${callTid},call:${id}}`;
-      return formatDynamicAddress(address.value);
+      return formatDynamicAddress(address.value)
     case 'no address':
-      return '';
+      return ''
     default:
-      throw new Error('Unexpected address type');
+      throw new Error('Unexpected address type')
   }
 }
 
 function escape(str) {
-  return str.replace(/"/g, '\\"');
+  return str.replace(/"/g, '\\"')
 }
 
 /**
@@ -651,7 +662,7 @@ function getRangeName(statement) {
 function getNodeAddress(node) {
   if (node.node.feature && node.node.feature.type === 'regex') return null
   if (node.locations && node.locations.length > 0) {
-    return formatAddress(node.locations[0]);
+    return formatAddress(node.locations[0])
   }
   return null
 }
@@ -664,9 +675,9 @@ function getNodeAddress(node) {
 
 function formatBytes(byteString) {
   // Use a regular expression to insert a space after every two characters
-  const formattedString = byteString.replace(/(.{2})/g, '$1 ').trim();
+  const formattedString = byteString.replace(/(.{2})/g, '$1 ').trim()
   // convert to uppercase
-  return formattedString.toUpperCase();
+  return formattedString.toUpperCase()
 }
 
 /**

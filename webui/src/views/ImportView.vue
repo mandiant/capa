@@ -14,8 +14,9 @@ import demoRdocStatic from '../../../tests/data/rd/al-khaser_x64.exe_.json'
 import demoRdocDynamic from '../../../tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json'
 
 import { useRdocLoader } from '../composables/useRdocLoader'
-
 const { rdocData, isValidVersion, loadRdoc } = useRdocLoader()
+
+import { isGzipped, decompressGzip, readFileAsText } from '../utils/fileUtils'
 
 const showCapabilitiesByFunctionOrProcess = ref(false)
 const showLibraryRules = ref(false)
@@ -40,9 +41,19 @@ const updateShowNamespaceChart = (value) => {
   showNamespaceChart.value = value
 }
 
-const loadFromLocal = (event) => {
+const loadFromLocal = async (event) => {
   const file = event.files[0]
-  loadRdoc(file)
+
+  let fileContent
+  if (await isGzipped(file)) {
+    fileContent = await decompressGzip(file)
+  } else {
+    fileContent = await readFileAsText(file)
+  }
+
+  const jsonData = JSON.parse(fileContent)
+
+  loadRdoc(jsonData)
 }
 
 const loadFromURL = (url) => {

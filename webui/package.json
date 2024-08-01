@@ -15,6 +15,7 @@
   "dependencies": {
     "@highlightjs/vue-plugin": "^2.1.0",
     "@primevue/themes": "^4.0.0-rc.2",
+    "pako": "^2.1.0",
     "plotly.js-dist": "^2.34.0",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",

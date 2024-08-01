@@ -17,9 +17,7 @@ export function useRdocLoader() {
   const checkVersion = (rdoc) => {
     const version = rdoc.meta.version
     if (version < MIN_SUPPORTED_VERSION) {
-      console.error(
-        `Version ${version} is not supported. Please use version ${MIN_SUPPORTED_VERSION} or higher.`
-      )
+      console.error(`Version ${version} is not supported. Please use version ${MIN_SUPPORTED_VERSION} or higher.`)
       toast.add({
         severity: 'error',
         summary: 'Unsupported Version',
@@ -41,11 +39,7 @@ export function useRdocLoader() {
     try {
       let data
 
-      if (source instanceof File) {
-        // Load from File
-        const text = await source.text()
-        data = JSON.parse(text)
-      } else if (typeof source === 'string') {
+      if (typeof source === 'string') {
         // Load from URL
         const response = await fetch(source)
         if (!response.ok) {
@@ -78,7 +72,7 @@ export function useRdocLoader() {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: error.message,
+        detail: "Failed to process the file. Please ensure it's a valid JSON or gzipped JSON file.",
         life: 3000,
         group: 'bc' // bottom-center
       })
