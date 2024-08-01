@@ -1,6 +1,6 @@
 {
   "name": "capa-webui",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:bundle": "vite build --mode bundle",
     "preview": "vite preview",
-    "test:unit": "vitest",
+    "test": "vitest",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/"
   },
