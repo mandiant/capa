@@ -7,7 +7,7 @@ const items = ref([
   {
     label: 'Import Analysis',
     icon: 'pi pi-file-import',
-    command: () => window.location.replace(window.location.origin)
+    command: () => window.location.replace(window.location.origin + '/capa/') // reload the page
   }
 ])
 </script>
