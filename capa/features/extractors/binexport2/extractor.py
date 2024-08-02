@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator
+from typing import Set, List, Tuple, Iterator
 
 import capa.features.extractors.elf
 import capa.features.extractors.common
@@ -15,7 +15,7 @@ import capa.features.extractors.binexport2.insn
 import capa.features.extractors.binexport2.helpers
 import capa.features.extractors.binexport2.function
 import capa.features.extractors.binexport2.basicblock
-from capa.features.common import Feature
+from capa.features.common import OS, Arch, Format, Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import (
     AddressSpace,
@@ -53,6 +53,20 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(list(capa.features.extractors.common.extract_os(self.buf)))
         self.global_features.extend(list(capa.features.extractors.common.extract_arch(self.buf)))
 
+        self.format: Set[str] = set()
+        self.os: Set[str] = set()
+        self.arch: Set[str] = set()
+
+        for feature, _ in self.global_features:
+            assert isinstance(feature.value, str)
+
+            if isinstance(feature, Format):
+                self.format.add(feature.value)
+            elif isinstance(feature, OS):
+                self.os.add(feature.value)
+            elif isinstance(feature, Arch):
+                self.arch.add(feature.value)
+
         # TODO(mr): assert supported file formats, arches
         # and gradually relax restrictions as they're tested.
         # https://github.com/mandiant/capa/issues/1755
@@ -82,7 +96,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
 
             yield FunctionHandle(
                 AbsoluteVirtualAddress(flow_graph_address),
-                inner=FunctionContext(self.ctx, flow_graph_index),
+                inner=FunctionContext(self.ctx, flow_graph_index, self.format, self.os, self.arch),
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

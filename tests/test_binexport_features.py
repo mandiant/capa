@@ -174,9 +174,9 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         (
             "687e79.ghidra.be2",
             "function=0x1057f8,bb=0x1057f8",
-            capa.features.insn.Number(-1),
+            capa.features.insn.Number(0xFFFFFFFFFFFFFFFF),
             True,
-        ),  # TODO(mr): this should be unsigned / use two's complement, https://github.com/mandiant/capa/issues/1755
+        ),
         (
             "687e79.ghidra.be2",
             "function=0x1057f8,bb=0x1057f8",

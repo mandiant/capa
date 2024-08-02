@@ -12,7 +12,7 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
-from capa.features.common import Bytes, String, Feature, Characteristic
+from capa.features.common import ARCH_I386, ARCH_AMD64, ARCH_AARCH64, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import (
     AddressSpace,
@@ -34,13 +34,59 @@ logger = logging.getLogger(__name__)
 SECURITY_COOKIE_BYTES_DELTA: int = 0x40
 
 
-def get_operand_expression_register(op_index: int, be2: BinExport2) -> Optional[str]:
-    op: BinExport2.Operand = be2.operand[op_index]
+HAS_ARCH32 = {ARCH_I386}
+HAS_ARCH64 = {ARCH_AARCH64, ARCH_AMD64}
+
+HAS_ARCH_INTEL = {ARCH_I386, ARCH_AMD64}
+HAS_ARCH_ARM = {ARCH_AARCH64}
+
+
+def get_operand_expression_register(op_index: int, fhi: FunctionContext) -> Optional[str]:
+    op: BinExport2.Operand = fhi.ctx.be2.operand[op_index]
     if len(op.expression_index) == 1:
-        exp: BinExport2.Expression = be2.expression[op.expression_index[0]]
+        exp: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
         if exp.type == BinExport2.Expression.Type.REGISTER:
             return exp.symbol.lower()
     return None
+
+
+def get_operand_expression_immediate(op_index: int, fhi: FunctionContext) -> Optional[int]:
+    op: BinExport2.Operand = fhi.ctx.be2.operand[op_index]
+    immediate: Optional[int] = None
+
+    if len(op.expression_index) == 1:
+        # - type: IMMEDIATE_INT
+        #   immediate: 20588728364
+        #   parent_index: 0
+
+        exp: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
+        if BinExport2.Expression.Type.IMMEDIATE_INT == exp.type:
+            immediate = exp.immediate
+
+    elif len(op.expression_index) == 2:
+        # from IDA, which provides a size hint for every operand,
+        # we get the following pattern for immediate constants:
+        #
+        # - type: SIZE_PREFIX
+        #   symbol: "b8"
+        # - type: IMMEDIATE_INT
+        #   immediate: 20588728364
+        #   parent_index: 0
+
+        exp0: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
+        exp1: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[1]]
+
+        if BinExport2.Expression.Type.SIZE_PREFIX == exp0.type:
+            if BinExport2.Expression.Type.IMMEDIATE_INT == exp1.type:
+                immediate = exp1.immediate
+
+    if immediate is not None:
+        if fhi.arch & HAS_ARCH64:
+            immediate &= 0xFFFFFFFFFFFFFFFF
+        elif fhi.arch & HAS_ARCH32:
+            immediate &= 0xFFFFFFFF
+
+    return immediate
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -114,64 +160,24 @@ def extract_insn_number_features(
         #   .text:0040116e leave
         return
 
-    # x86 / amd64
-    mnemonic = be2.mnemonic[instruction.mnemonic_index]
-    if mnemonic.name.lower().startswith("ret"):
-        # skip things like:
-        #   .text:0042250E retn 8
-        return
+    if fhi.arch & HAS_ARCH_INTEL:
+        mnemonic = be2.mnemonic[instruction.mnemonic_index]
+        if mnemonic.name.lower().startswith("ret"):
+            # skip things like:
+            #   .text:0042250E retn 8
+            return
 
-    register: Optional[str] = get_operand_expression_register(instruction.operand_index[0], be2)
-    if register is not None:
-        # x86 / amd64
+    if fhi.arch & HAS_ARCH_INTEL:
         if mnemonic.name.lower().startswith(("add", "sub")):
-            if register.endswith(("sp", "bp")):
-                return
+            register: Optional[str] = get_operand_expression_register(instruction.operand_index[0], fhi)
+            if register is not None:
+                if register.endswith(("sp", "bp")):
+                    return
 
     for i, operand_index in enumerate(instruction.operand_index):
-        operand = be2.operand[operand_index]
-
-        if len(operand.expression_index) == 1:
-            # - type: IMMEDIATE_INT
-            #   immediate: 20588728364
-            #   parent_index: 0
-
-            expression0 = be2.expression[operand.expression_index[0]]
-
-            if BinExport2.Expression.Type.IMMEDIATE_INT != expression0.type:
-                continue
-
-            value = expression0.immediate
-
-            # handling continues below at label: has a value
-
-        elif len(operand.expression_index) == 2:
-            # from IDA, which provides a size hint for every operand,
-            # we get the following pattern for immediate constants:
-            #
-            # - type: SIZE_PREFIX
-            #   symbol: "b8"
-            # - type: IMMEDIATE_INT
-            #   immediate: 20588728364
-            #   parent_index: 0
-
-            expression0 = be2.expression[operand.expression_index[0]]
-            expression1 = be2.expression[operand.expression_index[1]]
-
-            if BinExport2.Expression.Type.SIZE_PREFIX != expression0.type:
-                continue
-
-            if BinExport2.Expression.Type.IMMEDIATE_INT != expression1.type:
-                continue
-
-            value = expression1.immediate
-
-            # handling continues below at label: has a value
-
-        else:
+        value: Optional[int] = get_operand_expression_immediate(operand_index, fhi)
+        if value is None:
             continue
-
-        # label: has a value
 
         if analysis.base_address == 0x0:
             # When the image is mapped at 0x0,

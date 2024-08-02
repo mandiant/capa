@@ -14,7 +14,7 @@ import io
 import hashlib
 import logging
 import contextlib
-from typing import Dict, List, Tuple, Iterator
+from typing import Set, Dict, List, Tuple, Iterator
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
@@ -390,6 +390,9 @@ class AnalysisContext:
 class FunctionContext:
     ctx: AnalysisContext
     flow_graph_index: int
+    format: Set[str]
+    os: Set[str]
+    arch: Set[str]
 
 
 @dataclass
