@@ -168,11 +168,6 @@ def extract_insn_number_features(
             #   .text:0042250E retn 8
             return
 
-        if mnemonic.name.lower().startswith(("call, j")):
-            # skip things like:
-            # 0x415b81  JNZ         0x415B85
-            return
-
         if mnemonic.name.lower().startswith(("add", "sub")):
             register: Optional[str] = get_operand_expression_register(instruction.operand_index[0], fhi)
             if register is not None:
@@ -198,8 +193,9 @@ def extract_insn_number_features(
             #     continue
             pass
 
-        yield Number(value), ih.address
-        yield OperandNumber(i, value), ih.address
+        if not is_address_mapped(be2, value):
+            yield Number(value), ih.address
+            yield OperandNumber(i, value), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
