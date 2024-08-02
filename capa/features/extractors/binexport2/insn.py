@@ -11,7 +11,7 @@ from typing import List, Tuple, Iterator, Optional
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
-from capa.features.insn import API, Number, Mnemonic, OperandNumber
+from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import ARCH_I386, ARCH_AMD64, ARCH_AARCH64, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import (
@@ -160,9 +160,10 @@ def extract_insn_number_features(
         #   .text:0040116e leave
         return
 
+    mnemonic = be2.mnemonic[instruction.mnemonic_index]
+
     if fhi.arch & HAS_ARCH_INTEL:
         # short-circut checks for intel architecture
-        mnemonic = be2.mnemonic[instruction.mnemonic_index]
         if mnemonic.name.lower().startswith("ret"):
             # skip things like:
             #   .text:0042250E retn 8
@@ -193,9 +194,17 @@ def extract_insn_number_features(
             #     continue
             pass
 
-        if not is_address_mapped(be2, value):
-            yield Number(value), ih.address
-            yield OperandNumber(i, value), ih.address
+        if is_address_mapped(be2, value):
+            continue
+
+        yield Number(value), ih.address
+        yield OperandNumber(i, value), ih.address
+
+        if fhi.arch & HAS_ARCH_INTEL:
+            if mnemonic.name.lower().startswith("add"):
+                if 0 < value < MAX_STRUCTURE_SIZE:
+                    yield Offset(value), ih.address
+                    yield OperandOffset(i, value), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
