@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator
+from typing import List, Tuple, Iterator, Optional
 
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
@@ -32,6 +32,15 @@ logger = logging.getLogger(__name__)
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA: int = 0x40
+
+
+def get_operand_expression_register(op_index: int, be2: BinExport2) -> Optional[str]:
+    op: BinExport2.Operand = be2.operand[op_index]
+    if len(op.expression_index) == 1:
+        exp: BinExport2.Expression = be2.expression[op.expression_index[0]]
+        if exp.type == BinExport2.Expression.Type.REGISTER:
+            return exp.symbol.lower()
+    return None
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -88,48 +97,6 @@ def is_address_mapped(be2: BinExport2, address: int) -> bool:
     return any(section.address <= address < section.address + section.size for section in sections_with_perms)
 
 
-###############################################################################
-#
-# begin Ghidra symbol madness ("gsm").
-#
-# This is a "temporary" section of code to deal with
-#   https://github.com/google/binexport/issues/78
-# because Ghidra exports all operands as a single SYMBOL expression node.
-#
-# Use references to `_is_ghidra_symbol_madness` to remove all this up later.
-
-
-def _is_ghidra_symbol_madness(be2: BinExport2, instruction_index: int) -> bool:
-    instruction = be2.instruction[instruction_index]
-    for operand_index in instruction.operand_index:
-        operand = be2.operand[operand_index]
-
-        if len(operand.expression_index) != 1:
-            return False
-
-        expression0 = be2.expression[operand.expression_index[0]]
-
-        if BinExport2.Expression.Type.SYMBOL != expression0.type:
-            return False
-
-    return True
-
-
-def _gsm_get_instruction_operand(be2: BinExport2, instruction_index: int, operand_index: int) -> str:
-    """since Ghidra represents all operands as a single string, just fetch that."""
-    instruction = be2.instruction[instruction_index]
-    operand = be2.operand[instruction.operand_index[operand_index]]
-    assert len(operand.expression_index) == 1
-    expression = be2.expression[operand.expression_index[0]]
-    assert expression.type == BinExport2.Expression.Type.SYMBOL
-    return expression.symbol
-
-
-# end Ghidra symbol madness.
-#
-###############################################################################
-
-
 def extract_insn_number_features(
     fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
@@ -142,6 +109,11 @@ def extract_insn_number_features(
     instruction_index: int = ii.instruction_index
     instruction: BinExport2.Instruction = be2.instruction[instruction_index]
 
+    if len(instruction.operand_index) == 0:
+        # skip things like:
+        #   .text:0040116e leave
+        return
+
     # x86 / amd64
     mnemonic = be2.mnemonic[instruction.mnemonic_index]
     if mnemonic.name.lower().startswith("ret"):
@@ -149,55 +121,17 @@ def extract_insn_number_features(
         #   .text:0042250E retn 8
         return
 
-    _is_gsm = _is_ghidra_symbol_madness(be2, instruction_index)
+    register: Optional[str] = get_operand_expression_register(instruction.operand_index[0], be2)
+    if register is not None:
+        # x86 / amd64
+        if mnemonic.name.lower().startswith(("add", "sub")):
+            if register.endswith(("sp", "bp")):
+                return
 
     for i, operand_index in enumerate(instruction.operand_index):
         operand = be2.operand[operand_index]
 
-        if len(operand.expression_index) == 1 and _is_gsm:
-            # temporarily, we'll have to try to guess at the interpretation.
-            symbol = _gsm_get_instruction_operand(be2, instruction_index, i)
-
-            # x86 / amd64
-            if mnemonic.name.lower() == "add" and symbol.lower() == "esp":
-                # skip things like:
-                #
-                #    .text:00401140                 call    sub_407E2B
-                #    .text:00401145                 add     esp, 0Ch
-                return
-
-            if symbol.startswith(("#0x", "#-0x")):
-                # like:
-                # - type: SYMBOL
-                #   symbol: "#0xffffffff"
-                # - type: SYMBOL
-                #   symbol: "#-0x1"
-                try:
-                    value = int(symbol[len("#") :], 0x10)
-                except ValueError:
-                    # failed to parse as integer
-                    continue
-
-                # handling continues below at label: has a value
-
-            elif symbol.startswith(("0x", "-0x")):
-                # like:
-                # - type: SYMBOL
-                #   symbol: "0x1000"
-                # - type: SYMBOL
-                #   symbol: "-0x1"
-                try:
-                    value = int(symbol, 0x10)
-                except ValueError:
-                    # failed to parse as integer
-                    continue
-
-                # handling continues below at label: has a value
-
-            else:
-                continue
-
-        elif len(operand.expression_index) == 1:
+        if len(operand.expression_index) == 1:
             # - type: IMMEDIATE_INT
             #   immediate: 20588728364
             #   parent_index: 0
