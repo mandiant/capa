@@ -44,15 +44,10 @@ from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import (
     BACKEND_VIV,
-   
     BACKEND_CAPE,
-   
     BACKEND_BINJA,
-   
     BACKEND_DOTNET,
-   
     BACKEND_FREEZE,
-   
     BACKEND_PEFILE,
     BACKEND_DRAKVUF,
     BACKEND_BINEXPORT2,
