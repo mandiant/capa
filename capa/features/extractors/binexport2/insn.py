@@ -89,6 +89,14 @@ def get_operand_expression_immediate(op_index: int, fhi: FunctionContext) -> Opt
     return immediate
 
 
+def get_immediate_twos_complement(immediate: int, fhi: FunctionContext) -> int:
+    if fhi.arch & HAS_ARCH64:
+        return capa.features.extractors.helpers.twos_complement(immediate, 64)
+    elif fhi.arch & HAS_ARCH32:
+        return capa.features.extractors.helpers.twos_complement(immediate, 32)
+    return immediate
+
+
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
