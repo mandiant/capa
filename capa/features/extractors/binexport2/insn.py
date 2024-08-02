@@ -161,17 +161,24 @@ def extract_insn_number_features(
         return
 
     if fhi.arch & HAS_ARCH_INTEL:
+        # short-circut checks for intel architecture
         mnemonic = be2.mnemonic[instruction.mnemonic_index]
         if mnemonic.name.lower().startswith("ret"):
             # skip things like:
             #   .text:0042250E retn 8
             return
 
-    if fhi.arch & HAS_ARCH_INTEL:
+        if mnemonic.name.lower().startswith(("call, j")):
+            # skip things like:
+            # 0x415b81  JNZ         0x415B85
+            return
+
         if mnemonic.name.lower().startswith(("add", "sub")):
             register: Optional[str] = get_operand_expression_register(instruction.operand_index[0], fhi)
             if register is not None:
                 if register.endswith(("sp", "bp")):
+                    # skip things like:
+                    # 0x415bbc  ADD         ESP, 0xC
                     return
 
     for i, operand_index in enumerate(instruction.operand_index):
