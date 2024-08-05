@@ -5,7 +5,7 @@
       v-model:expandedKeys="expandedKeys"
       size="small"
       :filters="filters"
-      :filterMode="filterMode.value"
+      :filterMode="filterMode"
       sortField="namespace"
       :sortOrder="-1"
       removableSort
@@ -53,7 +53,7 @@
         <template #body="slotProps">
           <!-- Address column -->
           <span v-if="col.field === 'address'" class="text-sm" style="font-family: monospace">
-            {{ slotProps.node.data.type === 'match location' ? '' : slotProps.node.data.address }}
+            {{ slotProps.node.data.address }}
           </span>
 
           <!-- Tactic column -->
@@ -127,6 +127,7 @@ import RuleColumn from './columns/RuleColumn.vue'
 import VTIcon from './misc/VTIcon.vue'
 
 import { parseRules } from '../utils/rdocParser'
+import { createMBCHref, createATTACKHref } from '../utils/urlHelpers'
 
 const props = defineProps({
   data: {
@@ -141,7 +142,7 @@ const props = defineProps({
 
 const treeData = ref([])
 const filters = ref({})
-const filterMode = ref({ value: 'lenient' })
+const filterMode = ref('lenient')
 const sourceDialogVisible = ref(false)
 const currentSource = ref('')
 const expandedKeys = ref({})
@@ -178,7 +179,7 @@ const onRightClick = (event, instance) => {
     selectedNode.value.url = `https://github.com/mandiant/capa-rules/blob/master/${instance.node.data.namespace || 'lib'}/${instance.node.data.name.toLowerCase().replace(/\s+/g, '-')}.yml`
     // construct VirusTotal deep link
     const behaviourSignature = `behaviour_signature:"${instance.node.data.name}"`
-    selectedNode.value.vturl = `https://www.virustotal.com/gui/search/${behaviourSignature}/files`
+    selectedNode.value.vturl = `https://www.virustotal.com/gui/search/${encodeURIComponent(behaviourSignature)}/files`
 
     menu.value.show(event)
   }
@@ -253,57 +254,6 @@ onMounted(() => {
     console.error('Invalid data prop:', props.data)
   }
 })
-
-/**
- * Creates an MBC (Malware Behavior Catalog) URL from an MBC object.
- *
- * @param {Object} mbc - The MBC object to format.
- * @returns {string} The MBC URL.
- */
-
-function createMBCHref(mbc) {
-  let baseUrl
-
-  // Determine the base URL based on the id
-  if (mbc.id.startsWith('B')) {
-    // Behavior
-    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main'
-  } else if (mbc.id.startsWith('C')) {
-    // Micro-Behavior
-    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors'
-  } else {
-    return null
-  }
-
-  // Convert the objective and behavior to lowercase and replace spaces with hyphens
-  const objectivePath = mbc.objective.toLowerCase().replace(/\s+/g, '-')
-  const behaviorPath = mbc.behavior.toLowerCase().replace(/\s+/g, '-')
-
-  // Construct the final URL
-  return `${baseUrl}/${objectivePath}/${behaviorPath}.md`
-}
-
-/**
- * Creates a MITRE ATT&CK URL for a specific technique or sub-technique.
- *
- * @param {Object} attack - The ATT&CK object containing information about the technique.
- * @param {string} attack.id - The ID of the ATT&CK technique or sub-technique.
- * @returns {string} The formatted MITRE ATT&CK URL for the technique.
- */
-function createATTACKHref(attack) {
-  const baseUrl = 'https://attack.mitre.org/techniques/'
-  const idParts = attack.id.split('.')
-
-  if (idParts.length === 1) {
-    // It's a technique
-    return `${baseUrl}${idParts[0]}`
-  } else if (idParts.length === 2) {
-    // It's a sub-technique
-    return `${baseUrl}${idParts[0]}/${idParts[1]}`
-  } else {
-    return null
-  }
-}
 </script>
 
 <style scoped>
