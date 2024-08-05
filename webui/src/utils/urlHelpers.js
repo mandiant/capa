@@ -8,25 +8,25 @@
  * @returns {string|null} The MBC URL or null if the ID is invalid.
  */
 export function createMBCHref(mbc) {
-  let baseUrl
+    let baseUrl;
 
-  // Determine the base URL based on the id
-  if (mbc.id.startsWith('B')) {
-    // Behavior
-    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main'
-  } else if (mbc.id.startsWith('C')) {
-    // Micro-Behavior
-    baseUrl = 'https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors'
-  } else {
-    return null
-  }
+    // Determine the base URL based on the id
+    if (mbc.id.startsWith("B")) {
+        // Behavior
+        baseUrl = "https://github.com/MBCProject/mbc-markdown/blob/main";
+    } else if (mbc.id.startsWith("C")) {
+        // Micro-Behavior
+        baseUrl = "https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors";
+    } else {
+        return null;
+    }
 
-  // Convert the objective and behavior to lowercase and replace spaces with hyphens
-  const objectivePath = mbc.objective.toLowerCase().replace(/\s+/g, '-')
-  const behaviorPath = mbc.behavior.toLowerCase().replace(/\s+/g, '-')
+    // Convert the objective and behavior to lowercase and replace spaces with hyphens
+    const objectivePath = mbc.objective.toLowerCase().replace(/\s+/g, "-");
+    const behaviorPath = mbc.behavior.toLowerCase().replace(/\s+/g, "-");
 
-  // Construct the final URL
-  return `${baseUrl}/${objectivePath}/${behaviorPath}.md`
+    // Construct the final URL
+    return `${baseUrl}/${objectivePath}/${behaviorPath}.md`;
 }
 
 /**
@@ -37,16 +37,16 @@ export function createMBCHref(mbc) {
  * @returns {string|null} The formatted MITRE ATT&CK URL for the technique or null if the ID is invalid.
  */
 export function createATTACKHref(attack) {
-  const baseUrl = 'https://attack.mitre.org/techniques/'
-  const idParts = attack.id.split('.')
+    const baseUrl = "https://attack.mitre.org/techniques/";
+    const idParts = attack.id.split(".");
 
-  if (idParts.length === 1) {
-    // It's a technique
-    return `${baseUrl}${idParts[0]}`
-  } else if (idParts.length === 2) {
-    // It's a sub-technique
-    return `${baseUrl}${idParts[0]}/${idParts[1]}`
-  } else {
-    return null
-  }
+    if (idParts.length === 1) {
+        // It's a technique
+        return `${baseUrl}${idParts[0]}`;
+    } else if (idParts.length === 2) {
+        // It's a sub-technique
+        return `${baseUrl}${idParts[0]}/${idParts[1]}`;
+    } else {
+        return null;
+    }
 }
