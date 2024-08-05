@@ -12,34 +12,5 @@
                 search and display the rule matches in different viewing modes.
             </p>
         </div>
-        <div class="flex justify-content-center w-full mb-3 gap-4">
-            <Button label="Help" @click="openDialog('help')" icon="pi pi-info-circle" outlined />
-            <Button label="Changelog" @click="openDialog('changelog')" icon="pi pi-history" outlined />
-        </div>
     </div>
-
-    <Dialog v-model:visible="helpDialogVisible" header="Help" modal>
-        <p>TODO: Help instruction to walk through users how generate a capa report.</p>
-    </Dialog>
-
-    <Dialog v-model:visible="changelogDialogVisible" header="Changelog" modal>
-        <p>TODO: Add major changes to the tool here.</p>
-    </Dialog>
 </template>
-
-<script setup>
-import { ref } from "vue";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-
-const helpDialogVisible = ref(false);
-const changelogDialogVisible = ref(false);
-
-const openDialog = (type) => {
-    if (type === "help") {
-        helpDialogVisible.value = true;
-    } else if (type === "changelog") {
-        changelogDialogVisible.value = true;
-    }
-};
-</script>
