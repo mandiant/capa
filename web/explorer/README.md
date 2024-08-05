@@ -38,4 +38,4 @@ We welcome your feedback and contributions to improve the web-based Capa Explore
 
 ---
 
-For developers interested in building or contributing to Capa Explorer WebUI, please refer to our [Development Guide](CONTRIBUTION.md).
+For developers interested in building or contributing to Capa Explorer WebUI, please refer to our [Development Guide](DEVELOPMENT.md).
