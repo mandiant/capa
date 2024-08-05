@@ -3,7 +3,7 @@ name: Deploy webui to Github Pages
 on:
   # Runs on pushes targeting the webui branch
   push:
-    branches: ['webui']
+    branches: ['master']
 
   # Allows to run this workflow manually from the Actions tab
   workflow_dispatch:
