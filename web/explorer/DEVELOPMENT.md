@@ -96,7 +96,7 @@ npm run lint:fix
 
 ## Working with PrimeVue Components
 
-Capa Explorer WebUI uses the PrimeVue UI component library. When adding new features or modifying existing ones, refer to the [PrimeVue documentation](https://www.primefaces.org/primevue/) for available components and their usage.
+Capa Explorer WebUI uses the PrimeVue UI component library. When adding new features or modifying existing ones, refer to the [PrimeVue documentation](https://primevue.org/vite) for available components and their usage.
 
 ## Best Practices
 
@@ -110,6 +110,6 @@ Capa Explorer WebUI uses the PrimeVue UI component library. When adding new feat
 
 - [Vue.js Documentation](https://vuejs.org/guide/introduction.html)
 - [Vite Documentation](https://vitejs.dev/guide/)
-- [PrimeVue Documentation](https://www.primefaces.org/primevue/)
+- [PrimeVue Documentation](https://www.primevue.org/)
 
 If you encounter any issues or have questions about the development process, please open an issue on the GitHub repository.
