@@ -138,7 +138,7 @@ dev = [
     "ruff==0.5.2",
     "black==24.4.2",
     "isort==5.13.2",
-    "mypy==1.10.0",
+    "mypy==1.11.1",
     "mypy-protobuf==3.6.0",
     "PyGithub==2.3.0",
     # type stubs for mypy
