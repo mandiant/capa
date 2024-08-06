@@ -12,7 +12,7 @@ from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 
 @dataclass
-class ExpressionPhraseInfo:
+class OperandPhraseInfo:
     scale: Optional[BinExport2.Expression] = None
     index: Optional[BinExport2.Expression] = None
     base: Optional[BinExport2.Expression] = None
@@ -23,7 +23,7 @@ def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGr
     return vertex.HasField("type") and vertex.type == type_
 
 
-def get_operand_expression_phrase_info(be2: BinExport2, operand: BinExport2.Operand) -> Optional[ExpressionPhraseInfo]:
+def get_operand_phrase_info(be2: BinExport2, operand: BinExport2.Operand) -> Optional[OperandPhraseInfo]:
     # assume the following (see https://blog.yossarian.net/2020/06/13/How-x86_64-addresses-memory):
     #
     # Scale: A 2-bit constant factor
@@ -31,9 +31,10 @@ def get_operand_expression_phrase_info(be2: BinExport2, operand: BinExport2.Oper
     # Base: Any general purpose register
     # Displacement: An integral offset
 
-    # skip first expression, assume BinExport2.Expression.DEREFERENCE
     expressions: List[BinExport2.Expression] = get_operand_expressions(be2, operand)
 
+    # skip expression up to and including BinExport2.Expression.DEREFERENCE, assume caller
+    # has checked for BinExport2.Expression.DEREFERENCE
     for i, expression in enumerate(expressions):
         if expression.type == BinExport2.Expression.DEREFERENCE:
             expressions = expressions[i + 1 :]
@@ -55,10 +56,10 @@ def get_operand_expression_phrase_info(be2: BinExport2, operand: BinExport2.Oper
 
         if expression0.type == BinExport2.Expression.IMMEDIATE_INT:
             # Displacement
-            return ExpressionPhraseInfo(displacement=expression0)
+            return OperandPhraseInfo(displacement=expression0)
         elif expression0.type == BinExport2.Expression.REGISTER:
             # Base
-            return ExpressionPhraseInfo(base=expression0)
+            return OperandPhraseInfo(base=expression0)
 
     elif len(expressions) == 3:
         expression0 = expressions[0]
@@ -74,10 +75,10 @@ def get_operand_expression_phrase_info(be2: BinExport2, operand: BinExport2.Oper
 
         if expression2.type == BinExport2.Expression.REGISTER:
             # Base + Index
-            return ExpressionPhraseInfo(base=expression0, index=expression2)
+            return OperandPhraseInfo(base=expression0, index=expression2)
         elif expression2.type == BinExport2.Expression.IMMEDIATE_INT:
             # Base + Displacement
-            return ExpressionPhraseInfo(base=expression0, displacement=expression2)
+            return OperandPhraseInfo(base=expression0, displacement=expression2)
 
     elif len(expressions) == 5:
         expression0 = expressions[0]
@@ -97,13 +98,13 @@ def get_operand_expression_phrase_info(be2: BinExport2, operand: BinExport2.Oper
 
         if expression1.symbol == "+" and expression3.symbol == "+":
             # Base + Index + Displacement
-            return ExpressionPhraseInfo(base=expression0, index=expression2, displacement=expression4)
+            return OperandPhraseInfo(base=expression0, index=expression2, displacement=expression4)
         elif expression1.symbol == "+" and expression3.symbol == "*":
             # Base + (Index * Scale)
-            return ExpressionPhraseInfo(base=expression0, index=expression2, scale=expression3)
+            return OperandPhraseInfo(base=expression0, index=expression2, scale=expression3)
         elif expression1.symbol == "*" and expression3.symbol == "+":
             # (Index * Scale) + Displacement
-            return ExpressionPhraseInfo(index=expression0, scale=expression2, displacement=expression3)
+            return OperandPhraseInfo(index=expression0, scale=expression2, displacement=expression3)
         else:
             raise NotImplementedError(expression1.symbol, expression3.symbol)
 
@@ -125,7 +126,7 @@ def get_operand_expression_phrase_info(be2: BinExport2, operand: BinExport2.Oper
         assert expression6.type == BinExport2.Expression.IMMEDIATE_INT
 
         # Base + (Index * Scale) + Displacement
-        return ExpressionPhraseInfo(base=expression0, index=expression2, scale=expression4, displacement=expression6)
+        return OperandPhraseInfo(base=expression0, index=expression2, scale=expression4, displacement=expression6)
 
     else:
         raise NotImplementedError(len(expressions))
@@ -275,3 +276,39 @@ def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> List[Bin
     _get_operand_expression_list(be2, op, exp_tree, 0, exp_list)
 
     return exp_list
+
+
+def get_operand_register_expression(be2: BinExport2, operand: BinExport2.Operand) -> Optional[BinExport2.Expression]:
+    if len(operand.expression_index) == 1:
+        expression: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+        if expression.type == BinExport2.Expression.REGISTER:
+            return expression
+    return None
+
+
+def get_operand_immediate_expression(be2: BinExport2, operand: BinExport2.Operand) -> Optional[BinExport2.Expression]:
+    if len(operand.expression_index) == 1:
+        # - type: IMMEDIATE_INT
+        #   immediate: 20588728364
+        #   parent_index: 0
+        expression: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+        if expression.type == BinExport2.Expression.IMMEDIATE_INT:
+            return expression
+
+    elif len(operand.expression_index) == 2:
+        # from IDA, which provides a size hint for every operand,
+        # we get the following pattern for immediate constants:
+        #
+        # - type: SIZE_PREFIX
+        #   symbol: "b8"
+        # - type: IMMEDIATE_INT
+        #   immediate: 20588728364
+        #   parent_index: 0
+        expression0: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+        expression1: BinExport2.Expression = be2.expression[operand.expression_index[1]]
+
+        if expression0.type == BinExport2.Expression.SIZE_PREFIX:
+            if expression1.type == BinExport2.Expression.IMMEDIATE_INT:
+                return expression1
+
+    return None

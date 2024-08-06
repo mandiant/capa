@@ -25,7 +25,12 @@ from capa.features.extractors.binexport2 import (
     InstructionContext,
 )
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
-from capa.features.extractors.binexport2.helpers import ExpressionPhraseInfo
+from capa.features.extractors.binexport2.helpers import (
+    OperandPhraseInfo,
+    get_operand_phrase_info,
+    get_operand_register_expression,
+    get_operand_immediate_expression,
+)
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
@@ -48,43 +53,6 @@ def mask_immediate(fhi: FunctionContext, immediate: int) -> int:
     elif fhi.arch & HAS_ARCH32:
         immediate &= 0xFFFFFFFF
     return immediate
-
-
-def get_operand_register(op_index: int, fhi: FunctionContext) -> Optional[str]:
-    op: BinExport2.Operand = fhi.ctx.be2.operand[op_index]
-    if len(op.expression_index) == 1:
-        exp: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
-        if exp.type == BinExport2.Expression.Type.REGISTER:
-            return exp.symbol.lower()
-    return None
-
-
-def get_operand_immediate_expression(be2: BinExport2, operand: BinExport2.Operand) -> Optional[BinExport2.Expression]:
-    if len(operand.expression_index) == 1:
-        # - type: IMMEDIATE_INT
-        #   immediate: 20588728364
-        #   parent_index: 0
-        expression: BinExport2.Expression = be2.expression[operand.expression_index[0]]
-        if expression.type == BinExport2.Expression.IMMEDIATE_INT:
-            return expression
-
-    elif len(operand.expression_index) == 2:
-        # from IDA, which provides a size hint for every operand,
-        # we get the following pattern for immediate constants:
-        #
-        # - type: SIZE_PREFIX
-        #   symbol: "b8"
-        # - type: IMMEDIATE_INT
-        #   immediate: 20588728364
-        #   parent_index: 0
-        expression0: BinExport2.Expression = be2.expression[operand.expression_index[0]]
-        expression1: BinExport2.Expression = be2.expression[operand.expression_index[1]]
-
-        if expression0.type == BinExport2.Expression.SIZE_PREFIX:
-            if expression1.type == BinExport2.Expression.IMMEDIATE_INT:
-                return expression1
-
-    return None
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -167,21 +135,22 @@ def extract_insn_number_features(
             return
 
         if mnemonic.startswith(("add", "sub")):
-            register: Optional[str] = get_operand_register(instruction.operand_index[0], fhi)
-            if register is not None:
-                if register.endswith(("sp", "bp")):
-                    # skip things like:
-                    # 0x415bbc  ADD         ESP, 0xC
-                    return
+            register_expression: Optional[BinExport2.Expression] = get_operand_register_expression(
+                be2, be2.operand[instruction.operand_index[0]]
+            )
+            if register_expression and register_expression.symbol.lower().endswith(("sp", "bp")):
+                # skip things like:
+                # 0x415bbc  ADD         ESP, 0xC
+                return
 
     for i, operand_index in enumerate(instruction.operand_index):
         operand: BinExport2.Operand = be2.operand[operand_index]
 
-        expression: Optional[BinExport2.Expression] = get_operand_immediate_expression(be2, operand)
-        if expression is None:
+        immediate_expression: Optional[BinExport2.Expression] = get_operand_immediate_expression(be2, operand)
+        if not immediate_expression:
             continue
 
-        value: int = mask_immediate(fhi, expression.immediate)
+        value: int = mask_immediate(fhi, immediate_expression.immediate)
         if is_address_mapped(be2, value):
             continue
 
@@ -302,9 +271,7 @@ def extract_insn_offset_features(
             continue
 
         if fhi.arch & HAS_ARCH_INTEL:
-            phrase_info: Optional[ExpressionPhraseInfo] = (
-                capa.features.extractors.binexport2.helpers.get_operand_expression_phrase_info(be2, operand)
-            )
+            phrase_info: Optional[OperandPhraseInfo] = get_operand_phrase_info(be2, operand)
             if not phrase_info:
                 continue
 
