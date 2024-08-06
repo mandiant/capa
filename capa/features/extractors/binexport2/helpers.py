@@ -5,133 +5,45 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Optional
-from dataclasses import dataclass
+from typing import Set, List, Iterator, Optional
 
+import capa.features.extractors.helpers
+from capa.features.common import ARCH_I386, ARCH_AMD64, ARCH_AARCH64
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
+HAS_ARCH32 = {ARCH_I386}
+HAS_ARCH64 = {ARCH_AARCH64, ARCH_AMD64}
 
-@dataclass
-class OperandPhraseInfo:
-    scale: Optional[BinExport2.Expression] = None
-    index: Optional[BinExport2.Expression] = None
-    base: Optional[BinExport2.Expression] = None
-    displacement: Optional[BinExport2.Expression] = None
+HAS_ARCH_INTEL = {ARCH_I386, ARCH_AMD64}
+HAS_ARCH_ARM = {ARCH_AARCH64}
+
+
+def mask_immediate(arch: Set[str], immediate: int) -> int:
+    if arch & HAS_ARCH64:
+        immediate &= 0xFFFFFFFFFFFFFFFF
+    elif arch & HAS_ARCH32:
+        immediate &= 0xFFFFFFFF
+    return immediate
+
+
+def twos_complement(arch: Set[str], immediate: int, default: Optional[int] = None) -> int:
+    if default is not None:
+        return capa.features.extractors.helpers.twos_complement(immediate, default)
+    elif arch & HAS_ARCH64:
+        return capa.features.extractors.helpers.twos_complement(immediate, 64)
+    elif arch & HAS_ARCH32:
+        return capa.features.extractors.helpers.twos_complement(immediate, 32)
+    return immediate
+
+
+def is_address_mapped(be2: BinExport2, address: int) -> bool:
+    """return True if the given address is mapped"""
+    sections_with_perms: Iterator[BinExport2.Section] = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, be2.section)
+    return any(section.address <= address < section.address + section.size for section in sections_with_perms)
 
 
 def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGraph.Vertex.Type.ValueType) -> bool:
     return vertex.HasField("type") and vertex.type == type_
-
-
-def get_operand_phrase_info(be2: BinExport2, operand: BinExport2.Operand) -> Optional[OperandPhraseInfo]:
-    # assume the following (see https://blog.yossarian.net/2020/06/13/How-x86_64-addresses-memory):
-    #
-    # Scale: A 2-bit constant factor
-    # Index: Any general purpose register
-    # Base: Any general purpose register
-    # Displacement: An integral offset
-
-    expressions: List[BinExport2.Expression] = get_operand_expressions(be2, operand)
-
-    # skip expression up to and including BinExport2.Expression.DEREFERENCE, assume caller
-    # has checked for BinExport2.Expression.DEREFERENCE
-    for i, expression in enumerate(expressions):
-        if expression.type == BinExport2.Expression.DEREFERENCE:
-            expressions = expressions[i + 1 :]
-            break
-
-    expression0: BinExport2.Expression
-    expression1: BinExport2.Expression
-    expression2: BinExport2.Expression
-    expression3: BinExport2.Expression
-    expression4: BinExport2.Expression
-
-    if len(expressions) == 1:
-        expression0 = expressions[0]
-
-        assert (
-            expression0.type == BinExport2.Expression.IMMEDIATE_INT
-            or expression0.type == BinExport2.Expression.REGISTER
-        )
-
-        if expression0.type == BinExport2.Expression.IMMEDIATE_INT:
-            # Displacement
-            return OperandPhraseInfo(displacement=expression0)
-        elif expression0.type == BinExport2.Expression.REGISTER:
-            # Base
-            return OperandPhraseInfo(base=expression0)
-
-    elif len(expressions) == 3:
-        expression0 = expressions[0]
-        expression1 = expressions[1]
-        expression2 = expressions[2]
-
-        assert expression0.type == BinExport2.Expression.REGISTER
-        assert expression1.type == BinExport2.Expression.OPERATOR
-        assert (
-            expression2.type == BinExport2.Expression.IMMEDIATE_INT
-            or expression2.type == BinExport2.Expression.REGISTER
-        )
-
-        if expression2.type == BinExport2.Expression.REGISTER:
-            # Base + Index
-            return OperandPhraseInfo(base=expression0, index=expression2)
-        elif expression2.type == BinExport2.Expression.IMMEDIATE_INT:
-            # Base + Displacement
-            return OperandPhraseInfo(base=expression0, displacement=expression2)
-
-    elif len(expressions) == 5:
-        expression0 = expressions[0]
-        expression1 = expressions[1]
-        expression2 = expressions[2]
-        expression3 = expressions[3]
-        expression4 = expressions[4]
-
-        assert expression0.type == BinExport2.Expression.REGISTER
-        assert expression1.type == BinExport2.Expression.OPERATOR
-        assert (
-            expression2.type == BinExport2.Expression.REGISTER
-            or expression2.type == BinExport2.Expression.IMMEDIATE_INT
-        )
-        assert expression3.type == BinExport2.Expression.OPERATOR
-        assert expression4.type == BinExport2.Expression.IMMEDIATE_INT
-
-        if expression1.symbol == "+" and expression3.symbol == "+":
-            # Base + Index + Displacement
-            return OperandPhraseInfo(base=expression0, index=expression2, displacement=expression4)
-        elif expression1.symbol == "+" and expression3.symbol == "*":
-            # Base + (Index * Scale)
-            return OperandPhraseInfo(base=expression0, index=expression2, scale=expression3)
-        elif expression1.symbol == "*" and expression3.symbol == "+":
-            # (Index * Scale) + Displacement
-            return OperandPhraseInfo(index=expression0, scale=expression2, displacement=expression3)
-        else:
-            raise NotImplementedError(expression1.symbol, expression3.symbol)
-
-    elif len(expressions) == 7:
-        expression0 = expressions[0]
-        expression1 = expressions[1]
-        expression2 = expressions[2]
-        expression3 = expressions[3]
-        expression4 = expressions[4]
-        expression5 = expressions[5]
-        expression6 = expressions[6]
-
-        assert expression0.type == BinExport2.Expression.REGISTER
-        assert expression1.type == BinExport2.Expression.OPERATOR
-        assert expression2.type == BinExport2.Expression.REGISTER
-        assert expression3.type == BinExport2.Expression.OPERATOR
-        assert expression4.type == BinExport2.Expression.IMMEDIATE_INT
-        assert expression5.type == BinExport2.Expression.OPERATOR
-        assert expression6.type == BinExport2.Expression.IMMEDIATE_INT
-
-        # Base + (Index * Scale) + Displacement
-        return OperandPhraseInfo(base=expression0, index=expression2, scale=expression4, displacement=expression6)
-
-    else:
-        raise NotImplementedError(len(expressions))
-
-    return None
 
 
 def _get_operand_expression_list(

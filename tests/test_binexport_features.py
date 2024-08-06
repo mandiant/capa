@@ -46,7 +46,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "687e79.ghidra.be2",
             "file",
             capa.features.file.Export("android::clearDir"),
-            "xfail: not implemented yet?!",
+            "xfail: name demangling is not implemented",
         ),
         ("687e79.ghidra.be2", "file", capa.features.file.Export("nope"), False),
         # file/imports
@@ -104,19 +104,6 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.common.Characteristic("stack string"),
             "xfail: not implemented yet",
         ),
-        # bb/characteristic(tight loop)
-        (
-            "687e79.ghidra.be2",
-            "function=0x0,bb=0x0",
-            capa.features.common.Characteristic("tight loop"),
-            "xfail: not implemented yet",
-        ),
-        (
-            "687e79.ghidra.be2",
-            "function=0x0,bb=0x0",
-            capa.features.common.Characteristic("tight loop"),
-            "xfail: not implemented yet",
-        ),
         # insn/mnemonic
         ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("stp"), True),
         ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("adrp"), True),
@@ -142,24 +129,24 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.insn.OperandNumber(1, 0x8),
             True,
         ),
-        (
-            "687e79.ghidra.be2",
-            "function=0x107588,bb=0x107588,insn=0x1075b8",
-            capa.features.insn.OperandNumber(3, 0x10),
-            "xfail: GSM?",
-        ),  # TODO(mr): https://github.com/mandiant/capa/issues/2102
         # insn/operand.offset
         (
             "687e79.ghidra.be2",
-            "function=0x0,bb=0x0",
-            capa.features.insn.OperandOffset(1, 100),
-            "xfail: not implemented yet",
+            "function=0x105128,bb=0x105450",
+            capa.features.insn.OperandOffset(2, 0x10),
+            True,
         ),
         (
-            "687e79.ghidra.be2",
-            "function=0x0,bb=0x0",
-            capa.features.insn.OperandOffset(3, 100),
-            "xfail: not implemented yet",
+            "d1e650.ghidra.be2",
+            "function=0x124854,bb=0x1248AC,insn=0x1248B4",
+            capa.features.insn.OperandOffset(2, -0x48),
+            True,
+        ),
+        (
+            "d1e650.ghidra.be2",
+            "function=0x13347c,bb=0x133548,insn=0x133554",
+            capa.features.insn.OperandOffset(2, 0x20),
+            False,
         ),
         # insn/number
         ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Number(0x3), True),
@@ -181,7 +168,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "687e79.ghidra.be2",
             "function=0x1057f8,bb=0x1057f8",
             capa.features.insn.Number(0xFFFFFFFFFFFFFFFF),
-            "xfail: not implemented yet",
+            True,
         ),
         (
             "687e79.ghidra.be2",
@@ -192,34 +179,22 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # insn/offset
         (
             "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.insn.Offset(0x0),
-            "xfail: not implemented yet",
+            "function=0x105128,bb=0x105450",
+            capa.features.insn.Offset(0x10),
+            True,
         ),
         (
-            "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.insn.Offset(0x4),
-            "xfail: not implemented yet",
-        ),
-        (
-            "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.insn.Offset(0xC),
-            "xfail: not implemented yet",
+            "d1e650.ghidra.be2",
+            "function=0x13347c,bb=0x133548,insn=0x133554",
+            capa.features.insn.Offset(0x20),
+            False,
         ),
         # insn/offset: negative
         (
-            "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.insn.Offset(-0x1),
-            "xfail: not implemented yet",
-        ),
-        (
-            "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.insn.Offset(-0x2),
-            "xfail: not implemented yet",
+            "d1e650.ghidra.be2",
+            "function=0x124854,bb=0x1248AC,insn=0x1248B4",
+            capa.features.insn.Offset(-0x48),
+            True,
         ),
         # insn/offset from mnemonic: add
         #
