@@ -25,6 +25,7 @@ from capa.features.extractors.binexport2 import (
     InstructionContext,
 )
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+from capa.features.extractors.binexport2.helpers import ExpressionPhraseInfo
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,15 @@ HAS_ARCH_INTEL = {ARCH_I386, ARCH_AMD64}
 HAS_ARCH_ARM = {ARCH_AARCH64}
 
 
-def get_operand_expression_register(op_index: int, fhi: FunctionContext) -> Optional[str]:
+def mask_immediate(fhi: FunctionContext, immediate: int) -> int:
+    if fhi.arch & HAS_ARCH64:
+        immediate &= 0xFFFFFFFFFFFFFFFF
+    elif fhi.arch & HAS_ARCH32:
+        immediate &= 0xFFFFFFFF
+    return immediate
+
+
+def get_operand_register(op_index: int, fhi: FunctionContext) -> Optional[str]:
     op: BinExport2.Operand = fhi.ctx.be2.operand[op_index]
     if len(op.expression_index) == 1:
         exp: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
@@ -50,20 +59,16 @@ def get_operand_expression_register(op_index: int, fhi: FunctionContext) -> Opti
     return None
 
 
-def get_operand_expression_immediate(op_index: int, fhi: FunctionContext) -> Optional[int]:
-    op: BinExport2.Operand = fhi.ctx.be2.operand[op_index]
-    immediate: Optional[int] = None
-
-    if len(op.expression_index) == 1:
+def get_operand_immediate_expression(be2: BinExport2, operand: BinExport2.Operand) -> Optional[BinExport2.Expression]:
+    if len(operand.expression_index) == 1:
         # - type: IMMEDIATE_INT
         #   immediate: 20588728364
         #   parent_index: 0
+        expression: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+        if expression.type == BinExport2.Expression.IMMEDIATE_INT:
+            return expression
 
-        exp: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
-        if BinExport2.Expression.Type.IMMEDIATE_INT == exp.type:
-            immediate = exp.immediate
-
-    elif len(op.expression_index) == 2:
+    elif len(operand.expression_index) == 2:
         # from IDA, which provides a size hint for every operand,
         # we get the following pattern for immediate constants:
         #
@@ -72,29 +77,14 @@ def get_operand_expression_immediate(op_index: int, fhi: FunctionContext) -> Opt
         # - type: IMMEDIATE_INT
         #   immediate: 20588728364
         #   parent_index: 0
+        expression0: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+        expression1: BinExport2.Expression = be2.expression[operand.expression_index[1]]
 
-        exp0: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[0]]
-        exp1: BinExport2.Expression = fhi.ctx.be2.expression[op.expression_index[1]]
+        if expression0.type == BinExport2.Expression.SIZE_PREFIX:
+            if expression1.type == BinExport2.Expression.IMMEDIATE_INT:
+                return expression1
 
-        if BinExport2.Expression.Type.SIZE_PREFIX == exp0.type:
-            if BinExport2.Expression.Type.IMMEDIATE_INT == exp1.type:
-                immediate = exp1.immediate
-
-    if immediate is not None:
-        if fhi.arch & HAS_ARCH64:
-            immediate &= 0xFFFFFFFFFFFFFFFF
-        elif fhi.arch & HAS_ARCH32:
-            immediate &= 0xFFFFFFFF
-
-    return immediate
-
-
-def get_immediate_twos_complement(immediate: int, fhi: FunctionContext) -> int:
-    if fhi.arch & HAS_ARCH64:
-        return capa.features.extractors.helpers.twos_complement(immediate, 64)
-    elif fhi.arch & HAS_ARCH32:
-        return capa.features.extractors.helpers.twos_complement(immediate, 32)
-    return immediate
+    return None
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -158,7 +148,6 @@ def extract_insn_number_features(
     ii: InstructionContext = ih.inner
 
     be2: BinExport2 = fhi.ctx.be2
-    analysis: BinExport2Analysis = fhi.ctx.analysis
 
     instruction_index: int = ii.instruction_index
     instruction: BinExport2.Instruction = be2.instruction[instruction_index]
@@ -168,17 +157,17 @@ def extract_insn_number_features(
         #   .text:0040116e leave
         return
 
-    mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    mnemonic: str = be2.mnemonic[instruction.mnemonic_index].name.lower()
 
     if fhi.arch & HAS_ARCH_INTEL:
         # short-circut checks for intel architecture
-        if mnemonic.name.lower().startswith("ret"):
+        if mnemonic.startswith("ret"):
             # skip things like:
             #   .text:0042250E retn 8
             return
 
-        if mnemonic.name.lower().startswith(("add", "sub")):
-            register: Optional[str] = get_operand_expression_register(instruction.operand_index[0], fhi)
+        if mnemonic.startswith(("add", "sub")):
+            register: Optional[str] = get_operand_register(instruction.operand_index[0], fhi)
             if register is not None:
                 if register.endswith(("sp", "bp")):
                     # skip things like:
@@ -186,22 +175,13 @@ def extract_insn_number_features(
                     return
 
     for i, operand_index in enumerate(instruction.operand_index):
-        value: Optional[int] = get_operand_expression_immediate(operand_index, fhi)
-        if value is None:
+        operand: BinExport2.Operand = be2.operand[operand_index]
+
+        expression: Optional[BinExport2.Expression] = get_operand_immediate_expression(be2, operand)
+        if expression is None:
             continue
 
-        if analysis.base_address == 0x0:
-            # When the image is mapped at 0x0,
-            #  then its hard to tell if numbers are pointers or numbers.
-            # TODO(mr): be a little less conservative otherwise?
-            # https://github.com/mandiant/capa/issues/1755
-
-            # TODO(mr): this removes a lot of valid numbers, could check alignment and use additional heuristics
-            # https://github.com/mandiant/capa/issues/1755
-            # if is_address_mapped(be2, value):
-            #     continue
-            pass
-
+        value: int = mask_immediate(fhi, expression.immediate)
         if is_address_mapped(be2, value):
             continue
 
@@ -209,7 +189,7 @@ def extract_insn_number_features(
         yield OperandNumber(i, value), ih.address
 
         if fhi.arch & HAS_ARCH_INTEL:
-            if mnemonic.name.lower().startswith("add"):
+            if mnemonic.startswith("add"):
                 if 0 < value < MAX_STRUCTURE_SIZE:
                     yield Offset(value), ih.address
                     yield OperandOffset(i, value), ih.address
@@ -296,9 +276,61 @@ def extract_insn_string_features(
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): complete
-    # https://github.com/mandiant/capa/issues/1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2: BinExport2 = fhi.ctx.be2
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+
+    if len(instruction.operand_index) == 0:
+        # skip things like:
+        #   .text:0040116e leave
+        return
+
+    mnemonic: str = be2.mnemonic[instruction.mnemonic_index].name.lower()
+
+    for i, operand_index in enumerate(instruction.operand_index):
+        operand: BinExport2.Operand = be2.operand[operand_index]
+
+        is_dereference = False
+        for expression_index in operand.expression_index:
+            if be2.expression[expression_index].type == BinExport2.Expression.DEREFERENCE:
+                is_dereference = True
+                break
+
+        if not is_dereference:
+            continue
+
+        if fhi.arch & HAS_ARCH_INTEL:
+            phrase_info: Optional[ExpressionPhraseInfo] = (
+                capa.features.extractors.binexport2.helpers.get_operand_expression_phrase_info(be2, operand)
+            )
+            if not phrase_info:
+                continue
+
+            if phrase_info.displacement:
+                if phrase_info.base and phrase_info.base.symbol.lower().endswith(("bp", "sp")):
+                    # skips things like:
+                    # 00401068 MOV dword ptr [EBP + local_8],EAX
+                    continue
+
+                value: int = mask_immediate(fhi, phrase_info.displacement.immediate)
+                if not is_address_mapped(be2, value):
+                    value = capa.features.extractors.helpers.twos_complement(value, 32)
+
+                    yield Offset(value), ih.address
+                    yield OperandOffset(i, value), ih.address
+
+                    if mnemonic == "lea" and i == 1:
+                        if phrase_info.base and not any((phrase_info.scale, phrase_info.index)):
+                            yield Number(value), ih.address
+                            yield OperandNumber(i, value), ih.address
+
+            elif phrase_info.base and not any((phrase_info.index, phrase_info.scale)):
+                # like:
+                # 00401062 MOVZX EAX,word ptr [EDI]
+                yield Offset(0), ih.address
+                yield OperandOffset(i, 0), ih.address
 
 
 def is_security_cookie(

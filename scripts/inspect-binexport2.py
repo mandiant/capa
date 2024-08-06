@@ -88,8 +88,23 @@ def _render_expression_tree(
 
     elif expression.type == BinExport2.Expression.SYMBOL:
         o.write(expression.symbol)
-        assert len(children_tree_indexes) == 0
-        return
+        assert len(children_tree_indexes) <= 1
+
+        if len(children_tree_indexes) == 0:
+            return
+        elif len(children_tree_indexes) == 1:
+            # like: v
+            # from: mov v0.D[0x1], x9
+            #           |
+            #           0
+            #           .
+            #           |
+            #           D
+            child_index = children_tree_indexes[0]
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+            return
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
 
     elif expression.type == BinExport2.Expression.IMMEDIATE_INT:
         o.write(f"0x{expression.immediate:X}")
