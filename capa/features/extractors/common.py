@@ -75,7 +75,7 @@ def extract_format(buf: bytes) -> Iterator[Tuple[Feature, Address]]:
         #  1. handling a file format (e.g. macho)
         #
         # for (1), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug("unknown file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))
         return
 
 

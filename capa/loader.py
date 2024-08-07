@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
 import sys
 import logging
 import datetime
@@ -46,6 +47,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_DRAKVUF,
+    FORMAT_BINEXPORT2,
 )
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import (
@@ -64,6 +66,7 @@ BACKEND_PEFILE = "pefile"
 BACKEND_CAPE = "cape"
 BACKEND_DRAKVUF = "drakvuf"
 BACKEND_FREEZE = "freeze"
+BACKEND_BINEXPORT2 = "binexport2"
 
 
 class CorruptFile(ValueError):
@@ -228,7 +231,7 @@ def get_extractor(
 
     elif backend == BACKEND_BINJA:
         import capa.helpers
-        from capa.features.extractors.binja.find_binja_api import find_binja_path
+        from capa.features.extractors.binaryninja.find_binja_api import find_binja_path
 
         # When we are running as a standalone executable, we cannot directly import binaryninja
         # We need to fist find the binja API installation path and add it into sys.path
@@ -246,7 +249,7 @@ def get_extractor(
                 + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
             )
 
-        import capa.features.extractors.binja.extractor
+        import capa.features.extractors.binaryninja.extractor
 
         if input_format not in (FORMAT_SC32, FORMAT_SC64):
             if not is_supported_format(input_path):
@@ -263,7 +266,7 @@ def get_extractor(
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
 
-        return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+        return capa.features.extractors.binaryninja.extractor.BinjaFeatureExtractor(bv)
 
     elif backend == BACKEND_PEFILE:
         import capa.features.extractors.pefile
@@ -301,8 +304,40 @@ def get_extractor(
     elif backend == BACKEND_FREEZE:
         return frz.load(input_path.read_bytes())
 
+    elif backend == BACKEND_BINEXPORT2:
+        import capa.features.extractors.binexport2
+        import capa.features.extractors.binexport2.extractor
+
+        be2 = capa.features.extractors.binexport2.get_binexport2(input_path)
+        assert sample_path is not None
+        buf = sample_path.read_bytes()
+
+        return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
     else:
         raise ValueError("unexpected backend: " + backend)
+
+
+def _get_binexport2_file_extractors(input_file: Path) -> List[FeatureExtractor]:
+    # I'm not sure this is where this logic should live, but it works for now.
+    # we'll keep this a "private" routine until we're sure.
+    import capa.features.extractors.binexport2
+
+    be2 = capa.features.extractors.binexport2.get_binexport2(input_file)
+    sample_path = capa.features.extractors.binexport2.get_sample_from_binexport2(
+        input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
+    )
+
+    with sample_path.open("rb") as f:
+        taste = f.read()
+
+    if taste.startswith(capa.features.extractors.common.MATCH_PE):
+        return get_file_extractors(sample_path, FORMAT_PE)
+    elif taste.startswith(capa.features.extractors.common.MATCH_ELF):
+        return get_file_extractors(sample_path, FORMAT_ELF)
+    else:
+        logger.warning("unsupported format")
+        return []
 
 
 def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
@@ -341,6 +376,9 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
 
         report = capa.helpers.load_jsonl_from_path(input_file)
         file_extractors.append(capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report))
+
+    elif input_format == FORMAT_BINEXPORT2:
+        file_extractors = _get_binexport2_file_extractors(input_file)
 
     return file_extractors
 
