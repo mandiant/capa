@@ -56,7 +56,7 @@
 
 <script setup>
 import { defineProps } from "vue";
-import LibraryTag from "../misc/LibraryTag.vue";
+import LibraryTag from "@/components/misc/LibraryTag.vue";
 
 defineProps({
     node: {

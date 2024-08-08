@@ -181,7 +181,7 @@ import RuleColumn from "@/components/columns/RuleColumn.vue";
 import VTIcon from "@/components/misc/VTIcon.vue";
 
 import { parseRules } from "@/utils/rdocParser";
-import { createMBCHref, createATTACKHref, createCapaRulesUrl, createVirusTotalUrl } from "../utils/urlHelpers";
+import { createMBCHref, createATTACKHref, createCapaRulesUrl, createVirusTotalUrl } from "@/utils/urlHelpers";
 
 const props = defineProps({
     data: {
