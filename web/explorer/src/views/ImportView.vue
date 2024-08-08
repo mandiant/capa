@@ -77,8 +77,9 @@ onMounted(() => {
 
     // Check if the URL contains a rdoc parameter and load the data from that URL
     const urlParams = new URLSearchParams(window.location.search);
-    const rdocURL = urlParams.get("rdoc");
-    if (rdocURL) {
+    const encodedRdocURL = urlParams.get("rdoc");
+    if (encodedRdocURL) {
+        const rdocURL = decodeURIComponent(encodedRdocURL);
         loadFromURL(rdocURL);
     }
 });
