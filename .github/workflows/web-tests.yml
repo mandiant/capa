@@ -34,7 +34,7 @@ jobs:
       working-directory: ./web/explorer
 
     - name: Format
-      run: npm run format
+      run: npm run format:check
       working-directory: ./web/explorer
 
     - name: Run unit tests
