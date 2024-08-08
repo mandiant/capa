@@ -1,6 +1,6 @@
 # Capa Explorer Web
 
-Capa Explorer WebUI is a web-based user interface for exploring program capabilities identified by the capa tool. It provides an intuitive and interactive way to analyze and visualize the results of capa analysis.
+Capa Explorer Web is a browser-based user interface for exploring program capabilities identified by capa. It provides an intuitive and interactive way to analyze and visualize the results of capa analysis.
 
 ## Features
 
