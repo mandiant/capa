@@ -4,7 +4,7 @@
 
 ### New Features
 
-- webui: explore capa analysis in the web #2224 @s-ff
+- webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
 
 
