@@ -1,28 +1,27 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import DescriptionPanel from "../components/DescriptionPanel.vue";
-import UploadOptions from "../components/UploadOptions.vue";
-import MetadataPanel from "../components/MetadataPanel.vue";
-import RuleMatchesTable from "../components/RuleMatchesTable.vue";
-import FunctionCapabilities from "../components/FunctionCapabilities.vue";
-import ProcessCapabilities from "../components/ProcessCapabilities.vue";
-import SettingsPanel from "../components/SettingsPanel.vue";
-import NamespaceChart from "../components/NamespaceChart.vue";
+import DescriptionPanel from "@/components/DescriptionPanel.vue";
+import UploadOptions from "@/components/UploadOptions.vue";
+import MetadataPanel from "@/components/MetadataPanel.vue";
+import RuleMatchesTable from "@/components/RuleMatchesTable.vue";
+import FunctionCapabilities from "@/components/FunctionCapabilities.vue";
+import ProcessCapabilities from "@/components/ProcessCapabilities.vue";
+import SettingsPanel from "@/components/SettingsPanel.vue";
+import NamespaceChart from "@/components/NamespaceChart.vue";
 import Toast from "primevue/toast";
 
-import demoRdocStatic from "../../../../tests/data/rd/al-khaser_x64.exe_.json";
-import demoRdocDynamic from "../../../../tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json";
+import demoRdocStatic from "@testfiles/rd/al-khaser_x64.exe_.json";
+import demoRdocDynamic from "@testfiles/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json";
 
-import { useRdocLoader } from "../composables/useRdocLoader";
+import { useRdocLoader } from "@/composables/useRdocLoader";
 const { rdocData, isValidVersion, loadRdoc } = useRdocLoader();
 
-import { isGzipped, decompressGzip, readFileAsText } from "../utils/fileUtils";
+import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
 
 const showCapabilitiesByFunctionOrProcess = ref(false);
 const showLibraryRules = ref(false);
 const showNamespaceChart = ref(false);
-
-const flavor = computed(() => rdocData.value?.meta.flavor);
+const showColumnFilters = ref(false);
 
 const libraryRuleMatchesCount = computed(() => {
     if (!rdocData.value || !rdocData.value.rules) return 0;
@@ -39,6 +38,10 @@ const updateShowLibraryRules = (value) => {
 
 const updateShowNamespaceChart = (value) => {
     showNamespaceChart.value = value;
+};
+
+const updateShowColumnFilters = (value) => {
+    showColumnFilters.value = value;
 };
 
 const loadFromLocal = async (event) => {
@@ -69,6 +72,10 @@ const loadDemoDataDynamic = () => {
 };
 
 onMounted(() => {
+    // Clear out sessionStorage to prevent stale data from being used
+    sessionStorage.clear();
+
+    // Check if the URL contains a rdoc parameter and load the data from that URL
     const urlParams = new URLSearchParams(window.location.search);
     const rdocURL = urlParams.get("rdoc");
     if (rdocURL) {
@@ -92,25 +99,27 @@ onMounted(() => {
     <template v-if="rdocData && isValidVersion">
         <MetadataPanel :data="rdocData" />
         <SettingsPanel
-            :flavor="flavor"
+            :flavor="rdocData.meta.flavor"
             :library-rule-matches-count="libraryRuleMatchesCount"
             @update:show-capabilities-by-function-or-process="updateShowCapabilitiesByFunctionOrProcess"
             @update:show-library-rules="updateShowLibraryRules"
             @update:show-namespace-chart="updateShowNamespaceChart"
+            @update:show-column-filters="updateShowColumnFilters"
         />
 
         <RuleMatchesTable
             v-if="!showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
             :data="rdocData"
             :show-library-rules="showLibraryRules"
+            :show-column-filters="showColumnFilters"
         />
         <FunctionCapabilities
-            v-if="flavor === 'static' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
+            v-if="rdocData.meta.flavor === 'static' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
             :data="rdocData"
             :show-library-rules="showLibraryRules"
         />
         <ProcessCapabilities
-            v-else-if="flavor === 'dynamic' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
+            v-else-if="rdocData.meta.flavor === 'dynamic' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
             :data="rdocData"
             :show-capabilities-by-process="showCapabilitiesByFunctionOrProcess"
             :show-library-rules="showLibraryRules"

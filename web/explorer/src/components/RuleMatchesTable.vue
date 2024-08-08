@@ -1,118 +1,171 @@
 <template>
-    <div class="card">
-        <TreeTable
-            :value="filteredTreeData"
-            v-model:expandedKeys="expandedKeys"
-            size="small"
-            :filters="filters"
-            :filterMode="filterMode"
-            sortField="namespace"
-            :sortOrder="-1"
-            removableSort
-            :rowHover="true"
-            :indentation="1.3"
-            selectionMode="single"
-            @node-select="onNodeSelect"
-            :pt="{
-                row: ({ instance }) => ({
-                    oncontextmenu: (event) => onRightClick(event, instance)
-                })
-            }"
+    <TreeTable
+        :value="filteredTreeData"
+        v-model:expandedKeys="expandedKeys"
+        size="small"
+        scrollable
+        :filters="filters"
+        :filterMode="filterMode"
+        sortField="namespace"
+        :sortOrder="1"
+        removableSort
+        :rowHover="true"
+        :indentation="1.3"
+        selectionMode="single"
+        @node-select="onNodeSelect"
+        :pt="{
+            row: ({ instance }) => ({
+                oncontextmenu: (event) => onRightClick(event, instance)
+            })
+        }"
+    >
+        <template #header>
+            <IconField>
+                <InputIcon class="pi pi-search" />
+                <InputText v-model="filters['global']" placeholder="Global search" />
+            </IconField>
+        </template>
+
+        <!-- Rule column  -->
+        <Column
+            field="name"
+            header="Rule"
+            :sortable="true"
+            :expander="true"
+            filterMatchMode="contains"
+            style="width: 38%"
+            class="cursor-default"
         >
-            <template #header>
-                <div class="flex justify-content-end w-full">
-                    <IconField>
-                        <InputIcon class="pi pi-search" />
-                        <InputText v-model="filters['global']" placeholder="Global search" />
-                    </IconField>
+            <template #filter v-if="props.showColumnFilters">
+                <InputText
+                    v-model="filters['name']"
+                    type="text"
+                    placeholder="Filter by rule or nested feature"
+                    class="w-full"
+                />
+            </template>
+            <template #body="{ node }">
+                <RuleColumn :node="node" />
+            </template>
+        </Column>
+
+        <!-- Address/Process column  -->
+        <Column
+            field="address"
+            :header="props.data.meta.flavor === 'dynamic' ? 'Process' : 'Address'"
+            filterMatchMode="contains"
+            style="width: 8.5%"
+            class="cursor-default"
+        >
+            <template #filter v-if="props.showColumnFilters">
+                <InputText
+                    v-model="filters['address']"
+                    type="text"
+                    :placeholder="`Filter by ${props.data.meta.flavor === 'dynamic' ? 'process' : 'address'}`"
+                    class="w-full"
+                />
+            </template>
+            <template #body="{ node }">
+                <span class="font-monospace text-sm"> {{ node.data.address }} </span>
+            </template>
+        </Column>
+
+        <!-- Namespace column -->
+        <Column
+            field="namespace"
+            header="Namespace"
+            sortable
+            filterMatchMode="contains"
+            style="width: 16%"
+            class="cursor-default"
+        >
+            <template #filter v-if="props.showColumnFilters">
+                <InputText v-model="filters['namespace']" type="text" placeholder="Filter by namespace" />
+            </template>
+        </Column>
+
+        <!-- Technique column -->
+        <Column
+            field="attack"
+            header="ATT&CK Technique"
+            sortable
+            :sortField="(node) => node?.attack[0]?.technique"
+            filterField="attack.0.parts"
+            filterMatchMode="contains"
+            style="width: 15%"
+        >
+            <template #filter v-if="props.showColumnFilters">
+                <InputText
+                    v-model="filters['attack.0.parts']"
+                    type="text"
+                    placeholder="Filter by technique"
+                    class="w-full"
+                />
+            </template>
+            <template #body="{ node }">
+                <div class="flex flex-wrap">
+                    <div v-for="(attack, index) in node.data.attack" :key="index">
+                        <a :href="createATTACKHref(attack)" target="_blank">
+                            {{ attack.technique }}
+                            <span class="text-500 text-sm font-normal ml-1">({{ attack.id.split(".")[0] }})</span>
+                        </a>
+                        <div v-if="attack.subtechnique" style="font-size: 0.8em; margin-left: 2em">
+                            <a :href="createATTACKHref(attack)" target="_blank">
+                                ↳ {{ attack.subtechnique }}
+                                <span class="text-500 text-xs font-normal ml-1">({{ attack.id }})</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </template>
+        </Column>
 
-            <!-- Rule column (always visible) -->
-            <Column field="name" header="Rule" :sortable="true" :expander="true" filterMatchMode="contains">
-                <template #filter>
-                    <InputText v-model="filters['name']" type="text" placeholder="Filter by Rule or Feature" />
-                </template>
-                <template #body="{ node }">
-                    <RuleColumn :node="node" />
-                </template>
-            </Column>
-
-            <Column
-                v-for="col in visibleColumns"
-                :key="col.field"
-                :field="col.field"
-                :header="props.data.meta.flavor === 'dynamic' && col.field === 'address' ? 'Process' : col.header"
-                :sortable="col.field !== 'source'"
-                :class="{ 'w-3': col.field === 'mbc', 'w-full': col.field === 'name' }"
-                filterMatchMode="contains"
-            >
-                <template #filter>
-                    <InputText v-model="filters[col.field]" type="text" :placeholder="`Filter by ${col.header}`" />
-                </template>
-                <template #body="slotProps">
-                    <!-- Address column -->
-                    <span v-if="col.field === 'address'" class="text-sm" style="font-family: monospace">
-                        {{ slotProps.node.data.address }}
-                    </span>
-
-                    <!-- Tactic column -->
-                    <div v-else-if="col.field === 'tactic' && slotProps.node.data.attack">
-                        <div v-for="(attack, index) in slotProps.node.data.attack" :key="index">
-                            <a :href="createATTACKHref(attack)" target="_blank">
-                                {{ attack.technique }}
-                                <span class="text-500 text-sm font-normal ml-1">({{ attack.id }})</span>
-                            </a>
-                            <div
-                                v-for="(technique, techIndex) in attack.techniques"
-                                :key="techIndex"
-                                style="font-size: 0.8em; margin-left: 1em"
-                            >
-                                <a :href="createATTACKHref(technique)" target="_blank">
-                                    ↳ {{ technique.technique }}
-                                    <span class="text-500 text-xs font-normal ml-1">({{ technique.id }})</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- MBC column -->
-                    <div v-else-if="col.field === 'mbc' && slotProps.node.data.mbc">
-                        <div v-for="(mbc, index) in slotProps.node.data.mbc" :key="index">
-                            <a :href="createMBCHref(mbc)" target="_blank">
-                                {{ mbc.parts.join("::") }}
-                                <span class="text-500 text-sm font-normal opacity-80 ml-1">[{{ mbc.id }}]</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Namespace column -->
-                    <span v-else-if="col.field === 'namespace' && !slotProps.node.data.lib">
-                        {{ slotProps.node.data.namespace }}
-                    </span>
-                </template>
-            </Column>
-        </TreeTable>
-
-        <ContextMenu ref="menu" :model="contextMenuItems">
-            <template #item="{ item, props }">
-                <a v-ripple v-bind="props.action" :href="item.url" :target="item.target">
-                    <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
-                    <VTIcon v-else-if="item.icon === 'vt-icon'" />
-                    <span>{{ item.label }}</span>
-                </a>
+        <!-- MBC column -->
+        <Column
+            field="mbc"
+            header="Malware Behavior Catalog"
+            sortable
+            :sortField="(node) => node?.mbc[0]?.parts[0]"
+            filterField="mbc.0.parts"
+            filterMatchMode="contains"
+        >
+            <template #filter v-if="props.showColumnFilters">
+                <InputText v-model="filters['mbc.0.parts']" type="text" placeholder="Filter by MBC" class="w-full" />
             </template>
-        </ContextMenu>
+            <template #body="{ node }">
+                <div class="flex flex-wrap">
+                    <div v-for="(mbc, index) in node.data.mbc" :key="index">
+                        <a :href="createMBCHref(mbc)" target="_blank">
+                            {{ mbc.parts.join("::") }}
+                            <span class="text-500 text-sm font-normal opacity-80 ml-1">[{{ mbc.id }}]</span>
+                        </a>
+                    </div>
+                </div>
+            </template>
+        </Column>
+    </TreeTable>
 
-        <Toast />
+    <!-- Right click context menu -->
+    <ContextMenu ref="menu" :model="contextMenuItems">
+        <template #item="{ item, props }">
+            <a v-ripple v-bind="props.action" :href="item.url" :target="item.target">
+                <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
+                <VTIcon v-else-if="item.icon === 'vt-icon'" />
+                <span>{{ item.label }}</span>
+            </a>
+        </template>
+    </ContextMenu>
 
-        <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
-            <highlightjs autodetect :code="currentSource" />
-        </Dialog>
-    </div>
+    <Toast />
+
+    <!-- Source code dialog -->
+    <Dialog v-model:visible="sourceDialogVisible" style="width: 50vw">
+        <highlightjs autodetect :code="currentSource" />
+    </Dialog>
 </template>
 
 <script setup>
+// Used to highlight function calls in dynamic mode
 import "highlight.js/styles/stackoverflow-light.css";
 
 import { ref, onMounted, computed } from "vue";
@@ -124,11 +177,11 @@ import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import ContextMenu from "primevue/contextmenu";
 
-import RuleColumn from "./columns/RuleColumn.vue";
-import VTIcon from "./misc/VTIcon.vue";
+import RuleColumn from "@/components/columns/RuleColumn.vue";
+import VTIcon from "@/components/misc/VTIcon.vue";
 
-import { parseRules } from "../utils/rdocParser";
-import { createMBCHref, createATTACKHref } from "../utils/urlHelpers";
+import { parseRules } from "@/utils/rdocParser";
+import { createMBCHref, createATTACKHref, createCapaRulesUrl, createVirusTotalUrl } from "../utils/urlHelpers";
 
 const props = defineProps({
     data: {
@@ -138,62 +191,90 @@ const props = defineProps({
     showLibraryRules: {
         type: Boolean,
         default: false
+    },
+    showColumnFilters: {
+        type: Boolean,
+        default: false
     }
 });
 
 const treeData = ref([]);
+
+// The `filters` ref in the setup section is used by PrimeVue to maintain the overall filter
+// state of the table. Each column's filter contributes to this overall state.
 const filters = ref({});
+
 const filterMode = ref("lenient");
 const sourceDialogVisible = ref(false);
 const currentSource = ref("");
+
+// expandedKeys keeps track of the nodes that are expanded
+// for example, if a node with key "0" is expanded (and its first child is also expanded), expandedKeys will be { "0": true, "0-0": true }
+// if the entire tree is collapsed expandedKeys will be {}
 const expandedKeys = ref({});
 
+// selectedNode is used as placeholder for the node that is right-clicked
 const menu = ref();
 const selectedNode = ref({});
-
 const contextMenuItems = computed(() => [
     {
         label: "View source",
         icon: "pi pi-eye",
         command: () => {
-            showSource(selectedNode.value.data.source);
+            showSource(selectedNode.value.data?.source);
         }
     },
     {
         label: "View rule in capa-rules",
         icon: "pi pi-external-link",
         target: "_blank",
-        url: selectedNode.value.url
+        url: createCapaRulesUrl(selectedNode.value, props.data.meta.version)
     },
     {
         label: "Lookup rule in VirusTotal",
         icon: "vt-icon",
         target: "_blank",
-        url: selectedNode.value.vturl
+        url: createVirusTotalUrl(selectedNode.value.data?.name)
     }
 ]);
 
 const onRightClick = (event, instance) => {
     if (instance.node.data.source) {
+        // We only enable right-click context menu on rows that have
+        // a source field (i.e. rules and `- match` features)
         selectedNode.value = instance.node;
-        // contrust capa-rules url
-        selectedNode.value.url = `https://github.com/mandiant/capa-rules/blob/master/${instance.node.data.namespace || "lib"}/${instance.node.data.name.toLowerCase().replace(/\s+/g, "-")}.yml`;
-        // construct VirusTotal deep link
-        const behaviourSignature = `behaviour_signature:"${instance.node.data.name}"`;
-        selectedNode.value.vturl = `https://www.virustotal.com/gui/search/${encodeURIComponent(behaviourSignature)}/files`;
 
+        // show the context menu
+        console.log(menu);
         menu.value.show(event);
     }
 };
 
-/*
- * Expand node on click
+/**
+ * Handles the expansion and collapse of nodes
+ *
+ * @param {Object} node - The selected node
+ *
+ * @example
+ * // Expanding a rule node
+ * onNodeSelect({
+ *   key: '3',
+ *   data: { type: 'rule', name: 'test rule', namespace: 'namespace', ... }
+ *   children: [
+ *      {
+ *          key: '3-0',
+ *          data: { type: 'match location', name: 'function @ 0x1000', namespace: null, ... }
+ *          children: []
+ *      }
+ *   ]
+ * });
+ * // Result: expandedKeys.value = { '3': true, '3-0': true }
  */
 const onNodeSelect = (node) => {
     const nodeKey = node.key;
     const nodeType = node.data.type;
 
-    // We only expand rule and match locations, if not return
+    // We only expand rule and match locations, otherwise return
     if (nodeType !== "rule" && nodeType !== "match location") return;
 
     // If the node is already expanded, collapse it
@@ -211,18 +292,8 @@ const onNodeSelect = (node) => {
         // and toggle the clicked node while collapsing siblings
         const [parentKey] = nodeKey.split("-");
         expandedKeys.value = { [parentKey]: true, [`${nodeKey}`]: true };
-    } else {
-        return;
     }
 };
-
-// All available columns
-const visibleColumns = ref([
-    { field: "address", header: "Address" },
-    { field: "namespace", header: "Namespace" },
-    { field: "tactic", header: "ATT&CK Tactic" },
-    { field: "mbc", header: "Malware Behaviour Catalogue" }
-]);
 
 // Filter out the treeData for showing/hiding lib rules
 const filteredTreeData = computed(() => {
@@ -243,16 +314,33 @@ const filteredTreeData = computed(() => {
     }
 });
 
+/**
+ * Sets the source code of a node in the dialog.
+ *
+ * @param {string} source - The source code to be displayed.
+ */
 const showSource = (source) => {
     currentSource.value = source;
     sourceDialogVisible.value = true;
 };
 
 onMounted(() => {
-    if (props.data && props.data.rules) {
-        treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout);
+    const cacheKey = "ruleMatches";
+    const cachedData = sessionStorage.getItem(cacheKey);
+
+    if (cachedData) {
+        // If cached data exists, parse and use it
+        treeData.value = JSON.parse(cachedData);
     } else {
-        console.error("Invalid data prop:", props.data);
+        // If no cached data, parse the rules and store in sessionStorage
+        treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout);
+        // Store the parsed data in sessionStorage
+        try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(treeData.value));
+        } catch (e) {
+            console.warn("Failed to store parsed data in sessionStorage:", e);
+            // If storing fails (e.g., due to storage limits), we can still continue with the parsed data
+        }
     }
 });
 </script>

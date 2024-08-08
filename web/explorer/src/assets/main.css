@@ -14,6 +14,14 @@ a:hover {
     color: var(--primary-color);
 }
 
+.font-monospace {
+    font-family: monospace;   
+}
+
+.cursor-default {
+    cursor: default;
+}
+
 /* remove the border from rows other than rule names */
 .p-treetable-tbody > tr:not(:is([aria-level="1"])) > td {
     border: none !important;

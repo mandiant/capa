@@ -1,8 +1,8 @@
 <template>
-    <div>
+    <div class="cursor-default">
+        <!--- example node: "parse PE headers (2 matches) lib" --->
         <template v-if="node.data.type === 'rule'">
-            <!--- example node: "parse PE headers (2 matches) lib" --->
-            <div class="cursor-pointer">
+            <div>
                 <span>{{ node.data.name }}</span>
                 <span v-if="node.data.matchCount > 1" class="font-italic"> ({{ node.data.matchCount }} matches) </span>
                 <LibraryTag v-if="node.data.lib && node.data.matchCount" />
@@ -11,7 +11,7 @@
 
         <!--- example node: "basic block @ 0x401000" or "explorer.exe" --->
         <template v-else-if="node.data.type === 'match location'">
-            <span class="text-sm font-italic cursor-pointer">{{ node.data.name }}</span>
+            <span class="text-sm font-italic">{{ node.data.name }}</span>
         </template>
 
         <!--- example node: "- or", "- and" --->
@@ -29,17 +29,17 @@
 
         <!--- example node: "- api: GetProcAddress", "- regex: .*\\.exe" --->
         <template v-else-if="node.data.type === 'feature'">
-            <span
-                >- {{ node.data.typeValue }}:
-                <span :class="{ 'text-green-700': node.data.typeValue !== 'regex' }" style="font-family: monospace"
-                    >{{ node.data.name }}
+            <span>
+                - {{ node.data.typeValue }}:
+                <span :class="{ 'text-green-700': node.data.typeValue !== 'regex' }" class="font-monospace">
+                    {{ node.data.name }}
                 </span>
             </span>
         </template>
 
-        <!--- example node: "- malware.exe" (these are the captures (children nodes) of regex nodes) --->
+        <!--- example node: "- malware.exe" (these are the captures (i.e. children nodes) of regex nodes) --->
         <template v-else-if="node.data.type === 'regex-capture'">
-            - <span class="text-green-700" style="font-family: monospace">{{ node.data.name }}</span>
+            - <span class="text-green-700 font-monospace">{{ node.data.name }}</span>
         </template>
 
         <!--- example node: "exit(0) -> 0" (if the node type is call-info, we highlight node.data.name.callInfo) --->
