@@ -11,7 +11,7 @@ Capa Explorer WebUI is a web-based user interface for exploring program capabili
 
 ## Getting Started
 
-1. **Access the Application**: Open the Capa Explorer WebUI in your web browser.
+1. **Access the Application**: Open Capa Explorer Web in your web browser.
    You can start using Capa Explorer Web by accessing [https://mandiant.github.io/capa](https://mandiant.github.io/capa/) or running it locally by dowloading the offline release in the [releases](https://github.com/mandiant/capa/releases) section and loading it in your browser.
 
 2. **Import capa Results**:
