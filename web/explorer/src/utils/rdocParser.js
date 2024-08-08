@@ -3,7 +3,7 @@
  * @param {Object} rules - The rules object from the rodc JSON data
  * @param {string} flavor - The flavor of the analysis (static or dynamic)
  * @param {Object} layout - The layout object from the rdoc JSON data
- * @param {number} [maxMatches=500] - Maximum number of matches to parse per rule
+ * @param {number} [maxMatches=1] - Maximum number of matches to parse per rule
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
 export function parseRules(rules, flavor, layout, maxMatches = 1) {
@@ -18,24 +18,16 @@ export function parseRules(rules, flavor, layout, maxMatches = 1) {
                 namespace: rule.meta.namespace,
                 mbc: rule.meta.mbc,
                 source: rule.source,
-                tactic: JSON.stringify(rule.meta.attack),
                 attack: rule.meta.attack
-                    ? rule.meta.attack.map((attack) => ({
-                          tactic: attack.tactic,
-                          technique: attack.technique,
-                          id: attack.id.includes(".") ? attack.id.split(".")[0] : attack.id,
-                          techniques: attack.subtechnique ? [{ technique: attack.subtechnique, id: attack.id }] : []
-                      }))
-                    : null
             }
         };
-
-        // Is this a static rule with a file-level scope?
-        const isFileScope = rule.meta.scopes && rule.meta.scopes.static === "file";
 
         // Limit the number of matches to process
         // Dynamic matches can have thousands of matches, only show `maxMatches` for performance reasons
         const limitedMatches = flavor === "dynamic" ? rule.matches.slice(0, maxMatches) : rule.matches;
+
+        // Is this a static rule with a file-level scope?
+        const isFileScope = rule.meta.scopes && rule.meta.scopes.static === "file";
 
         if (isFileScope) {
             // The scope for the rule is a file, so we don't need to show the match location address
@@ -61,7 +53,7 @@ export function parseRules(rules, flavor, layout, maxMatches = 1) {
             });
         }
 
-        // Add a note if there are more matches than the limit
+        // Finally, add a note if there are more matches than the limit (only applicable in dynamic mode)
         if (rule.matches.length > limitedMatches.length) {
             ruleNode.children.push({
                 key: `${index}`,
@@ -77,98 +69,91 @@ export function parseRules(rules, flavor, layout, maxMatches = 1) {
 }
 
 /**
- * Parses rules data for the CapasByFunction component
- * @param {Object} data - The full JSON data object containing analysis results
- * @param {boolean} showLibraryRules - Whether to include library rules in the output
- * @returns {Array} - Parsed data for the CapasByFunction DataTable component
+ * Parses the capabilities of functions from a given rdoc.
+ *
+ * @param {Object} doc - The document containing function and rule information.
+ * @returns {Array} An array of objects, each representing a function with its address and capabilities.
+ *
+ * @example
+ * [
+ *  {
+ *    "address": "0x14002A690",
+ *    "capabilities": [
+ *      {
+ *        "name": "contain loop",
+ *        "lib": true
+ *
+ *      },
+ *      {
+ *        "name": "get disk information",
+ *        "namespace": "host-interaction/hardware/storage"
+ *        "lib": false
+ *      }
+ *    ]
+ *   }
+ * ]
  */
-export function parseFunctionCapabilities(data, showLibraryRules) {
-    const result = [];
+export function parseFunctionCapabilities(doc) {
+    // Map basic blocks to their their parent functions
+    const functionsByBB = new Map();
+
+    for (const finfo of doc.meta.analysis.layout.functions) {
+        const faddress = finfo.address;
+        for (const bb of finfo.matched_basic_blocks) {
+            const bbaddress = bb.address;
+            functionsByBB.set(formatAddress(bbaddress), formatAddress(faddress));
+        }
+    }
+
+    // Map to store capabilities matched to each function
     const matchesByFunction = new Map();
 
-    // Create a map of basic blocks to functions
-    const functionsByBB = new Map();
-    for (const func of data.meta.analysis.layout.functions) {
-        const funcAddress = func.address.value;
-        for (const bb of func.matched_basic_blocks) {
-            functionsByBB.set(bb.address.value, funcAddress);
-        }
-    }
-
-    // Iterate through all rules in the data
-    for (const ruleId in data.rules) {
-        const rule = data.rules[ruleId];
-
-        // Skip library rules if showLibraryRules is false
-        if (!showLibraryRules && rule.meta.lib) {
-            continue;
-        }
-
+    // Iterate through all rules in the document
+    for (const [, rule] of Object.entries(doc.rules)) {
         if (rule.meta.scopes.static === "function") {
-            // Function scope
-            for (const [addr] of rule.matches) {
-                const funcAddr = addr.value;
-                if (!matchesByFunction.has(funcAddr)) {
-                    matchesByFunction.set(funcAddr, new Map());
+            for (const [address] of rule.matches) {
+                const addr = formatAddress(address);
+                if (!matchesByFunction.has(addr)) {
+                    matchesByFunction.set(addr, new Set());
                 }
-                const funcMatches = matchesByFunction.get(funcAddr);
-                funcMatches.set(rule.meta.name, {
-                    count: (funcMatches.get(rule.meta.name)?.count || 0) + 1,
-                    namespace: rule.meta.namespace,
-                    lib: rule.meta.lib
-                });
+                matchesByFunction
+                    .get(addr)
+                    .add({ name: rule.meta.name, namespace: rule.meta.namespace, lib: rule.meta.lib });
             }
         } else if (rule.meta.scopes.static === "basic block") {
-            // Basic block scope
-            for (const [addr] of rule.matches) {
-                const bbAddr = addr.value;
-                const funcAddr = functionsByBB.get(bbAddr);
-                if (funcAddr) {
-                    if (!matchesByFunction.has(funcAddr)) {
-                        matchesByFunction.set(funcAddr, new Map());
+            for (const [address] of rule.matches) {
+                const addr = formatAddress(address);
+                const function_ = functionsByBB.get(addr);
+                if (function_) {
+                    if (!matchesByFunction.has(function_)) {
+                        matchesByFunction.set(function_, new Set());
                     }
-                    const funcMatches = matchesByFunction.get(funcAddr);
-                    funcMatches.set(rule.meta.name, {
-                        count: (funcMatches.get(rule.meta.name)?.count || 0) + 1,
-                        namespace: rule.meta.namespace,
-                        lib: rule.meta.lib
-                    });
+                    matchesByFunction
+                        .get(function_)
+                        .add({ name: rule.meta.name, namespace: rule.meta.namespace, lib: rule.meta.lib });
                 }
             }
         }
+        // (else) Ignoring file scope rules
     }
 
-    // Convert the matchesByFunction map to the intermediate result array
-    for (const [funcAddr, matches] of matchesByFunction) {
-        const functionAddress = funcAddr.toString(16).toUpperCase();
-        const matchingRules = Array.from(matches, ([ruleName, data]) => ({
-            ruleName,
-            matchCount: data.count,
-            namespace: data.namespace,
-            lib: data.lib
-        }));
+    const result = [];
 
+    // Iterate through all functions in the document
+    for (const f of doc.meta.analysis.feature_counts.functions) {
+        const addr = formatAddress(f.address);
+        const matches = matchesByFunction.get(addr);
+        // Skip functions with no matches (unlikely)
+        if (!matches || matches.size === 0) continue;
+
+        // Add function to result with its address and sorted capabilities
         result.push({
-            funcaddr: `0x${functionAddress}`,
-            matchCount: matchingRules.length,
-            capabilities: matchingRules,
-            lib: data.lib
+            address: addr,
+            capabilities: Array.from(matches)
         });
     }
 
-    // Transform the intermediate result into the final format
-    const finalResult = result.flatMap((func) =>
-        func.capabilities.map((cap) => ({
-            funcaddr: func.funcaddr,
-            matchCount: func.matchCount,
-            ruleName: cap.ruleName,
-            ruleMatchCount: cap.matchCount,
-            namespace: cap.namespace,
-            lib: cap.lib
-        }))
-    );
-
-    return finalResult;
+    return result;
 }
 
 // Helper functions
@@ -195,21 +180,16 @@ function parseNode(node, key, rules, lib, layout) {
         key: key,
         data: {
             type: processedNode.node.type, // statement or feature
-            typeValue: processedNode.node.statement
-                ? processedNode.node.statement.type
-                : processedNode.node.feature.type, // type value (eg. number, regex, api, or, and, optional ... etc)
+            typeValue: processedNode.node.statement?.type || processedNode.node.feature?.type, // e.g., number, regex, api, or, and, optional ... etc
             success: processedNode.success,
             name: getNodeName(processedNode),
             lib: lib,
             address: getNodeAddress(processedNode),
-            description: getNodeDescription(processedNode),
-            namespace: null,
-            matchCount: null,
-            source: null
+            description: getNodeDescription(processedNode)
         },
         children: []
     };
-    // Recursively parse children
+    // Recursively parse node children (i.e., nested statements or features)
     if (processedNode.children && Array.isArray(processedNode.children)) {
         result.children = processedNode.children
             .map((child) => {
@@ -233,11 +213,12 @@ function parseNode(node, key, rules, lib, layout) {
         if (result.children.length === 0) return null;
     }
 
+    // regex features have captures, which we need to process and add as children
     if (processedNode.node.feature && processedNode.node.feature.type === "regex") {
         result.children = processRegexCaptures(processedNode, key);
     }
 
-    // Add call information for dynamic sandbox traces
+    // Add call information for dynamic sandbox traces when the feature is `api`
     if (processedNode.node.feature && processedNode.node.feature.type === "api") {
         const callInfo = getCallInfo(node, layout);
         if (callInfo) {
@@ -255,8 +236,6 @@ function parseNode(node, key, rules, lib, layout) {
     return result;
 }
 
-// TODO(s-ff): decide if we want to show call info or not
-// e.g. explorer.exe{id:0,tid:10,pid:100,ppid:1000}
 function getCallInfo(node, layout) {
     if (!node.locations || node.locations.length === 0) return null;
 
@@ -445,9 +424,9 @@ function formatAddress(address) {
             return `base address+${formatHex(address.value)}`;
         case "file":
             return `file+${formatHex(address.value)}`;
-        case "dn_token":
+        case "dn token":
             return `token(${formatHex(address.value)})`;
-        case "dn_token_offset": {
+        case "dn token offset": {
             const [token, offset] = address.value;
             return `token(${formatHex(token)})+${formatHex(offset)}`;
         }
