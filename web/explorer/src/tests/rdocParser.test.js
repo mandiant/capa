@@ -95,6 +95,10 @@ describe("parseFunctionCapabilities", () => {
         const mockData = {
             meta: {
                 analysis: {
+                    feature_counts: {
+                        file: 0,
+                        functions: []
+                    },
                     layout: {
                         functions: []
                     }
@@ -107,25 +111,150 @@ describe("parseFunctionCapabilities", () => {
     });
 
     it("should parse a single function with one rule match", () => {
-        const mockData = {
+        const mockDoc = {
             meta: {
                 analysis: {
                     layout: {
                         functions: [
                             {
-                                address: {
-                                    type: "absolute",
-                                    value: 0x1000
-                                },
-                                matched_basic_blocks: [
-                                    {
-                                        address: {
-                                            type: "absolute",
-                                            value: 0x1000
-                                        }
-                                    }
-                                ]
+                                address: { type: "absolute", value: 0x1000 },
+                                matched_basic_blocks: [{ address: { type: "absolute", value: 0x1000 } }]
                             }
+                        ]
+                    },
+                    feature_counts: {
+                        functions: [{ address: { type: "absolute", value: 0x1000 } }]
+                    }
+                }
+            },
+            rules: {
+                rule1: {
+                    meta: {
+                        name: "Test Rule",
+                        namespace: "test",
+                        lib: false,
+                        scopes: { static: "function" }
+                    },
+                    matches: [[{ type: "absolute", value: 0x1000 }]]
+                }
+            }
+        };
+        const result = parseFunctionCapabilities(mockDoc);
+        expect(result).toEqual([
+            {
+                address: "0x1000",
+                capabilities: [{ name: "Test Rule", namespace: "test", lib: false }]
+            }
+        ]);
+    });
+
+    it("should handle multiple rules matching a single function", () => {
+        const mockDoc = {
+            meta: {
+                analysis: {
+                    layout: {
+                        functions: [
+                            {
+                                address: { type: "absolute", value: 0x1000 },
+                                matched_basic_blocks: [{ address: { type: "absolute", value: 0x1000 } }]
+                            }
+                        ]
+                    },
+                    feature_counts: {
+                        functions: [{ address: { type: "absolute", value: 0x1000 } }]
+                    }
+                }
+            },
+            rules: {
+                rule1: {
+                    meta: {
+                        name: "Test Rule 1",
+                        lib: true,
+                        scopes: { static: "function" }
+                    },
+                    matches: [[{ type: "absolute", value: 0x1000 }]]
+                },
+                rule2: {
+                    meta: {
+                        name: "Test Rule 2",
+                        namespace: "test",
+                        lib: false,
+                        scopes: { static: "function" }
+                    },
+                    matches: [[{ type: "absolute", value: 0x1000 }]]
+                }
+            }
+        };
+        const result = parseFunctionCapabilities(mockDoc);
+        expect(result).toEqual([
+            {
+                address: "0x1000",
+                capabilities: [
+                    { name: "Test Rule 1", lib: true },
+                    { name: "Test Rule 2", namespace: "test", lib: false }
+                ]
+            }
+        ]);
+    });
+
+    it("should handle basic block scoped rules", () => {
+        const mockDoc = {
+            meta: {
+                analysis: {
+                    layout: {
+                        functions: [
+                            {
+                                address: { type: "absolute", value: 0x1000 },
+                                matched_basic_blocks: [{ address: { type: "absolute", value: 0x1100 } }]
+                            }
+                        ]
+                    },
+                    feature_counts: {
+                        functions: [{ address: { type: "absolute", value: 0x1000 } }]
+                    }
+                }
+            },
+            rules: {
+                rule1: {
+                    meta: {
+                        name: "Basic Block Rule",
+                        namespace: "test",
+                        lib: false,
+                        scopes: { static: "basic block" }
+                    },
+                    matches: [[{ type: "absolute", value: 0x1100 }]]
+                }
+            }
+        };
+        const result = parseFunctionCapabilities(mockDoc);
+        expect(result).toEqual([
+            {
+                address: "0x1000",
+                capabilities: [{ name: "Basic Block Rule", namespace: "test", lib: false }]
+            }
+        ]);
+    });
+
+    it("should handle a single rule matching in multiple functions", () => {
+        const mockDoc = {
+            meta: {
+                analysis: {
+                    layout: {
+                        functions: [
+                            {
+                                address: { type: "absolute", value: 0x1000 },
+                                matched_basic_blocks: [{ address: { type: "absolute", value: 0x1000 } }]
+                            },
+                            {
+                                address: { type: "absolute", value: 0x2000 },
+                                matched_basic_blocks: [{ address: { type: "absolute", value: 0x2000 } }]
+                            }
+                        ]
+                    },
+                    feature_counts: {
+                        functions: [
+                            { address: { type: "absolute", value: 0x1000 } },
+                            { address: { type: "absolute", value: 0x2000 } }
                         ]
                     }
                 }
@@ -138,164 +267,20 @@ describe("parseFunctionCapabilities", () => {
                         lib: false,
                         scopes: { static: "function" }
                     },
-                    matches: [[{ value: 0x1000 }]]
+                    matches: [[{ type: "absolute", value: 0x1000 }], [{ type: "absolute", value: 0x2000 }]]
                 }
             }
         };
-        const result = parseFunctionCapabilities(mockData, false);
-        expect(result).toHaveLength(1);
-        expect(result[0]).toEqual({
-            funcaddr: "0x1000",
-            matchCount: 1,
-            ruleName: "Test Rule",
-            ruleMatchCount: 1,
-            namespace: "test",
-            lib: false
-        });
-    });
-
-    it("should handle multiple rules matching a single function", () => {
-        const mockData = {
-            meta: {
-                analysis: {
-                    layout: {
-                        functions: [
-                            {
-                                address: {
-                                    type: "absolute",
-                                    value: 0x1000
-                                },
-                                matched_basic_blocks: []
-                            }
-                        ]
-                    }
-                }
+        const result = parseFunctionCapabilities(mockDoc);
+        expect(result).toEqual([
+            {
+                address: "0x1000",
+                capabilities: [{ name: "Test Rule", namespace: "test", lib: false }]
             },
-            rules: {
-                rule1: {
-                    meta: {
-                        name: "Rule 1",
-                        namespace: "test1",
-                        lib: false,
-                        scopes: { static: "function" }
-                    },
-                    matches: [[{ value: 0x1000 }]]
-                },
-                rule2: {
-                    meta: {
-                        name: "Rule 2",
-                        namespace: "test2",
-                        lib: false,
-                        scopes: { static: "function" }
-                    },
-                    matches: [[{ value: 0x1000 }]]
-                }
+            {
+                address: "0x2000",
+                capabilities: [{ name: "Test Rule", namespace: "test", lib: false }]
             }
-        };
-        const result = parseFunctionCapabilities(mockData, false);
-        expect(result).toHaveLength(2);
-        expect(result[0].funcaddr).toBe("0x1000");
-        expect(result[1].funcaddr).toBe("0x1000");
-        expect(result.map((r) => r.ruleName)).toEqual(["Rule 1", "Rule 2"]);
-    });
-
-    it("should handle library rules correctly", () => {
-        const mockData = {
-            meta: {
-                analysis: {
-                    layout: {
-                        functions: [
-                            {
-                                address: { type: "absolute", value: 0x1000 },
-                                matched_basic_blocks: []
-                            }
-                        ]
-                    }
-                }
-            },
-            rules: {
-                libRule: {
-                    meta: {
-                        name: "Lib Rule",
-                        namespace: "lib",
-                        lib: true,
-                        scopes: { static: "function" }
-                    },
-                    matches: [[{ value: 0x1000 }]]
-                }
-            }
-        };
-        const resultWithLib = parseFunctionCapabilities(mockData, true);
-        expect(resultWithLib).toHaveLength(1);
-        expect(resultWithLib[0].lib).toBe(true);
-
-        const resultWithoutLib = parseFunctionCapabilities(mockData, false);
-        expect(resultWithoutLib).toHaveLength(0);
-    });
-
-    it("should handle a single rule matching in multiple functions", () => {
-        const mockData = {
-            meta: {
-                analysis: {
-                    layout: {
-                        functions: [
-                            { address: { value: 0x1000 }, matched_basic_blocks: [] },
-                            { address: { value: 0x2000 }, matched_basic_blocks: [] }
-                        ]
-                    }
-                }
-            },
-            rules: {
-                rule1: {
-                    meta: {
-                        name: "Multi-function Rule",
-                        namespace: "test",
-                        lib: false,
-                        scopes: { static: "function" }
-                    },
-                    matches: [[{ value: 0x1000 }], [{ value: 0x2000 }]]
-                }
-            }
-        };
-        const result = parseFunctionCapabilities(mockData, false);
-        expect(result).toHaveLength(2);
-        expect(result[0].funcaddr).toBe("0x1000");
-        expect(result[0].ruleName).toBe("Multi-function Rule");
-        expect(result[0].ruleMatchCount).toBe(1);
-        expect(result[1].funcaddr).toBe("0x2000");
-        expect(result[1].ruleName).toBe("Multi-function Rule");
-        expect(result[1].ruleMatchCount).toBe(1);
-    });
-
-    it("should handle basic block scoped rules", () => {
-        const mockData = {
-            meta: {
-                analysis: {
-                    layout: {
-                        functions: [
-                            {
-                                address: { value: 0x1000 },
-                                matched_basic_blocks: [{ address: { value: 0x1010 } }]
-                            }
-                        ]
-                    }
-                }
-            },
-            rules: {
-                bbRule: {
-                    meta: {
-                        name: "Basic Block Rule",
-                        namespace: "test",
-                        lib: false,
-                        scopes: { static: "basic block" }
-                    },
-                    matches: [[{ value: 0x1010 }]]
-                }
-            }
-        };
-        const result = parseFunctionCapabilities(mockData, false);
-        expect(result).toHaveLength(1);
-        expect(result[0].funcaddr).toBe("0x1000");
-        expect(result[0].ruleName).toBe("Basic Block Rule");
+        ]);
     });
 });
