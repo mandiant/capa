@@ -1,6 +1,6 @@
 # Development Guide for Capa Explorer Web
 
-This guide will help you set up the Capa Explorer We project for local development.
+This guide will help you set up the Capa Explorer Web project for local development.
 
 ## Prerequisites
 
