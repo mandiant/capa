@@ -10,14 +10,15 @@
 export function createMBCHref(mbc) {
     let baseUrl;
 
-    // Determine the base URL based on the id
-    if (mbc.id.startsWith("B")) {
+    // Determine the base URL based on the id first character
+    if (["B", "T", "E", "F"].includes(mbc.id[0])) {
         // Behavior
         baseUrl = "https://github.com/MBCProject/mbc-markdown/blob/main";
     } else if (mbc.id.startsWith("C")) {
         // Micro-Behavior
         baseUrl = "https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors";
     } else {
+        // unknown
         return null;
     }
 
@@ -49,4 +50,30 @@ export function createATTACKHref(attack) {
     } else {
         return null;
     }
+}
+
+/**
+ * Creates a CAPA rules URL for a given node with tag.
+ *
+ * @param {Object} node - The node object containing data about the rule.
+ * @param {string} node.data.namespace - The namespace of the rule (optional).
+ * @param {string} node.data.name - The name of the rule.
+ * @returns {string} The formatted CAPA rules URL.
+ */
+export function createCapaRulesUrl(node, tag) {
+    if (!node || !node.data || !tag) return null;
+    const namespace = node.data.namespace || "lib";
+    const ruleName = node.data.name.toLowerCase().replace(/\s+/g, "-");
+    return `https://github.com/mandiant/capa-rules/blob/v${tag}/${namespace}/${ruleName}.yml`;
+}
+
+/**
+ * Creates a VirusTotal deep link URL for a given behavior signature.
+ *
+ * @param {string} behaviorName - The name of the behavior signature.
+ * @returns {string} The formatted VirusTotal URL.
+ */
+export function createVirusTotalUrl(behaviorName) {
+    const behaviourSignature = `behaviour_signature:"${behaviorName}"`;
+    return `https://www.virustotal.com/gui/search/${encodeURIComponent(behaviourSignature)}/files`;
 }
