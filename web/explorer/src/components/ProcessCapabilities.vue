@@ -18,8 +18,7 @@
                         @mouseleave="hideTooltip"
                     >
                         <span
-                            class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-20rem"
-                            style="font-family: monospace"
+                            class="text-lg text-overflow-ellipsis overflow-hidden white-space-nowrap inline-block max-w-20rem font-monospace"
                         >
                             {{ slotProps.node.data.processname }}
                         </span>
@@ -67,7 +66,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import TreeTable from "primevue/treetable";
 import Column from "primevue/column";
-import LibraryTag from "./misc/LibraryTag.vue";
+import LibraryTag from "@/components/misc/LibraryTag.vue";
 
 const props = defineProps({
     data: {
@@ -166,7 +165,6 @@ const processTree = computed(() => {
     // build the final tree structure
     const rootProcesses = [];
     processMap.forEach((processNode) => {
-        console.log(processNode);
         processNode.data.uniqueRules = Array.from(processNode.data.uniqueRules.values());
         const parentProcess = processMap.get(processNode.data.ppid);
         if (parentProcess) {

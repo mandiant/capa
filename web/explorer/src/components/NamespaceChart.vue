@@ -99,7 +99,7 @@ const renderChart = () => {
                 parents: sunburstData.parents,
                 values: sunburstData.values,
                 outsidetextfont: { size: 20, color: "#377eb8" },
-                leaf: { opacity: 0.6 },
+                leaf: { opacity: 0.4 },
                 marker: { line: { width: 2 } },
                 branchvalues: "total"
             }
@@ -112,15 +112,6 @@ const renderChart = () => {
 };
 
 onMounted(() => {
-    const data = renderChart();
-    console.log(data);
+    renderChart();
 });
-
-watch(
-    () => props.data,
-    () => {
-        renderChart();
-    },
-    { deep: true }
-);
 </script>
