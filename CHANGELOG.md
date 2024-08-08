@@ -10,9 +10,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
+- data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
 -
 
 ### Bug Fixes
