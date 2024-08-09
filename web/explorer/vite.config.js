@@ -3,12 +3,11 @@ import vue from "@vitejs/plugin-vue";
 import { viteSingleFile } from "vite-plugin-singlefile";
 import { fileURLToPath, URL } from "node:url";
 
-// eslint-disable-next-line no-unused-vars
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
     const isBundle = mode === "bundle";
 
     return {
-        base: isBundle ? "/" : "/capa/explorer",
+        base: './',
         plugins: isBundle ? [vue(), viteSingleFile()] : [vue()],
         resolve: {
             alias: {
