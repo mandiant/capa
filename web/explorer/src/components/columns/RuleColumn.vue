@@ -55,7 +55,6 @@
 </template>
 
 <script setup>
-import { defineProps } from "vue";
 import LibraryTag from "@/components/misc/LibraryTag.vue";
 
 defineProps({
