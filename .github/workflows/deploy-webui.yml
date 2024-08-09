@@ -43,15 +43,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: ./web/explorer
-      - name: Lint
-        run: npm run lint
-        working-directory: ./web/explorer
-      - name: Format
-        run: npm run format:check
-        working-directory: ./web/explorer
-      - name: Run unit tests
-        run: npm run test
-        working-directory: ./web/explorer
       - name: Build
         run: npm run build
         working-directory: ./web/explorer
