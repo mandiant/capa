@@ -11,7 +11,6 @@ import os
 import re
 import copy
 import uuid
-import codecs
 import logging
 import binascii
 import collections
