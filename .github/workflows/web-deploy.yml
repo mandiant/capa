@@ -1,11 +1,10 @@
 name: deploy web to GitHub Pages
 
 on:
-  # Runs on pushes targeting the webui branch
   push:
     branches: [ master, "wb/webui-actions-1" ]
-    # paths:
-    #   - 'web/explorer/**'
+    paths:
+      - 'web/explorer/**'
 
   # Allows to run this workflow manually from the Actions tab
   workflow_dispatch:
