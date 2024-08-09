@@ -29,7 +29,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: landing-page
-          path: './web/index.html'
+          path: './web/public'
 
   build-explorer:
     runs-on: ubuntu-latest
