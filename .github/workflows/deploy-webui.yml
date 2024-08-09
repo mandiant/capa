@@ -3,7 +3,7 @@ name: deploy Capa Explorer Web to Github Pages
 on:
   # Runs on pushes targeting the webui branch
   push:
-    branches: [ master ]
+    branches: [ master, "wb/webui-actions-1" ]
     paths:
       - 'web/explorer/**'
 
