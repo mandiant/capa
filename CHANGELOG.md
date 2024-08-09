@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- regenerate ruleset cache automatically on source change (only in dev mode) #2133 @s-ff
 
 - webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
