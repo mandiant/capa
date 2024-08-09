@@ -11,13 +11,15 @@ capa detects capabilities in executable files.
 You run it against a PE, ELF, .NET module, shellcode file, or a sandbox report and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
-Check out our capa blog posts:
-- [Dynamic capa: Exploring Executable Run-Time Behavior with the CAPE Sandbox](https://www.mandiant.com/resources/blog/dynamic-capa-executable-behavior-cape-sandbox)
-- [capa v4: casting a wider .NET](https://www.mandiant.com/resources/blog/capa-v4-casting-wider-net) (.NET support)
-- [ELFant in the Room – capa v3](https://www.mandiant.com/resources/elfant-in-the-room-capa-v3) (ELF support)
-- [capa 2.0: Better, Stronger, Faster](https://www.mandiant.com/resources/capa-2-better-stronger-faster)
-- [capa: Automatically Identify Malware Capabilities](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities)
+This repo hosts the:
+- core capa source code
+- [capa Web Explorer](https://mandiant.github.io/capa/#/) to interactively inspect capa results in your browser
 
+The default capability detection rules that capa uses are available in the [capa-rules repository](https://github.com/mandiant/capa-rules). Malware samples and other binary files used for testing capa are available in the [capa-testfiles repository](https://github.com/mandiant/capa-testfiles).
+
+Below you find a list of [our capa blog posts with more details.](#blog-posts)
+
+# example capa output
 ```
 $ capa.exe suspicious.exe
 
@@ -72,15 +74,18 @@ Download stable releases of the standalone capa binaries [here](https://github.c
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
-For more information about how to use capa, see [doc/usage.md](https://github.com/mandiant/capa/blob/master/doc/usage.md).
+# web explorer
+The [capa Web Explorer](https://mandiant.github.io/capa/#/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage. More details on the web UI is available in the [capa Web Explorer README](https://github.com/mandiant/capa/blob/master/web/explorer/README.md).
 
 # example
 
-In the above sample output, we ran capa against an unknown binary (`suspicious.exe`),
-and the tool reported that the program can send HTTP requests, decode data via XOR and Base64,
+In the above sample output, we run capa against an unknown binary (`suspicious.exe`),
+and the tool reports that the program can send HTTP requests, decode data via XOR and Base64,
 install services, and spawn new processes.
 Taken together, this makes us think that `suspicious.exe` could be a persistent backdoor.
 Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the command and control server.
+
+## detailed results
 
 By passing the `-vv` flag (for very verbose), capa reports exactly where it found evidence of these capabilities.
 This is useful for at least two reasons:
@@ -126,6 +131,7 @@ function @ 0x4011C0
 ...
 ```
 
+## analyzing sandbox reports
 Additionally, capa also supports analyzing sandbox reports for dynamic capability extraction.
 In order to use this, you first submit your sample to one of supported sandboxes for analysis, and then run capa against the generated report file.
 
@@ -218,6 +224,7 @@ $ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.json
 ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
 ```
 
+# capa rules
 capa uses a collection of rules to identify capabilities within a program.
 These rules are easy to write, even for those new to reverse engineering.
 By authoring rules, you can extend the capabilities that capa recognizes.
@@ -254,17 +261,26 @@ rule:
       - property/read: System.Net.Sockets.TcpClient::Client
 ```
 
-The [github.com/mandiant/capa-rules](https://github.com/mandiant/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
+The [github.com/mandiant/capa-rules](https://github.com/mandiant/capa-rules) repository contains hundreds of standard rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
+# IDA Pro plugin: capa explorer
 If you use IDA Pro, then you can use the [capa explorer](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) plugin.
 capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
 
 ![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
+# Ghidra integration
 If you use Ghidra, then you can use the [capa + Ghidra integration](/capa/ghidra/) to run capa's analysis directly on your Ghidra database and render the results in Ghidra's user interface.
 
 <img src="https://github.com/mandiant/capa/assets/66766340/eeae33f4-99d4-42dc-a5e8-4c1b8c661492" width=300>
+
+# blog posts
+- [Dynamic capa: Exploring Executable Run-Time Behavior with the CAPE Sandbox](https://www.mandiant.com/resources/blog/dynamic-capa-executable-behavior-cape-sandbox)
+- [capa v4: casting a wider .NET](https://www.mandiant.com/resources/blog/capa-v4-casting-wider-net) (.NET support)
+- [ELFant in the Room – capa v3](https://www.mandiant.com/resources/elfant-in-the-room-capa-v3) (ELF support)
+- [capa 2.0: Better, Stronger, Faster](https://www.mandiant.com/resources/capa-2-better-stronger-faster)
+- [capa: Automatically Identify Malware Capabilities](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities)
 
 # further information
 ## capa
