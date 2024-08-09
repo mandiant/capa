@@ -1,6 +1,6 @@
 [submodule "rules"]
 	path = rules
-	url = ../capa-rules.git
+	url = ../../mandiant/capa-rules.git
 [submodule "tests/data"]
 	path = tests/data
-	url = ../capa-testfiles.git
+	url = ../../mandiant/capa-testfiles.git
