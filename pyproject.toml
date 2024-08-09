@@ -188,6 +188,7 @@ known_first_party = [
     "ida_loader",
     "ida_nalt",
     "ida_segment",
+    "ida_ua",
     "idaapi",
     "idautils",
     "idc",

@@ -81,6 +81,7 @@ can update using the `Settings` button.
 * Double-click the `Address` column to navigate your Disassembly view to the address of the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
 * Select a checkbox in the `Rule Information` column to highlight the address of the associated feature in your Disassembly view
+* Re-analyse if you rename global variables used to store dynamically resolved APIs as capa will use them to improve the analysis.
 
 #### Tips for Rule Generator
 
