@@ -1,4 +1,4 @@
-name: deploy Capa Explorer Web to Github Pages
+name: deploy web to GitHub Pages
 
 on:
   # Runs on pushes targeting the webui branch
