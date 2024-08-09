@@ -5,12 +5,17 @@
 Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmray.com/) integration! Simply provide a VMRay analysis archive, and capa will automatically extract and match capabilties, streamlining your workflow.
 
 ### New Features
+
+- webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
 - dynamic: add support for VMRay dynamic sandbox traces #2208 @mike-hunhoff @r-sm2024 @mr-tz
+
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (2)
 
+- nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
+- data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
 -
 
 ### Bug Fixes

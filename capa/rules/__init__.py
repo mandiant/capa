@@ -11,7 +11,6 @@ import os
 import re
 import copy
 import uuid
-import codecs
 import logging
 import binascii
 import collections
@@ -456,7 +455,7 @@ DESCRIPTION_SEPARATOR = " = "
 
 def parse_bytes(s: str) -> bytes:
     try:
-        b = codecs.decode(s.replace(" ", "").encode("ascii"), "hex")
+        b = bytes.fromhex(s.replace(" ", ""))
     except binascii.Error:
         raise InvalidRule(f'unexpected bytes value: must be a valid hex sequence: "{s}"')
 

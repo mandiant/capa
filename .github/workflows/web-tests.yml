@@ -1,0 +1,42 @@
+name: Capa Explorer Web tests 
+
+on:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'web/explorer/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+        fetch-depth: 1
+        show-progress: true
+
+    - name: Set up Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: './web/explorer/package-lock.json'
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ./web/explorer
+
+    - name: Lint
+      run: npm run lint
+      working-directory: ./web/explorer
+
+    - name: Format
+      run: npm run format:check
+      working-directory: ./web/explorer
+
+    - name: Run unit tests
+      run: npm run test
+      working-directory: ./web/explorer
