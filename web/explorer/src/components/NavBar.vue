@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from "vue";
 import Menubar from "primevue/menubar";
 </script>
 
