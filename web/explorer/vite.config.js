@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode }) => {
     const isBundle = mode === "bundle";
 
     return {
-        base: isBundle ? "/" : "/capa/",
+        base: isBundle ? "./",
         plugins: isBundle ? [vue(), viteSingleFile()] : [vue()],
         resolve: {
             alias: {
