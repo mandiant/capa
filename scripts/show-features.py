@@ -229,40 +229,37 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
         print(f"proc: {extractor.get_process_name(p)} (ppid={p.address.ppid}, pid={p.address.pid})")
 
-        for feature, addr in extractor.extract_process_features(p):
+        for feature, _ in extractor.extract_process_features(p):
             if is_global_feature(feature):
                 continue
 
             print(f" proc: {extractor.get_process_name(p)}: {feature}")
 
-            for t in extractor.get_threads(p):
-                print(f"  thread: {t.address.tid}")
-                for feature, addr in extractor.extract_thread_features(p, t):
+        for t in extractor.get_threads(p):
+            print(f"  thread: {t.address.tid}")
+            for feature, addr in extractor.extract_thread_features(p, t):
+                if is_global_feature(feature):
+                    continue
+
+                if feature != Feature(0):
+                    print(f"   {format_address(addr)}: {feature}")
+
+            for call in extractor.get_calls(p, t):
+                apis = []
+                arguments = []
+                for feature, addr in extractor.extract_call_features(p, t, call):
                     if is_global_feature(feature):
                         continue
 
-                    if feature != Feature(0):
-                        print(f"   {format_address(addr)}: {feature}")
+                    if isinstance(feature, API):
+                        assert isinstance(addr, capa.features.address.DynamicCallAddress)
+                        apis.append((addr.id, str(feature.value)))
 
-                for call in extractor.get_calls(p, t):
-                    apis = []
-                    arguments = []
-                    for feature, addr in extractor.extract_call_features(p, t, call):
-                        if is_global_feature(feature):
-                            continue
+                    if isinstance(feature, (Number, String)):
+                        arguments.append(str(feature.value))
 
-                        if isinstance(feature, API):
-                            assert isinstance(addr, capa.features.address.DynamicCallAddress)
-                            apis.append((addr.id, str(feature.value)))
-
-                        if isinstance(feature, (Number, String)):
-                            arguments.append(str(feature.value))
-
-                    if not apis:
-                        print(f"    arguments=[{', '.join(arguments)}]")
-
-                    for cid, api in apis:
-                        print(f"    call {cid}: {api}({', '.join(arguments)})")
+                for cid, api in apis:
+                    print(f"    call {cid}: {api}({', '.join(arguments)})")
 
 
 def ida_main():

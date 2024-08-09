@@ -22,7 +22,7 @@ import capa.features.address
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.helpers import assert_never
+from capa.helpers import assert_never, load_json_from_path
 
 
 class FrozenModel(BaseModel):
@@ -668,4 +668,5 @@ class ResultDocument(FrozenModel):
 
     @classmethod
     def from_file(cls, path: Path) -> "ResultDocument":
-        return cls.model_validate_json(path.read_text(encoding="utf-8"))
+        report = load_json_from_path(path)
+        return cls.model_validate(report)
