@@ -3,7 +3,10 @@
 ## master (unreleased)
 
 ### New Features
+
+- webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
+
 
 ### Breaking Changes
 

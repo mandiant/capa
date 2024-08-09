@@ -1,0 +1,66 @@
+name: deploy Capa Explorer Web to Github Pages
+
+on:
+  # Runs on pushes targeting the webui branch
+  push:
+    branches: [ master ]
+    paths:
+      - 'web/explorer/**'
+
+  # Allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 1
+          show-progress: true
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './web/explorer/package-lock.json'
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./web/explorer
+      - name: Lint
+        run: npm run lint
+        working-directory: ./web/explorer
+      - name: Format
+        run: npm run format:check
+        working-directory: ./web/explorer
+      - name: Run unit tests
+        run: npm run test
+        working-directory: ./web/explorer
+      - name: Build
+        run: npm run build
+        working-directory: ./web/explorer
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './web/explorer/dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
