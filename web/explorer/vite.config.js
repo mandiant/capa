@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
     const isBundle = mode === "bundle";
 
     return {
-        base: './',
+        base: "./",
         plugins: isBundle ? [vue(), viteSingleFile()] : [vue()],
         resolve: {
             alias: {
