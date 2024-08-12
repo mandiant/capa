@@ -1,53 +1,245 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>capa - extract capabilities from executable files</title>
+    <link rel="canonical" href="https://mandiant.github.io/capa/">
+
+    <link href="./css/bootstrap-5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH">
+    <script src="./js/bootstrap-5.3.3.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"></script>
+
+    <meta name="theme-color" content="#712cf9">
     <link rel="icon" href="img/icon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>capa</title>
+
     <style>
-      /*
-        Josh's Custom CSS Reset
-        https://www.joshwcomeau.com/css/custom-css-reset/
-      */
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
-      * {
-        margin: 0;
-      }
-      body {
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-      }
-      img, picture, video, canvas, svg {
-        display: block;
-        max-width: 100%;
-      }
-      input, button, textarea, select {
-        font: inherit;
-      }
-      p, h1, h2, h3, h4, h5, h6 {
-        overflow-wrap: break-word;
-      }
-      #root, #__next {
-        isolation: isolate;
+      .b-divider {
+        width: 100%;
+        height: 3rem;
+        background-color: rgba(0, 0, 0, .1);
+        border: solid rgba(0, 0, 0, .15);
+        border-width: 1px 0;
+        box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
       }
     </style>
   </head>
   <body>
     
-    <div style="height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-      <div>
-        <!-- this is centered -->
-        <img src="./img/icon.png" />
+<main>
+  <header 
+      class="d-flex flex-wrap justify-content-center py-1 mb-4 border-bottom fixed-top"
+      style="background-color: rgba(255,255,255,0.95);
+             box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
+      >
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+      <!-- TODO(williballenthin): use the logo with the word "capa" -->
+      <img src="./img/icon.png" height=48 class="mx-4" />
+      <span class="fs-4">capa</span>
+    </a>
+
+    <ul class="nav nav-pills">
+      <li class="nav-item"><a href="#features"      class="nav-link">Features</a></li>
+      <li class="nav-item"><a href="#download"      class="nav-link">Download</a></li>
+      <li class="nav-item"><a href="#contribute"    class="nav-link">Contribute</a></li>
+      <li class="nav-item"><a href="#documentation" class="nav-link">Documentation</a></li>
+    </ul>
+  </header>
+
+  <div class="container my-5 mt-3" style="margin-top: 4rem !important;">
+    <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center">
+      <div class="col-lg-7 p-3 p-lg-5 pt-lg-3">
+        <h1 class="display-4 fw-bold lh-1 text-body-emphasis">
+          Extract capabilities from executable files
+        </h1>
+        <p class="lead">
+          capa is the FLARE team's open-source tool to identify capabilities in executable files.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4 mb-lg-3">
+          <button type="button" class="btn btn-primary btn-lg px-4 me-md-2 fw-bold">Download</button>
+          <button type="button" class="btn btn-outline-secondary btn-lg px-4">Browse Rules</button>
+        </div>
       </div>
-      <div>
-        <a href="./explorer/">capa Explorer Web</a>
-      </div>
-      <div>
-        <img src="./img/capa.gif" style="max-width: 600px;"/>
+      <div class="col-lg-4 offset-lg-1 p-0">
+          <img 
+            class="rounded-lg-3 shadow-lg" 
+            style="border: 4px solid #f8f9fb;"
+            src="./img/capa-default-pma0101.png"
+            alt="default capa output" 
+            width="720">
       </div>
     </div>
-  </body>
+  </div>
+
+  <div class="b-divider"></div>
+
+  <div class="px-4 pt-5 my-5 text-center border-bottom">
+    <h1 class="display-4 fw-bold text-body-emphasis">Rules Crafted by Experts</h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4">
+        capa works with rules crafted by expert reverse engineers contributing from across the globe.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      </p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
+        <button type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Browse Rules</button>
+        <button type="button" class="btn btn-outline-secondary btn-lg px-4">Learn the Syntax</button>
+      </div>
+    </div>
+    <div class="overflow-hidden" style="max-height: 38vh;">
+      <div class="container px-5">
+        <img 
+          src="./img/capa-rule-create-socket.png" 
+          class="img-fluid border shadow-lg mb-4" 
+          alt="capa rule source" 
+          width="700" 
+          height="500" 
+          loading="lazy" 
+          />
+      </div>
+    </div>
+  </div>
+
+
+  <div class="b-divider"></div>
+
+  <div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+      <div class="col-10 col-sm-8 col-lg-6">
+        <img 
+          src="./img/capa-vv-pma0101.png" 
+          class="d-block mx-lg-auto img-fluid shadow-lg" 
+          style="border: 4px solid #f8f9fb;"
+          alt="capa vverbose output" 
+          width="700" 
+          height="500" 
+          loading="lazy">
+      </div>
+      <div class="col-lg-6">
+        <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
+          Responsive left-aligned hero with image
+        </h1>
+        <p class="lead">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="b-divider"></div>
+
+  <div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+      <div class="col-lg-7">
+        <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
+          Responsive right-aligned hero with image
+        </h1>
+        <p class="lead">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+      </div>
+
+      <div class="col-10 col-sm-8 col-lg-5">
+        <img 
+          src="./img/capa-vv-pma0101.png" 
+          class="d-block mx-lg-auto img-fluid shadow-lg" 
+          style="border: 4px solid #f8f9fb;"
+          alt="capa vverbose output" 
+          width="700" 
+          height="500" 
+          loading="lazy">
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="b-divider"></div>
+
+  <div class="container px-4 py-5">
+    <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+      <div class="col d-flex flex-column align-items-start gap-2">
+        <h2 class="fw-bold text-body-emphasis">
+          Integrates with Popular Reverse Engineering Tools
+        </h2>
+        <p class="text-body-secondary">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        <a href="#" class="btn btn-primary btn-lg">Primary button</a>
+      </div>
+
+      <div class="col">
+        <div class="row row-cols-1 row-cols-sm-2 g-4">
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              IDA Pro
+            </h4>
+            <p class="text-body-secondary">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            </p>
+          </div>
+
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              Ghidra
+            </h4>
+            <p class="text-body-secondary">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            </p>
+          </div>
+
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              Binary Ninja
+            </h4>
+            <p class="text-body-secondary">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            </p>
+          </div>
+
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              CAPE
+            </h4>
+            <p class="text-body-secondary">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="b-divider"></div>
+
+  <div class="bg-dark text-secondary px-4 pt-5 text-center">
+    <div class="py-5">
+      <img src="./img/icon.png" />
+      <h3 class="display-5 fw-bold text-white">
+        capa
+      </h3>
+
+      <div class="col-lg-6 mx-auto">
+        <p class="fs-5 my-4">
+          The FLARE team's open-source tool to identify capabilities in executable files.
+        </p>
+
+        <div class="d-grid gap-4 d-sm-flex justify-content-sm-center mb-4">
+          <div><a href="#features"      class="fw-bold text-white text-decoration-none">Features</a></div>
+          <div><a href="#download"      class="fw-bold text-white text-decoration-none">Download</a></div>
+          <div><a href="#contribute"    class="fw-bold text-white text-decoration-none">Contribute</a></div>
+          <div><a href="#documentation" class="fw-bold text-white text-decoration-none">Documentation</a></div>
+        </div>
+
+        <p>
+          Copyright © 2020 Mandiant, Inc. All Rights Reserved. <br />
+          Licensed under the Apache License, Version 2.0.
+        </p>
+      </div>
+    </div>
+  </div>
+ </main>
+
+    </body>
 </html>
