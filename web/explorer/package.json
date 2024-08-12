@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "build:bundle": "vite build --mode bundle",
+        "build:bundle": "vite build --mode bundle --outDir=capa-exlorer-web",
         "preview": "vite preview",
         "test": "vitest",
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
