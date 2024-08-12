@@ -9,7 +9,7 @@ import Menubar from "primevue/menubar";
                 <a
                     v-ripple
                     v-tooltip.right="'Download capa Explorer Web for offline usage'"
-                    href="/capa-explorer-web.zip"
+                    href="./capa-explorer-web.zip"
                     download="capa-explorer-web.zip"
                     aria-label="Download capa Explorer Web release"
                 >
