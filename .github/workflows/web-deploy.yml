@@ -53,7 +53,7 @@ jobs:
         run: npm run build:bundle
         working-directory: ./web/explorer
       - name: Zip release bundle
-        run: zip -r capa-explorer-web.zip capa-explorer-web
+        run: zip -r public/capa-explorer-web.zip capa-explorer-web
         working-directory: ./web/explorer
       - name: Build
         run: npm run build
