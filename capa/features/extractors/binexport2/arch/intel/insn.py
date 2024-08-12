@@ -48,7 +48,7 @@ def extract_insn_number_features(
         #   .text:0040116e leave
         return
 
-    mnemonic: str = be2.mnemonic[instruction.mnemonic_index].name.lower()
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
     if mnemonic.startswith("ret"):
         # skip things like:
@@ -98,7 +98,7 @@ def extract_insn_offset_features(
         #   .text:0040116e leave
         return
 
-    mnemonic: str = be2.mnemonic[instruction.mnemonic_index].name.lower()
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
     value: int
 
     for i, operand_index in enumerate(instruction.operand_index):
@@ -188,9 +188,8 @@ def extract_insn_nzxor_characteristic_features(
     be2: BinExport2 = fhi.ctx.be2
 
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
-    mnemonic: BinExport2.Mnemonic = be2.mnemonic[instruction.mnemonic_index]
-    mnemonic_name: str = mnemonic.name.lower()
-    if mnemonic_name not in (
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
+    if mnemonic not in (
         "xor",
         "xorpd",
         "xorps",
@@ -200,7 +199,7 @@ def extract_insn_nzxor_characteristic_features(
 
     operands: List[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
-    if mnemonic_name in ("xor", "xorpd", "xorps", "pxor"):
+    if mnemonic in ("xor", "xorpd", "xorps", "pxor"):
         if operands[0] == operands[1]:
             return
         if is_security_cookie(fhi, bbh.inner, instruction):

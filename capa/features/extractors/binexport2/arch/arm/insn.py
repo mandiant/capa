@@ -18,6 +18,7 @@ from capa.features.extractors.binexport2.helpers import (
     mask_immediate,
     is_address_mapped,
     get_operand_expressions,
+    get_instruction_mnemonic,
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
@@ -70,7 +71,7 @@ def extract_insn_offset_features(
         #   .text:0040116e leave
         return
 
-    mnemonic: str = be2.mnemonic[instruction.mnemonic_index].name.lower()
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
     for i, operand_index in enumerate(instruction.operand_index):
         operand: BinExport2.Operand = be2.operand[operand_index]
@@ -112,7 +113,7 @@ def extract_insn_nzxor_characteristic_features(
     be2: BinExport2 = fhi.ctx.be2
 
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
-    mnemonic: str = be2.mnemonic[instruction.mnemonic_index].name.lower()
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
     if mnemonic != "eor":
         return
