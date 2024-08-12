@@ -85,7 +85,7 @@ def extract_insn_offset_features(
         if not is_dereference:
             continue
 
-        if mnemonic == "ldp":
+        if mnemonic in ("ldp", "stp"):
             # like:
             # 0013a2f0 ldp x22,x9,[x21, #0x18]
             expressions: List[BinExport2.Expression] = get_operand_expressions(be2, operand)

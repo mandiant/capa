@@ -189,6 +189,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.insn.Offset(0x20),
             False,
         ),
+        (
+            "d1e650.ghidra.be2",
+            "function=0x1183e0,bb=0x11849c,insn=0x1184b0",
+            capa.features.insn.Offset(0x8),
+            True,
+        ),
         # insn/offset: negative
         (
             "d1e650.ghidra.be2",
