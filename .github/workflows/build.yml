@@ -3,6 +3,10 @@ name: build
 on:
   pull_request:
     branches: [ master ]
+    paths-ignore:
+      - 'web/**'
+      - 'doc/**'
+      - '**.md'
   release:
     types: [edited, published]
 

@@ -1,10 +1,22 @@
 name: CI
 
+# tests.yml workflow will run for all changes except:
+# any file or directory under web/ or doc/
+# any Markdown (.md) file anywhere in the repository
+
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - 'web/**'
+      - 'doc/**'
+      - '**.md'
   pull_request:
     branches: [ master, feat/1755 ]
+    paths-ignore:
+      - 'web/**'
+      - 'doc/**'
+      - '**.md'
 
 permissions: read-all
 
