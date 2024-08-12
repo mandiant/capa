@@ -224,3 +224,7 @@ def get_operand_immediate_expression(be2: BinExport2, operand: BinExport2.Operan
                 return expression1
 
     return None
+
+
+def get_instruction_mnemonic(be2: BinExport2, instruction: BinExport2.Instruction) -> str:
+    return be2.mnemonic[instruction.mnemonic_index].name.lower()

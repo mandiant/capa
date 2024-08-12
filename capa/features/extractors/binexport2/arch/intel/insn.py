@@ -18,6 +18,7 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 from capa.features.extractors.binexport2.helpers import (
     mask_immediate,
     is_address_mapped,
+    get_instruction_mnemonic,
     get_operand_register_expression,
     get_operand_immediate_expression,
 )
@@ -211,4 +212,39 @@ def extract_insn_nzxor_characteristic_features(
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2: BinExport2 = fhi.ctx.be2
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+
+    if len(instruction.operand_index) == 0:
+        # skip things like:
+        #   .text:0040116e leave
+        return
+
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
+    if mnemonic not in ("call", "jmp"):
+        return
+
+    assert len(instruction.operand_index) == 1
+
+    operand: BinExport2.Operand = be2.operand[instruction.operand_index[0]]
+
+    if len(operand.expression_index) == 1:
+        expression0: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+        # call edx
+        if expression0.type == BinExport2.Expression.REGISTER:
+            yield Characteristic("indirect call"), ih.address
+    else:
+        is_dereference = False
+        for expression_index in operand.expression_index:
+            if be2.expression[expression_index].type == BinExport2.Expression.DEREFERENCE:
+                is_dereference = True
+                break
+
+        if is_dereference:
+            phrase_info: Optional[OperandPhraseInfo] = get_operand_phrase_info(be2, operand)
+            if phrase_info and phrase_info.base:
+                # call dword ptr [eax+50h]
+                yield Characteristic("indirect call"), ih.address
