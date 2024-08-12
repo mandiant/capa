@@ -328,16 +328,16 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ),
         # insn/characteristic(indirect call)
         (
-            "687e79.ghidra.be2",
-            "function=0x0",
+            "d1e650.ghidra.be2",
+            "function=0x118620",
             capa.features.common.Characteristic("indirect call"),
-            "xfail: not implemented yet",
+            True
         ),
         (
-            "687e79.ghidra.be2",
-            "function=0x0",
+            "d1e650.ghidra.be2",
+            "function=0x118500",
             capa.features.common.Characteristic("indirect call"),
-            "xfail: not implemented yet",
+            False,
         ),
         # insn/characteristic(calls from)
         (

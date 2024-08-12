@@ -129,4 +129,22 @@ def extract_insn_nzxor_characteristic_features(
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2: BinExport2 = fhi.ctx.be2
+
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
+
+    if mnemonic not in ("blx", "bx", "blr"):
+        return
+
+    assert len(instruction.operand_index) == 1
+
+    expressions: List[BinExport2.Expression] = get_operand_expressions(be2, be2.operand[instruction.operand_index[0]])
+
+    assert len(expressions) == 1
+
+    if expressions[0].type == BinExport2.Expression.REGISTER:
+        yield Characteristic("indirect call"), ih.address
