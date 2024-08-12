@@ -1,19 +1,9 @@
 <script setup>
-import { ref } from "vue";
-
 import Menubar from "primevue/menubar";
-
-const items = ref([
-    {
-        label: "Import Analysis",
-        icon: "pi pi-file-import",
-        command: () => (window.location.href = window.location.origin + "/capa/")
-    }
-]);
 </script>
 
 <template>
-    <Menubar :model="items" class="p-1">
+    <Menubar class="p-1">
         <template #end>
             <div class="flex align-items-center gap-3">
                 <a
