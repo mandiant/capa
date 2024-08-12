@@ -183,16 +183,46 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.insn.Offset(0x10),
             True,
         ),
+        # ldp x29,x30,[sp, #0x20]
         (
             "d1e650.ghidra.be2",
             "function=0x13347c,bb=0x133548,insn=0x133554",
             capa.features.insn.Offset(0x20),
             False,
         ),
+        # stp x20,x0,[x19, #0x8]
         (
             "d1e650.ghidra.be2",
             "function=0x1183e0,bb=0x11849c,insn=0x1184b0",
             capa.features.insn.Offset(0x8),
+            True,
+        ),
+        # str xzr,[x8, #0x8]!
+        (
+            "d1e650.ghidra.be2",
+            "function=0x138688,bb=0x138994,insn=0x1389a8",
+            capa.features.insn.Offset(0x8),
+            True,
+        ),
+        # ldr x9,[x8, #0x8]!
+        (
+            "d1e650.ghidra.be2",
+            "function=0x138688,bb=0x138978,insn=0x138984",
+            capa.features.insn.Offset(0x8),
+            True,
+        ),
+        # ldr x19,[sp], #0x20
+        (
+            "d1e650.ghidra.be2",
+            "function=0x11451c",
+            capa.features.insn.Offset(0x20),
+            False,
+        ),
+        # ldrb w9,[x8, #0x1]
+        (
+            "d1e650.ghidra.be2",
+            "function=0x138a9c,bb=0x138b00,insn=0x138b00",
+            capa.features.insn.Offset(0x1),
             True,
         ),
         # insn/offset: negative
@@ -327,12 +357,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             True,
         ),
         # insn/characteristic(indirect call)
-        (
-            "d1e650.ghidra.be2",
-            "function=0x118620",
-            capa.features.common.Characteristic("indirect call"),
-            True
-        ),
+        ("d1e650.ghidra.be2", "function=0x118620", capa.features.common.Characteristic("indirect call"), True),
         (
             "d1e650.ghidra.be2",
             "function=0x118500",
