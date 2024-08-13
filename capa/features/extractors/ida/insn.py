@@ -5,9 +5,11 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, Dict, Tuple, Iterator
+import re
+from typing import Any, Dict, Tuple, Iterator, Optional
 
 import idc
+import ida_ua
 import idaapi
 import idautils
 
@@ -35,9 +37,9 @@ def get_externs(ctx: Dict[str, Any]) -> Dict[int, Any]:
     return ctx["externs_cache"]
 
 
-def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Iterator[Any]:
+def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Optional[Tuple[str, str]]:
     """check instruction for API call"""
-    info = ()
+    info = None
     ref = insn.ea
 
     # attempt to resolve API calls by following chained thunks to a reasonable depth
@@ -52,7 +54,7 @@ def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Iterator[A
             except IndexError:
                 break
 
-        info = funcs.get(ref, ())
+        info = funcs.get(ref)
         if info:
             break
 
@@ -60,8 +62,7 @@ def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Iterator[A
         if not f or not (f.flags & idaapi.FUNC_THUNK):
             break
 
-    if info:
-        yield info
+    return info
 
 
 def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -76,16 +77,39 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
     if insn.get_canon_mnem() not in ("call", "jmp"):
         return
 
-    # check calls to imported functions
-    for api in check_for_api_call(insn, get_imports(fh.ctx)):
+    # check call to imported functions
+    api = check_for_api_call(insn, get_imports(fh.ctx))
+    if api:
         # tuple (<module>, <function>, <ordinal>)
         for name in capa.features.extractors.helpers.generate_symbols(api[0], api[1]):
             yield API(name), ih.address
+        # a call instruction should only call one function, stop if a call to an import is extracted
+        return
 
-    # check calls to extern functions
-    for api in check_for_api_call(insn, get_externs(fh.ctx)):
+    # check call to extern functions
+    api = check_for_api_call(insn, get_externs(fh.ctx))
+    if api:
         # tuple (<module>, <function>, <ordinal>)
         yield API(api[1]), ih.address
+        # a call instruction should only call one function, stop if a call to an extern is extracted
+        return
+
+    # extract dynamically resolved APIs stored in renamed globals (renamed for example using `renimp.idc`)
+    # examples: `CreateProcessA`, `HttpSendRequestA`
+    if insn.Op1.type == ida_ua.o_mem:
+        op_addr = insn.Op1.addr
+        op_name = idaapi.get_name(op_addr)
+        # when renaming a global using an API name, IDA assigns it the function type
+        # ensure we do not extract something wrong by checking that the address has a name and a type
+        # we could check that the type is a function definition, but that complicates the code
+        if (not op_name.startswith("off_")) and idc.get_type(op_addr):
+            # Remove suffix used in repeated names, for example _0 in VirtualFree_0
+            match = re.match(r"(.+)_\d+", op_name)
+            if match:
+                op_name = match.group(1)
+            # the global name does not include the DLL name, so we can't extract it
+            for name in capa.features.extractors.helpers.generate_symbols("", op_name):
+                yield API(name), ih.address
 
     # extract IDA/FLIRT recognized API functions
     targets = tuple(idautils.CodeRefsFrom(insn.ea, False))
