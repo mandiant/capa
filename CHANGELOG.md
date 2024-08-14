@@ -11,10 +11,11 @@
 
 ### Breaking Changes
 
-### New Rules (2)
+### New Rules (3)
 
 - nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
 - data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
+- communication/socket/attach-bpf-to-socket-on-linux jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
