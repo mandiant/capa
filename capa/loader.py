@@ -249,7 +249,7 @@ def get_extractor(
                 + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
             )
 
-        import capa.features.extractors.binaryninja.extractor
+        import capa.features.extractors.binja.extractor
 
         if input_format not in (FORMAT_SC32, FORMAT_SC64):
             if not is_supported_format(input_path):
@@ -266,7 +266,7 @@ def get_extractor(
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
 
-        return capa.features.extractors.binaryninja.extractor.BinjaFeatureExtractor(bv)
+        return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
     elif backend == BACKEND_PEFILE:
         import capa.features.extractors.pefile
