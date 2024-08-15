@@ -811,11 +811,11 @@ def get_extractor_filters_from_cli(args, input_format) -> Dict[str, Set]:
     if input_format in STATIC_FORMATS:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
-        return {"functions": set(map(lambda x: int(x, 0), args.restrict_to_functions))}
+        return {"functions": set(int(addr, 0) for addr in args.restrict_to_functions)}
     elif input_format in DYNAMIC_FORMATS:
         if args.restrict_to_functions:
             raise InvalidArgument("Cannot filter functions with dynamic analysis.")
-        return {"processes": set(map(lambda x: int(x, 0), args.restrict_to_processes))}
+        return {"processes": set(int(pid, 0) for pid in args.restrict_to_processes)}
     else:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
@@ -921,7 +921,7 @@ def main(argv: Optional[List[str]] = None):
             return e.status_code
 
         if any(extractor_filters.values()):
-            # if the user specified function/process filters, apply them here.
+            # if the user specified any extractor filters, apply them here.
             extractor = apply_extractor_filters(extractor, extractor_filters)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
