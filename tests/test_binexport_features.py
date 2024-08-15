@@ -119,6 +119,13 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.insn.Number(0x10),
             False,
         ),
+        # 00105128 sub sp,sp,#0xE0
+        (
+            "687e79.ghidra.be2",
+            "function=0x105128",
+            capa.features.insn.Number(0xE0),
+            False,
+        ),
         # insn/operand.number
         (
             "687e79.ghidra.be2",
