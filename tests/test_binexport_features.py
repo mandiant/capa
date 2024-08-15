@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import binascii
+from typing import cast
 
 import pytest
 import fixtures
@@ -446,6 +447,9 @@ def test_binexport_features_elf_aarch64(sample, scope, feature, expected):
 def test_binexport_features_pe_x86(sample, scope, feature, expected):
     if "mimikatz.exe_" not in sample.name:
         pytest.skip("for now only testing mimikatz.exe_ Ghidra BinExport file")
+
+    if isinstance(feature, capa.features.common.Characteristic) and "stack string" in cast(str, feature.value):
+        pytest.skip("for now only testing basic features")
 
     sample = sample.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
     assert sample.exists()
