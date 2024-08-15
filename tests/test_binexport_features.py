@@ -111,6 +111,14 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("bl"), True),
         ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("in"), False),
         ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("adrl"), False),
+        # insn/number
+        # 00114524 add x29,sp,#0x10
+        (
+            "d1e650.ghidra.be2",
+            "function=0x11451c",
+            capa.features.insn.Number(0x10),
+            False,
+        ),
         # insn/operand.number
         (
             "687e79.ghidra.be2",
@@ -148,14 +156,6 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "function=0x13347c,bb=0x133548,insn=0x133554",
             capa.features.insn.OperandOffset(2, 0x20),
             False,
-        ),
-        # insn/number
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Number(0x3), True),
-        (
-            "687e79.ghidra.be2",
-            "function=0x107588",
-            capa.features.insn.Number(0x10),
-            "xfail: do we want this for ldp?",
         ),
         ("687e79.ghidra.be2", "function=0x105C88", capa.features.insn.Number(0xF000), True),
         # insn/number: negative
@@ -299,34 +299,20 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.common.Substring("/data/misc"),
             True,
         ),
-        # # insn/string, pointer to string
-        # ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
-        # # insn/string, direct memory reference
-        # ("mimikatz", "function=0x46D6CE", capa.features.common.String("(null)"), True),
         # insn/bytes
         (
-            "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.common.Bytes(binascii.unhexlify("00")),
-            "xfail: not implemented yet, may need other test sample",
-        ),
-        (
-            "687e79.ghidra.be2",
-            "function=0x0",
-            capa.features.common.Bytes(binascii.unhexlify("00")),
-            "xfail: not implemented yet, may need other test sample",
+            "d1e650.ghidra.be2",
+            "function=0x1165a4",
+            capa.features.common.Bytes(binascii.unhexlify("E405B89370BA6B419CD7925275BF6FCC1E8360CC")),
+            True,
         ),
         # # don't extract byte features for obvious strings
-        # ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
-        # ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
-        # ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), False),
-        # ("mimikatz", "function=0x40105D", capa.features.common.Bytes("nope".encode("ascii")), False),
-        # # push    offset aAcsAcr1220 ; "ACS..." -> where ACS == 41 00 43 00 == valid pointer to middle of instruction
-        # ("mimikatz", "function=0x401000", capa.features.common.Bytes(binascii.unhexlify("FDFF59F647")), False),
-        # # IDA features included byte sequences read from invalid memory, fixed in #409
-        # ("mimikatz", "function=0x44570F", capa.features.common.Bytes(binascii.unhexlify("FF" * 256)), False),
-        # # insn/bytes, pointer to string bytes
-        # ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
+        (
+            "687e79.ghidra.be2",
+            "function=0x1057f8",
+            capa.features.common.Bytes("/system/xbin/busybox".encode("utf-16le")),
+            False,
+        ),
         # insn/characteristic(nzxor)
         (
             "d1e650.ghidra.be2",
@@ -364,6 +350,13 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "function=0x118500",
             capa.features.common.Characteristic("indirect call"),
             False,
+        ),
+        ("d1e650.ghidra.be2", "function=0x118620", capa.features.common.Characteristic("indirect call"), True),
+        (
+            "d1e650.ghidra.be2",
+            "function=0x11451c",
+            capa.features.common.Characteristic("indirect call"),
+            True,
         ),
         # insn/characteristic(calls from)
         (
@@ -408,18 +401,6 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.ghidra.be2", "file", Format(FORMAT_PE), False),
         ("687e79.ghidra.be2", "function=0x107588", Format(FORMAT_ELF), True),
         ("687e79.ghidra.be2", "function=0x107588", Format(FORMAT_PE), False),
-        (
-            "687e79.ghidra.be2",
-            "function=0x0,bb=0x0",
-            capa.features.common.Characteristic("call $+5"),
-            "xfail: not implemented yet",
-        ),
-        (
-            "687e79.ghidra.be2",
-            "function=0x0,bb=0x0",
-            capa.features.common.Characteristic("call $+5"),
-            "xfail: not implemented yet",
-        ),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
