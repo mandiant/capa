@@ -288,17 +288,17 @@ def install_common_args(parser, wanted=None):
             help=f"select backend, {backend_help}",
         )
 
-    if "functions" in wanted:
+    if "restrict-to-functions" in wanted:
         parser.add_argument(
-            "--functions",
+            "--restrict-to-functions",
             type=lambda s: s.replace(" ", "").split(","),
             default=[],
             help="provide a list of comma-separated functions to analyze (static analysis).",
         )
 
-    if "processes" in wanted:
+    if "restrict-to-processes" in wanted:
         parser.add_argument(
-            "--processes",
+            "--restrict-to-processes",
             type=lambda s: s.replace(" ", "").split(","),
             default=[],
             help="provide a list of comma-separated processes to analyze (dynamic analysis).",
@@ -810,13 +810,13 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
 def get_extractor_filters_from_cli(args, input_format) -> Optional[Set]:
     if input_format in STATIC_FORMATS:
-        if args.processes:
+        if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
-        return set(map(str_to_number, args.functions))
+        return set(map(str_to_number, args.restrict_to_functions))
     elif input_format in DYNAMIC_FORMATS:
-        if args.functions:
+        if args.restrict_to_functions:
             raise InvalidArgument("Cannot filter functions with dynamic analysis.")
-        return set(map(str_to_number, args.processes))
+        return set(map(str_to_number, args.restrict_to_processes))
     else:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
@@ -870,7 +870,18 @@ def main(argv: Optional[List[str]] = None):
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     install_common_args(
-        parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag", "functions", "processes"}
+        parser,
+        {
+            "input_file",
+            "format",
+            "backend",
+            "os",
+            "signatures",
+            "rules",
+            "tag",
+            "restrict-to-functions",
+            "restrict-to-processes",
+        },
     )
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
