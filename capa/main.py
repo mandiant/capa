@@ -820,7 +820,7 @@ def get_extractor_filters_from_cli(args, input_format) -> Dict[str, Set]:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
 
-def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Set):
+def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Dict[str, Set]):
     if isinstance(extractor, StaticFeatureExtractor):
         return FunctionFilter(extractor, extractor_filters["functions"])
     elif isinstance(extractor, DynamicFeatureExtractor):
