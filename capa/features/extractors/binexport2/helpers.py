@@ -171,6 +171,11 @@ def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> List[Bin
     #          5
     #
     # Remember, these are the indices into the entries in operand.expression_index.
+    if len(op.expression_index) == 0:
+        # Ghidra bug where empty operands (no expressions) may
+        # exist (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
+        return []
+
     exp_tree: List[List[int]] = []
     for i, exp_index in enumerate(op.expression_index):
         children = []

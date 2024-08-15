@@ -364,7 +364,10 @@ def main(argv=None):
                                 operands = []
                                 for operand_index in instruction.operand_index:
                                     operand = be2.operand[operand_index]
-                                    operands.append(render_operand(be2, instruction, operand, index=operand_index))
+                                    # Ghidra bug where empty operands (no expressions) may
+                                    # exist so we skip those for now (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
+                                    if len(operand.expression_index) > 0:
+                                        operands.append(render_operand(be2, instruction, operand, index=operand_index))
 
                                 call_targets = ""
                                 if instruction.call_target:
