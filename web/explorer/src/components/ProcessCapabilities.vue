@@ -7,7 +7,7 @@
             filterMode="lenient"
             sortField="pid"
             :sortOrder="1"
-            rowHover="true"
+            :rowHover="true"
         >
             <Column field="processname" header="Process" expander>
                 <template #body="slotProps">

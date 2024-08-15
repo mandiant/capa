@@ -1,9 +1,15 @@
 <script setup>
 import Menubar from "primevue/menubar";
+import { RouterLink } from "vue-router";
 </script>
 
 <template>
     <Menubar class="p-1">
+        <template #start>
+            <RouterLink to="/">
+                <img src="@/assets/images/icon.png" alt="Logo" class="w-2rem" />
+            </RouterLink>
+        </template>
         <template #end>
             <div class="flex align-items-center gap-3">
                 <a
@@ -18,7 +24,6 @@ import Menubar from "primevue/menubar";
                 <a v-ripple href="https://github.com/mandiant/capa" class="flex justify-content-center w-2rem">
                     <i class="pi pi-github text-2xl"></i>
                 </a>
-                <img src="@/assets/images/icon.png" alt="Logo" class="w-2rem" />
             </div>
         </template>
     </Menubar>

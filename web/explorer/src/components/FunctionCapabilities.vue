@@ -71,22 +71,7 @@ const currentSource = ref("");
 const functionCapabilities = ref([]);
 
 onMounted(() => {
-    const cacheKey = "functionCapabilities";
-    let cachedData = sessionStorage.getItem(cacheKey);
-
-    if (cachedData) {
-        // If the data is already in sessionStorage, parse it and use it
-        functionCapabilities.value = JSON.parse(cachedData);
-    } else {
-        // Parse function capabilities and cache the result in sessionStorage
-        functionCapabilities.value = parseFunctionCapabilities(props.data);
-        try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(functionCapabilities.value));
-        } catch (e) {
-            console.warn("Failed to store parsed data in sessionStorage:", e);
-            // If storing fails (e.g., due to storage limits), we can still continue with the parsed data
-        }
-    }
+    functionCapabilities.value = parseFunctionCapabilities(props.data);
 });
 
 /*

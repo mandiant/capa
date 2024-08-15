@@ -269,6 +269,7 @@ Please learn to write rules and contribute new entries as you find interesting t
 # IDA Pro plugin: capa explorer
 If you use IDA Pro, then you can use the [capa explorer](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) plugin.
 capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
+It also uses your local changes to the .idb to extract better features, such as when you rename a global variable that contains a dynamically resolved API address.
 
 ![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
