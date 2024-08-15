@@ -20,6 +20,7 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_expressions,
     get_instruction_mnemonic,
     get_instruction_operands,
+    get_operand_register_expression,
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
@@ -43,6 +44,19 @@ def extract_insn_number_features(
         # skip things like:
         #   .text:0040116e leave
         return
+
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
+
+    if mnemonic == "add":
+        assert len(instruction.operand_index) == 3
+
+        expression1: Optional[BinExport2.Expression] = get_operand_register_expression(
+            be2, be2.operand[instruction.operand_index[1]]
+        )
+        if expression1 and is_stack_register_expression(be2, expression1):
+            # skip things like:
+            # add x0,sp,#0x8
+            return
 
     for i, operand_index in enumerate(instruction.operand_index):
         operand: BinExport2.Operand = be2.operand[operand_index]
