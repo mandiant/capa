@@ -241,28 +241,13 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             True,
         ),
         # insn/offset from mnemonic: add
-        #
-        # should not be considered, too big for an offset:
-        #    .text:00401D85 81 C1 00 00 00 80       add     ecx, 80000000h
-        # ("mimikatz", "function=0x401D64,bb=0x401D73,insn=0x401D85", capa.features.insn.Offset(0x80000000), False),
-        # should not be considered, relative to stack:
-        #    .text:00401CF6 83 C4 10                add     esp, 10h
-        # ("mimikatz", "function=0x401CC7,bb=0x401CDE,insn=0x401CF6", capa.features.insn.Offset(0x10), False),
-        # yes, this is also a offset (imagine eax is a pointer):
-        #    .text:0040223C 83 C0 04                add     eax, 4
-        # ("mimikatz", "function=0x402203,bb=0x402221,insn=0x40223C", capa.features.insn.Offset(0x4), True),
-        #
-        # insn/number from mnemonic: lea
-        #
-        # should not be considered, lea operand invalid encoding
-        #    .text:00471EE6 8D 1C 81                lea     ebx, [ecx+eax*4]
-        # ("mimikatz", "function=0x471EAB,bb=0x471ED8,insn=0x471EE6", capa.features.insn.Number(0x4), False),
-        # should not be considered, lea operand invalid encoding
-        #    .text:004717B1 8D 4C 31 D0             lea     ecx, [ecx+esi-30h]
-        # ("mimikatz", "function=0x47153B,bb=0x4717AB,insn=0x4717B1", capa.features.insn.Number(-0x30), False),
-        # yes, this is also a number (imagine edx is zero):
-        #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
-        # ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
+        # 0010514c add x23,param_1,#0x8
+        (
+            "687e79.ghidra.be2",
+            "function=0x105128,bb=0x105128,insn=0x10514c",
+            capa.features.insn.Offset(0x8),
+            True,
+        ),
         # insn/api
         # not extracting dll name
         ("687e79.ghidra.be2", "function=0x105c88", capa.features.insn.API("memset"), True),
