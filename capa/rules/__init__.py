@@ -11,7 +11,6 @@ import os
 import re
 import copy
 import uuid
-import codecs
 import logging
 import binascii
 import collections
@@ -456,7 +455,7 @@ DESCRIPTION_SEPARATOR = " = "
 
 def parse_bytes(s: str) -> bytes:
     try:
-        b = codecs.decode(s.replace(" ", "").encode("ascii"), "hex")
+        b = bytes.fromhex(s.replace(" ", ""))
     except binascii.Error:
         raise InvalidRule(f'unexpected bytes value: must be a valid hex sequence: "{s}"')
 
@@ -1918,7 +1917,6 @@ class RuleSet:
         # This strategy is described here:
         # https://github.com/mandiant/capa/issues/2129
         if feature_index.string_rules:
-
             # This is a FeatureSet that contains only String features.
             # Since we'll only be evaluating String/Regex features below, we don't care about
             # other sorts of features (Mnemonic, Number, etc.) and therefore can save some time

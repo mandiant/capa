@@ -5,17 +5,32 @@
 ### New Features
 - Add the ability to select which specific functions or processes to analyze @yelhamer
 
+- webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
+- support analyzing DRAKVUF traces #2143 @yelhamer
+- IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables #2201 @Ana06
+
+
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (3)
 
+- nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
+- data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
+- communication/socket/attach-bpf-to-socket-on-linux jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
 
+- elf: extract import / export symbols from stripped binaries #2096 @ygasparis
+- elf: fix handling of symbols in corrupt ELF files #2226 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
+- CI: use macos-12 since macos-11 is deprecated and will be removed on June 28th, 2024 #2173 @mr-tz
+- CI: update Binary Ninja version to 4.1 and use Python 3.9 to test it #2211 @xusheng6
+- CI: update tests.yml workflow to exclude web and documentation files #2263 @s-ff
+- CI: update build.yml workflow to exclude web and documentation files #2270 @s-ff
 
 ### Raw diffs
 - [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)

@@ -3,6 +3,10 @@ name: build
 on:
   pull_request:
     branches: [ master ]
+    paths-ignore:
+      - 'web/**'
+      - 'doc/**'
+      - '**.md'
   release:
     types: [edited, published]
 
@@ -32,7 +36,7 @@ jobs:
             artifact_name: capa.exe
             asset_name: windows
             python_version: 3.8
-          - os: macos-11
+          - os: macos-12
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
