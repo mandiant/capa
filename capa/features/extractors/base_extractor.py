@@ -306,7 +306,7 @@ def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticF
 
     # make a copy of the extractor before decorating the get_functions() method
     new_extractor = copy(extractor)
-    new_extractor.get_functions = MethodType(filtered_get_functions, extractor)
+    new_extractor.get_functions = MethodType(filtered_get_functions, extractor)  # type: ignore
 
     return new_extractor
 
@@ -490,7 +490,7 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> Dynamic
 
     # make a copy of the extractor before decorating the get_processes() method
     new_extractor = copy(extractor)
-    new_extractor.get_processes = MethodType(filtered_get_processes, extractor)
+    new_extractor.get_processes = MethodType(filtered_get_processes, extractor)  # type: ignore
 
     return new_extractor
 
