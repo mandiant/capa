@@ -52,7 +52,6 @@ from capa.loader import (
     BACKEND_DRAKVUF,
 )
 from capa.helpers import (
-    str_to_number,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
@@ -808,24 +807,24 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_CORRUPT_FILE) from e
 
 
-def get_extractor_filters_from_cli(args, input_format) -> Optional[Set]:
+def get_extractor_filters_from_cli(args, input_format) -> Dict[str, Set]:
     if input_format in STATIC_FORMATS:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
-        return set(map(str_to_number, args.restrict_to_functions))
+        return {"functions": set(map(lambda x: int(x, 0), args.restrict_to_functions))}
     elif input_format in DYNAMIC_FORMATS:
         if args.restrict_to_functions:
             raise InvalidArgument("Cannot filter functions with dynamic analysis.")
-        return set(map(str_to_number, args.restrict_to_processes))
+        return {"processes": set(map(lambda x: int(x, 0), args.restrict_to_processes))}
     else:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
 
-def apply_extractor_filters(extractor: FeatureExtractor, elements: Set):
+def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Set):
     if isinstance(extractor, StaticFeatureExtractor):
-        return FunctionFilter(extractor, elements)
+        return FunctionFilter(extractor, extractor_filters["functions"])
     elif isinstance(extractor, DynamicFeatureExtractor):
-        return ProcessFilter(extractor, elements)
+        return ProcessFilter(extractor, extractor_filters["processes"])
     else:
         raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
 
@@ -921,7 +920,7 @@ def main(argv: Optional[List[str]] = None):
         except ShouldExitError as e:
             return e.status_code
 
-        if extractor_filters:
+        if any(extractor_filters.values()):
             # if the user specified function/process filters, apply them here.
             extractor = apply_extractor_filters(extractor, extractor_filters)
 
