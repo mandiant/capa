@@ -20,9 +20,9 @@
                     />
                     <label for="showLibraryRules">
                         <span v-if="libraryRuleMatchesCount > 1">
-                            Show {{ libraryRuleMatchesCount }} library rule matches
+                            Show {{ libraryRuleMatchesCount }} distinct library rules
                         </span>
-                        <span v-else>Show 1 library rule match</span>
+                        <span v-else>Show 1 distinct library rule</span>
                     </label>
                 </div>
                 <div class="flex flex-row align-items-center gap-2">
