@@ -231,7 +231,7 @@ def get_extractor(
 
     elif backend == BACKEND_BINJA:
         import capa.helpers
-        from capa.features.extractors.binaryninja.find_binja_api import find_binja_path
+        from capa.features.extractors.binja.find_binja_api import find_binja_path
 
         # When we are running as a standalone executable, we cannot directly import binaryninja
         # We need to fist find the binja API installation path and add it into sys.path
