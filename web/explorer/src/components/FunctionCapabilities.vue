@@ -7,7 +7,7 @@
         size="small"
         :filters="filters"
         :filterMode="filterMode"
-        :globalFilterFields="['funcaddr', 'ruleName', 'namespace']"
+        :globalFilterFields="['address', 'rule', 'namespace']"
     >
         <template #header>
             <IconField>
