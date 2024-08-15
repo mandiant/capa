@@ -156,8 +156,6 @@
         </template>
     </ContextMenu>
 
-    <Toast />
-
     <!-- Source code dialog -->
     <Dialog v-model:visible="sourceDialogVisible" style="width: 50vw">
         <highlightjs autodetect :code="currentSource" />
@@ -325,23 +323,7 @@ const showSource = (source) => {
 };
 
 onMounted(() => {
-    const cacheKey = "ruleMatches";
-    const cachedData = sessionStorage.getItem(cacheKey);
-
-    if (cachedData) {
-        // If cached data exists, parse and use it
-        treeData.value = JSON.parse(cachedData);
-    } else {
-        // If no cached data, parse the rules and store in sessionStorage
-        treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout);
-        // Store the parsed data in sessionStorage
-        try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(treeData.value));
-        } catch (e) {
-            console.warn("Failed to store parsed data in sessionStorage:", e);
-            // If storing fails (e.g., due to storage limits), we can still continue with the parsed data
-        }
-    }
+    treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout);
 });
 </script>
 

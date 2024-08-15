@@ -1,4 +1,5 @@
 <template>
+    <Toast position="bottom-center" group="bc" />
     <header>
         <div class="wrapper">
             <BannerHeader />
