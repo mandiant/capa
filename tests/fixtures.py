@@ -1381,7 +1381,7 @@ FEATURE_COUNT_TESTS_DOTNET = [
 FEATURE_COUNT_TESTS_GHIDRA = [
     # Ghidra may render functions as labels, as well as provide differing amounts of call references
     ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
-    ("mimikatz", "function=0x401000", capa.features.common.Characteristic("calls to"), 0),
+    ("mimikatz", "function=0x401bf1", capa.features.common.Characteristic("calls to"), 2),
     ("mimikatz", "function=0x401000", capa.features.basicblock.BasicBlock(), 3),
 ]
 
