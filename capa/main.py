@@ -84,9 +84,9 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_DRAKVUF,
     STATIC_FORMATS,
     DYNAMIC_FORMATS,
-    FORMAT_DRAKVUF,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
 from capa.features.extractors.base_extractor import (
