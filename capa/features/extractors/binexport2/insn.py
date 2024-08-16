@@ -65,20 +65,6 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         for name in capa.features.extractors.helpers.generate_symbols("", api_name):
             yield API(name), ih.address
 
-    """
-        # TODO: re-enable pending https://github.com/google/binexport/issues/126#issuecomment-2074402906
-        function_name = vertex.mangled_name
-        if vertex.HasField("library_index"):
-            # TODO: this seems to be incorrect for Ghidra extractor
-            library = be2.library[vertex.library_index]
-            library_name = library.name
-
-            for name in capa.features.extractors.helpers.generate_symbols(library_name, function_name):
-                yield API(name), ih.address
-        else:
-            yield API(function_name), ih.address
-    """
-
 
 def extract_insn_number_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle

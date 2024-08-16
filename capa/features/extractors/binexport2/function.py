@@ -42,7 +42,6 @@ def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address
 
     edges: List[Tuple[int, int]] = []
     for edge in flow_graph.edge:
-        # TODO (meh): use Edge.is_back_edge pending https://github.com/mandiant/capa/issues/2101
         edges.append((edge.source_basic_block_index, edge.target_basic_block_index))
 
     if loops.has_loop(edges):
