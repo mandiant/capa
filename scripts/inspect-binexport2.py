@@ -431,6 +431,7 @@ def main(argv=None):
     with o.section("data"):
         for data_address in sorted(idx.data_reference_index_by_target_address.keys()):
             if data_address in idx.insn_address_by_index:
+                # appears to be code
                 continue
 
             data_xrefs: List[int] = []

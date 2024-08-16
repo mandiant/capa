@@ -99,6 +99,10 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
             data_reference: BinExport2.DataReference = be2.data_reference[data_reference_index]
             data_reference_address: int = data_reference.address
 
+            if data_reference_address in idx.insn_address_by_index:
+                # appears to be code
+                continue
+
             reference_addresses.append(data_reference_address)
 
     for reference_address in reference_addresses:
