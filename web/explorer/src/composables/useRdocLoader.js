@@ -1,11 +1,8 @@
-import { ref, readonly } from "vue";
 import { useToast } from "primevue/usetoast";
+import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
 
 export function useRdocLoader() {
     const toast = useToast();
-    const rdocData = ref(null);
-    const isValidVersion = ref(false);
-
     const MIN_SUPPORTED_VERSION = "7.0.0";
 
     /**
@@ -47,6 +44,14 @@ export function useRdocLoader() {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 data = await response.json();
+            } else if (source instanceof File) {
+                let fileContent;
+                if (await isGzipped(source)) {
+                    fileContent = await decompressGzip(source);
+                } else {
+                    fileContent = await readFileAsText(source);
+                }
+                data = JSON.parse(fileContent);
             } else if (typeof source === "object") {
                 // Direct JSON object (Preview options)
                 data = source;
@@ -55,8 +60,6 @@ export function useRdocLoader() {
             }
 
             if (checkVersion(data)) {
-                rdocData.value = data;
-                isValidVersion.value = true;
                 toast.add({
                     severity: "success",
                     summary: "Success",
@@ -64,9 +67,7 @@ export function useRdocLoader() {
                     life: 3000,
                     group: "bc" // bottom-center
                 });
-            } else {
-                rdocData.value = null;
-                isValidVersion.value = false;
+                return data;
             }
         } catch (error) {
             console.error("Error loading JSON:", error);
@@ -78,11 +79,10 @@ export function useRdocLoader() {
                 group: "bc" // bottom-center
             });
         }
+        return null;
     };
 
     return {
-        rdocData: readonly(rdocData),
-        isValidVersion: readonly(isValidVersion),
         loadRdoc
     };
 }
