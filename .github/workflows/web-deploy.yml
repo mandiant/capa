@@ -2,7 +2,8 @@ name: deploy web to GitHub Pages
 
 on:
   push:
-    branches: [ master, "wb/webui-actions-1" ]
+    # TODO(williballenthin): remove everything except master
+    branches: [ master, "wb/webui-actions-1", 'push-*' ]
     paths:
       - 'web/**'
 
@@ -22,6 +23,7 @@ concurrency:
 
 jobs:
   build-landing-page:
+    name: Build landing page
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,6 +34,7 @@ jobs:
           path: './web/public'
 
   build-explorer:
+    name: Build capa explorer web
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -63,12 +66,49 @@ jobs:
           name: explorer
           path: './web/explorer/dist'
 
+  build-rules:
+    name: Build rules site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: '3.12'
+      - uses: extractions/setup-just@v2
+      - name: Install pagefind
+        uses: supplypike/setup-bin@v4
+        with:
+          uri: "https://github.com/CloudCannon/pagefind/releases/download/v1.1.0/pagefind-v1.1.0-x86_64-unknown-linux-musl.tar.gz"
+          name: "pagefind"
+          version: "1.1.0"
+      - name: Install dependencies
+        working-directory: ./web/rules
+        run: pip install -r requirements.txt
+      - name: Build the website
+        working-directory: ./web/rules
+        run: just build
+      - name: Index the website
+        working-directory: ./web/rules
+        run: pagefind --site "public"
+      # upload the build website to artifacts
+      # so that we can download and inspect, if desired.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rules
+          path: './web/rules/public'
+
   deploy:
+    name: Deploy site to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: [build-landing-page, build-explorer]
+    needs: [build-landing-page, build-explorer, build-rules]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -78,6 +118,10 @@ jobs:
         with:
           name: explorer
           path: './public/explorer'
+      - uses: actions/download-artifact@v4
+        with:
+          name: rules
+          path: './public/rules'
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
