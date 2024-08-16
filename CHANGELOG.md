@@ -4,6 +4,34 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v7.2.0...master](https://github.com/mandiant/capa/compare/v7.2.0...master)
+- [capa-rules v7.2.0...master](https://github.com/mandiant/capa-rules/compare/v7.2.0...master)
+
+
+### v7.2.0
+The v7.2.0 release adds a web-based UI for online and offline usage, as well as a DRAKVUF sandbox feature extractor.
+Additionally, we fixed several bugs and added other features such as extracting names from dynamically resolved APIs in the IDA extractor.
+
+Special thanks to our repeat and new contributors:
+* @lakshayletsgo for their first contribution in https://github.com/mandiant/capa/pull/2248
+* @msm-cert for their first contribution in https://github.com/mandiant/capa/pull/2143
+* @VascoSch92 for their first contribution in https://github.com/mandiant/capa/pull/2143
+
+### New Features
+
 - webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
 - IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables #2201 @Ana06
@@ -33,8 +61,8 @@
 - CI: update build.yml workflow to exclude web and documentation files #2270 @s-ff
 
 ### Raw diffs
-- [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)
-- [capa-rules v7.1.0...master](https://github.com/mandiant/capa-rules/compare/v7.1.0...master)
+- [capa v7.1.0...7.2.0](https://github.com/mandiant/capa/compare/v7.1.0...7.2.0)
+- [capa-rules v7.1.0...7.2.0](https://github.com/mandiant/capa-rules/compare/v7.1.0...7.2.0)
 
 ## v7.1.0
 The v7.1.0 release brings large performance improvements to capa's rule matching engine.
