@@ -36,14 +36,7 @@
             </template>
         </Column>
 
-        <Column
-            field="rule"
-            sortable
-            header="Rule Matches"
-            class="w-min"
-            :showFilterMenu="false"
-            :showClearButton="false"
-        >
+        <Column field="rule" header="Rule Matches" class="w-min" :showFilterMenu="false" :showClearButton="false">
             <template #filter v-if="props.showColumnFilters">
                 <InputText v-model="filters['rule'].value" placeholder="Filter by rule" />
             </template>
@@ -53,7 +46,7 @@
             </template>
         </Column>
 
-        <Column field="namespace" sortable header="Namespace" :showFilterMenu="false" :showClearButton="false">
+        <Column field="namespace" header="Namespace" :showFilterMenu="false" :showClearButton="false">
             <template #filter v-if="props.showColumnFilters">
                 <InputText v-model="filters['namespace'].value" placeholder="Filter by namespace" />
             </template>
