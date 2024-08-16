@@ -430,20 +430,14 @@ def main(argv=None):
 
     with o.section("data"):
         for data_address in sorted(idx.data_reference_index_by_target_address.keys()):
-            # TODO(wb): re-enable this
-            # if data_address in idx.instruction_index_by_address:
-            #     # appears to be code
-            #     continue
-            # https://github.com/mandiant/capa/issues/1755
+            if data_address in idx.insn_address_by_index:
+                continue
 
             data_xrefs: List[int] = []
             for data_reference_index in idx.data_reference_index_by_target_address[data_address]:
                 data_reference = be2.data_reference[data_reference_index]
-                instruction_index = data_reference.instruction_index
-                # TODO(wb): uh-oh, how to reconstruct address?
-                # instruction_address = idx.instruction_address_by_index[instruction_index]
-                # data_xrefs.append(instruction_address)
-                # https://github.com/mandiant/capa/issues/1755
+                instruction_address = idx.get_insn_address(data_reference.instruction_index)
+                data_xrefs.append(instruction_address)
 
             if not data_xrefs:
                 continue
