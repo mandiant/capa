@@ -14,6 +14,50 @@
     <link rel="icon" href="img/icon.ico" />
 
     <style>
+      :root {
+        /* from the icon */
+        --capa-blue: #2593d7;
+        --capa-blue-darker: #1d74aa;
+
+        --bs-primary: var(--capa-blue);
+        --bs-primary-rgb: var(--capa-blue);
+      }
+
+      a:not(.btn) {
+        color: var(--capa-blue);
+        text-decoration: none;
+      }
+
+      a:not(.btn):hover {
+        text-decoration: underline;
+      }
+
+      .btn-primary {
+        --bs-btn-bg: var(--capa-blue);
+        --bs-btn-border-color: var(--capa-blue);
+      }
+
+      .btn:hover {
+        background-color: var(--capa-blue-darker);
+        border-color: var(--capa-blue-darker);
+      }
+
+      body {
+        overflow-x: clip;
+      }
+
+      /* a link that looks like inline text, until you hover and see a colorful underline */
+      .understated-link {
+        color: var(--bs-body-color) !important;
+        text-decoration: none;
+        text-decoration-color: var(--capa-blue);
+      }
+
+      .understated-link:hover {
+        text-decoration: underline;
+        text-decoration-color: var(--capa-blue) !important;
+      }
+
       .b-divider {
         width: 100%;
         height: 3rem;
@@ -32,18 +76,22 @@
       style="background-color: rgba(255,255,255,0.95);
              box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
       >
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-      <!-- TODO(williballenthin): use the logo with the word "capa" -->
-      <img src="./img/icon.png" height=48 class="mx-4" />
-      <span class="fs-4">capa</span>
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto">
+      <img src="./img/logo.png" height=48 />
     </a>
 
     <ul class="nav nav-pills">
-      <li class="nav-item"><a href="#features"      class="nav-link">Features</a></li>
-      <li class="nav-item"><a href="#download"      class="nav-link">Download</a></li>
-      <li class="nav-item"><a href="#contribute"    class="nav-link">Contribute</a></li>
-      <li class="nav-item"><a href="#documentation" class="nav-link">Documentation</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#rules"         class="nav-link text-dark">Rules</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#contribute"    class="nav-link text-dark">Contribute</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#documentation" class="nav-link text-dark">Documentation</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#download"      class="nav-link text-dark">Download</a></li>
     </ul>
+    <style>
+      .nav .nav-item a:hover {
+        text-decoration:  underline;
+        text-decoration-color: var(--capa-blue);
+      }
+    </style>
   </header>
 
   <div class="container my-5 mt-3" style="margin-top: 4rem !important;">
@@ -53,12 +101,20 @@
           Extract capabilities from executable files
         </h1>
         <p class="lead">
-          capa is the FLARE team's open-source tool to identify capabilities in executable files.
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          capa is the FLARE team's 
+            <a href="https://github.com/mandiant/capa" class="understated-link">free and open-source tool</a>
+            to identify capabilities in executable files.
+
+          <!-- TODO(williballenthin): add links to each one of these use cases -->
+          Triage unknown files, guide reverse engineering, and hunt across a corpus for novel malware.
+          Refer to capa's rule set as an encyclopedia of techniques used in real-world attacks, 
+            pivoting across <a href="https://attack.mitre.org/" class="understated-link">MITRE ATT&CK</a>
+            and <a href="https://github.com/MBCProject/mbc-markdown" class="understated-link">Malware Behavior Catalog (MBC)</a>
+            references.
         </p>
         <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4 mb-lg-3">
-          <button type="button" class="btn btn-primary btn-lg px-4 me-md-2 fw-bold">Download</button>
-          <button type="button" class="btn btn-outline-secondary btn-lg px-4">Browse Rules</button>
+          <a href="#download" type="button" class="btn btn-primary bs-primary btn-lg px-4 me-md-2 fw-bold">Download</button>
+          <a href="./rules/"  type="button" class="btn btn-outline-secondary btn-lg px-4">Browse Rules</a>
         </div>
       </div>
       <div class="col-lg-4 offset-lg-1 p-0">
@@ -74,16 +130,26 @@
 
   <div class="b-divider"></div>
 
-  <div class="px-4 pt-5 my-5 text-center border-bottom">
+  <div id="rules" class="px-4 pt-5 my-5 text-center border-bottom">
     <h1 class="display-4 fw-bold text-body-emphasis">Rules Crafted by Experts</h1>
-    <div class="col-lg-6 mx-auto">
+    <div class="col-lg-6 mx-auto text-start">
       <p class="lead mb-4">
-        capa works with rules crafted by expert reverse engineers contributing from across the globe.
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        capa recognizes behaviors by matching rules crafted by expert reverse engineers contributing from across the globe.
+        Rules describe logical combinations of features familiar to human analysts
+          - things like: 
+      </p>
+      <ul class="lead my-0 py-0 mx-3">
+        <li>API calls</li>
+        <li>integer constants</li>
+        <li>and string references</li>
+      </ul>
+      <p class="lead my-4">
+        capa looks for these features within instructions, basic blocks, and functions, having already disassembled the input file.
+        In contrast to YARA, which primarily searches for sequences of bytes, capa rules describe features at the code-level. 
       </p>
       <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
-        <button type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Browse Rules</button>
-        <button type="button" class="btn btn-outline-secondary btn-lg px-4">Learn the Syntax</button>
+        <a href="./rules/" type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Browse Rules</a>
+        <a href="https://github.com/mandiant/capa-rules/blob/master/doc/format.md" type="button" class="btn btn-outline-secondary btn-lg px-4">Learn the Syntax</a>
       </div>
     </div>
     <div class="overflow-hidden" style="max-height: 38vh;">
@@ -213,6 +279,64 @@
 
   <div class="b-divider"></div>
 
+  <div id="download" class="px-4 pt-5 my-5 text-center border-bottom">
+    <h1 class="display-4 fw-bold text-body-emphasis">
+      Download capa
+    </h1>
+    <div class="col-lg-8 mx-auto">
+      <p class="lead">
+        We distribute capa as a standalone executable and as a Python library.
+      </p>
+
+      <div class="row flex-lg-row align-items-center g-5 py-2 text-start">
+        <div class="col-10 col-sm-8 col-lg-6">
+
+          <p class="mb-4">
+            The standalone executable comes ready-to-go with 890+ embedded rules. 
+            Use this when analyzing files from the terminal on Windows, Linux, and macOS. 
+            There's a <a href="https://github.com/mandiant/capa/raw/master/doc/capa_quickstart.pdf">quickstart guide here</a> (PDF).
+          </p>
+
+          <p class="text-center">
+            <a href="https://github.com/mandiant/capa/releases/latest/" type="button" class="btn btn-primary me-md-2 mb-3 fw-bold">
+              Download standalone
+            </a>
+          </p>
+
+          <p>
+            capa is already included with malware analysis distributions like 
+            <a href="https://github.com/mandiant/flare-vm" class="understated-link">FLARE-VM</a>
+            and <a href="https://remnux.org/" class="understated-link">REmnux</a>.
+          </p>
+
+        </div>
+        <div class="col-lg-6">
+
+          <p>
+            The Python library makes it easy to integrate capa into other projects, 
+              like our plugins for IDA Pro and Ghidra.
+              Follow the <a href="https://github.com/mandiant/capa/blob/master/doc/installation.md">
+                instructions here
+              </a>, 
+              which starts with installation it from PyPI like this:
+          </p>
+
+          <pre class="py-3 text-center" style="border: 2px solid #eeeeee;"><code>pip install flare-capa</code></pre>
+
+          <p>
+            <a href="https://github.com/mandiant/capa/blob/master/scripts/bulk-process.py">Here's an example</a>
+             of using capa as a library to process many files in parallel.
+          </p>
+
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <div class="b-divider"></div>
+
   <div class="bg-dark text-secondary px-4 pt-5 text-center">
     <div class="py-5">
       <img src="./img/icon.png" />
@@ -226,14 +350,14 @@
         </p>
 
         <div class="d-grid gap-4 d-sm-flex justify-content-sm-center mb-4">
-          <div><a href="#features"      class="fw-bold text-white text-decoration-none">Features</a></div>
-          <div><a href="#download"      class="fw-bold text-white text-decoration-none">Download</a></div>
+          <div><a href="#rules"         class="fw-bold text-white text-decoration-none">Rules</a></div>
           <div><a href="#contribute"    class="fw-bold text-white text-decoration-none">Contribute</a></div>
           <div><a href="#documentation" class="fw-bold text-white text-decoration-none">Documentation</a></div>
+          <div><a href="#download"      class="fw-bold text-white text-decoration-none">Download</a></div>
         </div>
 
         <p>
-          Copyright © 2020 Mandiant, Inc. All Rights Reserved. <br />
+          Copyright © 2024 Mandiant, Inc. All Rights Reserved. <br />
           Licensed under the Apache License, Version 2.0.
         </p>
       </div>
