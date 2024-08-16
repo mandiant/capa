@@ -75,9 +75,7 @@ defineProps({
 const getTooltipContent = (data) => {
     if (data.typeValue === "number" || data.typeValue === "offset") {
         const decimalValue = parseInt(data.name, 16);
-        const octalValue = "0o" + decimalValue.toString(8);
-        return `Decimal: ${decimalValue}
-Octal: ${octalValue}`;
+        return `Decimal: ${decimalValue}`;
     }
     return null;
 };
