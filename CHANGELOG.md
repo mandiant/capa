@@ -44,7 +44,6 @@ Special thanks to our repeat and new contributors:
 - data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
 - communication/socket/attach-bpf-to-socket-on-linux jakub.jozwiak@mandiant.com
 - anti-analysis/anti-av/overwrite-dll-text-section-to-remove-hooks jakub.jozwiak@mandiant.com
--
 
 ### Bug Fixes
 
