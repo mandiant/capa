@@ -21,8 +21,11 @@
 - [capa-rules v7.2.0...master](https://github.com/mandiant/capa-rules/compare/v7.2.0...master)
 
 ### v7.2.0
-The v7.2.0 release adds a web-based UI for online and offline usage, as well as a DRAKVUF sandbox feature extractor.
-Additionally, we fixed several bugs and added other features such as extracting names from dynamically resolved APIs in the IDA extractor.
+capa v7.2.0 adds support to analyze DRAKVUF sandbox dynamic analysis results. This release also introduces a first version of capa explorer web: a web-based user interface to inspect capa results using your browser. capa explorer web is available at https://mandiant.github.io/capa/explorer/#/.
+
+These enhancements have been contributed by @yelhamer and @s-ff  as part of their Google Summer of Code 2024 projects.
+
+Additionally, we fixed several bugs handling ELF files and added support to the IDA Pro extractor to leverage analyst recovered API names.
 
 Special thanks to our repeat and new contributors:
 * @lakshayletsgo for their first contribution in https://github.com/mandiant/capa/pull/2248
