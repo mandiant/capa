@@ -11,12 +11,13 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (5)
 
 - nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
 - data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
 - communication/socket/attach-bpf-to-socket-on-linux jakub.jozwiak@mandiant.com
 - anti-analysis/anti-av/overwrite-dll-text-section-to-remove-hooks jakub.jozwiak@mandiant.com
+- nursery/delete-file-on-linux mehunhoff@google.com
 -
 
 ### Bug Fixes
