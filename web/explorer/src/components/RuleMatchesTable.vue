@@ -152,6 +152,7 @@
                 <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
                 <VTIcon v-else-if="item.icon === 'vt-icon'" />
                 <span>{{ item.label }}</span>
+                <i v-if="item.description" class="pi pi-info-circle text-xs" v-tooltip.right="item.description" />
             </a>
         </template>
     </ContextMenu>
@@ -216,6 +217,13 @@ const menu = ref();
 const selectedNode = ref({});
 const contextMenuItems = computed(() => [
     {
+        label: "Copy rule name",
+        icon: "pi pi-copy",
+        command: () => {
+            navigator.clipboard.writeText(selectedNode.value.data?.name);
+        }
+    },
+    {
         label: "View source",
         icon: "pi pi-eye",
         command: () => {
@@ -232,6 +240,7 @@ const contextMenuItems = computed(() => [
         label: "Lookup rule in VirusTotal",
         icon: "vt-icon",
         target: "_blank",
+        description: "Requires VirusTotal Premium account",
         url: createVirusTotalUrl(selectedNode.value.data?.name)
     }
 ]);
