@@ -67,10 +67,6 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
             elif isinstance(feature, Arch):
                 self.arch.add(feature.value)
 
-        # TODO(mr): assert supported file formats, arches
-        # and gradually relax restrictions as they're tested.
-        # https://github.com/mandiant/capa/issues/1755
-
     def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(self.analysis.base_address)
 
