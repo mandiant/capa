@@ -339,11 +339,6 @@ onMounted(() => {
     visibility: hidden !important;
     height: 1.3rem;
 }
-/* Disable the toggle button for rules */
-:deep(.p-treetable-tbody > tr:is([aria-level="1"]) > td > div > .p-treetable-node-toggle-button) {
-    visibility: collapse !important;
-    height: 1.3rem;
-}
 
 /* Make all matches nodes (i.e. not rule names) slightly smaller,
 and tighten up the spacing between the rows  */
