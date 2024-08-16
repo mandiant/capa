@@ -20,7 +20,6 @@
 - [capa v7.2.0...master](https://github.com/mandiant/capa/compare/v7.2.0...master)
 - [capa-rules v7.2.0...master](https://github.com/mandiant/capa-rules/compare/v7.2.0...master)
 
-
 ### v7.2.0
 The v7.2.0 release adds a web-based UI for online and offline usage, as well as a DRAKVUF sandbox feature extractor.
 Additionally, we fixed several bugs and added other features such as extracting names from dynamically resolved APIs in the IDA extractor.
