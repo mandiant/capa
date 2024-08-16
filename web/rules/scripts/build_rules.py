@@ -93,7 +93,7 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{name}</title>
         <link rel="icon"       href="./img/favicon.ico" type="image/x-icon">
-        <link rel="stylesheet" href="./css/bootstrap-4.5.2.min.css">
+        <link rel="stylesheet" href="./css/bootstrap-5.3.3.min.css">
         <link rel="stylesheet" href="./pagefind/pagefind-ui.css">
         <link rel="stylesheet" href="./pagefind/pagefind-modular-ui.css">
         <link rel="stylesheet" type="text/css" href="./css/styles.css">
@@ -126,8 +126,7 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
             </div>
         </div>
         <script src="./js/jquery-3.5.1.slim.min.js"></script>
-        <script src="./js/popper-2.9.2.min.js"></script>
-        <script src="./js/bootstrap-4.5.2.min.js"></script>
+        <script src="./js/bootstrap-5.3.3.min.js"></script>
         <script src="./pagefind/pagefind-ui.js" type="text/javascript"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {{

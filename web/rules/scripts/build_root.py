@@ -91,7 +91,7 @@ def generate_html(categories_data, color_map):
     <link rel="stylesheet" href="./pagefind/pagefind-modular-ui.css">
     <link href="./pagefind/pagefind-ui.css" rel="stylesheet">
     <link href="./css/poppins.css" rel="stylesheet">
-    <link href="./css/bootstrap-4.5.2.min.css" rel="stylesheet">
+    <link href="./css/bootstrap-5.3.3.min.css" rel="stylesheet">
     <link rel="icon" href="./img/favicon.png" type="image/x-icon"> <!-- Favicon -->
     <script src="./pagefind/pagefind-ui.js"></script>
     <style>

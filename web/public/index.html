@@ -10,6 +10,10 @@
     <link href="./css/bootstrap-5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH">
     <script src="./js/bootstrap-5.3.3.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"></script>
 
+    <link rel="stylesheet" href="./rules/pagefind/pagefind-ui.css">
+    <link rel="stylesheet" href="./rules/pagefind/pagefind-modular-ui.css">
+    <script src="./rules/pagefind/pagefind-ui.js"></script>
+
     <meta name="theme-color" content="#712cf9">
     <link rel="icon" href="img/icon.ico" />
 
@@ -40,6 +44,10 @@
       .btn:hover {
         background-color: var(--capa-blue-darker);
         border-color: var(--capa-blue-darker);
+      }
+
+      .text-justify {
+        text-align: justify;
       }
 
       body {
@@ -100,7 +108,7 @@
         <h1 class="display-4 fw-bold lh-1 text-body-emphasis">
           Extract capabilities from executable files
         </h1>
-        <p class="lead">
+        <p class="lead text-justify">
           capa is the FLARE team's 
             <a href="https://github.com/mandiant/capa" class="understated-link">free and open-source tool</a>
             to identify capabilities in executable files.
@@ -130,10 +138,10 @@
 
   <div class="b-divider"></div>
 
-  <div id="rules" class="px-4 pt-5 my-5 text-center border-bottom">
+  <div id="rules" class="px-4 pt-5 mt-5 text-center border-bottom">
     <h1 class="display-4 fw-bold text-body-emphasis">Rules Crafted by Experts</h1>
     <div class="col-lg-6 mx-auto text-start">
-      <p class="lead mb-4">
+      <p class="lead mb-4 text-justify">
         capa recognizes behaviors by matching rules crafted by expert reverse engineers contributing from across the globe.
         Rules describe logical combinations of features familiar to human analysts
           - things like: 
@@ -143,14 +151,17 @@
         <li>integer constants</li>
         <li>and string references</li>
       </ul>
-      <p class="lead my-4">
+      <p class="lead my-4 text-justify">
         capa looks for these features within instructions, basic blocks, and functions, having already disassembled the input file.
         In contrast to YARA, which primarily searches for sequences of bytes, capa rules describe features at the code-level. 
       </p>
-      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-4">
         <a href="./rules/" type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Browse Rules</a>
         <a href="https://github.com/mandiant/capa-rules/blob/master/doc/format.md" type="button" class="btn btn-outline-secondary btn-lg px-4">Learn the Syntax</a>
       </div>
+
+      <div id="search" class="mb-4"></div>
+
     </div>
     <div class="overflow-hidden" style="max-height: 38vh;">
       <div class="container px-5">
@@ -166,6 +177,24 @@
     </div>
   </div>
 
+
+  <div class="b-divider"></div>
+
+  <div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+      <h1>What's New</h1>
+
+      <h2>Recent Rule Updates</h2>
+      <p class="lead">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      </p>
+
+      <h2>Changelog</h2>
+      <p class="lead">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      </p>
+    </div>
+  </div>
 
   <div class="b-divider"></div>
 
@@ -291,7 +320,7 @@
       <div class="row flex-lg-row align-items-center g-5 py-2 text-start">
         <div class="col-10 col-sm-8 col-lg-6">
 
-          <p class="mb-4">
+          <p class="mb-4 text-justify">
             The standalone executable comes ready-to-go with 890+ embedded rules. 
             Use this when analyzing files from the terminal on Windows, Linux, and macOS. 
             There's a <a href="https://github.com/mandiant/capa/raw/master/doc/capa_quickstart.pdf">quickstart guide here</a> (PDF).
@@ -303,7 +332,7 @@
             </a>
           </p>
 
-          <p>
+          <p class="text-justify">
             capa is already included with malware analysis distributions like 
             <a href="https://github.com/mandiant/flare-vm" class="understated-link">FLARE-VM</a>
             and <a href="https://remnux.org/" class="understated-link">REmnux</a>.
@@ -312,7 +341,7 @@
         </div>
         <div class="col-lg-6">
 
-          <p>
+          <p class="text-justify">
             The Python library makes it easy to integrate capa into other projects, 
               like our plugins for IDA Pro and Ghidra.
               Follow the <a href="https://github.com/mandiant/capa/blob/master/doc/installation.md">
@@ -323,15 +352,12 @@
 
           <pre class="py-3 text-center" style="border: 2px solid #eeeeee;"><code>pip install flare-capa</code></pre>
 
-          <p>
+          <p class="text-justify">
             <a href="https://github.com/mandiant/capa/blob/master/scripts/bulk-process.py">Here's an example</a>
              of using capa as a library to process many files in parallel.
           </p>
-
         </div>
       </div>
-
-
     </div>
   </div>
 
@@ -364,6 +390,20 @@
     </div>
   </div>
  </main>
+
+<script>
+    window.addEventListener('DOMContentLoaded', (event) => {
+        new PagefindUI({ 
+            element: "#search", 
+            showSubResults: true,
+            showEmptyFilters: false,
+            excerptLength: 15,
+            translations: {
+              placeholder: "Search rules",
+            },
+        });
+    });
+</script>
 
     </body>
 </html>
