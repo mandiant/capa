@@ -9,13 +9,17 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 - webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
 - dynamic: add support for VMRay dynamic sandbox traces #2208 @mike-hunhoff @r-sm2024 @mr-tz
+- IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables #2201 @Ana06
 
 ### Breaking Changes
 
-### New Rules (2)
+### New Rules (5)
 
 - nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
 - data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
+- communication/socket/attach-bpf-to-socket-on-linux jakub.jozwiak@mandiant.com
+- anti-analysis/anti-av/overwrite-dll-text-section-to-remove-hooks jakub.jozwiak@mandiant.com
+- nursery/delete-file-on-linux mehunhoff@google.com
 -
 
 ### Bug Fixes
@@ -28,6 +32,8 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 ### Development
 - CI: use macos-12 since macos-11 is deprecated and will be removed on June 28th, 2024 #2173 @mr-tz
 - CI: update Binary Ninja version to 4.1 and use Python 3.9 to test it #2211 @xusheng6
+- CI: update tests.yml workflow to exclude web and documentation files #2263 @s-ff
+- CI: update build.yml workflow to exclude web and documentation files #2270 @s-ff
 
 ### Raw diffs
 - [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)

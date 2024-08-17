@@ -137,7 +137,7 @@ dev = [
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.5.6",
-    "black==24.4.2",
+    "black==24.8.0",
     "isort==5.13.2",
     "mypy==1.11.1",
     "mypy-protobuf==3.6.0",
@@ -148,8 +148,8 @@ dev = [
     "types-PyYAML==6.0.8",
     "types-tabulate==0.9.0.20240106",
     "types-termcolor==1.1.4",
-    "types-psutil==5.8.23",
-    "types_requests==2.32.0.20240602",
+    "types-psutil==6.0.0.20240621",
+    "types_requests==2.32.0.20240712",
     "types-protobuf==5.27.0.20240626",
     "deptry==0.17.0"
 ]
@@ -158,7 +158,7 @@ build = [
     # we want all developer environments to be consistent.
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
-    "pyinstaller==6.9.0",
+    "pyinstaller==6.10.0",
     "setuptools==70.0.0",
     "build==1.2.1"
 ]
@@ -189,6 +189,7 @@ known_first_party = [
     "ida_loader",
     "ida_nalt",
     "ida_segment",
+    "ida_ua",
     "idaapi",
     "idautils",
     "idc",

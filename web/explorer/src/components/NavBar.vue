@@ -1,29 +1,29 @@
 <script setup>
-import { ref } from "vue";
-
 import Menubar from "primevue/menubar";
-
-const items = ref([
-    {
-        label: "Import Analysis",
-        icon: "pi pi-file-import",
-        command: () => (window.location.href = window.location.origin + "/capa/")
-    }
-]);
+import { RouterLink } from "vue-router";
 </script>
 
 <template>
-    <Menubar :model="items" class="p-1">
+    <Menubar class="p-1">
+        <template #start>
+            <RouterLink to="/">
+                <img src="@/assets/images/icon.png" alt="Logo" class="w-2rem" />
+            </RouterLink>
+        </template>
         <template #end>
             <div class="flex align-items-center gap-3">
                 <a
                     v-ripple
-                    href="https://github.com/mandiant/capa"
-                    class="flex align-items-center justify-content-center text-color w-2rem"
+                    v-tooltip.right="'Download capa Explorer Web for offline usage'"
+                    href="./capa-explorer-web.zip"
+                    download="capa-explorer-web.zip"
+                    aria-label="Download capa Explorer Web release"
                 >
-                    <i id="gitsub-icon" class="pi pi-github text-2xl"></i>
+                    <i class="pi pi-download text-xl"></i>
                 </a>
-                <img src="@/assets/images/icon.png" alt="Logo" class="w-2rem" />
+                <a v-ripple href="https://github.com/mandiant/capa" class="flex justify-content-center w-2rem">
+                    <i class="pi pi-github text-2xl"></i>
+                </a>
             </div>
         </template>
     </Menubar>

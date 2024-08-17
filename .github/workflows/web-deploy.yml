@@ -1,11 +1,10 @@
-name: deploy Capa Explorer Web to Github Pages
+name: deploy web to GitHub Pages
 
 on:
-  # Runs on pushes targeting the webui branch
   push:
-    branches: [ master ]
+    branches: [ master, "wb/webui-actions-1" ]
     paths:
-      - 'web/explorer/**'
+      - 'web/**'
 
   # Allows to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -22,10 +21,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-landing-page:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: landing-page
+          path: './web/public'
+
+  build-explorer:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,24 +49,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: ./web/explorer
-      - name: Lint
-        run: npm run lint
+      - name: Generate release bundle
+        run: npm run build:bundle
         working-directory: ./web/explorer
-      - name: Format
-        run: npm run format:check
-        working-directory: ./web/explorer
-      - name: Run unit tests
-        run: npm run test
+      - name: Zip release bundle
+        run: zip -r public/capa-explorer-web.zip capa-explorer-web
         working-directory: ./web/explorer
       - name: Build
         run: npm run build
         working-directory: ./web/explorer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: explorer
+          path: './web/explorer/dist'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: [build-landing-page, build-explorer]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: landing-page
+          path: './public/'
+      - uses: actions/download-artifact@v4
+        with:
+          name: explorer
+          path: './public/explorer'
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './web/explorer/dist'
+          path: './public'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

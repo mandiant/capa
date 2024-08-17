@@ -152,11 +152,10 @@
                 <span v-if="item.icon !== 'vt-icon'" :class="item.icon" />
                 <VTIcon v-else-if="item.icon === 'vt-icon'" />
                 <span>{{ item.label }}</span>
+                <i v-if="item.description" class="pi pi-info-circle text-xs" v-tooltip.right="item.description" />
             </a>
         </template>
     </ContextMenu>
-
-    <Toast />
 
     <!-- Source code dialog -->
     <Dialog v-model:visible="sourceDialogVisible" style="width: 50vw">
@@ -218,6 +217,13 @@ const menu = ref();
 const selectedNode = ref({});
 const contextMenuItems = computed(() => [
     {
+        label: "Copy rule name",
+        icon: "pi pi-copy",
+        command: () => {
+            navigator.clipboard.writeText(selectedNode.value.data?.name);
+        }
+    },
+    {
         label: "View source",
         icon: "pi pi-eye",
         command: () => {
@@ -234,6 +240,7 @@ const contextMenuItems = computed(() => [
         label: "Lookup rule in VirusTotal",
         icon: "vt-icon",
         target: "_blank",
+        description: "Requires VirusTotal Premium account",
         url: createVirusTotalUrl(selectedNode.value.data?.name)
     }
 ]);
@@ -325,23 +332,7 @@ const showSource = (source) => {
 };
 
 onMounted(() => {
-    const cacheKey = "ruleMatches";
-    const cachedData = sessionStorage.getItem(cacheKey);
-
-    if (cachedData) {
-        // If cached data exists, parse and use it
-        treeData.value = JSON.parse(cachedData);
-    } else {
-        // If no cached data, parse the rules and store in sessionStorage
-        treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout);
-        // Store the parsed data in sessionStorage
-        try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(treeData.value));
-        } catch (e) {
-            console.warn("Failed to store parsed data in sessionStorage:", e);
-            // If storing fails (e.g., due to storage limits), we can still continue with the parsed data
-        }
-    }
+    treeData.value = parseRules(props.data.rules, props.data.meta.flavor, props.data.meta.analysis.layout);
 });
 </script>
 
@@ -355,11 +346,6 @@ onMounted(() => {
             > .p-treetable-node-toggle-button
     ) {
     visibility: hidden !important;
-    height: 1.3rem;
-}
-/* Disable the toggle button for rules */
-:deep(.p-treetable-tbody > tr:is([aria-level="1"]) > td > div > .p-treetable-node-toggle-button) {
-    visibility: collapse !important;
     height: 1.3rem;
 }
 
