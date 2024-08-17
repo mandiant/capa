@@ -26,7 +26,7 @@
             :showClearButton="false"
         >
             <template #filter v-if="props.showColumnFilters">
-                <InputText v-model="filters['address'].value" placeholder="Filter by name" />
+                <InputText v-model="filters['address'].value" placeholder="Filter by function address" />
             </template>
             <template #body="{ data }">
                 <span class="font-monospace text-base">{{ data.address }}</span>
@@ -36,9 +36,9 @@
             </template>
         </Column>
 
-        <Column field="rule" sortable header="Matches" class="w-min" :showFilterMenu="false" :showClearButton="false">
+        <Column field="rule" header="Rule Matches" class="w-min" :showFilterMenu="false" :showClearButton="false">
             <template #filter v-if="props.showColumnFilters">
-                <InputText v-model="filters['rule'].value" placeholder="Filter by name" />
+                <InputText v-model="filters['rule'].value" placeholder="Filter by rule" />
             </template>
             <template #body="{ data }">
                 {{ data.rule }}
@@ -46,9 +46,9 @@
             </template>
         </Column>
 
-        <Column field="namespace" sortable header="Namespace" :showFilterMenu="false" :showClearButton="false">
+        <Column field="namespace" header="Namespace" :showFilterMenu="false" :showClearButton="false">
             <template #filter v-if="props.showColumnFilters">
-                <InputText v-model="filters['namespace'].value" placeholder="Filter by name" />
+                <InputText v-model="filters['namespace'].value" placeholder="Filter by namespace" />
             </template>
         </Column>
     </DataTable>
