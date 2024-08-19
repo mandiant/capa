@@ -45,13 +45,7 @@ export function useRdocLoader() {
                 }
                 data = await response.json();
             } else if (source instanceof File) {
-                let fileContent;
-                if (await isGzipped(source)) {
-                    fileContent = await decompressGzip(source);
-                } else {
-                    fileContent = await readFileAsText(source);
-                }
-                data = JSON.parse(fileContent);
+                data = await processFile(source);
             } else if (typeof source === "object") {
                 // Direct JSON object (Preview options)
                 data = source;
@@ -73,13 +67,23 @@ export function useRdocLoader() {
             console.error("Error loading JSON:", error);
             toast.add({
                 severity: "error",
-                summary: "Error",
-                detail: "Failed to process the file. Please ensure it's a valid JSON or gzipped JSON file.",
+                summary: "Failed to process the file",
+                detail: error,
                 life: 3000,
                 group: "bc" // bottom-center
             });
         }
         return null;
+    };
+
+    const processFile = async (blob) => {
+        let fileContent;
+        if (await isGzipped(blob)) {
+            fileContent = await decompressGzip(blob);
+        } else {
+            fileContent = await readFileAsText(blob);
+        }
+        return JSON.parse(fileContent);
     };
 
     return {
