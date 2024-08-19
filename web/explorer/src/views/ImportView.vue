@@ -15,9 +15,18 @@ import { watch } from "vue";
 import DescriptionPanel from "@/components/DescriptionPanel.vue";
 import UploadOptions from "@/components/UploadOptions.vue";
 
-// import demo data
-import demoRdocStatic from "@testfiles/rd/al-khaser_x64.exe_.json";
-import demoRdocDynamic from "@testfiles/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json";
+const isBundle = import.meta.env.MODE === "bundle";
+const demoRdocStatic = null;
+const demoRdocDynamic = null;
+
+if (!isBundle) {
+    import("@testfiles/rd/al-khaser_x64.exe_.json").then((module) => {
+        demoRdocStatic.value = module.default;
+    });
+    import("@testfiles/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz").then((module) => {
+        demoRdocDynamic.value = module.default;
+    });
+}
 
 // import router utils
 import { useRouter, useRoute } from "vue-router";
@@ -50,7 +59,7 @@ const loadFromURL = async (url) => {
 const loadDemoDataStatic = async () => {
     const result = await loadRdoc(demoRdocStatic);
     if (result) {
-        rdocStore.setData(demoRdocStatic);
+        rdocStore.setData(result);
         router.push("/analysis");
     }
 };
@@ -58,7 +67,7 @@ const loadDemoDataStatic = async () => {
 const loadDemoDataDynamic = async () => {
     const result = await loadRdoc(demoRdocDynamic);
     if (result) {
-        rdocStore.setData(demoRdocDynamic);
+        rdocStore.setData(result);
         router.push("/analysis");
     }
 };
