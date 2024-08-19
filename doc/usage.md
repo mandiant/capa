@@ -15,8 +15,8 @@ For example, `capa sample.exe --restrict-to-functions 0x4019C0,0x401CD0` will on
 addresses 0x401CD0 and 0x4019C0.
 
 ### only analyze selected processes
-Use the `--processes` option to extract capabilities from only a selected set of processes.
-For example, `capa report.log --processes 3888,3214,4299` will extract capabilities only from the processes 3888, 3214, and 4299.
+Use the `--restrict-to-processes` option to extract capabilities from only a selected set of processes.
+For example, `capa report.log --restrict-to-processes 3888,3214,4299` will extract capabilities only from the processes 3888, 3214, and 4299.
 
 ### IDA Pro plugin: capa explorer
 Please check out the [capa explorer documentation](/capa/ida/plugin/README.md).
