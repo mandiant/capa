@@ -3,7 +3,7 @@ import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
 
 export function useRdocLoader() {
     const toast = useToast();
-    const MIN_SUPPORTED_VERSION = "7.0.0";
+    const MIN_SUPPORTED_VERSION = "6.1.0";
 
     /**
      * Checks if the loaded rdoc version is supported
