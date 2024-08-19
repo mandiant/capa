@@ -38,7 +38,10 @@
                     </Divider>
 
                     <div class="flex-grow-1 flex align-items-center justify-content-center">
-                        <Button label="Preview Static" @click="$emit('load-demo-static')" class="p-button" />
+                        <Button
+                            label="Preview Static"
+                            @click="router.push({ path: '/', query: { rdoc: staticURL } })"
+                        />
                     </div>
 
                     <Divider layout="vertical" class="hidden-mobile">
@@ -48,7 +51,10 @@
                         <b>OR</b>
                     </Divider>
                     <div class="flex-grow-1 flex align-items-center justify-content-center">
-                        <Button label="Preview Dynamic" @click="$emit('load-demo-dynamic')" class="p-button" />
+                        <Button
+                            label="Preview Static"
+                            @click="router.push({ path: '/', query: { rdoc: dynamicURL } })"
+                        />
                     </div>
                 </template>
             </div>
@@ -65,10 +71,17 @@ import FloatLabel from "primevue/floatlabel";
 import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 
+import { useRouter } from "vue-router";
+const router = useRouter();
+
 const loadURL = ref("");
 const isBundle = import.meta.env.MODE === "bundle";
 
-defineEmits(["load-from-local", "load-from-url", "load-demo-static", "load-demo-dynamic"]);
+defineEmits(["load-from-local", "load-from-url"]);
+
+const dynamicURL =
+    "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json";
+const staticURL = "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/al-khaser_x64.exe_.json";
 </script>
 
 <style scoped>
