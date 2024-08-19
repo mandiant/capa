@@ -3,10 +3,10 @@
  * @param {Object} rules - The rules object from the rodc JSON data
  * @param {string} flavor - The flavor of the analysis (static or dynamic)
  * @param {Object} layout - The layout object from the rdoc JSON data
- * @param {number} [maxMatches=1] - Maximum number of matches to parse per rule
+ * @param {number} [maxMatches=30] - Maximum number of matches to parse per rule
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
-export function parseRules(rules, flavor, layout, maxMatches = 1) {
+export function parseRules(rules, flavor, layout, maxMatches = 30) {
     return Object.entries(rules).map(([, rule], index) => {
         const ruleNode = {
             key: `${index}`,
