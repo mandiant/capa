@@ -3,7 +3,7 @@
 ## master (unreleased)
 
 ### New Features
-- Add the ability to select which specific functions or processes to analyze @yelhamer
+- add the ability to select which specific functions or processes to analyze @yelhamer
 
 - webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
