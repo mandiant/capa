@@ -10,8 +10,8 @@ For example, `capa -t william.ballenthin@mandiant.com` runs rules that reference
 `capa -t communication` runs rules with the namespace `communication`.
 
 ### only analyze selected functions
-Use the `--functions` option to extract capabilities from only a selected set of functions.
-For example, `capa sample.exe --functions 0x4019C0,0x401CD0` will only extract the capabilities in the functions found at
+Use the `--restrict-to-functions` option to extract capabilities from only a selected set of functions.
+For example, `capa sample.exe --restrict-to-functions 0x4019C0,0x401CD0` will only extract the capabilities in the functions found at
 addresses 0x401CD0 and 0x4019C0.
 
 ### only analyze selected processes
