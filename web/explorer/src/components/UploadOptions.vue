@@ -29,28 +29,28 @@
                     </FloatLabel>
                     <Button icon="pi pi-arrow-right" @click="$emit('load-from-url', loadURL)" :disabled="!loadURL" />
                 </div>
+                <template v-if="!isBundle">
+                    <Divider layout="vertical" class="hidden-mobile">
+                        <b>OR</b>
+                    </Divider>
+                    <Divider layout="horizontal" class="visible-mobile" align="center">
+                        <b>OR</b>
+                    </Divider>
 
-                <Divider layout="vertical" class="hidden-mobile">
-                    <b>OR</b>
-                </Divider>
-                <Divider layout="horizontal" class="visible-mobile" align="center">
-                    <b>OR</b>
-                </Divider>
+                    <div class="flex-grow-1 flex align-items-center justify-content-center">
+                        <Button label="Preview Static" @click="$emit('load-demo-static')" class="p-button" />
+                    </div>
 
-                <div class="flex-grow-1 flex align-items-center justify-content-center">
-                    <Button label="Preview Static" @click="$emit('load-demo-static')" class="p-button" />
-                </div>
-
-                <Divider layout="vertical" class="hidden-mobile">
-                    <b>OR</b>
-                </Divider>
-                <Divider layout="horizontal" class="visible-mobile" align="center">
-                    <b>OR</b>
-                </Divider>
-
-                <div class="flex-grow-1 flex align-items-center justify-content-center">
-                    <Button label="Preview Dynamic" @click="$emit('load-demo-dynamic')" class="p-button" />
-                </div>
+                    <Divider layout="vertical" class="hidden-mobile">
+                        <b>OR</b>
+                    </Divider>
+                    <Divider layout="horizontal" class="visible-mobile" align="center">
+                        <b>OR</b>
+                    </Divider>
+                    <div class="flex-grow-1 flex align-items-center justify-content-center">
+                        <Button label="Preview Dynamic" @click="$emit('load-demo-dynamic')" class="p-button" />
+                    </div>
+                </template>
             </div>
         </template>
     </Card>
@@ -66,6 +66,7 @@ import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 
 const loadURL = ref("");
+const isBundle = import.meta.env.MODE === "bundle";
 
 defineEmits(["load-from-local", "load-from-url", "load-demo-static", "load-demo-dynamic"]);
 </script>
