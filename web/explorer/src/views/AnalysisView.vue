@@ -18,12 +18,14 @@
         v-if="doc.meta.flavor === 'static' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
         :data="doc"
         :show-library-rules="showLibraryRules"
+        :show-column-filters="showColumnFilters"
     />
     <ProcessCapabilities
         v-else-if="doc.meta.flavor === 'dynamic' && showCapabilitiesByFunctionOrProcess && !showNamespaceChart"
         :data="doc"
         :show-capabilities-by-process="showCapabilitiesByFunctionOrProcess"
         :show-library-rules="showLibraryRules"
+        :show-column-filters="showColumnFilters"
     />
     <NamespaceChart v-else-if="showNamespaceChart" :data="doc" />
 </template>

@@ -16,13 +16,14 @@
                         v-model="showLibraryRules"
                         inputId="showLibraryRules"
                         :binary="true"
-                        :disabled="showNamespaceChart"
+                        :disabled="showNamespaceChart || libraryRuleMatchesCount === 0"
                     />
                     <label for="showLibraryRules">
                         <span v-if="libraryRuleMatchesCount > 1">
-                            Show {{ libraryRuleMatchesCount }} library rule matches
+                            Show {{ libraryRuleMatchesCount }} distinct library rules
                         </span>
-                        <span v-else>Show 1 library rule match</span>
+                        <span v-else-if="libraryRuleMatchesCount === 1">Show 1 distinct library rule</span>
+                        <span v-else>No library rules matched</span>
                     </label>
                 </div>
                 <div class="flex flex-row align-items-center gap-2">
