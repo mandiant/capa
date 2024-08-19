@@ -16,15 +16,15 @@ import DescriptionPanel from "@/components/DescriptionPanel.vue";
 import UploadOptions from "@/components/UploadOptions.vue";
 
 const isBundle = import.meta.env.MODE === "bundle";
-const demoRdocStatic = null;
-const demoRdocDynamic = null;
+let demoRdocStatic = null;
+let demoRdocDynamic = null;
 
 if (!isBundle) {
     import("@testfiles/rd/al-khaser_x64.exe_.json").then((module) => {
-        demoRdocStatic.value = module.default;
+        demoRdocStatic = module.default;
     });
     import("@testfiles/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz").then((module) => {
-        demoRdocDynamic.value = module.default;
+        demoRdocDynamic = module.default;
     });
 }
 
@@ -52,6 +52,7 @@ const loadFromURL = async (url) => {
     const result = await loadRdoc(url);
     if (result) {
         rdocStore.setData(result);
+        console.log(result);
         router.push({ name: "analysis", query: { rdoc: url } });
     }
 };
