@@ -10,8 +10,6 @@ import { watch } from "vue";
 import DescriptionPanel from "@/components/DescriptionPanel.vue";
 import UploadOptions from "@/components/UploadOptions.vue";
 
-const isBundle = import.meta.env.MODE === "bundle";
-
 // import router utils
 import { useRouter, useRoute } from "vue-router";
 const router = useRouter();
@@ -36,7 +34,6 @@ const loadFromURL = async (url) => {
     const result = await loadRdoc(url);
     if (result) {
         rdocStore.setData(result);
-        console.log(result);
         router.push({ name: "analysis", query: { rdoc: url } });
     }
 };
