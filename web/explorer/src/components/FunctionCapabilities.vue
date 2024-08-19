@@ -7,7 +7,8 @@
         size="small"
         :filters="filters"
         :filterMode="filterMode"
-        :globalFilterFields="['funcaddr', 'ruleName', 'namespace']"
+        filterDisplay="row"
+        :globalFilterFields="['address', 'rule', 'namespace']"
     >
         <template #header>
             <IconField>
@@ -16,35 +17,47 @@
             </IconField>
         </template>
 
-        <Column field="address" sortable header="Function Address" :rowspan="3" class="w-min">
+        <Column
+            field="address"
+            sortable
+            header="Function Address"
+            class="w-min"
+            :showFilterMenu="false"
+            :showClearButton="false"
+        >
+            <template #filter v-if="props.showColumnFilters">
+                <InputText v-model="filters['address'].value" placeholder="Filter by function address" />
+            </template>
             <template #body="{ data }">
-                <span class="font-monospace">{{ data.address }}</span>
+                <span class="font-monospace text-base">{{ data.address }}</span>
                 <span v-if="data.matchCount > 1" class="font-italic">
                     ({{ data.matchCount }} match{{ data.matchCount > 1 ? "es" : "" }})
                 </span>
             </template>
         </Column>
 
-        <Column field="rule" sortable header="Matches" class="w-min">
+        <Column field="rule" header="Rule Matches" class="w-min" :showFilterMenu="false" :showClearButton="false">
+            <template #filter v-if="props.showColumnFilters">
+                <InputText v-model="filters['rule'].value" placeholder="Filter by rule" />
+            </template>
             <template #body="{ data }">
                 {{ data.rule }}
                 <LibraryTag v-if="data.lib" />
             </template>
         </Column>
 
-        <Column field="namespace" sortable header="Namespace"></Column>
+        <Column field="namespace" header="Namespace" :showFilterMenu="false" :showClearButton="false">
+            <template #filter v-if="props.showColumnFilters">
+                <InputText v-model="filters['namespace'].value" placeholder="Filter by namespace" />
+            </template>
+        </Column>
     </DataTable>
-
-    <Dialog v-model:visible="sourceDialogVisible" :style="{ width: '50vw' }">
-        <highlightjs lang="yml" :code="currentSource" class="bg-white" />
-    </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
-import Dialog from "primevue/dialog";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import InputText from "primevue/inputtext";
@@ -60,33 +73,25 @@ const props = defineProps({
     showLibraryRules: {
         type: Boolean,
         default: false
+    },
+    showColumnFilters: {
+        type: Boolean,
+        default: false
     }
 });
 
-const filters = ref({ global: { value: null, matchMode: "contains" } });
+const filters = ref({
+    global: { value: null, matchMode: "contains" },
+    address: { value: null, matchMode: "contains" },
+    rule: { value: null, matchMode: "contains" },
+    namespace: { value: null, matchMode: "contains" }
+});
 const filterMode = ref("lenient");
-const sourceDialogVisible = ref(false);
-const currentSource = ref("");
 
 const functionCapabilities = ref([]);
 
 onMounted(() => {
-    const cacheKey = "functionCapabilities";
-    let cachedData = sessionStorage.getItem(cacheKey);
-
-    if (cachedData) {
-        // If the data is already in sessionStorage, parse it and use it
-        functionCapabilities.value = JSON.parse(cachedData);
-    } else {
-        // Parse function capabilities and cache the result in sessionStorage
-        functionCapabilities.value = parseFunctionCapabilities(props.data);
-        try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(functionCapabilities.value));
-        } catch (e) {
-            console.warn("Failed to store parsed data in sessionStorage:", e);
-            // If storing fails (e.g., due to storage limits), we can still continue with the parsed data
-        }
-    }
+    functionCapabilities.value = parseFunctionCapabilities(props.data);
 });
 
 /*
@@ -116,8 +121,10 @@ const tableData = computed(() => {
 </script>
 
 <style scoped>
-/* tighten up the spacing between rows */
-:deep(.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td) {
+/* tighten up the spacing between rows, and change border color */
+:deep(.p-datatable-tbody > tr > td) {
     padding: 0.2rem 0.5rem !important;
+    border-width: 0 0 1px 0;
+    border-color: #97a0ab;
 }
 </style>
