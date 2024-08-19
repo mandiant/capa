@@ -292,7 +292,7 @@ def install_common_args(parser, wanted=None):
             "--restrict-to-functions",
             type=lambda s: s.replace(" ", "").split(","),
             default=[],
-            help="provide a list of comma-separated functions to analyze (static analysis).",
+            help="provide a list of comma-separated function virtual addresses to analyze (static analysis).",
         )
 
     if "restrict-to-processes" in wanted:
