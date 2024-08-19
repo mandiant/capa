@@ -1,11 +1,6 @@
 <template>
     <DescriptionPanel />
-    <UploadOptions
-        @load-from-local="loadFromLocal"
-        @load-from-url="loadFromURL"
-        @load-demo-static="loadDemoDataStatic"
-        @load-demo-dynamic="loadDemoDataDynamic"
-    />
+    <UploadOptions @load-from-local="loadFromLocal" @load-from-url="loadFromURL" />
 </template>
 
 <script setup>
@@ -16,17 +11,6 @@ import DescriptionPanel from "@/components/DescriptionPanel.vue";
 import UploadOptions from "@/components/UploadOptions.vue";
 
 const isBundle = import.meta.env.MODE === "bundle";
-let demoRdocStatic = null;
-let demoRdocDynamic = null;
-
-if (!isBundle) {
-    import("@testfiles/rd/al-khaser_x64.exe_.json").then((module) => {
-        demoRdocStatic = module.default;
-    });
-    import("@testfiles/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz").then((module) => {
-        demoRdocDynamic = module.default;
-    });
-}
 
 // import router utils
 import { useRouter, useRoute } from "vue-router";
@@ -54,22 +38,6 @@ const loadFromURL = async (url) => {
         rdocStore.setData(result);
         console.log(result);
         router.push({ name: "analysis", query: { rdoc: url } });
-    }
-};
-
-const loadDemoDataStatic = async () => {
-    const result = await loadRdoc(demoRdocStatic);
-    if (result) {
-        rdocStore.setData(result);
-        router.push("/analysis");
-    }
-};
-
-const loadDemoDataDynamic = async () => {
-    const result = await loadRdoc(demoRdocDynamic);
-    if (result) {
-        rdocStore.setData(result);
-        router.push("/analysis");
     }
 };
 
