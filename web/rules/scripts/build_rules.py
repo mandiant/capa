@@ -69,6 +69,7 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         <link rel="stylesheet" type="text/css" href="./css/styles.css">
         <script src="./js/jquery-3.5.1.slim.min.js"></script>
         <script src="./js/bootstrap-5.3.3.bundle.min.js"></script>
+        <script defer src="https://cloud.umami.is/script.js" data-website-id="0bb8ff9e-fbcc-4ee2-9f9f-b337a2e8cc7f"></script>
         <style>
         :root {{
             /* from the icon */
