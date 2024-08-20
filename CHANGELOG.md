@@ -21,11 +21,11 @@
 - [capa-rules v7.2.0...master](https://github.com/mandiant/capa-rules/compare/v7.2.0...master)
 
 ### v7.2.0
-capa v7.2.0 adds support to analyze DRAKVUF sandbox dynamic analysis results. This release also introduces a first version of capa explorer web: a web-based user interface to inspect capa results using your browser. capa explorer web is available at https://mandiant.github.io/capa/explorer/#/.
+capa v7.2.0 introduces a first version of capa explorer web: a web-based user interface to inspect capa results using your browser. Now, users can upload their samples or sandbox reports to the online web instance and get a list of the capabilities extracted from it. Users can also filter, sort, and see the details of each extracted capabilitiy which makes analyzing samples much easier. capa explorer web was worked on by @s-ff as part of a [GSoC project](https://summerofcode.withgoogle.com/programs/2024/projects/cR3hjbsq), and it is available at https://mandiant.github.io/capa/explorer/#/.
 
-These enhancements have been contributed by @yelhamer and @s-ff  as part of their Google Summer of Code 2024 projects.
+This release also adds a feature extractor for output from the DRAKVUF sandbox. Now, analysts can pass the resulting `drakmon.log` file to capa and extract capabilities from the artifacts captured by the sandbox. This feature extractor will also be added to the DRAKVUF sandbox as a post-processing script, and it was worked on by @yelhamer as part of a [GSoC project](https://summerofcode.withgoogle.com/programs/2024/projects/fCnBGuEC).
 
-Additionally, we fixed several bugs handling ELF files and added support to the IDA Pro extractor to leverage analyst recovered API names.
+Additionally, we fixed several bugs handling ELF files, and added the ability to filter capa analysis by functions or processes. We also added support to the IDA Pro extractor to leverage analyst recovered API names.
 
 Special thanks to our repeat and new contributors:
 * @lakshayletsgo for their first contribution in https://github.com/mandiant/capa/pull/2248
