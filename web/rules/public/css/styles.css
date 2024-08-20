@@ -1,18 +1,3 @@
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background-color: #ffffff;
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-}
-
 .hero {
   background-image: url('img/hero-image.jpg');
   background-size: cover;
@@ -50,11 +35,7 @@ body {
 }
 
 p.big {
-  line-height: 1.3;}
-.button {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  line-height: 1.3;
 }
 
 .sub-hero h1{
@@ -150,12 +131,6 @@ footer {
   box-shadow: 0 2px 5px rbga(0, 0, 0, 0.15);
   border-radius: 5px;
   min-height: 100px; 
-}
-
-pre {
-  font-size: 1em; 
-  font-family: Arial, sans-serif; 
-  white-space: pre-wrap; 
 }
 
 .rule-grid {

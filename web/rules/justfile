@@ -3,12 +3,12 @@ modified-dates:
     python scripts/modified-dates.py ../../rules/ ./file_modification_dates.txt
 
 
-build-rules: modified-dates
+build-rules:
     mkdir -p ./public/rules/
     python scripts/build_rules.py ../../rules/ ./file_modification_dates.txt ./public/
 
 
-build-root: modified-dates
+build-root:
     python scripts/build_root.py ../../rules/ ./file_modification_dates.txt ./public/
 
 
@@ -16,7 +16,7 @@ index-website: build-rules build-root
     pagefind --site "public"
 
 
-build: build-rules build-root index-website
+build: modified-dates build-rules build-root index-website
 
 
 clean:
