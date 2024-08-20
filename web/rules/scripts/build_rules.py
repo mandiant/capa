@@ -43,16 +43,19 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
     # TODO(wb): link to MBC
     # TODO(wb): link to capa result examples
     #
-    # TODO(wb): link to namespace search
     # TODO(wb): link to author search
 
     # TODO(wb): link references
     # TODO(wb): link to examples
 
+    # TODO(wb): link to match rule names, like `match: enumerate PE sections`
+
     gh_link = f"https://github.com/mandiant/capa-rules/tree/master/{namespace}/{filename}.yml"
     vt_query = 'behavior_signature:"' + rule.name + '"'
     vt_fragment = urllib.parse.quote(urllib.parse.quote(vt_query))
     vt_link = f"https://www.virustotal.com/gui/search/{vt_fragment}/files"
+    ns_query = f'"namespace: {namespace} "'
+    ns_link = f"./?{urllib.parse.urlencode({'q': ns_query})}"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -66,6 +69,30 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         <link rel="stylesheet" type="text/css" href="./css/styles.css">
         <script src="./js/jquery-3.5.1.slim.min.js"></script>
         <script src="./js/bootstrap-5.3.3.bundle.min.js"></script>
+        <style>
+        :root {{
+            /* from the icon */
+            --capa-blue: #2593d7;
+            --capa-blue-darker: #1d74aa;
+
+            --bs-primary: var(--capa-blue);
+            --bs-primary-rgb: var(--capa-blue);
+        }}
+
+        a:not(.btn) {{
+            color: var(--capa-blue);
+            text-decoration: none;
+        }}
+
+        a:not(.btn):hover {{
+            text-decoration: underline;
+            text-decoration-color: var(--capa-blue) !important;
+        }}
+
+        .rule-content .highlight pre {{
+            overflow: visible;
+        }}
+        </style>
     </head>
     <body>
         <nav class="navbar navbar-light bg-light justify-content-between">
@@ -73,17 +100,21 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
                 <img src="./img/logo.png" alt="Logo" style="max-height: 65px;">
             </a>
         </nav>
-        <div class="container d-flex justify-content-center">
+        <div class="container d-flex justify-content-center mt-4">
             <div style="max-width: 650px;">
-                <p class="lead mb-0 text-secondary">{namespace}</p>
+                <p class="lead mb-0 text-secondary">
+                    <a href="{ns_link}" class="text-secondary">
+                        {namespace}
+                    </a>
+                </p>
                 <h1 class="display-6">{rule.name}</h1>
                 
-                <ul style="display: block; position: relative; float: right;" class="mt-4">
-                    <li><a href="{gh_link}">source (GitHub)</a></li>
-                    <li><a href="{vt_link}">VirusTotal</a></li>
+                <ul style="display: block; position: relative; float: right; height: 0px;" class="mt-4">
+                    <li><a href="{gh_link}">edit on GitHub</a></li>
+                    <li><a href="{vt_link}">search on VirusTotal</a></li>
                 </ul>
                 
-                <div class="mt-4">
+                <div class="mt-4 rule-content">
                     {rendered_rule}
                 </div>
                 <p class="text-secondary">last edited: {timestamp}</p>
