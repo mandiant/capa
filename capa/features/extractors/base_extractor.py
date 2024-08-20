@@ -302,7 +302,7 @@ def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticF
     original_get_functions = extractor.get_functions  # fetch original get_functions()
 
     def filtered_get_functions(self):
-        yield from (f for f in get_functions() if f.address in functions)
+        yield from (f for f in original_get_functions() if f.address in functions)
 
     # make a copy of the extractor before decorating the get_functions() method
     new_extractor = copy(extractor)
@@ -483,10 +483,10 @@ class DynamicFeatureExtractor:
 
 
 def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> DynamicFeatureExtractor:
-    get_processes = extractor.get_processes  # fetch original get_functions()
+    original_get_processes = extractor.get_processes  # fetch original get_functions()
 
     def filtered_get_processes(self):
-        yield from (f for f in get_processes() if f.address.pid in processes)
+        yield from (f for f in original_get_processes() if f.address.pid in processes)
 
     # make a copy of the extractor before decorating the get_processes() method
     new_extractor = copy(extractor)
