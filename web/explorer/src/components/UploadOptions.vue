@@ -80,7 +80,7 @@ const isBundle = import.meta.env.MODE === "bundle";
 defineEmits(["load-from-local", "load-from-url"]);
 
 const dynamicURL =
-    "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json";
+    "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz";
 const staticURL = "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/al-khaser_x64.exe_.json";
 </script>
 
