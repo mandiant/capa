@@ -18,7 +18,7 @@ To use this, you can copy the virtual addresses from your favorite disassembler 
 
 ### only analyze selected processes
 Use the `--restrict-to-processes` option to extract capabilities from only a selected set of processes. This is useful for filtering the noise 
-generated from analyzing non-malicious malware processes that can be reported by some sandboxes, as well as reduce the execution time 
+generated from analyzing non-malicious processes that can be reported by some sandboxes, as well as reduce the execution time 
 by not analyzing such processes in the first place.
 
 To use this, you can pick the PIDs of the processes you are interested in from the sandbox-generated process tree (or from the sandbox-reported malware PID) 
