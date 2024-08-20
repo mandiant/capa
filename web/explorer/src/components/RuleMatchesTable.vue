@@ -3,7 +3,7 @@
         :value="filteredTreeData"
         v-model:expandedKeys="expandedKeys"
         size="small"
-        scrollable
+        :scrollable="true"
         :filters="filters"
         :filterMode="filterMode"
         sortField="namespace"
@@ -252,7 +252,6 @@ const onRightClick = (event, instance) => {
         selectedNode.value = instance.node;
 
         // show the context menu
-        console.log(menu);
         menu.value.show(event);
     }
 };
