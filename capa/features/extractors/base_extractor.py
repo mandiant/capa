@@ -299,7 +299,7 @@ class StaticFeatureExtractor:
 
 
 def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticFeatureExtractor:
-    original_get_functions = extractor.get_functions  # fetch original get_functions()
+    original_get_functions = extractor.get_functions
 
     def filtered_get_functions(self):
         yield from (f for f in original_get_functions() if f.address in functions)
