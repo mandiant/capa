@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Set, Dict, List, Optional, TypedDict
 from pathlib import Path
 
 import colorama
@@ -122,8 +122,8 @@ logger = logging.getLogger("capa")
 
 
 class FilterConfig(TypedDict, total=False):
-    processes: set[int]
-    functions: set[int]
+    processes: Set[int]
+    functions: Set[int]
 
 
 @contextlib.contextmanager
@@ -781,9 +781,10 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
+    extractor_filters = get_extractor_filters_from_cli(args, input_format)
 
     try:
-        return capa.loader.get_extractor(
+        extractor = capa.loader.get_extractor(
             args.input_file,
             input_format,
             os_,
@@ -793,6 +794,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             disable_progress=args.quiet or args.debug,
             sample_path=sample_path,
         )
+        return apply_extractor_filters(extractor, extractor_filters)
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
@@ -813,6 +815,10 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
 
 def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
+    if not hasattr(args, "restrict_to_processes") and not hasattr(args, "restrict_to_functions"):
+        # no processes or function filters were installed in the args
+        return {}
+
     if input_format in STATIC_FORMATS:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
@@ -826,6 +832,10 @@ def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
 
 
 def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: FilterConfig):
+    if not any(extractor_filters.values()):
+        return extractor
+
+    # if the user specified extractor filters, then apply them here
     if isinstance(extractor, StaticFeatureExtractor):
         assert extractor_filters["functions"]
         return FunctionFilter(extractor, extractor_filters["functions"])
@@ -896,7 +906,6 @@ def main(argv: Optional[List[str]] = None):
         handle_common_args(args)
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
-        extractor_filters = get_extractor_filters_from_cli(args, input_format)
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
         found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
@@ -926,10 +935,6 @@ def main(argv: Optional[List[str]] = None):
             extractor = get_extractor_from_cli(args, input_format, backend)
         except ShouldExitError as e:
             return e.status_code
-
-        if any(extractor_filters.values()):
-            # if the user specified any extractor filters, apply them here.
-            extractor = apply_extractor_filters(extractor, extractor_filters)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
