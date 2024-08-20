@@ -827,8 +827,10 @@ def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
 
 def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: FilterConfig):
     if isinstance(extractor, StaticFeatureExtractor):
+        assert extractor_filters["functions"]
         return FunctionFilter(extractor, extractor_filters["functions"])
     elif isinstance(extractor, DynamicFeatureExtractor):
+        assert extractor_filters["processes"]
         return ProcessFilter(extractor, extractor_filters["processes"])
     else:
         raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
