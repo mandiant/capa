@@ -212,15 +212,6 @@ def generate_html(categories_data, color_map):
             width: 78px; 
             height: 42px; 
         }
-
-        .hero-image {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            margin-top: 10px;
-            margin-left: -40px; 
-        }
-    </style>
     </style>
 </head>
 <body>
@@ -228,17 +219,16 @@ def generate_html(categories_data, color_map):
         <a class="navbar-brand" href="#">
             <img src="./img/logo.png" width="30" height="30" alt="Logo">
         </a>
-        <div id="search"></div>
     </nav>
     <div class="container-fluid">
-        <img src="./img/HeroImage.png" alt="Hero Image" class="hero-image">
+        <div id="search" class="my-4"></div>
 """
 
     for category, files in categories_data.items():
         if not files:
             continue
 
-        html_content += f'<h2>{category}</h2><div class="row">'
+        html_content += f'<h2>{category}</h2><div class="row mb-4">'
         cards_data = []
         for file_path in files:
             try:
@@ -282,12 +272,20 @@ def generate_html(categories_data, color_map):
    
     <script>
         window.addEventListener('DOMContentLoaded', (event) => {
-            new PagefindUI({ 
+            const search = new PagefindUI({ 
                 element: "#search", 
                 showSubResults: true,
                 showEmptyFilters: false,
                 excerptLength: 15,
             });
+            
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get("q");
+        
+            if (q) {
+                console.log("initial query:", q)
+                search.triggerSearch(q)
+            }
         });
     </script>
 </body>
