@@ -2,7 +2,7 @@ import os
 import sys
 import random
 
-import yaml
+import capa.rules
 
 start_dir = sys.argv[1]
 txt_file_path = sys.argv[2]
@@ -70,14 +70,16 @@ def read_file_paths(txt_file_path):
     return categorized_files
 
 
-def parse_yaml(file_path):
-    with open(file_path, "r") as f:
-        data = yaml.safe_load(f)
-    meta = data.get("rule", {}).get("meta", {})
-    name = meta.get("name", "N/A")
-    namespace = meta.get("namespace", "N/A")
-    authors = ", ".join(meta.get("authors", []))
-    return {"name": name, "namespace": namespace, "authors": authors}
+def parse_rule(file_path):
+    rule = capa.rules.Rule.from_yaml_file(file_path)
+
+    return {
+        "name": rule.name,
+        "namespace": rule.meta.get("namespace", ""),
+        "authors": rule.meta.get("authors", []),
+        "path": file_path,
+        "filename": os.path.basename(file_path),
+    }
 
 
 def generate_color():
@@ -240,17 +242,15 @@ def generate_html(categories_data, color_map):
         cards_data = []
         for file_path in files:
             try:
-                card_data = parse_yaml(file_path)
-                if card_data["name"] != "N/A":
-                    cards_data.append(card_data)
+                card_data = parse_rule(file_path)
+                cards_data.append(card_data)
             except Exception as e:
                 print(f"Error parsing {file_path}: {e}")
 
         for i, card in enumerate(cards_data):
             first_word = get_first_word(card["namespace"])
             rectangle_color = color_map[first_word]
-            file_name = card["name"].lower().replace(" ", "-") + ".html"
-            file_path = file_name
+            file_name = card["filename"].rpartition(".yml")[0]
 
             card_html = f"""
                 <div class="card-wrapper">
@@ -258,8 +258,8 @@ def generate_html(categories_data, color_map):
                         <div class="thin-rectangle" style="background-color: {rectangle_color};"></div>
                         <div class="card-body">
                             <div class="namespace">{card['namespace']}</div>
-                            <div class="rule-name"><a href="{file_path}">{card['name']}</a></div>
-                            <div class="authors">{card['authors']}</div>
+                            <div class="rule-name"><a href="./{file_name}.html">{card['name']}</a></div>
+                            <div class="authors">{', '.join(card['authors'])}</div>
                         </div>
                     </div>
                 </div>"""
@@ -308,7 +308,7 @@ color_index = 0
 all_files = [file for category in categories_data.values() for file in category]
 for file_path in all_files:
     try:
-        card_data = parse_yaml(file_path)
+        card_data = parse_rule(file_path)
         first_word = get_first_word(card_data["namespace"])
         if first_word not in color_map:
             if color_index < len(predefined_colors):

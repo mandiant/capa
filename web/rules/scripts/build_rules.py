@@ -1,5 +1,6 @@
 import os
 import sys
+import urllib.parse
 from glob import glob
 
 import pygments
@@ -17,12 +18,12 @@ assert os.path.exists(output_directory), "output directory must exist"
 
 
 def convert_yaml_to_html(timestamps, yaml_file, output_dir):
-    filename = os.path.basename(yaml_file)
-
     with open(yaml_file, "rt", encoding="utf-8") as f:
         rule_content = f.read()
         rule = capa.rules.Rule.from_yaml(rule_content, use_ruamel=True)
 
+    filename = os.path.basename(yaml_file).rpartition(".yml")[0]
+    namespace = rule.meta.get("namespace", "")
     timestamp = timestamps[yaml_file]
 
     rendered_rule = pygments.highlight(
@@ -35,20 +36,23 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
             nobackground=True,
         ),
     )
-    
+
     # TODO(wb): use jinja for templating
 
-    # TODO(wb): link to GitHub source
     # TODO(wb): link to ATT&CK
     # TODO(wb): link to MBC
-    # TODO(wb): link to VT search
     # TODO(wb): link to capa result examples
     #
     # TODO(wb): link to namespace search
     # TODO(wb): link to author search
-    
+
     # TODO(wb): link references
     # TODO(wb): link to examples
+
+    gh_link = f"https://github.com/mandiant/capa-rules/tree/master/{namespace}/{filename}.yml"
+    vt_query = 'behavior_signature:"' + rule.name + '"'
+    vt_fragment = urllib.parse.quote(urllib.parse.quote(vt_query))
+    vt_link = f"https://www.virustotal.com/gui/search/{vt_fragment}/files"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -61,7 +65,7 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         <link rel="stylesheet" href="./css/bootstrap-5.3.3.min.css">
         <link rel="stylesheet" type="text/css" href="./css/styles.css">
         <script src="./js/jquery-3.5.1.slim.min.js"></script>
-        <script src="./js/bootstrap-5.3.3.min.js"></script>
+        <script src="./js/bootstrap-5.3.3.bundle.min.js"></script>
     </head>
     <body>
         <nav class="navbar navbar-light bg-light justify-content-between">
@@ -71,8 +75,14 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         </nav>
         <div class="container d-flex justify-content-center">
             <div style="max-width: 650px;">
-                <p class="lead mb-0 text-secondary">{rule.meta.get('namespace', '')}</p>
+                <p class="lead mb-0 text-secondary">{namespace}</p>
                 <h1 class="display-6">{rule.name}</h1>
+                
+                <ul style="display: block; position: relative; float: right;" class="mt-4">
+                    <li><a href="{gh_link}">source (GitHub)</a></li>
+                    <li><a href="{vt_link}">VirusTotal</a></li>
+                </ul>
+                
                 <div class="mt-4">
                     {rendered_rule}
                 </div>
