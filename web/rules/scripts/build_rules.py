@@ -1,13 +1,11 @@
-import sys
 import os
+import sys
 from glob import glob
-from datetime import datetime
 
 import pygments
+import capa.rules
 from pygments.lexers import YamlLexer
 from pygments.formatters import HtmlFormatter
-
-import capa.rules
 
 input_directory = sys.argv[1]
 txt_file_path = sys.argv[2]
@@ -20,25 +18,25 @@ assert os.path.exists(output_directory), "output directory must exist"
 
 def convert_yaml_to_html(timestamps, yaml_file, output_dir):
     filename = os.path.basename(yaml_file)
-    
-    with open(yaml_file, 'rt', encoding="utf-8") as f:
+
+    with open(yaml_file, "rt", encoding="utf-8") as f:
         rule_content = f.read()
         rule = capa.rules.Rule.from_yaml(rule_content, use_ruamel=True)
-        
+
     timestamp = timestamps[yaml_file]
 
     rendered_rule = pygments.highlight(
-       rule_content, 
-       YamlLexer(), 
-       HtmlFormatter(
-         style="xcode", 
-         noclasses=True,
-         wrapcode=True,
-         nobackground=True,
-       ))
-
-    name = rule.name
-    html_file_name = f"{filename}.html"
+        rule_content,
+        YamlLexer(),
+        HtmlFormatter(
+            style="xcode",
+            noclasses=True,
+            wrapcode=True,
+            nobackground=True,
+        ),
+    )
+    
+    # TODO(wb): use jinja for templating
 
     # TODO(wb): link to GitHub source
     # TODO(wb): link to ATT&CK
@@ -46,19 +44,19 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
     # TODO(wb): link to VT search
     # TODO(wb): link to capa result examples
     #
-    # TODO(wb): link to namespace
-    # TODO(wb): link to author
+    # TODO(wb): link to namespace search
+    # TODO(wb): link to author search
+    
     # TODO(wb): link references
     # TODO(wb): link to examples
 
-    # TODO(wb): use jinja for templating
     html_content = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{name}</title>
+        <title>{rule.name}</title>
         <link rel="icon"       href="./img/favicon.ico" type="image/x-icon">
         <link rel="stylesheet" href="./css/bootstrap-5.3.3.min.css">
         <link rel="stylesheet" type="text/css" href="./css/styles.css">
@@ -86,11 +84,12 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
     """
 
     os.makedirs(output_dir, exist_ok=True)
-    output_file_path = os.path.join(output_dir, html_file_name)
-    with open(output_file_path, 'w') as html_file:
+    output_file_path = os.path.join(output_dir, filename + ".html")
+    with open(output_file_path, "wt", encoding="utf-8") as html_file:
         html_file.write(html_content)
 
-yaml_files = glob(os.path.join(input_directory, '**/*.yml'), recursive=True)
+
+yaml_files = glob(os.path.join(input_directory, "**/*.yml"), recursive=True)
 
 timestamps = {}
 with open(txt_file_path, "rt", encoding="utf-8") as f:

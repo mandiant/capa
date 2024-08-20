@@ -1,25 +1,38 @@
 import os
 import sys
-import yaml
 import random
-from datetime import datetime, timedelta
 
+import yaml
 
 start_dir = sys.argv[1]
 txt_file_path = sys.argv[2]
 out_dir = sys.argv[3]
-output_html_path = os.path.join(out_dir, 'index.html')
+output_html_path = os.path.join(out_dir, "index.html")
 
 assert os.path.exists(start_dir), "input directory must exist"
 assert os.path.exists(txt_file_path), "file-modification txt file must exist"
 assert os.path.exists(out_dir), "output directory must exist"
 
 predefined_colors = [
-    "#9CAFAA", "#577590", "#a98467", "#D6DAC8", "#adc178",
-    "#f4d35e", "#85182a", "#d6c399", "#dde5b6", "#8da9c4",
-    "#fcd5ce", "#706993", "#FBF3D5", "#1a659e", "#c71f37",
-    "#EFBC9B", "#7e7f9a"
+    "#9CAFAA",
+    "#577590",
+    "#a98467",
+    "#D6DAC8",
+    "#adc178",
+    "#f4d35e",
+    "#85182a",
+    "#d6c399",
+    "#dde5b6",
+    "#8da9c4",
+    "#fcd5ce",
+    "#706993",
+    "#FBF3D5",
+    "#1a659e",
+    "#c71f37",
+    "#EFBC9B",
+    "#7e7f9a",
 ]
+
 
 def read_file_paths(txt_file_path):
     categorized_files = {
@@ -31,7 +44,7 @@ def read_file_paths(txt_file_path):
         "older": [],
     }
 
-    with open(txt_file_path, 'r') as f:
+    with open(txt_file_path, "r") as f:
         lines = f.readlines()
 
     current_category = None
@@ -39,22 +52,18 @@ def read_file_paths(txt_file_path):
         line = line.strip()
         if not line:
             continue
-        if '===' in line:
-            category = line.strip('===').strip()
+        if "===" in line:
+            category = line.strip("===").strip()
             if category in categorized_files:
                 current_category = category
             else:
                 print(f"Warning: Unrecognized category '{category}'")
                 current_category = None
         elif current_category:
-            parts = line.split(' ', 1)
+            parts = line.split(" ", 1)
             if len(parts) == 2:
                 file_path, last_modified_date_str = parts
-                try:
-                    last_modified_date = datetime.strptime(last_modified_date_str, '%Y-%m-%d %H:%M:%S')
-                    categorized_files[current_category].append(file_path)
-                except ValueError:
-                    print(f"Error parsing date for file {file_path}: {last_modified_date_str}")
+                categorized_files[current_category].append(file_path)
             else:
                 print(f"Warning: Skipping line due to unexpected format: {line}")
 
@@ -62,26 +71,25 @@ def read_file_paths(txt_file_path):
 
 
 def parse_yaml(file_path):
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         data = yaml.safe_load(f)
-    meta = data.get('rule', {}).get('meta', {})
-    name = meta.get('name', 'N/A')
-    namespace = meta.get('namespace', 'N/A')
-    authors = ', '.join(meta.get('authors', []))
-    return {
-        'name': name,
-        'namespace': namespace,
-        'authors': authors
-    }
+    meta = data.get("rule", {}).get("meta", {})
+    name = meta.get("name", "N/A")
+    namespace = meta.get("namespace", "N/A")
+    authors = ", ".join(meta.get("authors", []))
+    return {"name": name, "namespace": namespace, "authors": authors}
+
 
 def generate_color():
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
+
 def get_first_word(namespace):
-    return namespace.split('/')[0] if '/' in namespace else namespace
+    return namespace.split("/")[0] if "/" in namespace else namespace
+
 
 def generate_html(categories_data, color_map):
-    html_content = '''<!DOCTYPE html>
+    html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -222,31 +230,29 @@ def generate_html(categories_data, color_map):
     </nav>
     <div class="container-fluid">
         <img src="./img/HeroImage.png" alt="Hero Image" class="hero-image">
-'''
+"""
 
-    
     for category, files in categories_data.items():
         if not files:
             continue
-        
+
         html_content += f'<h2>{category}</h2><div class="row">'
         cards_data = []
         for file_path in files:
             try:
                 card_data = parse_yaml(file_path)
-                if card_data['name'] != 'N/A':  
+                if card_data["name"] != "N/A":
                     cards_data.append(card_data)
             except Exception as e:
                 print(f"Error parsing {file_path}: {e}")
 
-       
         for i, card in enumerate(cards_data):
-            first_word = get_first_word(card['namespace'])
+            first_word = get_first_word(card["namespace"])
             rectangle_color = color_map[first_word]
-            file_name = card['name'].lower().replace(' ', '-') + '.html'
+            file_name = card["name"].lower().replace(" ", "-") + ".html"
             file_path = file_name
 
-            card_html = f'''
+            card_html = f"""
                 <div class="card-wrapper">
                     <div class="card">
                         <div class="thin-rectangle" style="background-color: {rectangle_color};"></div>
@@ -256,23 +262,22 @@ def generate_html(categories_data, color_map):
                             <div class="authors">{card['authors']}</div>
                         </div>
                     </div>
-                </div>'''
+                </div>"""
 
             html_content += card_html
 
-        
         num_cards = len(cards_data)
         num_empty_cells = (4 - (num_cards % 4)) % 4
         if num_empty_cells > 0:
             for _ in range(num_empty_cells):
-                html_content += '''
+                html_content += """
                 <div class="card-wrapper">
                     <div class="card" style="visibility: hidden;"></div>
-                </div>'''
+                </div>"""
 
-        html_content += '</div>'
+        html_content += "</div>"
 
-    html_content += '''
+    html_content += """
     </div>
    
     <script>
@@ -286,9 +291,9 @@ def generate_html(categories_data, color_map):
         });
     </script>
 </body>
-</html>'''
+</html>"""
 
-    with (open(output_html_path, 'w') as output_file):
+    with open(output_html_path, "w") as output_file:
         output_file.write(html_content)
 
 
@@ -304,7 +309,7 @@ all_files = [file for category in categories_data.values() for file in category]
 for file_path in all_files:
     try:
         card_data = parse_yaml(file_path)
-        first_word = get_first_word(card_data['namespace'])
+        first_word = get_first_word(card_data["namespace"])
         if first_word not in color_map:
             if color_index < len(predefined_colors):
                 color_map[first_word] = predefined_colors[color_index]
@@ -319,4 +324,4 @@ for file_path in all_files:
         print(f"Error parsing {file_path}: {e}")
 
 generate_html(categories_data, color_map)
-print(f'HTML file has been generated: {output_html_path}')
+print(f"HTML file has been generated: {output_html_path}")
