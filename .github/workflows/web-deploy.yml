@@ -2,8 +2,7 @@ name: deploy web to GitHub Pages
 
 on:
   push:
-    # TODO(williballenthin): remove everything except master
-    branches: [ master, "wb/webui-actions-1", 'push-*' ]
+    branches: [ master ]
     paths:
       - 'web/**'
 
