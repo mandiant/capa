@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Optional
+from typing import Any, Set, Dict, List, Optional, TypedDict
 from pathlib import Path
 
 import colorama
@@ -119,6 +119,11 @@ E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
 
 logger = logging.getLogger("capa")
+
+
+class FilterConfig(TypedDict, total=False):
+    processes: set[int]
+    functions: set[int]
 
 
 @contextlib.contextmanager
@@ -807,7 +812,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_CORRUPT_FILE) from e
 
 
-def get_extractor_filters_from_cli(args, input_format) -> Dict[str, Set]:
+def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
     if input_format in STATIC_FORMATS:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
@@ -820,7 +825,7 @@ def get_extractor_filters_from_cli(args, input_format) -> Dict[str, Set]:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
 
-def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Dict[str, Set]):
+def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: FilterConfig):
     if isinstance(extractor, StaticFeatureExtractor):
         return FunctionFilter(extractor, extractor_filters["functions"])
     elif isinstance(extractor, DynamicFeatureExtractor):
