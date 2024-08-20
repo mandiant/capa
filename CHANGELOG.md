@@ -4,6 +4,9 @@
 
 ### New Features
 
+- add landing page https://mandiant.github.io/capa/ @williballenthin #2310
+- add rules website https://mandiant.github.io/capa/rules @DeeyaSingh #2310
+
 ### Breaking Changes
 
 ### New Rules (0)
