@@ -106,9 +106,9 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
             </a>
 
             <ul class="nav nav-pills">
-                <li class="nav-item d-flex align-items-center"><a href="/capa/rules#rules"    class="nav-link text-dark">Rules</a></li>
-                <li class="nav-item d-flex align-items-center"><a href="/capa/rules#examples" class="nav-link text-dark">Examples</a></li>
-                <li class="nav-item d-flex align-items-center"><a href="/capa/rules#download" class="nav-link text-dark">Download</a></li>
+                <li class="nav-item d-flex align-items-center"><a href="/capa/#rules"    class="nav-link text-dark">Rules</a></li>
+                <li class="nav-item d-flex align-items-center"><a href="/capa/#examples" class="nav-link text-dark">Examples</a></li>
+                <li class="nav-item d-flex align-items-center"><a href="/capa/#download" class="nav-link text-dark">Download</a></li>
             </ul>
         </header>
         

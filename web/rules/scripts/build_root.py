@@ -104,6 +104,7 @@ def generate_html(categories_data, color_map):
     <link href="./css/bootstrap-5.3.3.min.css" rel="stylesheet">
     <link rel="icon" href="./img/favicon.png" type="image/x-icon"> <!-- Favicon -->
     <script src="./pagefind/pagefind-ui.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="0bb8ff9e-fbcc-4ee2-9f9f-b337a2e8cc7f"></script>
     <style>
          body {
             background-color: #ffffff;
@@ -230,9 +231,9 @@ def generate_html(categories_data, color_map):
         </a>
 
         <ul class="nav nav-pills">
-            <li class="nav-item d-flex align-items-center"><a href="/capa/rules#rules"    class="nav-link text-dark">Rules</a></li>
-            <li class="nav-item d-flex align-items-center"><a href="/capa/rules#examples" class="nav-link text-dark">Examples</a></li>
-            <li class="nav-item d-flex align-items-center"><a href="/capa/rules#download" class="nav-link text-dark">Download</a></li>
+            <li class="nav-item d-flex align-items-center"><a href="/capa/#rules"    class="nav-link text-dark">Rules</a></li>
+            <li class="nav-item d-flex align-items-center"><a href="/capa/#examples" class="nav-link text-dark">Examples</a></li>
+            <li class="nav-item d-flex align-items-center"><a href="/capa/#download" class="nav-link text-dark">Download</a></li>
         </ul>
     </header>
     

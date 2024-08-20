@@ -91,17 +91,11 @@
     </a>
 
     <ul class="nav nav-pills">
-      <li class="nav-item d-flex align-items-center"><a href="#rules"         class="nav-link text-dark">Rules</a></li>
-      <li class="nav-item d-flex align-items-center"><a href="#contribute"    class="nav-link text-dark">Contribute</a></li>
-      <li class="nav-item d-flex align-items-center"><a href="#documentation" class="nav-link text-dark">Documentation</a></li>
-      <li class="nav-item d-flex align-items-center"><a href="#download"      class="nav-link text-dark">Download</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#rules"    class="nav-link text-dark">Rules</a></li>
+      <!-- TODO(williballenthin): create this section (currently doesn't exist and URL doesn't go anywhere) -->
+      <li class="nav-item d-flex align-items-center"><a href="#examples" class="nav-link text-dark">Examples</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#download" class="nav-link text-dark">Download</a></li>
     </ul>
-    <style>
-      .nav .nav-item a:hover {
-        text-decoration:  underline;
-        text-decoration-color: var(--capa-blue);
-      }
-    </style>
   </header>
 
   <div class="container my-5 mt-3" style="margin-top: 4rem !important;">
@@ -140,20 +134,21 @@
 
   <div class="b-divider"></div>
 
-  <div id="rules" class="px-4 pt-5 mt-5 text-center border-bottom">
+  <div id="rules" class="px-4 mt-5 text-center border-bottom">
     <h1 class="display-4 fw-bold text-body-emphasis">Rules Crafted by Experts</h1>
     <div class="col-lg-6 mx-auto text-start">
       <p class="lead mb-4 text-justify">
-        capa recognizes behaviors by matching rules crafted by expert reverse engineers contributing from across the globe.
-        Rules describe logical combinations of features familiar to human analysts
-          - things like: 
+        capa recognizes behaviors by matching rules crafted by expert reverse engineers.
+      <p class="mb-4 text-justify">
+        Rules describe logical combinations of features familiar to human analysts.
+        Things like: 
       </p>
-      <ul class="lead my-0 py-0 mx-3">
-        <li>API calls</li>
-        <li>integer constants</li>
-        <li>and string references</li>
+      <ul class="my-0 py-0 mx-3">
+        <li>API calls, like <code>CreateRemoteThread</code>,</li>
+        <li>integer constants, like <code>0x100000001b3 = FNV prime</code>,</li>
+        <li>string references, like <code>"ZIG_DEBUG_COLOR"</code>.</li>
       </ul>
-      <p class="lead my-4 text-justify">
+      <p class="my-4 text-justify">
         capa looks for these features within instructions, basic blocks, and functions, having already disassembled the input file.
         In contrast to YARA, which primarily searches for sequences of bytes, capa rules describe features at the code-level. 
       </p>
@@ -179,90 +174,80 @@
     </div>
   </div>
 
+  <!-- TODO(williballenthin): need section for examples -->
+  <!-- such as: -->
+  <!--   - default output -->
+  <!--   - verbose output -->
+  <!--   - capa Explorer IDA Plugin -->
+  <!--   - capa Explorer Ghidra Plugin -->
+  <!--   - capa Explorer web application -->
+  <!--   - JSON output -->
+  <!--   - VT integration -->
+  <!-- we'll want screenshots and/or styled text inline -->
+  <!-- maybe also a bunch (all) of result documents from PMA or testfiles that people can browse -->
 
   <div class="b-divider"></div>
 
+  <!-- TODO(williballenthin): auto-generate this section from release notes and git history -->
   <div class="container col-xxl-8 px-4 py-5">
-    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5">
       <h1>What's New</h1>
 
-      <h2>Recent Rule Updates</h2>
-      <p class="lead">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      <h3 class="mt-3">Rule Updates</h3>
+
+      <ul class="mt-2 ps-5">
+        <!-- TODO(williballenthin): add date -->
+        <li>
+          added:
+          <a href="./rules/overwrite-dll-text-section-to-remove-hooks.html">
+            overwrite DLL .text section to remove hooks
+          </a>
+        </li>
+
+        <li>
+          added:
+          <a href="./rules/attach-bpf-to-socket-on-linux.html">
+            attach BPF to socket on Linux
+          </a>
+        </li>
+      </ul>
+
+      <h3 class="mt-3">Tool Updates</h3>
+
+      <h5 class="mt-2">v7.2.0</h5>
+      <!-- TODO(williballenthin): add date -->
+      <p class="mt-0">
+        <a href="https://github.com/mandiant/capa/releases/tag/v7.2.0">capa v7.2.0</a>
+        introduces a first version of capa explorer web: a web-based user interface to inspect capa results using your browser.
+        capa explorer web was worked on by @s-ff as part of a GSoC project, and it is available at https://mandiant.github.io/capa/explorer/.
+        This release also adds a feature extractor for output from the DRAKVUF sandbox. Now, analysts can pass the resulting drakmon.log file to capa and extract capabilities from the artifacts captured by the sandbox. 
       </p>
 
-      <h2>Changelog</h2>
-      <p class="lead">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-      </p>
+      <p class="mt-0">New  features:</p>
+      <ul class="mt-0 ps-5">
+        <li>webui: explore capa analysis results in a web-based UI online and offline</li>
+        <li>support analyzing DRAKVUF traces</li>
+        <li>IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables</li>
+        <li>cli: add the ability to select which specific functions or processes to analyze</li>
+      </ul>
     </div>
   </div>
 
   <div class="b-divider"></div>
 
-  <div class="container col-xxl-8 px-4 py-5">
-    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
-      <div class="col-10 col-sm-8 col-lg-6">
-        <img 
-          src="./img/capa-vv-pma0101.png" 
-          class="d-block mx-lg-auto img-fluid shadow-lg" 
-          style="border: 4px solid #f8f9fb;"
-          alt="capa vverbose output" 
-          width="700" 
-          height="500" 
-          loading="lazy">
-      </div>
-      <div class="col-lg-6">
-        <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
-          Responsive left-aligned hero with image
-        </h1>
-        <p class="lead">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div class="b-divider"></div>
-
-  <div class="container col-xxl-8 px-4 py-5">
-    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
-      <div class="col-lg-7">
-        <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
-          Responsive right-aligned hero with image
-        </h1>
-        <p class="lead">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </p>
-      </div>
-
-      <div class="col-10 col-sm-8 col-lg-5">
-        <img 
-          src="./img/capa-vv-pma0101.png" 
-          class="d-block mx-lg-auto img-fluid shadow-lg" 
-          style="border: 4px solid #f8f9fb;"
-          alt="capa vverbose output" 
-          width="700" 
-          height="500" 
-          loading="lazy">
-      </div>
-    </div>
-  </div>
-
-
-
-  <div class="b-divider"></div>
-
+  <!-- TODO(williballenthin): this whole section's text is terrible, aside from the headers maybe -->
   <div class="container px-4 py-5">
-    <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+    <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5">
       <div class="col d-flex flex-column align-items-start gap-2">
         <h2 class="fw-bold text-body-emphasis">
           Integrates with Popular Reverse Engineering Tools
         </h2>
         <p class="text-body-secondary">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          <!-- TODO(williballenthin): add links for each of these tools -->
+          capa uses the results of static or dynamic analysis to find the capabilities of programs.
+          The tool can rely on many different analysis backends, including IDA, Ghidra, Binary Ninja, CAPE, DRAKVUF, and VMRay.
+          The capa Explorer plugins provide interfaces for understanding the behaviors in programs, directly within reverse engineering tools.
         </p>
-        <a href="#" class="btn btn-primary btn-lg">Primary button</a>
       </div>
 
       <div class="col">
@@ -272,7 +257,8 @@
               IDA Pro
             </h4>
             <p class="text-body-secondary">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              <!-- TODO(williballenthin): add link to find out more -->
+              Use the capa Explorer IDA Plugin to guide your reverse engineering, zeroing in on the interesting functions by behavior.
             </p>
           </div>
 
@@ -281,7 +267,8 @@
               Ghidra
             </h4>
             <p class="text-body-secondary">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              <!-- TODO(williballenthin): add link to find out more -->
+              Invoke Ghidra in headless mode to collect features for capa, or use the capa Explorer Ghidra plugin to understand key functions.
             </p>
           </div>
 
@@ -290,7 +277,8 @@
               Binary Ninja
             </h4>
             <p class="text-body-secondary">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              <!-- TODO(williballenthin): add link to find out more -->
+              Use Binary Ninja as the disassembler backend, relying on its state-of-the-art code analysis to recover capabilities.
             </p>
           </div>
 
@@ -299,18 +287,20 @@
               CAPE
             </h4>
             <p class="text-body-secondary">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              <!-- TODO(williballenthin): add link to find out more -->
+              Analyze the API trace captured by CAPE as it detonates malware, summarizing the behaviors seen across thousands of function calls.
             </p>
           </div>
-
         </div>
       </div>
     </div>
   </div>
 
+  <!-- TODO(williballenthin): need section on the capa Explorer web application -->
+
   <div class="b-divider"></div>
 
-  <div id="download" class="px-4 pt-5 my-5 text-center border-bottom">
+  <div id="download" class="px-4 pt-5 text-center border-bottom">
     <h1 class="display-4 fw-bold text-body-emphasis">
       Download capa
     </h1>
@@ -363,8 +353,6 @@
     </div>
   </div>
 
-  <div class="b-divider"></div>
-
   <div class="bg-dark text-secondary px-4 pt-5 text-center">
     <div class="py-5">
       <img src="./img/icon.png" />
@@ -378,10 +366,9 @@
         </p>
 
         <div class="d-grid gap-4 d-sm-flex justify-content-sm-center mb-4">
-          <div><a href="#rules"         class="fw-bold text-white text-decoration-none">Rules</a></div>
-          <div><a href="#contribute"    class="fw-bold text-white text-decoration-none">Contribute</a></div>
-          <div><a href="#documentation" class="fw-bold text-white text-decoration-none">Documentation</a></div>
-          <div><a href="#download"      class="fw-bold text-white text-decoration-none">Download</a></div>
+          <div><a href="#rules"    class="fw-bold text-white text-decoration-none">Rules</a></div>
+          <div><a href="#examples" class="fw-bold text-white text-decoration-none">Examples</a></div>
+          <div><a href="#download" class="fw-bold text-white text-decoration-none">Download</a></div>
         </div>
 
         <p>
