@@ -1,5 +1,4 @@
 import sys
-import yaml
 import os
 from glob import glob
 from datetime import datetime
@@ -7,6 +6,8 @@ from datetime import datetime
 import pygments
 from pygments.lexers import YamlLexer
 from pygments.formatters import HtmlFormatter
+
+import capa.rules
 
 input_directory = sys.argv[1]
 txt_file_path = sys.argv[2]
@@ -18,17 +19,13 @@ assert os.path.exists(output_directory), "output directory must exist"
 
 
 def convert_yaml_to_html(timestamps, yaml_file, output_dir):
+    filename = os.path.basename(yaml_file)
+    
     with open(yaml_file, 'rt', encoding="utf-8") as f:
         rule_content = f.read()
-        f.seek(0)
-        # TODO(wb): load via capa
-        data = yaml.safe_load(f)
-
-    rule = data.get('rule', {}).get('meta', {})
-
-    namespace = rule.get('namespace', '')
-    
-    last_edited_str = timestamps[yaml_file]
+        rule = capa.rules.Rule.from_yaml(rule_content, use_ruamel=True)
+        
+    timestamp = timestamps[yaml_file]
 
     rendered_rule = pygments.highlight(
        rule_content, 
@@ -40,10 +37,8 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
          nobackground=True,
        ))
 
-    name = rule['name']
-    # TODO(williballenthin): use capa for this
-    sanitized_name = name.lower().replace(' ', '-').replace('/', '-').replace('\\', '-')
-    html_file_name = f"{sanitized_name}.html"
+    name = rule.name
+    html_file_name = f"{filename}.html"
 
     # TODO(wb): link to GitHub source
     # TODO(wb): link to ATT&CK
@@ -78,12 +73,12 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         </nav>
         <div class="container d-flex justify-content-center">
             <div style="max-width: 650px;">
-                <p class="lead mb-0 text-secondary">{namespace}</p>
-                <h1 class="display-6">{name}</h1>
+                <p class="lead mb-0 text-secondary">{rule.meta.get('namespace', '')}</p>
+                <h1 class="display-6">{rule.name}</h1>
                 <div class="mt-4">
                     {rendered_rule}
                 </div>
-                <p class="text-secondary">last edited: {last_edited_str}</p>
+                <p class="text-secondary">last edited: {timestamp}</p>
             </div>
         </div>
     </body>
