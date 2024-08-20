@@ -486,7 +486,7 @@ class DynamicFeatureExtractor:
 
 
 def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> DynamicFeatureExtractor:
-    original_get_processes = extractor.get_processes  # fetch original get_processes()
+    original_get_processes = extractor.get_processes
 
     def filtered_get_processes(self):
         yield from (f for f in original_get_processes() if f.address.pid in processes)
