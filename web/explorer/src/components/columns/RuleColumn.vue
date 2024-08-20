@@ -31,7 +31,15 @@
         <template v-else-if="node.data.type === 'feature'">
             <span>
                 - {{ node.data.typeValue }}:
-                <span :class="{ 'text-green-700': node.data.typeValue !== 'regex' }" class="font-monospace">
+                <span
+                    :class="{ 'text-green-700': node.data.typeValue !== 'regex' }"
+                    class="font-monospace"
+                    v-tooltip.top="{
+                        value: getTooltipContent(node.data),
+                        showDelay: 1000,
+                        hideDelay: 300
+                    }"
+                >
                     {{ node.data.name }}
                 </span>
             </span>
@@ -63,4 +71,12 @@ defineProps({
         required: true
     }
 });
+
+const getTooltipContent = (data) => {
+    if (data.typeValue === "number" || data.typeValue === "offset") {
+        const decimalValue = parseInt(data.name, 16);
+        return `Decimal: ${decimalValue}`;
+    }
+    return null;
+};
 </script>
