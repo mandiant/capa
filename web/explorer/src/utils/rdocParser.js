@@ -108,6 +108,9 @@ export function parseFunctionCapabilities(doc) {
     // Map to store capabilities matched to each function
     const matchesByFunction = new Map();
 
+    // Add a special entry for file-level matches
+    matchesByFunction.set("file", new Set());
+
     // Iterate through all rules in the document
     for (const [, rule] of Object.entries(doc.rules)) {
         if (rule.meta.scopes.static === "function") {
@@ -133,11 +136,25 @@ export function parseFunctionCapabilities(doc) {
                         .add({ name: rule.meta.name, namespace: rule.meta.namespace, lib: rule.meta.lib });
                 }
             }
+        } else if (rule.meta.scopes.static === "file") {
+            // Add file-level matches to the special 'file' entry
+            matchesByFunction.get("file").add({
+                name: rule.meta.name,
+                namespace: rule.meta.namespace,
+                lib: rule.meta.lib
+            });
         }
-        // (else) Ignoring file scope rules
     }
 
     const result = [];
+
+    // Add file-level matches if there are any
+    if (matchesByFunction.get("file").size > 0) {
+        result.push({
+            address: "file",
+            capabilities: Array.from(matchesByFunction.get("file"))
+        });
+    }
 
     // Iterate through all functions in the document
     for (const f of doc.meta.analysis.feature_counts.functions) {

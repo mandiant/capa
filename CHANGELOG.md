@@ -4,20 +4,50 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v7.2.0...master](https://github.com/mandiant/capa/compare/v7.2.0...master)
+- [capa-rules v7.2.0...master](https://github.com/mandiant/capa-rules/compare/v7.2.0...master)
+
+### v7.2.0
+capa v7.2.0 introduces a first version of capa explorer web: a web-based user interface to inspect capa results using your browser. Users can inspect capa result JSON documents in an online web instance or a standalone HTML page for offline usage. capa explorer supports interactive exploring of capa results to make it easier to understand them. Users can filter, sort, and see the details of all identified capabilities. capa explorer web was worked on by @s-ff as part of a [GSoC project](https://summerofcode.withgoogle.com/programs/2024/projects/cR3hjbsq), and it is available at https://mandiant.github.io/capa/explorer/#/.
+
+This release also adds a feature extractor for output from the DRAKVUF sandbox. Now, analysts can pass the resulting `drakmon.log` file to capa and extract capabilities from the artifacts captured by the sandbox. This feature extractor will also be added to the DRAKVUF sandbox as a post-processing script, and it was worked on by @yelhamer as part of a [GSoC project](https://summerofcode.withgoogle.com/programs/2024/projects/fCnBGuEC).
+
+Additionally, we fixed several bugs handling ELF files, and added the ability to filter capa analysis by functions or processes. We also added support to the IDA Pro extractor to leverage analyst recovered API names.
+
+Special thanks to our repeat and new contributors:
+* @lakshayletsgo for their first contribution in https://github.com/mandiant/capa/pull/2248
+* @msm-cert for their first contribution in https://github.com/mandiant/capa/pull/2143
+* @VascoSch92 for their first contribution in https://github.com/mandiant/capa/pull/2143
+
+### New Features
+
 - webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
 - IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables #2201 @Ana06
-
+- cli: add the ability to select which specific functions or processes to analyze @yelhamer
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (5)
 
 - nursery/upload-file-to-onedrive jaredswilson@google.com ervinocampo@google.com
 - data-manipulation/encoding/base64/decode-data-using-base64-via-vbmi-lookup-table still@teamt5.org
 - communication/socket/attach-bpf-to-socket-on-linux jakub.jozwiak@mandiant.com
 - anti-analysis/anti-av/overwrite-dll-text-section-to-remove-hooks jakub.jozwiak@mandiant.com
--
+- nursery/delete-file-on-linux mehunhoff@google.com
 
 ### Bug Fixes
 
@@ -33,8 +63,8 @@
 - CI: update build.yml workflow to exclude web and documentation files #2270 @s-ff
 
 ### Raw diffs
-- [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)
-- [capa-rules v7.1.0...master](https://github.com/mandiant/capa-rules/compare/v7.1.0...master)
+- [capa v7.1.0...7.2.0](https://github.com/mandiant/capa/compare/v7.1.0...7.2.0)
+- [capa-rules v7.1.0...7.2.0](https://github.com/mandiant/capa-rules/compare/v7.1.0...7.2.0)
 
 ## v7.1.0
 The v7.1.0 release brings large performance improvements to capa's rule matching engine.
