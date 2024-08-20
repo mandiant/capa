@@ -212,15 +212,31 @@ def generate_html(categories_data, color_map):
             width: 78px; 
             height: 42px; 
         }
+
+        .pagefind-ui__result-thumb {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="#">
-            <img src="./img/logo.png" width="30" height="30" alt="Logo">
+
+    <header 
+            class="d-flex flex-wrap justify-content-center py-1 mb-4 border-bottom fixed-top"
+            style="background-color: rgba(255,255,255,0.95);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
+        >
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto">
+            <img src="./img/logo.png" height=48 />
         </a>
-    </nav>
-    <div class="container-fluid">
+
+        <ul class="nav nav-pills">
+            <li class="nav-item d-flex align-items-center"><a href="/capa/rules#rules"    class="nav-link text-dark">Rules</a></li>
+            <li class="nav-item d-flex align-items-center"><a href="/capa/rules#examples" class="nav-link text-dark">Examples</a></li>
+            <li class="nav-item d-flex align-items-center"><a href="/capa/rules#download" class="nav-link text-dark">Download</a></li>
+        </ul>
+    </header>
+    
+    <div class="container-fluid" style="margin-top: 5rem !important;">
         <div id="search" class="my-4"></div>
 """
 
@@ -228,7 +244,7 @@ def generate_html(categories_data, color_map):
         if not files:
             continue
 
-        html_content += f'<h2>{category}</h2><div class="row mb-4">'
+        html_content += f'<h4>{category}</h4><div class="row mb-4">'
         cards_data = []
         for file_path in files:
             try:

@@ -95,12 +95,23 @@ def convert_yaml_to_html(timestamps, yaml_file, output_dir):
         </style>
     </head>
     <body>
-        <nav class="navbar navbar-light bg-light justify-content-between">
-            <a class="navbar-brand" href="#">
-                <img src="./img/logo.png" alt="Logo" style="max-height: 65px;">
+        <header 
+                class="d-flex flex-wrap justify-content-center py-1 mb-4 border-bottom fixed-top"
+                style="background-color: rgba(255,255,255,0.95);
+                box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
+            >
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto">
+                <img src="./img/logo.png" height=48 />
             </a>
-        </nav>
-        <div class="container d-flex justify-content-center mt-4">
+
+            <ul class="nav nav-pills">
+                <li class="nav-item d-flex align-items-center"><a href="/capa/rules#rules"    class="nav-link text-dark">Rules</a></li>
+                <li class="nav-item d-flex align-items-center"><a href="/capa/rules#examples" class="nav-link text-dark">Examples</a></li>
+                <li class="nav-item d-flex align-items-center"><a href="/capa/rules#download" class="nav-link text-dark">Download</a></li>
+            </ul>
+        </header>
+        
+        <div class="container d-flex justify-content-center" style="margin-top: 4rem !important;">
             <div style="max-width: 650px;">
                 <p class="lead mb-0 text-secondary">
                     <a href="{ns_link}" class="text-secondary">
