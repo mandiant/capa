@@ -37,7 +37,7 @@ Special thanks to our repeat and new contributors:
 - webui: explore capa analysis results in a web-based UI online and offline #2224 @s-ff
 - support analyzing DRAKVUF traces #2143 @yelhamer
 - IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables #2201 @Ana06
-
+- cli: add the ability to select which specific functions or processes to analyze @yelhamer
 
 ### Breaking Changes
 
