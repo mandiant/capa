@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 from pathlib import Path
 
 import colorama
