@@ -11,7 +11,7 @@
 
         <!-- example node: "basic block @ 0x401000" or "explorer.exe" -->
         <template v-else-if="node.data.type === 'match location'">
-            <span class="text-sm font-italic">{{ node.data.name }}</span>
+            <span class="text-sm font-monospace text-xs">{{ node.data.name }}</span>
         </template>
 
         <!-- example node: "- or", "- and" -->
@@ -52,7 +52,7 @@
 
         <!-- example node: "exit(0) -> 0" (if the node type is call-info, we highlight node.data.name.callInfo) -->
         <template v-else-if="node.data.type === 'call-info'">
-            <highlightjs lang="c" :code="node.data.name.callInfo" />
+            <highlightjs lang="c" :code="node.data.name.callInfo" class="text-xs" />
         </template>
 
         <!-- example node: " = IMAGE_NT_SIGNATURE (PE)" -->
