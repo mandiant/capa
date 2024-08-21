@@ -1,17 +1,30 @@
-import os
+"""
+Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+You may obtain a copy of the License at: [package root]/LICENSE.txt
+Unless required by applicable law or agreed to in writing, software distributed under the License
+ is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+"""
+
 import sys
 import random
+import logging
+from pathlib import Path
 
 import capa.rules
 
-start_dir = sys.argv[1]
-txt_file_path = sys.argv[2]
-out_dir = sys.argv[3]
-output_html_path = os.path.join(out_dir, "index.html")
+logger = logging.getLogger(__name__)
 
-assert os.path.exists(start_dir), "input directory must exist"
-assert os.path.exists(txt_file_path), "file-modification txt file must exist"
-assert os.path.exists(out_dir), "output directory must exist"
+start_dir = Path(sys.argv[1])
+txt_file_path = Path(sys.argv[2])
+out_dir = Path(sys.argv[3])
+output_html_path = out_dir / "index.html"
+
+assert start_dir.exists(), "input directory must exist"
+assert txt_file_path.exists(), "file-modification txt file must exist"
+assert out_dir.exists(), "output directory must exist"
 
 predefined_colors = [
     "#9CAFAA",
@@ -34,7 +47,7 @@ predefined_colors = [
 ]
 
 
-def read_file_paths(txt_file_path):
+def read_file_paths(txt_file_path: Path):
     categorized_files = {
         "modified in the last day": [],
         "modified in the last week": [],
@@ -44,8 +57,7 @@ def read_file_paths(txt_file_path):
         "older": [],
     }
 
-    with open(txt_file_path, "r") as f:
-        lines = f.readlines()
+    lines = txt_file_path.read_text(encoding="utf-8").splitlines()
 
     current_category = None
     for line in lines:
@@ -53,11 +65,11 @@ def read_file_paths(txt_file_path):
         if not line:
             continue
         if "===" in line:
-            category = line.strip("===").strip()
+            category = line.strip("=").strip()
             if category in categorized_files:
                 current_category = category
             else:
-                print(f"Warning: Unrecognized category '{category}'")
+                logger.warning("Unrecognized category '%s'", category)
                 current_category = None
         elif current_category:
             parts = line.split(" ", 1)
@@ -65,12 +77,12 @@ def read_file_paths(txt_file_path):
                 file_path, last_modified_date_str = parts
                 categorized_files[current_category].append(file_path)
             else:
-                print(f"Warning: Skipping line due to unexpected format: {line}")
+                logger.warning("Skipping line due to unexpected format: %s", line)
 
     return categorized_files
 
 
-def parse_rule(file_path):
+def parse_rule(file_path: Path):
     rule = capa.rules.Rule.from_yaml_file(file_path)
 
     return {
@@ -78,7 +90,7 @@ def parse_rule(file_path):
         "namespace": rule.meta.get("namespace", ""),
         "authors": rule.meta.get("authors", []),
         "path": file_path,
-        "filename": os.path.basename(file_path),
+        "filename": file_path.name,
     }
 
 
@@ -114,18 +126,18 @@ def generate_html(categories_data, color_map):
         }
 
         .container-fluid {
-            padding: 0 40px; 
+            padding: 0 40px;
         }
 
         .row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px; 
+            gap: 10px;
         }
 
         .card-wrapper {
             display: flex;
-            align-items: stretch; 
+            align-items: stretch;
         }
 
         .card {
@@ -136,7 +148,7 @@ def generate_html(categories_data, color_map):
             transition: box-shadow 0.3s ease-in-out;
             display: flex;
             flex-direction: column;
-            width: 100%; 
+            width: 100%;
         }
 
         .card:hover {
@@ -203,15 +215,14 @@ def generate_html(categories_data, color_map):
             text-decoration: underline;
         }
 
-    
         .navbar {
             width: 100%;
             max-width: 100%;
         }
 
         .navbar-brand img {
-            width: 78px; 
-            height: 42px; 
+            width: 78px;
+            height: 42px;
         }
 
         .pagefind-ui__result-thumb {
@@ -221,7 +232,7 @@ def generate_html(categories_data, color_map):
 </head>
 <body>
 
-    <header 
+    <header
             class="d-flex flex-wrap justify-content-center py-1 mb-4 border-bottom fixed-top"
             style="background-color: rgba(255,255,255,0.95);
             box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
@@ -236,7 +247,7 @@ def generate_html(categories_data, color_map):
             <li class="nav-item d-flex align-items-center"><a href="/capa/#download" class="nav-link text-dark">Download</a></li>
         </ul>
     </header>
-    
+
     <div class="container-fluid" style="margin-top: 5rem !important;">
         <div id="search" class="my-4"></div>
 """
@@ -252,9 +263,9 @@ def generate_html(categories_data, color_map):
                 card_data = parse_rule(file_path)
                 cards_data.append(card_data)
             except Exception as e:
-                print(f"Error parsing {file_path}: {e}")
+                logger.error("parsing %s: %s", file_path, e)
 
-        for i, card in enumerate(cards_data):
+        for card in cards_data:
             first_word = get_first_word(card["namespace"])
             rectangle_color = color_map[first_word]
             file_name = card["filename"].rpartition(".yml")[0]
@@ -286,19 +297,19 @@ def generate_html(categories_data, color_map):
 
     html_content += """
     </div>
-   
+
     <script>
         window.addEventListener('DOMContentLoaded', (event) => {
-            const search = new PagefindUI({ 
-                element: "#search", 
+            const search = new PagefindUI({
+                element: "#search",
                 showSubResults: true,
                 showEmptyFilters: false,
                 excerptLength: 15,
             });
-            
+
             const params = new URLSearchParams(window.location.search);
             const q = params.get("q");
-        
+
             if (q) {
                 console.log("initial query:", q)
                 search.triggerSearch(q)
@@ -308,8 +319,7 @@ def generate_html(categories_data, color_map):
 </body>
 </html>"""
 
-    with open(output_html_path, "w") as output_file:
-        output_file.write(html_content)
+    output_html_path.write_text(html_content, encoding="utf-8")
 
 
 categories_data = read_file_paths(txt_file_path)
@@ -336,7 +346,7 @@ for file_path in all_files:
                 color_map[first_word] = new_color
                 used_colors.add(new_color)
     except Exception as e:
-        print(f"Error parsing {file_path}: {e}")
+        logger.error("parsing %s: %s", file_path, e)
 
 generate_html(categories_data, color_map)
-print(f"HTML file has been generated: {output_html_path}")
+logger.info("HTML file has been generated: %s", output_html_path)
