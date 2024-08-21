@@ -11,7 +11,7 @@
 
         <!-- example node: "basic block @ 0x401000" or "explorer.exe" -->
         <template v-else-if="node.data.type === 'match location'">
-            <span class="text-sm font-italic">{{ node.data.name }}</span>
+            <span class="text-sm font-monospace text-xs">{{ node.data.name }}</span>
         </template>
 
         <!-- example node: "- or", "- and" -->
