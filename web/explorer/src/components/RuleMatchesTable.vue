@@ -49,7 +49,7 @@
             </template>
         </Column>
 
-        <!-- Address column (only shown in static flavors)  -->
+        <!-- Address column (only shown for static flavor)  -->
         <Column
             v-if="props.data.meta.flavor === 'static'"
             field="address"
