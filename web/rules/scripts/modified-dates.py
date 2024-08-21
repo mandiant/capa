@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 start_dir = Path(sys.argv[1])
 output_file = Path(sys.argv[2])
 
+assert start_dir.exists(), "start directory must exist"
+
 
 def get_yml_files_and_dates(start_dir: Path):
     yml_files = []
