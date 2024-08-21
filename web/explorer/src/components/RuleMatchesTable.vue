@@ -49,10 +49,11 @@
             </template>
         </Column>
 
-        <!-- Address/Process column  -->
+        <!-- Address column (only shown in static flavors)  -->
         <Column
+            v-if="props.data.meta.flavor === 'static'"
             field="address"
-            :header="props.data.meta.flavor === 'dynamic' ? 'Process' : 'Address'"
+            header="Address"
             filterMatchMode="contains"
             style="width: 8.5%"
             class="cursor-default"
