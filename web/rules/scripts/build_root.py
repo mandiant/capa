@@ -11,8 +11,8 @@ See the License for the specific language governing permissions and limitations 
 import sys
 import random
 import logging
-from pathlib import Path
 from typing import Dict, List
+from pathlib import Path
 
 import capa.rules
 
