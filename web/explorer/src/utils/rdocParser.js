@@ -3,69 +3,219 @@
  * @param {Object} rules - The rules object from the rodc JSON data
  * @param {string} flavor - The flavor of the analysis (static or dynamic)
  * @param {Object} layout - The layout object from the rdoc JSON data
- * @param {number} [maxMatches=30] - Maximum number of matches to parse per rule
+ * @param {number} [maxMatches=300] - Maximum number of matches to parse per rule (used for optimized rendering in dynamic analysis)
  * @returns {Array} - Parsed tree data for the TreeTable component
  */
-export function parseRules(rules, flavor, layout, maxMatches = 30) {
-    return Object.entries(rules).map(([, rule], index) => {
-        const ruleNode = {
-            key: `${index}`,
-            data: {
-                type: "rule",
-                name: rule.meta.name,
-                lib: rule.meta.lib,
-                matchCount: rule.matches.length,
-                namespace: rule.meta.namespace,
-                mbc: rule.meta.mbc,
-                source: rule.source,
-                attack: rule.meta.attack
-            }
-        };
+export function parseRules(rules, flavor, _layout, maxMatches = 300) {
+    const layout = preprocessLayout(_layout);
+    const treeData = [];
+    let index = 0;
+
+    for (const [, rule] of Object.entries(rules)) {
+        const ruleNode = createRuleNode(rule, index, flavor);
 
         // Limit the number of matches to process
-        // Dynamic matches can have thousands of matches, only show `maxMatches` for performance reasons
-        const limitedMatches = flavor === "dynamic" ? rule.matches.slice(0, maxMatches) : rule.matches;
+        // Dynamic matches can have thousands of matches, only show `maxMatches` for rendering optimization
+        const matchesToProcess = flavor === "dynamic" ? rule.matches.slice(0, maxMatches) : rule.matches;
 
-        // Is this a static rule with a file-level scope?
-        const isFileScope = rule.meta.scopes && rule.meta.scopes.static === "file";
+        for (let matchIndex = 0; matchIndex < matchesToProcess.length; matchIndex++) {
+            const match = matchesToProcess[matchIndex];
+            const matchKey = `${index}-${matchIndex}`;
 
-        if (isFileScope) {
-            // The scope for the rule is a file, so we don't need to show the match location address
-            ruleNode.children = limitedMatches.map((match, matchIndex) => {
-                return parseNode(match[1], `${index}-${matchIndex}`, rules, rule.meta.lib, layout);
-            });
-        } else {
-            // This is not a file-level match scope, we need to create intermediate nodes for each match
-            ruleNode.children = limitedMatches.map((match, matchIndex) => {
-                const matchKey = `${index}-${matchIndex}`;
-                const matchNode = {
-                    key: matchKey,
-                    data: {
-                        type: "match location",
-                        name:
-                            flavor === "static"
-                                ? `${rule.meta.scopes.static} @ ` + formatAddress(match[0])
-                                : getProcessName(layout, match[0])
-                    },
-                    children: [parseNode(match[1], `${matchKey}`, rules, rule.meta.lib, layout)]
-                };
-                return matchNode;
-            });
+            // Check if the rule has a file-level scope
+            if (rule.meta.scopes && rule.meta.scopes.static === "file") {
+                // The scope for the rule is a file, so we don't need to show the match location address
+                ruleNode.children.push(parseNode(match[1], matchKey, rules, rule.meta.lib, layout));
+            } else {
+                // This is not a file-level match scope, we need to create an intermediate node for each match
+                const matchNode = createMatchNode(rule.meta.scopes.static, match, matchKey, flavor, layout);
+                matchNode.children.push(parseNode(match[1], matchKey, rules, rule.meta.lib, layout));
+                ruleNode.children.push(matchNode);
+            }
         }
 
-        // Finally, add a note if there are more matches than the limit (only applicable in dynamic mode)
-        if (rule.matches.length > limitedMatches.length) {
-            ruleNode.children.push({
-                key: `${index}`,
-                data: {
-                    type: "match location",
-                    name: `... and ${rule.matches.length - maxMatches} more matches`
+        // Add note for additional non-covered matches in dynamic mode
+        if (flavor === "dynamic" && rule.matches.length > maxMatches) {
+            ruleNode.children.push(createAdditionalMatchesNode(index, rule.matches.length - maxMatches));
+        }
+
+        treeData.push(ruleNode);
+        index++;
+    }
+    return treeData;
+}
+
+/**
+ * Preprocesses the layout to create efficient lookup maps
+ * @param {Object} layout - The layout object from rdoc JSON data
+ * @returns {Object} An object containing lookup maps for calls, threads, and processes
+ */
+function preprocessLayout(layout) {
+    const processMap = new Map();
+    const threadMap = new Map();
+    const callMap = new Map();
+
+    if (layout && layout.processes) {
+        for (const process of layout.processes) {
+            if (process.address && process.address.type === "process" && process.address.value) {
+                const [ppid, pid] = process.address.value;
+                processMap.set(`${ppid}-${pid}`, process);
+
+                if (process.matched_threads) {
+                    for (const thread of process.matched_threads) {
+                        if (thread.address && thread.address.type === "thread" && thread.address.value) {
+                            const [, , tid] = thread.address.value;
+                            threadMap.set(`${ppid}-${pid}-${tid}`, thread);
+
+                            if (thread.matched_calls) {
+                                for (const call of thread.matched_calls) {
+                                    if (call.address && call.address.type === "call" && call.address.value) {
+                                        const [, , , callId] = call.address.value;
+                                        callMap.set(`${ppid}-${pid}-${tid}-${callId}`, call);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+
+    return { processMap, threadMap, callMap };
+}
+// Creates a node for a rule
+function createRuleNode(rule, index) {
+    return {
+        key: `${index}`,
+        data: {
+            type: "rule",
+            name: rule.meta.name,
+            lib: rule.meta.lib,
+            matchCount: rule.matches.length,
+            namespace: rule.meta.namespace,
+            mbc: rule.meta.mbc,
+            source: rule.source,
+            attack: rule.meta.attack
+        },
+        children: []
+    };
+}
+
+// Creates a match location (e.g. basic block @ 0x1000 or explorer.exe (ppid: 1234, pid: 5678)) node
+function createMatchNode(scope, match, matchKey, flavor, layout) {
+    const [location] = match;
+    const name = flavor === "static" ? `${scope} @ ${formatAddress(location)}` : getProcessName(layout, location);
+
+    return {
+        key: matchKey,
+        data: {
+            type: "match location",
+            name: name
+        },
+        children: []
+    };
+}
+
+// Creates a note node for additional non-covered matches in dynamic mode
+function createAdditionalMatchesNode(index, additionalMatchCount) {
+    return {
+        key: `${index}`,
+        data: {
+            type: "match location",
+            name: `... and ${additionalMatchCount} more matches`
+        }
+    };
+}
+
+/**
+ * Parses a single `node` object (i.e. statement or feature) in each rule
+ * @param {Object} node - The node to parse
+ * @param {string} key - The key for this node
+ * @param {Object} rules - The full rules object
+ * @param {boolean} lib - Whether this is a library rule
+ * @returns {Object} - Parsed node data
+ **/
+
+function parseNode(node, key, rules, lib, layout) {
+    if (!node) return null;
+
+    const isNotStatement = node.node.statement && node.node.statement.type === "not";
+    const processedNode = isNotStatement ? invertNotStatementSuccess(node) : node;
+
+    if (!processedNode.success) {
+        return null;
+    }
+
+    const result = {
+        key: key,
+        data: {
+            type: processedNode.node.type, // feature or statement
+            typeValue: processedNode.node.statement?.type || processedNode.node.feature?.type,
+            success: processedNode.success,
+            name: getNodeName(processedNode),
+            lib: lib,
+            address: getNodeAddress(processedNode),
+            description: getNodeDescription(processedNode)
+        },
+        children: []
+    };
+
+    if (processedNode.children && Array.isArray(processedNode.children)) {
+        result.children = processedNode.children
+            .map((child) => parseNode(child, `${key}`, rules, lib, layout))
+            .filter((child) => child !== null);
+    }
+
+    if (processedNode.node.feature && processedNode.node.feature.type === "match") {
+        const ruleName = processedNode.node.feature.match;
+        const rule = rules[ruleName];
+        if (rule) {
+            result.data.source = rule.source;
+        }
+        result.children = [];
+    }
+
+    if (
+        processedNode.node.statement &&
+        processedNode.node.statement.type === "optional" &&
+        result.children.length === 0
+    ) {
+        return null;
+    }
+
+    if (processedNode.node.feature && processedNode.node.feature.type === "regex") {
+        result.children = processRegexCaptures(processedNode, key);
+    }
+
+    if (processedNode.node.feature && processedNode.node.feature.type === "api") {
+        const callInfo = getCallInfo(node, layout);
+        if (callInfo) {
+            result.children.push({
+                key: key,
+                data: {
+                    type: "call-info",
+                    name: callInfo
+                },
+                children: []
             });
         }
+    }
 
-        return ruleNode;
-    });
+    return result;
+}
+
+/**
+ * Get the process name using the optimized processNames Map
+ * @param {Map} layout - The layout object containing maps
+ * @param {Object} address - The address object containing process information
+ * @returns {string} The process name
+ */
+function getProcessName(layout, address) {
+    const [ppid, pid] = address.value;
+    const processKey = `${ppid}-${pid}`;
+    const process = layout.processMap.get(processKey);
+    return process.name + ` (ppid:${ppid}, pid:${pid})`;
 }
 
 /**
@@ -175,249 +325,34 @@ export function parseFunctionCapabilities(doc) {
 
 // Helper functions
 
-/**
- * Parses a single `node` object (i.e. statement or feature) in each rule
- * @param {Object} node - The node to parse
- * @param {string} key - The key for this node
- * @param {Object} rules - The full rules object
- * @param {boolean} lib - Whether this is a library rule
- * @returns {Object} - Parsed node data
- */
-function parseNode(node, key, rules, lib, layout) {
-    if (!node) return null;
-
-    const isNotStatement = node.node.statement && node.node.statement.type === "not";
-    const processedNode = isNotStatement ? invertNotStatementSuccess(node) : node;
-
-    if (!processedNode.success) {
-        return null;
-    }
-
-    const result = {
-        key: key,
-        data: {
-            type: processedNode.node.type, // statement or feature
-            typeValue: processedNode.node.statement?.type || processedNode.node.feature?.type, // e.g., number, regex, api, or, and, optional ... etc
-            success: processedNode.success,
-            name: getNodeName(processedNode),
-            lib: lib,
-            address: getNodeAddress(processedNode),
-            description: getNodeDescription(processedNode)
-        },
-        children: []
-    };
-    // Recursively parse node children (i.e., nested statements or features)
-    if (processedNode.children && Array.isArray(processedNode.children)) {
-        result.children = processedNode.children
-            .map((child) => {
-                const childNode = parseNode(child, `${key}`, rules, lib, layout);
-                return childNode;
-            })
-            .filter((child) => child !== null);
-    }
-    // If this is a match node, add the rule's source code to the result.data.source object
-    if (processedNode.node.feature && processedNode.node.feature.type === "match") {
-        const ruleName = processedNode.node.feature.match;
-        const rule = rules[ruleName];
-        if (rule) {
-            result.data.source = rule.source;
-        }
-        result.children = [];
-    }
-    // If this is an optional node, check if it has children. If not, return null (optional statement always evaluate to true)
-    // we only render them, if they have at least one child node where node.success is true.
-    if (processedNode.node.statement && processedNode.node.statement.type === "optional") {
-        if (result.children.length === 0) return null;
-    }
-
-    // regex features have captures, which we need to process and add as children
-    if (processedNode.node.feature && processedNode.node.feature.type === "regex") {
-        result.children = processRegexCaptures(processedNode, key);
-    }
-
-    // Add call information for dynamic sandbox traces when the feature is `api`
-    if (processedNode.node.feature && processedNode.node.feature.type === "api") {
-        const callInfo = getCallInfo(node, layout);
-        if (callInfo) {
-            result.children.push({
-                key: key,
-                data: {
-                    type: "call-info",
-                    name: callInfo
-                },
-                children: []
-            });
-        }
-    }
-
-    return result;
-}
-
 function getCallInfo(node, layout) {
     if (!node.locations || node.locations.length === 0) return null;
 
     const location = node.locations[0];
     if (location.type !== "call") return null;
 
-    // eslint-disable-next-line no-unused-vars
-    const [ppid, pid, tid, callId] = location.value;
-    // eslint-disable-next-line no-unused-vars
-    const callName = node.node.feature.api;
-
     const pname = getProcessName(layout, location);
     const cname = getCallName(layout, location);
-    // eslint-disable-next-line no-unused-vars
-    const [fname, separator, restWithArgs] = partition(cname, "(");
-    const [args, , returnValueWithParen] = rpartition(restWithArgs, ")");
 
-    const s = [];
-    s.push(`${fname}(`);
-    for (const arg of args.split(", ")) {
-        s.push(`  ${arg},`);
-    }
-    s.push(`)${returnValueWithParen}`);
-
-    //const callInfo = `${pname}{pid:${pid},tid:${tid},call:${callId}}\n${s.join('\n')}`;
-
-    return { processName: pname, callInfo: s.join("\n") };
+    return { processName: pname, callInfo: cname };
 }
 
 /**
- * Splits a string into three parts based on the first occurrence of a separator.
- * This function mimics Python's str.partition() method.
- *
- * @param {string} str - The input string to be partitioned.
- * @param {string} separator - The separator to use for partitioning.
- * @returns {Array<string>} An array containing three elements:
- *   1. The part of the string before the separator.
- *   2. The separator itself.
- *   3. The part of the string after the separator.
- *   If the separator is not found, returns [str, '', ''].
- *
- * @example
- * // Returns ["hello", ",", "world"]
- * partition("hello,world", ",");
- *
- * @example
- * // Returns ["hello world", "", ""]
- * partition("hello world", ":");
- */
-function partition(str, separator) {
-    const index = str.indexOf(separator);
-    if (index === -1) {
-        // Separator not found, return original string and two empty strings
-        return [str, "", ""];
-    }
-    return [str.slice(0, index), separator, str.slice(index + separator.length)];
-}
-
-/**
- * Get the process name from the layout
- * @param {Object} layout - The layout object
- * @param {Object} address - The address object containing process information
- * @returns {string} The process name
- */
-function getProcessName(layout, address) {
-    if (!layout || !layout.processes || !Array.isArray(layout.processes)) {
-        console.error("Invalid layout structure");
-        return "Unknown Process";
-    }
-
-    const [ppid, pid] = address.value;
-
-    for (const process of layout.processes) {
-        if (
-            process.address &&
-            process.address.type === "process" &&
-            process.address.value &&
-            process.address.value[0] === ppid &&
-            process.address.value[1] === pid
-        ) {
-            return process.name || "Unnamed Process";
-        }
-    }
-
-    return "Unknown Process";
-}
-
-/**
- * Splits a string into three parts based on the last occurrence of a separator.
- * This function mimics Python's str.rpartition() method.
- *
- * @param {string} str - The input string to be partitioned.
- * @param {string} separator - The separator to use for partitioning.
- * @returns {Array<string>} An array containing three elements:
- *   1. The part of the string before the last occurrence of the separator.
- *   2. The separator itself.
- *   3. The part of the string after the last occurrence of the separator.
- *   If the separator is not found, returns ['', '', str].
- *
- * @example
- * // Returns ["hello,", ",", "world"]
- * rpartition("hello,world,", ",");
- *
- * @example
- * // Returns ["", "", "hello world"]
- * rpartition("hello world", ":");
- */
-function rpartition(str, separator) {
-    const index = str.lastIndexOf(separator);
-    if (index === -1) {
-        // Separator not found, return two empty strings and the original string
-        return ["", "", str];
-    }
-    return [
-        str.slice(0, index), // Part before the last separator
-        separator, // The separator itself
-        str.slice(index + separator.length) // Part after the last separator
-    ];
-}
-
-/**
- * Get the call name from the layout
- * @param {Object} layout - The layout object
+ * Get the call name from the preprocessed layout maps
+ * @param {Object} layoutMaps - The preprocessed layout maps
  * @param {Object} address - The address object containing call information
- * @returns {string} The call name with arguments
+ * @returns {string} The call name or "Unknown Call" if not found
  */
-function getCallName(layout, address) {
-    if (!layout || !layout.processes || !Array.isArray(layout.processes)) {
-        console.error("Invalid layout structure");
+function getCallName(layoutMaps, address) {
+    if (!address || !address.value || address.value.length < 4) {
         return "Unknown Call";
     }
 
     const [ppid, pid, tid, callId] = address.value;
+    const callKey = `${ppid}-${pid}-${tid}-${callId}`;
 
-    for (const process of layout.processes) {
-        if (
-            process.address &&
-            process.address.type === "process" &&
-            process.address.value &&
-            process.address.value[0] === ppid &&
-            process.address.value[1] === pid
-        ) {
-            for (const thread of process.matched_threads) {
-                if (
-                    thread.address &&
-                    thread.address.type === "thread" &&
-                    thread.address.value &&
-                    thread.address.value[2] === tid
-                ) {
-                    for (const call of thread.matched_calls) {
-                        if (
-                            call.address &&
-                            call.address.type === "call" &&
-                            call.address.value &&
-                            call.address.value[3] === callId
-                        ) {
-                            return call.name || "Unnamed Call";
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return "Unknown Call";
+    const call = layoutMaps.callMap.get(callKey);
+    return call.name;
 }
 
 function processRegexCaptures(node, key) {
