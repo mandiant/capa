@@ -52,7 +52,7 @@
                     </Divider>
                     <div class="flex-grow-1 flex align-items-center justify-content-center">
                         <Button
-                            label="Preview Static"
+                            label="Preview Dynamic"
                             @click="router.push({ path: '/', query: { rdoc: dynamicURL } })"
                         />
                     </div>
