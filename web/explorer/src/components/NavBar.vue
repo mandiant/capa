@@ -17,10 +17,10 @@ const isBundle = import.meta.env.MODE === "bundle";
                 <a
                     v-if="!isBundle"
                     v-ripple
-                    v-tooltip.bottom="'Download capa Explorer Web for offline usage'"
-                    href="./capa-explorer-web.zip"
+                    v-tooltip.bottom="'Download capa explorer web for offline usage'"
+                    href="capa-explorer-web.zip"
                     download="capa-explorer-web.zip"
-                    aria-label="Download capa Explorer Web release"
+                    aria-label="Download capa explorer web release"
                 >
                     <i class="pi pi-download text-xl"></i>
                 </a>
