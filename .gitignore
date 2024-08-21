@@ -126,3 +126,4 @@ Pipfile.lock
 .github/binja/binaryninja
 .github/binja/download_headless.py
 .github/binja/BinaryNinja-headless.zip
+justfile

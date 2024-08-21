@@ -7,21 +7,26 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+
 import os
 import sys
+import logging
 import subprocess
+from pathlib import Path
 from datetime import datetime, timedelta
 
-start_dir = sys.argv[1]
-output_file = sys.argv[2]
+logger = logging.getLogger(__name__)
+
+start_dir = Path(sys.argv[1])
+output_file = Path(sys.argv[2])
 
 
-def get_yml_files_and_dates(start_dir):
+def get_yml_files_and_dates(start_dir: Path):
     yml_files = []
-    for root, dirs, files in os.walk(start_dir):
+    for root, _, files in os.walk(start_dir):
         for file in files:
             if file.endswith(".yml") or file.endswith(".yaml"):
-                file_path = os.path.join(root, file)
+                file_path = Path(root) / file
 
                 proc = subprocess.run(
                     [
@@ -65,7 +70,7 @@ def write_category(f, category_name, files):
     f.write("\n")
 
 
-with open(output_file, "w") as f:
+with output_file.open("wt", encoding="utf-8") as f:
     for title, delta in categories:
         current_files = []
         for file_path, last_modified_date in yml_files_and_dates:
@@ -81,4 +86,4 @@ with open(output_file, "w") as f:
     write_category(f, "older", yml_files_and_dates)
 
 
-print(f"File names and modification dates have been written to {output_file}")
+logger.info("File names and modification dates have been written to %s", output_file)

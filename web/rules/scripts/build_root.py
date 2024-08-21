@@ -12,6 +12,7 @@ import sys
 import random
 import logging
 from pathlib import Path
+from typing import Dict, List
 
 import capa.rules
 
@@ -48,7 +49,7 @@ predefined_colors = [
 
 
 def read_file_paths(txt_file_path: Path):
-    categorized_files = {
+    categorized_files: Dict[str, List[Path]] = {
         "modified in the last day": [],
         "modified in the last week": [],
         "modified in the last month": [],
@@ -75,7 +76,7 @@ def read_file_paths(txt_file_path: Path):
             parts = line.split(" ", 1)
             if len(parts) == 2:
                 file_path, last_modified_date_str = parts
-                categorized_files[current_category].append(file_path)
+                categorized_files[current_category].append(Path(file_path))
             else:
                 logger.warning("Skipping line due to unexpected format: %s", line)
 
