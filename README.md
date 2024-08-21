@@ -11,7 +11,7 @@ capa detects capabilities in executable files.
 You run it against a PE, ELF, .NET module, shellcode file, or a sandbox report and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
-To interactively inspect capa results in your browser use the [capa web explorer](https://mandiant.github.io/capa/explorer/).
+To interactively inspect capa results in your browser use the [capa explorer web](https://mandiant.github.io/capa/explorer/).
 
 If you want to inspect or write capa rules, head on over to the [capa-rules repository](https://github.com/mandiant/capa-rules). Otherwise, keep reading.
 
@@ -72,12 +72,12 @@ Download stable releases of the standalone capa binaries [here](https://github.c
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
-# web explorer
-The [capa web explorer](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
+# capa explorer web
+The [capa explorer web](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
 
-![capa web explorer screenshot](https://github.com/mandiant/capa/blob/master/doc/img/capa_web_explorer.png)
+![capa explorer web screenshot](https://github.com/mandiant/capa/blob/master/doc/img/capa_web_explorer.png)
 
-More details on the web UI is available in the [capa web explorer README](https://github.com/mandiant/capa/blob/master/web/explorer/README.md).
+More details on the web UI is available in the [capa explorer web README](https://github.com/mandiant/capa/blob/master/web/explorer/README.md).
 
 # example
 
