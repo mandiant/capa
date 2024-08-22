@@ -15,6 +15,8 @@
 
 ### Bug Fixes
 
+- fix duplicate features shown in vverbose mode @williballenthin #2323
+
 ### capa explorer IDA Pro plugin
 
 ### Development
