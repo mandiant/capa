@@ -105,7 +105,7 @@ def convert_yaml_to_html(timestamps, yaml_file: Path, output_dir: Path):
                     <li><a href="{vt_link}">search on VirusTotal</a></li>
                 </ul>
 
-                <div class="mt-4 rule-content">
+                <div class="mt-4 rule-content" data-pagefind-body>
                     {rendered_rule}
                 </div>
                 <p class="text-secondary">last edited: {timestamp}</p>
