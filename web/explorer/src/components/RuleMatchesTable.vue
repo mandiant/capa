@@ -3,7 +3,7 @@
         :value="filteredTreeData"
         v-model:expandedKeys="expandedKeys"
         size="small"
-        scrollable
+        :scrollable="true"
         :filters="filters"
         :filterMode="filterMode"
         sortField="namespace"
@@ -49,10 +49,11 @@
             </template>
         </Column>
 
-        <!-- Address/Process column  -->
+        <!-- Address column (only shown for static flavor)  -->
         <Column
+            v-if="props.data.meta.flavor === 'static'"
             field="address"
-            :header="props.data.meta.flavor === 'dynamic' ? 'Process' : 'Address'"
+            header="Address"
             filterMatchMode="contains"
             style="width: 8.5%"
             class="cursor-default"
@@ -252,7 +253,6 @@ const onRightClick = (event, instance) => {
         selectedNode.value = instance.node;
 
         // show the context menu
-        console.log(menu);
         menu.value.show(event);
     }
 };
