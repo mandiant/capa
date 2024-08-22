@@ -118,6 +118,7 @@ def generate_html(categories_data, color_map):
     <link rel="icon" href="./img/favicon.png" type="image/x-icon"> <!-- Favicon -->
     <script src="./pagefind/pagefind-ui.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="0bb8ff9e-fbcc-4ee2-9f9f-b337a2e8cc7f"></script>
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
     <style>
          body {
             background-color: #ffffff;
@@ -166,14 +167,17 @@ def generate_html(categories_data, color_map):
 
         .namespace {
             color: grey;
-            font-weight: bold;
             font-size: 13px;
         }
 
-        .rule-name {
+        .rule-name a {
             color: black;
             font-weight: bold;
             font-size: 14.5px;
+        }
+
+        .rule-name a:hover {
+            text-decoration: none;
         }
 
         .authors {
@@ -214,20 +218,6 @@ def generate_html(categories_data, color_map):
 
         a:hover {
             text-decoration: underline;
-        }
-
-        .navbar {
-            width: 100%;
-            max-width: 100%;
-        }
-
-        .navbar-brand img {
-            width: 78px;
-            height: 42px;
-        }
-
-        .pagefind-ui__result-thumb {
-            display: none;
         }
     </style>
 </head>

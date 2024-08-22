@@ -64,33 +64,14 @@ def convert_yaml_to_html(timestamps, yaml_file: Path, output_dir: Path):
         <title>{rule.name}</title>
         <link rel="icon"       href="./img/favicon.ico" type="image/x-icon">
         <link rel="stylesheet" href="./css/bootstrap-5.3.3.min.css">
-        <link rel="stylesheet" type="text/css" href="./css/styles.css">
         <script src="./js/jquery-3.5.1.slim.min.js"></script>
         <script src="./js/bootstrap-5.3.3.bundle.min.js"></script>
         <script defer src="https://cloud.umami.is/script.js" data-website-id="0bb8ff9e-fbcc-4ee2-9f9f-b337a2e8cc7f"></script>
+        <link rel="stylesheet" type="text/css" href="./css/style.css">
         <style>
-        :root {{
-            /* from the icon */
-            --capa-blue: #2593d7;
-            --capa-blue-darker: #1d74aa;
-
-            --bs-primary: var(--capa-blue);
-            --bs-primary-rgb: var(--capa-blue);
-        }}
-
-        a:not(.btn) {{
-            color: var(--capa-blue);
-            text-decoration: none;
-        }}
-
-        a:not(.btn):hover {{
-            text-decoration: underline;
-            text-decoration-color: var(--capa-blue) !important;
-        }}
-
-        .rule-content .highlight pre {{
-            overflow: visible;
-        }}
+            .rule-content .highlight pre {{
+                overflow: visible;
+            }}
         </style>
     </head>
     <body>
