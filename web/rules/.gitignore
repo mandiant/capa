@@ -1,0 +1,12 @@
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor
+.direnv/
+.env/
+.envrc
+file_modification_dates.txt
+public/*.html
+public/pagefind/
+public/index.html

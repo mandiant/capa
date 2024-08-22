@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
                 "@": fileURLToPath(new URL("src", import.meta.url)),
                 "@testfiles": fileURLToPath(new URL("../../tests/data", import.meta.url))
             }
-        }
+        },
+        assetsInclude: ["**/*.gz"]
     };
 });

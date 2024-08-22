@@ -1,4 +1,16 @@
-![capa](https://github.com/mandiant/capa/blob/master/.github/logo.png)
+<br />
+<div align="center">
+<a href="https://mandiant.github.io/capa/" target="_blank">
+  <img src="https://github.com/mandiant/capa/blob/master/.github/logo.png">
+</a>
+<p align="center">
+  <a href="https://mandiant.github.io/capa/" target="_blank">Website</a>
+  |
+  <a href="https://github.com/mandiant/capa/releases/latest" target="_blank">Download</a>
+  |
+  <a href="https://mandiant.github.io/capa/explorer/" target="_blank">Web Interface</a>
+</p>
+<div align="center">
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
 [![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
@@ -6,6 +18,11 @@
 [![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
 [![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
+
+</div>
+</div>
+
+---
 
 capa detects capabilities in executable files.
 You run it against a PE, ELF, .NET module, shellcode file, or a sandbox report and it tells you what it thinks the program can do.

@@ -9,7 +9,9 @@
 import abc
 import hashlib
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator
+from copy import copy
+from types import MethodType
+from typing import Any, Set, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
 # TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
@@ -296,6 +298,22 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
 
+def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticFeatureExtractor:
+    original_get_functions = extractor.get_functions
+
+    def filtered_get_functions(self):
+        yield from (f for f in original_get_functions() if f.address in functions)
+
+    # we make a copy of the original extractor object and then update its get_functions() method with the decorated filter one.
+    # this is in order to preserve the original extractor object's get_functions() method, in case it is used elsewhere in the code.
+    # an example where this is important is in our testfiles where we may use the same extractor object with different tests,
+    # with some of these tests needing to install a functions filter on the extractor object.
+    new_extractor = copy(extractor)
+    new_extractor.get_functions = MethodType(filtered_get_functions, extractor)  # type: ignore
+
+    return new_extractor
+
+
 @dataclass
 class ProcessHandle:
     """
@@ -465,6 +483,22 @@ class DynamicFeatureExtractor:
             Foo(1, "two", b"\x00\x11") -> -1
         """
         raise NotImplementedError()
+
+
+def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> DynamicFeatureExtractor:
+    original_get_processes = extractor.get_processes
+
+    def filtered_get_processes(self):
+        yield from (f for f in original_get_processes() if f.address.pid in processes)
+
+    # we make a copy of the original extractor object and then update its get_processes() method with the decorated filter one.
+    # this is in order to preserve the original extractor object's get_processes() method, in case it is used elsewhere in the code.
+    # an example where this is important is in our testfiles where we may use the same extractor object with different tests,
+    # with some of these tests needing to install a processes filter on the extractor object.
+    new_extractor = copy(extractor)
+    new_extractor.get_processes = MethodType(filtered_get_processes, extractor)  # type: ignore
+
+    return new_extractor
 
 
 FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]

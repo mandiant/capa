@@ -38,6 +38,7 @@ repos:
         -   "capa/"
         -   "scripts/"
         -   "tests/"
+        -   "web/rules/scripts/"
         always_run: true
         pass_filenames: false
 
@@ -55,6 +56,7 @@ repos:
         -   "capa/"
         -   "scripts/"
         -   "tests/"
+        -   "web/rules/scripts/"
         always_run: true
         pass_filenames: false
 
@@ -72,6 +74,7 @@ repos:
         -   "capa/"
         -   "scripts/"
         -   "tests/"
+        -   "web/rules/scripts/"
         always_run: true
         pass_filenames: false
 
@@ -90,6 +93,7 @@ repos:
         -   "capa/"
         -   "scripts/"
         -   "tests/"
+        -   "web/rules/scripts/"
         always_run: true
         pass_filenames: false
 
@@ -107,6 +111,7 @@ repos:
         -   "capa/"
         -   "scripts/"
         -   "tests/"
+        -   "web/rules/scripts/"
         always_run: true
         pass_filenames: false
 
