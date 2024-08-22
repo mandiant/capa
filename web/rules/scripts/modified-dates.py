@@ -39,6 +39,7 @@ def get_yml_files_and_dates(start_dir: Path):
                         file,  # just the filename, will run from the containing directory
                     ],
                     cwd=root,  # the directory with the file we're inspecting
+                    check=True,
                     capture_output=True,
                 )
 

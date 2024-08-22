@@ -264,7 +264,7 @@ def generate_html(categories_data, color_map):
                 card_data = parse_rule(file_path)
                 cards_data.append(card_data)
             except Exception as e:
-                logger.error("parsing %s: %s", file_path, e)
+                logger.error("error parsing %s: %s", file_path, e)
 
         for card in cards_data:
             first_word = get_first_word(card["namespace"])
@@ -347,7 +347,7 @@ for file_path in all_files:
                 color_map[first_word] = new_color
                 used_colors.add(new_color)
     except Exception as e:
-        logger.error("parsing %s: %s", file_path, e)
+        logger.error("error parsing %s: %s", file_path, e)
 
 generate_html(categories_data, color_map)
 logger.info("HTML file has been generated: %s", output_html_path)
