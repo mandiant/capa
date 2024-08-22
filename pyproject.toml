@@ -172,7 +172,8 @@ scripts = [
 [tool.deptry]
 extend_exclude = [
     "sigs",
-    "tests"
+    "tests",
+    "web",
 ]
 
 # dependencies marked as first party, to inform deptry that they are local
