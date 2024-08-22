@@ -6,7 +6,8 @@
 
 - add landing page https://mandiant.github.io/capa/ @williballenthin #2310
 - add rules website https://mandiant.github.io/capa/rules @DeeyaSingh #2310
-
+- add .justfile @williballenthin #2325
+ 
 ### Breaking Changes
 
 ### New Rules (0)
