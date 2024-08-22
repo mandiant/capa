@@ -12,7 +12,7 @@ cxxfilt==0.2.2
 dncil==1.0.2
 dnfile==0.15.0
 funcy==2.0
-humanize==4.9.0
+humanize==4.10.0
 ida-netnode==3.0
 ida-settings==2.1.0
 intervaltree==3.1.0
