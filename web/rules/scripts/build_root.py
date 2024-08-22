@@ -228,7 +228,7 @@ def generate_html(categories_data, color_map):
             style="background-color: rgba(255,255,255,0.95);
             box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
         >
-        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto">
+        <a href="/capa/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto">
             <img src="./img/logo.png" height=48 />
         </a>
 
