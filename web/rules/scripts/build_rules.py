@@ -147,6 +147,7 @@ for line in txt_file_path.read_text(encoding="utf-8").splitlines():
         continue
     if line.startswith("==="):
         continue
+
     path, _, timestamp = line.partition(" ")
     timestamps[path] = timestamp
 
