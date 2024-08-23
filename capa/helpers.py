@@ -260,7 +260,7 @@ def log_unsupported_os_error():
     logger.error(" Input file does not appear to target a supported OS.")
     logger.error(" ")
     logger.error(" capa currently only analyzes executables for some operating systems")
-    logger.error(" (including Windows and Linux).")
+    logger.error(" (including Windows, Linux, and Android).")
     logger.error("-" * 80)
 
 
