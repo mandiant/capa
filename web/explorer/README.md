@@ -17,6 +17,7 @@ capa explorer web is a browser-based user interface for exploring program capabi
 2. **Import capa results**:
 
     - Click on "Upload from local" to select a capa analysis document file from your computer (with a version higher than 7.0.0).
+      - You can generate the analysis document by running `capa.exe -j results.json sample.exe_`
     - Or, paste a URL to a capa JSON file and click the arrow button to load it.
         - You can also load capa results using the `rdoc` query parameter to the URL. For example: `?rdoc=https://example.com/capa-results.json` (loading JSON and gzipped JSON (.gz) files are both supported).
     - Alternatively, use the "Preview Static" or "Preview Dynamic" for sample data.
