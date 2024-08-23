@@ -12,19 +12,35 @@
                 used to search and display the rule matches in different viewing modes.
             </p>
         </div>
-        <div class="bg-blue-50 border-round p-3 text-center max-w-75rem">
-            <p class="text-900 text-sm m-0">
-                New to capa? Explore the
+        <div class="bg-blue-50 border-round p-3 pb-4 text-center max-w-75rem mt-4">
+            <p class="text-700 text-sm m-0">New to capa? Follow these quick steps to get started:</p>
+            <p class="text-700 text-sm mb-3"></p>
+            <ol class="text-left text-sm pl-4 mb-3">
+                <li class="mb-2">Install capa: <code>pip install flare-capa</code></li>
+                <li class="mb-2">Generate JSON output: <code>capa -j /path/to/file > result.json</code></li>
+                <li>Upload the JSON file here to explore the results</li>
+            </ol>
+            <p class="text-700 text-sm m-0">
+                For more detailed information, explore the
                 <a
                     href="https://github.com/mandiant/capa"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-blue-600 hover:text-blue-400"
+                    class="text-blue-600 hover:text-blue-800 transition-colors duration-200"
                 >
-                    capa GitHub repository
-                </a>
-                to learn how to generate analysis results.
+                    capa GitHub repository</a
+                >.
             </p>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* highlight inline code */
+code {
+    background-color: #e2e8f0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+</style>

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-wrap align-items-center justify-content-center gap-3">
+    <div class="flex flex-wrap align-items-center justify-content-center gap-3 mb-6">
         <div class="flex-grow-1 flex align-items-center justify-content-center">
             <FileUpload
                 mode="basic"

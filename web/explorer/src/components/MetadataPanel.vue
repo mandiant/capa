@@ -28,14 +28,14 @@
                 <span class="ml-2 mr-2 text-white-alpha-30"> • </span>
                 <span>{{ data.meta.analysis.arch === "i386" ? "i386" : data.meta.analysis.arch.toUpperCase() }}</span>
             </div>
-            <!-- Flavor • Extractor • CAPA Version • Timestamp -->
+            <!-- Flavor • Extractor • capa Version • Timestamp -->
             <div class="flex-wrap align-items-center text-sm m-0 line-height-3 text-white">
                 <span class="capitalize">
                     {{ flavor }} analysis with {{ data.meta.analysis.extractor.split(/(Feature)?Extractor/)[0] }}</span
                 >
                 <!--- Extractor (e.g., CapeExtractor -> Cape, GhidraFeatureExtractor -> Ghidra, ... etc) -->
                 <span class="mx-2 text-white-alpha-30"> • </span>
-                <span>CAPA v{{ data.meta.version }}</span>
+                <span>capa v{{ data.meta.version }}</span>
                 <span class="mx-2 text-white-alpha-30"> • </span>
                 <span>{{ new Date(data.meta.timestamp).toLocaleString() }}</span>
             </div>
