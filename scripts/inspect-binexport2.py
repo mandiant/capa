@@ -186,7 +186,7 @@ def render_operand(
     # Therefore, we expect caching to be fruitful, trading memory for CPU time.
     #
     # No caching:   6.045 s ± 0.164 s   [User: 5.916 s, System: 0.129 s]
-    # With caching: 4.259 s ±  0.161 s  [User: 4.141 s, System: 0.117 s]
+    # With caching: 4.259 s ± 0.161 s   [User: 4.141 s, System: 0.117 s]
     #
     # So we can save 30% of CPU time by caching operand rendering.
     #
