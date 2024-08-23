@@ -66,6 +66,8 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
                 self.os.add(feature.value)
             elif isinstance(feature, Arch):
                 self.arch.add(feature.value)
+            else:
+                raise ValueError("unexpected global feature: %s", feature)
 
     def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(self.analysis.base_address)
