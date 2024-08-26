@@ -620,13 +620,22 @@ def get_rules_from_cli(args) -> RuleSet:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
+    enable_cache: bool = True
     try:
         if capa.helpers.is_running_standalone() and args.is_default_rules:
             cache_dir = get_default_root() / "cache"
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir)
+        if capa.helpers.is_dev_environment():
+            # using the rules cache during development may result in unexpected errors, see #1898
+            enable_cache = capa.helpers.is_cache_newer_than_rule_code(cache_dir)
+            if not enable_cache:
+                logger.debug("not using cache. delete the cache file manually to use rule caching again")
+            else:
+                logger.debug("cache can be used, no potentially outdated cache files found")
+
+        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(

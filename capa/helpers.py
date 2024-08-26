@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
 import sys
 import gzip
 import inspect
@@ -14,6 +15,7 @@ import importlib.util
 from typing import Dict, List, Union, BinaryIO, Iterator, NoReturn
 from pathlib import Path
 from zipfile import ZipFile
+from datetime import datetime
 
 import tqdm
 import msgspec.json
@@ -309,3 +311,62 @@ def is_running_standalone() -> bool:
     # so we keep this in a common area.
     # generally, other library code should not use this function.
     return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
+
+
+def is_dev_environment() -> bool:
+    if is_running_standalone():
+        return False
+
+    if "site-packages" in __file__:
+        # running from a site-packages installation
+        return False
+
+    capa_root = Path(__file__).resolve().parent.parent
+    git_dir = capa_root / ".git"
+
+    if not git_dir.is_dir():
+        # .git directory doesn't exist
+        return False
+
+    return True
+
+
+def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
+    """
+    basic check to prevent issues if the rules cache is older than relevant rules code
+
+    args:
+      cache_dir: the cache directory containing cache files
+
+    returns:
+      True if latest cache file is newer than relevant rule cache code
+    """
+
+    # retrieve the latest modified cache file
+    cache_files = list(cache_dir.glob("*.cache"))
+    if not cache_files:
+        logger.debug("no rule cache files found")
+        return False
+
+    latest_cache_file = max(cache_files, key=os.path.getmtime)
+    cache_timestamp = os.path.getmtime(latest_cache_file)
+
+    # these are the relevant rules code files that could conflict with using an outdated cache
+    latest_rule_code_file = max([Path("capa/rules/__init__.py"), Path("capa/rules/cache.py")], key=os.path.getmtime)
+    rule_code_timestamp = os.path.getmtime(latest_rule_code_file)
+
+    if rule_code_timestamp > cache_timestamp:
+
+        def ts_to_str(ts):
+            return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+        logger.warning(
+            "latest rule code file %s (%s) is newer than the latest rule cache file %s (%s)",
+            latest_rule_code_file,
+            ts_to_str(rule_code_timestamp),
+            latest_cache_file,
+            ts_to_str(cache_timestamp),
+        )
+        return False
+
+    return True
