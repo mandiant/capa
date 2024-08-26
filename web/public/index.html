@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>capa - extract capabilities from executable files</title>
+    <link rel="canonical" href="https://mandiant.github.io/capa/">
+
+    <link href="./css/bootstrap-5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH">
+    <script src="./js/bootstrap-5.3.3.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"></script>
+
+    <link rel="stylesheet" href="./rules/pagefind/pagefind-ui.css">
+    <link rel="stylesheet" href="./rules/pagefind/pagefind-modular-ui.css">
+    <script src="./rules/pagefind/pagefind-ui.js"></script>
+
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="0bb8ff9e-fbcc-4ee2-9f9f-b337a2e8cc7f"></script>
+
+    <meta name="theme-color" content="#712cf9">
+    <link rel="icon" href="img/icon.ico" />
+
+    <style>
+      :root {
+        /* from the icon */
+        --capa-blue: #2593d7;
+        --capa-blue-darker: #1d74aa;
+
+        --bs-primary: var(--capa-blue);
+        --bs-primary-rgb: var(--capa-blue);
+      }
+
+      a:not(.btn) {
+        color: var(--capa-blue);
+        text-decoration: none;
+      }
+
+      a:not(.btn):hover {
+        text-decoration: underline;
+      }
+
+      .btn-primary {
+        --bs-btn-bg: var(--capa-blue);
+        --bs-btn-border-color: var(--capa-blue);
+      }
+
+      .btn:hover {
+        background-color: var(--capa-blue-darker);
+        border-color: var(--capa-blue-darker);
+      }
+
+      .text-justify {
+        text-align: justify;
+      }
+
+      body {
+        overflow-x: clip;
+      }
+
+      /* a link that looks like inline text, until you hover and see a colorful underline */
+      .understated-link {
+        color: var(--bs-body-color) !important;
+        text-decoration: none;
+        text-decoration-color: var(--capa-blue);
+      }
+
+      .understated-link:hover {
+        text-decoration: underline;
+        text-decoration-color: var(--capa-blue) !important;
+      }
+
+      .b-divider {
+        width: 100%;
+        height: 3rem;
+        background-color: rgba(0, 0, 0, .1);
+        border: solid rgba(0, 0, 0, .15);
+        border-width: 1px 0;
+        box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+      }
+    </style>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="0bb8ff9e-fbcc-4ee2-9f9f-b337a2e8cc7f"></script>
+  </head>
+  <body>
+    
+<main>
+  <header 
+      class="d-flex flex-wrap justify-content-center py-1 mb-4 border-bottom fixed-top"
+      style="background-color: rgba(255,255,255,0.95);
+             box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05),inset 0 -1px 0 rgba(0,0,0,0.15);"
+      >
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto">
+      <img src="./img/logo.png" height=48 />
+    </a>
+
+    <ul class="nav nav-pills">
+      <li class="nav-item d-flex align-items-center"><a href="#rules"    class="nav-link text-dark">Rules</a></li>
+      <!-- TODO(williballenthin): create this section (currently doesn't exist and URL doesn't go anywhere) -->
+      <li class="nav-item d-flex align-items-center"><a href="#examples" class="nav-link text-dark">Examples</a></li>
+      <li class="nav-item d-flex align-items-center"><a href="#download" class="nav-link text-dark">Download</a></li>
+    </ul>
+  </header>
+
+  <div class="container my-5 mt-3" style="margin-top: 4rem !important;">
+    <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center">
+      <div class="col-lg-7 p-3 p-lg-5 pt-lg-3">
+        <h1 class="display-4 fw-bold lh-1 text-body-emphasis">
+          Extract capabilities from executable files
+        </h1>
+        <p class="lead text-justify">
+          capa is the FLARE team's 
+            <a href="https://github.com/mandiant/capa" class="understated-link">free and open-source tool</a>
+            to identify capabilities in executable files.
+
+          <!-- TODO(williballenthin): add links to each one of these use cases -->
+          Triage unknown files, guide reverse engineering, and hunt across a corpus for novel malware.
+          Refer to capa's rule set as an encyclopedia of techniques used in real-world attacks, 
+            pivoting across <a href="https://attack.mitre.org/" class="understated-link">MITRE ATT&CK</a>
+            and <a href="https://github.com/MBCProject/mbc-markdown" class="understated-link">Malware Behavior Catalog (MBC)</a>
+            references.
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4 mb-lg-3">
+          <a href="#download" type="button" class="btn btn-primary bs-primary btn-lg px-4 me-md-2 fw-bold">Download</button>
+          <a href="./rules/"  type="button" class="btn btn-outline-secondary btn-lg px-4">Browse Rules</a>
+        </div>
+      </div>
+      <div class="col-lg-4 offset-lg-1 p-0">
+          <img 
+            class="rounded-lg-3 shadow-lg" 
+            style="border: 4px solid #f8f9fb;"
+            src="./img/capa-default-pma0101.png"
+            alt="default capa output" 
+            width="720">
+      </div>
+    </div>
+  </div>
+
+  <div class="b-divider"></div>
+
+  <div id="rules" class="px-4 mt-5 text-center border-bottom">
+    <h1 class="display-4 fw-bold text-body-emphasis">Rules Crafted by Experts</h1>
+    <div class="col-lg-6 mx-auto text-start">
+      <p class="lead mb-4 text-justify">
+        capa recognizes behaviors by matching rules crafted by expert reverse engineers.
+      <p class="mb-4 text-justify">
+        Rules describe logical combinations of features familiar to human analysts.
+        Things like: 
+      </p>
+      <ul class="my-0 py-0 mx-3">
+        <li>API calls, like <code>CreateRemoteThread</code>,</li>
+        <li>integer constants, like <code>0x100000001b3 = FNV prime</code>,</li>
+        <li>string references, like <code>"ZIG_DEBUG_COLOR"</code>.</li>
+      </ul>
+      <p class="my-4 text-justify">
+        capa looks for these features within instructions, basic blocks, and functions, having already disassembled the input file.
+        In contrast to YARA, which primarily searches for sequences of bytes, capa rules describe features at the code-level. 
+      </p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-4">
+        <a href="./rules/" type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Browse Rules</a>
+        <a href="https://github.com/mandiant/capa-rules/blob/master/doc/format.md" type="button" class="btn btn-outline-secondary btn-lg px-4">Learn the Syntax</a>
+      </div>
+
+      <div id="search" class="mb-4"></div>
+
+    </div>
+    <div class="overflow-hidden" style="max-height: 38vh;">
+      <div class="container px-5">
+        <img 
+          src="./img/capa-rule-create-socket.png" 
+          class="img-fluid border shadow-lg mb-4" 
+          alt="capa rule source" 
+          width="700" 
+          height="500" 
+          loading="lazy" 
+          />
+      </div>
+    </div>
+  </div>
+
+  <!-- TODO(williballenthin): need section for examples -->
+  <!-- such as: -->
+  <!--   - default output -->
+  <!--   - verbose output -->
+  <!--   - capa Explorer IDA Plugin -->
+  <!--   - capa Explorer Ghidra Plugin -->
+  <!--   - capa Explorer web application -->
+  <!--   - JSON output -->
+  <!--   - VT integration -->
+  <!-- we'll want screenshots and/or styled text inline -->
+  <!-- maybe also a bunch (all) of result documents from PMA or testfiles that people can browse -->
+
+  <div class="b-divider"></div>
+
+  <!-- TODO(williballenthin): auto-generate this section from release notes and git history -->
+  <div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5">
+      <h1>What's New</h1>
+
+      <h3 class="mt-3">Rule Updates</h3>
+
+      <ul class="mt-2 ps-5">
+        <!-- TODO(williballenthin): add date -->
+        <li>
+          added:
+          <a href="./rules/overwrite-dll-text-section-to-remove-hooks.html">
+            overwrite DLL .text section to remove hooks
+          </a>
+        </li>
+
+        <li>
+          added:
+          <a href="./rules/attach-bpf-to-socket-on-linux.html">
+            attach BPF to socket on Linux
+          </a>
+        </li>
+      </ul>
+
+      <h3 class="mt-3">Tool Updates</h3>
+
+      <h5 class="mt-2">v7.2.0</h5>
+      <!-- TODO(williballenthin): add date -->
+      <p class="mt-0">
+        <a href="https://github.com/mandiant/capa/releases/tag/v7.2.0">capa v7.2.0</a>
+        introduces a first version of capa explorer web: a web-based user interface to inspect capa results using your browser.
+        capa explorer web was worked on by @s-ff as part of a GSoC project, and it is available at https://mandiant.github.io/capa/explorer/.
+        This release also adds a feature extractor for output from the DRAKVUF sandbox. Now, analysts can pass the resulting drakmon.log file to capa and extract capabilities from the artifacts captured by the sandbox. 
+      </p>
+
+      <p class="mt-0">New  features:</p>
+      <ul class="mt-0 ps-5">
+        <li>webui: explore capa analysis results in a web-based UI online and offline</li>
+        <li>support analyzing DRAKVUF traces</li>
+        <li>IDA extractor: extract names from dynamically resolved APIs stored in renamed global variables</li>
+        <li>cli: add the ability to select which specific functions or processes to analyze</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="b-divider"></div>
+
+  <!-- TODO(williballenthin): this whole section's text is terrible, aside from the headers maybe -->
+  <div class="container px-4 py-5">
+    <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5">
+      <div class="col d-flex flex-column align-items-start gap-2">
+        <h2 class="fw-bold text-body-emphasis">
+          Integrates with Popular Reverse Engineering Tools
+        </h2>
+        <p class="text-body-secondary">
+          <!-- TODO(williballenthin): add links for each of these tools -->
+          capa uses the results of static or dynamic analysis to find the capabilities of programs.
+          The tool can rely on many different analysis backends, including IDA, Ghidra, Binary Ninja, CAPE, DRAKVUF, and VMRay.
+          The capa Explorer plugins provide interfaces for understanding the behaviors in programs, directly within reverse engineering tools.
+        </p>
+      </div>
+
+      <div class="col">
+        <div class="row row-cols-1 row-cols-sm-2 g-4">
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              IDA Pro
+            </h4>
+            <p class="text-body-secondary">
+              <!-- TODO(williballenthin): add link to find out more -->
+              Use the capa Explorer IDA Plugin to guide your reverse engineering, zeroing in on the interesting functions by behavior.
+            </p>
+          </div>
+
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              Ghidra
+            </h4>
+            <p class="text-body-secondary">
+              <!-- TODO(williballenthin): add link to find out more -->
+              Invoke Ghidra in headless mode to collect features for capa, or use the capa Explorer Ghidra plugin to understand key functions.
+            </p>
+          </div>
+
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              Binary Ninja
+            </h4>
+            <p class="text-body-secondary">
+              <!-- TODO(williballenthin): add link to find out more -->
+              Use Binary Ninja as the disassembler backend, relying on its state-of-the-art code analysis to recover capabilities.
+            </p>
+          </div>
+
+          <div class="col d-flex flex-column gap-2">
+            <h4 class="fw-semibold mb-0 text-body-emphasis">
+              CAPE
+            </h4>
+            <p class="text-body-secondary">
+              <!-- TODO(williballenthin): add link to find out more -->
+              Analyze the API trace captured by CAPE as it detonates malware, summarizing the behaviors seen across thousands of function calls.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODO(williballenthin): need section on the capa Explorer web application -->
+
+  <div class="b-divider"></div>
+
+  <div id="download" class="px-4 pt-5 text-center border-bottom">
+    <h1 class="display-4 fw-bold text-body-emphasis">
+      Download capa
+    </h1>
+    <div class="col-lg-8 mx-auto">
+      <p class="lead">
+        We distribute capa as a standalone executable and as a Python library.
+      </p>
+
+      <div class="row flex-lg-row align-items-center g-5 py-2 text-start">
+        <div class="col-10 col-sm-8 col-lg-6">
+
+          <p class="mb-4 text-justify">
+            The standalone executable comes ready-to-go with 890+ embedded rules. 
+            Use this when analyzing files from the terminal on Windows, Linux, and macOS. 
+            There's a <a href="https://github.com/mandiant/capa/raw/master/doc/capa_quickstart.pdf">quickstart guide here</a> (PDF).
+          </p>
+
+          <p class="text-center">
+            <a href="https://github.com/mandiant/capa/releases/latest/" type="button" class="btn btn-primary me-md-2 mb-3 fw-bold">
+              Download standalone
+            </a>
+          </p>
+
+          <p class="text-justify">
+            capa is already included with malware analysis distributions like 
+            <a href="https://github.com/mandiant/flare-vm" class="understated-link">FLARE-VM</a>
+            and <a href="https://remnux.org/" class="understated-link">REmnux</a>.
+          </p>
+
+        </div>
+        <div class="col-lg-6">
+
+          <p class="text-justify">
+            The Python library makes it easy to integrate capa into other projects, 
+              like our plugins for IDA Pro and Ghidra.
+              Follow the <a href="https://github.com/mandiant/capa/blob/master/doc/installation.md">
+                instructions here
+              </a>, 
+              which starts with installation it from PyPI like this:
+          </p>
+
+          <pre class="py-3 text-center" style="border: 2px solid #eeeeee;"><code>pip install flare-capa</code></pre>
+
+          <p class="text-justify">
+            <a href="https://github.com/mandiant/capa/blob/master/scripts/bulk-process.py">Here's an example</a>
+             of using capa as a library to process many files in parallel.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-dark text-secondary px-4 pt-5 text-center">
+    <div class="py-5">
+      <img src="./img/icon.png" />
+      <h3 class="display-5 fw-bold text-white">
+        capa
+      </h3>
+
+      <div class="col-lg-6 mx-auto">
+        <p class="fs-5 my-4">
+          The FLARE team's open-source tool to identify capabilities in executable files.
+        </p>
+
+        <div class="d-grid gap-4 d-sm-flex justify-content-sm-center mb-4">
+          <div><a href="#rules"    class="fw-bold text-white text-decoration-none">Rules</a></div>
+          <div><a href="#examples" class="fw-bold text-white text-decoration-none">Examples</a></div>
+          <div><a href="#download" class="fw-bold text-white text-decoration-none">Download</a></div>
+        </div>
+
+        <p>
+          Copyright © 2024 Mandiant, Inc. All Rights Reserved. <br />
+          Licensed under the Apache License, Version 2.0.
+        </p>
+      </div>
+    </div>
+  </div>
+ </main>
+
+<script>
+    window.addEventListener('DOMContentLoaded', (event) => {
+        new PagefindUI({ 
+            element: "#search", 
+            showSubResults: true,
+            showEmptyFilters: false,
+            excerptLength: 15,
+            translations: {
+              placeholder: "Search rules",
+            },
+        });
+    });
+</script>
+
+    </body>
+</html>

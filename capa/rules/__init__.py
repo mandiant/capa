@@ -11,7 +11,6 @@ import os
 import re
 import copy
 import uuid
-import codecs
 import logging
 import binascii
 import collections
@@ -456,7 +455,7 @@ DESCRIPTION_SEPARATOR = " = "
 
 def parse_bytes(s: str) -> bytes:
     try:
-        b = codecs.decode(s.replace(" ", "").encode("ascii"), "hex")
+        b = bytes.fromhex(s.replace(" ", ""))
     except binascii.Error:
         raise InvalidRule(f'unexpected bytes value: must be a valid hex sequence: "{s}"')
 
@@ -576,6 +575,15 @@ def trim_dll_part(api: str) -> str:
     return api
 
 
+def unique(sequence):
+    """deduplicate the items in the given sequence, returning a list with the same order.
+
+    via: https://stackoverflow.com/a/58666031
+    """
+    seen = set()
+    return [x for x in sequence if not (x in seen or seen.add(x))]  # type: ignore [func-returns-value]
+
+
 def build_statements(d, scopes: Scopes):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
@@ -583,21 +591,21 @@ def build_statements(d, scopes: Scopes):
     key = list(d.keys())[0]
     description = pop_statement_description_entry(d[key])
     if key == "and":
-        return ceng.And([build_statements(dd, scopes) for dd in d[key]], description=description)
+        return ceng.And(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
     elif key == "or":
-        return ceng.Or([build_statements(dd, scopes) for dd in d[key]], description=description)
+        return ceng.Or(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
         return ceng.Not(build_statements(d[key][0], scopes), description=description)
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return ceng.Some(count, [build_statements(dd, scopes) for dd in d[key]], description=description)
+        return ceng.Some(count, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return ceng.Some(0, [build_statements(dd, scopes) for dd in d[key]], description=description)
+        return ceng.Some(0, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
 
     elif key == "process":
         if Scope.FILE not in scopes:
@@ -673,7 +681,7 @@ def build_statements(d, scopes: Scopes):
             #       - arch: i386
             #       - mnemonic: cmp
             #
-            statements = ceng.And([build_statements(dd, Scopes(static=Scope.INSTRUCTION)) for dd in d[key]])
+            statements = ceng.And(unique(build_statements(dd, Scopes(static=Scope.INSTRUCTION)) for dd in d[key]))
 
         return ceng.Subscope(Scope.INSTRUCTION, statements, description=description)
 
@@ -1918,7 +1926,6 @@ class RuleSet:
         # This strategy is described here:
         # https://github.com/mandiant/capa/issues/2129
         if feature_index.string_rules:
-
             # This is a FeatureSet that contains only String features.
             # Since we'll only be evaluating String/Regex features below, we don't care about
             # other sorts of features (Mnemonic, Number, etc.) and therefore can save some time
