@@ -351,5 +351,4 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
         )
         return False
 
-    logger.debug("no potentially outdated cache files found, cache can be used")
     return True

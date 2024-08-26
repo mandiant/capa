@@ -624,6 +624,8 @@ def get_rules_from_cli(args) -> RuleSet:
             enable_cache = capa.helpers.is_cache_newer_than_rule_code(cache_dir)
             if not enable_cache:
                 logger.debug("not using cache. delete the cache file manually to use rule caching again")
+            else:
+                logger.debug("cache can be used, no potentially outdated cache files found")
 
         rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
