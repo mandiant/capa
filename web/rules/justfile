@@ -1,0 +1,30 @@
+
+modified-dates:
+    python scripts/modified-dates.py ../../rules/ ./file_modification_dates.txt
+
+
+build-rules:
+    mkdir -p ./public/rules/
+    python scripts/build_rules.py ../../rules/ ./file_modification_dates.txt ./public/
+
+
+build-root:
+    python scripts/build_root.py ../../rules/ ./file_modification_dates.txt ./public/
+
+
+index-website: build-rules build-root
+    pagefind --site "public"
+
+
+build: modified-dates build-rules build-root index-website
+
+
+clean:
+    rm -f  file_modification_dates.txt
+    rm -f  public/index.html
+    rm -rf public/*.html
+    rm -rf public/pagefind
+
+
+serve:
+    python -m http.server --b localhost --directory ./public

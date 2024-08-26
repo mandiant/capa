@@ -84,8 +84,7 @@ def main() -> int:
     args = _parse_args()
 
     try:
-        with Path(args.capa_output).open() as capa_output:
-            json_data = json.load(capa_output)
+        json_data = json.loads(Path(args.capa_output).read_text(encoding="utf-8"))
     except ValueError:
         logger.error("Input data was not valid JSON, input should be a capa json output file.")
         return -1

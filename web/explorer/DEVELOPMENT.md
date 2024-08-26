@@ -1,6 +1,6 @@
-# Development Guide for Capa Explorer Web
+# Development Guide for capa explorer web
 
-This guide will help you set up the Capa Explorer Web project for local development.
+This guide will help you set up the capa explorer web project for local development.
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ Before you begin, ensure you have the following installed:
     npm run dev
     ```
 
-    This will start the Vite development server. The application should now be running at `http://localhost:<port>`
+    This will start the Vite development server. The application should now be running at `http://localhost:<port>`.
 
 ## Project Structure
 
@@ -80,7 +80,7 @@ Or, you can build a standalone bundle application that can be used offline:
 npm run build:bundle
 ```
 
-This will generate an offline HTML bundle file in the `dist/` directory.
+This will generate an offline HTML bundle file in the `capa-explorer-web/` directory.
 
 ## Testing
 
@@ -98,12 +98,13 @@ We use ESLint for linting and Prettier for code formatting. Run the linter with:
 
 ```
 npm run lint
+npm run format:check
 npm run format
 ```
 
 ## Working with PrimeVue Components
 
-Capa Explorer Web uses the PrimeVue UI component library. When adding new features or modifying existing ones, refer to the [PrimeVue documentation](https://primevue.org/vite) for available components and their usage.
+capa explorer web uses the PrimeVue UI component library. When adding new features or modifying existing ones, refer to the [PrimeVue documentation](https://primevue.org/vite) for available components and their usage.
 
 ## Best Practices
 

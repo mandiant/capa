@@ -1,0 +1,22 @@
+.pagefind-ui__result-thumb {
+    display: none;
+}
+
+:root {
+    /* from the icon */
+    --capa-blue: #2593d7;
+    --capa-blue-darker: #1d74aa;
+
+    --bs-primary: var(--capa-blue);
+    --bs-primary-rgb: var(--capa-blue);
+}
+
+a:not(.btn) {
+    color: var(--capa-blue);
+    text-decoration: none;
+}
+
+a:not(.btn):hover {
+    text-decoration: underline;
+    text-decoration-color: var(--capa-blue) !important;
+}

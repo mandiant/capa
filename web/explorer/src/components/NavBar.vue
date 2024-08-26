@@ -1,6 +1,8 @@
 <script setup>
 import Menubar from "primevue/menubar";
 import { RouterLink } from "vue-router";
+
+const isBundle = import.meta.env.MODE === "bundle";
 </script>
 
 <template>
@@ -13,11 +15,12 @@ import { RouterLink } from "vue-router";
         <template #end>
             <div class="flex align-items-center gap-3">
                 <a
+                    v-if="!isBundle"
                     v-ripple
-                    v-tooltip.right="'Download capa Explorer Web for offline usage'"
-                    href="./capa-explorer-web.zip"
+                    v-tooltip.bottom="'Download capa explorer web for offline usage'"
+                    href="capa-explorer-web.zip"
                     download="capa-explorer-web.zip"
-                    aria-label="Download capa Explorer Web release"
+                    aria-label="Download capa explorer web release"
                 >
                     <i class="pi pi-download text-xl"></i>
                 </a>

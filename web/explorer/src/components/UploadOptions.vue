@@ -1,73 +1,75 @@
 <template>
-    <Card>
-        <template #content>
-            <div class="flex flex-wrap align-items-center justify-content-center gap-3">
-                <div class="flex-grow-1 flex align-items-center justify-content-center">
-                    <FileUpload
-                        mode="basic"
-                        name="model[]"
-                        accept=".json,.gz"
-                        :max-file-size="10000000"
-                        :auto="true"
-                        :custom-upload="true"
-                        choose-label="Upload from local"
-                        @uploader="$emit('load-from-local', $event)"
-                    />
-                </div>
+    <div class="flex flex-wrap align-items-center justify-content-center gap-3 mb-6">
+        <div class="flex-grow-1 flex align-items-center justify-content-center">
+            <FileUpload
+                mode="basic"
+                name="model[]"
+                accept=".json,.gz"
+                :max-file-size="10000000"
+                :auto="true"
+                :custom-upload="true"
+                choose-label="Upload from local"
+                @uploader="$emit('load-from-local', $event)"
+            />
+        </div>
 
-                <Divider layout="vertical" class="hidden-mobile">
-                    <b>OR</b>
-                </Divider>
-                <Divider layout="horizontal" class="visible-mobile" align="center">
-                    <b>OR</b>
-                </Divider>
+        <div class="hidden-mobile">
+            <b>OR</b>
+        </div>
+        <Divider layout="horizontal" class="visible-mobile" align="center">
+            <b>OR</b>
+        </Divider>
+        <div class="flex-grow-1 flex align-items-center justify-content-center gap-2">
+            <FloatLabel>
+                <InputText id="url" type="text" v-model="loadURL" />
+                <label for="url">Load from URL</label>
+            </FloatLabel>
+            <Button icon="pi pi-arrow-right" @click="$emit('load-from-url', loadURL)" :disabled="!loadURL" />
+        </div>
+        <template v-if="!isBundle">
+            <div class="hidden-mobile">
+                <b>OR</b>
+            </div>
+            <Divider layout="horizontal" class="visible-mobile" align="center">
+                <b>OR</b>
+            </Divider>
+            <div class="flex-grow-1 flex align-items-center justify-content-center">
+                <Button label="Preview Static" @click="router.push({ path: '/', query: { rdoc: staticURL } })" />
+            </div>
 
-                <div class="flex-grow-1 flex align-items-center justify-content-center gap-2">
-                    <FloatLabel>
-                        <InputText id="url" type="text" v-model="loadURL" />
-                        <label for="url">Load from URL</label>
-                    </FloatLabel>
-                    <Button icon="pi pi-arrow-right" @click="$emit('load-from-url', loadURL)" :disabled="!loadURL" />
-                </div>
+            <div class="hidden-mobile">
+                <b>OR</b>
+            </div>
+            <Divider layout="horizontal" class="visible-mobile" align="center">
+                <b>OR</b>
+            </Divider>
 
-                <Divider layout="vertical" class="hidden-mobile">
-                    <b>OR</b>
-                </Divider>
-                <Divider layout="horizontal" class="visible-mobile" align="center">
-                    <b>OR</b>
-                </Divider>
-
-                <div class="flex-grow-1 flex align-items-center justify-content-center">
-                    <Button label="Preview Static" @click="$emit('load-demo-static')" class="p-button" />
-                </div>
-
-                <Divider layout="vertical" class="hidden-mobile">
-                    <b>OR</b>
-                </Divider>
-                <Divider layout="horizontal" class="visible-mobile" align="center">
-                    <b>OR</b>
-                </Divider>
-
-                <div class="flex-grow-1 flex align-items-center justify-content-center">
-                    <Button label="Preview Dynamic" @click="$emit('load-demo-dynamic')" class="p-button" />
-                </div>
+            <div class="flex-grow-1 flex align-items-center justify-content-center">
+                <Button label="Preview Dynamic" @click="router.push({ path: '/', query: { rdoc: dynamicURL } })" />
             </div>
         </template>
-    </Card>
+    </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import Card from "primevue/card";
 import FileUpload from "primevue/fileupload";
 import Divider from "primevue/divider";
 import FloatLabel from "primevue/floatlabel";
 import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 
-const loadURL = ref("");
+import { useRouter } from "vue-router";
+const router = useRouter();
 
-defineEmits(["load-from-local", "load-from-url", "load-demo-static", "load-demo-dynamic"]);
+const loadURL = ref("");
+const isBundle = import.meta.env.MODE === "bundle";
+
+defineEmits(["load-from-local", "load-from-url"]);
+
+const dynamicURL =
+    "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz";
+const staticURL = "https://raw.githubusercontent.com/mandiant/capa-testfiles/master/rd/al-khaser_x64.exe_.json";
 </script>
 
 <style scoped>

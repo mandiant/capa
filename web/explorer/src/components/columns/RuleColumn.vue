@@ -11,7 +11,7 @@
 
         <!-- example node: "basic block @ 0x401000" or "explorer.exe" -->
         <template v-else-if="node.data.type === 'match location'">
-            <span class="text-sm font-italic">{{ node.data.name }}</span>
+            <span class="text-sm font-monospace text-xs">{{ node.data.name }}</span>
         </template>
 
         <!-- example node: "- or", "- and" -->
@@ -31,7 +31,15 @@
         <template v-else-if="node.data.type === 'feature'">
             <span>
                 - {{ node.data.typeValue }}:
-                <span :class="{ 'text-green-700': node.data.typeValue !== 'regex' }" class="font-monospace">
+                <span
+                    :class="{ 'text-green-700': node.data.typeValue !== 'regex' }"
+                    class="font-monospace"
+                    v-tooltip.top="{
+                        value: getTooltipContent(node.data),
+                        showDelay: 1000,
+                        hideDelay: 300
+                    }"
+                >
                     {{ node.data.name }}
                 </span>
             </span>
@@ -44,7 +52,7 @@
 
         <!-- example node: "exit(0) -> 0" (if the node type is call-info, we highlight node.data.name.callInfo) -->
         <template v-else-if="node.data.type === 'call-info'">
-            <highlightjs lang="c" :code="node.data.name.callInfo" />
+            <highlightjs lang="c" :code="node.data.name.callInfo" class="text-xs" />
         </template>
 
         <!-- example node: " = IMAGE_NT_SIGNATURE (PE)" -->
@@ -63,4 +71,12 @@ defineProps({
         required: true
     }
 });
+
+const getTooltipContent = (data) => {
+    if (data.typeValue === "number" || data.typeValue === "offset") {
+        const decimalValue = parseInt(data.name, 16);
+        return `Decimal: ${decimalValue}`;
+    }
+    return null;
+};
 </script>
