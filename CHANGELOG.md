@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- regenerate ruleset cache automatically on source change (only in dev mode) #2133 @s-ff
 
 - add landing page https://mandiant.github.io/capa/ @williballenthin #2310
 - add rules website https://mandiant.github.io/capa/rules @DeeyaSingh #2310
