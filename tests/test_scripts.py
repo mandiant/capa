@@ -65,7 +65,7 @@ def get_rule_path():
         pytest.param("show-features.py", ["-F", "0x407970", get_binary_file_path()]),
         pytest.param("show-features.py", ["-P", "MicrosoftEdgeUpdate.exe", get_report_file_path()]),
         pytest.param("show-unused-features.py", [get_binary_file_path()]),
-        pytest.param("capa_as_library.py", [get_binary_file_path()]),
+        pytest.param("capa-as-library.py", [get_binary_file_path()]),
     ],
 )
 def test_scripts(script, args):
