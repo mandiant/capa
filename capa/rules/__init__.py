@@ -2137,7 +2137,7 @@ def get_rules(
       rule_paths: list of paths to rules files or directories containing rules files
       cache_dir: directory to use for caching rules, or will use the default detected cache directory if None
       on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
-      enable_cache: enable loading of a cached ruleset
+      enable_cache: enable loading of a cached ruleset (default: True)
     """
     if cache_dir is None:
         cache_dir = capa.rules.cache.get_default_cache_directory()

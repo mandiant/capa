@@ -343,13 +343,12 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
             return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
 
         logger.warning(
-            "not using cache: latest rule code file %s (%s) is newer than the latest rule cache file %s (%s)",
+            "latest rule code file %s (%s) is newer than the latest rule cache file %s (%s)",
             latest_rule_code_file,
             ts_to_str(rule_code_timestamp),
             latest_cache_file,
             ts_to_str(cache_timestamp),
         )
-        logger.debug("delete the cache file manually to use rule caching again")
         return False
 
     logger.debug("no potentially outdated cache files found, cache can be used")
