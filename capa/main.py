@@ -860,6 +860,9 @@ def main(argv: Optional[List[str]] = None):
         You can see the rule set here:
           https://github.com/mandiant/capa-rules
 
+        You can load capa JSON output to capa explorer web:
+          https://github.com/mandiant/capa/explorer
+
         To provide your own rule set, use the `-r` flag:
           capa  --rules /path/to/rules  suspicious.exe
           capa  -r      /path/to/rules  suspicious.exe
