@@ -5,10 +5,12 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import io
 import textwrap
 from unittest.mock import Mock
 
 import fixtures
+import rich.console
 
 import capa.rules
 import capa.render.utils
@@ -151,9 +153,10 @@ def test_render_meta_maec():
     mock_rd.rules = {"test rule": rm}
 
     # capture the output of render_maec
-    output_stream = capa.render.utils.StringIO()
-    capa.render.default.render_maec(mock_rd, output_stream)
-    output = output_stream.getvalue()
+    f = io.StringIO()
+    console = rich.console.Console(file=f)
+    capa.render.default.render_maec(mock_rd, console)
+    output = f.getvalue()
 
     assert "analysis-conclusion" in output
     assert analysis_conclusion in output

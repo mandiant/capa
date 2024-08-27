@@ -6,11 +6,11 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 
 ### New Features
 - regenerate ruleset cache automatically on source change (only in dev mode) #2133 @s-ff
-
 - add landing page https://mandiant.github.io/capa/ @williballenthin #2310
 - add rules website https://mandiant.github.io/capa/rules @DeeyaSingh #2310
 - add .justfile @williballenthin #2325
 - dynamic: add support for VMRay dynamic sandbox traces #2208 @mike-hunhoff @r-sm2024 @mr-tz
+- cli: use modern terminal features to hyperlink to the rules website #2337 @williballenthin
  
 ### Breaking Changes
 
