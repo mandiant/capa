@@ -13,6 +13,7 @@ from pathlib import Path
 
 import idc
 import idaapi
+import ida_ida
 import idautils
 import ida_bytes
 import ida_loader
@@ -52,17 +53,16 @@ def inform_user_ida_ui(message):
 
 def is_supported_ida_version():
     version = float(idaapi.get_kernel_version())
-    if version < 7.4 or version >= 9:
+    if version < 7.4 or version >= 10:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 9.0.", version)
+        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.", version)
         return False
     return True
 
 
 def is_supported_file_type():
-    file_info = idaapi.get_inf_structure()
-    if file_info.filetype not in SUPPORTED_FILE_TYPES:
+    if ida_ida.inf_get_filetype() not in SUPPORTED_FILE_TYPES:
         logger.error("-" * 80)
         logger.error(" Input file does not appear to be a supported file type.")
         logger.error(" ")
@@ -76,8 +76,9 @@ def is_supported_file_type():
 
 
 def is_supported_arch_type():
-    file_info = idaapi.get_inf_structure()
-    if file_info.procname not in SUPPORTED_ARCH_TYPES or not any((file_info.is_32bit(), file_info.is_64bit())):
+    if idc.get_processor_name() not in SUPPORTED_ARCH_TYPES or not any(
+        (idaapi.inf_is_32bit_exactly(), idaapi.inf_is_64bit())
+    ):
         logger.error("-" * 80)
         logger.error(" Input file does not appear to target a supported architecture.")
         logger.error(" ")
@@ -125,10 +126,10 @@ def collect_metadata(rules: List[Path]):
     md5 = get_file_md5()
     sha256 = get_file_sha256()
 
-    info: idaapi.idainfo = idaapi.get_inf_structure()
-    if info.procname == "metapc" and info.is_64bit():
+    procname = idc.get_processor_name()
+    if procname == "metapc" and idaapi.inf_is_64bit():
         arch = "x86_64"
-    elif info.procname == "metapc" and info.is_32bit():
+    elif procname == "metapc" and idaapi.inf_is_32bit_exactly():
         arch = "x86"
     else:
         arch = "unknown arch"

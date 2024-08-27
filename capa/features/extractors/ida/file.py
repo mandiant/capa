@@ -11,6 +11,7 @@ from typing import Tuple, Iterator
 
 import idc
 import idaapi
+import ida_ida
 import idautils
 import ida_entry
 
@@ -177,17 +178,17 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
-    file_info = idaapi.get_inf_structure()
+    filetype = ida_ida.inf_get_filetype()
 
-    if file_info.filetype in (idaapi.f_PE, idaapi.f_COFF):
+    if filetype in (idaapi.f_PE, idaapi.f_COFF):
         yield Format(FORMAT_PE), NO_ADDRESS
-    elif file_info.filetype == idaapi.f_ELF:
+    elif filetype == idaapi.f_ELF:
         yield Format(FORMAT_ELF), NO_ADDRESS
-    elif file_info.filetype == idaapi.f_BIN:
+    elif filetype == idaapi.f_BIN:
         # no file type to return when processing a binary file, but we want to continue processing
         return
     else:
-        raise NotImplementedError(f"unexpected file format: {file_info.filetype}")
+        raise NotImplementedError(f"unexpected file format: {filetype}")
 
 
 def extract_features() -> Iterator[Tuple[Feature, Address]]:
