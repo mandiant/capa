@@ -72,11 +72,10 @@ def extract_insn_number_features(
         yield Number(value), ih.address
         yield OperandNumber(i, value), ih.address
 
-        if mnemonic == "add":
-            if i == 2:
-                if 0 < value < MAX_STRUCTURE_SIZE:
-                    yield Offset(value), ih.address
-                    yield OperandOffset(i, value), ih.address
+        if mnemonic == "add" and i == 2:
+            if 0 < value < MAX_STRUCTURE_SIZE:
+                yield Offset(value), ih.address
+                yield OperandOffset(i, value), ih.address
 
 
 def extract_insn_offset_features(
