@@ -46,6 +46,7 @@ from capa.loader import (
     BACKEND_VIV,
     BACKEND_CAPE,
     BACKEND_BINJA,
+    BACKEND_VMRAY,
     BACKEND_DOTNET,
     BACKEND_FREEZE,
     BACKEND_PEFILE,
@@ -59,6 +60,7 @@ from capa.helpers import (
     log_unsupported_format_error,
     log_empty_sandbox_report_error,
     log_unsupported_cape_report_error,
+    log_unsupported_vmray_report_error,
     log_unsupported_drakvuf_report_error,
 )
 from capa.exceptions import (
@@ -80,6 +82,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
@@ -259,6 +262,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_CAPE, "CAPE sandbox report"),
             (FORMAT_DRAKVUF, "DRAKVUF sandbox report"),
+            (FORMAT_VMRAY, "VMRay sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
@@ -281,6 +285,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
             (BACKEND_DRAKVUF, "DRAKVUF"),
+            (BACKEND_VMRAY, "VMRay"),
         ]
         backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
@@ -552,6 +557,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_DRAKVUF:
         return BACKEND_DRAKVUF
 
+    elif input_format == FORMAT_VMRAY:
+        return BACKEND_VMRAY
+
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
 
@@ -576,7 +584,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if backend in (BACKEND_CAPE, BACKEND_DRAKVUF):
+    if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
         return None
     else:
         return args.input_file
@@ -690,6 +698,8 @@ def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtract
             log_unsupported_cape_report_error(str(e))
         elif input_format == FORMAT_DRAKVUF:
             log_unsupported_drakvuf_report_error(str(e))
+        elif input_format == FORMAT_VMRAY:
+            log_unsupported_vmray_report_error(str(e))
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
@@ -809,6 +819,8 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             log_unsupported_cape_report_error(str(e))
         elif input_format == FORMAT_DRAKVUF:
             log_unsupported_drakvuf_report_error(str(e))
+        elif input_format == FORMAT_VMRAY:
+            log_unsupported_vmray_report_error(str(e))
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e

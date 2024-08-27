@@ -12,8 +12,9 @@ import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import Dict, Union, BinaryIO, Iterator, NoReturn
+from typing import Dict, List, Union, BinaryIO, Iterator, NoReturn
 from pathlib import Path
+from zipfile import ZipFile
 from datetime import datetime
 
 import tqdm
@@ -25,6 +26,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_DRAKVUF,
@@ -34,9 +36,10 @@ from capa.features.common import (
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-# CAPE extensions: .json, .json_, .json.gz
-# DRAKVUF Sandbox extensions: .log, .log.gz
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz")
+# CAPE (.json, .json_, .json.gz)
+# DRAKVUF (.log, .log.gz)
+# VMRay (.zip)
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz", ".zip")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
@@ -125,16 +128,20 @@ def get_format_from_report(sample: Path) -> str:
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
-        return FORMAT_UNKNOWN
-
-    report = load_json_from_path(sample)
-    if "CAPE" in report:
-        return FORMAT_CAPE
-
-    if "target" in report and "info" in report and "behavior" in report:
-        # CAPE report that's missing the "CAPE" key,
-        # which is not going to be much use, but its correct.
-        return FORMAT_CAPE
+    elif sample.name.endswith(".zip"):
+        with ZipFile(sample, "r") as zipfile:
+            namelist: List[str] = zipfile.namelist()
+            if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
+                # assume VMRay zipfile at a minimum has these files
+                return FORMAT_VMRAY
+    elif sample.name.endswith(("json", "json_", "json.gz")):
+        report = load_json_from_path(sample)
+        if "CAPE" in report:
+            return FORMAT_CAPE
+        if "target" in report and "info" in report and "behavior" in report:
+            # CAPE report that's missing the "CAPE" key,
+            # which is not going to be much use, but its correct.
+            return FORMAT_CAPE
 
     return FORMAT_UNKNOWN
 
@@ -241,6 +248,17 @@ def log_unsupported_drakvuf_report_error(error: str):
     logger.error(
         " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
     )
+    logger.error("-" * 80)
+
+
+def log_unsupported_vmray_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error(" Input file is not a valid VMRay analysis archive: %s", error)
+    logger.error(" ")
+    logger.error(
+        " capa only supports analyzing VMRay dynamic analysis archives containing summary_v2.json and flog.xml log files."
+    )
+    logger.error(" Please make sure you have downloaded a dynamic analysis archive from VMRay.")
     logger.error("-" * 80)
 
 
