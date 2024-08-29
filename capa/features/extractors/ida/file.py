@@ -11,10 +11,10 @@ from typing import Tuple, Iterator
 
 import idc
 import idaapi
-import ida_ida
 import idautils
 import ida_entry
 
+import capa.ida.helpers
 import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
@@ -178,7 +178,7 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
-    filetype = ida_ida.inf_get_filetype()
+    filetype = capa.ida.helpers.get_filetype()
 
     if filetype in (idaapi.f_PE, idaapi.f_COFF):
         yield Format(FORMAT_PE), NO_ADDRESS

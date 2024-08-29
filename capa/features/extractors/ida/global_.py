@@ -9,8 +9,6 @@ import logging
 import contextlib
 from typing import Tuple, Iterator
 
-import idc
-import idaapi
 import ida_loader
 
 import capa.ida.helpers
@@ -49,10 +47,10 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_arch() -> Iterator[Tuple[Feature, Address]]:
-    procname = idc.get_processor_name()
-    if procname == "metapc" and idaapi.inf_is_64bit():
+    procname = capa.ida.helpers.get_processor_name()
+    if procname == "metapc" and capa.ida.helpers.is_64bit():
         yield Arch(ARCH_AMD64), NO_ADDRESS
-    elif procname == "metapc" and idaapi.inf_is_32bit_exactly():
+    elif procname == "metapc" and capa.ida.helpers.is_32bit():
         yield Arch(ARCH_I386), NO_ADDRESS
     elif procname == "metapc":
         logger.debug("unsupported architecture: non-32-bit nor non-64-bit intel")
