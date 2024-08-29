@@ -62,9 +62,8 @@ export function createATTACKHref(attack) {
  */
 export function createCapaRulesUrl(node, tag) {
     if (!node || !node.data || !tag) return null;
-    const namespace = node.data.namespace || "lib";
     const ruleName = node.data.name.toLowerCase().replace(/\s+/g, "-");
-    return `https://github.com/mandiant/capa-rules/blob/v${tag}/${namespace}/${ruleName}.yml`;
+    return `https://mandiant.github.io/capa/rules/${ruleName}/`;
 }
 
 /**

@@ -235,7 +235,7 @@ const contextMenuItems = computed(() => [
         label: "View rule in capa-rules",
         icon: "pi pi-external-link",
         target: "_blank",
-        url: createCapaRulesUrl(selectedNode.value, props.data.meta.version)
+        url: createCapaRulesUrl(selectedNode.value)
     },
     {
         label: "Lookup rule in VirusTotal",
