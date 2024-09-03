@@ -34,14 +34,14 @@ CD = Path(__file__).resolve().parent
 # Ghidra disassembly of c7f38027552a3eca84e2bfc846ac1307fbf98657545426bb93a2d63555cbb486
 GHIDRA_DISASSEMBLY = """
                              //
-                             // segment_1 
+                             // segment_1
                              // Loadable segment  [0x200000 - 0x200157]
                              // ram:00200000-ram:00200157
                              //
         00200000 7f 45 4c        Elf64_Ehdr
 ...
                              //
-                             // .text 
+                             // .text
                              // SHT_PROGBITS  [0x210158 - 0x2101c7]
                              // ram:00210158-ram:002101c7
                              //
@@ -50,9 +50,9 @@ GHIDRA_DISASSEMBLY = """
                              **************************************************************
                              undefined entry()
              undefined         w0:1           <RETURN>
-                             _start                                          XREF[4]:     Entry Point(*), 00200018(*), 
-                             entry                                                        002000c0(*), 
-                                                                                          _elfSectionHeaders::00000050(*)  
+                             _start                                          XREF[4]:     Entry Point(*), 00200018(*),
+                             entry                                                        002000c0(*),
+                                                                                          _elfSectionHeaders::00000050(*)
         00210158 20 00 80 d2     mov        x0,#0x1
         0021015c a1 02 00 58     ldr        x1=>helloWorldStr,DAT_002101b0                   = "Hello World!\n"
                                                                                              = 00000000002201C8h
@@ -70,47 +70,47 @@ GHIDRA_DISASSEMBLY = """
                              **************************************************************
                              undefined printString()
              undefined         w0:1           <RETURN>
-                             printString                                     XREF[1]:     entry:00210170(c)  
+                             printString                                     XREF[1]:     entry:00210170(c)
         00210180 01 00 80 d2     mov        x1,#0x0
-                             strlenLoop                                      XREF[1]:     00210194(j)  
+                             strlenLoop                                      XREF[1]:     00210194(j)
         00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
         00210188 5f 00 00 71     cmp        w2,#0x0
         0021018c 60 00 00 54     b.eq       strlenDone
         00210190 21 04 00 91     add        x1,x1,#0x1
         00210194 fc ff ff 17     b          strlenLoop
-                             strlenDone                                      XREF[1]:     0021018c(j)  
+                             strlenDone                                      XREF[1]:     0021018c(j)
         00210198 e2 03 01 aa     mov        x2,x1
         0021019c e1 03 00 aa     mov        x1,x0
         002101a0 20 00 80 d2     mov        x0,#0x1
         002101a4 08 08 80 d2     mov        x8,#0x40
         002101a8 01 00 00 d4     svc        0x0
         002101ac c0 03 5f d6     ret
-                             DAT_002101b0                                    XREF[1]:     entry:0021015c(R)  
+                             DAT_002101b0                                    XREF[1]:     entry:0021015c(R)
         002101b0 c8 01 22        undefined8 00000000002201C8h                                ?  ->  002201c8
-                 00 00 00 
+                 00 00 00
                  00 00
-                             DAT_002101b8                                    XREF[1]:     entry:00210160(R)  
+                             DAT_002101b8                                    XREF[1]:     entry:00210160(R)
         002101b8 0e 00 00        undefined8 000000000000000Eh
-                 00 00 00 
+                 00 00 00
                  00 00
-                             DAT_002101c0                                    XREF[1]:     entry:0021016c(R)  
+                             DAT_002101c0                                    XREF[1]:     entry:0021016c(R)
         002101c0 d6 01 22        undefined8 00000000002201D6h                                ?  ->  002201d6
-                 00 00 00 
+                 00 00 00
                  00 00
                              //
-                             // .data 
+                             // .data
                              // SHT_PROGBITS  [0x2201c8 - 0x2201fb]
                              // ram:002201c8-ram:002201fb
                              //
-                             helloWorldStr                                   XREF[3]:     002000f8(*), entry:0021015c(*), 
-                                                                                          _elfSectionHeaders::00000090(*)  
+                             helloWorldStr                                   XREF[3]:     002000f8(*), entry:0021015c(*),
+                                                                                          _elfSectionHeaders::00000090(*)
         002201c8 48 65 6c        ds         "Hello World!\n"
-                 6c 6f 20 
-                 57 6f 72 
-                             $stringWith_Weird_Name                          XREF[1]:     entry:0021016c(*)  
+                 6c 6f 20
+                 57 6f 72
+                             $stringWith_Weird_Name                          XREF[1]:     entry:0021016c(*)
         002201d6 54 68 69        ds         "This string has a very strange label\n"
-                 73 20 73 
-                 74 72 69 
+                 73 20 73
+                 74 72 69
 ...
 """
 
@@ -122,11 +122,11 @@ def _parse_ghidra_disassembly(disasm: str) -> dict:
     # address  bytes           mnemonic   o1,o2  (,o3)
     pattern = re.compile(
         r"^( ){8}(?P<address>[0-9a-f]+) "
-        "(?P<bytes>([0-9a-f]{2}[ ]){4})\s+"
-        "(?P<mnemonic>[\w\.]+)\s*"
-        "(?P<operand1>[\w#$=>]+)?,?"
-        "((?P<operand2>[\w#$=>]+))?,?"
-        "((?P<operand3>[\w#$=>]+))?"
+        + r"(?P<bytes>([0-9a-f]{2}[ ]){4})\s+"
+        + r"(?P<mnemonic>[\w\.]+)\s*"
+        + r"(?P<operand1>[\w#$=>]+)?,?"
+        + r"((?P<operand2>[\w#$=>]+))?,?"
+        + r"((?P<operand3>[\w#$=>]+))?"
     )
     for line in disasm.splitlines()[20:]:
         m = pattern.match(line)

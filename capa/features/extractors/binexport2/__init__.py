@@ -235,6 +235,13 @@ class BinExport2Index:
         vertex_index: int = self.vertex_index_by_address[address]
         return self.get_function_name_by_vertex(vertex_index)
 
+    def get_instruction_by_address(self, address: int) -> BinExport2.Instruction:
+        for i, be2_insn in enumerate(self.be2.instruction):
+            insn = self.get_insn_address(i)
+            if address == insn:
+                return be2_insn
+        raise ValueError(f"address 0x{address:x} not found")
+
 
 class BinExport2Analysis:
     def __init__(self, be2: BinExport2, idx: BinExport2Index, buf: bytes):
