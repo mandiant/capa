@@ -177,47 +177,93 @@ def test_get_instruction_operands_count():
 
 
 @pytest.mark.parametrize(
-    "addr,op_expressions",
+    "addr,expressions",
     [
         # 00210158 20 00 80 d2     mov        x0,#0x1
-        (0x210158, ("x0", "#0x1")),
+        (
+            0x210158,
+            (
+                BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x0"),
+                BinExport2.Expression(type=BinExport2.Expression.IMMEDIATE_INT, immediate=0x1),
+            ),
+        ),
         # 0021015c a1 02 00 58     ldr        x1=>helloWorldStr,DAT_002101b0
-        (0x21015C, ("x1", "DAT_002101b0")),
+        (
+            0x21015C,
+            (
+                BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
+                BinExport2.Expression(
+                    type=BinExport2.Expression.IMMEDIATE_INT, symbol="DAT_002101b0", immediate=0x2101B0
+                ),
+            ),
+        ),
         # 00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
-        (0x210184, ("w2", "[x0, x1, LSL ]")),
+        #                                                 ^^^ issue in Ghidra?
+        #  IDA gives               LDRB       W2, [X0,X1]
+        # still need to test/handle this and it's the only complex operand expression in this test binary :/
+        (
+            0x210184,
+            (
+                BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="w2"),
+                (
+                    BinExport2.Expression(type=BinExport2.Expression.DEREFERENCE, symbol="["),
+                    BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x0"),
+                    BinExport2.Expression(type=BinExport2.Expression.OPERATOR, symbol=","),
+                    BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
+                    BinExport2.Expression(type=BinExport2.Expression.OPERATOR, symbol=","),
+                    BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="LSL"),
+                    BinExport2.Expression(type=BinExport2.Expression.DEREFERENCE, symbol="]"),
+                ),
+            ),
+        ),
         # 00210190 21 04 00 91     add        x1,x1,#0x1
-        (0x210190, ("x1", "x1", "#0x1")),
+        (
+            0x210190,
+            (
+                BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
+                BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
+                BinExport2.Expression(type=BinExport2.Expression.IMMEDIATE_INT, immediate=0x1),
+            ),
+        ),
     ],
 )
-def test_get_operand_expressions(addr, op_expressions):
+def test_get_operand_expressions(addr, expressions):
     insn = BE2_EXTRACTOR.idx.get_instruction_by_address(addr)
     ops = get_instruction_operands(BE2_EXTRACTOR.be2, insn)
     for i, op in enumerate(ops):
+        op_expression = expressions[i]
         exps = get_operand_expressions(BE2_EXTRACTOR.be2, op)
-        assert len(exps) == 1
-        assert exps[0].symbol == op_expressions[i]
+        if len(exps) > 1:
+            for j, exp in enumerate(exps):
+                assert exp.type == op_expression[j].type
+                assert exp.symbol == op_expression[j].symbol
+        else:
+            assert len(exps) == 1
+            assert exps[0] == op_expression
 
 
 @pytest.mark.parametrize(
-    "addr,reg_expressions",
+    "addr,expressions",
     [
         # 00210158 20 00 80 d2     mov        x0,#0x1
         (0x210158, ("x0", None)),
         # 0021015c a1 02 00 58     ldr        x1=>helloWorldStr,DAT_002101b0
         (0x21015C, ("x1", None)),
-        # 00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
-        (0x210184, ("w2", None)),
+        # 0021019c e1 03 00 aa     mov        x1,x0
+        (0x21019C, ("x1", "x0")),
         # 00210190 21 04 00 91     add        x1,x1,#0x1
         (0x210190, ("x1", "x1", None)),
     ],
 )
-def _TODO_test_get_operand_register_expression(addr, reg_expressions):
+def test_get_operand_register_expression(addr, expressions):
     insn = BE2_EXTRACTOR.idx.get_instruction_by_address(addr)
     ops = get_instruction_operands(BE2_EXTRACTOR.be2, insn)
     for i, op in enumerate(ops):
         reg_exp = get_operand_register_expression(BE2_EXTRACTOR.be2, op)
-        logger.debug("%s", get_operand_expressions(BE2_EXTRACTOR.be2, op))
-        assert reg_exp == reg_expressions[i]
+        if reg_exp is None:
+            assert reg_exp == expressions[i]
+        else:
+            assert reg_exp.symbol == expressions[i]
 
 
 @pytest.mark.parametrize(
@@ -226,20 +272,22 @@ def _TODO_test_get_operand_register_expression(addr, reg_expressions):
         # 00210158 20 00 80 d2     mov        x0,#0x1
         (0x210158, (None, 0x1)),
         # 0021015c a1 02 00 58     ldr        x1=>helloWorldStr,DAT_002101b0
-        (0x21015C, (None, None)),
-        # 00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
-        (0x210184, (None, None)),
+        (0x21015C, (None, 0x2101B0)),
+        # 002101a8 01 00 00 d4     svc        0x0
+        (0x2101A8, (0x0,)),
         # 00210190 21 04 00 91     add        x1,x1,#0x1
         (0x210190, (None, None, 0x1)),
     ],
 )
-def _TODO_test_get_operand_immediate_expression(addr, expressions):
+def test_get_operand_immediate_expression(addr, expressions):
     insn = BE2_EXTRACTOR.idx.get_instruction_by_address(addr)
     ops = get_instruction_operands(BE2_EXTRACTOR.be2, insn)
     for i, op in enumerate(ops):
         reg_exp = get_operand_immediate_expression(BE2_EXTRACTOR.be2, op)
-        logger.debug("%s", get_operand_expressions(BE2_EXTRACTOR.be2, op))
-        assert reg_exp == expressions[i]
+        if reg_exp is None:
+            assert reg_exp == expressions[i]
+        else:
+            assert reg_exp.immediate == expressions[i]
 
 
 """
@@ -249,11 +297,11 @@ add     x0, sp, 0x10
 """
 BE2_DICT: Dict[str, Any] = {
     "expression": [
-        {"type": 1, "symbol": "x0"},
-        {"type": 2, "immediate": 0x20},
-        {"type": 3, "immediate": 0x100},
-        {"type": 1, "symbol": "sp"},
-        {"type": 3, "immediate": 0x10},
+        {"type": BinExport2.Expression.REGISTER, "symbol": "x0"},
+        {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x20},
+        {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x100},
+        {"type": BinExport2.Expression.REGISTER, "symbol": "sp"},
+        {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x10},
     ],
     # operand consists of 1 or more expressions, linked together as a tree
     "operand": [
@@ -281,20 +329,20 @@ BE2 = ParseDict(
 )
 
 
-def _TODO_test_is_stack_register_expression():
+def test_is_stack_register_expression():
     mov = ParseDict(BE2_DICT["instruction"][0], BinExport2.Instruction())
     add = ParseDict(BE2_DICT["instruction"][2], BinExport2.Instruction())
 
-    ops = get_instruction_operands(BE2_EXTRACTOR.be2, mov)
-    exps = get_operand_expressions(BE2_EXTRACTOR.be2, ops[0])
-    assert is_stack_register_expression(BE2_EXTRACTOR.be2, exps[0]) is False
-    exps = get_operand_expressions(BE2_EXTRACTOR.be2, ops[1])
-    assert is_stack_register_expression(BE2_EXTRACTOR.be2, exps[0]) is False
+    mov_op0, mov_op1 = get_instruction_operands(BE2, mov)
+    op0_exp0 = get_operand_expressions(BE2, mov_op0)[0]
+    assert is_stack_register_expression(BE2, op0_exp0) is False
+    op0_exp1 = get_operand_expressions(BE2, mov_op1)[0]
+    assert is_stack_register_expression(BE2, op0_exp1) is False
 
-    ops = get_instruction_operands(BE2_EXTRACTOR.be2, add)
-    exps = get_operand_expressions(BE2_EXTRACTOR.be2, ops[0])
-    assert is_stack_register_expression(BE2_EXTRACTOR.be2, exps[0]) is False
-    exps = get_operand_expressions(BE2_EXTRACTOR.be2, ops[1])
-    assert is_stack_register_expression(BE2_EXTRACTOR.be2, exps[0]) is True
-    exps = get_operand_expressions(BE2_EXTRACTOR.be2, ops[1])
-    assert is_stack_register_expression(BE2_EXTRACTOR.be2, exps[0]) is False
+    add_op0, add_op1, add_op2 = get_instruction_operands(BE2, add)
+    op0_exp0 = get_operand_expressions(BE2, add_op0)[0]
+    assert is_stack_register_expression(BE2, op0_exp0) is False
+    op1_exp0 = get_operand_expressions(BE2, add_op1)[0]
+    assert is_stack_register_expression(BE2, op1_exp0) is True
+    op2_exp0 = get_operand_expressions(BE2, add_op2)[0]
+    assert is_stack_register_expression(BE2, op2_exp0) is False
