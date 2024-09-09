@@ -46,116 +46,88 @@ def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGr
     return vertex.HasField("type") and vertex.type == type_
 
 
-def _get_operand_expression_list(
+# internal to `build_expression_tree`
+# this is unstable: it is subject to change, so don't rely on it!
+def _prune_expression_tree_empty_shifts(
     be2: BinExport2,
     operand: BinExport2.Operand,
     expression_tree: List[List[int]],
     tree_index: int,
-    expression_list: List[BinExport2.Expression],
 ):
-    exp_index = operand.expression_index[tree_index]
-    expression = be2.expression[exp_index]
+    expression_index = operand.expression_index[tree_index]
+    expression = be2.expression[expression_index]
     children_tree_indexes: List[int] = expression_tree[tree_index]
 
-    if expression.type == BinExport2.Expression.REGISTER:
-        expression_list.append(expression)
-        assert len(children_tree_indexes) == 0
-        return
+    if expression.type == BinExport2.Expression.OPERATOR:
+        if len(children_tree_indexes) == 0 and expression.symbol in ("lsl", "lsr"):
+            # Ghidra may emit superfluous lsl nodes with no children.
+            # https://github.com/mandiant/capa/pull/2340/files#r1750003919
+            # Which is maybe: https://github.com/NationalSecurityAgency/ghidra/issues/6821#issuecomment-2295394697
+            #
+            # Which seems to be as if the shift wasn't there (shift of #0)
+            # so we want to remove references to this node from any parent nodes.
+            for tree_node in expression_tree:
+                if tree_index in tree_node:
+                    tree_node.remove(tree_index)
 
-    elif expression.type == BinExport2.Expression.SYMBOL:
-        expression_list.append(expression)
-        assert len(children_tree_indexes) <= 1
-
-        if len(children_tree_indexes) == 0:
-            return
-        elif len(children_tree_indexes) == 1:
-            # like: v
-            # from: mov v0.D[0x1], x9
-            #           |
-            #           0
-            #           .
-            #           |
-            #           D
-            child_index = children_tree_indexes[0]
-            _get_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
-            return
-        else:
-            raise NotImplementedError(len(children_tree_indexes))
-
-    elif expression.type == BinExport2.Expression.IMMEDIATE_INT:
-        expression_list.append(expression)
-        assert len(children_tree_indexes) == 0
-        return
-
-    elif expression.type == BinExport2.Expression.SIZE_PREFIX:
-        # like: b4
-        #
-        # We might want to use this occasionally, such as to disambiguate the
-        # size of MOVs into/out of memory. But I'm not sure when/where we need that yet.
-        #
-        # IDA spams this size prefix hint *everywhere*, so we can't rely on the exporter
-        # to provide it only when necessary.
-        assert len(children_tree_indexes) == 1
-        child_index = children_tree_indexes[0]
-        _get_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
-        return
-
-    elif expression.type == BinExport2.Expression.OPERATOR:
-
-        if len(children_tree_indexes) == 0:
-            # TODO(mr-tz): Ghidra bug?
-            # https://github.com/mandiant/capa/pull/2340
-            # 00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
-            #                                                 ^^^
-            pass
-
-        elif len(children_tree_indexes) == 1:
-            # prefix operator, like "ds:"
-            expression_list.append(expression)
-            child_index = children_tree_indexes[0]
-            _get_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
             return
 
-        elif len(children_tree_indexes) == 2:
-            # infix operator: like "+" in "ebp+10"
-            child_a = children_tree_indexes[0]
-            child_b = children_tree_indexes[1]
-            _get_operand_expression_list(be2, operand, expression_tree, child_a, expression_list)
-            expression_list.append(expression)
-            _get_operand_expression_list(be2, operand, expression_tree, child_b, expression_list)
+    for child_tree_index in children_tree_indexes:
+        _prune_expression_tree_empty_shifts(be2, operand, expression_tree, child_tree_index)
+
+
+# internal to `build_expression_tree`
+# this is unstable: it is subject to change, so don't rely on it!
+def _prune_expression_tree_empty_commas(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+    expression_tree: List[List[int]],
+    tree_index: int,
+):
+    expression_index = operand.expression_index[tree_index]
+    expression = be2.expression[expression_index]
+    children_tree_indexes: List[int] = expression_tree[tree_index]
+
+    if expression.type == BinExport2.Expression.OPERATOR:
+        if len(children_tree_indexes) == 1 and expression.symbol == ",":
+            # Due to the above pruning of empty LSL or LSR expressions,
+            # the parents might need to be fixed up.
+            #
+            # Specifically, if the pruned node was part of a comma list with two children,
+            # now there's only a single child, which renders as an extra comma,
+            # so we replace references to the comma node with the immediate child.
+            #
+            # A more correct way of doing this might be to walk up the parents and do fixups,
+            # but I'm not quite sure how to do this yet. Just do two passes right now.
+            child = children_tree_indexes[0]
+
+            for tree_node in expression_tree:
+                tree_node.index
+                if tree_index in tree_node:
+                    tree_node[tree_node.index(tree_index)] = child
+
             return
 
-        elif len(children_tree_indexes) == 3:
-            # infix operator: like "+" in "ebp+ecx+10"
-            child_a = children_tree_indexes[0]
-            child_b = children_tree_indexes[1]
-            child_c = children_tree_indexes[2]
-            _get_operand_expression_list(be2, operand, expression_tree, child_a, expression_list)
-            expression_list.append(expression)
-            _get_operand_expression_list(be2, operand, expression_tree, child_b, expression_list)
-            expression_list.append(expression)
-            _get_operand_expression_list(be2, operand, expression_tree, child_c, expression_list)
-            return
-
-        else:
-            raise NotImplementedError(len(children_tree_indexes))
-
-    elif expression.type == BinExport2.Expression.DEREFERENCE:
-        expression_list.append(expression)
-
-        assert len(children_tree_indexes) == 1
-        child_index = children_tree_indexes[0]
-        _get_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
-        return
-
-    elif expression.type == BinExport2.Expression.IMMEDIATE_FLOAT:
-        raise NotImplementedError(expression.type)
-
-    else:
-        raise NotImplementedError(expression.type)
+    for child_tree_index in children_tree_indexes:
+        _prune_expression_tree_empty_commas(be2, operand, expression_tree, child_tree_index)
 
 
-def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> List[BinExport2.Expression]:
+# internal to `build_expression_tree`
+# this is unstable: it is subject to change, so don't rely on it!
+def _prune_expression_tree(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+    expression_tree: List[List[int]],
+):
+    _prune_expression_tree_empty_shifts(be2, operand, expression_tree, 0)
+    _prune_expression_tree_empty_commas(be2, operand, expression_tree, 0)
+
+
+# this is unstable: it is subject to change, so don't rely on it!
+def _build_expression_tree(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+) -> List[List[int]]:
     # The reconstructed expression tree layout, linking parent nodes to their children.
     #
     # There is one list of integers for each expression in the operand.
@@ -178,28 +150,141 @@ def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> List[Bin
     #          5
     #
     # Remember, these are the indices into the entries in operand.expression_index.
-    if len(op.expression_index) == 0:
+    if len(operand.expression_index) == 0:
         # Ghidra bug where empty operands (no expressions) may
         # exist (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
         return []
 
-    exp_tree: List[List[int]] = []
-    for i, exp_index in enumerate(op.expression_index):
+    tree: List[List[int]] = []
+    for i, expression_index in enumerate(operand.expression_index):
         children = []
 
         # scan all subsequent expressions, looking for those that have parent_index == current.expression_index
-        for j, candidate_index in enumerate(op.expression_index[i + 1 :]):
+        for j, candidate_index in enumerate(operand.expression_index[i + 1 :]):
             candidate = be2.expression[candidate_index]
 
-            if candidate.parent_index == exp_index:
+            if candidate.parent_index == expression_index:
                 children.append(i + j + 1)
 
-        exp_tree.append(children)
+        tree.append(children)
 
-    exp_list: List[BinExport2.Expression] = []
-    _get_operand_expression_list(be2, op, exp_tree, 0, exp_list)
+    _prune_expression_tree(be2, operand, tree)
+    _prune_expression_tree(be2, operand, tree)
 
-    return exp_list
+    return tree
+
+
+def _fill_operand_expression_list(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+    expression_tree: List[List[int]],
+    tree_index: int,
+    expression_list: List[BinExport2.Expression],
+):
+    """
+    Walk the given expression tree and collect the expression nodes in-order.
+    """
+    expression_index = operand.expression_index[tree_index]
+    expression = be2.expression[expression_index]
+    children_tree_indexes: List[int] = expression_tree[tree_index]
+
+    if expression.type == BinExport2.Expression.REGISTER:
+        assert len(children_tree_indexes) == 0
+        expression_list.append(expression)
+        return
+
+    elif expression.type == BinExport2.Expression.SYMBOL:
+        assert len(children_tree_indexes) <= 1
+        expression_list.append(expression)
+
+        if len(children_tree_indexes) == 0:
+            return
+        elif len(children_tree_indexes) == 1:
+            # like: v
+            # from: mov v0.D[0x1], x9
+            #           |
+            #           0
+            #           .
+            #           |
+            #           D
+            child_index = children_tree_indexes[0]
+            _fill_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
+            return
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
+
+    elif expression.type == BinExport2.Expression.IMMEDIATE_INT:
+        assert len(children_tree_indexes) == 0
+        expression_list.append(expression)
+        return
+
+    elif expression.type == BinExport2.Expression.SIZE_PREFIX:
+        # like: b4
+        #
+        # We might want to use this occasionally, such as to disambiguate the
+        # size of MOVs into/out of memory. But I'm not sure when/where we need that yet.
+        #
+        # IDA spams this size prefix hint *everywhere*, so we can't rely on the exporter
+        # to provide it only when necessary.
+        assert len(children_tree_indexes) == 1
+        child_index = children_tree_indexes[0]
+        _fill_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
+        return
+
+    elif expression.type == BinExport2.Expression.OPERATOR:
+        if len(children_tree_indexes) == 1:
+            # prefix operator, like "ds:"
+            expression_list.append(expression)
+            child_index = children_tree_indexes[0]
+            _fill_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
+            return
+
+        elif len(children_tree_indexes) == 2:
+            # infix operator: like "+" in "ebp+10"
+            child_a = children_tree_indexes[0]
+            child_b = children_tree_indexes[1]
+            _fill_operand_expression_list(be2, operand, expression_tree, child_a, expression_list)
+            expression_list.append(expression)
+            _fill_operand_expression_list(be2, operand, expression_tree, child_b, expression_list)
+            return
+
+        elif len(children_tree_indexes) == 3:
+            # infix operator: like "+" in "ebp+ecx+10"
+            child_a = children_tree_indexes[0]
+            child_b = children_tree_indexes[1]
+            child_c = children_tree_indexes[2]
+            _fill_operand_expression_list(be2, operand, expression_tree, child_a, expression_list)
+            expression_list.append(expression)
+            _fill_operand_expression_list(be2, operand, expression_tree, child_b, expression_list)
+            expression_list.append(expression)
+            _fill_operand_expression_list(be2, operand, expression_tree, child_c, expression_list)
+            return
+
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
+
+    elif expression.type == BinExport2.Expression.DEREFERENCE:
+        assert len(children_tree_indexes) == 1
+        expression_list.append(expression)
+
+        child_index = children_tree_indexes[0]
+        _fill_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
+        return
+
+    elif expression.type == BinExport2.Expression.IMMEDIATE_FLOAT:
+        raise NotImplementedError(expression.type)
+
+    else:
+        raise NotImplementedError(expression.type)
+
+
+def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> List[BinExport2.Expression]:
+    tree = _build_expression_tree(be2, op)
+
+    expressions: List[BinExport2.Expression] = []
+    _fill_operand_expression_list(be2, op, tree, 0, expressions)
+
+    return expressions
 
 
 def get_operand_register_expression(be2: BinExport2, operand: BinExport2.Operand) -> Optional[BinExport2.Expression]:
