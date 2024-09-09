@@ -200,7 +200,6 @@ def test_get_instruction_operands_count():
         # 00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
         #                                                 ^^^ issue in Ghidra?
         #  IDA gives               LDRB       W2, [X0,X1]
-        # still need to test/handle this and it's the only complex operand expression in this test binary :/
         (
             0x210184,
             (
@@ -210,8 +209,6 @@ def test_get_instruction_operands_count():
                     BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x0"),
                     BinExport2.Expression(type=BinExport2.Expression.OPERATOR, symbol=","),
                     BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
-                    BinExport2.Expression(type=BinExport2.Expression.OPERATOR, symbol=","),
-                    BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="LSL"),
                     BinExport2.Expression(type=BinExport2.Expression.DEREFERENCE, symbol="]"),
                 ),
             ),

@@ -68,35 +68,6 @@ class Renderer:
 
 
 # internal to `render_operand`
-def _prune_expression_tree(
-    be2: BinExport2,
-    operand: BinExport2.Operand,
-    expression_tree: List[List[int]],
-    tree_index: int = 0,
-):
-    expression_index = operand.expression_index[tree_index]
-    expression = be2.expression[expression_index]
-    children_tree_indexes: List[int] = expression_tree[tree_index]
-
-    if expression.type == BinExport2.Expression.OPERATOR:
-        if len(children_tree_indexes) == 0 and expression.symbol in ("lsl", "lsr"):
-            # ghidra may emit superfluous lsl nodes with no children.
-            # https://github.com/mandiant/capa/pull/2340/files#r1750003919
-            # which is maybe: https://github.com/NationalSecurityAgency/ghidra/issues/6821#issuecomment-2295394697
-            #
-            # which seems to be as if the shift wasn't there (shift of #0)
-            # so we want to remove references to this node from any parent nodes.
-            for tree_node in expression_tree:
-                if tree_index in tree_node:
-                    tree_node.remove(tree_index)
-
-            return
-
-    for child_tree_index in children_tree_indexes:
-        _prune_expression_tree(be2, operand, expression_tree, child_tree_index)
-
-
-# internal to `render_operand`
 def _render_expression_tree(
     be2: BinExport2,
     operand: BinExport2.Operand,
@@ -203,50 +174,6 @@ def _render_expression_tree(
         raise NotImplementedError(expression.type)
 
 
-def _build_expression_tree(
-    be2: BinExport2,
-    operand: BinExport2.Operand,
-) -> List[List[int]]:
-    # The reconstructed expression tree layout, linking parent nodes to their children.
-    #
-    # There is one list of integers for each expression in the operand.
-    # These integers are indexes of other expressions in the same operand,
-    # which are the children of that expression.
-    #
-    # So:
-    #
-    #   [ [1, 3], [2], [], [4], [5], []]
-    #
-    # means the first expression has two children, at index 1 and 3,
-    # and the tree looks like:
-    #
-    #        0
-    #       / \
-    #      1   3
-    #      |   |
-    #      2   4
-    #          |
-    #          5
-    #
-    # Remember, these are the indices into the entries in operand.expression_index.
-    tree: List[List[int]] = []
-    for i, expression_index in enumerate(operand.expression_index):
-        children = []
-
-        # scan all subsequent expressions, looking for those that have parent_index == current.expression_index
-        for j, candidate_index in enumerate(operand.expression_index[i + 1 :]):
-            candidate = be2.expression[candidate_index]
-
-            if candidate.parent_index == expression_index:
-                children.append(i + j + 1)
-
-        tree.append(children)
-
-    _prune_expression_tree(be2, operand, tree)
-
-    return tree
-
-
 _OPERAND_CACHE: Dict[int, str] = {}
 
 
@@ -279,7 +206,7 @@ def render_operand(
         return _OPERAND_CACHE[index]
 
     o = io.StringIO()
-    tree = _build_expression_tree(be2, operand)
+    tree = capa.features.extractors.binexport2.helpers._build_expression_tree(be2, operand)
     _render_expression_tree(be2, operand, tree, 0, o)
     s = o.getvalue()
 
@@ -290,7 +217,7 @@ def render_operand(
 
 
 def inspect_operand(be2: BinExport2, operand: BinExport2.Operand):
-    expression_tree = _build_expression_tree(be2, operand)
+    expression_tree = capa.features.extractors.binexport2.helpers._build_expression_tree(be2, operand)
 
     def rec(tree_index, indent=0):
         expression_index = operand.expression_index[tree_index]
