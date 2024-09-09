@@ -5,9 +5,13 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Set, List, Iterator, Optional
+import re
+from typing import Set, Dict, List, Tuple, Union, Iterator, Optional
+from collections import defaultdict
+from dataclasses import dataclass
 
 import capa.features.extractors.helpers
+import capa.features.extractors.binexport2.helpers
 from capa.features.common import ARCH_I386, ARCH_AMD64, ARCH_AARCH64
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
@@ -329,3 +333,318 @@ def get_instruction_mnemonic(be2: BinExport2, instruction: BinExport2.Instructio
 
 def get_instruction_operands(be2: BinExport2, instruction: BinExport2.Instruction) -> List[BinExport2.Operand]:
     return [be2.operand[operand_index] for operand_index in instruction.operand_index]
+
+
+def split_with_delimiters(s: str, delimiters: Tuple[str, ...]) -> Iterator[str]:
+    """
+    Splits a string by any of the provided delimiter characters,
+    including the delimiters in the results.
+
+    Args:
+        string: The string to split.
+        delimiters: A string containing the characters to use as delimiters.
+    """
+    start = 0
+    for i, char in enumerate(s):
+        if char in delimiters:
+            yield s[start:i]
+            yield char
+            start = i + 1
+
+    if start < len(s):
+        yield s[start:]
+
+
+BinExport2OperandPattern = Union[str, Tuple[str, ...]]
+
+
+@dataclass
+class BinExport2InstructionPattern:
+    """
+    This describes a way to match disassembled instructions, with mnemonics and operands.
+
+    You can specify constraints on the instruction, via:
+      - the mnemonics, like "mov",
+      - number of operands, and
+      - format of each operand, "[reg, reg, #int]".
+
+    During matching, you can also capture a single element, to see its concrete value.
+    For example, given the pattern:
+
+        mov reg0, #int0  ; capture int0
+
+    and the instruction:
+
+        mov eax, 1
+
+    Then the capture will contain the immediate integer 1.
+
+    This matcher uses the BinExport2 data layout under the hood.
+    """
+
+    mnemonics: Tuple[str, ...]
+    operands: Tuple[Union[str, BinExport2OperandPattern], ...]
+    capture: Optional[str]
+
+    @classmethod
+    def from_str(cls, query: str):
+        """
+        Parse a pattern string into a Pattern instance.
+        The supported syntax is like this:
+
+            br      reg
+            br      reg                          ; capture reg
+            br      reg(stack)                   ; capture reg
+            br      reg(not-stack)               ; capture reg
+            mov     reg0, reg1                   ; capture reg0
+            adrp    reg, #int                    ; capture #int
+            add     reg, reg, #int               ; capture #int
+            ldr     reg0, [reg1]                 ; capture reg1
+            ldr|str reg, [reg, #int]             ; capture #int
+            ldr|str reg, [reg(stack), #int]      ; capture #int
+            ldr|str reg, [reg(not-stack), #int]  ; capture #int
+            ldr|str reg, [reg, #int]!            ; capture #int
+            ldr|str reg, [reg], #int             ; capture #int
+            ldp|stp reg, reg, [reg, #int]        ; capture #int
+            ldp|stp reg, reg, [reg, #int]!       ; capture #int
+            ldp|stp reg, reg, [reg], #int        ; capture #int
+        """
+        #
+        # The implementation of the parser here is obviously ugly.
+        # Its handwritten and probably fragile. But since we don't
+        # expect this to be widely used, its probably ok.
+        # Don't hesitate to rewrite this if it becomes more important.
+        #
+        # Note that this doesn't have to be very performant.
+        # We expect these patterns to be parsed once upfront and then reused
+        # (globally at the module level?) rather than within any loop.
+        #
+
+        pattern, _, comment = query.strip().partition(";")
+
+        # we don't support fs: yet
+        assert ":" not in pattern
+
+        # from "capture #int" to "#int"
+        if comment:
+            comment = comment.strip()
+            assert comment.startswith("capture ")
+            capture = comment[len("capture ") :]
+        else:
+            capture = None
+
+        # from "ldr|str ..." to ["ldr", "str"]
+        pattern = pattern.strip()
+        mnemonic, _, rest = pattern.partition(" ")
+        mnemonics = mnemonic.split("|")
+
+        operands: List[Union[str, Tuple[str, ...]]] = []
+        while rest:
+            rest = rest.strip()
+            if not rest.startswith("["):
+                # If its not a dereference, which looks like `[op, op, op, ...]`,
+                # then its a simple operand, which we can split by the next comma.
+                operand, _, rest = rest.partition(", ")
+                rest = rest.strip()
+                operands.append(operand)
+
+            else:
+                # This looks like a dereference, something like `[op, op, op, ...]`.
+                # Since these can't be nested, look for the next ] and then parse backwards.
+                deref_end = rest.index("]")
+                try:
+                    deref_end = rest.index(", ", deref_end)
+                    deref_end += len(", ")
+                except ValueError:
+                    deref = rest
+                    rest = ""
+                else:
+                    deref = rest[:deref_end]
+                    rest = rest[deref_end:]
+                    rest = rest.strip()
+                    deref = deref.rstrip(" ")
+                    deref = deref.rstrip(",")
+
+                # like: [reg, #int]!
+                has_postindex_writeback = deref.endswith("!")
+
+                deref = deref.rstrip("!")
+                deref = deref.rstrip("]")
+                deref = deref.lstrip("[")
+
+                parts = tuple(split_with_delimiters(deref, (",", "+", "*")))
+                parts = tuple(s.strip() for s in parts)
+
+                # emit operands in this order to match
+                # how BinExport2 expressions are flatted
+                # by 
+                if has_postindex_writeback:
+                    operands.append(("!", "[") + parts)
+                else:
+                    operands.append(("[",) + parts)
+
+        for operand in operands:  # type: ignore
+            # Try to ensure we've parsed the operands correctly.
+            # This is just sanity checking.
+            for o in (operand,) if isinstance(operand, str) else operand:
+                # operands can look like:
+                #  - reg
+                #  - reg0
+                #  - reg(stack)
+                #  - reg0(stack)
+                #  - reg(not-stack)
+                #  - reg0(not-stack)
+                #  - #int
+                #  - #int0
+                # and a limited set of supported operators.
+                # use an inline regex so that its easy to read. not perf critical.
+                assert re.match(r"^(reg|#int)[0-9]?(\(stack\)|\(not-stack\))?$", o) or o in ("[", ",", "!", "+", "*")
+
+        return cls(tuple(mnemonics), tuple(operands), capture)
+
+    @dataclass
+    class MatchResult:
+        operand_index: int
+        expression_index: int
+        expression: BinExport2.Expression
+
+    def match(
+        self, mnemonic: str, operand_expressions: List[List[BinExport2.Expression]]
+    ) -> Optional["BinExport2InstructionPattern.MatchResult"]:
+        """
+        Match the given BinExport2 data against this pattern.
+
+        The BinExport2 expression tree must have been flattened, such as with
+        capa.features.extractors.binexport2.helpers.get_operand_expressions.
+
+        If there's a match, the captured Expression instance is returned.
+        Otherwise, you get None back.
+        """
+        if mnemonic not in self.mnemonics:
+            return None
+
+        if len(self.operands) != len(operand_expressions):
+            return None
+
+        captured = None
+
+        for operand_index, found_expressions in enumerate(operand_expressions):
+            wanted_expressions = self.operands[operand_index]
+
+            # from `"reg"` to `("reg", )`
+            if isinstance(wanted_expressions, str):
+                wanted_expressions = (wanted_expressions,)
+            assert isinstance(wanted_expressions, tuple)
+
+            if len(wanted_expressions) != len(found_expressions):
+                return None
+
+            for expression_index, (wanted_expression, found_expression) in enumerate(
+                zip(wanted_expressions, found_expressions)
+            ):
+                if wanted_expression.startswith("reg"):
+                    if found_expression.type != BinExport2.Expression.REGISTER:
+                        return None
+
+                    if wanted_expression.endswith(")"):
+                        if wanted_expression.endswith("(not-stack)"):
+                            # intel 64: rsp, esp, sp,
+                            # intel 32: ebp, ebp, bp
+                            # arm: sp
+                            register_name = found_expression.symbol.lower()
+                            if register_name in ("rsp", "esp", "sp", "rbp", "ebp", "bp"):
+                                return None
+
+                        elif wanted_expression.endswith("(stack)"):
+                            register_name = found_expression.symbol.lower()
+                            if register_name not in ("rsp", "esp", "sp", "rbp", "ebp", "bp"):
+                                return None
+
+                        else:
+                            raise ValueError("unexpected expression suffix", wanted_expression)
+
+                    if self.capture == wanted_expression:
+                        captured = BinExport2InstructionPattern.MatchResult(
+                            operand_index, expression_index, found_expression
+                        )
+
+                elif wanted_expression.startswith("#int"):
+                    if found_expression.type != BinExport2.Expression.IMMEDIATE_INT:
+                        return None
+
+                    if self.capture == wanted_expression:
+                        captured = BinExport2InstructionPattern.MatchResult(
+                            operand_index, expression_index, found_expression
+                        )
+
+                elif wanted_expression == "[":
+                    if found_expression.type != BinExport2.Expression.DEREFERENCE:
+                        return None
+
+                elif wanted_expression in (",", "!", "+", "*"):
+                    if found_expression.type != BinExport2.Expression.OPERATOR:
+                        return None
+
+                    if found_expression.symbol != wanted_expression:
+                        return None
+
+                else:
+                    raise ValueError(found_expression)
+
+        if captured:
+            return captured
+        else:
+            # There were no captures, so
+            # return arbitrary non-None expression
+            return BinExport2InstructionPattern.MatchResult(operand_index, expression_index, found_expression)
+
+
+class BinExport2InstructionPatternMatcher:
+    """Index and match a collection of instruction patterns."""
+
+    def __init__(self, queries: List[BinExport2InstructionPattern]):
+        self.queries = queries
+        # shard the patterns by (mnemonic, #operands)
+        self._index: Dict[Tuple[str, int], List[BinExport2InstructionPattern]] = defaultdict(list)
+
+        for query in queries:
+            for mnemonic in query.mnemonics:
+                self._index[(mnemonic.lower(), len(query.operands))].append(query)
+
+    @classmethod
+    def from_str(cls, patterns: str):
+        return cls(
+            [
+                BinExport2InstructionPattern.from_str(line)
+                for line in filter(
+                    lambda line: not line.startswith("#"), (line.strip() for line in patterns.split("\n"))
+                )
+            ]
+        )
+
+    def match(
+        self, mnemonic: str, operand_expressions: List[List[BinExport2.Expression]]
+    ) -> Optional[BinExport2InstructionPattern.MatchResult]:
+        queries = self._index.get((mnemonic.lower(), len(operand_expressions)), [])
+        for query in queries:
+            captured = query.match(mnemonic.lower(), operand_expressions)
+            if captured:
+                return captured
+
+        return None
+
+    def match_with_be2(
+        self, be2: BinExport2, instruction_index: int
+    ) -> Optional[BinExport2InstructionPattern.MatchResult]:
+        instruction: BinExport2.Instruction = be2.instruction[instruction_index]
+        mnemonic: str = get_instruction_mnemonic(be2, instruction)
+
+        if (mnemonic.lower(), len(instruction.operand_index)) not in self._index:
+            # verify that we might have a hit before we realize the operand expression list
+            return None
+
+        operands = []
+        for operand_index in instruction.operand_index:
+            operands.append(get_operand_expressions(be2, be2.operand[operand_index]))
+
+        return self.match(mnemonic, operands)

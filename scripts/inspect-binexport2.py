@@ -127,12 +127,15 @@ def _render_expression_tree(
 
         if len(children_tree_indexes) == 1:
             # prefix operator, like "ds:"
-            if expression.symbol != ",":
-                # or there's a binary operator, like ",", that's missing a child,
-                # such as when we prune "lsl" branches.
+            if expression.symbol != "!":
                 o.write(expression.symbol)
+
             child_index = children_tree_indexes[0]
             _render_expression_tree(be2, operand, expression_tree, child_index, o)
+
+            # postfix operator, like "!" in aarch operand "[x1, 8]!"
+            if expression.symbol == "!":
+                o.write(expression.symbol)
             return
 
         elif len(children_tree_indexes) == 2:
@@ -177,9 +180,7 @@ def _render_expression_tree(
 _OPERAND_CACHE: Dict[int, str] = {}
 
 
-def render_operand(
-    be2: BinExport2, operand: BinExport2.Operand, index: Optional[int] = None
-) -> str:
+def render_operand(be2: BinExport2, operand: BinExport2.Operand, index: Optional[int] = None) -> str:
     # For the mimikatz example file, there are 138k distinct operands.
     # Of those, only 11k are unique, which is less than 10% of the total.
     # The most common operands are seen 37k, 24k, 17k, 15k, 11k, ... times.
@@ -224,9 +225,10 @@ def inspect_operand(be2: BinExport2, operand: BinExport2.Operand):
         expression = be2.expression[expression_index]
         children_tree_indexes: List[int] = expression_tree[tree_index]
 
-        print(f"    {'  ' * indent}expression: {str(expression).replace('\n', ', ')}")
+        NEWLINE = "\n"
+        print(f"    {'  ' * indent}expression: {str(expression).replace(NEWLINE, ', ')}")
         for child_index in children_tree_indexes:
-            rec(child_index, indent+1)
+            rec(child_index, indent + 1)
 
     rec(0)
 
@@ -238,7 +240,6 @@ def inspect_instruction(be2: BinExport2, instruction: BinExport2.Instruction, ad
     print(f"  mnemonic: {mnemonic.name}")
 
     print("  operands:")
-    operands = []
     for i, operand_index in enumerate(instruction.operand_index):
         print(f"  - operand {i}: [{operand_index}]")
         operand = be2.operand[operand_index]

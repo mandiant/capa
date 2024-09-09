@@ -6,30 +6,59 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator, Optional
+from typing import List, Tuple, Iterator
 
 import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
 from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
-from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext, InstructionContext, BinExport2Index
+from capa.features.extractors.binexport2 import BinExport2Index, FunctionContext, BasicBlockContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
+    BinExport2InstructionPatternMatcher,
     mask_immediate,
     is_address_mapped,
     get_instruction_mnemonic,
-    get_operand_register_expression,
-    get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.intel.helpers import (
-    SECURITY_COOKIE_BYTES_DELTA,
-    OperandPhraseInfo,
-    get_operand_phrase_info,
-)
+from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOKIE_BYTES_DELTA
 
 logger = logging.getLogger(__name__)
+
+
+IGNORE_NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    ret  #int
+    retn #int
+    add  reg(stack), #int
+    sub  reg(stack), #int
+    """
+)
+
+NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    push #int0            ; capture #int0
+
+    # its a little tedious to enumerate all the address forms
+    # but at least we are explicit
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar  reg,                      #int0  ; capture #int0
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar [reg],                     #int0  ; capture #int0
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar [#int],                    #int0  ; capture #int0
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar [reg + #int],              #int0  ; capture #int0
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar [reg + reg + #int],        #int0  ; capture #int0
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar [reg + reg * #int],        #int0  ; capture #int0
+    cmp|and|or|test|mov|add|adc|sub|shl|shr|sal|sar [reg + reg * #int + #int], #int0  ; capture #int0
+
+    imul reg, reg, #int  ; capture #int
+    # note that int is first
+    cmp|test #int0, reg   ; capture #int0
+
+    # imagine reg is zero'd out, then this is like `mov reg, #int`
+    # which is not uncommon.
+    lea reg, [reg + #int]  ; capture #int
+    """
+)
 
 
 def extract_insn_number_features(
@@ -40,48 +69,56 @@ def extract_insn_number_features(
 
     be2: BinExport2 = fhi.ctx.be2
 
+    if IGNORE_NUMBER_PATTERNS.match_with_be2(be2, ii.instruction_index):
+        return
+
+    match = NUMBER_PATTERNS.match_with_be2(be2, ii.instruction_index)
+    if not match:
+        return
+
+    value: int = mask_immediate(fhi.arch, match.expression.immediate)
+    if is_address_mapped(be2, value):
+        return
+
+    yield Number(value), ih.address
+    yield OperandNumber(match.operand_index, value), ih.address
+
     instruction_index: int = ii.instruction_index
     instruction: BinExport2.Instruction = be2.instruction[instruction_index]
 
-    if len(instruction.operand_index) == 0:
-        # skip things like:
-        #   .text:0040116e leave
-        return
-
     mnemonic: str = get_instruction_mnemonic(be2, instruction)
+    if mnemonic.startswith("add"):
+        if 0 < value < MAX_STRUCTURE_SIZE:
+            yield Offset(value), ih.address
+            yield OperandOffset(match.operand_index, value), ih.address
 
-    if mnemonic.startswith("ret"):
-        # skip things like:
-        #   .text:0042250E retn 8
-        return
 
-    if mnemonic.startswith(("add", "sub")):
-        register_expression: Optional[BinExport2.Expression] = get_operand_register_expression(
-            be2, be2.operand[instruction.operand_index[0]]
-        )
-        if register_expression and register_expression.symbol.lower().endswith(("sp", "bp")):
-            # skip things like:
-            # 0x415bbc  ADD         ESP, 0xC
-            return
+OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    mov|movzx|movsb|cmp [reg            +  reg * #int + #int0], #int  ; capture #int0
+    mov|movzx|movsb|cmp [reg            * #int + #int0],        #int  ; capture #int0
+    mov|movzx|movsb|cmp [reg            +  reg + #int0],        #int  ; capture #int0
+    mov|movzx|movsb|cmp [reg(not-stack) + #int0],               #int  ; capture #int0
+    mov|movzx|movsb|cmp [reg            +  reg * #int + #int0], reg   ; capture #int0
+    mov|movzx|movsb|cmp [reg            * #int + #int0],        reg   ; capture #int0
+    mov|movzx|movsb|cmp [reg            +  reg + #int0],        reg   ; capture #int0
+    mov|movzx|movsb|cmp [reg(not-stack) + #int0],               reg   ; capture #int0
+    mov|movzx|movsb|cmp|lea reg, [reg            +  reg * #int + #int0]  ; capture #int0
+    mov|movzx|movsb|cmp|lea reg, [reg            * #int + #int0]         ; capture #int0
+    mov|movzx|movsb|cmp|lea reg, [reg            +  reg + #int0]         ; capture #int0
+    mov|movzx|movsb|cmp|lea reg, [reg(not-stack) + #int0]                ; capture #int0
+    """
+)
 
-    for i, operand_index in enumerate(instruction.operand_index):
-        operand: BinExport2.Operand = be2.operand[operand_index]
-
-        immediate_expression: Optional[BinExport2.Expression] = get_operand_immediate_expression(be2, operand)
-        if not immediate_expression:
-            continue
-
-        value: int = mask_immediate(fhi.arch, immediate_expression.immediate)
-        if is_address_mapped(be2, value):
-            continue
-
-        yield Number(value), ih.address
-        yield OperandNumber(i, value), ih.address
-
-        if mnemonic.startswith("add"):
-            if 0 < value < MAX_STRUCTURE_SIZE:
-                yield Offset(value), ih.address
-                yield OperandOffset(i, value), ih.address
+# these are patterns that access offset 0 from some pointer
+# (pointer is not the stack pointer).
+OFFSET_ZERO_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    mov|movzx|movsb [reg(not-stack)], reg
+    mov|movzx|movsb [reg(not-stack)], #int
+    lea             reg,              [reg(not-stack)]
+    """
+)
 
 
 def extract_insn_offset_features(
@@ -91,55 +128,23 @@ def extract_insn_offset_features(
     ii: InstructionContext = ih.inner
 
     be2: BinExport2 = fhi.ctx.be2
-    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
 
-    if len(instruction.operand_index) == 0:
-        # skip things like:
-        #   .text:0040116e leave
+    match = OFFSET_PATTERNS.match_with_be2(be2, ii.instruction_index)
+    if not match:
+        match = OFFSET_ZERO_PATTERNS.match_with_be2(be2, ii.instruction_index)
+        if not match:
+            return
+
+        yield Offset(0), ih.address
+        yield OperandOffset(match.operand_index, 0), ih.address
+
+    value = mask_immediate(fhi.arch, match.expression.immediate)
+    if is_address_mapped(be2, value):
         return
 
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
-    value: int
-
-    for i, operand_index in enumerate(instruction.operand_index):
-        operand: BinExport2.Operand = be2.operand[operand_index]
-
-        is_dereference = False
-        for expression_index in operand.expression_index:
-            if be2.expression[expression_index].type == BinExport2.Expression.DEREFERENCE:
-                is_dereference = True
-                break
-
-        if not is_dereference:
-            continue
-
-        phrase_info: Optional[OperandPhraseInfo] = get_operand_phrase_info(be2, operand)
-        if not phrase_info:
-            continue
-
-        if phrase_info.displacement:
-            if phrase_info.base and phrase_info.base.symbol.lower().endswith(("bp", "sp")):
-                # skips things like:
-                # 00401068 MOV dword ptr [EBP + local_8],EAX
-                continue
-
-            value = mask_immediate(fhi.arch, phrase_info.displacement.immediate)
-            if not is_address_mapped(be2, value):
-                value = capa.features.extractors.binexport2.helpers.twos_complement(fhi.arch, value, 32)
-
-                yield Offset(value), ih.address
-                yield OperandOffset(i, value), ih.address
-
-                if mnemonic == "lea" and i == 1:
-                    if phrase_info.base and not any((phrase_info.scale, phrase_info.index)):
-                        yield Number(value), ih.address
-                        yield OperandNumber(i, value), ih.address
-
-        elif phrase_info.base and not any((phrase_info.index, phrase_info.scale)):
-            # like:
-            # 00401062 MOVZX EAX,word ptr [EDI]
-            yield Offset(0), ih.address
-            yield OperandOffset(i, 0), ih.address
+    value = capa.features.extractors.binexport2.helpers.twos_complement(fhi.arch, value, 32)
+    yield Offset(value), ih.address
+    yield OperandOffset(match.operand_index, value), ih.address
 
 
 def is_security_cookie(
@@ -177,6 +182,14 @@ def is_security_cookie(
     return False
 
 
+NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    xor|xorpd|xorps|pxor reg, reg
+    xor|xorpd|xorps|pxor reg, #int
+    """
+)
+
+
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
@@ -188,27 +201,37 @@ def extract_insn_nzxor_characteristic_features(
     ii: InstructionContext = ih.inner
 
     be2: BinExport2 = fhi.ctx.be2
+    idx: BinExport2Index = fhi.ctx.idx
 
-    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
-    if mnemonic not in (
-        "xor",
-        "xorpd",
-        "xorps",
-        "pxor",
-    ):
+    if NZXOR_PATTERNS.match_with_be2(be2, ii.instruction_index) is None:
         return
 
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+    # guaranteed to be simple int/reg operands
+    # so we don't have to realize the tree/list.
     operands: List[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
-    if mnemonic in ("xor", "xorpd", "xorps", "pxor"):
-        if operands[0] == operands[1]:
-            return
-        instruction_address: int = idx.insn_address_by_index[ii.instruction_index]
-        if is_security_cookie(fhi, bbh.inner, instruction_address, instruction):
-            return
+    if operands[0] == operands[1]:
+        return
+
+    instruction_address: int = idx.insn_address_by_index[ii.instruction_index]
+    if is_security_cookie(fhi, bbh.inner, instruction_address, instruction):
+        return
 
     yield Characteristic("nzxor"), ih.address
+
+
+INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    call|jmp reg0
+    call|jmp [reg + reg * #int + #int]
+    call|jmp [reg + reg * #int]
+    call|jmp [reg * #int + #int]
+    call|jmp [reg + reg + #int]
+    call|jmp [reg + #int]
+    call|jmp [reg]
+    """
+)
 
 
 def extract_function_indirect_call_characteristic_features(
@@ -216,37 +239,10 @@ def extract_function_indirect_call_characteristic_features(
 ) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
-
     be2: BinExport2 = fhi.ctx.be2
-    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
 
-    if len(instruction.operand_index) == 0:
-        # skip things like:
-        #   .text:0040116e leave
+    match = INDIRECT_CALL_PATTERNS.match_with_be2(be2, ii.instruction_index)
+    if match is None:
         return
 
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
-    if mnemonic not in ("call", "jmp"):
-        return
-
-    assert len(instruction.operand_index) == 1
-
-    operand: BinExport2.Operand = be2.operand[instruction.operand_index[0]]
-
-    if len(operand.expression_index) == 1:
-        expression0: BinExport2.Expression = be2.expression[operand.expression_index[0]]
-        # call edx
-        if expression0.type == BinExport2.Expression.REGISTER:
-            yield Characteristic("indirect call"), ih.address
-    else:
-        is_dereference = False
-        for expression_index in operand.expression_index:
-            if be2.expression[expression_index].type == BinExport2.Expression.DEREFERENCE:
-                is_dereference = True
-                break
-
-        if is_dereference:
-            phrase_info: Optional[OperandPhraseInfo] = get_operand_phrase_info(be2, operand)
-            if phrase_info and phrase_info.base:
-                # call dword ptr [eax+50h]
-                yield Characteristic("indirect call"), ih.address
+    yield Characteristic("indirect call"), ih.address

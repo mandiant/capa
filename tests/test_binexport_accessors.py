@@ -15,13 +15,18 @@ import pytest
 import fixtures
 from google.protobuf.json_format import ParseDict
 
+import capa.features.extractors.binexport2.helpers
 from capa.features.extractors.binexport2.helpers import (
+    BinExport2InstructionPattern,
+    BinExport2InstructionPatternMatcher,
+    split_with_delimiters,
     get_operand_expressions,
     get_instruction_mnemonic,
     get_instruction_operands,
     get_operand_register_expression,
     get_operand_immediate_expression,
 )
+from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
 
@@ -343,3 +348,255 @@ def test_is_stack_register_expression():
     assert is_stack_register_expression(BE2, op1_exp0) is True
     op2_exp0 = get_operand_expressions(BE2, add_op2)[0]
     assert is_stack_register_expression(BE2, op2_exp0) is False
+
+
+def test_split_with_delimiters():
+    assert tuple(split_with_delimiters("abc|def", ("|",))) == ("abc", "|", "def")
+    assert tuple(split_with_delimiters("abc|def|", ("|",))) == ("abc", "|", "def", "|")
+    assert tuple(split_with_delimiters("abc||def", ("|",))) == ("abc", "|", "", "|", "def")
+    assert tuple(split_with_delimiters("abc|def-ghi", ("|", "-"))) == ("abc", "|", "def", "-", "ghi")
+
+
+def test_pattern_parsing():
+    assert BinExport2InstructionPattern.from_str(
+        "br      reg                     ; capture reg"
+    ) == BinExport2InstructionPattern(mnemonics=("br",), operands=("reg",), capture="reg")
+
+    assert BinExport2InstructionPattern.from_str(
+        "mov     reg0, reg1              ; capture reg0"
+    ) == BinExport2InstructionPattern(mnemonics=("mov",), operands=("reg0", "reg1"), capture="reg0")
+
+    assert BinExport2InstructionPattern.from_str(
+        "adrp    reg, #int               ; capture #int"
+    ) == BinExport2InstructionPattern(mnemonics=("adrp",), operands=("reg", "#int"), capture="#int")
+
+    assert BinExport2InstructionPattern.from_str(
+        "add     reg, reg, #int          ; capture #int"
+    ) == BinExport2InstructionPattern(mnemonics=("add",), operands=("reg", "reg", "#int"), capture="#int")
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldr     reg0, [reg1]            ; capture reg1"
+    ) == BinExport2InstructionPattern(mnemonics=("ldr",), operands=("reg0", ("[", "reg1")), capture="reg1")
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldr|str reg, [reg, #int]        ; capture #int"
+    ) == BinExport2InstructionPattern(
+        mnemonics=(
+            "ldr",
+            "str",
+        ),
+        operands=("reg", ("[", "reg", ",", "#int")),
+        capture="#int",
+    )
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldr|str reg, [reg, #int]!       ; capture #int"
+    ) == BinExport2InstructionPattern(
+        mnemonics=(
+            "ldr",
+            "str",
+        ),
+        operands=("reg", ("!", "[", "reg", ",", "#int")),
+        capture="#int",
+    )
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldr|str reg, [reg], #int        ; capture #int"
+    ) == BinExport2InstructionPattern(
+        mnemonics=(
+            "ldr",
+            "str",
+        ),
+        operands=(
+            "reg",
+            (
+                "[",
+                "reg",
+            ),
+            "#int",
+        ),
+        capture="#int",
+    )
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldp|stp reg, reg, [reg, #int]   ; capture #int"
+    ) == BinExport2InstructionPattern(
+        mnemonics=(
+            "ldp",
+            "stp",
+        ),
+        operands=("reg", "reg", ("[", "reg", ",", "#int")),
+        capture="#int",
+    )
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldp|stp reg, reg, [reg, #int]!  ; capture #int"
+    ) == BinExport2InstructionPattern(
+        mnemonics=(
+            "ldp",
+            "stp",
+        ),
+        operands=("reg", "reg", ("!", "[", "reg", ",", "#int")),
+        capture="#int",
+    )
+
+    assert BinExport2InstructionPattern.from_str(
+        "ldp|stp reg, reg, [reg], #int   ; capture #int"
+    ) == BinExport2InstructionPattern(
+        mnemonics=(
+            "ldp",
+            "stp",
+        ),
+        operands=("reg", "reg", ("[", "reg"), "#int"),
+        capture="#int",
+    )
+
+    assert (
+        BinExport2InstructionPatternMatcher.from_str(
+            """
+            # comment
+            br      reg
+            br      reg(not-stack)
+            br      reg                     ; capture reg
+            mov     reg0, reg1              ; capture reg0
+            adrp    reg, #int               ; capture #int
+            add     reg, reg, #int          ; capture #int
+            ldr     reg0, [reg1]            ; capture reg1
+            ldr|str reg, [reg, #int]        ; capture #int
+            ldr|str reg, [reg, #int]!       ; capture #int
+            ldr|str reg, [reg], #int        ; capture #int
+            ldp|stp reg, reg, [reg, #int]   ; capture #int
+            ldp|stp reg, reg, [reg, #int]!  ; capture #int
+            ldp|stp reg, reg, [reg], #int   ; capture #int
+            ldrb    reg0, [reg1, reg2]      ; capture reg2
+            call    [reg + reg * #int + #int]
+            call    [reg + reg * #int]
+            call    [reg * #int + #int]
+            call    [reg + reg + #int]
+            call    [reg + #int]
+            """
+        ).queries
+        is not None
+    )
+
+
+def match_address(extractor: BinExport2FeatureExtractor, queries: BinExport2InstructionPatternMatcher, address: int):
+    instruction = extractor.idx.insn_by_address[address]
+    mnemonic: str = get_instruction_mnemonic(extractor.be2, instruction)
+
+    operands = []
+    for operand_index in instruction.operand_index:
+        operand = extractor.be2.operand[operand_index]
+        operands.append(capa.features.extractors.binexport2.helpers.get_operand_expressions(extractor.be2, operand))
+
+    return queries.match(mnemonic, operands)
+
+
+def match_address_with_be2(
+    extractor: BinExport2FeatureExtractor, queries: BinExport2InstructionPatternMatcher, address: int
+):
+    instruction_index = extractor.idx.insn_index_by_address[address]
+    return queries.match_with_be2(extractor.be2, instruction_index)
+
+
+def test_pattern_matching():
+    queries = BinExport2InstructionPatternMatcher.from_str(
+        """
+        br      reg(stack)                     ; capture reg
+        br      reg(not-stack)                 ; capture reg
+        mov     reg0, reg1                     ; capture reg0
+        adrp    reg, #int                      ; capture #int
+        add     reg, reg, #int                 ; capture #int
+        ldr     reg0, [reg1]                   ; capture reg1
+        ldr|str reg, [reg, #int]               ; capture #int
+        ldr|str reg, [reg, #int]!              ; capture #int
+        ldr|str reg, [reg], #int               ; capture #int
+        ldp|stp reg, reg, [reg, #int]          ; capture #int
+        ldp|stp reg, reg, [reg, #int]!         ; capture #int
+        ldp|stp reg, reg, [reg], #int          ; capture #int
+        ldrb    reg0, [reg1(not-stack), reg2]  ; capture reg2
+        """
+    )
+
+    # 0x210184: ldrb      w2, [x0,                x1]
+    # query:    ldrb    reg0, [reg1(not-stack), reg2]      ; capture reg2"
+    assert match_address(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
+
+    # 0x210198:  mov         x2, x1
+    # query:     mov       reg0, reg1           ; capture reg0"),
+    assert match_address(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
+
+    # 0x210190:  add         x1, x1,  0x1
+    # query:     add        reg, reg, #int      ; capture #int
+    assert match_address(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
+
+
+BE2_EXTRACTOR_687 = fixtures.get_binexport_extractor(
+    CD
+    / "data"
+    / "binexport2"
+    / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
+)
+
+
+def test_pattern_matching_exclamation():
+    queries = BinExport2InstructionPatternMatcher.from_str(
+        """
+        stp  reg, reg, [reg, #int]!  ; capture #int
+        """
+    )
+
+    # note this captures the sp
+    # 0x107918:  stp  x20, x19, [sp,0xFFFFFFFFFFFFFFE0]!
+    # query:     stp  reg, reg, [reg, #int]!  ; capture #int
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+
+
+def test_pattern_matching_stack():
+    queries = BinExport2InstructionPatternMatcher.from_str(
+        """
+        stp  reg, reg, [reg(stack), #int]!  ; capture #int
+        """
+    )
+
+    # note this does capture the sp
+    # compare this with the test above (exclamation)
+    # 0x107918:  stp  x20, x19, [sp,         0xFFFFFFFFFFFFFFE0]!
+    # query:     stp  reg, reg, [reg(stack), #int]!  ; capture #int
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+
+
+def test_pattern_matching_not_stack():
+    queries = BinExport2InstructionPatternMatcher.from_str(
+        """
+        stp  reg, reg, [reg(not-stack), #int]!  ; capture #int
+        """
+    )
+
+    # note this does not capture the sp
+    # compare this with the test above (exclamation)
+    # 0x107918:  stp  x20, x19, [sp,             0xFFFFFFFFFFFFFFE0]!
+    # query:     stp  reg, reg, [reg(not-stack), #int]!  ; capture #int
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918) is None
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918) is None
+
+
+BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
+
+
+def test_pattern_matching_x86():
+    queries = BinExport2InstructionPatternMatcher.from_str(
+        """
+        cmp|lea reg, [reg(not-stack) + #int0]  ; capture #int0
+        """
+    )
+
+    # 0x4018c0:  LEA         ECX, [EBX+0x2]
+    # query:     cmp|lea     reg, [reg(not-stack) + #int0]  ; capture #int0
+    assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
+    assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
