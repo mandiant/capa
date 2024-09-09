@@ -53,18 +53,16 @@ export function createATTACKHref(attack) {
 }
 
 /**
- * Creates a CAPA rules URL for a given node with tag.
+ * Creates an href for a given rule in the rules website
  *
- * @param {Object} node - The node object containing data about the rule.
- * @param {string} node.data.namespace - The namespace of the rule (optional).
+ * @param {Object} node - The node object
  * @param {string} node.data.name - The name of the rule.
- * @returns {string} The formatted CAPA rules URL.
+ * @returns {string} The formatted capa rules URL.
  */
-export function createCapaRulesUrl(node, tag) {
-    if (!node || !node.data || !tag) return null;
-    const namespace = node.data.namespace || "lib";
+export function createCapaRulesUrl(node) {
+    if (!node || !node.data) return null;
     const ruleName = node.data.name.toLowerCase().replace(/\s+/g, "-");
-    return `https://github.com/mandiant/capa-rules/blob/v${tag}/${namespace}/${ruleName}.yml`;
+    return `https://mandiant.github.io/capa/rules/${ruleName}/`;
 }
 
 /**

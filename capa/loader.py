@@ -45,6 +45,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_DRAKVUF,
     FORMAT_BINEXPORT2,
@@ -65,6 +66,7 @@ BACKEND_BINJA = "binja"
 BACKEND_PEFILE = "pefile"
 BACKEND_CAPE = "cape"
 BACKEND_DRAKVUF = "drakvuf"
+BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 
@@ -221,6 +223,11 @@ def get_extractor(
         report = capa.helpers.load_jsonl_from_path(input_path)
         return capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report)
 
+    elif backend == BACKEND_VMRAY:
+        import capa.features.extractors.vmray.extractor
+
+        return capa.features.extractors.vmray.extractor.VMRayExtractor.from_zipfile(input_path)
+
     elif backend == BACKEND_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
@@ -376,6 +383,11 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
 
         report = capa.helpers.load_jsonl_from_path(input_file)
         file_extractors.append(capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report))
+
+    elif input_format == FORMAT_VMRAY:
+        import capa.features.extractors.vmray.extractor
+
+        file_extractors.append(capa.features.extractors.vmray.extractor.VMRayExtractor.from_zipfile(input_file))
 
     elif input_format == FORMAT_BINEXPORT2:
         file_extractors = _get_binexport2_file_extractors(input_file)

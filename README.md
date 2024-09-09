@@ -28,7 +28,7 @@ capa detects capabilities in executable files.
 You run it against a PE, ELF, .NET module, shellcode file, or a sandbox report and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
-To interactively inspect capa results in your browser use the [capa web explorer](https://mandiant.github.io/capa/explorer/).
+To interactively inspect capa results in your browser use the [capa explorer web](https://mandiant.github.io/capa/explorer/).
 
 If you want to inspect or write capa rules, head on over to the [capa-rules repository](https://github.com/mandiant/capa-rules). Otherwise, keep reading.
 
@@ -89,12 +89,12 @@ Download stable releases of the standalone capa binaries [here](https://github.c
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
-# web explorer
-The [capa web explorer](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
+# capa explorer web
+The [capa explorer web](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
 
-![capa web explorer screenshot](https://github.com/mandiant/capa/blob/master/doc/img/capa_web_explorer.png)
+![capa explorer web screenshot](https://github.com/mandiant/capa/blob/master/doc/img/capa_web_explorer.png)
 
-More details on the web UI is available in the [capa web explorer README](https://github.com/mandiant/capa/blob/master/web/explorer/README.md).
+More details on the web UI is available in the [capa explorer web README](https://github.com/mandiant/capa/blob/master/web/explorer/README.md).
 
 # example
 
@@ -150,13 +150,15 @@ function @ 0x4011C0
 ...
 ```
 
-## analyzing sandbox reports
-Additionally, capa also supports analyzing sandbox reports for dynamic capability extraction.
-In order to use this, you first submit your sample to one of supported sandboxes for analysis, and then run capa against the generated report file.
+capa also supports dynamic capabilities detection for multiple sandboxes including:
+* [CAPE](https://github.com/kevoreilly/CAPEv2) (supported report formats: `.json`, `.json_`, `.json.gz`)
+* [DRAKVUF](https://github.com/CERT-Polska/drakvuf-sandbox/) (supported report formats: `.log`, `.log.gz`)
+* [VMRay](https://www.vmray.com/) (supported report formats: analysis archive `.zip`)
 
-Currently, capa supports the [CAPE sandbox](https://github.com/kevoreilly/CAPEv2) and the [DRAKVUF sandbox](https://github.com/CERT-Polska/drakvuf-sandbox/). In order to use either, simply run capa against the generated file (JSON for CAPE or LOG for DRAKVUF sandbox) and it will automatically detect the sandbox and extract capabilities from it.
 
-Here's an example of running capa against a packed binary, and then running capa against the CAPE report of that binary:
+To use this feature, submit your file to a supported sandbox and then download and run capa against the generated report file. This feature enables capa to match capabilities against dynamic and static features that the sandbox captured during execution.
+
+Here's an example of running capa against a packed file, and then running capa against the CAPE report generated for the same packed file:
 
 ```yaml
 $ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.exe

@@ -46,6 +46,7 @@ from capa.loader import (
     BACKEND_VIV,
     BACKEND_CAPE,
     BACKEND_BINJA,
+    BACKEND_VMRAY,
     BACKEND_DOTNET,
     BACKEND_FREEZE,
     BACKEND_PEFILE,
@@ -60,6 +61,7 @@ from capa.helpers import (
     log_unsupported_format_error,
     log_empty_sandbox_report_error,
     log_unsupported_cape_report_error,
+    log_unsupported_vmray_report_error,
     log_unsupported_drakvuf_report_error,
 )
 from capa.exceptions import (
@@ -81,6 +83,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
@@ -262,6 +265,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_CAPE, "CAPE sandbox report"),
             (FORMAT_DRAKVUF, "DRAKVUF sandbox report"),
+            (FORMAT_VMRAY, "VMRay sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
             (FORMAT_BINEXPORT2, "BinExport2"),
         ]
@@ -286,6 +290,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
             (BACKEND_DRAKVUF, "DRAKVUF"),
+            (BACKEND_VMRAY, "VMRay"),
         ]
         backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
@@ -561,6 +566,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_DRAKVUF:
         return BACKEND_DRAKVUF
 
+    elif input_format == FORMAT_VMRAY:
+        return BACKEND_VMRAY
+
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
 
@@ -588,7 +596,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if backend in (BACKEND_CAPE, BACKEND_DRAKVUF):
+    if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
         return None
     elif backend == BACKEND_BINEXPORT2:
         import capa.features.extractors.binexport2
@@ -631,13 +639,22 @@ def get_rules_from_cli(args) -> RuleSet:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
+    enable_cache: bool = True
     try:
         if capa.helpers.is_running_standalone() and args.is_default_rules:
             cache_dir = get_default_root() / "cache"
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir)
+        if capa.helpers.is_dev_environment():
+            # using the rules cache during development may result in unexpected errors, see #1898
+            enable_cache = capa.helpers.is_cache_newer_than_rule_code(cache_dir)
+            if not enable_cache:
+                logger.debug("not using cache. delete the cache file manually to use rule caching again")
+            else:
+                logger.debug("cache can be used, no potentially outdated cache files found")
+
+        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
@@ -700,6 +717,8 @@ def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtract
             log_unsupported_cape_report_error(str(e))
         elif input_format == FORMAT_DRAKVUF:
             log_unsupported_drakvuf_report_error(str(e))
+        elif input_format == FORMAT_VMRAY:
+            log_unsupported_vmray_report_error(str(e))
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
@@ -822,6 +841,8 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             log_unsupported_cape_report_error(str(e))
         elif input_format == FORMAT_DRAKVUF:
             log_unsupported_drakvuf_report_error(str(e))
+        elif input_format == FORMAT_VMRAY:
+            log_unsupported_vmray_report_error(str(e))
         else:
             log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
@@ -881,6 +902,9 @@ def main(argv: Optional[List[str]] = None):
         By default, capa uses a default set of embedded rules.
         You can see the rule set here:
           https://github.com/mandiant/capa-rules
+
+        You can load capa JSON output to capa explorer web:
+          https://github.com/mandiant/capa/explorer
 
         To provide your own rule set, use the `-r` flag:
           capa  --rules /path/to/rules  suspicious.exe
