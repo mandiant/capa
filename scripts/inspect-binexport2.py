@@ -68,9 +68,37 @@ class Renderer:
 
 
 # internal to `render_operand`
+def _prune_expression_tree(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+    expression_tree: List[List[int]],
+    tree_index: int = 0,
+):
+    expression_index = operand.expression_index[tree_index]
+    expression = be2.expression[expression_index]
+    children_tree_indexes: List[int] = expression_tree[tree_index]
+
+    if expression.type == BinExport2.Expression.OPERATOR:
+        if len(children_tree_indexes) == 0 and expression.symbol in ("lsl", "lsr"):
+            # ghidra may emit superfluous lsl nodes with no children.
+            # https://github.com/mandiant/capa/pull/2340/files#r1750003919
+            # which is maybe: https://github.com/NationalSecurityAgency/ghidra/issues/6821#issuecomment-2295394697
+            #
+            # which seems to be as if the shift wasn't there (shift of #0)
+            # so we want to remove references to this node from any parent nodes.
+            for tree_node in expression_tree:
+                if tree_index in tree_node:
+                    tree_node.remove(tree_index)
+
+            return
+
+    for child_tree_index in children_tree_indexes:
+        _prune_expression_tree(be2, operand, expression_tree, child_tree_index)
+
+
+# internal to `render_operand`
 def _render_expression_tree(
     be2: BinExport2,
-    instruction: BinExport2.Instruction,
     operand: BinExport2.Operand,
     expression_tree: List[List[int]],
     tree_index: int,
@@ -101,7 +129,7 @@ def _render_expression_tree(
             #           |
             #           D
             child_index = children_tree_indexes[0]
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+            _render_expression_tree(be2, operand, expression_tree, child_index, o)
             return
         else:
             raise NotImplementedError(len(children_tree_indexes))
@@ -121,25 +149,28 @@ def _render_expression_tree(
         # to provide it only when necessary.
         assert len(children_tree_indexes) == 1
         child_index = children_tree_indexes[0]
-        _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+        _render_expression_tree(be2, operand, expression_tree, child_index, o)
         return
 
     elif expression.type == BinExport2.Expression.OPERATOR:
 
         if len(children_tree_indexes) == 1:
             # prefix operator, like "ds:"
-            o.write(expression.symbol)
+            if expression.symbol != ",":
+                # or there's a binary operator, like ",", that's missing a child,
+                # such as when we prune "lsl" branches.
+                o.write(expression.symbol)
             child_index = children_tree_indexes[0]
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+            _render_expression_tree(be2, operand, expression_tree, child_index, o)
             return
 
         elif len(children_tree_indexes) == 2:
             # infix operator: like "+" in "ebp+10"
             child_a = children_tree_indexes[0]
             child_b = children_tree_indexes[1]
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_a, o)
+            _render_expression_tree(be2, operand, expression_tree, child_a, o)
             o.write(expression.symbol)
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_b, o)
+            _render_expression_tree(be2, operand, expression_tree, child_b, o)
             return
 
         elif len(children_tree_indexes) == 3:
@@ -147,11 +178,11 @@ def _render_expression_tree(
             child_a = children_tree_indexes[0]
             child_b = children_tree_indexes[1]
             child_c = children_tree_indexes[2]
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_a, o)
+            _render_expression_tree(be2, operand, expression_tree, child_a, o)
             o.write(expression.symbol)
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_b, o)
+            _render_expression_tree(be2, operand, expression_tree, child_b, o)
             o.write(expression.symbol)
-            _render_expression_tree(be2, instruction, operand, expression_tree, child_c, o)
+            _render_expression_tree(be2, operand, expression_tree, child_c, o)
             return
 
         else:
@@ -161,7 +192,7 @@ def _render_expression_tree(
         o.write("[")
         assert len(children_tree_indexes) == 1
         child_index = children_tree_indexes[0]
-        _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+        _render_expression_tree(be2, operand, expression_tree, child_index, o)
         o.write("]")
         return
 
@@ -172,39 +203,10 @@ def _render_expression_tree(
         raise NotImplementedError(expression.type)
 
 
-_OPERAND_CACHE: Dict[int, str] = {}
-
-
-def render_operand(
-    be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand, index: Optional[int] = None
-) -> str:
-    # For the mimikatz example file, there are 138k distinct operands.
-    # Of those, only 11k are unique, which is less than 10% of the total.
-    # The most common operands are seen 37k, 24k, 17k, 15k, 11k, ... times.
-    # In other words, the most common five operands account for 100k instances,
-    # which is around 75% of operand instances.
-    # Therefore, we expect caching to be fruitful, trading memory for CPU time.
-    #
-    # No caching:   6.045 s ± 0.164 s   [User: 5.916 s, System: 0.129 s]
-    # With caching: 4.259 s ± 0.161 s   [User: 4.141 s, System: 0.117 s]
-    #
-    # So we can save 30% of CPU time by caching operand rendering.
-    #
-    # Other measurements:
-    #
-    # perf: loading BinExport2:   0.06s
-    # perf: indexing BinExport2:  0.34s
-    # perf: rendering BinExport2: 1.96s
-    # perf: writing BinExport2:   1.13s
-    # ________________________________________________________
-    # Executed in    4.40 secs    fish           external
-    #    usr time    4.22 secs    0.00 micros    4.22 secs
-    #    sys time    0.18 secs  842.00 micros    0.18 secs
-    if index and index in _OPERAND_CACHE:
-        return _OPERAND_CACHE[index]
-
-    o = io.StringIO()
-
+def _build_expression_tree(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+) -> List[List[int]]:
     # The reconstructed expression tree layout, linking parent nodes to their children.
     #
     # There is one list of integers for each expression in the operand.
@@ -240,13 +242,83 @@ def render_operand(
 
         tree.append(children)
 
-    _render_expression_tree(be2, instruction, operand, tree, 0, o)
+    _prune_expression_tree(be2, operand, tree)
+
+    return tree
+
+
+_OPERAND_CACHE: Dict[int, str] = {}
+
+
+def render_operand(
+    be2: BinExport2, operand: BinExport2.Operand, index: Optional[int] = None
+) -> str:
+    # For the mimikatz example file, there are 138k distinct operands.
+    # Of those, only 11k are unique, which is less than 10% of the total.
+    # The most common operands are seen 37k, 24k, 17k, 15k, 11k, ... times.
+    # In other words, the most common five operands account for 100k instances,
+    # which is around 75% of operand instances.
+    # Therefore, we expect caching to be fruitful, trading memory for CPU time.
+    #
+    # No caching:   6.045 s ± 0.164 s   [User: 5.916 s, System: 0.129 s]
+    # With caching: 4.259 s ± 0.161 s   [User: 4.141 s, System: 0.117 s]
+    #
+    # So we can save 30% of CPU time by caching operand rendering.
+    #
+    # Other measurements:
+    #
+    # perf: loading BinExport2:   0.06s
+    # perf: indexing BinExport2:  0.34s
+    # perf: rendering BinExport2: 1.96s
+    # perf: writing BinExport2:   1.13s
+    # ________________________________________________________
+    # Executed in    4.40 secs    fish           external
+    #    usr time    4.22 secs    0.00 micros    4.22 secs
+    #    sys time    0.18 secs  842.00 micros    0.18 secs
+    if index and index in _OPERAND_CACHE:
+        return _OPERAND_CACHE[index]
+
+    o = io.StringIO()
+    tree = _build_expression_tree(be2, operand)
+    _render_expression_tree(be2, operand, tree, 0, o)
     s = o.getvalue()
 
     if index:
         _OPERAND_CACHE[index] = s
 
     return s
+
+
+def inspect_operand(be2: BinExport2, operand: BinExport2.Operand):
+    expression_tree = _build_expression_tree(be2, operand)
+
+    def rec(tree_index, indent=0):
+        expression_index = operand.expression_index[tree_index]
+        expression = be2.expression[expression_index]
+        children_tree_indexes: List[int] = expression_tree[tree_index]
+
+        print(f"    {'  ' * indent}expression: {str(expression).replace('\n', ', ')}")
+        for child_index in children_tree_indexes:
+            rec(child_index, indent+1)
+
+    rec(0)
+
+
+def inspect_instruction(be2: BinExport2, instruction: BinExport2.Instruction, address: int):
+    mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    print("instruction:")
+    print(f"  address: {hex(address)}")
+    print(f"  mnemonic: {mnemonic.name}")
+
+    print("  operands:")
+    operands = []
+    for i, operand_index in enumerate(instruction.operand_index):
+        print(f"  - operand {i}: [{operand_index}]")
+        operand = be2.operand[operand_index]
+        # Ghidra bug where empty operands (no expressions) may
+        # exist so we skip those for now (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
+        if len(operand.expression_index) > 0:
+            inspect_operand(be2, operand)
 
 
 def main(argv=None):
@@ -256,6 +328,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Inspect BinExport2 files")
     capa.main.install_common_args(parser, wanted={"input_file"})
+    parser.add_argument("--instruction", type=lambda v: int(v, 0))
     args = parser.parse_args(args=argv)
 
     try:
@@ -367,7 +440,7 @@ def main(argv=None):
                                     # Ghidra bug where empty operands (no expressions) may
                                     # exist so we skip those for now (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
                                     if len(operand.expression_index) > 0:
-                                        operands.append(render_operand(be2, instruction, operand, index=operand_index))
+                                        operands.append(render_operand(be2, operand, index=operand_index))
 
                                 call_targets = ""
                                 if instruction.call_target:
@@ -452,6 +525,10 @@ def main(argv=None):
 
     with timing("writing to STDOUT"):
         print(o.getvalue())
+
+    if args.instruction:
+        insn = idx.insn_by_address[args.instruction]
+        inspect_instruction(be2, insn, args.instruction)
 
 
 if __name__ == "__main__":
