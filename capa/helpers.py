@@ -5,14 +5,17 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
 import sys
 import gzip
 import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import Dict, Union, BinaryIO, Iterator, NoReturn
+from typing import Dict, List, Union, BinaryIO, Iterator, NoReturn
 from pathlib import Path
+from zipfile import ZipFile
+from datetime import datetime
 
 import tqdm
 import msgspec.json
@@ -23,6 +26,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_DRAKVUF,
@@ -33,9 +37,10 @@ from capa.features.common import (
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-# CAPE extensions: .json, .json_, .json.gz
-# DRAKVUF Sandbox extensions: .log, .log.gz
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz")
+# CAPE (.json, .json_, .json.gz)
+# DRAKVUF (.log, .log.gz)
+# VMRay (.zip)
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz", ".zip")
 EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
@@ -125,16 +130,20 @@ def get_format_from_report(sample: Path) -> str:
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
-        return FORMAT_UNKNOWN
-
-    report = load_json_from_path(sample)
-    if "CAPE" in report:
-        return FORMAT_CAPE
-
-    if "target" in report and "info" in report and "behavior" in report:
-        # CAPE report that's missing the "CAPE" key,
-        # which is not going to be much use, but its correct.
-        return FORMAT_CAPE
+    elif sample.name.endswith(".zip"):
+        with ZipFile(sample, "r") as zipfile:
+            namelist: List[str] = zipfile.namelist()
+            if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
+                # assume VMRay zipfile at a minimum has these files
+                return FORMAT_VMRAY
+    elif sample.name.endswith(("json", "json_", "json.gz")):
+        report = load_json_from_path(sample)
+        if "CAPE" in report:
+            return FORMAT_CAPE
+        if "target" in report and "info" in report and "behavior" in report:
+            # CAPE report that's missing the "CAPE" key,
+            # which is not going to be much use, but its correct.
+            return FORMAT_CAPE
 
     return FORMAT_UNKNOWN
 
@@ -247,6 +256,17 @@ def log_unsupported_drakvuf_report_error(error: str):
     logger.error("-" * 80)
 
 
+def log_unsupported_vmray_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error(" Input file is not a valid VMRay analysis archive: %s", error)
+    logger.error(" ")
+    logger.error(
+        " capa only supports analyzing VMRay dynamic analysis archives containing summary_v2.json and flog.xml log files."
+    )
+    logger.error(" Please make sure you have downloaded a dynamic analysis archive from VMRay.")
+    logger.error("-" * 80)
+
+
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
     logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
@@ -294,3 +314,62 @@ def is_running_standalone() -> bool:
     # so we keep this in a common area.
     # generally, other library code should not use this function.
     return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
+
+
+def is_dev_environment() -> bool:
+    if is_running_standalone():
+        return False
+
+    if "site-packages" in __file__:
+        # running from a site-packages installation
+        return False
+
+    capa_root = Path(__file__).resolve().parent.parent
+    git_dir = capa_root / ".git"
+
+    if not git_dir.is_dir():
+        # .git directory doesn't exist
+        return False
+
+    return True
+
+
+def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
+    """
+    basic check to prevent issues if the rules cache is older than relevant rules code
+
+    args:
+      cache_dir: the cache directory containing cache files
+
+    returns:
+      True if latest cache file is newer than relevant rule cache code
+    """
+
+    # retrieve the latest modified cache file
+    cache_files = list(cache_dir.glob("*.cache"))
+    if not cache_files:
+        logger.debug("no rule cache files found")
+        return False
+
+    latest_cache_file = max(cache_files, key=os.path.getmtime)
+    cache_timestamp = os.path.getmtime(latest_cache_file)
+
+    # these are the relevant rules code files that could conflict with using an outdated cache
+    latest_rule_code_file = max([Path("capa/rules/__init__.py"), Path("capa/rules/cache.py")], key=os.path.getmtime)
+    rule_code_timestamp = os.path.getmtime(latest_rule_code_file)
+
+    if rule_code_timestamp > cache_timestamp:
+
+        def ts_to_str(ts):
+            return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+        logger.warning(
+            "latest rule code file %s (%s) is newer than the latest rule cache file %s (%s)",
+            latest_rule_code_file,
+            ts_to_str(rule_code_timestamp),
+            latest_cache_file,
+            ts_to_str(cache_timestamp),
+        )
+        return False
+
+    return True

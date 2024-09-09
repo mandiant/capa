@@ -259,7 +259,6 @@ def generate_html(categories_data, color_map):
         for card in cards_data:
             first_word = get_first_word(card["namespace"])
             rectangle_color = color_map[first_word]
-            file_name = card["filename"].rpartition(".yml")[0]
 
             card_html = f"""
                 <div class="card-wrapper">
@@ -267,7 +266,7 @@ def generate_html(categories_data, color_map):
                         <div class="thin-rectangle" style="background-color: {rectangle_color};"></div>
                         <div class="card-body">
                             <div class="namespace">{card['namespace']}</div>
-                            <div class="rule-name"><a href="./{file_name}.html">{card['name']}</a></div>
+                            <div class="rule-name"><a href="./{card['name']}/">{card['name']}</a></div>
                             <div class="authors">{', '.join(card['authors'])}</div>
                         </div>
                     </div>

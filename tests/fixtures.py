@@ -210,6 +210,13 @@ def get_drakvuf_extractor(path):
 
 
 @lru_cache(maxsize=1)
+def get_vmray_extractor(path):
+    from capa.features.extractors.vmray.extractor import VMRayExtractor
+
+    return VMRayExtractor.from_zipfile(path)
+
+
+@lru_cache(maxsize=1)
 def get_ghidra_extractor(path: Path):
     import capa.features.extractors.ghidra.extractor
 
@@ -408,13 +415,21 @@ def get_data_path_by_name(name) -> Path:
             / "v2.2"
             / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
         )
-    elif name.startswith("93b2d1"):
+    elif name.startswith("93b2d1-drakvuf"):
         return (
             CD
             / "data"
             / "dynamic"
             / "drakvuf"
             / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
+        )
+    elif name.startswith("93b2d1-vmray"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "vmray"
+            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip"
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
@@ -1564,4 +1579,7 @@ def a076114_rd():
 @pytest.fixture
 def dynamic_a0000a6_rd():
     # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
-    return get_result_doc(CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json")
+    # gzip tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
+    return get_result_doc(
+        CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )

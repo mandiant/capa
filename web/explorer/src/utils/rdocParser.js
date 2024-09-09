@@ -490,6 +490,8 @@ function getFeatureName(feature) {
             return formatBytes(feature.bytes);
         case "operand offset":
             return `operand[${feature.index}].offset: 0x${feature.operand_offset.toString(16).toUpperCase()}`;
+        case "class":
+            return `${feature.class_}`;
         default:
             return `${feature[feature.type]}`;
     }
