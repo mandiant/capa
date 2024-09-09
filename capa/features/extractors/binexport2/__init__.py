@@ -9,6 +9,9 @@
 Proto files generated via protobuf v24.4:
 
     protoc --python_out=. --mypy_out=. binexport2.proto
+
+from BinExport2 at 6916731d5f6693c4a4f0a052501fd3bd92cfd08b
+https://github.com/google/binexport/blob/6916731/binexport2.proto
 """
 import io
 import hashlib

@@ -818,7 +818,9 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
         # insn/offset: negative
+        # 0x4012b4  MOVZX       ECX, [EAX+0xFFFFFFFFFFFFFFFF]
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
+        # 0x4012b8  MOVZX       EAX, [EAX+0xFFFFFFFFFFFFFFFE]
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
         #
         # insn/offset from mnemonic: add
@@ -841,7 +843,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         # should not be considered, lea operand invalid encoding
         #    .text:004717B1 8D 4C 31 D0             lea     ecx, [ecx+esi-30h]
         ("mimikatz", "function=0x47153B,bb=0x4717AB,insn=0x4717B1", capa.features.insn.Number(-0x30), False),
-        # yes, this is also a number (imagine edx is zero):
+        # yes, this is also a number (imagine ebx is zero):
         #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
         ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api

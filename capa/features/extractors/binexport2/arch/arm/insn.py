@@ -15,11 +15,10 @@ from capa.features.address import Address
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
+    BinExport2InstructionPatternMatcher,
     mask_immediate,
     is_address_mapped,
-    get_operand_expressions,
     get_instruction_mnemonic,
-    get_instruction_operands,
     get_operand_register_expression,
     get_operand_immediate_expression,
 )
@@ -50,10 +49,10 @@ def extract_insn_number_features(
     if mnemonic in ("add", "sub"):
         assert len(instruction.operand_index) == 3
 
-        expression1: Optional[BinExport2.Expression] = get_operand_register_expression(
+        operand1_expression: Optional[BinExport2.Expression] = get_operand_register_expression(
             be2, be2.operand[instruction.operand_index[1]]
         )
-        if expression1 and is_stack_register_expression(be2, expression1):
+        if operand1_expression and is_stack_register_expression(be2, operand1_expression):
             # skip things like:
             # add x0,sp,#0x8
             return
@@ -78,6 +77,18 @@ def extract_insn_number_features(
                 yield OperandOffset(i, value), ih.address
 
 
+OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    ldr|ldrb|ldrh|ldrsb|ldrsh|ldrex|ldrd|str|strb|strh|strex|strd reg, [reg(not-stack),  #int]                                 ; capture #int
+    ldr|ldrb|ldrh|ldrsb|ldrsh|ldrex|ldrd|str|strb|strh|strex|strd reg, [reg(not-stack),  #int]!                                ; capture #int
+    ldr|ldrb|ldrh|ldrsb|ldrsh|ldrex|ldrd|str|strb|strh|strex|strd reg, [reg(not-stack)],        #int                           ; capture #int
+    ldp|ldpd|stp|stpd                                             reg, reg,                     [reg(not-stack), #int]         ; capture #int
+    ldp|ldpd|stp|stpd                                             reg, reg,                     [reg(not-stack), #int]!        ; capture #int
+    ldp|ldpd|stp|stpd                                             reg, reg,                     [reg(not-stack)],       #int   ; capture #int
+    """
+)
+
+
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
@@ -85,104 +96,26 @@ def extract_insn_offset_features(
     ii: InstructionContext = ih.inner
 
     be2: BinExport2 = fhi.ctx.be2
-    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
 
-    if len(instruction.operand_index) == 0:
-        # skip things like:
-        #   .text:0040116e leave
+    match = OFFSET_PATTERNS.match_with_be2(be2, ii.instruction_index)
+    if not match:
         return
 
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
-    value: Optional[int] = None
-    value_index: Optional[int] = None
-
-    operands: List[BinExport2.Operand]
-    immediate_expression: Optional[BinExport2.Expression]
-
-    if mnemonic.startswith(("ldr", "str")):
-        operands = get_instruction_operands(be2, instruction)
-        expressions1: List[BinExport2.Expression]
-
-        if len(operands) == 2:
-            # like:
-            # ldr x0, [x1, 8]
-            expressions1 = get_operand_expressions(be2, operands[1])
-
-            if len(expressions1) == 4:
-                # like:
-                # ldr x0, [x1, 8]
-                if not is_stack_register_expression(be2, expressions1[1]):
-                    if expressions1[3].type == BinExport2.Expression.IMMEDIATE_INT:
-                        value = expressions1[3].immediate
-                        value_index = 1
-
-            elif len(expressions1) == 5:
-                # like
-                # ldr x0, [x1, 8]!
-                if not is_stack_register_expression(be2, expressions1[2]):
-                    if expressions1[4].type == BinExport2.Expression.IMMEDIATE_INT:
-                        value = expressions1[4].immediate
-                        value_index = 1
-
-        elif len(operands) == 3:
-            # like:
-            # ldr x0, [x1], 8
-            expressions1 = get_operand_expressions(be2, operands[1])
-            if not is_stack_register_expression(be2, expressions1[1]):
-                immediate_expression = get_operand_immediate_expression(be2, operands[2])
-
-                if immediate_expression:
-                    value = immediate_expression.immediate
-                    value_index = 2
-
-    elif mnemonic in ("ldp", "stp"):
-        operands = get_instruction_operands(be2, instruction)
-        expressions2: List[BinExport2.Expression]
-
-        if len(operands) == 3:
-            # like:
-            # ldp x0, x1, [x3, 8]!
-            expressions2 = get_operand_expressions(be2, operands[2])
-
-            if len(expressions2) == 4:
-                # like:
-                # ldp x0, x1, [x3, 8]
-                if not is_stack_register_expression(be2, expressions2[1]):
-                    if expressions2[3].type == BinExport2.Expression.IMMEDIATE_INT:
-                        value = expressions2[3].immediate
-                        value_index = 2
-
-            elif len(expressions2) == 5:
-                # like:
-                # ldp x0, x1, [x3, 8]!
-                if not is_stack_register_expression(be2, expressions2[2]):
-                    if expressions2[4].type == BinExport2.Expression.IMMEDIATE_INT:
-                        value = expressions2[4].immediate
-                        value_index = 2
-
-        elif len(operands) == 4:
-            # like
-            # ldp x0, x1, [x3], 8
-            expressions2 = get_operand_expressions(be2, operands[2])
-
-            if not is_stack_register_expression(be2, expressions2[1]):
-                immediate_expression = get_operand_immediate_expression(be2, operands[3])
-
-                if immediate_expression:
-                    value = immediate_expression.immediate
-                    value_index = 3
-
-    if value is None:
-        return
-
-    # we shouldn't make it here if index is not set
-    assert value_index is not None
+    value = match.expression.immediate
 
     value = mask_immediate(fhi.arch, value)
     if not is_address_mapped(be2, value):
         value = capa.features.extractors.binexport2.helpers.twos_complement(fhi.arch, value)
         yield Offset(value), ih.address
-        yield OperandOffset(value_index, value), ih.address
+        yield OperandOffset(match.operand_index, value), ih.address
+
+
+NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    eor reg, reg, reg
+    eor reg, reg, #int
+    """
+)
 
 
 def extract_insn_nzxor_characteristic_features(
@@ -190,21 +123,25 @@ def extract_insn_nzxor_characteristic_features(
 ) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
-
     be2: BinExport2 = fhi.ctx.be2
 
-    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
-
-    if mnemonic != "eor":
+    if NZXOR_PATTERNS.match_with_be2(be2, ii.instruction_index) is None:
         return
 
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+    # guaranteed to be simple int/reg operands
+    # so we don't have to realize the tree/list.
     operands: List[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
-
-    assert len(operands) == 3
 
     if operands[1] != operands[2]:
         yield Characteristic("nzxor"), ih.address
+
+
+INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
+    """
+    blx|bx|blr reg
+    """
+)
 
 
 def extract_function_indirect_call_characteristic_features(
@@ -212,20 +149,7 @@ def extract_function_indirect_call_characteristic_features(
 ) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
-
     be2: BinExport2 = fhi.ctx.be2
 
-    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
-
-    if mnemonic not in ("blx", "bx", "blr"):
-        return
-
-    assert len(instruction.operand_index) == 1
-
-    expressions: List[BinExport2.Expression] = get_operand_expressions(be2, be2.operand[instruction.operand_index[0]])
-
-    assert len(expressions) == 1
-
-    if expressions[0].type == BinExport2.Expression.REGISTER:
+    if INDIRECT_CALL_PATTERNS.match_with_be2(be2, ii.instruction_index) is not None:
         yield Characteristic("indirect call"), ih.address
