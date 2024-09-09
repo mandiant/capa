@@ -13,7 +13,7 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
-from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext, InstructionContext
+from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext, InstructionContext, BinExport2Index
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
     mask_immediate,
@@ -145,12 +145,14 @@ def extract_insn_offset_features(
 def is_security_cookie(
     fhi: FunctionContext,
     bbi: BasicBlockContext,
+    instruction_address: int,
     instruction: BinExport2.Instruction,
 ) -> bool:
     """
     check if an instruction is related to security cookie checks.
     """
     be2: BinExport2 = fhi.ctx.be2
+    idx: BinExport2Index = fhi.ctx.idx
 
     # security cookie check should use SP or BP
     op1: BinExport2.Operand = be2.operand[instruction.operand_index[1]]
@@ -164,13 +166,13 @@ def is_security_cookie(
     basic_block_index: int = bbi.basic_block_index
     bb: BinExport2.BasicBlock = be2.basic_block[basic_block_index]
     if flow_graph.entry_basic_block_index == basic_block_index:
-        first_addr: int = min((be2.instruction[ir.begin_index].address for ir in bb.instruction_index))
-        if instruction.address < first_addr + SECURITY_COOKIE_BYTES_DELTA:
+        first_addr: int = min((idx.insn_address_by_index[ir.begin_index] for ir in bb.instruction_index))
+        if instruction_address < first_addr + SECURITY_COOKIE_BYTES_DELTA:
             return True
     # or insn falls at the end before return in a terminal basic block.
     if basic_block_index not in (e.source_basic_block_index for e in flow_graph.edge):
-        last_addr: int = max((be2.instruction[ir.end_index - 1].address for ir in bb.instruction_index))
-        if instruction.address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
+        last_addr: int = max((idx.insn_address_by_index[ir.end_index - 1] for ir in bb.instruction_index))
+        if instruction_address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
             return True
     return False
 
@@ -202,7 +204,8 @@ def extract_insn_nzxor_characteristic_features(
     if mnemonic in ("xor", "xorpd", "xorps", "pxor"):
         if operands[0] == operands[1]:
             return
-        if is_security_cookie(fhi, bbh.inner, instruction):
+        instruction_address: int = idx.insn_address_by_index[ii.instruction_index]
+        if is_security_cookie(fhi, bbh.inner, instruction_address, instruction):
             return
 
     yield Characteristic("nzxor"), ih.address
