@@ -1,4 +1,3 @@
-`
 <template>
     <DataTable
         :value="tableData"
