@@ -30,8 +30,8 @@
                 <InputText v-model="filters['address'].value" placeholder="Filter by function address" />
             </template>
             <template #body="{ data }">
-                <span class="font-monospace text-base">{{ data.address }}</span>
-                <span v-if="data.matchCount > 1" class="font-italic">
+                <span class="font-monospace">{{ data.address }}</span>
+                <span v-if="data.matchCount > 1" class="font-italic match-count">
                     ({{ data.matchCount }} match{{ data.matchCount > 1 ? "es" : "" }})
                 </span>
             </template>

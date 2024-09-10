@@ -4,7 +4,9 @@
         <template v-if="node.data.type === 'rule'">
             <div>
                 <span>{{ node.data.name }}</span>
-                <span v-if="node.data.matchCount > 1" class="font-italic"> ({{ node.data.matchCount }} matches) </span>
+                <span v-if="node.data.matchCount > 1" class="font-italic match-count">
+                    ({{ node.data.matchCount }} matches)
+                </span>
                 <LibraryTag v-if="node.data.lib && node.data.matchCount" />
             </div>
         </template>

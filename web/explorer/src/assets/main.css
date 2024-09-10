@@ -22,6 +22,13 @@ a:hover {
     cursor: default;
 }
 
+/* mute and minimize match count text labels, e.g. "(2 matches)" */
+.match-count {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-left: 0.2rem;
+}
+
 /* remove the border from rows other than rule names */
 .p-treetable-tbody > tr:not(:is([aria-level="1"])) > td {
     border: none !important;
