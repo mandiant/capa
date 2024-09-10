@@ -33,7 +33,7 @@ pyelftools==0.31
 pygments==2.18.0
 python-flirt==0.8.10
 pyyaml==6.0.2
-rich==13.7.1
+rich==13.8.0
 ruamel-yaml==0.18.6
 ruamel-yaml-clib==0.2.8
 setuptools==70.0.0
