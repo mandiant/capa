@@ -21,6 +21,8 @@ from capa.features.extractors.base_extractor import FunctionHandle
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)  # use one byte-per-character encoding
 
 
+# TODO (mr): use find_bytes
+# https://github.com/mandiant/capa/issues/2339
 def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
 
@@ -38,7 +40,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
         return
 
     while True:
-        ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+        ea, _ = ida_bytes.bin_search3(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
         if ea == idaapi.BADADDR:
             break
         start = ea + 1
