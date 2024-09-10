@@ -16,5 +16,10 @@
 @deptry:
     pre-commit run deptry --hook-stage manual --all-files
 
-lint: isort black ruff flake8 mypy deptry
-
+@lint:
+    -just isort
+    -just black
+    -just ruff
+    -just flake8
+    -just mypy
+    -just deptry

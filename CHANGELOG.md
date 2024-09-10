@@ -10,8 +10,9 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 - add rules website https://mandiant.github.io/capa/rules @DeeyaSingh #2310
 - add .justfile @williballenthin #2325
 - dynamic: add support for VMRay dynamic sandbox traces #2208 @mike-hunhoff @r-sm2024 @mr-tz
+- cli: use modern terminal features to hyperlink to the rules website #2337 @williballenthin
 - update IDAPython to IDA Pro 9.0 @mr-tz
- 
+
 ### Breaking Changes
 
 ### New Rules (0)
