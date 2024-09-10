@@ -1,3 +1,4 @@
+`
 <template>
     <DataTable
         :value="tableData"
@@ -104,9 +105,10 @@ onMounted(() => {
 const tableData = computed(() => {
     const data = [];
     for (const fcaps of functionCapabilities.value) {
-        const capabilities = fcaps.capabilities;
-        for (const capability of capabilities) {
-            if (capability.lib && !props.showLibraryRules) continue;
+        // when props.showLibraryRules is true, all capabilities are included.
+        // when props.showLibraryRules is false, only non-library capabilities (where cap.lib is false) are included.
+        const capabilities = fcaps.capabilities.filter((cap) => props.showLibraryRules || !cap.lib);
+        capabilities.forEach((capability) => {
             data.push({
                 address: fcaps.address,
                 matchCount: capabilities.length,
@@ -114,7 +116,7 @@ const tableData = computed(() => {
                 namespace: capability.namespace,
                 lib: capability.lib
             });
-        }
+        });
     }
     return data;
 });
