@@ -16,13 +16,22 @@
             <p class="text-700 text-sm m-0">New to capa? Follow these quick steps to get started:</p>
             <p class="text-700 text-sm mb-3"></p>
             <ol class="text-left text-sm pl-4 mb-3">
-                <li class="mb-2"><a href="https://github.com/mandiant/capa/blob/master/doc/installation.md" class="underline">Install capa</a>, e.g.
-                <ul>
-                    <li>download the latest <a href="https://github.com/mandiant/capa/releases" class="underline">standalone executable release</a></li>
-                    <li>or run <code>$ pip install flare-capa</code></li>
-                </ul>
+                <li class="mb-2">
+                    <a href="https://github.com/mandiant/capa/blob/master/doc/installation.md" class="underline"
+                        >Install capa</a
+                    >, e.g.
+                    <ul>
+                        <li>
+                            download the latest
+                            <a href="https://github.com/mandiant/capa/releases" class="underline"
+                                >standalone executable release</a
+                            >
+                        </li>
+                        <li>or run <code>$ pip install flare-capa</code></li>
+                    </ul>
                 </li>
-                <li class="mb-2">Analyze a sample and save the JSON results:
+                <li class="mb-2">
+                    Analyze a sample and save the JSON results:
                     <ul>
                         <li><code>$ capa -j /path/to/file > result.json</code></li>
                     </ul>
@@ -43,7 +52,8 @@
         </div>
         <div>
             <p class="text-base p-3 max-w-75rem" style="max-width: 75ch">
-                You can download capa Explorer Web for offline usage via the download button in the top-right corner of this page.
+                You can download capa Explorer Web for offline usage via the download button in the top-right corner of
+                this page.
             </p>
         </div>
     </div>
