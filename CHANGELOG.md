@@ -21,6 +21,7 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 ### Bug Fixes
 
 - fix duplicate features shown in vverbose mode @williballenthin #2323
+- fix code path reference in linter @williballenthin #2350
 
 ### capa explorer IDA Pro plugin
 
