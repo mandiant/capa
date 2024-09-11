@@ -17,17 +17,21 @@
             <p class="text-700 text-sm mb-3"></p>
             <ol class="text-left text-sm pl-4 mb-3">
                 <li class="mb-2">
-                    <a href="https://github.com/mandiant/capa/blob/master/doc/installation.md" class="underline"
-                        >Install capa</a
-                    >, e.g.
+                    <a href="https://github.com/mandiant/capa/blob/master/doc/installation.md" class="underline">
+                        Install capa
+                    </a>
+                    , e.g.
                     <ul>
                         <li>
                             download the latest
-                            <a href="https://github.com/mandiant/capa/releases" class="underline"
-                                >standalone executable release</a
-                            >
+                            <a href="https://github.com/mandiant/capa/releases" class="underline">
+                                standalone executable release
+                            </a>
                         </li>
-                        <li>or run <code>$ pip install flare-capa</code></li>
+                        <li>
+                            or run
+                            <code>$ pip install flare-capa</code>
+                        </li>
                     </ul>
                 </li>
                 <li class="mb-2">
@@ -46,8 +50,9 @@
                     rel="noopener noreferrer"
                     class="text-blue-600 hover:text-blue-800 transition-colors duration-200"
                 >
-                    capa GitHub repository</a
-                >.
+                    capa GitHub repository
+                </a>
+                .
             </p>
         </div>
         <div>
