@@ -102,7 +102,14 @@ def _get_operand_expression_list(
 
     elif expression.type == BinExport2.Expression.OPERATOR:
 
-        if len(children_tree_indexes) == 1:
+        if len(children_tree_indexes) == 0:
+            # TODO(mr-tz): Ghidra bug?
+            # https://github.com/mandiant/capa/pull/2340
+            # 00210184 02 68 61 38     ldrb       w2,[x0, x1, LSL ]
+            #                                                 ^^^
+            pass
+
+        elif len(children_tree_indexes) == 1:
             # prefix operator, like "ds:"
             expression_list.append(expression)
             child_index = children_tree_indexes[0]

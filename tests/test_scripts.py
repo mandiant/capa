@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import os
 import sys
 import logging
 import textwrap
@@ -36,6 +37,10 @@ def get_cape_report_file_path():
         / "v2.4"
         / "fb7ade52dc5a1d6128b9c217114a46d0089147610f99f5122face29e429a1e74.json.gz"
     )
+
+
+def get_binexport2_file_path():
+    return str(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
 
 
 def get_rules_path():
@@ -70,6 +75,22 @@ def get_rule_path():
     ],
 )
 def test_scripts(script, args):
+    script_path = get_script_path(script)
+    p = run_program(script_path, args)
+    assert p.returncode == 0
+
+
+@pytest.mark.parametrize(
+    "script,args",
+    [
+        pytest.param("inspect-binexport2.py", [get_binexport2_file_path()]),
+        pytest.param("detect-binexport2-capabilities.py", [get_binexport2_file_path()]),
+    ],
+)
+def test_binexport_scripts(script, args):
+    # define sample bytes location
+    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data"))
+
     script_path = get_script_path(script)
     p = run_program(script_path, args)
     assert p.returncode == 0

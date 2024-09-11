@@ -104,6 +104,7 @@ class BinExport2Index:
         self.string_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
 
         self.insn_address_by_index: Dict[int, int] = {}
+        self.insn_by_address: Dict[int, BinExport2.Instruction] = {}
 
         # must index instructions first
         self._index_insn_addresses()
@@ -186,6 +187,7 @@ class BinExport2Index:
                 addr = next_addr
                 next_addr += len(insn.raw_bytes)
             self.insn_address_by_index[idx] = addr
+            self.insn_by_address[addr] = insn
 
     @staticmethod
     def instruction_indices(basic_block: BinExport2.BasicBlock) -> Iterator[int]:
@@ -234,6 +236,10 @@ class BinExport2Index:
 
         vertex_index: int = self.vertex_index_by_address[address]
         return self.get_function_name_by_vertex(vertex_index)
+
+    def get_instruction_by_address(self, address: int) -> BinExport2.Instruction:
+        assert address in self.insn_by_address, f"address must be indexed, missing {address:x}"
+        return self.insn_by_address[address]
 
 
 class BinExport2Analysis:
