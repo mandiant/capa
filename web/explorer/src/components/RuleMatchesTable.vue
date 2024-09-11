@@ -67,7 +67,7 @@
                 />
             </template>
             <template #body="{ node }">
-                <span class="font-monospace text-sm"> {{ node.data.address }} </span>
+                <span class="font-monospace text-sm">{{ node.data.address }}</span>
             </template>
         </Column>
 
