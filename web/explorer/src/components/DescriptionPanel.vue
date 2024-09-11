@@ -48,7 +48,7 @@
                     href="https://github.com/mandiant/capa/tree/master/web/explorer"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                    class="underline"
                 >
                     capa GitHub repository
                 </a>
@@ -56,7 +56,7 @@
             </p>
         </div>
         <div>
-            <p class="text-base p-3 max-w-75rem" style="max-width: 75ch">
+            <p class="text-base p-3 max-w-75rem">
                 You can download capa Explorer Web for offline usage via the download button in the top-right corner of
                 this page.
             </p>
@@ -68,7 +68,6 @@
 /* highlight inline code */
 code {
     background-color: #e2e8f0;
-    padding: 2px 4px;
     border-radius: 4px;
     font-family: monospace;
 }
