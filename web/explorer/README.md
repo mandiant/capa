@@ -1,6 +1,6 @@
-# capa explorer web
+# capa Explorer Web
 
-capa explorer web is a browser-based user interface for exploring program capabilities identified by capa. It provides an intuitive and interactive way to analyze and visualize the results of capa analysis.
+capa Explorer Web is a browser-based user interface for exploring program capabilities identified by capa. It provides an intuitive and interactive way to analyze and visualize the results of capa analysis.
 
 ## Features
 
@@ -11,8 +11,8 @@ capa explorer web is a browser-based user interface for exploring program capabi
 
 ## Getting Started
 
-1. **Access the application**: Open capa explorer web in your web browser.
-   You can start using capa explorer web by accessing [https://mandiant.github.io/capa](https://mandiant.github.io/capa/explorer) or running it locally by downloading the offline release from the top right-hand corner and opening it in your web browser.
+1. **Access the application**: Open capa Explorer Web in your web browser.
+   You can start using capa Explorer Web by accessing [https://mandiant.github.io/capa](https://mandiant.github.io/capa/explorer) or running it locally by downloading the offline release from the top right-hand corner and opening it in your web browser.
 
 2. **Import capa results**:
 
@@ -41,4 +41,4 @@ We welcome your feedback and contributions to improve the web-based capa explore
 
 ---
 
-For developers interested in building or contributing to capa explorer web, please refer to our [Development Guide](DEVELOPMENT.md).
+For developers interested in building or contributing to capa Explorer Web, please refer to our [Development Guide](DEVELOPMENT.md).

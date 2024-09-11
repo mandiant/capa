@@ -33,7 +33,7 @@ jobs:
           path: './web/public'
 
   build-explorer:
-    name: Build capa explorer web
+    name: Build capa Explorer Web
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
