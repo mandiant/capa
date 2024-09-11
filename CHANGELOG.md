@@ -15,8 +15,9 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- linking/static/minhook/linked-against-minhook jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
