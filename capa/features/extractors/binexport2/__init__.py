@@ -104,6 +104,7 @@ class BinExport2Index:
         self.string_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
 
         self.insn_address_by_index: Dict[int, int] = {}
+        self.insn_index_by_address: Dict[int, int] = {}
         self.insn_by_address: Dict[int, BinExport2.Instruction] = {}
 
         # must index instructions first
@@ -187,6 +188,7 @@ class BinExport2Index:
                 addr = next_addr
                 next_addr += len(insn.raw_bytes)
             self.insn_address_by_index[idx] = addr
+            self.insn_index_by_address[addr] = idx
             self.insn_by_address[addr] = insn
 
     @staticmethod
