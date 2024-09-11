@@ -29,8 +29,8 @@
                 <InputText v-model="filters['address'].value" placeholder="Filter by function address" />
             </template>
             <template #body="{ data }">
-                <span class="font-monospace text-base">{{ data.address }}</span>
-                <span v-if="data.matchCount > 1" class="font-italic">
+                <span class="font-monospace">{{ data.address }}</span>
+                <span v-if="data.matchCount > 1" class="font-italic match-count">
                     ({{ data.matchCount }} match{{ data.matchCount > 1 ? "es" : "" }})
                 </span>
             </template>
@@ -104,9 +104,10 @@ onMounted(() => {
 const tableData = computed(() => {
     const data = [];
     for (const fcaps of functionCapabilities.value) {
-        const capabilities = fcaps.capabilities;
-        for (const capability of capabilities) {
-            if (capability.lib && !props.showLibraryRules) continue;
+        // when props.showLibraryRules is true, all capabilities are included.
+        // when props.showLibraryRules is false, only non-library capabilities (where cap.lib is false) are included.
+        const capabilities = fcaps.capabilities.filter((cap) => props.showLibraryRules || !cap.lib);
+        capabilities.forEach((capability) => {
             data.push({
                 address: fcaps.address,
                 matchCount: capabilities.length,
@@ -114,7 +115,7 @@ const tableData = computed(() => {
                 namespace: capability.namespace,
                 lib: capability.lib
             });
-        }
+        });
     }
     return data;
 });
