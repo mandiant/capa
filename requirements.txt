@@ -8,7 +8,7 @@
 # Kept up to date by dependabot.
 annotated-types==0.7.0
 colorama==0.4.6
-cxxfilt==0.2.2
+cxxfilt==0.3.0
 dncil==1.0.2
 dnfile==0.15.0
 funcy==2.0
@@ -23,8 +23,8 @@ networkx==3.1
 pefile==2023.2.7
 pip==24.2
 protobuf==5.27.3
-pyasn1==0.4.8
-pyasn1-modules==0.2.8
+pyasn1==0.5.1
+pyasn1-modules==0.3.0
 pycparser==2.22
 pydantic==2.7.3
 pydantic-core==2.18.4
@@ -43,5 +43,5 @@ tabulate==0.9.0
 termcolor==2.4.0
 tqdm==4.66.5
 viv-utils==0.7.11
-vivisect==1.1.1
+vivisect==1.2.1
 wcwidth==0.2.13
