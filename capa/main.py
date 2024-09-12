@@ -51,6 +51,7 @@ from capa.loader import (
     BACKEND_FREEZE,
     BACKEND_PEFILE,
     BACKEND_DRAKVUF,
+    BACKEND_BINEXPORT2,
 )
 from capa.helpers import (
     get_file_taste,
@@ -89,6 +90,7 @@ from capa.features.common import (
     FORMAT_DRAKVUF,
     STATIC_FORMATS,
     DYNAMIC_FORMATS,
+    FORMAT_BINEXPORT2,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
 from capa.features.extractors.base_extractor import (
@@ -193,12 +195,13 @@ def simple_message_exception_handler(exctype, value: BaseException, traceback: T
     """
 
     if exctype is KeyboardInterrupt:
-        print("KeyboardInterrupt detected, program terminated")
+        print("KeyboardInterrupt detected, program terminated", file=sys.stderr)
     else:
         print(
             f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
             + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-            + "can improve the code! (https://github.com/mandiant/capa/issues)"
+            + "can improve the code! (https://github.com/mandiant/capa/issues)",
+            file=sys.stderr,
         )
 
 
@@ -264,6 +267,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_DRAKVUF, "DRAKVUF sandbox report"),
             (FORMAT_VMRAY, "VMRay sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
+            (FORMAT_BINEXPORT2, "BinExport2"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 
@@ -282,6 +286,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
             (BACKEND_DOTNET, ".NET"),
+            (BACKEND_BINEXPORT2, "BinExport2"),
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
             (BACKEND_DRAKVUF, "DRAKVUF"),
@@ -450,8 +455,12 @@ def handle_common_args(args):
         if args.rules == [RULES_PATH_DEFAULT_STRING]:
             logger.debug("-" * 80)
             logger.debug(" Using default embedded rules.")
-            logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+            logger.debug(" To provide your own rules, use the form:")
+            logger.debug("")
+            logger.debug("     `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+            logger.debug("")
             logger.debug(" You can see the current default rule set here:")
+            logger.debug("")
             logger.debug("     https://github.com/mandiant/capa-rules")
             logger.debug("-" * 80)
 
@@ -566,6 +575,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     elif input_format == FORMAT_FREEZE:
         return BACKEND_FREEZE
 
+    elif input_format == FORMAT_BINEXPORT2:
+        return BACKEND_BINEXPORT2
+
     else:
         return BACKEND_VIV
 
@@ -586,6 +598,13 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     """
     if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
         return None
+    elif backend == BACKEND_BINEXPORT2:
+        import capa.features.extractors.binexport2
+
+        be2 = capa.features.extractors.binexport2.get_binexport2(args.input_file)
+        return capa.features.extractors.binexport2.get_sample_from_binexport2(
+            args.input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
+        )
     else:
         return args.input_file
 
@@ -801,6 +820,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
     extractor_filters = get_extractor_filters_from_cli(args, input_format)
+
+    logger.debug("format:  %s", input_format)
+    logger.debug("backend: %s", backend)
 
     try:
         extractor = capa.loader.get_extractor(

@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
 import sys
 import logging
 import datetime
@@ -47,6 +48,7 @@ from capa.features.common import (
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_DRAKVUF,
+    FORMAT_BINEXPORT2,
 )
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import (
@@ -66,6 +68,7 @@ BACKEND_CAPE = "cape"
 BACKEND_DRAKVUF = "drakvuf"
 BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
+BACKEND_BINEXPORT2 = "binexport2"
 
 
 class CorruptFile(ValueError):
@@ -308,8 +311,40 @@ def get_extractor(
     elif backend == BACKEND_FREEZE:
         return frz.load(input_path.read_bytes())
 
+    elif backend == BACKEND_BINEXPORT2:
+        import capa.features.extractors.binexport2
+        import capa.features.extractors.binexport2.extractor
+
+        be2 = capa.features.extractors.binexport2.get_binexport2(input_path)
+        assert sample_path is not None
+        buf = sample_path.read_bytes()
+
+        return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
     else:
         raise ValueError("unexpected backend: " + backend)
+
+
+def _get_binexport2_file_extractors(input_file: Path) -> List[FeatureExtractor]:
+    # I'm not sure this is where this logic should live, but it works for now.
+    # we'll keep this a "private" routine until we're sure.
+    import capa.features.extractors.binexport2
+
+    be2 = capa.features.extractors.binexport2.get_binexport2(input_file)
+    sample_path = capa.features.extractors.binexport2.get_sample_from_binexport2(
+        input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
+    )
+
+    with sample_path.open("rb") as f:
+        taste = f.read()
+
+    if taste.startswith(capa.features.extractors.common.MATCH_PE):
+        return get_file_extractors(sample_path, FORMAT_PE)
+    elif taste.startswith(capa.features.extractors.common.MATCH_ELF):
+        return get_file_extractors(sample_path, FORMAT_ELF)
+    else:
+        logger.warning("unsupported format")
+        return []
 
 
 def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
@@ -353,6 +388,9 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
         import capa.features.extractors.vmray.extractor
 
         file_extractors.append(capa.features.extractors.vmray.extractor.VMRayExtractor.from_zipfile(input_file))
+
+    elif input_format == FORMAT_BINEXPORT2:
+        file_extractors = _get_binexport2_file_extractors(input_file)
 
     return file_extractors
 

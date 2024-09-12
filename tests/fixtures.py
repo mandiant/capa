@@ -226,6 +226,19 @@ def get_ghidra_extractor(path: Path):
     return extractor
 
 
+@lru_cache(maxsize=1)
+def get_binexport_extractor(path):
+    import capa.features.extractors.binexport2
+    import capa.features.extractors.binexport2.extractor
+
+    be2 = capa.features.extractors.binexport2.get_binexport2(path)
+    search_paths = [CD / "data", CD / "data" / "aarch64"]
+    path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
+    buf = path.read_bytes()
+
+    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -428,6 +441,20 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
     elif name.startswith("nested_typeref"):
         return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
+    elif name.startswith("687e79.ghidra.be2"):
+        return (
+            CD
+            / "data"
+            / "binexport2"
+            / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
+        )
+    elif name.startswith("d1e650.ghidra.be2"):
+        return (
+            CD
+            / "data"
+            / "binexport2"
+            / "d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8.elf_.ghidra.BinExport"
+        )
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -791,7 +818,9 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
         # insn/offset: negative
+        # 0x4012b4  MOVZX       ECX, [EAX+0xFFFFFFFFFFFFFFFF]
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
+        # 0x4012b8  MOVZX       EAX, [EAX+0xFFFFFFFFFFFFFFFE]
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
         #
         # insn/offset from mnemonic: add
@@ -814,7 +843,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         # should not be considered, lea operand invalid encoding
         #    .text:004717B1 8D 4C 31 D0             lea     ecx, [ecx+esi-30h]
         ("mimikatz", "function=0x47153B,bb=0x4717AB,insn=0x4717B1", capa.features.insn.Number(-0x30), False),
-        # yes, this is also a number (imagine edx is zero):
+        # yes, this is also a number (imagine ebx is zero):
         #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
         ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api
@@ -1368,9 +1397,9 @@ FEATURE_COUNT_TESTS_DOTNET = [
 
 FEATURE_COUNT_TESTS_GHIDRA = [
     # Ghidra may render functions as labels, as well as provide differing amounts of call references
-    # (Colton) TODO: Add more test cases
     ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
-    ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
+    ("mimikatz", "function=0x401bf1", capa.features.common.Characteristic("calls to"), 2),
+    ("mimikatz", "function=0x401000", capa.features.basicblock.BasicBlock(), 3),
 ]
 
 
