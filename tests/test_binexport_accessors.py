@@ -198,7 +198,7 @@ def test_get_instruction_operands_count():
             (
                 BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
                 BinExport2.Expression(
-                    type=BinExport2.Expression.IMMEDIATE_INT, symbol="DAT_002101b0", immediate=0x2101B0
+                    type=BinExport2.Expression.IMMEDIATE_INT, symbol="PTR_helloWorldStr_002101b0", immediate=0x2101B0
                 ),
             ),
         ),
