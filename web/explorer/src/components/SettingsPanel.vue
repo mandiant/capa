@@ -28,7 +28,7 @@
                 </div>
                 <div class="flex flex-row align-items-center gap-2">
                     <Checkbox v-model="showNamespaceChart" inputId="showNamespaceChart" :binary="true" />
-                    <label for="showNamespaceChart"> Show namespace chart </label>
+                    <label for="showNamespaceChart">Show namespace chart</label>
                 </div>
                 <div class="flex flex-row align-items-center gap-2">
                     <Checkbox
@@ -37,7 +37,7 @@
                         :binary="true"
                         :disabled="showNamespaceChart"
                     />
-                    <label for="showColumnFilters"> Show column filters </label>
+                    <label for="showColumnFilters">Show column filters</label>
                 </div>
             </div>
         </template>

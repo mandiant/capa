@@ -17,8 +17,8 @@
         </template>
 
         <!-- example node: "- or", "- and" -->
-        <template v-else-if="node.data.type === 'statement'"
-            >-
+        <template v-else-if="node.data.type === 'statement'">
+            -
             <span
                 :class="{
                     'text-green-700': node.data.typeValue === 'range',
@@ -49,7 +49,8 @@
 
         <!-- example node: "- malware.exe" (these are the captures (i.e. children nodes) of regex nodes) -->
         <template v-else-if="node.data.type === 'regex-capture'">
-            - <span class="text-green-700 font-monospace">{{ node.data.name }}</span>
+            -
+            <span class="text-green-700 font-monospace">{{ node.data.name }}</span>
         </template>
 
         <!-- example node: "exit(0) -> 0" (if the node type is call-info, we highlight node.data.name.callInfo) -->

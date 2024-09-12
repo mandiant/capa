@@ -1,6 +1,6 @@
-# Development Guide for capa explorer web
+# Development Guide for capa Explorer Web
 
-This guide will help you set up the capa explorer web project for local development.
+This guide will help you set up the capa Explorer Web project for local development.
 
 ## Prerequisites
 
@@ -104,7 +104,7 @@ npm run format
 
 ## Working with PrimeVue Components
 
-capa explorer web uses the PrimeVue UI component library. When adding new features or modifying existing ones, refer to the [PrimeVue documentation](https://primevue.org/vite) for available components and their usage.
+capa Explorer Web uses the PrimeVue UI component library. When adding new features or modifying existing ones, refer to the [PrimeVue documentation](https://primevue.org/vite) for available components and their usage.
 
 ## Best Practices
 

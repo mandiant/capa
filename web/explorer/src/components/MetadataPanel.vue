@@ -11,7 +11,7 @@
             </h1>
             <p class="text-xs mt-1 mb-0 text-white-alpha-70">
                 SHA256:
-                <a :href="`https://www.virustotal.com/gui/file/${sha256}`" target="_blank">{{ sha256 }} </a>
+                <a :href="`https://www.virustotal.com/gui/file/${sha256}`" target="_blank">{{ sha256 }}</a>
             </p>
         </div>
 
@@ -23,20 +23,20 @@
             <!-- OS • Program Format • Arch -->
             <div class="flex align-items-center text-sm m-0 line-height-3 text-white">
                 <span class="capitalize">{{ data.meta.analysis.os }}</span>
-                <span class="ml-2 mr-2 text-white-alpha-30"> • </span>
+                <span class="ml-2 mr-2 text-white-alpha-30">•</span>
                 <span class="uppercase">{{ data.meta.analysis.format }}</span>
-                <span class="ml-2 mr-2 text-white-alpha-30"> • </span>
+                <span class="ml-2 mr-2 text-white-alpha-30">•</span>
                 <span>{{ data.meta.analysis.arch === "i386" ? "i386" : data.meta.analysis.arch.toUpperCase() }}</span>
             </div>
             <!-- Flavor • Extractor • capa Version • Timestamp -->
             <div class="flex-wrap align-items-center text-sm m-0 line-height-3 text-white">
                 <span class="capitalize">
-                    {{ flavor }} analysis with {{ data.meta.analysis.extractor.split(/(Feature)?Extractor/)[0] }}</span
-                >
+                    {{ flavor }} analysis with {{ data.meta.analysis.extractor.split(/(Feature)?Extractor/)[0] }}
+                </span>
                 <!--- Extractor (e.g., CapeExtractor -> Cape, GhidraFeatureExtractor -> Ghidra, ... etc) -->
-                <span class="mx-2 text-white-alpha-30"> • </span>
+                <span class="mx-2 text-white-alpha-30">•</span>
                 <span>capa v{{ data.meta.version }}</span>
-                <span class="mx-2 text-white-alpha-30"> • </span>
+                <span class="mx-2 text-white-alpha-30">•</span>
                 <span>{{ new Date(data.meta.timestamp).toLocaleString() }}</span>
             </div>
         </div>

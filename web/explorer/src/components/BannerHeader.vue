@@ -5,7 +5,7 @@
     >
         <div class="font-bold mr-8">This is an early release</div>
         <div class="align-items-center hidden lg:flex">
-            <span class="line-height-3">Please report any bugs, enhancements or features in the </span>
+            <span class="line-height-3">Please report any bugs, enhancements or features in the</span>
             <a
                 v-ripple
                 href="https://github.com/mandiant/capa/issues"

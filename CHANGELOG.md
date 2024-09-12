@@ -18,13 +18,15 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- linking/static/minhook/linked-against-minhook jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
 
 - fix duplicate features shown in vverbose mode @williballenthin #2323
+- fix code path reference in linter @williballenthin #2350
 
 ### capa explorer IDA Pro plugin
 

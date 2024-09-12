@@ -22,7 +22,7 @@
                         >
                             {{ slotProps.node.data.processname }}
                         </span>
-                        <span class="ml-2"> - PID: {{ slotProps.node.data.pid }} </span>
+                        <span class="ml-2">- PID: {{ slotProps.node.data.pid }}</span>
                         <span v-if="slotProps.node.data.uniqueMatchCount > 0" class="font-italic ml-2 match-count">
                             ({{ slotProps.node.data.uniqueMatchCount }} unique
                             {{ slotProps.node.data.uniqueMatchCount > 1 ? "matches" : "match" }})
@@ -53,9 +53,9 @@
         >
             <div v-for="rule in currentNode.data.uniqueRules" :key="rule.name">
                 • {{ rule.name }}
-                <span class="font-italic match-count"
-                    >({{ rule.matchCount }} {{ rule.scope }} {{ rule.matchCount > 1 ? "matches" : "match" }})</span
-                >
+                <span class="font-italic match-count">
+                    ({{ rule.matchCount }} {{ rule.scope }} {{ rule.matchCount > 1 ? "matches" : "match" }})
+                </span>
                 <LibraryTag v-if="rule.lib" />
             </div>
         </div>

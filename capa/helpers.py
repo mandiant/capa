@@ -355,7 +355,11 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
     cache_timestamp = os.path.getmtime(latest_cache_file)
 
     # these are the relevant rules code files that could conflict with using an outdated cache
-    latest_rule_code_file = max([Path("capa/rules/__init__.py"), Path("capa/rules/cache.py")], key=os.path.getmtime)
+    # delayed import due to circular dependencies
+    import capa.rules
+    import capa.rules.cache
+
+    latest_rule_code_file = max([Path(capa.rules.__file__), Path(capa.rules.cache.__file__)], key=os.path.getmtime)
     rule_code_timestamp = os.path.getmtime(latest_rule_code_file)
 
     if rule_code_timestamp > cache_timestamp:
