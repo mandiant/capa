@@ -477,7 +477,7 @@ class BinExport2InstructionPattern:
 
                 # emit operands in this order to match
                 # how BinExport2 expressions are flatted
-                # by 
+                # by get_operand_expressions
                 if has_postindex_writeback:
                     operands.append(("!", "[") + parts)
                 else:
