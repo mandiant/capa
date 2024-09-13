@@ -44,3 +44,4 @@ tqdm==4.66.5
 viv-utils==0.7.11
 vivisect==1.1.1
 wcwidth==0.2.13
+msgspec==0.6.0
