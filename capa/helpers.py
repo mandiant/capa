@@ -21,6 +21,19 @@ from zipfile import ZipFile
 from datetime import datetime
 
 import msgspec.json
+from rich.progress import (
+    Task,
+    Text,
+    Progress,
+    BarColumn,
+    TextColumn,
+    SpinnerColumn,
+    ProgressColumn,
+    TimeElapsedColumn,
+    MofNCompleteColumn,
+    TaskProgressColumn,
+    TimeRemainingColumn,
+)
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
@@ -399,3 +412,47 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
         return False
 
     return True
+
+
+class RateColumn(ProgressColumn):
+    """Renders speed column in progress bar."""
+
+    def render(self, task: "Task") -> Text:
+        speed = f"{task.speed:>.1f}" if task.speed else "00.0"
+        unit = task.fields.get("unit", "it")
+        return Text.from_markup(f"[progress.data.speed]{speed} {unit}/s")
+
+
+class PostfixColumn(ProgressColumn):
+    """Renders a postfix column in progress bar."""
+
+    def render(self, task: "Task") -> Text:
+        return Text(task.fields.get("postfix", ""))
+
+
+class MofNCompleteColumnWithUnit(MofNCompleteColumn):
+    """Renders completed/total count column with a unit."""
+
+    def render(self, task: "Task") -> Text:
+        ret = super().render(task)
+        unit = task.fields.get("unit")
+        return ret.append(f" {unit}") if unit else ret
+
+
+class CapaProgressBar(Progress):
+    @classmethod
+    def get_default_columns(cls):
+        return (
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TaskProgressColumn(),
+            BarColumn(),
+            MofNCompleteColumnWithUnit(),
+            "•",
+            TimeElapsedColumn(),
+            "<",
+            TimeRemainingColumn(),
+            "•",
+            RateColumn(),
+            PostfixColumn(),
+        )
