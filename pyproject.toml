@@ -65,7 +65,6 @@ dependencies = [
     # or minor otherwise).
     # As specific constraints are identified, please provide
     # comments and context.
-    "tqdm>=4",
     "pyyaml>=6",
     "tabulate>=0.9",
     "colorama>=0.4",
