@@ -18,12 +18,14 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (6)
 
 - linking/static/minhook/linked-against-minhook jakub.jozwiak@mandiant.com
 - linking/static/sqlite3/linked-against-sqlcipher wballenthin@google.com
 - host-interaction/network/traffic/filter/delete-network-filter-via-wfp-api jakub.jozwiak@mandiant.com
 - host-interaction/network/traffic/filter/enumerate-network-filters-via-wfp-api jakub.jozwiak@mandiant.com
+- nursery/check-thread-suspend-count-exceeded ervinocampo@google.com
+- nursery/create-thread-bypassing-process-freeze ervinocampo@google.com
 -
 
 ### Bug Fixes
