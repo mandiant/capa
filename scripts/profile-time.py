@@ -42,7 +42,6 @@ import logging
 import argparse
 import subprocess
 
-import tqdm
 import humanize
 import tabulate
 
@@ -92,12 +91,15 @@ def main(argv=None):
     except capa.main.ShouldExitError as e:
         return e.status_code
 
-    with tqdm.tqdm(total=args.number * args.repeat, leave=False) as pbar:
+    with capa.helpers.CapaProgressBar() as progress:
+        total_iterations = args.number * args.repeat
+        task = progress.add_task("profiling", total=total_iterations)
 
         def do_iteration():
             capa.perf.reset()
             capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
-            pbar.update(1)
+            progress.update(task)
+            progress.advance(task)
 
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)
 

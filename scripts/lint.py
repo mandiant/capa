@@ -31,11 +31,9 @@ from typing import Set, Dict, List
 from pathlib import Path
 from dataclasses import field, dataclass
 
-import tqdm
 import pydantic
 import termcolor
 import ruamel.yaml
-import tqdm.contrib.logging
 
 import capa.main
 import capa.rules
@@ -921,12 +919,15 @@ def lint(ctx: Context):
     ret = {}
 
     source_rules = [rule for rule in ctx.rules.rules.values() if not rule.is_subscope_rule()]
-    with tqdm.contrib.logging.tqdm_logging_redirect(source_rules, unit="rule", leave=False) as pbar:
-        with capa.helpers.redirecting_print_to_tqdm(False):
-            for rule in pbar:
-                name = rule.name
-                pbar.set_description(width(f"linting rule: {name}", 48))
-                ret[name] = lint_rule(ctx, rule)
+    n_rules: int = len(source_rules)
+
+    with capa.helpers.CapaProgressBar(transient=True) as pbar:
+        task = pbar.add_task(description="linting", total=n_rules, unit="rule")
+        for rule in source_rules:
+            name = rule.name
+            pbar.update(task, description=width(f"linting rule: {name}", 48))
+            ret[name] = lint_rule(ctx, rule)
+            pbar.advance(task)
 
     return ret
 

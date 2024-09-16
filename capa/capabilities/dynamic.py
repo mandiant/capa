@@ -6,20 +6,16 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
 import logging
 import itertools
 import collections
-from typing import Any, Tuple
-
-import tqdm
+from typing import Any, List, Tuple
 
 import capa.perf
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.helpers import redirecting_print_to_tqdm
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
@@ -139,38 +135,28 @@ def find_dynamic_capabilities(
     feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
 
     assert isinstance(extractor, DynamicFeatureExtractor)
-    with redirecting_print_to_tqdm(disable_progress):
-        with tqdm.contrib.logging.logging_redirect_tqdm():
-            pbar = tqdm.tqdm
-            if disable_progress:
-                # do not use tqdm to avoid unnecessary side effects when caller intends
-                # to disable progress completely
-                def pbar(s, *args, **kwargs):
-                    return s
+    processes: List[ProcessHandle] = list(extractor.get_processes())
+    n_processes: int = len(processes)
 
-            elif not sys.stderr.isatty():
-                # don't display progress bar when stderr is redirected to a file
-                def pbar(s, *args, **kwargs):
-                    return s
+    with capa.helpers.CapaProgressBar(transient=True, disable=disable_progress) as pbar:
+        task = pbar.add_task("matching", total=n_processes, unit="processes")
+        for p in processes:
+            process_matches, thread_matches, call_matches, feature_count = find_process_capabilities(
+                ruleset, extractor, p
+            )
+            feature_counts.processes += (
+                rdoc.ProcessFeatureCount(address=frz.Address.from_capa(p.address), count=feature_count),
+            )
+            logger.debug("analyzed %s and extracted %d features", p.address, feature_count)
 
-            processes = list(extractor.get_processes())
+            for rule_name, res in process_matches.items():
+                all_process_matches[rule_name].extend(res)
+            for rule_name, res in thread_matches.items():
+                all_thread_matches[rule_name].extend(res)
+            for rule_name, res in call_matches.items():
+                all_call_matches[rule_name].extend(res)
 
-            pb = pbar(processes, desc="matching", unit=" processes", leave=False)
-            for p in pb:
-                process_matches, thread_matches, call_matches, feature_count = find_process_capabilities(
-                    ruleset, extractor, p
-                )
-                feature_counts.processes += (
-                    rdoc.ProcessFeatureCount(address=frz.Address.from_capa(p.address), count=feature_count),
-                )
-                logger.debug("analyzed %s and extracted %d features", p.address, feature_count)
-
-                for rule_name, res in process_matches.items():
-                    all_process_matches[rule_name].extend(res)
-                for rule_name, res in thread_matches.items():
-                    all_thread_matches[rule_name].extend(res)
-                for rule_name, res in call_matches.items():
-                    all_call_matches[rule_name].extend(res)
+            pbar.advance(task)
 
     # collection of features that captures the rule matches within process and thread scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
