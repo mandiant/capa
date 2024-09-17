@@ -11,6 +11,7 @@ from unittest.mock import Mock
 
 import fixtures
 import rich.console
+from rich.console import Console
 
 import capa.rules
 import capa.render.utils
@@ -198,7 +199,7 @@ def test_render_meta_maec():
     ],
 )
 def test_render_vverbose_feature(feature, expected):
-    ostream = capa.render.utils.StringIO()
+    console = Console(highlight=False)
 
     addr = capa.features.freeze.Address.from_capa(capa.features.address.AbsoluteVirtualAddress(0x401000))
     feature = capa.features.freeze.features.feature_from_capa(feature)
@@ -240,6 +241,8 @@ def test_render_vverbose_feature(feature, expected):
         matches=(),
     )
 
-    capa.render.vverbose.render_feature(ostream, layout, rm, matches, feature, indent=0)
+    with console.capture() as capture:
+        capa.render.vverbose.render_feature(console, layout, rm, matches, feature, indent=0)
 
-    assert ostream.getvalue().strip() == expected
+    output = capture.get().strip()
+    assert output == expected
