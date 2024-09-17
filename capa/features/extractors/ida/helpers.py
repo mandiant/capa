@@ -21,30 +21,49 @@ from capa.features.extractors.base_extractor import FunctionHandle
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)  # use one byte-per-character encoding
 
 
-# TODO (mr): use find_bytes
-# https://github.com/mandiant/capa/issues/2339
-def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
-    """yield all ea of a given byte sequence
+if hasattr(ida_bytes, "parse_binpat_str"):
+    # TODO (mr): use find_bytes
+    # https://github.com/mandiant/capa/issues/2339
+    def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
+        """yield all ea of a given byte sequence
 
-    args:
-        start: min virtual address
-        end: max virtual address
-        seq: bytes to search e.g. b"\x01\x03"
-    """
-    patterns = ida_bytes.compiled_binpat_vec_t()
+        args:
+            start: min virtual address
+            end: max virtual address
+            seq: bytes to search e.g. b"\x01\x03"
+        """
+        patterns = ida_bytes.compiled_binpat_vec_t()
 
-    seqstr = " ".join([f"{b:02x}" for b in seq])
-    err = ida_bytes.parse_binpat_str(patterns, 0, seqstr, 16, IDA_NALT_ENCODING)
+        seqstr = " ".join([f"{b:02x}" for b in seq])
+        err = ida_bytes.parse_binpat_str(patterns, 0, seqstr, 16, IDA_NALT_ENCODING)
 
-    if err:
-        return
+        if err:
+            return
 
-    while True:
-        ea, _ = ida_bytes.bin_search3(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
-        if ea == idaapi.BADADDR:
-            break
-        start = ea + 1
-        yield ea
+        while True:
+            ea, _ = ida_bytes.bin_search3(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+            if ea == idaapi.BADADDR:
+                break
+            start = ea + 1
+            yield ea
+
+else:
+    # for IDA 7.5 and older; using deprecated find_binary instead of bin_search
+    def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
+        """yield all ea of a given byte sequence
+
+        args:
+            start: min virtual address
+            end: max virtual address
+            seq: bytes to search e.g. b"\x01\x03"
+        """
+        seqstr = " ".join([f"{b:02x}" for b in seq])
+        while True:
+            ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
+            if ea == idaapi.BADADDR:
+                break
+            start = ea + 1
+            yield ea
 
 
 def get_functions(

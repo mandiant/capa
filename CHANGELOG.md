@@ -34,6 +34,7 @@ Unlock powerful malware analysis with capa's new [VMRay sandbox](https://www.vmr
 - fix code path reference in linter @williballenthin #2350
 
 ### capa explorer IDA Pro plugin
+- fix byte search IDA Pro 7.5 compatability @mr-tz #2371
 
 ### Development
 
