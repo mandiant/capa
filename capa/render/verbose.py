@@ -26,6 +26,8 @@ See the License for the specific language governing permissions and limitations 
 from typing import cast
 
 import tabulate
+from rich.text import Text
+from rich.console import Console
 
 import capa.rules
 import capa.helpers
@@ -140,7 +142,7 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     )
 
 
-def render_static_meta(ostream, meta: rd.StaticMetadata):
+def render_static_meta(console: Console, meta: rd.StaticMetadata):
     """
     like:
 
@@ -183,10 +185,10 @@ def render_static_meta(ostream, meta: rd.StaticMetadata):
         ),
     ]
 
-    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+    console.print(tabulate.tabulate(rows, tablefmt="plain"))
 
 
-def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
+def render_dynamic_meta(console: Console, meta: rd.DynamicMetadata):
     """
     like:
 
@@ -225,19 +227,19 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
         ),
     ]
 
-    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+    console.print(tabulate.tabulate(rows, tablefmt="plain"))
 
 
-def render_meta(osstream, doc: rd.ResultDocument):
+def render_meta(console: Console, doc: rd.ResultDocument):
     if doc.meta.flavor == rd.Flavor.STATIC:
-        render_static_meta(osstream, cast(rd.StaticMetadata, doc.meta))
+        render_static_meta(console, cast(rd.StaticMetadata, doc.meta))
     elif doc.meta.flavor == rd.Flavor.DYNAMIC:
-        render_dynamic_meta(osstream, cast(rd.DynamicMetadata, doc.meta))
+        render_dynamic_meta(console, cast(rd.DynamicMetadata, doc.meta))
     else:
         raise ValueError("invalid meta analysis")
 
 
-def render_rules(ostream, doc: rd.ResultDocument):
+def render_rules(console: Console, doc: rd.ResultDocument):
     """
     like:
 
@@ -254,9 +256,9 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if count == 1:
             capability = rutils.bold(rule.meta.name)
         else:
-            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
+            capability = Text.assemble(rutils.bold(rule.meta.name), f" ({count} matches)")
 
-        ostream.writeln(capability)
+        console.print(capability)
         had_match = True
 
         rows = []
@@ -310,23 +312,23 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
             rows.append(("matches", "\n".join(lines)))
 
-        ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
-        ostream.write("\n")
+        console.print(tabulate.tabulate(rows, tablefmt="plain"))
+        console.print()
 
     if not had_match:
-        ostream.writeln(rutils.bold("no capabilities found"))
+        console.print(rutils.bold("no capabilities found"))
 
 
 def render_verbose(doc: rd.ResultDocument):
-    ostream = rutils.StringIO()
+    console = Console(highlight=False)
 
-    render_meta(ostream, doc)
-    ostream.write("\n")
+    with console.capture() as capture:
+        render_meta(console, doc)
+        console.print()
+        render_rules(console, doc)
+        console.print()
 
-    render_rules(ostream, doc)
-    ostream.write("\n")
-
-    return ostream.getvalue()
+    return capture.get()
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:

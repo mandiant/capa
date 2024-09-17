@@ -9,28 +9,28 @@
 import io
 from typing import Dict, List, Tuple, Union, Iterator, Optional
 
-import termcolor
+from rich.progress import Text
 
 import capa.render.result_document as rd
 
 
-def bold(s: str) -> str:
+def bold(s: str) -> Text:
     """draw attention to the given string"""
-    return termcolor.colored(s, "cyan")
+    return Text(s, style="cyan")
 
 
-def bold2(s: str) -> str:
+def bold2(s: str) -> Text:
     """draw attention to the given string, within a `bold` section"""
-    return termcolor.colored(s, "green")
+    return Text(s, style="green")
 
 
-def mute(s: str) -> str:
+def mute(s: str) -> Text:
     """draw attention away from the given string"""
-    return termcolor.colored(s, "dark_grey")
+    return Text(s, style="dim")
 
 
-def warn(s: str) -> str:
-    return termcolor.colored(s, "yellow")
+def warn(s: str) -> Text:
+    return Text(s, style="yellow")
 
 
 def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):

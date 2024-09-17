@@ -10,6 +10,7 @@ import textwrap
 from typing import Dict, Iterable, Optional
 
 import tabulate
+from rich.console import Console
 
 import capa.rules
 import capa.helpers
@@ -45,7 +46,7 @@ def hanging_indent(s: str, indent: int) -> str:
     return textwrap.indent(s, prefix=prefix)[len(prefix) :]
 
 
-def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address], indent: int):
+def render_locations(console: Console, layout: rd.Layout, locations: Iterable[frz.Address], indent: int):
     import capa.render.verbose as v
 
     # it's possible to have an empty locations array here,
@@ -56,7 +57,7 @@ def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address
     if len(locations) == 0:
         return
 
-    ostream.write(" @ ")
+    console.print(" @ ", end="")
     location0 = locations[0]
 
     if len(locations) == 1:
@@ -64,58 +65,58 @@ def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address
 
         if location.type == frz.AddressType.CALL:
             assert isinstance(layout, rd.DynamicLayout)
-            ostream.write(hanging_indent(v.render_call(layout, location), indent + 1))
+            console.print(hanging_indent(v.render_call(layout, location), indent + 1), end="")
         else:
-            ostream.write(v.format_address(locations[0]))
+            console.print(v.format_address(locations[0]), end="")
 
     elif location0.type == frz.AddressType.CALL and len(locations) > 1:
         location = locations[0]
 
         assert isinstance(layout, rd.DynamicLayout)
         s = f"{v.render_call(layout, location)}\nand {(len(locations) - 1)} more..."
-        ostream.write(hanging_indent(s, indent + 1))
+        console.print(hanging_indent(s, indent + 1), end="")
 
     elif len(locations) > 4:
         # don't display too many locations, because it becomes very noisy.
         # probably only the first handful of locations will be useful for inspection.
-        ostream.write(", ".join(map(v.format_address, locations[0:4])))
-        ostream.write(f", and {(len(locations) - 4)} more...")
+        console.print(", ".join(map(v.format_address, locations[0:4])), end="")
+        console.print(f", and {(len(locations) - 4)} more...", end="")
 
     elif len(locations) > 1:
-        ostream.write(", ".join(map(v.format_address, locations)))
+        console.print(", ".join(map(v.format_address, locations)), end="")
 
     else:
         raise RuntimeError("unreachable")
 
 
-def render_statement(ostream, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int):
-    ostream.write("  " * indent)
+def render_statement(console: Console, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int):
+    console.print("  " * indent, end="")
 
     if isinstance(statement, rd.SubscopeStatement):
         # emit `basic block:`
         # rather than `subscope:`
-        ostream.write(statement.scope)
+        console.print(statement.scope, end="")
 
-        ostream.write(":")
+        console.print(":", end="")
         if statement.description:
-            ostream.write(f" = {statement.description}")
-        ostream.writeln("")
+            console.print(f" = {statement.description}", end="")
+        console.print()
 
     elif isinstance(statement, (rd.CompoundStatement)):
         # emit `and:`  `or:`  `optional:`  `not:`
-        ostream.write(statement.type)
+        console.print(statement.type, end="")
 
-        ostream.write(":")
+        console.print(":", end="")
         if statement.description:
-            ostream.write(f" = {statement.description}")
-        ostream.writeln("")
+            console.print(f" = {statement.description}", end="")
+        console.print()
 
     elif isinstance(statement, rd.SomeStatement):
-        ostream.write(f"{statement.count} or more:")
+        console.print(f"{statement.count} or more:", end="")
 
         if statement.description:
-            ostream.write(f" = {statement.description}")
-        ostream.writeln("")
+            console.print(f" = {statement.description}", end="")
+        console.print()
 
     elif isinstance(statement, rd.RangeStatement):
         # `range` is a weird node, its almost a hybrid of statement+feature.
@@ -133,25 +134,25 @@ def render_statement(ostream, layout: rd.Layout, match: rd.Match, statement: rd.
             value = rutils.bold2(value)
 
             if child.description:
-                ostream.write(f"count({child.type}({value} = {child.description})): ")
+                console.print(f"count({child.type}({value} = {child.description})): ", end="")
             else:
-                ostream.write(f"count({child.type}({value})): ")
+                console.print(f"count({child.type}({value})): ", end="")
         else:
-            ostream.write(f"count({child.type}): ")
+            console.print(f"count({child.type}): ", end="")
 
         if statement.max == statement.min:
-            ostream.write(f"{statement.min}")
+            console.print(f"{statement.min}", end="")
         elif statement.min == 0:
-            ostream.write(f"{statement.max} or fewer")
+            console.print(f"{statement.max} or fewer", end="")
         elif statement.max == (1 << 64 - 1):
-            ostream.write(f"{statement.min} or more")
+            console.print(f"{statement.min} or more", end="")
         else:
-            ostream.write(f"between {statement.min} and {statement.max}")
+            console.print(f"between {statement.min} and {statement.max}", end="")
 
         if statement.description:
-            ostream.write(f" = {statement.description}")
-        render_locations(ostream, layout, match.locations, indent)
-        ostream.writeln("")
+            console.print(f" = {statement.description}", end="")
+        render_locations(console, layout, match.locations, indent)
+        console.print()
 
     else:
         raise RuntimeError("unexpected match statement type: " + str(statement))
@@ -162,9 +163,9 @@ def render_string_value(s: str) -> str:
 
 
 def render_feature(
-    ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, feature: frzf.Feature, indent: int
+    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, feature: frzf.Feature, indent: int
 ):
-    ostream.write("  " * indent)
+    console.print("  " * indent, end="")
 
     key = feature.type
     value: Optional[str]
@@ -205,14 +206,14 @@ def render_feature(
         elif isinstance(feature, frzf.OperandOffsetFeature):
             key = f"operand[{feature.index}].offset"
 
-        ostream.write(f"{key}: ")
+        console.print(f"{key}: ", end="")
 
         if value:
-            ostream.write(rutils.bold2(value))
+            console.print(rutils.bold2(value), end="")
 
             if feature.description:
-                ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
-                ostream.write(feature.description)
+                console.print(capa.rules.DESCRIPTION_SEPARATOR, end="")
+                console.print(feature.description, end="")
 
         if isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
             # don't show the location of these global features
@@ -224,35 +225,32 @@ def render_feature(
         elif isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
             pass
         else:
-            render_locations(ostream, layout, match.locations, indent)
-        ostream.write("\n")
+            render_locations(console, layout, match.locations, indent)
+        console.print()
     else:
         # like:
         #  regex: /blah/ = SOME_CONSTANT
         #    - "foo blah baz" @ 0x401000
         #    - "aaa blah bbb" @ 0x402000, 0x403400
-        ostream.write(key)
-        ostream.write(": ")
-        ostream.write(value)
-        ostream.write("\n")
+        console.print(f"{key}: {value}")
 
         for capture, locations in sorted(match.captures.items()):
-            ostream.write("  " * (indent + 1))
-            ostream.write("- ")
-            ostream.write(rutils.bold2(render_string_value(capture)))
+            console.print("  " * (indent + 1), end="")
+            console.print("- ", end="")
+            console.print(rutils.bold2(render_string_value(capture)), end="")
             if isinstance(layout, rd.DynamicLayout) and rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
                 # like above, don't re-render calls when in call scope.
                 pass
             else:
-                render_locations(ostream, layout, locations, indent=indent)
-            ostream.write("\n")
+                render_locations(console, layout, locations, indent=indent)
+            console.print()
 
 
-def render_node(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, node: rd.Node, indent: int):
+def render_node(console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, node: rd.Node, indent: int):
     if isinstance(node, rd.StatementNode):
-        render_statement(ostream, layout, match, node.statement, indent=indent)
+        render_statement(console, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
-        render_feature(ostream, layout, rule, match, node.feature, indent=indent)
+        render_feature(console, layout, rule, match, node.feature, indent=indent)
     else:
         raise RuntimeError("unexpected node type: " + str(node))
 
@@ -265,7 +263,9 @@ MODE_SUCCESS = "success"
 MODE_FAILURE = "failure"
 
 
-def render_match(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, indent=0, mode=MODE_SUCCESS):
+def render_match(
+    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, indent=0, mode=MODE_SUCCESS
+):
     child_mode = mode
     if mode == MODE_SUCCESS:
         # display only nodes that evaluated successfully.
@@ -297,13 +297,13 @@ def render_match(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Mat
     else:
         raise RuntimeError("unexpected mode: " + mode)
 
-    render_node(ostream, layout, rule, match, match.node, indent=indent)
+    render_node(console, layout, rule, match, match.node, indent=indent)
 
     for child in match.children:
-        render_match(ostream, layout, rule, child, indent=indent + 1, mode=child_mode)
+        render_match(console, layout, rule, child, indent=indent + 1, mode=child_mode)
 
 
-def render_rules(ostream, doc: rd.ResultDocument):
+def render_rules(console: Console, doc: rd.ResultDocument):
     """
     like:
 
@@ -356,7 +356,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 lib_info = ", only showing first match of library rule"
             capability = f"{rutils.bold(rule.meta.name)} ({count} matches{lib_info})"
 
-        ostream.writeln(capability)
+        console.print(capability)
         had_match = True
 
         rows = []
@@ -402,7 +402,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if rule.meta.description:
             rows.append(("description", rule.meta.description))
 
-        ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+        console.print(tabulate.tabulate(rows, tablefmt="plain"))
 
         if capa.rules.Scope.FILE in rule.meta.scopes:
             matches = doc.rules[rule.meta.name].matches
@@ -413,61 +413,60 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
                 raise RuntimeError(f"unexpected file scope match count: {len(matches)}")
             _, first_match = matches[0]
-            render_match(ostream, doc.meta.analysis.layout, rule, first_match, indent=0)
+            render_match(console, doc.meta.analysis.layout, rule, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
                 if doc.meta.flavor == rd.Flavor.STATIC:
                     assert rule.meta.scopes.static is not None
-                    ostream.write(rule.meta.scopes.static.value)
-                    ostream.write(" @ ")
-                    ostream.write(capa.render.verbose.format_address(location))
+                    console.print(rule.meta.scopes.static.value, end=" @ ")
+                    console.print(capa.render.verbose.format_address(location), end="")
 
                     if rule.meta.scopes.static == capa.rules.Scope.BASIC_BLOCK:
                         func = frz.Address.from_capa(functions_by_bb[location.to_capa()])
-                        ostream.write(f" in function {capa.render.verbose.format_address(func)}")
+                        console.print(f" in function {capa.render.verbose.format_address(func)}", end="")
 
                 elif doc.meta.flavor == rd.Flavor.DYNAMIC:
                     assert rule.meta.scopes.dynamic is not None
                     assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
 
-                    ostream.write(rule.meta.scopes.dynamic.value)
-
-                    ostream.write(" @ ")
+                    console.print(rule.meta.scopes.dynamic.value, end=" @ ")
 
                     if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
-                        ostream.write(v.render_process(doc.meta.analysis.layout, location))
+                        console.print(v.render_process(doc.meta.analysis.layout, location), end="")
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
-                        ostream.write(v.render_thread(doc.meta.analysis.layout, location))
+                        console.print(v.render_thread(doc.meta.analysis.layout, location), end="")
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
-                        ostream.write(hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1))
+                        console.print(
+                            hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1), end=""
+                        )
                     else:
                         capa.helpers.assert_never(rule.meta.scopes.dynamic)
 
                 else:
                     capa.helpers.assert_never(doc.meta.flavor)
 
-                ostream.write("\n")
-                render_match(ostream, doc.meta.analysis.layout, rule, match, indent=1)
+                console.print()
+                render_match(console, doc.meta.analysis.layout, rule, match, indent=1)
                 if rule.meta.lib:
                     # only show first match
                     break
 
-        ostream.write("\n")
+        console.print()
 
     if not had_match:
-        ostream.writeln(rutils.bold("no capabilities found"))
+        console.print(rutils.bold("no capabilities found"))
 
 
 def render_vverbose(doc: rd.ResultDocument):
-    ostream = rutils.StringIO()
+    console = Console(highlight=False)
 
-    capa.render.verbose.render_meta(ostream, doc)
-    ostream.write("\n")
+    with console.capture() as capture:
+        capa.render.verbose.render_meta(console, doc)
+        console.print()
+        render_rules(console, doc)
+        console.print()
 
-    render_rules(ostream, doc)
-    ostream.write("\n")
-
-    return ostream.getvalue()
+    return capture.get()
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:

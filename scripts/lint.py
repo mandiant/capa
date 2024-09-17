@@ -32,8 +32,8 @@ from pathlib import Path
 from dataclasses import field, dataclass
 
 import pydantic
-import termcolor
 import ruamel.yaml
+from rich import print
 
 import capa.main
 import capa.rules
@@ -47,18 +47,6 @@ from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")
-
-
-def red(s):
-    return termcolor.colored(s, "red")
-
-
-def orange(s):
-    return termcolor.colored(s, "yellow")
-
-
-def green(s):
-    return termcolor.colored(s, "green")
 
 
 @dataclass
@@ -78,8 +66,8 @@ class Context:
 
 
 class Lint:
-    WARN = orange("WARN")
-    FAIL = red("FAIL")
+    WARN = "[yellow]WARN[/yellow]"
+    FAIL = "[red]FAIL[/red]"
 
     name = "lint"
     level = FAIL
@@ -894,7 +882,7 @@ def lint_rule(ctx: Context, rule: Rule):
         if (not lints_failed) and (not lints_warned) and has_examples:
             print("")
             print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
-            print(f"      {Lint.WARN}: {green('no lint failures')}: Graduate the rule")
+            print(f"      {Lint.WARN}: '[green]no lint failures[/green]': Graduate the rule")
             print("")
     else:
         lints_failed = len(tuple(filter(lambda v: v.level == Lint.FAIL, violations)))
@@ -1021,18 +1009,18 @@ def main(argv=None):
     logger.debug("lints ran for ~ %02d:%02dm", min, sec)
 
     if warned_rules:
-        print(orange("rules with WARN:"))
+        print("[yellow]rules with WARN:[/yellow]")
         for warned_rule in sorted(warned_rules):
             print("  - " + warned_rule)
         print()
 
     if failed_rules:
-        print(red("rules with FAIL:"))
+        print("[red]rules with FAIL:[/red]")
         for failed_rule in sorted(failed_rules):
             print("  - " + failed_rule)
         return 1
     else:
-        logger.info(green("no lints failed, nice!"))
+        logger.info("[green]no lints failed, nice![/green]")
         return 0
 
 
