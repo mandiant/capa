@@ -160,7 +160,7 @@ build = [
     # and should not conflict with other libraries/tooling.
     "pyinstaller==6.10.0",
     "setuptools==70.0.0",
-    "build==1.2.1"
+    "build==1.2.2"
 ]
 scripts = [
     "jschema_to_python==1.2.3",
