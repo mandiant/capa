@@ -10,8 +10,6 @@ import textwrap
 from unittest.mock import Mock
 
 import fixtures
-import rich.console
-from rich.console import Console
 
 import capa.rules
 import capa.render.utils
@@ -25,6 +23,7 @@ import capa.features.basicblock
 import capa.render.result_document
 import capa.render.result_document as rd
 import capa.features.freeze.features
+from capa.render.utils import Console
 
 
 def test_render_number():
@@ -155,7 +154,7 @@ def test_render_meta_maec():
 
     # capture the output of render_maec
     f = io.StringIO()
-    console = rich.console.Console(file=f)
+    console = Console(file=f)
     capa.render.default.render_maec(mock_rd, console)
     output = f.getvalue()
 
