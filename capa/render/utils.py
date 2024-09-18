@@ -17,21 +17,21 @@ import capa.render.result_document as rd
 
 def bold(s: str) -> Text:
     """draw attention to the given string"""
-    return Text(s, style="cyan")
+    return Text.from_markup(f"[cyan]{s}")
 
 
 def bold2(s: str) -> Text:
     """draw attention to the given string, within a `bold` section"""
-    return Text(s, style="green")
+    return Text.from_markup(f"[green]{s}")
 
 
 def mute(s: str) -> Text:
     """draw attention away from the given string"""
-    return Text(s, style="dim")
+    return Text.from_markup(f"[dim]{s}")
 
 
 def warn(s: str) -> Text:
-    return Text(s, style="yellow")
+    return Text.from_markup(f"[yellow]{s}")
 
 
 def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
