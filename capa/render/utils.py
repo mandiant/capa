@@ -9,6 +9,7 @@
 import io
 from typing import Dict, List, Tuple, Union, Iterator, Optional
 
+import rich.console
 from rich.progress import Text
 
 import capa.render.result_document as rd
@@ -85,3 +86,17 @@ class StringIO(io.StringIO):
     def writeln(self, s):
         self.write(s)
         self.write("\n")
+
+
+class Console(rich.console.Console):
+    def writeln(self, *args, **kwargs) -> None:
+        """
+        prints the text with a new line at the end.
+        """
+        return self.print(*args, **kwargs)
+
+    def write(self, *args, **kwargs) -> None:
+        """
+        prints the text without a new line at the end.
+        """
+        return self.print(*args, **kwargs, end="")
