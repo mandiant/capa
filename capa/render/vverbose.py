@@ -9,8 +9,8 @@ import logging
 import textwrap
 from typing import Dict, Iterable, Optional
 
-import tabulate
 from rich.text import Text
+from rich.table import Table
 
 import capa.rules
 import capa.helpers
@@ -403,7 +403,14 @@ def render_rules(console: Console, doc: rd.ResultDocument):
         if rule.meta.description:
             rows.append(("description", rule.meta.description))
 
-        console.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+        grid = Table.grid(padding=(0, 2))
+        grid.add_column(style="dim")
+        grid.add_column()
+
+        for row in rows:
+            grid.add_row(*row)
+
+        console.writeln(grid)
 
         if capa.rules.Scope.FILE in rule.meta.scopes:
             matches = doc.rules[rule.meta.name].matches

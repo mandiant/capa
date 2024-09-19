@@ -43,7 +43,9 @@ import argparse
 import subprocess
 
 import humanize
-import tabulate
+from rich import box
+from rich.table import Table
+from rich.console import Console
 
 import capa.main
 import capa.perf
@@ -104,40 +106,47 @@ def main(argv=None):
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)
 
     logger.debug("perf: find capabilities: min: %0.2fs", (min(samples) / float(args.number)))
-    logger.debug("perf: find capabilities: avg: %0.2fs", (sum(samples) / float(args.repeat) / float(args.number)))
+    logger.debug(
+        "perf: find capabilities: avg: %0.2fs",
+        (sum(samples) / float(args.repeat) / float(args.number)),
+    )
     logger.debug("perf: find capabilities: max: %0.2fs", (max(samples) / float(args.number)))
 
     for counter, count in capa.perf.counters.most_common():
         logger.debug("perf: counter: %s: %s", counter, count)
 
-    print(
-        tabulate.tabulate(
-            [(counter, humanize.intcomma(count)) for counter, count in capa.perf.counters.most_common()],
-            headers=["feature class", "evaluation count"],
-            tablefmt="github",
-        )
-    )
-    print()
+    console = Console()
 
-    print(
-        tabulate.tabulate(
-            [
-                (
-                    args.label,
-                    "{:,}".format(capa.perf.counters["evaluate.feature"]),
-                    # python documentation indicates that min(samples) should be preferred,
-                    # so lets put that first.
-                    #
-                    # https://docs.python.org/3/library/timeit.html#timeit.Timer.repeat
-                    f"{(min(samples) / float(args.number)):.2f}s",
-                    f"{(sum(samples) / float(args.repeat) / float(args.number)):.2f}s",
-                    f"{(max(samples) / float(args.number)):.2f}s",
-                )
-            ],
-            headers=["label", "count(evaluations)", "min(time)", "avg(time)", "max(time)"],
-            tablefmt="github",
-        )
+    table1 = Table(box=box.MARKDOWN)
+    table1.add_column("feature class")
+    table1.add_column("evaluation count")
+
+    for counter, count in capa.perf.counters.most_common():
+        table1.add_row(counter, humanize.intcomma(count))
+
+    console.print(table1)
+    console.print()
+
+    table2 = Table(box=box.MARKDOWN)
+    table2.add_column("label")
+    table2.add_column("count(evaluations)", style="magenta")
+    table2.add_column("min(time)", style="green")
+    table2.add_column("avg(time)", style="yellow")
+    table2.add_column("max(time)", style="red")
+
+    table2.add_row(
+        args.label,
+        # python documentation indicates that min(samples) should be preferred,
+        # so lets put that first.
+        #
+        # https://docs.python.org/3/library/timeit.html#timeit.Timer.repeat
+        "{:,}".format(capa.perf.counters["evaluate.feature"]),
+        f"{(min(samples) / float(args.number)):.2f}s",
+        f"{(sum(samples) / float(args.repeat) / float(args.number)):.2f}s",
+        f"{(max(samples) / float(args.number)):.2f}s",
     )
+
+    console.print(table2)
 
     return 0
 

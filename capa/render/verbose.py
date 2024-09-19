@@ -25,9 +25,8 @@ See the License for the specific language governing permissions and limitations 
 
 from typing import cast
 
-import tabulate
 from rich.text import Text
-from rich.console import Console
+from rich.table import Table
 
 import capa.rules
 import capa.helpers
@@ -36,6 +35,7 @@ import capa.features.freeze as frz
 import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.render.utils import Console
 
 
 def format_address(address: frz.Address) -> str:
@@ -163,12 +163,16 @@ def render_static_meta(console: Console, meta: rd.StaticMetadata):
         total feature count  1918
     """
 
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="dim")
+    grid.add_column()
+
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
         ("sha256", meta.sample.sha256),
         ("path", meta.sample.path),
-        ("timestamp", meta.timestamp),
+        ("timestamp", str(meta.timestamp)),
         ("capa version", meta.version),
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
@@ -177,15 +181,18 @@ def render_static_meta(console: Console, meta: rd.StaticMetadata):
         ("extractor", meta.analysis.extractor),
         ("base address", format_address(meta.analysis.base_address)),
         ("rules", "\n".join(meta.analysis.rules)),
-        ("function count", len(meta.analysis.feature_counts.functions)),
-        ("library function count", len(meta.analysis.library_functions)),
+        ("function count", str(len(meta.analysis.feature_counts.functions))),
+        ("library function count", str(len(meta.analysis.library_functions))),
         (
             "total feature count",
-            meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions),
+            str(meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions)),
         ),
     ]
 
-    console.print(tabulate.tabulate(rows, tablefmt="plain"))
+    for row in rows:
+        grid.add_row(*row)
+
+    console.print(grid)
 
 
 def render_dynamic_meta(console: Console, meta: rd.DynamicMetadata):
@@ -207,12 +214,16 @@ def render_dynamic_meta(console: Console, meta: rd.DynamicMetadata):
         total feature count  1918
     """
 
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="dim")
+    table.add_column()
+
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
         ("sha256", meta.sample.sha256),
         ("path", meta.sample.path),
-        ("timestamp", meta.timestamp),
+        ("timestamp", str(meta.timestamp)),
         ("capa version", meta.version),
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
@@ -220,14 +231,17 @@ def render_dynamic_meta(console: Console, meta: rd.DynamicMetadata):
         ("analysis", meta.flavor.value),
         ("extractor", meta.analysis.extractor),
         ("rules", "\n".join(meta.analysis.rules)),
-        ("process count", len(meta.analysis.feature_counts.processes)),
+        ("process count", str(len(meta.analysis.feature_counts.processes))),
         (
             "total feature count",
-            meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes),
+            str(meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes)),
         ),
     ]
 
-    console.print(tabulate.tabulate(rows, tablefmt="plain"))
+    for row in rows:
+        table.add_row(*row)
+
+    console.print(table)
 
 
 def render_meta(console: Console, doc: rd.ResultDocument):
@@ -260,6 +274,10 @@ def render_rules(console: Console, doc: rd.ResultDocument):
 
         console.print(capability)
         had_match = True
+
+        table = Table.grid(padding=(0, 2))
+        table.add_column(style="dim")
+        table.add_column()
 
         rows = []
 
@@ -312,7 +330,10 @@ def render_rules(console: Console, doc: rd.ResultDocument):
 
             rows.append(("matches", "\n".join(lines)))
 
-        console.print(tabulate.tabulate(rows, tablefmt="plain"))
+        for row in rows:
+            table.add_row(*row)
+
+        console.print(table)
         console.print()
 
     if not had_match:
