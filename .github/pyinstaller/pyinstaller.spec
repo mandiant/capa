@@ -2,7 +2,6 @@
 # Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 import sys
 
-import wcwidth
 import capa.rules.cache
 
 from pathlib import Path
@@ -29,13 +28,6 @@ a = Analysis(
         ("../../rules", "rules"),
         ("../../sigs", "sigs"),
         ("../../cache", "cache"),
-        # capa.render.default uses tabulate that depends on wcwidth.
-        # it seems wcwidth uses a json file `version.json`
-        # and this doesn't get picked up by pyinstaller automatically.
-        # so we manually embed the wcwidth resources here.
-        #
-        # ref: https://stackoverflow.com/a/62278462/87207
-        (Path(wcwidth.__file__).parent, "wcwidth"),
     ],
     # when invoking pyinstaller from the project root,
     # this gets run from the project root.
