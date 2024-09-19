@@ -20,9 +20,9 @@ from importlib import util
 spec = util.find_spec('binaryninja')
 if spec is not None:
     if len(spec.submodule_search_locations) > 0:
-            path = Path(spec.submodule_search_locations[0])
-            # encode the path with utf8 then convert to hex, make sure it can be read and restored properly
-            print(str(path.parent).encode('utf8').hex())
+        path = Path(spec.submodule_search_locations[0])
+        # encode the path with utf8 then convert to hex, make sure it can be read and restored properly
+        print(str(path.parent).encode('utf8').hex())
 """
 
 
