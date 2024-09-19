@@ -183,6 +183,7 @@ known_first_party = [
     "binaryninja",
     "flirt",
     "ghidra",
+    "ida",
     "ida_ida",
     "ida_bytes",
     "ida_entry",
