@@ -22,6 +22,7 @@ from pathlib import Path
 
 import colorama
 from pefile import PEFormatError
+from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
 import capa.perf
@@ -125,6 +126,7 @@ E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
 
 logger = logging.getLogger("capa")
+logger.propagate = False
 
 
 class FilterConfig(TypedDict, total=False):
@@ -404,6 +406,15 @@ def handle_common_args(args):
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
+    # use [/] after the logger name to reset any styling,
+    # and prevent the color from carrying over to the message
+    LOGFORMAT = "[dim]%(name)s[/]: %(message)s"
+
+    # markup=True, to allow the use of Rich's markup syntax in log messages
+    rich_handler = RichHandler(markup=True, show_time=False)
+    rich_handler.setFormatter(logging.Formatter(LOGFORMAT))
+    logger.addHandler(rich_handler)
+
     if args.quiet:
         logging.basicConfig(level=logging.WARNING)
         logging.getLogger().setLevel(logging.WARNING)
