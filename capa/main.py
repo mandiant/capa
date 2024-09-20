@@ -43,6 +43,7 @@ import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import (
+    BACKEND_IDA,
     BACKEND_VIV,
     BACKEND_CAPE,
     BACKEND_BINJA,
@@ -283,6 +284,7 @@ def install_common_args(parser, wanted=None):
         backends = [
             (BACKEND_AUTO, "(default) detect appropriate backend automatically"),
             (BACKEND_VIV, "vivisect"),
+            (BACKEND_IDA, "IDA via idalib"),
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
             (BACKEND_DOTNET, ".NET"),

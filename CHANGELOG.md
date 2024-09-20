@@ -4,6 +4,8 @@
 
 ### New Features
 
+- add IDA v9.0 backend via idalib #2376 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (0)

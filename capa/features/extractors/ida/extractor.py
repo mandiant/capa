@@ -8,7 +8,6 @@
 from typing import List, Tuple, Iterator
 
 import idaapi
-import ida_nalt
 
 import capa.ida.helpers
 import capa.features.extractors.elf
@@ -32,7 +31,9 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self):
         super().__init__(
             hashes=SampleHashes(
-                md5=ida_nalt.retrieve_input_file_md5(), sha1="(unknown)", sha256=ida_nalt.retrieve_input_file_sha256()
+                md5=capa.ida.helpers.retrieve_input_file_md5(),
+                sha1="(unknown)",
+                sha256=capa.ida.helpers.retrieve_input_file_sha256(),
             )
         )
         self.global_features: List[Tuple[Feature, Address]] = []

@@ -185,6 +185,7 @@ known_first_party = [
     "ghidra",
     "ida",
     "ida_ida",
+    "ida_auto",
     "ida_bytes",
     "ida_entry",
     "ida_funcs",

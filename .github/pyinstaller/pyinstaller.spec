@@ -70,7 +70,10 @@ a = Analysis(
         "qt5",
         "pyqtwebengine",
         "pyasn1",
+        # don't pull in Binary Ninja/IDA bindings that should
+        # only be installed locally.
         "binaryninja",
+        "ida",
     ],
 )
 
