@@ -32,7 +32,9 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self):
         super().__init__(
             hashes=SampleHashes(
-                md5=ida_nalt.retrieve_input_file_md5(), sha1="(unknown)", sha256=ida_nalt.retrieve_input_file_sha256()
+                md5=ida_nalt.retrieve_input_file_md5().hex(),
+                sha1="(unknown)",
+                sha256=ida_nalt.retrieve_input_file_sha256().hex(),
             )
         )
         self.global_features: List[Tuple[Feature, Address]] = []

@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import io
 import os
 import sys
 import logging
@@ -69,6 +70,7 @@ BACKEND_DRAKVUF = "drakvuf"
 BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
+BACKEND_IDA = "ida"
 
 
 class CorruptFile(ValueError):
@@ -320,6 +322,36 @@ def get_extractor(
         buf = sample_path.read_bytes()
 
         return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
+    elif backend == BACKEND_IDA:
+        import capa.features.extractors.ida.idalib as idalib
+
+        if not idalib.has_idalib():
+            raise RuntimeError(
+                # TODO(williballenthin): add more details here
+                "cannot find IDA idalib  module."
+            )
+
+        if not idalib.load_idalib():
+            raise RuntimeError("failed to load IDA idalib  module.")
+
+        import ida
+        import ida_auto
+
+        import capa.features.extractors.ida.extractor
+
+        logger.debug("idalib: opening database...")
+        # idalib writes to stdout (ugh), so we have to capture that
+        # so as not to screw up structured output.
+        with capa.helpers.stdout_redirector(io.BytesIO()):
+            if ida.open_database(str(input_path), run_auto_analysis=True):
+                raise RuntimeError("failed to analyze input file")
+
+            logger.debug("idalib: waiting for analysis...")
+            ida_auto.auto_wait()
+            logger.debug("idalib: opened database.")
+
+        return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     else:
         raise ValueError("unexpected backend: " + backend)
