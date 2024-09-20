@@ -92,7 +92,7 @@ def stdout_redirector(stream):
 
     *But*, this only works on Linux! Otherwise will silently still write to stdout.
     So, try to upstream the fix when possible.
-     
+
     Via: https://eli.thegreenplace.net/2015/redirecting-all-kinds-of-stdout-in-python/
     """
     if sys.platform not in ("linux", "linux2"):
