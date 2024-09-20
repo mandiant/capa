@@ -42,5 +42,6 @@
   - [ ] [publish to PyPI](https://pypi.org/project/flare-capa)
   - [ ] [create tag in capa rules](https://github.com/mandiant/capa-rules/tags)
   - [ ] [create release in capa rules](https://github.com/mandiant/capa-rules/releases)
+- [ ] Update [homepage](https://github.com/mandiant/capa/blob/master/web/public/index.html)
 - [ ] [Spread the word](https://twitter.com)
 - [ ] Update internal service
