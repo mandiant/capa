@@ -6,8 +6,14 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (6)
 
+- nursery/access-unmanaged-com-objects-in-dotnet mehunhoff@google.com
+- nursery/implement-ui-automation-client-in-dotnet mehunhoff@google.com
+- nursery/interact-with-shortcut-via-iwshshortcut-in-dotnet mehunhoff@google.com
+- nursery/interact-with-windows-scripting-host-in-dotnet mehunhoff@google.com
+- nursery/use-dotnet-library-simplejson mehunhoff@google.com
+- nursery/use-dotnet-library-websocket-sharp mehunhoff@google.com
 -
 
 ### Bug Fixes
