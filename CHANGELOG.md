@@ -18,6 +18,8 @@
 
 ### Bug Fixes
 
+- bump minimum Python version to 3.8.1 to satisfy uv #2387 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
