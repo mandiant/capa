@@ -18,6 +18,8 @@
 
 ### Bug Fixes
 
+- use Python 3.12 to build extra standalone build on Linux #2383 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
