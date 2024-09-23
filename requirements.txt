@@ -27,7 +27,7 @@ pyasn1==0.5.1
 pyasn1-modules==0.3.0
 pycparser==2.22
 pydantic==2.9.1
-pydantic-core==2.23.3
+pydantic-core==2.24.0
 xmltodict==0.13.0
 pyelftools==0.31
 pygments==2.18.0
