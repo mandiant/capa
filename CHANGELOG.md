@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (7)
 
 - nursery/access-unmanaged-com-objects-in-dotnet mehunhoff@google.com
 - nursery/implement-ui-automation-client-in-dotnet mehunhoff@google.com
@@ -14,6 +14,7 @@
 - nursery/interact-with-windows-scripting-host-in-dotnet mehunhoff@google.com
 - nursery/use-dotnet-library-simplejson mehunhoff@google.com
 - nursery/use-dotnet-library-websocket-sharp mehunhoff@google.com
+- linking/runtime-linking/populate-syswhispers2-syscall-list still@teamt5.org
 -
 
 ### Bug Fixes
