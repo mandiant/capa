@@ -145,7 +145,9 @@ def find_static_capabilities(
     n_libs: int = 0
     percentage: float = 0
 
-    with capa.helpers.CapaProgressBar(transient=True, disable=disable_progress) as pbar:
+    with capa.helpers.CapaProgressBar(
+        console=capa.helpers.log_console, transient=True, disable=disable_progress
+    ) as pbar:
         task = pbar.add_task(
             "matching", total=n_funcs, unit="functions", postfix=f"skipped {n_libs} library functions, {percentage}%"
         )

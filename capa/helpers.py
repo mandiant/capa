@@ -21,6 +21,7 @@ from zipfile import ZipFile
 from datetime import datetime
 
 import msgspec.json
+from rich.console import Console
 from rich.progress import (
     Task,
     Text,
@@ -61,6 +62,10 @@ EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
 logger = logging.getLogger("capa")
+
+
+# shared console used to redirect logging to stderr
+log_console: Console = Console(stderr=True)
 
 
 def hex(n: int) -> str:

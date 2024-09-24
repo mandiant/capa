@@ -138,7 +138,9 @@ def find_dynamic_capabilities(
     processes: List[ProcessHandle] = list(extractor.get_processes())
     n_processes: int = len(processes)
 
-    with capa.helpers.CapaProgressBar(transient=True, disable=disable_progress) as pbar:
+    with capa.helpers.CapaProgressBar(
+        console=capa.helpers.log_console, transient=True, disable=disable_progress
+    ) as pbar:
         task = pbar.add_task("matching", total=n_processes, unit="processes")
         for p in processes:
             process_matches, thread_matches, call_matches, feature_count = find_process_capabilities(

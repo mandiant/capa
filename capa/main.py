@@ -125,8 +125,24 @@ E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
 E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
 
+root_logger = logging.getLogger()
+logging.basicConfig(level=logging.NOTSET)
+
+# use [/] after the logger name to reset any styling,
+# and prevent the color from carrying over to the message
+LOGFORMAT = "[dim]%(name)s[/]: %(message)s"
+
+if root_logger.hasHandlers():
+    root_logger.handlers.clear()
+
+# markup=True, to allow the use of Rich's markup syntax in log messages
+rich_handler = RichHandler(
+    level=logging.NOTSET, markup=True, show_time=False, show_path=True, console=capa.helpers.log_console
+)
+rich_handler.setFormatter(logging.Formatter(LOGFORMAT))
+root_logger.addHandler(rich_handler)
+
 logger = logging.getLogger("capa")
-logger.propagate = False
 
 
 class FilterConfig(TypedDict, total=False):
@@ -406,14 +422,6 @@ def handle_common_args(args):
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    # use [/] after the logger name to reset any styling,
-    # and prevent the color from carrying over to the message
-    LOGFORMAT = "[dim]%(name)s[/]: %(message)s"
-
-    # markup=True, to allow the use of Rich's markup syntax in log messages
-    rich_handler = RichHandler(markup=True, show_time=False)
-    rich_handler.setFormatter(logging.Formatter(LOGFORMAT))
-    logger.addHandler(rich_handler)
 
     if args.quiet:
         logging.basicConfig(level=logging.WARNING)
@@ -427,6 +435,20 @@ def handle_common_args(args):
 
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)
+
+    # logger = logging.getLogger()
+
+    # # use [/] after the logger name to reset any styling,
+    # # and prevent the color from carrying over to the message
+    # LOGFORMAT = "[dim]%(name)s[/]: %(message)s"
+
+    # if logger.hasHandlers():
+    #      logger.handlers.clear()
+
+    # # markup=True, to allow the use of Rich's markup syntax in log messages
+    # rich_handler = RichHandler(level=logging.NOTSET, markup=True, show_time=False, show_path=False, console=Console(stderr=True))
+    # rich_handler.setFormatter(logging.Formatter(LOGFORMAT))
+    # logger.addHandler(rich_handler)
 
     if isinstance(sys.stdout, io.TextIOWrapper) or hasattr(sys.stdout, "reconfigure"):
         # from sys.stdout type hint:

@@ -93,7 +93,7 @@ def main(argv=None):
     except capa.main.ShouldExitError as e:
         return e.status_code
 
-    with capa.helpers.CapaProgressBar() as progress:
+    with capa.helpers.CapaProgressBar(console=capa.helpers.log_console) as progress:
         total_iterations = args.number * args.repeat
         task = progress.add_task("profiling", total=total_iterations)
 
