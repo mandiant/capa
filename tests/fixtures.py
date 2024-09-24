@@ -431,6 +431,14 @@ def get_data_path_by_name(name) -> Path:
             / "vmray"
             / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip"
         )
+    elif name.startswith("2f8a79-vmray"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "vmray"
+            / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
+        )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):

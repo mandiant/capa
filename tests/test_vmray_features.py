@@ -87,3 +87,10 @@ def test_vmray_features(sample, scope, feature, expected):
 )
 def test_vmray_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(fixtures.get_vmray_extractor, sample, scope, feature, expected)
+
+
+def test_vmray_processes():
+    # see #2394
+    path = fixtures.get_data_path_by_name("2f8a79-vmray")
+    vmre = fixtures.get_vmray_extractor(path)
+    assert len(vmre.analysis.process_ids) == 9
