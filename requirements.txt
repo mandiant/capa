@@ -41,4 +41,4 @@ six==1.16.0
 sortedcontainers==2.4.0
 viv-utils==0.7.11
 vivisect==1.2.1
-wcwidth==0.2.13
+msgspec==0.18.6
