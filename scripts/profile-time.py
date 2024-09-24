@@ -100,7 +100,7 @@ def main(argv=None):
         def do_iteration():
             capa.perf.reset()
             capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
-            progress.update(task)
+
             progress.advance(task)
 
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)

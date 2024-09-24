@@ -40,11 +40,6 @@ a = Analysis(
         "tkinter",
         "_tkinter",
         "Tkinter",
-        # tqdm provides renderers for ipython,
-        # however, this drags in a lot of dependencies.
-        # since we don't spawn a notebook, we can safely remove these.
-        "IPython",
-        "ipywidgets",
         # these are pulled in by networkx
         # but we don't need to compute the strongly connected components.
         "numpy",
