@@ -6,12 +6,15 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import sys
 import logging
+import argparse
 import importlib.util
 
 import rich
 import rich.table
 
+import capa.main
 from capa.features.extractors.ida.idalib import find_idalib, load_idalib, is_idalib_installed
 from capa.features.extractors.binja.find_binja_api import find_binaryninja, load_binaryninja, is_binaryninja_installed
 
@@ -34,8 +37,25 @@ def load_vivisect() -> bool:
         return False
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
+    parser = argparse.ArgumentParser(description="Detect analysis backends.")
+    capa.main.install_common_args(parser, wanted=set())
+    args = parser.parse_args(args=argv)
+
+    try:
+        capa.main.handle_common_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
+
+    if args.debug:
+        logging.getLogger("capa").setLevel(logging.DEBUG)
+        logging.getLogger("viv_utils").setLevel(logging.DEBUG)
+    else:
+        logging.getLogger("capa").setLevel(logging.ERROR)
+        logging.getLogger("viv_utils").setLevel(logging.ERROR)
 
     table = rich.table.Table()
     table.add_column("backend")
@@ -83,4 +103,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

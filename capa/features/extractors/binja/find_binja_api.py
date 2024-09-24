@@ -54,8 +54,7 @@ def get_desktop_entry(name: str) -> Optional[Path]:
     assert sys.platform in ("linux", "linux2")
     assert name.endswith(".desktop")
 
-    default_data_dirs = f"/usr/share/applications:{Path.home()}/.local/share"
-    data_dirs = os.environ.get("XDG_DATA_DIRS", default_data_dirs)
+    data_dirs = os.environ.get("XDG_DATA_DIRS", "/usr/share") + f":{Path.home()}/.local/share"
     for data_dir in data_dirs.split(":"):
         applications = Path(data_dir) / "applications"
         for application in applications.glob("*.desktop"):
@@ -116,14 +115,17 @@ def find_binaryninja() -> Optional[Path]:
 
         desktop_entry = get_desktop_entry("com.vector35.binaryninja.desktop")
         if not desktop_entry:
+            logger.debug("failed to find Binary Ninja application")
             return None
         logger.debug("found Binary Ninja application: %s", desktop_entry)
 
         binaryninja_path = get_binaryninja_path(desktop_entry)
         if not binaryninja_path:
+            logger.debug("failed to determine Binary Ninja installation path")
             return None
 
         if not validate_binaryninja_path(binaryninja_path):
+            logger.debug("failed to validate Binary Ninja installation")
             return None
 
     logger.debug("found Binary Ninja installation: %s", binaryninja_path)
