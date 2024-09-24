@@ -137,11 +137,31 @@ class FunctionReturn(BaseModel):
     from_addr: HexInt = Field(alias="from")
 
 
+class MonitorProcess(BaseModel):
+    ts: HexInt
+    process_id: int
+    image_name: str
+    filename: str
+    # page_root: HexInt
+    os_pid: HexInt
+    # os_integrity_level: HexInt
+    # os_privileges: HexInt
+    monitor_reason: str
+    parent_id: int
+    os_parent_pid: HexInt
+    # cmd_line: str
+    # cur_dir: str
+    # os_username: str
+    # bitness: int
+    # os_groups: str
+
+
 class Analysis(BaseModel):
     log_version: str  # tested 2
     analyzer_version: str  # tested 2024.2.1
     # analysis_date: str
 
+    monitor_processes: List[MonitorProcess] = Field(alias="monitor_process", default=[])
     function_calls: List[FunctionCall] = Field(alias="fncall", default=[])
     # function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
 

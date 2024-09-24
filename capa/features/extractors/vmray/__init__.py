@@ -45,6 +45,7 @@ class VMRayAnalysis:
         self.exports: Dict[int, str] = {}
         self.imports: Dict[int, Tuple[str, str]] = {}
         self.sections: Dict[int, str] = {}
+        # VMRay monitor ID to OS PID
         self.process_ids: Dict[int, int] = {}
         self.process_threads: Dict[int, List[int]] = defaultdict(list)
         self.process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
@@ -133,6 +134,13 @@ class VMRayAnalysis:
             # we expect VMRay's monitor IDs to be unique, but OS PIDs may be reused
             assert process.monitor_id not in self.process_ids.keys()
             self.process_ids[process.monitor_id] = process.os_pid
+
+        # not all processes may get an ID, get missing data from flog.xml, see #2394
+        for monitor_process in self.flog.analysis.monitor_processes:
+            if monitor_process.process_id in self.process_ids:
+                assert self.process_ids[monitor_process.process_id] == monitor_process.os_pid
+            else:
+                self.process_ids[monitor_process.process_id] = monitor_process.os_pid
 
     def _compute_process_threads(self):
         # logs/flog.xml appears to be the only file that contains thread-related data
