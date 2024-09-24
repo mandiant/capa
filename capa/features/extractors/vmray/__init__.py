@@ -45,9 +45,8 @@ class VMRayAnalysis:
         self.exports: Dict[int, str] = {}
         self.imports: Dict[int, Tuple[str, str]] = {}
         self.sections: Dict[int, str] = {}
-        # VMRay monitor ID to OS PID
-        self.process_ids: Dict[int, int] = {}
-        self.process_threads: Dict[int, List[int]] = defaultdict(list)
+        self.os_pid_by_monitor_id: Dict[int, int] = {}
+        self.tids_by_pid: Dict[int, List[int]] = defaultdict(list)
         self.process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
         self.base_address: int
 
@@ -132,15 +131,15 @@ class VMRayAnalysis:
     def _compute_process_ids(self):
         for process in self.sv2.processes.values():
             # we expect VMRay's monitor IDs to be unique, but OS PIDs may be reused
-            assert process.monitor_id not in self.process_ids.keys()
-            self.process_ids[process.monitor_id] = process.os_pid
+            assert process.monitor_id not in self.os_pid_by_monitor_id.keys()
+            self.os_pid_by_monitor_id[process.monitor_id] = process.os_pid
 
         # not all processes may get an ID, get missing data from flog.xml, see #2394
         for monitor_process in self.flog.analysis.monitor_processes:
-            if monitor_process.process_id in self.process_ids:
-                assert self.process_ids[monitor_process.process_id] == monitor_process.os_pid
+            if monitor_process.process_id in self.os_pid_by_monitor_id:
+                assert self.os_pid_by_monitor_id[monitor_process.process_id] == monitor_process.os_pid
             else:
-                self.process_ids[monitor_process.process_id] = monitor_process.os_pid
+                self.os_pid_by_monitor_id[monitor_process.process_id] = monitor_process.os_pid
 
     def _compute_process_threads(self):
         # logs/flog.xml appears to be the only file that contains thread-related data
@@ -152,8 +151,8 @@ class VMRayAnalysis:
             assert isinstance(pid, int)
             assert isinstance(tid, int)
 
-            if tid not in self.process_threads[pid]:
-                self.process_threads[pid].append(tid)
+            if tid not in self.tids_by_pid[pid]:
+                self.tids_by_pid[pid].append(tid)
 
     def _compute_process_calls(self):
         for function_call in self.flog.analysis.function_calls:
@@ -166,4 +165,4 @@ class VMRayAnalysis:
             self.process_calls[pid][tid].append(function_call)
 
     def get_process_os_pid(self, monitor_id: int) -> int:
-        return self.process_ids[monitor_id]
+        return self.os_pid_by_monitor_id[monitor_id]

@@ -80,7 +80,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         return process.image_name
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
-        for thread in self.analysis.process_threads[ph.address.pid]:
+        for thread in self.analysis.tids_by_pid[ph.address.pid]:
             address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
             yield ThreadHandle(address=address, inner={})
 
