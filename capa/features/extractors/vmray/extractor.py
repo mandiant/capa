@@ -15,9 +15,16 @@ import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
 from capa.features.common import Feature, Characteristic
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
-from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import PARAM_TYPE_STR, Process, ParamList, FunctionCall
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+    AbsoluteVirtualAddress,
+)
+from capa.features.extractors.vmray import VMRayAnalysis, VMRayMonitorThread, VMRayMonitorProcess
+from capa.features.extractors.vmray.models import PARAM_TYPE_STR, ParamList, FunctionCall
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -69,20 +76,26 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from self.global_features
 
     def get_processes(self) -> Iterator[ProcessHandle]:
-        yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
+        for monitor_process_id in self.analysis.monitor_processes:
+            monitor_process: VMRayMonitorProcess = self.analysis.monitor_processes[monitor_process_id]
+
+            address: ProcessAddress = ProcessAddress(pid=monitor_process.pid, ppid=monitor_process.ppid)
+            yield ProcessHandle(address, inner=monitor_process)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
         # we have not identified process-specific features for VMRay yet
         yield from []
 
     def get_process_name(self, ph) -> str:
-        process: Process = ph.inner
-        return process.image_name
+        monitor_process: VMRayMonitorProcess = ph.inner
+        return monitor_process.image_name
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
-        for thread in self.analysis.tids_by_pid[ph.address.pid]:
-            address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
-            yield ThreadHandle(address=address, inner={})
+        for monitor_thread_id in self.analysis.monitor_threads_by_monitor_process[ph.inner.monitor_id]:
+            monitor_thread: VMRayMonitorThread = self.analysis.monitor_threads[monitor_thread_id]
+
+            address: ThreadAddress = ThreadAddress(process=ph.address, tid=monitor_thread.tid)
+            yield ThreadHandle(address=address, inner=monitor_thread)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
         if False:
@@ -92,7 +105,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         return
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
-        for function_call in self.analysis.process_calls[ph.address.pid][th.address.tid]:
+        for function_call in self.analysis.monitor_process_calls[ph.inner.monitor_id][th.inner.monitor_id]:
             addr = DynamicCallAddress(thread=th.address, id=function_call.fncall_id)
             yield CallHandle(address=addr, inner=function_call)
 

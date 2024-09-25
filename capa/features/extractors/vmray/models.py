@@ -156,8 +156,16 @@ class MonitorProcess(BaseModel):
     # os_groups: str
 
 
+class MonitorThread(BaseModel):
+    ts: HexInt
+    thread_id: int
+    process_id: int
+    os_tid: HexInt
+
+
 # handle if there's only single entries, but the model expects a list
 MonitorProcessList = Annotated[List[MonitorProcess], BeforeValidator(validate_ensure_is_list)]
+MonitorThreadList = Annotated[List[MonitorThread], BeforeValidator(validate_ensure_is_list)]
 FunctionCallList = Annotated[List[FunctionCall], BeforeValidator(validate_ensure_is_list)]
 
 
@@ -167,6 +175,7 @@ class Analysis(BaseModel):
     # analysis_date: str
 
     monitor_processes: MonitorProcessList = Field(alias="monitor_process", default=[])
+    monitor_threads: MonitorThreadList = Field(alias="monitor_thread", default=[])
     function_calls: FunctionCallList = Field(alias="fncall", default=[])
     # function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
 
