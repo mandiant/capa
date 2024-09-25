@@ -76,9 +76,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from self.global_features
 
     def get_processes(self) -> Iterator[ProcessHandle]:
-        for monitor_process_id in self.analysis.monitor_processes:
-            monitor_process: VMRayMonitorProcess = self.analysis.monitor_processes[monitor_process_id]
-
+        for monitor_process in self.analysis.monitor_processes.values():
             address: ProcessAddress = ProcessAddress(pid=monitor_process.pid, ppid=monitor_process.ppid)
             yield ProcessHandle(address, inner=monitor_process)
 
