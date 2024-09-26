@@ -37,6 +37,8 @@ DYNAMIC_CAPE_FEATURE_PRESENCE_TESTS = sorted(
         ),
         ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), False),
         # thread/api calls
+        ("0000a657", "process=(2900:2852),thread=2904", capa.features.insn.API("RegQueryValueExA"), True),
+        ("0000a657", "process=(2900:2852),thread=2904", capa.features.insn.API("RegQueryValueEx"), True),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), True),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), False),
         # thread/number call argument

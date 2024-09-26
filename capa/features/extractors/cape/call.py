@@ -9,6 +9,7 @@
 import logging
 from typing import Tuple, Iterator
 
+import capa.features.extractors.helpers
 from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
@@ -50,7 +51,8 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
         else:
             assert_never(value)
 
-    yield API(call.api), ch.address
+    for name in capa.features.extractors.helpers.generate_symbols("", call.api):
+        yield API(name), ch.address
 
 
 def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
