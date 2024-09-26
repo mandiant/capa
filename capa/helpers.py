@@ -10,7 +10,6 @@ import os
 import sys
 import gzip
 import ctypes
-import inspect
 import logging
 import tempfile
 import contextlib
