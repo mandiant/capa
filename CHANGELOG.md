@@ -27,6 +27,7 @@
 - use Python 3.12 to build extra standalone build on Linux #2383 @williballenthin
 - bump minimum Python version to 3.8.1 to satisfy uv #2387 @williballenthin
 - vmray: collect more process information from flog.xml #2394 @mr-tz @mike-hunhoff
+- dynamic: emit complete features for A/W APIs #2409 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 
