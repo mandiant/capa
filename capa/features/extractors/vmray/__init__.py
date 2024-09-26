@@ -150,7 +150,7 @@ class VMRayAnalysis:
     def _compute_monitor_processes(self):
         for process in self.sv2.processes.values():
             # we expect monitor IDs to be unique
-            assert process.monitor_id not in self.monitor_processes.keys()
+            assert process.monitor_id not in self.monitor_processes
 
             ppid: int = (
                 self.sv2.processes[process.ref_parent_process.path[1]].os_pid if process.ref_parent_process else 0
@@ -168,7 +168,7 @@ class VMRayAnalysis:
                 monitor_process.image_name,
             )
 
-            if monitor_process.process_id not in self.monitor_processes.keys():
+            if monitor_process.process_id not in self.monitor_processes:
                 self.monitor_processes[monitor_process.process_id] = vmray_monitor_process
             else:
                 # we expect monitor processes recorded in both SummaryV2.json and flog.xml to equal
@@ -177,7 +177,7 @@ class VMRayAnalysis:
     def _compute_monitor_threads(self):
         for monitor_thread in self.flog.analysis.monitor_threads:
             # we expect monitor IDs to be unique
-            assert monitor_thread.thread_id not in self.monitor_threads.keys()
+            assert monitor_thread.thread_id not in self.monitor_threads
 
             self.monitor_threads[monitor_thread.thread_id] = VMRayMonitorThread(
                 monitor_thread.os_tid, monitor_thread.thread_id, monitor_thread.process_id
