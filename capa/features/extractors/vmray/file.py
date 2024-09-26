@@ -6,35 +6,16 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Dict, Tuple, Iterator
+from typing import Tuple, Iterator
 
 import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.helpers import generate_symbols
-from capa.features.extractors.vmray.models import Process
-from capa.features.extractors.base_extractor import ProcessHandle
 
 logger = logging.getLogger(__name__)
-
-
-def get_processes(analysis: VMRayAnalysis) -> Iterator[ProcessHandle]:
-    processes: Dict[str, Process] = analysis.sv2.processes
-
-    for process in processes.values():
-        # we map VMRay's monitor ID to the OS PID to make it easier for users
-        # to follow the processes in capa's output
-        pid: int = analysis.get_process_os_pid(process.monitor_id)
-        ppid: int = (
-            analysis.get_process_os_pid(processes[process.ref_parent_process.path[1]].monitor_id)
-            if process.ref_parent_process
-            else 0
-        )
-
-        addr: ProcessAddress = ProcessAddress(pid=pid, ppid=ppid)
-        yield ProcessHandle(address=addr, inner=process)
 
 
 def extract_export_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:

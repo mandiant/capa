@@ -87,7 +87,7 @@ class Param(BaseModel):
     deref: Optional[ParamDeref] = None
 
 
-def validate_param_list(value: Union[List[Param], Param]) -> List[Param]:
+def validate_ensure_is_list(value: Union[List[Param], Param]) -> List[Param]:
     if isinstance(value, list):
         return value
     else:
@@ -97,7 +97,7 @@ def validate_param_list(value: Union[List[Param], Param]) -> List[Param]:
 # params may be stored as a list of Param or a single Param so we convert
 # the input value to Python list type before the inner validation (List[Param])
 # is called
-ParamList = Annotated[List[Param], BeforeValidator(validate_param_list)]
+ParamList = Annotated[List[Param], BeforeValidator(validate_ensure_is_list)]
 
 
 class Params(BaseModel):
@@ -137,12 +137,46 @@ class FunctionReturn(BaseModel):
     from_addr: HexInt = Field(alias="from")
 
 
+class MonitorProcess(BaseModel):
+    ts: HexInt
+    process_id: int
+    image_name: str
+    filename: str
+    # page_root: HexInt
+    os_pid: HexInt
+    # os_integrity_level: HexInt
+    # os_privileges: HexInt
+    monitor_reason: str
+    parent_id: int
+    os_parent_pid: HexInt
+    # cmd_line: str
+    # cur_dir: str
+    # os_username: str
+    # bitness: int
+    # os_groups: str
+
+
+class MonitorThread(BaseModel):
+    ts: HexInt
+    thread_id: int
+    process_id: int
+    os_tid: HexInt
+
+
+# handle if there's only single entries, but the model expects a list
+MonitorProcessList = Annotated[List[MonitorProcess], BeforeValidator(validate_ensure_is_list)]
+MonitorThreadList = Annotated[List[MonitorThread], BeforeValidator(validate_ensure_is_list)]
+FunctionCallList = Annotated[List[FunctionCall], BeforeValidator(validate_ensure_is_list)]
+
+
 class Analysis(BaseModel):
     log_version: str  # tested 2
     analyzer_version: str  # tested 2024.2.1
     # analysis_date: str
 
-    function_calls: List[FunctionCall] = Field(alias="fncall", default=[])
+    monitor_processes: MonitorProcessList = Field(alias="monitor_process", default=[])
+    monitor_threads: MonitorThreadList = Field(alias="monitor_thread", default=[])
+    function_calls: FunctionCallList = Field(alias="fncall", default=[])
     # function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
 
 
