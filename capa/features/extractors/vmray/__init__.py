@@ -63,7 +63,11 @@ class VMRayAnalysis:
         self.sections: Dict[int, str] = {}
         self.monitor_processes: Dict[int, VMRayMonitorProcess] = {}
         self.monitor_threads: Dict[int, VMRayMonitorThread] = {}
+
+        # map monitor thread IDs to their associated monitor process ID
         self.monitor_threads_by_monitor_process: Dict[int, List[int]] = defaultdict(list)
+
+        # map function calls to their associated monitor thread ID mapped to its associated monitor process ID
         self.monitor_process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
 
         self.base_address: int
@@ -183,7 +187,8 @@ class VMRayAnalysis:
                 monitor_thread.os_tid, monitor_thread.thread_id, monitor_thread.process_id
             )
 
-            # we expect 1 monitor thread per monitor process
+            # we expect each monitor thread ID to be unique for its associated monitor process ID e.g. monitor
+            # thread ID 10 should not be captured twice for monitor process ID 1
             assert monitor_thread.thread_id not in self.monitor_threads_by_monitor_process[monitor_thread.thread_id]
 
             self.monitor_threads_by_monitor_process[monitor_thread.process_id].append(monitor_thread.thread_id)
