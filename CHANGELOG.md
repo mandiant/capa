@@ -4,6 +4,9 @@
 
 ### New Features
 
+- add IDA v9.0 backend via idalib #2376 @williballenthin
+- locate Binary Ninja API using XDG Desktop Entries #2376 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (7)
