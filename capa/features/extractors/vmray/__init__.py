@@ -161,13 +161,18 @@ class VMRayAnalysis:
 
         # not all processes are recorded in SummaryV2.json, get missing data from flog.xml, see #2394
         for monitor_process in self.flog.analysis.monitor_processes:
+            vmray_monitor_process: VMRayMonitorProcess = VMRayMonitorProcess(
+                monitor_process.os_pid,
+                monitor_process.os_parent_pid,
+                monitor_process.process_id,
+                monitor_process.image_name,
+            )
+
             if monitor_process.process_id not in self.monitor_processes.keys():
-                self.monitor_processes[monitor_process.process_id] = VMRayMonitorProcess(
-                    monitor_process.os_pid,
-                    monitor_process.os_parent_pid,
-                    monitor_process.process_id,
-                    monitor_process.image_name,
-                )
+                self.monitor_processes[monitor_process.process_id] = vmray_monitor_process
+            else:
+                # we expect monitor processes recorded in both SummaryV2.json and flog.xml to equal
+                assert self.monitor_processes[monitor_process.process_id] == vmray_monitor_process
 
     def _compute_monitor_threads(self):
         for monitor_thread in self.flog.analysis.monitor_threads:
