@@ -19,8 +19,13 @@ DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
         ("93b2d1-vmray", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
         # file/imports
         ("93b2d1-vmray", "file", capa.features.file.Import("GetAddrInfoW"), True),
+        ("93b2d1-vmray", "file", capa.features.file.Import("GetAddrInfo"), True),
         # thread/api calls
+        ("93b2d1-vmray", "process=(2176:0),thread=2180", capa.features.insn.API("LoadLibraryExA"), True),
+        ("93b2d1-vmray", "process=(2176:0),thread=2180", capa.features.insn.API("LoadLibraryEx"), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("GetAddrInfoW"), True),
+        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("GetAddrInfo"), True),
+        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("GetAddrInfo"), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("DoesNotExist"), False),
         # call/api
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2361", capa.features.insn.API("GetAddrInfoW"), True),

@@ -8,6 +8,7 @@
 import logging
 from typing import Tuple, Iterator
 
+import capa.features.extractors.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
@@ -41,7 +42,8 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
         for param in call.params_in.params:
             yield from get_call_param_features(param, ch)
 
-    yield API(call.name), ch.address
+    for name in capa.features.extractors.helpers.generate_symbols("", call.name):
+        yield API(name), ch.address
 
 
 def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
