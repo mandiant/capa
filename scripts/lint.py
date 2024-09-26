@@ -909,7 +909,7 @@ def lint(ctx: Context):
     source_rules = [rule for rule in ctx.rules.rules.values() if not rule.is_subscope_rule()]
     n_rules: int = len(source_rules)
 
-    with capa.helpers.CapaProgressBar(transient=True) as pbar:
+    with capa.helpers.CapaProgressBar(transient=True, console=capa.helpers.log_console) as pbar:
         task = pbar.add_task(description="linting", total=n_rules, unit="rule")
         for rule in source_rules:
             name = rule.name
