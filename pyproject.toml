@@ -150,7 +150,7 @@ dev = [
     "types-termcolor==1.1.4",
     "types-psutil==6.0.0.20240901",
     "types_requests==2.32.0.20240712",
-    "types-protobuf==5.27.0.20240907",
+    "types-protobuf==5.27.0.20240920",
     "deptry==0.20.0"
 ]
 build = [
