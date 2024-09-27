@@ -25,7 +25,8 @@ See the License for the specific language governing permissions and limitations 
 
 from typing import cast
 
-import tabulate
+from rich.text import Text
+from rich.table import Table
 
 import capa.rules
 import capa.helpers
@@ -34,6 +35,7 @@ import capa.features.freeze as frz
 import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.render.utils import Console
 
 
 def format_address(address: frz.Address) -> str:
@@ -140,7 +142,7 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     )
 
 
-def render_static_meta(ostream, meta: rd.StaticMetadata):
+def render_static_meta(console: Console, meta: rd.StaticMetadata):
     """
     like:
 
@@ -161,12 +163,16 @@ def render_static_meta(ostream, meta: rd.StaticMetadata):
         total feature count  1918
     """
 
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="dim")
+    grid.add_column()
+
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
         ("sha256", meta.sample.sha256),
         ("path", meta.sample.path),
-        ("timestamp", meta.timestamp),
+        ("timestamp", str(meta.timestamp)),
         ("capa version", meta.version),
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
@@ -175,18 +181,21 @@ def render_static_meta(ostream, meta: rd.StaticMetadata):
         ("extractor", meta.analysis.extractor),
         ("base address", format_address(meta.analysis.base_address)),
         ("rules", "\n".join(meta.analysis.rules)),
-        ("function count", len(meta.analysis.feature_counts.functions)),
-        ("library function count", len(meta.analysis.library_functions)),
+        ("function count", str(len(meta.analysis.feature_counts.functions))),
+        ("library function count", str(len(meta.analysis.library_functions))),
         (
             "total feature count",
-            meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions),
+            str(meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions)),
         ),
     ]
 
-    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+    for row in rows:
+        grid.add_row(*row)
+
+    console.print(grid)
 
 
-def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
+def render_dynamic_meta(console: Console, meta: rd.DynamicMetadata):
     """
     like:
 
@@ -205,12 +214,16 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
         total feature count  1918
     """
 
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="dim")
+    table.add_column()
+
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
         ("sha256", meta.sample.sha256),
         ("path", meta.sample.path),
-        ("timestamp", meta.timestamp),
+        ("timestamp", str(meta.timestamp)),
         ("capa version", meta.version),
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
@@ -218,26 +231,29 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
         ("analysis", meta.flavor.value),
         ("extractor", meta.analysis.extractor),
         ("rules", "\n".join(meta.analysis.rules)),
-        ("process count", len(meta.analysis.feature_counts.processes)),
+        ("process count", str(len(meta.analysis.feature_counts.processes))),
         (
             "total feature count",
-            meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes),
+            str(meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes)),
         ),
     ]
 
-    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+    for row in rows:
+        table.add_row(*row)
+
+    console.print(table)
 
 
-def render_meta(osstream, doc: rd.ResultDocument):
+def render_meta(console: Console, doc: rd.ResultDocument):
     if doc.meta.flavor == rd.Flavor.STATIC:
-        render_static_meta(osstream, cast(rd.StaticMetadata, doc.meta))
+        render_static_meta(console, cast(rd.StaticMetadata, doc.meta))
     elif doc.meta.flavor == rd.Flavor.DYNAMIC:
-        render_dynamic_meta(osstream, cast(rd.DynamicMetadata, doc.meta))
+        render_dynamic_meta(console, cast(rd.DynamicMetadata, doc.meta))
     else:
         raise ValueError("invalid meta analysis")
 
 
-def render_rules(ostream, doc: rd.ResultDocument):
+def render_rules(console: Console, doc: rd.ResultDocument):
     """
     like:
 
@@ -254,10 +270,14 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if count == 1:
             capability = rutils.bold(rule.meta.name)
         else:
-            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
+            capability = Text.assemble(rutils.bold(rule.meta.name), f" ({count} matches)")
 
-        ostream.writeln(capability)
+        console.print(capability)
         had_match = True
+
+        table = Table.grid(padding=(0, 2))
+        table.add_column(style="dim")
+        table.add_column()
 
         rows = []
 
@@ -310,23 +330,26 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
             rows.append(("matches", "\n".join(lines)))
 
-        ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
-        ostream.write("\n")
+        for row in rows:
+            table.add_row(*row)
+
+        console.print(table)
+        console.print()
 
     if not had_match:
-        ostream.writeln(rutils.bold("no capabilities found"))
+        console.print(rutils.bold("no capabilities found"))
 
 
 def render_verbose(doc: rd.ResultDocument):
-    ostream = rutils.StringIO()
+    console = Console(highlight=False)
 
-    render_meta(ostream, doc)
-    ostream.write("\n")
+    with console.capture() as capture:
+        render_meta(console, doc)
+        console.print()
+        render_rules(console, doc)
+        console.print()
 
-    render_rules(ostream, doc)
-    ostream.write("\n")
-
-    return ostream.getvalue()
+    return capture.get()
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:

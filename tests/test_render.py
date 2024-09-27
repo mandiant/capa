@@ -10,7 +10,6 @@ import textwrap
 from unittest.mock import Mock
 
 import fixtures
-import rich.console
 
 import capa.rules
 import capa.render.utils
@@ -24,6 +23,7 @@ import capa.features.basicblock
 import capa.render.result_document
 import capa.render.result_document as rd
 import capa.features.freeze.features
+from capa.render.utils import Console
 
 
 def test_render_number():
@@ -154,7 +154,7 @@ def test_render_meta_maec():
 
     # capture the output of render_maec
     f = io.StringIO()
-    console = rich.console.Console(file=f)
+    console = Console(file=f)
     capa.render.default.render_maec(mock_rd, console)
     output = f.getvalue()
 
@@ -198,7 +198,7 @@ def test_render_meta_maec():
     ],
 )
 def test_render_vverbose_feature(feature, expected):
-    ostream = capa.render.utils.StringIO()
+    console = Console(highlight=False)
 
     addr = capa.features.freeze.Address.from_capa(capa.features.address.AbsoluteVirtualAddress(0x401000))
     feature = capa.features.freeze.features.feature_from_capa(feature)
@@ -240,6 +240,8 @@ def test_render_vverbose_feature(feature, expected):
         matches=(),
     )
 
-    capa.render.vverbose.render_feature(ostream, layout, rm, matches, feature, indent=0)
+    with console.capture() as capture:
+        capa.render.vverbose.render_feature(console, layout, rm, matches, feature, indent=0)
 
-    assert ostream.getvalue().strip() == expected
+    output = capture.get().strip()
+    assert output == expected

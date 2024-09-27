@@ -12,11 +12,12 @@ import sys
 import typing
 import logging
 import argparse
-from typing import Set, Tuple
+from typing import Set, List, Tuple
 from collections import Counter
 
-import tabulate
-from termcolor import colored
+from rich import print
+from rich.text import Text
+from rich.table import Table
 
 import capa.main
 import capa.rules
@@ -77,23 +78,30 @@ def get_file_features(
     return feature_map
 
 
-def get_colored(s: str):
+def get_colored(s: str) -> Text:
     if "(" in s and ")" in s:
         s_split = s.split("(", 1)
-        s_color = colored(s_split[1][:-1], "cyan")
-        return f"{s_split[0]}({s_color})"
+        return Text.assemble(s_split[0], "(", (s_split[1][:-1], "cyan"), ")")
     else:
-        return colored(s, "cyan")
+        return Text(s, style="cyan")
 
 
 def print_unused_features(feature_map: typing.Counter[Feature], rules_feature_set: Set[Feature]):
-    unused_features = []
+    unused_features: List[Tuple[str, Text]] = []
     for feature, count in reversed(feature_map.most_common()):
         if feature in rules_feature_set:
             continue
         unused_features.append((str(count), get_colored(str(feature))))
+
+    table = Table(title="Unused Features", box=None)
+    table.add_column("Count", style="dim")
+    table.add_column("Feature")
+
+    for count_str, feature_text in unused_features:
+        table.add_row(count_str, feature_text)
+
     print("\n")
-    print(tabulate.tabulate(unused_features, headers=["Count", "Feature"], tablefmt="plain"))
+    print(table)
     print("\n")
 
 

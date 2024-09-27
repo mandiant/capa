@@ -10,7 +10,6 @@ import os
 import sys
 import gzip
 import ctypes
-import inspect
 import logging
 import tempfile
 import contextlib
@@ -20,8 +19,21 @@ from pathlib import Path
 from zipfile import ZipFile
 from datetime import datetime
 
-import tqdm
 import msgspec.json
+from rich.console import Console
+from rich.progress import (
+    Task,
+    Text,
+    Progress,
+    BarColumn,
+    TextColumn,
+    SpinnerColumn,
+    ProgressColumn,
+    TimeElapsedColumn,
+    MofNCompleteColumn,
+    TaskProgressColumn,
+    TimeRemainingColumn,
+)
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
@@ -49,6 +61,10 @@ EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
 logger = logging.getLogger("capa")
+
+
+# shared console used to redirect logging to stderr
+log_console: Console = Console(stderr=True)
 
 
 def hex(n: int) -> str:
@@ -247,39 +263,6 @@ def get_format(sample: Path) -> str:
     return FORMAT_UNKNOWN
 
 
-@contextlib.contextmanager
-def redirecting_print_to_tqdm(disable_progress):
-    """
-    tqdm (progress bar) expects to have fairly tight control over console output.
-    so calls to `print()` will break the progress bar and make things look bad.
-    so, this context manager temporarily replaces the `print` implementation
-    with one that is compatible with tqdm.
-    via: https://stackoverflow.com/a/42424890/87207
-    """
-    old_print = print  # noqa: T202 [reserved word print used]
-
-    def new_print(*args, **kwargs):
-        # If tqdm.tqdm.write raises error, use builtin print
-        if disable_progress:
-            old_print(*args, **kwargs)
-        else:
-            try:
-                tqdm.tqdm.write(*args, **kwargs)
-            except Exception:
-                old_print(*args, **kwargs)
-
-    try:
-        # Globally replace print with new_print.
-        # Verified this works manually on Python 3.11:
-        #     >>> import inspect
-        #     >>> inspect.builtins
-        #     <module 'builtins' (built-in)>
-        inspect.builtins.print = new_print  # type: ignore
-        yield
-    finally:
-        inspect.builtins.print = old_print  # type: ignore
-
-
 def log_unsupported_format_error():
     logger.error("-" * 80)
     logger.error(" Input file does not appear to be a supported file.")
@@ -433,3 +416,47 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
         return False
 
     return True
+
+
+class RateColumn(ProgressColumn):
+    """Renders speed column in progress bar."""
+
+    def render(self, task: "Task") -> Text:
+        speed = f"{task.speed:>.1f}" if task.speed else "00.0"
+        unit = task.fields.get("unit", "it")
+        return Text.from_markup(f"[progress.data.speed]{speed} {unit}/s")
+
+
+class PostfixColumn(ProgressColumn):
+    """Renders a postfix column in progress bar."""
+
+    def render(self, task: "Task") -> Text:
+        return Text(task.fields.get("postfix", ""))
+
+
+class MofNCompleteColumnWithUnit(MofNCompleteColumn):
+    """Renders completed/total count column with a unit."""
+
+    def render(self, task: "Task") -> Text:
+        ret = super().render(task)
+        unit = task.fields.get("unit")
+        return ret.append(f" {unit}") if unit else ret
+
+
+class CapaProgressBar(Progress):
+    @classmethod
+    def get_default_columns(cls):
+        return (
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TaskProgressColumn(),
+            BarColumn(),
+            MofNCompleteColumnWithUnit(),
+            "•",
+            TimeElapsedColumn(),
+            "<",
+            TimeRemainingColumn(),
+            "•",
+            RateColumn(),
+            PostfixColumn(),
+        )
