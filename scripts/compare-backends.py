@@ -36,7 +36,7 @@ import capa.main
 
 logger = logging.getLogger("capa.compare-backends")
 
-BACKENDS = ("vivisect", "ida", "binja")
+BACKENDS = ("vivisect", "ida", "binja", "lancelot")
 
 
 @dataclass
@@ -113,6 +113,9 @@ def collect(args):
                 file.unlink()
 
     doc = json.loads(results_path.read_text(encoding="utf-8"))
+    for backend in BACKENDS:
+        if backend not in doc:
+            doc[backend] = {}
 
     plan = []
     for file in sorted(p for p in testfiles.glob("*")):
@@ -228,6 +231,7 @@ def report(args):
         t.add_column("viv")
         t.add_column("ida")
         t.add_column("bn")
+        t.add_column("lan")
         t.add_column("rule")
 
         for rule, _ in seen_rules.most_common():
@@ -235,6 +239,7 @@ def report(args):
                 "x" if rule in rules_by_backend["vivisect"] else " ",
                 "x" if rule in rules_by_backend["ida"] else " ",
                 "x" if rule in rules_by_backend["binja"] else " ",
+                "x" if rule in rules_by_backend["lancelot"] else " ",
                 rule,
             )
 

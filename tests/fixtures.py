@@ -134,6 +134,23 @@ def fixup_viv(path: Path, extractor):
         extractor.vw.makeFunction(0x404970)
 
 
+@lru_cache
+def get_lancelot_extractor(path: Path):
+    import lancelot
+
+    import capa.features.extractors.binexport2
+    import capa.features.extractors.binexport2.extractor
+
+    buf = path.read_bytes()
+    be2_buf: bytes = lancelot.binexport2_from_bytes(buf)
+    be2 = capa.features.extractors.binexport2.get_binexport2_from_bytes(be2_buf)
+
+    extractor = capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+    setattr(extractor, "path", path.as_posix())
+
+    return extractor
+
+
 @lru_cache(maxsize=1)
 def get_pefile_extractor(path: Path):
     import capa.features.extractors.pefile

@@ -79,6 +79,7 @@ BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
+BACKEND_LANCELOT = "lancelot"
 
 
 class CorruptFile(ValueError):
@@ -350,6 +351,18 @@ def get_extractor(
             logger.debug("idalib: opened database.")
 
         return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+
+    elif backend == BACKEND_LANCELOT:
+        import lancelot
+
+        import capa.features.extractors.binexport2
+        import capa.features.extractors.binexport2.extractor
+
+        buf = input_path.read_bytes()
+        be2_buf: bytes = lancelot.binexport2_from_bytes(buf)
+        be2 = capa.features.extractors.binexport2.get_binexport2_from_bytes(be2_buf)
+
+        return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
 
     else:
         raise ValueError("unexpected backend: " + backend)
