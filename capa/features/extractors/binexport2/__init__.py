@@ -40,10 +40,14 @@ from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 logger = logging.getLogger(__name__)
 
 
-def get_binexport2(sample: Path) -> BinExport2:
+def get_binexport2_from_bytes(buf: bytes) -> BinExport2:
     be2: BinExport2 = BinExport2()
-    be2.ParseFromString(sample.read_bytes())
+    be2.ParseFromString(buf)
     return be2
+
+
+def get_binexport2(sample: Path) -> BinExport2:
+    return get_binexport2_from_bytes(sample.read_bytes())
 
 
 def compute_common_prefix_length(m: str, n: str) -> int:
