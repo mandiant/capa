@@ -22,6 +22,7 @@ from pathlib import Path
 
 import colorama
 from pefile import PEFormatError
+from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
 import capa.perf
@@ -43,6 +44,7 @@ import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import (
+    BACKEND_IDA,
     BACKEND_VIV,
     BACKEND_CAPE,
     BACKEND_BINJA,
@@ -283,6 +285,7 @@ def install_common_args(parser, wanted=None):
         backends = [
             (BACKEND_AUTO, "(default) detect appropriate backend automatically"),
             (BACKEND_VIV, "vivisect"),
+            (BACKEND_IDA, "IDA via idalib"),
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
             (BACKEND_DOTNET, ".NET"),
@@ -403,14 +406,22 @@ def handle_common_args(args):
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     if args.quiet:
-        logging.basicConfig(level=logging.WARNING)
         logging.getLogger().setLevel(logging.WARNING)
     elif args.debug:
-        logging.basicConfig(level=logging.DEBUG)
         logging.getLogger().setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
+
+    # use [/] after the logger name to reset any styling,
+    # and prevent the color from carrying over to the message
+    logformat = "[dim]%(name)s[/]: %(message)s"
+
+    # set markup=True to allow the use of Rich's markup syntax in log messages
+    rich_handler = RichHandler(markup=True, show_time=False, show_path=True, console=capa.helpers.log_console)
+    rich_handler.setFormatter(logging.Formatter(logformat))
+
+    # use RichHandler for root logger
+    logging.getLogger().addHandler(rich_handler)
 
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)

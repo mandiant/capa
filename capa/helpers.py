@@ -5,11 +5,13 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import io
 import os
 import sys
 import gzip
-import inspect
+import ctypes
 import logging
+import tempfile
 import contextlib
 import importlib.util
 from typing import Dict, List, Union, BinaryIO, Iterator, NoReturn
@@ -17,8 +19,21 @@ from pathlib import Path
 from zipfile import ZipFile
 from datetime import datetime
 
-import tqdm
 import msgspec.json
+from rich.console import Console
+from rich.progress import (
+    Task,
+    Text,
+    Progress,
+    BarColumn,
+    TextColumn,
+    SpinnerColumn,
+    ProgressColumn,
+    TimeElapsedColumn,
+    MofNCompleteColumn,
+    TaskProgressColumn,
+    TimeRemainingColumn,
+)
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
@@ -46,6 +61,10 @@ EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
 logger = logging.getLogger("capa")
+
+
+# shared console used to redirect logging to stderr
+log_console: Console = Console(stderr=True)
 
 
 def hex(n: int) -> str:
@@ -79,6 +98,59 @@ def assert_never(value) -> NoReturn:
     # careful: python -O will remove this assertion.
     # but this is only used for type checking, so it's ok.
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
+
+
+@contextlib.contextmanager
+def stdout_redirector(stream):
+    """
+    Redirect stdout at the C runtime level,
+     which lets us handle native libraries that spam stdout.
+
+    *But*, this only works on Linux! Otherwise will silently still write to stdout.
+    So, try to upstream the fix when possible.
+
+    Via: https://eli.thegreenplace.net/2015/redirecting-all-kinds-of-stdout-in-python/
+    """
+    if sys.platform not in ("linux", "linux2"):
+        logger.warning("Unable to capture STDOUT on non-Linux (begin)")
+        yield
+        logger.warning("Unable to capture STDOUT on non-Linux (end)")
+        return
+
+    # libc is only on Linux
+    LIBC = ctypes.CDLL(None)
+    C_STDOUT = ctypes.c_void_p.in_dll(LIBC, "stdout")
+
+    # The original fd stdout points to. Usually 1 on POSIX systems.
+    original_stdout_fd = sys.stdout.fileno()
+
+    def _redirect_stdout(to_fd):
+        """Redirect stdout to the given file descriptor."""
+        # Flush the C-level buffer stdout
+        LIBC.fflush(C_STDOUT)
+        # Flush and close sys.stdout - also closes the file descriptor (fd)
+        sys.stdout.close()
+        # Make original_stdout_fd point to the same file as to_fd
+        os.dup2(to_fd, original_stdout_fd)
+        # Create a new sys.stdout that points to the redirected fd
+        sys.stdout = io.TextIOWrapper(os.fdopen(original_stdout_fd, "wb"))
+
+    # Save a copy of the original stdout fd in saved_stdout_fd
+    saved_stdout_fd = os.dup(original_stdout_fd)
+    try:
+        # Create a temporary file and redirect stdout to it
+        tfile = tempfile.TemporaryFile(mode="w+b")
+        _redirect_stdout(tfile.fileno())
+        # Yield to caller, then redirect stdout back to the saved fd
+        yield
+        _redirect_stdout(saved_stdout_fd)
+        # Copy contents of temporary file to the given stream
+        tfile.flush()
+        tfile.seek(0, io.SEEK_SET)
+        stream.write(tfile.read())
+    finally:
+        tfile.close()
+        os.close(saved_stdout_fd)
 
 
 def load_json_from_path(json_path: Path):
@@ -189,39 +261,6 @@ def get_format(sample: Path) -> str:
         return feature.value
 
     return FORMAT_UNKNOWN
-
-
-@contextlib.contextmanager
-def redirecting_print_to_tqdm(disable_progress):
-    """
-    tqdm (progress bar) expects to have fairly tight control over console output.
-    so calls to `print()` will break the progress bar and make things look bad.
-    so, this context manager temporarily replaces the `print` implementation
-    with one that is compatible with tqdm.
-    via: https://stackoverflow.com/a/42424890/87207
-    """
-    old_print = print  # noqa: T202 [reserved word print used]
-
-    def new_print(*args, **kwargs):
-        # If tqdm.tqdm.write raises error, use builtin print
-        if disable_progress:
-            old_print(*args, **kwargs)
-        else:
-            try:
-                tqdm.tqdm.write(*args, **kwargs)
-            except Exception:
-                old_print(*args, **kwargs)
-
-    try:
-        # Globally replace print with new_print.
-        # Verified this works manually on Python 3.11:
-        #     >>> import inspect
-        #     >>> inspect.builtins
-        #     <module 'builtins' (built-in)>
-        inspect.builtins.print = new_print  # type: ignore
-        yield
-    finally:
-        inspect.builtins.print = old_print  # type: ignore
 
 
 def log_unsupported_format_error():
@@ -377,3 +416,47 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
         return False
 
     return True
+
+
+class RateColumn(ProgressColumn):
+    """Renders speed column in progress bar."""
+
+    def render(self, task: "Task") -> Text:
+        speed = f"{task.speed:>.1f}" if task.speed else "00.0"
+        unit = task.fields.get("unit", "it")
+        return Text.from_markup(f"[progress.data.speed]{speed} {unit}/s")
+
+
+class PostfixColumn(ProgressColumn):
+    """Renders a postfix column in progress bar."""
+
+    def render(self, task: "Task") -> Text:
+        return Text(task.fields.get("postfix", ""))
+
+
+class MofNCompleteColumnWithUnit(MofNCompleteColumn):
+    """Renders completed/total count column with a unit."""
+
+    def render(self, task: "Task") -> Text:
+        ret = super().render(task)
+        unit = task.fields.get("unit")
+        return ret.append(f" {unit}") if unit else ret
+
+
+class CapaProgressBar(Progress):
+    @classmethod
+    def get_default_columns(cls):
+        return (
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TaskProgressColumn(),
+            BarColumn(),
+            MofNCompleteColumnWithUnit(),
+            "•",
+            TimeElapsedColumn(),
+            "<",
+            TimeRemainingColumn(),
+            "•",
+            RateColumn(),
+            PostfixColumn(),
+        )

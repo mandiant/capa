@@ -14,6 +14,7 @@ from pathlib import Path
 import idc
 import idaapi
 import ida_ida
+import ida_nalt
 import idautils
 import ida_bytes
 import ida_loader
@@ -64,6 +65,12 @@ if version < 9.0:
         info: idaapi.idainfo = idaapi.get_inf_structure()
         return info.is_64bit()
 
+    def retrieve_input_file_md5() -> str:
+        return ida_nalt.retrieve_input_file_md5()
+
+    def retrieve_input_file_sha256() -> str:
+        return ida_nalt.retrieve_input_file_sha256()
+
 else:
 
     def get_filetype() -> "ida_ida.filetype_t":
@@ -77,6 +84,12 @@ else:
 
     def is_64bit() -> bool:
         return idaapi.inf_is_64bit()
+
+    def retrieve_input_file_md5() -> str:
+        return ida_nalt.retrieve_input_file_md5().hex()
+
+    def retrieve_input_file_sha256() -> str:
+        return ida_nalt.retrieve_input_file_sha256().hex()
 
 
 def inform_user_ida_ui(message):

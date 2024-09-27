@@ -6,21 +6,18 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
 import time
 import logging
 import itertools
 import collections
-from typing import Any, Tuple
-
-import tqdm.contrib.logging
+from typing import Any, List, Tuple
 
 import capa.perf
+import capa.helpers
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.helpers import redirecting_print_to_tqdm
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
@@ -143,75 +140,58 @@ def find_static_capabilities(
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
 
     assert isinstance(extractor, StaticFeatureExtractor)
-    with redirecting_print_to_tqdm(disable_progress):
-        with tqdm.contrib.logging.logging_redirect_tqdm():
-            pbar = tqdm.tqdm
-            if capa.helpers.is_runtime_ghidra():
-                # Ghidrathon interpreter cannot properly handle
-                # the TMonitor thread that is created via a monitor_interval
-                # > 0
-                pbar.monitor_interval = 0
-            if disable_progress:
-                # do not use tqdm to avoid unnecessary side effects when caller intends
-                # to disable progress completely
-                def pbar(s, *args, **kwargs):
-                    return s
+    functions: List[FunctionHandle] = list(extractor.get_functions())
+    n_funcs: int = len(functions)
+    n_libs: int = 0
+    percentage: float = 0
 
-            elif not sys.stderr.isatty():
-                # don't display progress bar when stderr is redirected to a file
-                def pbar(s, *args, **kwargs):
-                    return s
-
-            functions = list(extractor.get_functions())
-            n_funcs = len(functions)
-
-            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
-            for f in pb:
-                t0 = time.time()
-                if extractor.is_library_function(f.address):
-                    function_name = extractor.get_function_name(f.address)
-                    logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
-                    library_functions += (
-                        rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name),
-                    )
-                    n_libs = len(library_functions)
-                    percentage = round(100 * (n_libs / n_funcs))
-                    if isinstance(pb, tqdm.tqdm):
-                        pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
-                    continue
-
-                function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
-                    ruleset, extractor, f
+    with capa.helpers.CapaProgressBar(
+        console=capa.helpers.log_console, transient=True, disable=disable_progress
+    ) as pbar:
+        task = pbar.add_task(
+            "matching", total=n_funcs, unit="functions", postfix=f"skipped {n_libs} library functions, {percentage}%"
+        )
+        for f in functions:
+            t0 = time.time()
+            if extractor.is_library_function(f.address):
+                function_name = extractor.get_function_name(f.address)
+                logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
+                library_functions += (
+                    rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name),
                 )
-                feature_counts.functions += (
-                    rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
-                )
-                t1 = time.time()
+                n_libs = len(library_functions)
+                percentage = round(100 * (n_libs / n_funcs))
+                pbar.update(task, postfix=f"skipped {n_libs} library functions, {percentage}%")
+                pbar.advance(task)
+                continue
 
-                match_count = 0
-                for name, matches_ in itertools.chain(
-                    function_matches.items(), bb_matches.items(), insn_matches.items()
-                ):
-                    # in practice, most matches are derived rules,
-                    # like "check OS version/5bf4c7f39fd4492cbed0f6dc7d596d49"
-                    # but when we log to the human, they really care about "real" rules.
-                    if not ruleset.rules[name].is_subscope_rule():
-                        match_count += len(matches_)
+            function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
+            feature_counts.functions += (
+                rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
+            )
+            t1 = time.time()
 
-                logger.debug(
-                    "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
-                    f.address,
-                    feature_count,
-                    match_count,
-                    t1 - t0,
-                )
+            match_count = 0
+            for name, matches_ in itertools.chain(function_matches.items(), bb_matches.items(), insn_matches.items()):
+                if not ruleset.rules[name].is_subscope_rule():
+                    match_count += len(matches_)
 
-                for rule_name, res in function_matches.items():
-                    all_function_matches[rule_name].extend(res)
-                for rule_name, res in bb_matches.items():
-                    all_bb_matches[rule_name].extend(res)
-                for rule_name, res in insn_matches.items():
-                    all_insn_matches[rule_name].extend(res)
+            logger.debug(
+                "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
+                f.address,
+                feature_count,
+                match_count,
+                t1 - t0,
+            )
+
+            for rule_name, res in function_matches.items():
+                all_function_matches[rule_name].extend(res)
+            for rule_name, res in bb_matches.items():
+                all_bb_matches[rule_name].extend(res)
+            for rule_name, res in insn_matches.items():
+                all_insn_matches[rule_name].extend(res)
+
+            pbar.advance(task)
 
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.

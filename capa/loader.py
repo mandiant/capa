@@ -5,8 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import io
 import os
-import sys
 import logging
 import datetime
 import contextlib
@@ -69,6 +69,7 @@ BACKEND_DRAKVUF = "drakvuf"
 BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
+BACKEND_IDA = "ida"
 
 
 class CorruptFile(ValueError):
@@ -237,24 +238,15 @@ def get_extractor(
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(input_path)
 
     elif backend == BACKEND_BINJA:
-        import capa.helpers
-        from capa.features.extractors.binja.find_binja_api import find_binja_path
+        import capa.features.extractors.binja.find_binja_api as finder
 
-        # When we are running as a standalone executable, we cannot directly import binaryninja
-        # We need to fist find the binja API installation path and add it into sys.path
-        if capa.helpers.is_running_standalone():
-            bn_api = find_binja_path()
-            if bn_api.exists():
-                sys.path.append(str(bn_api))
+        if not finder.has_binaryninja():
+            raise RuntimeError("cannot find Binary Ninja API module.")
 
-        try:
-            import binaryninja
-            from binaryninja import BinaryView
-        except ImportError:
-            raise RuntimeError(
-                "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
-                + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
-            )
+        if not finder.load_binaryninja():
+            raise RuntimeError("failed to load Binary Ninja API module.")
+
+        import binaryninja
 
         import capa.features.extractors.binja.extractor
 
@@ -269,7 +261,7 @@ def get_extractor(
                 raise UnsupportedOSError()
 
         with console.status("analyzing program...", spinner="dots"):
-            bv: BinaryView = binaryninja.load(str(input_path))
+            bv: binaryninja.BinaryView = binaryninja.load(str(input_path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
 
@@ -320,6 +312,34 @@ def get_extractor(
         buf = sample_path.read_bytes()
 
         return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
+    elif backend == BACKEND_IDA:
+        import capa.features.extractors.ida.idalib as idalib
+
+        if not idalib.has_idalib():
+            raise RuntimeError("cannot find IDA idalib module.")
+
+        if not idalib.load_idalib():
+            raise RuntimeError("failed to load IDA idalib module.")
+
+        import ida
+        import ida_auto
+
+        import capa.features.extractors.ida.extractor
+
+        logger.debug("idalib: opening database...")
+        # idalib writes to stdout (ugh), so we have to capture that
+        # so as not to screw up structured output.
+        with capa.helpers.stdout_redirector(io.BytesIO()):
+            with console.status("analyzing program...", spinner="dots"):
+                if ida.open_database(str(input_path), run_auto_analysis=True):
+                    raise RuntimeError("failed to analyze input file")
+
+            logger.debug("idalib: waiting for analysis...")
+            ida_auto.auto_wait()
+            logger.debug("idalib: opened database.")
+
+        return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     else:
         raise ValueError("unexpected backend: " + backend)

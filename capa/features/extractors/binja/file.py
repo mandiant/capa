@@ -5,8 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
-import struct
 from typing import Tuple, Iterator
 
 from binaryninja import Segment, BinaryView, SymbolType, SymbolBinding
@@ -20,56 +18,24 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, Absolu
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
-def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[Tuple[int, int]]:
-    """check segment for embedded PE
-
-    adapted for binja from:
-    https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
-    """
-    mz_xor = [
-        (
-            capa.features.extractors.helpers.xor_static(b"MZ", i),
-            capa.features.extractors.helpers.xor_static(b"PE", i),
-            i,
-        )
-        for i in range(256)
-    ]
-
-    todo = []
-    # If this is the first segment of the binary, skip the first bytes. Otherwise, there will always be a matched
-    # PE at the start of the binaryview.
-    start = seg.start
-    if bv.view_type == "PE" and start == bv.start:
+def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[Tuple[Feature, Address]]:
+    """check segment for embedded PE"""
+    start = 0
+    if bv.view_type == "PE" and seg.start == bv.start:
+        # If this is the first segment of the binary, skip the first bytes.
+        # Otherwise, there will always be a matched PE at the start of the binaryview.
         start += 1
 
-    for mzx, pex, i in mz_xor:
-        for off, _ in bv.find_all_data(start, seg.end, mzx):
-            todo.append((off, mzx, pex, i))
+    buf = bv.read(seg.start, seg.length)
 
-    while len(todo):
-        off, mzx, pex, i = todo.pop()
-
-        # The MZ header has one field we will check e_lfanew is at 0x3c
-        e_lfanew = off + 0x3C
-
-        if seg.end < (e_lfanew + 4):
-            continue
-
-        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(bv.read(e_lfanew, 4), i))[0]
-
-        peoff = off + newoff
-        if seg.end < (peoff + 2):
-            continue
-
-        if bv.read(peoff, 2) == pex:
-            yield off, i
+    for offset, _ in capa.features.extractors.helpers.carve_pe(buf, start):
+        yield Characteristic("embedded pe"), FileOffsetAddress(seg.start + offset)
 
 
 def extract_file_embedded_pe(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
     """extract embedded PE features"""
     for seg in bv.segments:
-        for ea, _ in check_segment_for_pe(bv, seg):
-            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+        yield from check_segment_for_pe(bv, seg)
 
 
 def extract_file_export_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
