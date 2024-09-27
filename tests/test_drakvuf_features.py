@@ -22,6 +22,8 @@ DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS = sorted(
         ("93b2d1-drakvuf", "process=(3564:4852),thread=6592", capa.features.insn.API("LdrLoadDll"), True),
         ("93b2d1-drakvuf", "process=(3564:4852),thread=6592", capa.features.insn.API("DoesNotExist"), False),
         # call/api
+        ("93b2d1-drakvuf", "process=(3564:4852),thread=4716,call=17", capa.features.insn.API("CreateWindowExW"), True),
+        ("93b2d1-drakvuf", "process=(3564:4852),thread=4716,call=17", capa.features.insn.API("CreateWindowEx"), True),
         ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.API("LdrLoadDll"), True),
         ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.API("DoesNotExist"), False),
         # call/string argument
