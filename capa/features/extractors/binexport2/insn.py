@@ -64,12 +64,17 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         ):
             continue
 
+        dll = ""
+        if vertex.HasField("library_index"):
+            library = be2.library[vertex.library_index]
+            dll = library.name
+
         if not vertex.HasField("mangled_name"):
             logger.debug("vertex %d does not have mangled_name", vertex_idx)
             continue
 
         api_name: str = vertex.mangled_name
-        for name in capa.features.extractors.helpers.generate_symbols("", api_name):
+        for name in capa.features.extractors.helpers.generate_symbols(dll, api_name):
             yield API(name), ih.address
 
 
