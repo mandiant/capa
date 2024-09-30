@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (9)
+### New Rules (11)
 
 - nursery/access-unmanaged-com-objects-in-dotnet mehunhoff@google.com
 - nursery/implement-ui-automation-client-in-dotnet mehunhoff@google.com
@@ -20,6 +20,7 @@
 - linking/runtime-linking/populate-syswhispers2-syscall-list still@teamt5.org
 - host-interaction/os/hide-shutdown-actions-via-policy still@teamt5.org
 - host-interaction/process/get-process-filename matthew.williams@mandiant.com
+- host-interaction/driver/complete-processing-asynchronous-io-request moritz.raabe@mandiant.com
 -
 
 ### Bug Fixes
