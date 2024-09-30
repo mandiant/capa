@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (11)
+### New Rules (12)
 
 - nursery/access-unmanaged-com-objects-in-dotnet mehunhoff@google.com
 - nursery/implement-ui-automation-client-in-dotnet mehunhoff@google.com
@@ -21,6 +21,7 @@
 - host-interaction/os/hide-shutdown-actions-via-policy still@teamt5.org
 - host-interaction/process/get-process-filename matthew.williams@mandiant.com
 - host-interaction/driver/complete-processing-asynchronous-io-request moritz.raabe@mandiant.com
+- anti-analysis/packer/nmm-protect/packed-with-nmm-protect william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
