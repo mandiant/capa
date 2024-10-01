@@ -36,6 +36,7 @@
 - improve navigation in capa Explorer Web @s-ff #2425
 
 ### capa Explorer IDA Pro plugin
+
 ### Development
 
 ### Raw diffs
