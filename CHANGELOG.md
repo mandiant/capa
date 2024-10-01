@@ -4,10 +4,38 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v7.4.0...master](https://github.com/mandiant/capa/compare/v7.4.0...master)
+- [capa-rules v7.4.0...master](https://github.com/mandiant/capa-rules/compare/v7.4.0...master)
+
+## v7.4.0
+
+The v7.4.0 capa release fixes a bug when processing VMRay analysis archives and enhances API extraction for all dynamic backends. For better terminal rendering capa now solely relies on the rich library.
+
+The standalone capa executable can now automatically detect installations of relevant third party applications and use their backends (notably, idalib and Binary Ninja). For the extra standalone Linux build we've upgraded from Python 3.11 to 3.12.
+
+Twelve new rules have been added. Thanks to all the contributors!
+
+*This is the last capa version supporting Python 3.8 and 3.9. If you have major concerns about this please reach out to us.*
+
+### New Features
+
 - add IDA v9.0 backend via idalib #2376 @williballenthin
 - locate Binary Ninja API using XDG Desktop Entries #2376 @williballenthin
-
-### Breaking Changes
 
 ### New Rules (15)
 
@@ -25,7 +53,6 @@
 - host-interaction/firewall/modify/access-firewall-policy-via-inetfwpolicy2 jakub.jozwiak@mandiant.com
 - host-interaction/firewall/modify/access-firewall-rule-properties-via-inetfwrule jakub.jozwiak@mandiant.com
 - host-interaction/registry/open-recentdocs-registry-key matthew.williams@mandiant.com
--
 
 ### Bug Fixes
 
@@ -39,14 +66,10 @@
 ### capa Explorer Web
 - improve navigation in capa Explorer Web @s-ff #2425
 
-### capa Explorer IDA Pro plugin
-
-### Development
-
 ### Raw diffs
 
-- [capa v7.3.0...master](https://github.com/mandiant/capa/compare/v7.3.0...master)
-- [capa-rules v7.3.0...master](https://github.com/mandiant/capa-rules/compare/v7.3.0...master)
+- [capa v7.3.0...v7.4.0](https://github.com/mandiant/capa/compare/v7.3.0...v7.4.0)
+- [capa-rules v7.3.0...v7.4.0](https://github.com/mandiant/capa-rules/compare/v7.3.0...v7.4.0)
 
 ## v7.3.0
 
