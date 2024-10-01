@@ -32,7 +32,10 @@
 - replace tabulate, tqdm, and termcolor with rich #2374 @s-ff
 - dynamic: emit complete features for A/W APIs #2409 @mike-hunhoff
 
-### capa explorer IDA Pro plugin
+### capa Explorer Web
+- improve navigation in capa Explorer Web @s-ff #2425
+
+### capa Explorer IDA Pro plugin
 
 ### Development
 
