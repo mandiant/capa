@@ -372,6 +372,10 @@ if __name__ == "__main__":
         from capa.exceptions import UnsupportedRuntimeError
 
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
+    elif sys.version_info < (3, 10):
+        from warnings import warn
+
+        warn("This is the last capa version supporting Python 3.8 and 3.9.", DeprecationWarning, stacklevel=2)
     exit_code = main()
     if exit_code != 0:
         popup("capa explorer encountered errors during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821

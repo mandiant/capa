@@ -903,6 +903,10 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
 def main(argv: Optional[List[str]] = None):
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
+    elif sys.version_info < (3, 10):
+        from warnings import warn
+
+        warn("This is the last capa version supporting Python 3.8 and 3.9.", DeprecationWarning, stacklevel=2)
 
     if argv is None:
         argv = sys.argv[1:]
