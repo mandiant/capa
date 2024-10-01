@@ -18,12 +18,20 @@ const router = createRouter({
             name: "analysis",
             component: AnalysisView,
             beforeEnter: (to, from, next) => {
-                if (rdocStore.data.value === null) {
-                    // No rdoc loaded, redirect to home page
-                    next({ name: "home" });
-                } else {
-                    // rdoc is loaded, proceed to analysis page
+                // check if rdoc is loaded
+                if (rdocStore.data.value !== null) {
+                    // rdocStore.data already contains the rdoc json - continue
                     next();
+                } else {
+                    // rdoc is not loaded, check if the rdoc query param is set in the URL
+                    const rdocUrl = to.query.rdoc;
+                    if (rdocUrl) {
+                        // query param is set - try to load the rdoc from the homepage
+                        next({ name: "home", query: { rdoc: rdocUrl } });
+                    } else {
+                        // no query param is set - go back home
+                        next({ name: "home" });
+                    }
                 }
             }
         },
