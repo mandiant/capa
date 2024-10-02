@@ -492,6 +492,8 @@ function getFeatureName(feature) {
             return `operand[${feature.index}].offset: 0x${feature.operand_offset.toString(16).toUpperCase()}`;
         case "class":
             return `${feature.class_}`;
+        case "import":
+            return `${feature.import_}`;
         default:
             return `${feature[feature.type]}`;
     }
