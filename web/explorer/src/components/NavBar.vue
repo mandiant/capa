@@ -15,11 +15,7 @@ const isBundle = import.meta.env.MODE === "bundle";
         </template>
         <template #end>
             <div class="flex align-items-center gap-3">
-                <a
-                    href="https://github.com/mandiant/capa/issues/new/choose"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
+                <a href="https://github.com/mandiant/capa/issues/new/choose" target="_blank" rel="noopener noreferrer">
                     <Button severity="contrast" size="small" outlined label="Provide feedback" />
                 </a>
                 <a
