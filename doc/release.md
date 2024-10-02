@@ -26,7 +26,9 @@
 
     ### Bug Fixes
 
-    ### capa explorer IDA Pro plugin
+    ### capa Explorer Web
+
+    ### capa Explorer IDA Pro plugin
 
     ### Development
 
