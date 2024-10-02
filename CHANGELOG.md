@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (12)
+### New Rules (14)
 
 - nursery/access-unmanaged-com-objects-in-dotnet mehunhoff@google.com
 - nursery/implement-ui-automation-client-in-dotnet mehunhoff@google.com
@@ -22,6 +22,8 @@
 - host-interaction/process/get-process-filename matthew.williams@mandiant.com
 - host-interaction/driver/complete-processing-asynchronous-io-request moritz.raabe@mandiant.com
 - anti-analysis/packer/nmm-protect/packed-with-nmm-protect william.ballenthin@mandiant.com
+- host-interaction/firewall/modify/access-firewall-policy-via-inetfwpolicy2 jakub.jozwiak@mandiant.com
+- host-interaction/firewall/modify/access-firewall-rule-properties-via-inetfwrule jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
