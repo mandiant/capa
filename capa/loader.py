@@ -171,6 +171,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
         # to do a subclass check via isinstance.
         if type(e) is Exception and "Couldn't convert rva" in e.args[0]:
             raise CorruptFile(e.args[0]) from e
+        raise
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 

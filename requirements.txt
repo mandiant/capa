@@ -20,7 +20,7 @@ markdown-it-py==3.0.0
 mdurl==0.1.2
 msgpack==1.0.8
 networkx==3.1
-pefile==2023.2.7
+pefile==2024.8.26
 pip==24.2
 protobuf==5.28.2
 pyasn1==0.5.1
