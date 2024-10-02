@@ -19,7 +19,6 @@ const isBundle = import.meta.env.MODE === "bundle";
                     href="https://github.com/mandiant/capa/issues/new/choose"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="no-underline"
                 >
                     <Button severity="contrast" size="small" outlined label="Provide feedback" />
                 </a>
