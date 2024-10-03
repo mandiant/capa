@@ -1,6 +1,7 @@
 <script setup>
 import Menubar from "primevue/menubar";
 import { RouterLink } from "vue-router";
+import Button from "primevue/button";
 
 const isBundle = import.meta.env.MODE === "bundle";
 </script>
@@ -14,6 +15,9 @@ const isBundle = import.meta.env.MODE === "bundle";
         </template>
         <template #end>
             <div class="flex align-items-center gap-3">
+                <a href="https://github.com/mandiant/capa/issues/new/choose" target="_blank" rel="noopener noreferrer">
+                    <Button severity="contrast" size="small" outlined label="Provide feedback" />
+                </a>
                 <a
                     v-if="!isBundle"
                     v-ripple
