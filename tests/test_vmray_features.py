@@ -35,6 +35,31 @@ DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
             capa.features.common.String("raw.githubusercontent.com"),
             True,
         ),
+        # backslashes in paths; see #2428
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2180,call=267",
+            capa.features.common.String("C:\\Users\\WhuOXYsD\\Desktop\\filename.exe"),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2180,call=267",
+            capa.features.common.String("C:\\\\Users\\\\WhuOXYsD\\\\Desktop\\\\filename.exe"),
+            False,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2204,call=2395",
+            capa.features.common.String("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2204,call=2395",
+            capa.features.common.String("Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Policies\\\\System"),
+            False,
+        ),
         # call/number argument
         # VirtualAlloc(4096, 4)
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2358", capa.features.insn.Number(4096), True),

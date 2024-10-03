@@ -33,6 +33,7 @@
 - vmray: collect more process information from flog.xml #2394 @mr-tz @mike-hunhoff
 - replace tabulate, tqdm, and termcolor with rich #2374 @s-ff
 - dynamic: emit complete features for A/W APIs #2409 @mike-hunhoff
+- vmray: fix backslash handling in string call arguments #2428 @mr-tz
 
 ### capa Explorer Web
 - improve navigation in capa Explorer Web @s-ff #2425

@@ -27,7 +27,11 @@ def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[Tuple[Feat
             if param.deref.type_ in PARAM_TYPE_INT:
                 yield Number(hexint(param.deref.value)), ch.address
             elif param.deref.type_ in PARAM_TYPE_STR:
-                yield String(param.deref.value), ch.address
+                # TODO(mr-tz): remove FPS like " \\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x08\\x09\\x0a\\x0b\\x0c\\x0d\\x0e\\x0f\\x10\\x11\\x12\\x13\\x14\\x15\\x16\\x17\\x18\\x19\\x1a\\x1b\\x1c\\x1d\\x1e\..."
+                # https://github.com/mandiant/capa/issues/2432
+
+                # parsing the data up to here results in double-escaped backslashes, remove those here
+                yield String(param.deref.value.replace("\\\\", "\\")), ch.address
             else:
                 logger.debug("skipping deref param type %s", param.deref.type_)
     elif param.value is not None:
