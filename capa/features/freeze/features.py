@@ -309,6 +309,7 @@ class PropertyFeature(FeatureModel):
     property: str
     description: Optional[str] = None
 
+
 class NumberFeature(FeatureModel):
     type: Literal["number"] = "number"
     number: Union[int, float]
