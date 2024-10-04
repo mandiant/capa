@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import binascii
-from typing import Union, Optional, Annotated
+from typing import Union, Literal, Optional, Annotated
 
 from pydantic import Field, BaseModel, ConfigDict
 
