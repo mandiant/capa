@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import binascii
-from typing import Union, Optional
+from typing import Union, Optional, Annotated
 
 from pydantic import Field, BaseModel, ConfigDict
 
@@ -27,16 +27,19 @@ class FeatureModel(BaseModel):
             return capa.features.common.Arch(self.arch, description=self.description)
 
         elif isinstance(self, FormatFeature):
-            return capa.features.common.Format(self.format, description=self.description)
+            return capa.features.common.Format(
+                self.format, description=self.description
+            )
 
         elif isinstance(self, MatchFeature):
-            return capa.features.common.MatchedRule(self.match, description=self.description)
+            return capa.features.common.MatchedRule(
+                self.match, description=self.description
+            )
 
-        elif isinstance(
-            self,
-            CharacteristicFeature,
-        ):
-            return capa.features.common.Characteristic(self.characteristic, description=self.description)
+        elif isinstance(self, CharacteristicFeature,):
+            return capa.features.common.Characteristic(
+                self.characteristic, description=self.description
+            )
 
         elif isinstance(self, ExportFeature):
             return capa.features.file.Export(self.export, description=self.description)
@@ -45,25 +48,35 @@ class FeatureModel(BaseModel):
             return capa.features.file.Import(self.import_, description=self.description)
 
         elif isinstance(self, SectionFeature):
-            return capa.features.file.Section(self.section, description=self.description)
+            return capa.features.file.Section(
+                self.section, description=self.description
+            )
 
         elif isinstance(self, FunctionNameFeature):
-            return capa.features.file.FunctionName(self.function_name, description=self.description)
+            return capa.features.file.FunctionName(
+                self.function_name, description=self.description
+            )
 
         elif isinstance(self, SubstringFeature):
-            return capa.features.common.Substring(self.substring, description=self.description)
+            return capa.features.common.Substring(
+                self.substring, description=self.description
+            )
 
         elif isinstance(self, RegexFeature):
             return capa.features.common.Regex(self.regex, description=self.description)
 
         elif isinstance(self, StringFeature):
-            return capa.features.common.String(self.string, description=self.description)
+            return capa.features.common.String(
+                self.string, description=self.description
+            )
 
         elif isinstance(self, ClassFeature):
             return capa.features.common.Class(self.class_, description=self.description)
 
         elif isinstance(self, NamespaceFeature):
-            return capa.features.common.Namespace(self.namespace, description=self.description)
+            return capa.features.common.Namespace(
+                self.namespace, description=self.description
+            )
 
         elif isinstance(self, BasicBlockFeature):
             return capa.features.basicblock.BasicBlock(description=self.description)
@@ -72,32 +85,34 @@ class FeatureModel(BaseModel):
             return capa.features.insn.API(self.api, description=self.description)
 
         elif isinstance(self, PropertyFeature):
-            return capa.features.insn.Property(self.property, access=self.access, description=self.description)
+            return capa.features.insn.Property(
+                self.property, access=self.access, description=self.description
+            )
 
         elif isinstance(self, NumberFeature):
             return capa.features.insn.Number(self.number, description=self.description)
 
         elif isinstance(self, BytesFeature):
-            return capa.features.common.Bytes(binascii.unhexlify(self.bytes), description=self.description)
+            return capa.features.common.Bytes(
+                binascii.unhexlify(self.bytes), description=self.description
+            )
 
         elif isinstance(self, OffsetFeature):
             return capa.features.insn.Offset(self.offset, description=self.description)
 
         elif isinstance(self, MnemonicFeature):
-            return capa.features.insn.Mnemonic(self.mnemonic, description=self.description)
+            return capa.features.insn.Mnemonic(
+                self.mnemonic, description=self.description
+            )
 
         elif isinstance(self, OperandNumberFeature):
             return capa.features.insn.OperandNumber(
-                self.index,
-                self.operand_number,
-                description=self.description,
+                self.index, self.operand_number, description=self.description,
             )
 
         elif isinstance(self, OperandOffsetFeature):
             return capa.features.insn.OperandOffset(
-                self.index,
-                self.operand_offset,
-                description=self.description,
+                self.index, self.operand_offset, description=self.description,
             )
 
         else:
@@ -175,7 +190,9 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
 
     elif isinstance(f, capa.features.insn.Property):
         assert isinstance(f.value, str)
-        return PropertyFeature(property=f.value, access=f.access, description=f.description)
+        return PropertyFeature(
+            property=f.value, access=f.access, description=f.description
+        )
 
     elif isinstance(f, capa.features.insn.Number):
         assert isinstance(f.value, (int, float))
@@ -184,7 +201,9 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.common.Bytes):
         buf = f.value
         assert isinstance(buf, bytes)
-        return BytesFeature(bytes=binascii.hexlify(buf).decode("ascii"), description=f.description)
+        return BytesFeature(
+            bytes=binascii.hexlify(buf).decode("ascii"), description=f.description
+        )
 
     elif isinstance(f, capa.features.insn.Offset):
         assert isinstance(f.value, int)
@@ -348,29 +367,32 @@ class OperandOffsetFeature(FeatureModel):
     description: Optional[str] = None
 
 
-Feature = Union[
-    OSFeature,
-    ArchFeature,
-    FormatFeature,
-    MatchFeature,
-    CharacteristicFeature,
-    ExportFeature,
-    ImportFeature,
-    SectionFeature,
-    FunctionNameFeature,
-    SubstringFeature,
-    RegexFeature,
-    StringFeature,
-    ClassFeature,
-    NamespaceFeature,
-    APIFeature,
-    PropertyFeature,
-    NumberFeature,
-    BytesFeature,
-    OffsetFeature,
-    MnemonicFeature,
-    OperandNumberFeature,
-    OperandOffsetFeature,
-    # Note! this must be last, see #1161
-    BasicBlockFeature,
+Feature = Annotated[
+    Union[
+        OSFeature,
+        ArchFeature,
+        FormatFeature,
+        MatchFeature,
+        CharacteristicFeature,
+        ExportFeature,
+        ImportFeature,
+        SectionFeature,
+        FunctionNameFeature,
+        SubstringFeature,
+        RegexFeature,
+        StringFeature,
+        ClassFeature,
+        NamespaceFeature,
+        APIFeature,
+        PropertyFeature,
+        NumberFeature,
+        BytesFeature,
+        OffsetFeature,
+        MnemonicFeature,
+        OperandNumberFeature,
+        OperandOffsetFeature,
+        # Note! this must be last, see #1161
+        BasicBlockFeature,
+    ],
+    Field(discriminator="type"),
 ]
