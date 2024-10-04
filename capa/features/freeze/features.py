@@ -306,7 +306,8 @@ class APIFeature(FeatureModel):
 class PropertyFeature(FeatureModel):
     type: Literal["property"] = "property"
     access: Optional[str] = None
-
+    property: str
+    description: Optional[str] = None
 
 class NumberFeature(FeatureModel):
     type: Literal["number"] = "number"
