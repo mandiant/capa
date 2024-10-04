@@ -209,140 +209,138 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
 
 
 class OSFeature(FeatureModel):
-    type: Literal["os"]
+    type: Literal["os"] = "os"
     os: str
     description: Optional[str] = None
 
 
 class ArchFeature(FeatureModel):
-    type: Literal["arch"]
+    type: Literal["arch"] = "arch"
     arch: str
     description: Optional[str] = None
 
 
 class FormatFeature(FeatureModel):
-    type: Literal["format"]
+    type: Literal["format"] = "format"
     format: str
     description: Optional[str] = None
 
 
 class MatchFeature(FeatureModel):
-    type: Literal["match"]
+    type: Literal["match"] = "match"
     match: str
     description: Optional[str] = None
 
 
 class CharacteristicFeature(FeatureModel):
-    type: Literal["characteristic"]
+    type: Literal["characteristic"] = "characteristic"
     characteristic: str
     description: Optional[str] = None
 
 
 class ExportFeature(FeatureModel):
-    type: Literal["export"]
+    type: Literal["export"] = "export"
     export: str
     description: Optional[str] = None
 
 
 class ImportFeature(FeatureModel):
-    type: Literal["import"]
+    type: Literal["import"] = "import"
     import_: str = Field(alias="import")
     description: Optional[str] = None
 
 
 class SectionFeature(FeatureModel):
-    type: Literal["section"]
+    type: Literal["section"] = "section"
     section: str
     description: Optional[str] = None
 
 
 class FunctionNameFeature(FeatureModel):
-    type: Literal["function name"]
+    type: Literal["function name"] = "function name"
     function_name: str = Field(alias="function name")
     description: Optional[str] = None
 
 
 class SubstringFeature(FeatureModel):
-    type: Literal["substring"]
+    type: Literal["substring"] = "substring"
     substring: str
     description: Optional[str] = None
 
 
 class RegexFeature(FeatureModel):
-    type: Literal["regex"]
+    type: Literal["regex"] = "regex"
     regex: str
     description: Optional[str] = None
 
 
 class StringFeature(FeatureModel):
-    type: Literal["string"]
+    type: Literal["string"] = "string"
     string: str
     description: Optional[str] = None
 
 
 class ClassFeature(FeatureModel):
-    type: Literal["class"]
+    type: Literal["class"] = "class"
     class_: str = Field(alias="class")
     description: Optional[str] = None
 
 
 class NamespaceFeature(FeatureModel):
-    type: Literal["namespace"]
+    type: Literal["namespace"] = "namespace"
     namespace: str
     description: Optional[str] = None
 
 
 class BasicBlockFeature(FeatureModel):
-    type: Literal["basic block"]
+    type: Literal["basic block"] = "basic block"
     description: Optional[str] = None
 
 
 class APIFeature(FeatureModel):
-    type: Literal["api"]
+    type: Literal["api"] = "api"
     api: str
     description: Optional[str] = None
 
 
 class PropertyFeature(FeatureModel):
-    type: Literal["property"]
+    type: Literal["property"] = "property"
     access: Optional[str] = None
-    property: str
-    description: Optional[str] = None
 
 
 class NumberFeature(FeatureModel):
-    type: Literal["number"]
+    type: Literal["number"] = "number"
     number: Union[int, float]
     description: Optional[str] = None
 
 
 class BytesFeature(FeatureModel):
-    type: Literal["bytes"]
+    type: Literal["bytes"] = "bytes"
     bytes: str
     description: Optional[str] = None
 
 
 class OffsetFeature(FeatureModel):
-    type: Literal["offset"]
+    type: Literal["offset"] = "offset"
     offset: int
     description: Optional[str] = None
 
 
 class MnemonicFeature(FeatureModel):
-    type: Literal["mnemonic"]
+    type: Literal["mnemonic"] = "mnemonic"
     mnemonic: str
     description: Optional[str] = None
 
 
 class OperandNumberFeature(FeatureModel):
-    type: Literal["operand number"]
+    type: Literal["operand number"] = "operand number"
     index: int
     operand_number: int = Field(alias="operand number")
     description: Optional[str] = None
 
 
 class OperandOffsetFeature(FeatureModel):
-    type: Literal["operand offset"]
+    type: Literal["operand offset"] = "operand offset"
     index: int
     operand_offset: int = Field(alias="operand offset")
     description: Optional[str] = None
