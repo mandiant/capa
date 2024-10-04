@@ -114,7 +114,7 @@ jobs:
         include:
           - asset_name: linux
             artifact_name: capa
-          - asset_name: linux-py311
+          - asset_name: linux-py312
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe
