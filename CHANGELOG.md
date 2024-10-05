@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- extractor: fix exception when PE extractor encounters unknown architecture #2440 @Tamir-K
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
