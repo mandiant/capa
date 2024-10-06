@@ -130,7 +130,13 @@ def extract_file_arch(pe, **kwargs):
     elif pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_AMD64"]:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
+        try:
+            logger.warning(
+                "unsupported architecture: %s",
+                pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine],
+            )
+        except KeyError:
+            logger.warning("unknown architecture: %s", pe.FILE_HEADER.Machine)
 
 
 def extract_file_features(pe, buf):
