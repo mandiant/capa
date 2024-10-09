@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def is_idalib_installed() -> bool:
     try:
-        return importlib.util.find_spec("ida") is not None
+        return importlib.util.find_spec("idapro") is not None
     except ModuleNotFoundError:
         return False
 
@@ -44,6 +44,7 @@ def get_idalib_user_config_path() -> Optional[Path]:
 def find_idalib() -> Optional[Path]:
     config_path = get_idalib_user_config_path()
     if not config_path:
+        logger.error("IDA Pro user configuration does not exist, please make sure you've installed idalib properly.")
         return None
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
@@ -51,6 +52,9 @@ def find_idalib() -> Optional[Path]:
     try:
         ida_install_dir = Path(config["Paths"]["ida-install-dir"])
     except KeyError:
+        logger.error(
+            "IDA Pro user configuration does not contain location of IDA Pro installation, please make sure you've installed idalib properly."
+        )
         return None
 
     if not ida_install_dir.exists():
@@ -73,7 +77,7 @@ def find_idalib() -> Optional[Path]:
     if not idalib_path.exists():
         return None
 
-    if not (idalib_path / "ida" / "__init__.py").is_file():
+    if not (idalib_path / "idapro" / "__init__.py").is_file():
         return None
 
     return idalib_path
@@ -96,7 +100,7 @@ def has_idalib() -> bool:
 
 def load_idalib() -> bool:
     try:
-        import ida
+        import idapro
 
         return True
     except ImportError:
@@ -106,7 +110,7 @@ def load_idalib() -> bool:
 
         sys.path.append(idalib_path.absolute().as_posix())
         try:
-            import ida  # noqa: F401 unused import
+            import idapro  # noqa: F401 unused import
 
             return True
         except ImportError:

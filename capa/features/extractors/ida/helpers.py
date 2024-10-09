@@ -41,7 +41,7 @@ if hasattr(ida_bytes, "parse_binpat_str"):
             return
 
         while True:
-            ea, _ = ida_bytes.bin_search3(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+            ea, _ = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
             if ea == idaapi.BADADDR:
                 break
             start = ea + 1
