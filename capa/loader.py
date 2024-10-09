@@ -323,7 +323,7 @@ def get_extractor(
         if not idalib.load_idalib():
             raise RuntimeError("failed to load IDA idalib module.")
 
-        import ida
+        import idapro
         import ida_auto
 
         import capa.features.extractors.ida.extractor
@@ -333,7 +333,7 @@ def get_extractor(
         # so as not to screw up structured output.
         with capa.helpers.stdout_redirector(io.BytesIO()):
             with console.status("analyzing program...", spinner="dots"):
-                if ida.open_database(str(input_path), run_auto_analysis=True):
+                if idapro.open_database(str(input_path), run_auto_analysis=True):
                     raise RuntimeError("failed to analyze input file")
 
             logger.debug("idalib: waiting for analysis...")

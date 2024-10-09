@@ -177,7 +177,7 @@ known_first_party = [
     "binaryninja",
     "flirt",
     "ghidra",
-    "ida",
+    "idapro",
     "ida_ida",
     "ida_auto",
     "ida_bytes",
