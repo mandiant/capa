@@ -1,0 +1,67 @@
+name: create capa Explorer Web release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for the release (x.x.x)'
+        required: true
+        type: string
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/web-tests.yml
+
+  build-and-release:
+    needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set release name
+      run: echo "RELEASE_NAME=capa-explorer-web-${{ github.event.inputs.version }}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Check if release already exists
+      run: |
+        if ls web/explorer/releases/capa-explorer-web-${{ github.event.inputs.version }}-* 1> /dev/null 2>&1; then
+          echo "A release with version ${{ github.event.inputs.version }} already exists"
+          exit 1
+        fi
+
+    - name: Set up Node.js
+      uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: 'web/explorer/package-lock.json'
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: web/explorer
+
+    - name: Build offline bundle
+      run: npm run build:bundle
+      working-directory: web/explorer
+
+    - name: Compress bundle
+      run: zip -r ${{ env.RELEASE_NAME }}.zip capa-explorer-web
+      working-directory: web/explorer
+
+    - name: Create releases directory
+      run: mkdir -vp web/explorer/releases
+
+    - name: Move archive release to releases folder
+      run: mv web/explorer/${{ env.RELEASE_NAME }}.zip web/explorer/releases
+
+    - name: Commit and push release
+      run: |
+        git config --local user.email "capa-dev@mandiant.com"
+        git config --local user.name "Capa Bot"
+        git add -f web/explorer/releases/${{ env.RELEASE_NAME }}.zip
+        git commit -m "explorer web: add release ${{ env.RELEASE_NAME }}"
+        git push
+
+    - name: Remove older releases
+      # keep only the latest 3 releases
+      run: ls -t capa-explorer-web-*.zip | tail -n +4 | xargs -r rm --
+      working-directory: web/explorer/releases
