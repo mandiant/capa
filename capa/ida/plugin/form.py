@@ -1309,10 +1309,17 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         s = self.resdoc_cache.model_dump_json().encode("utf-8")
 
-        path = Path(self.ask_user_capa_json_file())
-        if not path.exists():
+        path = self.ask_user_capa_json_file()
+        if not path:
+            # dialog canceled
             return
 
+        path = Path(path)
+        if not path.parent.exists():
+            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            return
+
+        logger.info("Saving capa results to %s.", path)
         write_file(path, s)
 
     def save_function_analysis(self):

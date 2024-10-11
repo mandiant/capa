@@ -19,6 +19,8 @@
 
 ### capa Explorer IDA Pro plugin
 
+- fix bug preventing saving of capa results via Save button @mr-tz
+
 ### Development
 
 ### Raw diffs
