@@ -1,9 +1,27 @@
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
+
+"""
+further requirements:
+  - nltk
+"""
 import gzip
-import pathlib
-from typing import Dict, Sequence
+import logging
+import collections
+from typing import Dict
+from pathlib import Path
 from dataclasses import dataclass
 
 import msgspec
+
+import capa.features.extractors.strings
+
+logger = logging.getLogger(__name__)
 
 
 class LibraryString(msgspec.Struct):
@@ -23,7 +41,7 @@ class LibraryStringDatabase:
         return len(self.metadata_by_string)
 
     @classmethod
-    def from_file(cls, path: pathlib.Path) -> "LibraryStringDatabase":
+    def from_file(cls, path: Path) -> "LibraryStringDatabase":
         metadata_by_string: Dict[str, LibraryString] = {}
         decoder = msgspec.json.Decoder(type=LibraryString)
         for line in gzip.decompress(path.read_bytes()).split(b"\n"):
@@ -55,12 +73,12 @@ DEFAULT_FILENAMES = (
     "zlib.jsonl.gz",
 )
 
-DEFAULT_PATHS = tuple(
-    pathlib.Path(__file__).parent / "data" / "oss" / filename for filename in DEFAULT_FILENAMES
-) + (pathlib.Path(__file__).parent / "data" / "crt" / "msvc_v143.jsonl.gz",)
+DEFAULT_PATHS = tuple(Path(__file__).parent / "data" / "oss" / filename for filename in DEFAULT_FILENAMES) + (
+    Path(__file__).parent / "data" / "crt" / "msvc_v143.jsonl.gz",
+)
 
 
-def get_default_databases() -> Sequence[LibraryStringDatabase]:
+def get_default_databases() -> list[LibraryStringDatabase]:
     return [LibraryStringDatabase.from_file(path) for path in DEFAULT_PATHS]
 
 
@@ -73,9 +91,9 @@ class WindowsApiStringDatabase:
         return len(self.dll_names) + len(self.api_names)
 
     @classmethod
-    def from_dir(cls, path: pathlib.Path) -> "WindowsApiStringDatabase":
-        dll_names: Set[str] = set()
-        api_names: Set[str] = set()
+    def from_dir(cls, path: Path) -> "WindowsApiStringDatabase":
+        dll_names: set[str] = set()
+        api_names: set[str] = set()
 
         for line in gzip.decompress((path / "dlls.txt.gz").read_bytes()).decode("utf-8").splitlines():
             if not line:
@@ -91,5 +109,69 @@ class WindowsApiStringDatabase:
 
     @classmethod
     def from_defaults(cls) -> "WindowsApiStringDatabase":
-        return cls.from_dir(pathlib.Path(__file__).parent / "data" / "winapi")
+        return cls.from_dir(Path(__file__).parent / "data" / "winapi")
 
+
+def extract_strings(buf, n=4):
+    yield from capa.features.extractors.strings.extract_ascii_strings(buf, n=n)
+    yield from capa.features.extractors.strings.extract_unicode_strings(buf, n=n)
+
+
+def prune_databases(dbs: list[LibraryStringDatabase], n=8):
+    """remove less trustyworthy database entries.
+
+    such as:
+      - those found in multiple databases
+      - those that are English words
+      - those that are too short
+      - Windows API and DLL names
+    """
+
+    # TODO: consider applying these filters directly to the persisted databases, not at load time.
+
+    winapi = WindowsApiStringDatabase.from_defaults()
+
+    try:
+        from nltk.corpus import words as nltk_words
+    except ImportError:
+        # one-time download of dataset.
+        # this probably doesn't work well for embedded use.
+        import nltk
+
+        nltk.download("words")
+        from nltk.corpus import words as nltk_words
+    words = set(nltk_words.words())
+
+    counter: collections.Counter[str] = collections.Counter()
+    to_remove = set()
+    for db in dbs:
+        for string in db.metadata_by_string.keys():
+            counter[string] += 1
+
+            if string in words:
+                to_remove.add(string)
+                continue
+
+            if len(string) < n:
+                to_remove.add(string)
+                continue
+
+            if string in winapi.api_names:
+                to_remove.add(string)
+                continue
+
+            if string in winapi.dll_names:
+                to_remove.add(string)
+                continue
+
+    for string, count in counter.most_common():
+        if count <= 1:
+            break
+
+        # remove strings that are seen in more than one database
+        to_remove.add(string)
+
+    for db in dbs:
+        for string in to_remove:
+            if string in db.metadata_by_string:
+                del db.metadata_by_string[string]
