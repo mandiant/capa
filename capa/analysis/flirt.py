@@ -91,6 +91,19 @@ def configure_logging(args):
         logging.getLogger("viv_utils").setLevel(logging.ERROR)
 
 
+def get_flirt_matches(lib_only=True):
+    for ea in idautils.Functions(start=None, end=None):
+        f = idaapi.get_func(ea)
+        is_thunk = bool(f.flags & idaapi.FUNC_THUNK)
+        is_lib = bool(f.flags & idaapi.FUNC_LIB)
+        fname = idaapi.get_func_name(ea)
+
+        if lib_only and not is_lib:
+            continue
+
+        yield FunctionId(address=ea, is_library=is_lib, is_thunk=is_thunk, name=fname)
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -134,23 +147,9 @@ def main(argv=None):
     table.add_column("thunk?")
     table.add_column("name")
 
-    LIBONLY = True
-    count = 0
-
-    for ea in idautils.Functions(start=None, end=None):
-        f = idaapi.get_func(ea)
-        is_thunk = bool(f.flags & idaapi.FUNC_THUNK)
-        is_lib = bool(f.flags & idaapi.FUNC_LIB)
-        fname = idaapi.get_func_name(ea)
-
-        if LIBONLY and not is_lib:
-            continue
-
-        fid = FunctionId(address=ea, is_library=is_lib, is_thunk=is_thunk, name=fname)
+    for i, fid in enumerate(get_flirt_matches()):
         table.add_row(*fid.to_row())
-
-        count += 1
-        if count > 50:
+        if i > 50:
             break
 
     rich.print(table)

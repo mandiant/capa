@@ -175,3 +175,34 @@ def prune_databases(dbs: list[LibraryStringDatabase], n=8):
         for string in to_remove:
             if string in db.metadata_by_string:
                 del db.metadata_by_string[string]
+
+
+def get_function_strings():
+    import idaapi
+    import idautils
+
+    import capa.features.extractors.ida.helpers as ida_helpers
+
+    strings_by_function = collections.defaultdict(set)
+    for ea in idautils.Functions():
+        f = idaapi.get_func(ea)
+
+        # ignore library functions and thunk functions as identified by IDA
+        if f.flags & idaapi.FUNC_THUNK:
+            continue
+        if f.flags & idaapi.FUNC_LIB:
+            continue
+
+        for bb in ida_helpers.get_function_blocks(f):
+            for insn in ida_helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
+                ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+                if ref == insn.ea:
+                    continue
+
+                string = capa.features.extractors.ida.helpers.find_string_at(ref)
+                if not string:
+                    continue
+
+                strings_by_function[ea].add(string)
+
+    return strings_by_function
