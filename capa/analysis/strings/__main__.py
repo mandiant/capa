@@ -15,6 +15,7 @@ from rich.text import Text
 
 import capa.analysis.strings
 import capa.features.extractors.strings
+import capa.features.extractors.ida.helpers as ida_helpers
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +78,6 @@ def main():
     import idaapi
     import idautils
     import ida_funcs
-
-    import capa.features.extractors.ida.helpers as ida_helpers
 
     strings_by_function = collections.defaultdict(set)
     for ea in idautils.Functions():
