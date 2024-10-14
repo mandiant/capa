@@ -204,7 +204,7 @@ def collect_metadata(rules: List[Path]):
             os=os,
             extractor="ida",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
-            base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
+            base_address=capa.features.freeze.Address.from_capa(AbsoluteVirtualAddress(idaapi.get_imagebase())),
             layout=rdoc.StaticLayout(
                 functions=(),
                 # this is updated after capabilities have been collected.
