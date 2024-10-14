@@ -160,7 +160,7 @@
 
     <!-- Source code dialog -->
     <Dialog v-model:visible="sourceDialogVisible" style="width: 50vw">
-        <highlightjs autodetect :code="currentSource" />
+        <highlightjs :autodetect="false" language="yaml" :code="currentSource" />
     </Dialog>
 </template>
 

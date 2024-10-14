@@ -13,10 +13,13 @@
 ### Bug Fixes
 
 - extractor: fix exception when PE extractor encounters unknown architecture #2440 @Tamir-K
+- IDA Pro: rename ida to idapro module for plugin and idalib in IDA 9.0 #2453 @mr-tz
 
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+
+- fix bug preventing saving of capa results via Save button @mr-tz
 
 ### Development
 
