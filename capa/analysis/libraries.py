@@ -7,14 +7,19 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import io
 import sys
+import json
 import time
 import logging
 import argparse
 import tempfile
 import contextlib
+import collections
+from enum import Enum
+from typing import List, Literal, Optional
 from pathlib import Path
 
 import rich
+from pydantic import Field, BaseModel
 from rich.text import Text
 from rich.console import Console
 
@@ -30,11 +35,42 @@ if not idalib.has_idalib():
 if not idalib.load_idalib():
     raise RuntimeError("failed to load IDA idalib module.")
 
+import idaapi
 import idapro
 import ida_auto
+import idautils
 import ida_funcs
 
 logger = logging.getLogger(__name__)
+
+
+class Classification(str, Enum):
+    USER = "user"
+    LIBRARY = "library"
+    UNKNOWN = "unknown"
+
+
+class Method(str, Enum):
+    FLIRT = "flirt"
+    STRINGS = "strings"
+
+
+class FunctionClassification(BaseModel):
+    va: int  # rva? va?
+    classification: Literal[Classification.USER, Classification.LIBRARY, Classification.UNKNOWN]
+    method: Literal[Method.FLIRT, Method.STRINGS]
+    # if is library
+    library_name: Optional[str] = None
+    library_version: Optional[str] = None
+
+
+class Layout(BaseModel):
+    functions: List[int] = list()
+
+
+class FunctionIdResults(BaseModel):
+    function_classifications: List[FunctionClassification] = list()
+    # layout: Layout
 
 
 @contextlib.contextmanager
@@ -88,25 +124,21 @@ def main(argv=None):
     N = 8
     time0 = time.time()
 
+    results = FunctionIdResults()
+
     with ida_session(args.input_file, use_temp_dir=not args.store_idb):
         # TODO: add more signature (files)
         # TOOD: apply more signatures
 
-        table = rich.table.Table()
-        table.add_column("FVA")
-        table.add_column("library?")
-        table.add_column("thunk?")
-        table.add_column("name")
-
         for fid in capa.analysis.flirt.get_flirt_matches(lib_only=False):
-            table.add_row(*fid.to_row())
-
-        rich.print(table)
-
-        # TODO can we include which signature matched per function?
-        for index in range(0, ida_funcs.get_idasgn_qty()):
-            signame, optlibs, nmatches = ida_funcs.get_idasgn_desc_with_matches(index)
-            rich.print(signame, optlibs, nmatches)
+            results.function_classifications.append(
+                FunctionClassification(
+                    va=fid.address,
+                    classification=Classification.LIBRARY,
+                    method=Method.FLIRT,
+                    # note: we cannot currently include which signature matched per function via the IDA API
+                )
+            )
 
         min, sec = divmod(time.time() - time0, 60)
         logger.debug("FLIRT-based library identification ran for ~ %02d:%02dm", min, sec)
@@ -137,7 +169,48 @@ def main(argv=None):
                             )
                             console.print("    - ", location, ": ", string.rstrip())
 
+                            results.function_classifications.append(
+                                FunctionClassification(
+                                    va=function,
+                                    classification=Classification.LIBRARY,
+                                    method=Method.STRINGS,
+                                    library_name=metadata.library_name,
+                                    library_version=metadata.library_version,
+                                )
+                            )
+
                             # TODO: ensure there aren't conflicts among the matches
+
+    # RENDER
+    table = rich.table.Table()
+    table.add_column("FVA")
+    # table.add_column("FNAME")
+    table.add_column("CLASSIFICATION")
+    table.add_column("METHOD")
+    table.add_column("EXTRA INFO")
+
+    idx = collections.defaultdict(list)
+    for r in sorted(results.function_classifications, key=lambda d: d.va):
+        # idx[r.va].append(r)
+        table.add_row(
+            *[
+                hex(r.va),
+                # bug? idaapi.get_func_name(r.va),
+                r.classification,
+                r.method,
+                f"{r.library_name}@{r.library_version}" if r.library_name else "",
+            ]
+        )
+
+    # bug in IDA (no-op) when calling generator again?
+    # for va in idautils.Functions(start=0, end=None):
+    #     if va in idx:
+    #         for d in idx[va]:
+    #             table.add_row([hex(va), ida_funcs.get_func_name(va), d.classification, d.method])
+    #     else:
+    #         table.add_row([hex(va)])
+
+    rich.print(table)
 
 
 if __name__ == "__main__":
