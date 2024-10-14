@@ -1,0 +1,2 @@
+# temporary extra file to track dependencies of the analysis directory
+nltk==3.9.1
