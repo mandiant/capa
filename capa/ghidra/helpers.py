@@ -150,7 +150,7 @@ def collect_metadata(rules: List[Path]):
             os=os,
             extractor="ghidra",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
-            base_address=capa.features.freeze.Address.from_capa(currentProgram().getImageBase().getOffset()),  # type: ignore [name-defined] # noqa: F821
+            base_address=capa.features.freeze.Address.from_capa(AbsoluteVirtualAddress(currentProgram().getImageBase().getOffset())),  # type: ignore [name-defined] # noqa: F821
             layout=rdoc.StaticLayout(
                 functions=(),
             ),
