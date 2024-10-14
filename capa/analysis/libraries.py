@@ -38,14 +38,19 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
-def ida_session(input_path: Path):
-    t = Path(tempfile.mkdtemp(prefix="ida-")) / input_path.name
+def ida_session(input_path: Path, use_temp_dir=True):
+    if use_temp_dir:
+        t = Path(tempfile.mkdtemp(prefix="ida-")) / input_path.name
+    else:
+        t = input_path
 
+    logger.debug("using %s", str(t))
     # stderr=True is used here to redirect the spinner banner to stderr, so that users can redirect capa's output.
     console = Console(stderr=True, quiet=False)
 
     try:
-        t.write_bytes(input_path.read_bytes())
+        if use_temp_dir:
+            t.write_bytes(input_path.read_bytes())
 
         # idalib writes to stdout (ugh), so we have to capture that
         # so as not to screw up structured output.
@@ -62,7 +67,8 @@ def ida_session(input_path: Path):
         yield
     finally:
         idapro.close_database()
-        t.unlink()
+        if use_temp_dir:
+            t.unlink()
 
 
 def main(argv=None):
@@ -71,6 +77,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Identify library functions using various strategies.")
     capa.main.install_common_args(parser, wanted={"input_file"})
+    parser.add_argument("--store-idb", action="store_true", default=False, help="store IDA database file")
     args = parser.parse_args(args=argv)
 
     try:
@@ -81,7 +88,7 @@ def main(argv=None):
     N = 8
     time0 = time.time()
 
-    with ida_session(args.input_file):
+    with ida_session(args.input_file, use_temp_dir=not args.store_idb):
         # TODO: add more signature (files)
         # TOOD: apply more signatures
 
