@@ -134,7 +134,7 @@ def prune_databases(dbs: list[LibraryStringDatabase], n=8):
     try:
         from nltk.corpus import words as nltk_words
         nltk_words.words()
-    except ImportError:
+    except ImportError, LookupError:
         # one-time download of dataset.
         # this probably doesn't work well for embedded use.
         import nltk
