@@ -1,10 +1,11 @@
-name: Capa Explorer Web tests 
+name: capa Explorer Web tests 
 
 on:
   pull_request:
     branches: [ master ]
     paths:
       - 'web/explorer/**'
+  workflow_call:  # this allows the workflow to be called by other workflows
 
 jobs:
   test:
@@ -23,20 +24,20 @@ jobs:
       with:
         node-version: 20
         cache: 'npm'
-        cache-dependency-path: './web/explorer/package-lock.json'
+        cache-dependency-path: 'web/explorer/package-lock.json'
 
     - name: Install dependencies
       run: npm ci
-      working-directory: ./web/explorer
+      working-directory: web/explorer
 
     - name: Lint
       run: npm run lint
-      working-directory: ./web/explorer
+      working-directory: web/explorer
 
     - name: Format
       run: npm run format:check
-      working-directory: ./web/explorer
+      working-directory: web/explorer
 
     - name: Run unit tests
       run: npm run test
-      working-directory: ./web/explorer
+      working-directory: web/explorer

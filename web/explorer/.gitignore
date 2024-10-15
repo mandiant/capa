@@ -7,6 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# capa Explorer Web Releases
+releases/
+
 # Dependencies, build results, and other generated files
 node_modules
 .DS_Store
