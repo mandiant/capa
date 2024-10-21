@@ -108,6 +108,7 @@ repos:
         -   "--check-untyped-defs"
         -   "--ignore-missing-imports"
         -   "--config-file=.github/mypy/mypy.ini"
+        -   "--enable-incomplete-feature=NewGenericSyntax"
         -   "capa/"
         -   "scripts/"
         -   "tests/"
