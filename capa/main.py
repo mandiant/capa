@@ -185,15 +185,11 @@ def get_default_signatures() -> List[Path]:
     return ret
 
 
-def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
+def simple_message_exception_handler(
+    exctype: type[BaseException], value: BaseException, traceback: TracebackType | None
+):
     """
     prints friendly message on unexpected exceptions to regular users (debug mode shows regular stack trace)
-
-    args:
-      # TODO(aaronatp): Once capa drops support for Python 3.8, move the exctype type annotation to
-      # the function parameters and remove the "# type: ignore[assignment]" from the relevant place
-      # in the main function, see (https://github.com/mandiant/capa/issues/1896)
-      exctype (type[BaseException]): exception class
     """
 
     if exctype is KeyboardInterrupt:
@@ -455,7 +451,7 @@ def handle_common_args(args):
         raise RuntimeError("unexpected --color value: " + args.color)
 
     if not args.debug:
-        sys.excepthook = simple_message_exception_handler  # type: ignore[assignment]
+        sys.excepthook = simple_message_exception_handler
 
     if hasattr(args, "input_file"):
         args.input_file = Path(args.input_file)
@@ -901,12 +897,8 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
 
 
 def main(argv: Optional[List[str]] = None):
-    if sys.version_info < (3, 8):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
-    elif sys.version_info < (3, 10):
-        from warnings import warn
-
-        warn("This is the last capa version supporting Python 3.8 and 3.9.", DeprecationWarning, stacklevel=2)
+    if sys.version_info < (3, 10):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
 
     if argv is None:
         argv = sys.argv[1:]

@@ -21,26 +21,25 @@ jobs:
       # set to false for debugging
       fail-fast: true
       matrix:
-        # using Python 3.8 to support running across multiple operating systems including Windows 7
         include:
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
-            python_version: 3.8
+            python_version: '3.10'
           - os: ubuntu-20.04
             artifact_name: capa
             asset_name: linux-py312
-            python_version: 3.12
+            python_version: "3.12"
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
-            python_version: 3.8
+            python_version: '3.10'
           - os: macos-12
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
-            python_version: 3.8
+            python_version: '3.10'
     steps:
       - name: Checkout capa
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -86,9 +85,6 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux
-          - os: ubuntu-22.04
-            artifact_name: capa
-            asset_name: linux-py312
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
@@ -107,7 +103,7 @@ jobs:
     # upload zipped binaries to Release page
     if: github.event_name == 'release'
     name: zip and upload ${{ matrix.asset_name }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build]
     strategy:
       matrix:
