@@ -55,9 +55,14 @@ class Method(str, Enum):
 class FunctionClassification(BaseModel):
     va: int
     classification: Classification
+    # name per the disassembler/analysis tool
+    # may be combined with the recovered/suspected name TODO below
+    name: str
 
     # if is library, this must be provided
     method: Optional[Method]
+
+    # TODO if is library, recovered/suspected name?
 
     # if is library, these can optionally be provided.
     library_name: Optional[str] = None
@@ -137,6 +142,7 @@ def main(argv=None):
                 function_classifications.append(
                     FunctionClassification(
                         va=flirt_match.va,
+                        name=flirt_match.name,
                         classification=Classification.LIBRARY,
                         method=Method.FLIRT,
                         # note: we cannot currently include which signature matched per function via the IDA API
@@ -149,6 +155,7 @@ def main(argv=None):
                 function_classifications.append(
                     FunctionClassification(
                         va=fva,
+                        name=idaapi.get_func_name(fva),
                         classification=Classification.THUNK,
                         method=None,
                     )
@@ -159,6 +166,7 @@ def main(argv=None):
                 function_classifications.append(
                     FunctionClassification(
                         va=string_match.va,
+                        name=idaapi.get_func_name(string_match.va),
                         classification=Classification.LIBRARY,
                         method=Method.STRINGS,
                         library_name=string_match.metadata.library_name,
@@ -166,21 +174,22 @@ def main(argv=None):
                     )
                 )
 
-        if args.json:
-            doc = FunctionIdResults(function_classifications=[])
-            classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
-            for va in idautils.Functions():
-                if classifications := classifications_by_va.get(va):
-                    doc.function_classifications.extend(classifications)
-                else:
-                    doc.function_classifications.append(
-                        FunctionClassification(
-                            va=va,
-                            classification=Classification.UNKNOWN,
-                            method=None,
-                        )
+        doc = FunctionIdResults(function_classifications=[])
+        classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
+        for va in idautils.Functions():
+            if classifications := classifications_by_va.get(va):
+                doc.function_classifications.extend(classifications)
+            else:
+                doc.function_classifications.append(
+                    FunctionClassification(
+                        va=va,
+                        name=idaapi.get_func_name(va),
+                        classification=Classification.UNKNOWN,
+                        method=None,
                     )
+                )
 
+        if args.json:
             print(doc.model_dump_json())  # noqa: T201 print found
 
         else:
@@ -191,13 +200,13 @@ def main(argv=None):
             table.add_column("FNAME")
             table.add_column("EXTRA INFO")
 
-            classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
-            for va in idautils.Functions(start=0, end=None):
-                name = idaapi.get_func_name(va)
-                if name.startswith("sub_"):
+            classifications_by_va = capa.analysis.strings.create_index(doc.function_classifications, "va", sorted_=True)
+            for va, classifications in classifications_by_va.items():
+                name = ", ".join({c.name for c in classifications})
+                if "sub_" in name:
                     name = Text(name, style="grey37")
 
-                if classifications := classifications_by_va.get(va):
+                if classifications:
                     classification = {c.classification for c in classifications}
                     method = {c.method for c in classifications if c.method}
                     extra = {f"{c.library_name}@{c.library_version}" for c in classifications if c.library_name}
