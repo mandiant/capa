@@ -31,7 +31,7 @@ pydantic==2.9.2
 # but dependabot updates these separately (which is broken) and is annoying,
 # so we rely on pydantic to pull in the right version of pydantic-core.
 # pydantic-core==2.23.4
-xmltodict==0.13.0
+xmltodict==0.14.2
 pyelftools==0.31
 pygments==2.18.0
 python-flirt==0.8.10
