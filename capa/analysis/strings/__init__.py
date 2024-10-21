@@ -13,7 +13,7 @@ further requirements:
 import gzip
 import logging
 import collections
-from typing import Dict
+from typing import Any, Dict, Mapping
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -133,8 +133,9 @@ def prune_databases(dbs: list[LibraryStringDatabase], n=8):
 
     try:
         from nltk.corpus import words as nltk_words
+
         nltk_words.words()
-    except ImportError, LookupError:
+    except (ImportError, LookupError):
         # one-time download of dataset.
         # this probably doesn't work well for embedded use.
         import nltk
@@ -207,3 +208,59 @@ def get_function_strings():
                 strings_by_function[ea].add(string)
 
     return strings_by_function
+
+
+@dataclass
+class LibraryStringClassification:
+    va: int
+    string: str
+    library_name: str
+    metadata: LibraryString
+
+
+def create_index[T](s: list[T], k: str) -> Mapping[Any, list[T]]:
+    """create an index of the elements in `s` using the key `k`"""
+    s_by_k = collections.defaultdict(list)
+    for v in s:
+        p = getattr(v, k)
+        s_by_k[p].append(v)
+    return s_by_k
+
+
+def get_string_matches(dbs: list[LibraryStringDatabase]) -> list[LibraryStringClassification]:
+    matches: list[LibraryStringClassification] = []
+
+    for function, strings in sorted(get_function_strings().items()):
+        for string in strings:
+            for db in dbs:
+                if metadata := db.metadata_by_string.get(string):
+                    matches.append(
+                        LibraryStringClassification(
+                            va=function,
+                            string=string,
+                            library_name=metadata.library_name,
+                            metadata=metadata,
+                        )
+                    )
+
+    # if there are less than N strings per library, ignore that library
+    matches_by_library = create_index(matches, "library_name")
+    for library_name, library_matches in matches_by_library.items():
+        if len(library_matches) > 5:
+            continue
+
+        logger.info("pruning library %s: only %d matched string", library_name, len(library_matches))
+        matches = [m for m in matches if m.library_name != library_name]
+
+    # if there are conflicts within a single function, don't label it
+    matches_by_function = create_index(matches, "va")
+    for va, function_matches in matches_by_function.items():
+        library_names = {m.library_name for m in function_matches}
+        if len(library_names) == 1:
+            continue
+
+        logger.info("conflicting matches: 0x%x: %s", va, sorted(library_names))
+        # this is potentially slow (O(n**2)) but hopefully fast enough in practice.
+        matches = [m for m in matches if m.va != va]
+
+    return matches

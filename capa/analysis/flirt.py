@@ -135,9 +135,6 @@ def main(argv=None):
 
         logger.debug("idalib: waiting for analysis...")
 
-        # TODO: add more signature (files)
-        # TOOD: apply more signatures
-
         ida_auto.auto_wait()
         logger.debug("idalib: opened database.")
 
@@ -154,7 +151,6 @@ def main(argv=None):
 
     rich.print(table)
 
-    # TODO can we include which signature matched per function?
     for index in range(0, ida_funcs.get_idasgn_qty()):
         signame, optlibs, nmatches = ida_funcs.get_idasgn_desc_with_matches(index)
         rich.print(signame, optlibs, nmatches)

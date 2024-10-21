@@ -71,8 +71,6 @@ def main():
         # return early and don't do IDA analysis
         return
 
-    # TODO: ensure there are XXX matches for each library, or ignore those entries
-
     open_ida(input_path)
 
     import idaapi
@@ -120,8 +118,6 @@ def main():
                             style="grey37",
                         )
                         console.print("    - ", location, ": ", string.rstrip())
-
-                        # TODO: ensure there aren't conflicts among the matches
 
     console.print()
 
