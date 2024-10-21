@@ -218,7 +218,7 @@ class LibraryStringClassification:
     metadata: LibraryString
 
 
-def create_index[T](s: list[T], k: str) -> Mapping[Any, list[T]]:
+def create_index(s: list, k: str) -> Mapping[Any, list]:
     """create an index of the elements in `s` using the key `k`"""
     s_by_k = collections.defaultdict(list)
     for v in s:
