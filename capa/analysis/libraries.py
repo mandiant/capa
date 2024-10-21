@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 class Classification(str, Enum):
     USER = "user"
+    THUNK = "thunk"
     LIBRARY = "library"
     UNKNOWN = "unknown"
 
@@ -103,6 +104,11 @@ def ida_session(input_path: Path, use_temp_dir=True):
             t.unlink()
 
 
+def is_thunk_function(fva):
+    f = idaapi.get_func(fva)
+    return bool(f.flags & idaapi.FUNC_THUNK)
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -130,10 +136,21 @@ def main(argv=None):
             for flirt_match in capa.analysis.flirt.get_flirt_matches():
                 function_classifications.append(
                     FunctionClassification(
-                        va=flirt_match.address,
+                        va=flirt_match.va,
                         classification=Classification.LIBRARY,
                         method=Method.FLIRT,
                         # note: we cannot currently include which signature matched per function via the IDA API
+                    )
+                )
+
+        # thunks
+        for fva in idautils.Functions():
+            if is_thunk_function(fva):
+                function_classifications.append(
+                    FunctionClassification(
+                        va=fva,
+                        classification=Classification.THUNK,
+                        method=None,
                     )
                 )
 
@@ -152,7 +169,7 @@ def main(argv=None):
         if args.json:
             doc = FunctionIdResults(function_classifications=[])
             classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
-            for va in idautils.Functions(start=0, end=None):
+            for va in idautils.Functions():
                 if classifications := classifications_by_va.get(va):
                     doc.function_classifications.extend(classifications)
                 else:
