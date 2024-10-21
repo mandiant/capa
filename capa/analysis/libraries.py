@@ -54,21 +54,17 @@ class Method(str, Enum):
 class FunctionClassification(BaseModel):
     va: int
     classification: Classification
-    method: Method
+
+    # if is library, this must be provided
+    method: Optional[Method]
 
     # if is library, these can optionally be provided.
     library_name: Optional[str] = None
     library_version: Optional[str] = None
 
 
-class Layout(BaseModel):
-    functions: List[int]
-
-
 class FunctionIdResults(BaseModel):
     function_classifications: List[FunctionClassification]
-
-    # layout: Layout
 
 
 @contextlib.contextmanager
@@ -115,6 +111,7 @@ def main(argv=None):
     capa.main.install_common_args(parser, wanted={"input_file"})
     parser.add_argument("--store-idb", action="store_true", default=False, help="store IDA database file")
     parser.add_argument("--min-string-length", type=int, default=8, help="minimum string length")
+    parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
 
     try:
@@ -152,40 +149,58 @@ def main(argv=None):
                     )
                 )
 
-        table = rich.table.Table()
-        table.add_column("FVA")
-        table.add_column("CLASSIFICATION")
-        table.add_column("METHOD")
-        table.add_column("FNAME")
-        table.add_column("EXTRA INFO")
+        if args.json:
+            doc = FunctionIdResults(function_classifications=[])
+            classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
+            for va in idautils.Functions(start=0, end=None):
+                if classifications := classifications_by_va.get(va):
+                    doc.function_classifications.extend(classifications)
+                else:
+                    doc.function_classifications.append(
+                        FunctionClassification(
+                            va=va,
+                            classification=Classification.UNKNOWN,
+                            method=None,
+                        )
+                    )
 
-        classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
-        for va in idautils.Functions(start=0, end=None):
-            name = idaapi.get_func_name(va)
-            if name.startswith("sub_"):
-                name = Text(name, style="grey37")
+            print(doc.model_dump_json())  # noqa: T201 print found
 
-            if classifications := classifications_by_va.get(va):
-                classification = {c.classification for c in classifications}
-                method = {c.method for c in classifications}
-                extra = {f"{c.library_name}@{c.library_version}" for c in classifications if c.library_name}
+        else:
+            table = rich.table.Table()
+            table.add_column("FVA")
+            table.add_column("CLASSIFICATION")
+            table.add_column("METHOD")
+            table.add_column("FNAME")
+            table.add_column("EXTRA INFO")
 
-                table.add_row(
-                    hex(va),
-                    ", ".join(classification),
-                    ", ".join(method),
-                    name,
-                    ", ".join(extra),
-                )
-            else:
-                table.add_row(
-                    hex(va),
-                    Text("unknown", style="grey37"),
-                    "",
-                    name,
-                )
+            classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
+            for va in idautils.Functions(start=0, end=None):
+                name = idaapi.get_func_name(va)
+                if name.startswith("sub_"):
+                    name = Text(name, style="grey37")
 
-        rich.print(table)
+                if classifications := classifications_by_va.get(va):
+                    classification = {c.classification for c in classifications}
+                    method = {c.method for c in classifications if c.method}
+                    extra = {f"{c.library_name}@{c.library_version}" for c in classifications if c.library_name}
+
+                    table.add_row(
+                        hex(va),
+                        ", ".join(classification),
+                        ", ".join(method),
+                        name,
+                        ", ".join(extra),
+                    )
+                else:
+                    table.add_row(
+                        hex(va),
+                        Text("unknown", style="grey37"),
+                        "",
+                        name,
+                    )
+
+            rich.print(table)
 
 
 if __name__ == "__main__":
