@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
+
 ### New Rules (0)
 
 -
@@ -183,6 +185,7 @@ Special thanks to our repeat and new contributors:
 - CI: update Binary Ninja version to 4.1 and use Python 3.9 to test it #2211 @xusheng6
 - CI: update tests.yml workflow to exclude web and documentation files #2263 @s-ff
 - CI: update build.yml workflow to exclude web and documentation files #2270 @s-ff
+- CI: add web releases workflow #2455 @s-ff
 
 ### Raw diffs
 

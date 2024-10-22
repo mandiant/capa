@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Callable, Iterator
+from typing import Callable, Iterator
 
 import envi
 import envi.exc
@@ -33,7 +33,7 @@ SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 def interface_extract_instruction_XXX(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse features from the given instruction.
 
@@ -53,7 +53,7 @@ def get_imports(vw):
     caching accessor to vivisect workspace imports
     avoids performance issues in vivisect when collecting locations
 
-    returns: Dict[int, Tuple[str, str]]
+    returns: dict[int, tuple[str, str]]
     """
     if "imports" in vw.metadata:
         return vw.metadata["imports"]
@@ -65,7 +65,7 @@ def get_imports(vw):
         return imports
 
 
-def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse API features from the given instruction.
 
@@ -260,7 +260,7 @@ def read_bytes(vw, va: int) -> bytes:
         raise
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse byte sequence features from the given instruction.
     example:
@@ -371,7 +371,7 @@ def is_security_cookie(f, bb, insn) -> bool:
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbhandle: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
@@ -392,12 +392,12 @@ def extract_insn_nzxor_characteristic_features(
     yield Characteristic("nzxor"), ih.address
 
 
-def extract_insn_mnemonic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_mnemonic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse mnemonic features from the given instruction."""
     yield Mnemonic(ih.inner.mnem), ih.address
 
 
-def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
@@ -415,7 +415,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle)
             yield Characteristic("call $+5"), ih.address
 
 
-def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
@@ -451,7 +451,7 @@ def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> It
         pass
 
 
-def extract_insn_segment_access_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_segment_access_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse the instruction for access to fs or gs"""
     insn: envi.Opcode = ih.inner
 
@@ -472,7 +472,7 @@ def get_section(vw, va: int):
     raise KeyError(va)
 
 
-def extract_insn_cross_section_cflow(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_cross_section_cflow(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
@@ -513,7 +513,7 @@ def extract_insn_cross_section_cflow(fh: FunctionHandle, bb, ih: InsnHandle) -> 
 
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
 
@@ -554,7 +554,7 @@ def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
 
 # this is a feature that's most relevant at the function or basic block scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_indirect_call_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_indirect_call_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
@@ -578,7 +578,7 @@ def extract_function_indirect_call_characteristic_features(f, bb, ih: InsnHandle
 
 def extract_op_number_features(
     fh: FunctionHandle, bb, ih: InsnHandle, i, oper: envi.Operand
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse number features from the given operand.
 
     example:
@@ -623,7 +623,7 @@ def extract_op_number_features(
 
 def extract_op_offset_features(
     fh: FunctionHandle, bb, ih: InsnHandle, i, oper: envi.Operand
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse structure offset features from the given operand."""
     # example:
     #
@@ -674,7 +674,7 @@ def extract_op_offset_features(
 
 def extract_op_string_features(
     fh: FunctionHandle, bb, ih: InsnHandle, i, oper: envi.Operand
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse string features from the given operand."""
     # example:
     #
@@ -705,15 +705,15 @@ def extract_op_string_features(
                 yield String(s), ih.address
 
 
-def extract_operand_features(f: FunctionHandle, bb, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_operand_features(f: FunctionHandle, bb, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     for i, oper in enumerate(insn.inner.opers):
         for op_handler in OPERAND_HANDLERS:
             for feature, addr in op_handler(f, bb, insn, i, oper):
                 yield feature, addr
 
 
-OPERAND_HANDLERS: List[
-    Callable[[FunctionHandle, BBHandle, InsnHandle, int, envi.Operand], Iterator[Tuple[Feature, Address]]]
+OPERAND_HANDLERS: list[
+    Callable[[FunctionHandle, BBHandle, InsnHandle, int, envi.Operand], Iterator[tuple[Feature, Address]]]
 ] = [
     extract_op_number_features,
     extract_op_offset_features,
@@ -721,7 +721,7 @@ OPERAND_HANDLERS: List[
 ]
 
 
-def extract_features(f, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(f, bb, insn) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given insn.
 
@@ -731,14 +731,14 @@ def extract_features(f, bb, insn) -> Iterator[Tuple[Feature, Address]]:
       insn (vivisect...Instruction): the instruction to process.
 
     yields:
-      Tuple[Feature, Address]: the features and their location found in this insn.
+      tuple[Feature, Address]: the features and their location found in this insn.
     """
     for insn_handler in INSTRUCTION_HANDLERS:
         for feature, addr in insn_handler(f, bb, insn):
             yield feature, addr
 
 
-INSTRUCTION_HANDLERS: List[Callable[[FunctionHandle, BBHandle, InsnHandle], Iterator[Tuple[Feature, Address]]]] = [
+INSTRUCTION_HANDLERS: list[Callable[[FunctionHandle, BBHandle, InsnHandle], Iterator[tuple[Feature, Address]]]] = [
     extract_insn_api_features,
     extract_insn_bytes_features,
     extract_insn_nzxor_characteristic_features,

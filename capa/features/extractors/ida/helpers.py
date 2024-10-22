@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import functools
-from typing import Any, Dict, Tuple, Iterator, Optional
+from typing import Any, Iterator, Optional
 
 import idc
 import idaapi
@@ -124,9 +124,9 @@ def inspect_import(imports, library, ea, function, ordinal):
     return True
 
 
-def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
+def get_file_imports() -> dict[int, tuple[str, str, int]]:
     """get file imports"""
-    imports: Dict[int, Tuple[str, str, int]] = {}
+    imports: dict[int, tuple[str, str, int]] = {}
 
     for idx in range(idaapi.get_import_module_qty()):
         library = idaapi.get_import_module_name(idx)
@@ -147,7 +147,7 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
     return imports
 
 
-def get_file_externs() -> Dict[int, Tuple[str, str, int]]:
+def get_file_externs() -> dict[int, tuple[str, str, int]]:
     externs = {}
 
     for seg in get_segments(skip_header_segments=True):
@@ -248,7 +248,7 @@ def find_string_at(ea: int, min_: int = 4) -> str:
     return ""
 
 
-def get_op_phrase_info(op: idaapi.op_t) -> Dict:
+def get_op_phrase_info(op: idaapi.op_t) -> dict:
     """parse phrase features from operand
 
     Pretty much dup of sark's implementation:
@@ -323,7 +323,7 @@ def is_frame_register(reg: int) -> bool:
     return reg in (idautils.procregs.sp.reg, idautils.procregs.bp.reg)
 
 
-def get_insn_ops(insn: idaapi.insn_t, target_ops: Optional[Tuple[Any]] = None) -> idaapi.op_t:
+def get_insn_ops(insn: idaapi.insn_t, target_ops: Optional[tuple[Any]] = None) -> idaapi.op_t:
     """yield op_t for instruction, filter on type if specified"""
     for op in insn.ops:
         if op.type == idaapi.o_void:

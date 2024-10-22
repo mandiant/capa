@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import itertools
 import collections
-from typing import Set, Dict, Tuple, Union, Optional
+from typing import Union, Optional
 
 import capa.engine
 from capa.rules import Scope, RuleSet
@@ -34,7 +34,7 @@ class CapaRuleGenFeatureCacheNode:
             self.parent.children.add(self)
 
         self.features: FeatureSet = collections.defaultdict(set)
-        self.children: Set[CapaRuleGenFeatureCacheNode] = set()
+        self.children: set[CapaRuleGenFeatureCacheNode] = set()
 
     def __hash__(self):
         # TODO(mike-hunhoff): confirm this is unique enough
@@ -55,9 +55,9 @@ class CapaRuleGenFeatureCache:
         self.global_features: FeatureSet = collections.defaultdict(set)
 
         self.file_node: CapaRuleGenFeatureCacheNode = CapaRuleGenFeatureCacheNode(None, None)
-        self.func_nodes: Dict[Address, CapaRuleGenFeatureCacheNode] = {}
-        self.bb_nodes: Dict[Address, CapaRuleGenFeatureCacheNode] = {}
-        self.insn_nodes: Dict[Address, CapaRuleGenFeatureCacheNode] = {}
+        self.func_nodes: dict[Address, CapaRuleGenFeatureCacheNode] = {}
+        self.bb_nodes: dict[Address, CapaRuleGenFeatureCacheNode] = {}
+        self.insn_nodes: dict[Address, CapaRuleGenFeatureCacheNode] = {}
 
         self._find_global_features()
         self._find_file_features()
@@ -115,7 +115,7 @@ class CapaRuleGenFeatureCache:
 
     def _find_instruction_capabilities(
         self, ruleset: RuleSet, insn: CapaRuleGenFeatureCacheNode
-    ) -> Tuple[FeatureSet, MatchResults]:
+    ) -> tuple[FeatureSet, MatchResults]:
         features: FeatureSet = collections.defaultdict(set)
 
         for feature, locs in itertools.chain(insn.features.items(), self.global_features.items()):
@@ -131,7 +131,7 @@ class CapaRuleGenFeatureCache:
 
     def _find_basic_block_capabilities(
         self, ruleset: RuleSet, bb: CapaRuleGenFeatureCacheNode
-    ) -> Tuple[FeatureSet, MatchResults, MatchResults]:
+    ) -> tuple[FeatureSet, MatchResults, MatchResults]:
         features: FeatureSet = collections.defaultdict(set)
         insn_matches: MatchResults = collections.defaultdict(list)
 
@@ -155,7 +155,7 @@ class CapaRuleGenFeatureCache:
 
     def find_code_capabilities(
         self, ruleset: RuleSet, fh: FunctionHandle
-    ) -> Tuple[FeatureSet, MatchResults, MatchResults, MatchResults]:
+    ) -> tuple[FeatureSet, MatchResults, MatchResults, MatchResults]:
         f_node: Optional[CapaRuleGenFeatureCacheNode] = self._get_cached_func_node(fh)
         if f_node is None:
             return {}, {}, {}, {}
@@ -179,7 +179,7 @@ class CapaRuleGenFeatureCache:
         _, function_matches = ruleset.match(Scope.FUNCTION, function_features, f_node.address)
         return function_features, function_matches, bb_matches, insn_matches
 
-    def find_file_capabilities(self, ruleset: RuleSet) -> Tuple[FeatureSet, MatchResults]:
+    def find_file_capabilities(self, ruleset: RuleSet) -> tuple[FeatureSet, MatchResults]:
         features: FeatureSet = collections.defaultdict(set)
 
         for func_node in self.file_node.children:
