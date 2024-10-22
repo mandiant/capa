@@ -13,13 +13,11 @@ permissions:
 jobs:
   check_changelog:
     # no need to check for dependency updates via dependabot
-    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]' && !contains(github.head_ref, 'dependabot')
+    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]' && !contains(github.ref_name, 'dependabot')
     runs-on: ubuntu-latest
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:
-    - name: Debug
-      uses: raven-actions/debug@v1
     - name: Get changed files
       id: files
       uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
