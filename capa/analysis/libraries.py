@@ -204,27 +204,19 @@ def main(argv=None):
             for va, classifications in classifications_by_va.items():
                 name = ", ".join({c.name for c in classifications})
                 if "sub_" in name:
-                    name = Text(name, style="grey37")
+                    name = Text(name, style="grey53")
 
-                if classifications:
-                    classification = {c.classification for c in classifications}
-                    method = {c.method for c in classifications if c.method}
-                    extra = {f"{c.library_name}@{c.library_version}" for c in classifications if c.library_name}
+                classification = {c.classification for c in classifications}
+                method = {c.method for c in classifications if c.method}
+                extra = {f"{c.library_name}@{c.library_version}" for c in classifications if c.library_name}
 
-                    table.add_row(
-                        hex(va),
-                        ", ".join(classification),
-                        ", ".join(method),
-                        name,
-                        ", ".join(extra),
-                    )
-                else:
-                    table.add_row(
-                        hex(va),
-                        Text("unknown", style="grey37"),
-                        "",
-                        name,
-                    )
+                table.add_row(
+                    hex(va),
+                    ", ".join(classification) if classification != {"unknown"} else Text("unknown", style="grey53"),
+                    ", ".join(method),
+                    name,
+                    ", ".join(extra),
+                )
 
             rich.print(table)
 
