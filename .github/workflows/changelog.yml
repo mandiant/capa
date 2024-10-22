@@ -13,7 +13,7 @@ permissions:
 jobs:
   check_changelog:
     # no need to check for dependency updates via dependabot
-    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]' && github.repository_owner != 'dependabot'
+    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]' && !contains(github.head_ref, 'dependabot')
     runs-on: ubuntu-latest
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
