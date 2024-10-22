@@ -18,6 +18,8 @@ jobs:
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:
+    - name: Debug
+      uses: raven-actions/debug@v1
     - name: Get changed files
       id: files
       uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
