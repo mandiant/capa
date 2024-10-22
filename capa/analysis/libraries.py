@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 
 class Classification(str, Enum):
     USER = "user"
-    THUNK = "thunk"
     LIBRARY = "library"
     UNKNOWN = "unknown"
 
@@ -50,6 +49,7 @@ class Classification(str, Enum):
 class Method(str, Enum):
     FLIRT = "flirt"
     STRINGS = "strings"
+    THUNK = "thunk"
 
 
 class FunctionClassification(BaseModel):
@@ -156,8 +156,8 @@ def main(argv=None):
                     FunctionClassification(
                         va=fva,
                         name=idaapi.get_func_name(fva),
-                        classification=Classification.THUNK,
-                        method=None,
+                        classification=Classification.LIBRARY,
+                        method=Method.THUNK,
                     )
                 )
 
