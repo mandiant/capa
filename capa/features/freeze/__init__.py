@@ -14,13 +14,9 @@ import json
 import zlib
 import logging
 from enum import Enum
-from typing import List, Tuple, Union, Literal
+from typing import Union, Literal, TypeAlias
 
 from pydantic import Field, BaseModel, ConfigDict
-
-# TODO(williballenthin): use typing.TypeAlias directly in Python 3.10+
-# https://github.com/mandiant/capa/issues/1699
-from typing_extensions import TypeAlias
 
 import capa.helpers
 import capa.version
@@ -62,7 +58,7 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, Tuple[int, ...], None] = None  # None default value to support deserialization of NO_ADDRESS
+    value: Union[int, tuple[int, ...], None] = None  # None default value to support deserialization of NO_ADDRESS
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -272,52 +268,52 @@ class InstructionFeature(HashableModel):
 
 class InstructionFeatures(BaseModel):
     address: Address
-    features: Tuple[InstructionFeature, ...]
+    features: tuple[InstructionFeature, ...]
 
 
 class BasicBlockFeatures(BaseModel):
     address: Address
-    features: Tuple[BasicBlockFeature, ...]
-    instructions: Tuple[InstructionFeatures, ...]
+    features: tuple[BasicBlockFeature, ...]
+    instructions: tuple[InstructionFeatures, ...]
 
 
 class FunctionFeatures(BaseModel):
     address: Address
-    features: Tuple[FunctionFeature, ...]
-    basic_blocks: Tuple[BasicBlockFeatures, ...] = Field(alias="basic blocks")
+    features: tuple[FunctionFeature, ...]
+    basic_blocks: tuple[BasicBlockFeatures, ...] = Field(alias="basic blocks")
     model_config = ConfigDict(populate_by_name=True)
 
 
 class CallFeatures(BaseModel):
     address: Address
     name: str
-    features: Tuple[CallFeature, ...]
+    features: tuple[CallFeature, ...]
 
 
 class ThreadFeatures(BaseModel):
     address: Address
-    features: Tuple[ThreadFeature, ...]
-    calls: Tuple[CallFeatures, ...]
+    features: tuple[ThreadFeature, ...]
+    calls: tuple[CallFeatures, ...]
 
 
 class ProcessFeatures(BaseModel):
     address: Address
     name: str
-    features: Tuple[ProcessFeature, ...]
-    threads: Tuple[ThreadFeatures, ...]
+    features: tuple[ProcessFeature, ...]
+    threads: tuple[ThreadFeatures, ...]
 
 
 class StaticFeatures(BaseModel):
-    global_: Tuple[GlobalFeature, ...] = Field(alias="global")
-    file: Tuple[FileFeature, ...]
-    functions: Tuple[FunctionFeatures, ...]
+    global_: tuple[GlobalFeature, ...] = Field(alias="global")
+    file: tuple[FileFeature, ...]
+    functions: tuple[FunctionFeatures, ...]
     model_config = ConfigDict(populate_by_name=True)
 
 
 class DynamicFeatures(BaseModel):
-    global_: Tuple[GlobalFeature, ...] = Field(alias="global")
-    file: Tuple[FileFeature, ...]
-    processes: Tuple[ProcessFeatures, ...]
+    global_: tuple[GlobalFeature, ...] = Field(alias="global")
+    file: tuple[FileFeature, ...]
+    processes: tuple[ProcessFeatures, ...]
     model_config = ConfigDict(populate_by_name=True)
 
 
@@ -344,7 +340,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
-    global_features: List[GlobalFeature] = []
+    global_features: list[GlobalFeature] = []
     for feature, _ in extractor.extract_global_features():
         global_features.append(
             GlobalFeature(
@@ -352,7 +348,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
             )
         )
 
-    file_features: List[FileFeature] = []
+    file_features: list[FileFeature] = []
     for feature, address in extractor.extract_file_features():
         file_features.append(
             FileFeature(
@@ -361,7 +357,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
             )
         )
 
-    function_features: List[FunctionFeatures] = []
+    function_features: list[FunctionFeatures] = []
     for f in extractor.get_functions():
         faddr = Address.from_capa(f.address)
         ffeatures = [
@@ -446,7 +442,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
-    global_features: List[GlobalFeature] = []
+    global_features: list[GlobalFeature] = []
     for feature, _ in extractor.extract_global_features():
         global_features.append(
             GlobalFeature(
@@ -454,7 +450,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
             )
         )
 
-    file_features: List[FileFeature] = []
+    file_features: list[FileFeature] = []
     for feature, address in extractor.extract_file_features():
         file_features.append(
             FileFeature(
@@ -463,7 +459,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
             )
         )
 
-    process_features: List[ProcessFeatures] = []
+    process_features: list[ProcessFeatures] = []
     for p in extractor.get_processes():
         paddr = Address.from_capa(p.address)
         pname = extractor.get_process_name(p)

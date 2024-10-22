@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Dict, List, Tuple, Optional
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 from collections import defaultdict
@@ -58,17 +58,17 @@ class VMRayAnalysis:
                 "VMRay feature extractor does not support flog version %s" % self.flog.analysis.log_version
             )
 
-        self.exports: Dict[int, str] = {}
-        self.imports: Dict[int, Tuple[str, str]] = {}
-        self.sections: Dict[int, str] = {}
-        self.monitor_processes: Dict[int, VMRayMonitorProcess] = {}
-        self.monitor_threads: Dict[int, VMRayMonitorThread] = {}
+        self.exports: dict[int, str] = {}
+        self.imports: dict[int, tuple[str, str]] = {}
+        self.sections: dict[int, str] = {}
+        self.monitor_processes: dict[int, VMRayMonitorProcess] = {}
+        self.monitor_threads: dict[int, VMRayMonitorThread] = {}
 
         # map monitor thread IDs to their associated monitor process ID
-        self.monitor_threads_by_monitor_process: Dict[int, List[int]] = defaultdict(list)
+        self.monitor_threads_by_monitor_process: dict[int, list[int]] = defaultdict(list)
 
         # map function calls to their associated monitor thread ID mapped to its associated monitor process ID
-        self.monitor_process_calls: Dict[int, Dict[int, List[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
+        self.monitor_process_calls: dict[int, dict[int, list[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
 
         self.base_address: int
 

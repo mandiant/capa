@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
-from typing import List
 from pathlib import Path
 
 import fixtures
@@ -85,7 +84,7 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
 )
 
 
-def addresses(s) -> List[Address]:
+def addresses(s) -> list[Address]:
     return sorted(i.address for i in s)
 
 

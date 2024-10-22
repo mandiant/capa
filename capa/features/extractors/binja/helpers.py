@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
-from typing import List, Callable
+from typing import Callable
 from dataclasses import dataclass
 
 from binaryninja import BinaryView, LowLevelILInstruction
@@ -17,7 +17,7 @@ from binaryninja.architecture import InstructionTextToken
 class DisassemblyInstruction:
     address: int
     length: int
-    text: List[InstructionTextToken]
+    text: list[InstructionTextToken]
 
 
 LLIL_VISITOR = Callable[[LowLevelILInstruction, LowLevelILInstruction, int], bool]
@@ -54,7 +54,7 @@ def unmangle_c_name(name: str) -> str:
 
 
 def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
-    s: List[str] = []
+    s: list[str] = []
     while len(s) < max_len:
         try:
             c = bv.read(offset + len(s), 1)[0]

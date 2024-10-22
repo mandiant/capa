@@ -27,7 +27,6 @@ import logging
 import argparse
 import itertools
 import posixpath
-from typing import Set, Dict, List
 from pathlib import Path
 from dataclasses import field, dataclass
 
@@ -59,10 +58,10 @@ class Context:
       capabilities_by_sample: cache of results, indexed by file path.
     """
 
-    samples: Dict[str, Path]
+    samples: dict[str, Path]
     rules: RuleSet
     is_thorough: bool
-    capabilities_by_sample: Dict[Path, Set[str]] = field(default_factory=dict)
+    capabilities_by_sample: dict[Path, set[str]] = field(default_factory=dict)
 
 
 class Lint:
@@ -330,7 +329,7 @@ class InvalidAttckOrMbcTechnique(Lint):
 DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 
 
-def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
+def get_sample_capabilities(ctx: Context, path: Path) -> set[str]:
     nice_path = path.resolve().absolute()
     if path in ctx.capabilities_by_sample:
         logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
@@ -541,7 +540,7 @@ class FeatureStringTooShort(Lint):
     name = "feature string too short"
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
 
-    def check_features(self, ctx: Context, features: List[Feature]):
+    def check_features(self, ctx: Context, features: list[Feature]):
         for feature in features:
             if isinstance(feature, (String, Substring)):
                 assert isinstance(feature.value, str)
@@ -559,7 +558,7 @@ class FeatureNegativeNumber(Lint):
         + 'representation; will not match on "{:d}"'
     )
 
-    def check_features(self, ctx: Context, features: List[Feature]):
+    def check_features(self, ctx: Context, features: list[Feature]):
         for feature in features:
             if isinstance(feature, (capa.features.insn.Number,)):
                 assert isinstance(feature.value, int)
@@ -577,7 +576,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
         + "module requirement to improve detection"
     )
 
-    def check_features(self, ctx: Context, features: List[Feature]):
+    def check_features(self, ctx: Context, features: list[Feature]):
         for feature in features:
             if isinstance(feature, capa.features.insn.API):
                 assert isinstance(feature.value, str)
@@ -712,7 +711,7 @@ def run_lints(lints, ctx: Context, rule: Rule):
             yield lint
 
 
-def run_feature_lints(lints, ctx: Context, features: List[Feature]):
+def run_feature_lints(lints, ctx: Context, features: list[Feature]):
     for lint in lints:
         if lint.check_features(ctx, features):
             yield lint
@@ -900,7 +899,7 @@ def width(s, count):
 
 def lint(ctx: Context):
     """
-    Returns: Dict[string, Tuple(int, int)]
+    Returns: dict[string, tuple(int, int)]
       - # lints failed
       - # lints warned
     """
@@ -920,7 +919,7 @@ def lint(ctx: Context):
     return ret
 
 
-def collect_samples(samples_path: Path) -> Dict[str, Path]:
+def collect_samples(samples_path: Path) -> dict[str, Path]:
     """
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """

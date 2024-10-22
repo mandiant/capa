@@ -130,7 +130,13 @@ def extract_file_arch(pe, **kwargs):
     elif pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_AMD64"]:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
+        try:
+            logger.warning(
+                "unsupported architecture: %s",
+                pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine],
+            )
+        except KeyError:
+            logger.warning("unknown architecture: %s", pe.FILE_HEADER.Machine)
 
 
 def extract_file_features(pe, buf):
@@ -142,11 +148,11 @@ def extract_file_features(pe, buf):
       buf: the raw sample bytes
 
     yields:
-      Tuple[Feature, VA]: a feature and its location.
+      tuple[Feature, VA]: a feature and its location.
     """
 
     for file_handler in FILE_HANDLERS:
-        # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
+        # file_handler: type: (pe, bytes) -> Iterable[tuple[Feature, Address]]
         for feature, va in file_handler(pe=pe, buf=buf):  # type: ignore
             yield feature, va
 
@@ -171,10 +177,10 @@ def extract_global_features(pe, buf):
       buf: the raw sample bytes
 
     yields:
-      Tuple[Feature, VA]: a feature and its location.
+      tuple[Feature, VA]: a feature and its location.
     """
     for handler in GLOBAL_HANDLERS:
-        # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
+        # file_handler: type: (pe, bytes) -> Iterable[tuple[Feature, Address]]
         for feature, va in handler(pe=pe, buf=buf):  # type: ignore
             yield feature, va
 

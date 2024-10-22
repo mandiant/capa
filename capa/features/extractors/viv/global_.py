@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from capa.features.common import ARCH_I386, ARCH_AMD64, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
@@ -14,7 +14,7 @@ from capa.features.address import NO_ADDRESS, Address
 logger = logging.getLogger(__name__)
 
 
-def extract_arch(vw) -> Iterator[Tuple[Feature, Address]]:
+def extract_arch(vw) -> Iterator[tuple[Feature, Address]]:
     arch = vw.getMeta("Architecture")
     if arch == "amd64":
         yield Arch(ARCH_AMD64), NO_ADDRESS

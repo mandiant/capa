@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from binaryninja import BinaryView
 
@@ -16,7 +16,7 @@ from capa.features.address import NO_ADDRESS, Address
 logger = logging.getLogger(__name__)
 
 
-def extract_os(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     name = bv.platform.name
     if "-" in name:
         name = name.split("-")[0]
@@ -45,7 +45,7 @@ def extract_os(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
         return
 
 
-def extract_arch(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_arch(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     arch = bv.arch.name
     if arch == "x86_64":
         yield Arch(ARCH_AMD64), NO_ADDRESS

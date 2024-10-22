@@ -5,10 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, List, Tuple, Union
+from typing import Union, TypeAlias
 from dataclasses import dataclass
-
-from typing_extensions import TypeAlias
 
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, DynamicCallAddress
@@ -27,19 +25,19 @@ from capa.features.extractors.base_extractor import (
 
 @dataclass
 class InstructionFeatures:
-    features: List[Tuple[Address, Feature]]
+    features: list[tuple[Address, Feature]]
 
 
 @dataclass
 class BasicBlockFeatures:
-    features: List[Tuple[Address, Feature]]
-    instructions: Dict[Address, InstructionFeatures]
+    features: list[tuple[Address, Feature]]
+    instructions: dict[Address, InstructionFeatures]
 
 
 @dataclass
 class FunctionFeatures:
-    features: List[Tuple[Address, Feature]]
-    basic_blocks: Dict[Address, BasicBlockFeatures]
+    features: list[tuple[Address, Feature]]
+    basic_blocks: dict[Address, BasicBlockFeatures]
 
 
 @dataclass
@@ -52,9 +50,9 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
 
     base_address: Address
     sample_hashes: SampleHashes
-    global_features: List[Feature]
-    file_features: List[Tuple[Address, Feature]]
-    functions: Dict[Address, FunctionFeatures]
+    global_features: list[Feature]
+    file_features: list[tuple[Address, Feature]]
+    functions: dict[Address, FunctionFeatures]
 
     def get_base_address(self):
         return self.base_address
@@ -98,19 +96,19 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
 @dataclass
 class CallFeatures:
     name: str
-    features: List[Tuple[Address, Feature]]
+    features: list[tuple[Address, Feature]]
 
 
 @dataclass
 class ThreadFeatures:
-    features: List[Tuple[Address, Feature]]
-    calls: Dict[Address, CallFeatures]
+    features: list[tuple[Address, Feature]]
+    calls: dict[Address, CallFeatures]
 
 
 @dataclass
 class ProcessFeatures:
-    features: List[Tuple[Address, Feature]]
-    threads: Dict[Address, ThreadFeatures]
+    features: list[tuple[Address, Feature]]
+    threads: dict[Address, ThreadFeatures]
     name: str
 
 
@@ -118,9 +116,9 @@ class ProcessFeatures:
 class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     base_address: Address
     sample_hashes: SampleHashes
-    global_features: List[Feature]
-    file_features: List[Tuple[Address, Feature]]
-    processes: Dict[Address, ProcessFeatures]
+    global_features: list[Feature]
+    file_features: list[tuple[Address, Feature]]
+    processes: dict[Address, ProcessFeatures]
 
     def extract_global_features(self):
         for feature in self.global_features:

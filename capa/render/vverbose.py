@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
 import textwrap
-from typing import Dict, Iterable, Optional
+from typing import Iterable, Optional
 
 from rich.text import Text
 from rich.table import Table
@@ -323,7 +323,7 @@ def render_rules(console: Console, doc: rd.ResultDocument):
     """
     import capa.render.verbose as v
 
-    functions_by_bb: Dict[capa.features.address.Address, capa.features.address.Address] = {}
+    functions_by_bb: dict[capa.features.address.Address, capa.features.address.Address] = {}
     if isinstance(doc.meta.analysis, rd.StaticAnalysis):
         for finfo in doc.meta.analysis.layout.functions:
             faddress = finfo.address.to_capa()

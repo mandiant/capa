@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 
-from typing import List, Tuple, Iterator
+from typing import Iterator
 from pathlib import Path
 
 import capa.helpers
@@ -34,8 +34,8 @@ from capa.features.extractors.base_extractor import (
 )
 
 
-def get_formatted_params(params: ParamList) -> List[str]:
-    params_list: List[str] = []
+def get_formatted_params(params: ParamList) -> list[str]:
+    params_list: list[str] = []
 
     for param in params:
         if param.deref and param.deref.value is not None:
@@ -69,10 +69,10 @@ class VMRayExtractor(DynamicFeatureExtractor):
         # value according to the PE header, the actual trace may use a different imagebase
         return AbsoluteVirtualAddress(self.analysis.base_address)
 
-    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.vmray.file.extract_features(self.analysis)
 
-    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from self.global_features
 
     def get_processes(self) -> Iterator[ProcessHandle]:
@@ -80,7 +80,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
             address: ProcessAddress = ProcessAddress(pid=monitor_process.pid, ppid=monitor_process.ppid)
             yield ProcessHandle(address, inner=monitor_process)
 
-    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
         # we have not identified process-specific features for VMRay yet
         yield from []
 
@@ -95,7 +95,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
             address: ThreadAddress = ThreadAddress(process=ph.address, tid=monitor_thread.tid)
             yield ThreadHandle(address=address, inner=monitor_thread)
 
-    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
         if False:
             # force this routine to be a generator,
             # but we don't actually have any elements to generate.
@@ -109,7 +109,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-    ) -> Iterator[Tuple[Feature, Address]]:
+    ) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:

@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
@@ -41,7 +41,7 @@ def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
             seen_processes[addr].append(process)
 
 
-def extract_import_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     """
     extract imported function names
     """
@@ -62,57 +62,57 @@ def extract_import_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]
                 yield Import(name), AbsoluteVirtualAddress(function.address)
 
 
-def extract_export_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_export_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     assert report.static is not None and report.static.pe is not None
     for function in report.static.pe.exports:
         yield Export(function.name), AbsoluteVirtualAddress(function.address)
 
 
-def extract_section_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_section_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     assert report.static is not None and report.static.pe is not None
     for section in report.static.pe.sections:
         yield Section(section.name), AbsoluteVirtualAddress(section.virtual_address)
 
 
-def extract_file_strings(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_strings(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     if report.strings is not None:
         for string in report.strings:
             yield String(string), NO_ADDRESS
 
 
-def extract_used_regkeys(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_regkeys(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for regkey in report.behavior.summary.keys:
         yield String(regkey), NO_ADDRESS
 
 
-def extract_used_files(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_files(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for file in report.behavior.summary.files:
         yield String(file), NO_ADDRESS
 
 
-def extract_used_mutexes(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_mutexes(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for mutex in report.behavior.summary.mutexes:
         yield String(mutex), NO_ADDRESS
 
 
-def extract_used_commands(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_commands(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for cmd in report.behavior.summary.executed_commands:
         yield String(cmd), NO_ADDRESS
 
 
-def extract_used_apis(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_apis(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for symbol in report.behavior.summary.resolved_apis:
         yield String(symbol), NO_ADDRESS
 
 
-def extract_used_services(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_services(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for svc in report.behavior.summary.created_services:
         yield String(svc), NO_ADDRESS
     for svc in report.behavior.summary.started_services:
         yield String(svc), NO_ADDRESS
 
 
-def extract_features(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(report):
             yield feature, addr

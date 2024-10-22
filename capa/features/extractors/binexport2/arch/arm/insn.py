@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator, Optional
+from typing import Iterator, Optional
 
 import capa.features.extractors.binexport2.helpers
 from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 def extract_insn_number_features(
     fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -91,7 +91,7 @@ OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -120,7 +120,7 @@ NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
     be2: BinExport2 = fhi.ctx.be2
@@ -131,7 +131,7 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    operands: List[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
+    operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
     if operands[1] != operands[2]:
         yield Characteristic("nzxor"), ih.address
@@ -146,7 +146,7 @@ INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
     be2: BinExport2 = fhi.ctx.be2

@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Tuple, Union, Iterator, Optional
+from typing import TYPE_CHECKING, Union, Iterator, Optional
 
 if TYPE_CHECKING:
     from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
@@ -61,7 +61,7 @@ def get_callee(
     return callee
 
 
-def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse instruction API features"""
     if ih.inner.opcode not in (
         OpCodes.Call,
@@ -83,7 +83,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
             yield API(name), ih.address
 
 
-def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse instruction property features"""
     name: Optional[str] = None
     access: Optional[str] = None
@@ -118,7 +118,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
 def extract_insn_namespace_class_features(
     fh: FunctionHandle, bh, ih: InsnHandle
-) -> Iterator[Tuple[Union[Namespace, Class], Address]]:
+) -> Iterator[tuple[Union[Namespace, Class], Address]]:
     """parse instruction namespace and class features"""
     type_: Optional[Union[DnType, DnUnmanagedMethod]] = None
 
@@ -173,13 +173,13 @@ def extract_insn_namespace_class_features(
             yield Namespace(type_.namespace), ih.address
 
 
-def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse instruction number features"""
     if ih.inner.is_ldc():
         yield Number(ih.inner.get_ldc()), ih.address
 
 
-def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse instruction string features"""
     if not ih.inner.is_ldstr():
         return
@@ -197,7 +197,7 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
 
 def extract_unmanaged_call_characteristic_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Characteristic, Address]]:
+) -> Iterator[tuple[Characteristic, Address]]:
     if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp):
         return
 
@@ -209,7 +209,7 @@ def extract_unmanaged_call_characteristic_features(
         yield Characteristic("unmanaged call"), ih.address
 
 
-def extract_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
         for feature, addr in inst_handler(fh, bbh, ih):

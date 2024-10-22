@@ -6,10 +6,9 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import binascii
-from typing import Any, Dict, List, Union, Literal, Optional
+from typing import Any, Union, Literal, Optional, Annotated, TypeAlias
 
 from pydantic import Field, BaseModel, ConfigDict
-from typing_extensions import Annotated, TypeAlias
 from pydantic.functional_validators import BeforeValidator
 
 
@@ -59,11 +58,11 @@ Skip: TypeAlias = Optional[Any]
 # in a field with this type.
 # then we can update the model with the discovered shape.
 TODO: TypeAlias = None
-ListTODO: TypeAlias = List[None]
+ListTODO: TypeAlias = list[None]
 DictTODO: TypeAlias = ExactModel
 
-EmptyDict: TypeAlias = BaseModel
-EmptyList: TypeAlias = List[Any]
+Emptydict: TypeAlias = BaseModel
+EmptyList: TypeAlias = list[Any]
 
 
 class Info(FlexibleModel):
@@ -77,7 +76,7 @@ class ImportedSymbol(ExactModel):
 
 class ImportedDll(ExactModel):
     dll: str
-    imports: List[ImportedSymbol]
+    imports: list[ImportedSymbol]
 
 
 class DirectoryEntry(ExactModel):
@@ -149,7 +148,7 @@ class Signer(ExactModel):
     aux_valid: Optional[bool] = None
     aux_error: Optional[bool] = None
     aux_error_desc: Optional[str] = None
-    aux_signers: Optional[List[AuxSigner]] = None
+    aux_signers: Optional[list[AuxSigner]] = None
 
 
 class Overlay(ExactModel):
@@ -178,22 +177,22 @@ class PE(ExactModel):
     pdbpath: Optional[str] = None
     timestamp: str
 
-    # List[ImportedDll], or Dict[basename(dll), ImportedDll]
-    imports: Union[List[ImportedDll], Dict[str, ImportedDll]]
+    # list[ImportedDll], or dict[basename(dll), ImportedDll]
+    imports: Union[list[ImportedDll], dict[str, ImportedDll]]
     imported_dll_count: Optional[int] = None
     imphash: str
 
     exported_dll_name: Optional[str] = None
-    exports: List[ExportedSymbol]
+    exports: list[ExportedSymbol]
 
-    dirents: List[DirectoryEntry]
-    sections: List[Section]
+    dirents: list[DirectoryEntry]
+    sections: list[Section]
 
     ep_bytes: Optional[HexBytes] = None
 
     overlay: Optional[Overlay] = None
-    resources: List[Resource]
-    versioninfo: List[KV]
+    resources: list[Resource]
+    versioninfo: list[KV]
 
     # base64 encoded data
     icon: Optional[str] = None
@@ -204,7 +203,7 @@ class PE(ExactModel):
     # short hex string
     icon_dhash: Optional[str] = None
 
-    digital_signers: List[DigitalSigner]
+    digital_signers: list[DigitalSigner]
     guest_signers: Signer
 
 
@@ -217,9 +216,9 @@ class File(FlexibleModel):
     cape_type: Optional[str] = None
 
     pid: Optional[Union[int, Literal[""]]] = None
-    name: Union[List[str], str]
+    name: Union[list[str], str]
     path: str
-    guest_paths: Union[List[str], str, None]
+    guest_paths: Union[list[str], str, None]
     timestamp: Optional[str] = None
 
     #
@@ -244,7 +243,7 @@ class File(FlexibleModel):
     ep_bytes: Optional[HexBytes] = None
     entrypoint: Optional[int] = None
     data: Optional[str] = None
-    strings: Optional[List[str]] = None
+    strings: Optional[list[str]] = None
 
     #
     # detections (skip)
@@ -283,7 +282,7 @@ class Call(ExactModel):
 
     api: str
 
-    arguments: List[Argument]
+    arguments: list[Argument]
     status: bool
     return_: HexInt = Field(alias="return")
     pretty_return: Optional[str] = None
@@ -304,9 +303,9 @@ class Process(ExactModel):
     parent_id: int
     module_path: str
     first_seen: str
-    calls: List[Call]
-    threads: List[int]
-    environ: Dict[str, str]
+    calls: list[Call]
+    threads: list[int]
+    environ: dict[str, str]
 
 
 class ProcessTree(ExactModel):
@@ -314,25 +313,25 @@ class ProcessTree(ExactModel):
     pid: int
     parent_id: int
     module_path: str
-    threads: List[int]
-    environ: Dict[str, str]
-    children: List["ProcessTree"]
+    threads: list[int]
+    environ: dict[str, str]
+    children: list["ProcessTree"]
 
 
 class Summary(ExactModel):
-    files: List[str]
-    read_files: List[str]
-    write_files: List[str]
-    delete_files: List[str]
-    keys: List[str]
-    read_keys: List[str]
-    write_keys: List[str]
-    delete_keys: List[str]
-    executed_commands: List[str]
-    resolved_apis: List[str]
-    mutexes: List[str]
-    created_services: List[str]
-    started_services: List[str]
+    files: list[str]
+    read_files: list[str]
+    write_files: list[str]
+    delete_files: list[str]
+    keys: list[str]
+    read_keys: list[str]
+    write_keys: list[str]
+    delete_keys: list[str]
+    executed_commands: list[str]
+    resolved_apis: list[str]
+    mutexes: list[str]
+    created_services: list[str]
+    started_services: list[str]
 
 
 class EncryptedBuffer(ExactModel):
@@ -349,12 +348,12 @@ class Behavior(ExactModel):
     summary: Summary
 
     # list of processes, of threads, of calls
-    processes: List[Process]
+    processes: list[Process]
     # tree of processes
-    processtree: List[ProcessTree]
+    processtree: list[ProcessTree]
 
-    anomaly: List[str]
-    encryptedbuffers: List[EncryptedBuffer]
+    anomaly: list[str]
+    encryptedbuffers: list[EncryptedBuffer]
     # these are small objects that describe atomic events,
     # like file move, registry access.
     # we'll detect the same with our API call analysis.
@@ -373,7 +372,7 @@ class Static(ExactModel):
 
 
 class Cape(ExactModel):
-    payloads: List[ProcessFile]
+    payloads: list[ProcessFile]
     configs: Skip = None
 
 
@@ -389,7 +388,7 @@ class CapeReport(FlexibleModel):
     # static analysis results
     #
     static: Optional[Static] = None
-    strings: Optional[List[str]] = None
+    strings: Optional[list[str]] = None
 
     #
     # dynamic analysis results
@@ -398,9 +397,9 @@ class CapeReport(FlexibleModel):
     behavior: Behavior
 
     # post-processed results: payloads and extracted configs
-    CAPE: Optional[Union[Cape, List]] = None
-    dropped: Optional[List[File]] = None
-    procdump: Optional[List[ProcessFile]] = None
+    CAPE: Optional[Union[Cape, list]] = None
+    dropped: Optional[list[File]] = None
+    procdump: Optional[list[ProcessFile]] = None
     procmemory: ListTODO
 
     # =========================================================================
@@ -437,7 +436,7 @@ class CapeReport(FlexibleModel):
     malfamily_tag: Optional[str] = None
     malscore: float
     detections: Skip = None
-    detections2pid: Optional[Dict[int, List[str]]] = None
+    detections2pid: Optional[dict[int, list[str]]] = None
     # AV detections for the sample.
     virustotal: Skip = None
 

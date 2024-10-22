@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 from pathlib import Path
 
 import dnfile
@@ -48,12 +48,12 @@ from capa.features.extractors.dnfile.helpers import (
 logger = logging.getLogger(__name__)
 
 
-def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
+def extract_file_format(**kwargs) -> Iterator[tuple[Format, Address]]:
     yield Format(FORMAT_DOTNET), NO_ADDRESS
     yield Format(FORMAT_PE), NO_ADDRESS
 
 
-def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:
+def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Import, Address]]:
     for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
         yield Import(str(method)), DNTokenAddress(method.token)
@@ -64,12 +64,12 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
             yield Import(name), DNTokenAddress(imp.token)
 
 
-def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, Address]]:
+def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[FunctionName, Address]]:
     for method in get_dotnet_managed_methods(pe):
         yield FunctionName(str(method)), DNTokenAddress(method.token)
 
 
-def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, Address]]:
+def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Namespace, Address]]:
     """emit namespace features from TypeRef and TypeDef tables"""
 
     # namespaces may be referenced multiple times, so we need to filter
@@ -93,7 +93,7 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
         yield Namespace(namespace), NO_ADDRESS
 
 
-def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
+def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
     nested_class_table = get_dotnet_nested_class_table_index(pe)
 
@@ -116,11 +116,11 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
         yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
 
 
-def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
+def extract_file_os(**kwargs) -> Iterator[tuple[OS, Address]]:
     yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address]]:
+def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
     assert pe.net is not None
@@ -134,18 +134,18 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, Address]]:
+def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[String, Address]]:
     yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
 
 
 def extract_file_mixed_mode_characteristic_features(
     pe: dnfile.dnPE, **kwargs
-) -> Iterator[Tuple[Characteristic, Address]]:
+) -> Iterator[tuple[Characteristic, Address]]:
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_features(pe: dnfile.dnPE) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(pe=pe):  # type: ignore
             yield feature, addr
@@ -162,7 +162,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
+def extract_global_features(pe: dnfile.dnPE) -> Iterator[tuple[Feature, Address]]:
     for handler in GLOBAL_HANDLERS:
         for feature, va in handler(pe=pe):  # type: ignore
             yield feature, va
@@ -204,7 +204,7 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def is_mixed_mode(self) -> bool:
         return is_dotnet_mixed_mode(self.pe)
 
-    def get_runtime_version(self) -> Tuple[int, int]:
+    def get_runtime_version(self) -> tuple[int, int]:
         assert self.pe.net is not None
         assert self.pe.net.struct is not None
         assert self.pe.net.struct.MajorRuntimeVersion is not None

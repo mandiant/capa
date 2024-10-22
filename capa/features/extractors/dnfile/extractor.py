@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Union, Iterator, Optional
+from typing import Union, Iterator, Optional
 from pathlib import Path
 
 import dnfile
@@ -41,11 +41,11 @@ from capa.features.extractors.dnfile.helpers import (
 
 class DnFileFeatureExtractorCache:
     def __init__(self, pe: dnfile.dnPE):
-        self.imports: Dict[int, Union[DnType, DnUnmanagedMethod]] = {}
-        self.native_imports: Dict[int, Union[DnType, DnUnmanagedMethod]] = {}
-        self.methods: Dict[int, Union[DnType, DnUnmanagedMethod]] = {}
-        self.fields: Dict[int, Union[DnType, DnUnmanagedMethod]] = {}
-        self.types: Dict[int, Union[DnType, DnUnmanagedMethod]] = {}
+        self.imports: dict[int, Union[DnType, DnUnmanagedMethod]] = {}
+        self.native_imports: dict[int, Union[DnType, DnUnmanagedMethod]] = {}
+        self.methods: dict[int, Union[DnType, DnUnmanagedMethod]] = {}
+        self.fields: dict[int, Union[DnType, DnUnmanagedMethod]] = {}
+        self.types: dict[int, Union[DnType, DnUnmanagedMethod]] = {}
 
         for import_ in get_dotnet_managed_imports(pe):
             self.imports[import_.token] = import_
@@ -84,7 +84,7 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
         self.token_cache: DnFileFeatureExtractorCache = DnFileFeatureExtractorCache(self.pe)
 
         # pre-compute these because we'll yield them at *every* scope.
-        self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features: list[tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format())
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
@@ -100,7 +100,7 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         # create a method lookup table
-        methods: Dict[Address, FunctionHandle] = {}
+        methods: dict[Address, FunctionHandle] = {}
         for token, method in get_dotnet_managed_method_bodies(self.pe):
             fh: FunctionHandle = FunctionHandle(
                 address=DNTokenAddress(token),
@@ -136,7 +136,7 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
         yield from methods.values()
 
-    def extract_function_features(self, fh) -> Iterator[Tuple[Feature, Address]]:
+    def extract_function_features(self, fh) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.dnfile.function.extract_features(fh)
 
     def get_basic_blocks(self, f) -> Iterator[BBHandle]:
@@ -157,5 +157,5 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
                 inner=insn,
             )
 
-    def extract_insn_features(self, fh, bbh, ih) -> Iterator[Tuple[Feature, Address]]:
+    def extract_insn_features(self, fh, bbh, ih) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.dnfile.insn.extract_features(fh, bbh, ih)

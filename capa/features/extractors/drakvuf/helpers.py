@@ -7,16 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import itertools
-from typing import Dict, List
 
 from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 
 
-def index_calls(report: DrakvufReport) -> Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]:
+def index_calls(report: DrakvufReport) -> dict[ProcessAddress, dict[ThreadAddress, list[Call]]]:
     # this method organizes calls into processes and threads, and then sorts them based on
     # timestamp so that we can address individual calls per index (CallAddress requires call index)
-    result: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = {}
+    result: dict[ProcessAddress, dict[ThreadAddress, list[Call]]] = {}
     for call in itertools.chain(report.syscalls, report.apicalls):
         if call.pid == 0:
             # DRAKVUF captures api/native calls from all processes running on the system.

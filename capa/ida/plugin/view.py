@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
-from typing import Dict, Optional
+from typing import Optional
 from collections import Counter
 
 import idc
@@ -1019,7 +1019,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         return o
 
-    def load_features(self, file_features, func_features: Optional[Dict] = None):
+    def load_features(self, file_features, func_features: Optional[dict] = None):
         """ """
         self.parse_features_for_tree(self.new_parent_node(self, ("File Scope",)), file_features)
         if func_features:

@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Set, List, Tuple, Iterator
+from typing import Iterator
 
 import capa.features.extractors.elf
 import capa.features.extractors.common
@@ -48,14 +48,14 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         address_space: AddressSpace = AddressSpace.from_buf(buf, self.analysis.base_address)
         self.ctx: AnalysisContext = AnalysisContext(self.buf, self.be2, self.idx, self.analysis, address_space)
 
-        self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features: list[tuple[Feature, Address]] = []
         self.global_features.extend(list(capa.features.extractors.common.extract_format(self.buf)))
         self.global_features.extend(list(capa.features.extractors.common.extract_os(self.buf)))
         self.global_features.extend(list(capa.features.extractors.common.extract_arch(self.buf)))
 
-        self.format: Set[str] = set()
-        self.os: Set[str] = set()
-        self.arch: Set[str] = set()
+        self.format: set[str] = set()
+        self.os: set[str] = set()
+        self.arch: set[str] = set()
 
         for feature, _ in self.global_features:
             assert isinstance(feature.value, str)
@@ -72,10 +72,10 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(self.analysis.base_address)
 
-    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from self.global_features
 
-    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.file.extract_features(self.be2, self.buf)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
@@ -97,7 +97,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
                 inner=FunctionContext(self.ctx, flow_graph_index, self.format, self.os, self.arch),
             )
 
-    def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
@@ -112,7 +112,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
                 inner=BasicBlockContext(basic_block_index),
             )
 
-    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
@@ -126,5 +126,5 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
 
     def extract_insn_features(
         self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-    ) -> Iterator[Tuple[Feature, Address]]:
+    ) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.insn.extract_features(fh, bbh, ih)

@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Tuple, Iterator
+from typing import Iterator
 
 import ghidra
 from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
@@ -49,7 +49,7 @@ def extract_recursive_call(fh: FunctionHandle):
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
-def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr

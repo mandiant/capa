@@ -8,7 +8,7 @@
 
 import string
 import struct
-from typing import Tuple, Iterator
+from typing import Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
@@ -97,7 +97,7 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     return False
 
 
-def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract stackstring indicators from basic block"""
     bb: ghidra.program.model.block.CodeBlock = bbh.inner
 
@@ -105,7 +105,7 @@ def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[
         yield Characteristic("stack string"), bbh.address
 
 
-def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
     bb: ghidra.program.model.block.CodeBlock = bbh.inner
 
@@ -119,7 +119,7 @@ BASIC_BLOCK_HANDLERS = (
 )
 
 
-def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
@@ -127,7 +127,7 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Featur
         bb: the basic block to process.
 
     yields:
-      Tuple[Feature, int]: the features and their location found in this basic block.
+      tuple[Feature, int]: the features and their location found in this basic block.
     """
     yield BasicBlock(), bbh.address
     for bb_handler in BASIC_BLOCK_HANDLERS:

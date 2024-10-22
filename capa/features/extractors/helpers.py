@@ -8,7 +8,7 @@
 
 import struct
 import builtins
-from typing import Tuple, Iterator
+from typing import Iterator
 
 MIN_STACKSTRING_LEN = 8
 
@@ -119,7 +119,7 @@ def twos_complement(val: int, bits: int) -> int:
         return val
 
 
-def carve_pe(pbytes: bytes, offset: int = 0) -> Iterator[Tuple[int, int]]:
+def carve_pe(pbytes: bytes, offset: int = 0) -> Iterator[tuple[int, int]]:
     """
     Generate (offset, key) tuples of embedded PEs
 

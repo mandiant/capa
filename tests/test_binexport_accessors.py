@@ -8,7 +8,7 @@
 
 import re
 import logging
-from typing import Any, Dict
+from typing import Any
 from pathlib import Path
 
 import pytest
@@ -297,7 +297,7 @@ mov     x0, 0x20
 bl      0x100
 add     x0, sp, 0x10
 """
-BE2_DICT: Dict[str, Any] = {
+BE2_DICT: dict[str, Any] = {
     "expression": [
         {"type": BinExport2.Expression.REGISTER, "symbol": "x0"},
         {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x20},

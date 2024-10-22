@@ -8,7 +8,7 @@
 
 import string
 import struct
-from typing import Tuple, Iterator
+from typing import Iterator
 
 import envi
 import envi.archs.i386.disasm
@@ -20,7 +20,7 @@ from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
-def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse features from the given basic block.
 
@@ -47,7 +47,7 @@ def _bb_has_tight_loop(f, bb):
     return False
 
 
-def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
     if _bb_has_tight_loop(f, bb.inner):
         yield Characteristic("tight loop"), bb.address
@@ -70,7 +70,7 @@ def _bb_has_stackstring(f, bb):
     return False
 
 
-def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """check basic block for stackstring indicators"""
     if _bb_has_stackstring(f, bb.inner):
         yield Characteristic("stack string"), bb.address
@@ -145,7 +145,7 @@ def is_printable_utf16le(chars: bytes) -> bool:
     return False
 
 
-def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
@@ -154,7 +154,7 @@ def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature,
       bb (viv_utils.BasicBlock): the basic block to process.
 
     yields:
-      Tuple[Feature, int]: the features and their location found in this basic block.
+      tuple[Feature, int]: the features and their location found in this basic block.
     """
     yield BasicBlock(), AbsoluteVirtualAddress(bb.inner.va)
     for bb_handler in BASIC_BLOCK_HANDLERS:

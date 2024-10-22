@@ -6,12 +6,12 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Any, Dict, List
+from typing import Any
 
 from capa.features.extractors.base_extractor import ProcessHandle
 
 
-def find_process(processes: List[Dict[str, Any]], ph: ProcessHandle) -> Dict[str, Any]:
+def find_process(processes: list[dict[str, Any]], ph: ProcessHandle) -> dict[str, Any]:
     """
     find a specific process identified by a process handler.
 

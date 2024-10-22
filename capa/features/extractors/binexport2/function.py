@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
@@ -16,7 +16,7 @@ from capa.features.extractors.base_extractor import FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 
-def extract_function_calls_to(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_to(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     be2: BinExport2 = fhi.ctx.be2
@@ -32,7 +32,7 @@ def extract_function_calls_to(fh: FunctionHandle) -> Iterator[Tuple[Feature, Add
         yield Characteristic("calls to"), AbsoluteVirtualAddress(caller_address)
 
 
-def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_loop(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     be2: BinExport2 = fhi.ctx.be2
@@ -40,7 +40,7 @@ def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address
     flow_graph_index: int = fhi.flow_graph_index
     flow_graph: BinExport2.FlowGraph = be2.flow_graph[flow_graph_index]
 
-    edges: List[Tuple[int, int]] = []
+    edges: list[tuple[int, int]] = []
     for edge in flow_graph.edge:
         edges.append((edge.source_basic_block_index, edge.target_basic_block_index))
 
@@ -48,7 +48,7 @@ def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address
         yield Characteristic("loop"), fh.address
 
 
-def extract_function_name(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     be2: BinExport2 = fhi.ctx.be2
@@ -63,7 +63,7 @@ def extract_function_name(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address
         yield FunctionName(vertex.mangled_name), fh.address
 
 
-def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr

@@ -11,7 +11,6 @@ See the License for the specific language governing permissions and limitations 
 import sys
 import random
 import logging
-from typing import Dict, List
 from pathlib import Path
 
 import capa.rules
@@ -49,7 +48,7 @@ predefined_colors = [
 
 
 def read_file_paths(txt_file_path: Path):
-    categorized_files: Dict[str, List[Path]] = {
+    categorized_files: dict[str, list[Path]] = {
         "modified in the last day": [],
         "modified in the last week": [],
         "modified in the last month": [],

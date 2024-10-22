@@ -14,7 +14,7 @@ import time
 import logging
 import argparse
 import contextlib
-from typing import Dict, List, Optional
+from typing import Optional
 
 import capa.main
 import capa.features.extractors.binexport2
@@ -71,14 +71,14 @@ class Renderer:
 def _render_expression_tree(
     be2: BinExport2,
     operand: BinExport2.Operand,
-    expression_tree: List[List[int]],
+    expression_tree: list[list[int]],
     tree_index: int,
     o: io.StringIO,
 ):
 
     expression_index = operand.expression_index[tree_index]
     expression = be2.expression[expression_index]
-    children_tree_indexes: List[int] = expression_tree[tree_index]
+    children_tree_indexes: list[int] = expression_tree[tree_index]
 
     if expression.type == BinExport2.Expression.REGISTER:
         o.write(expression.symbol)
@@ -177,7 +177,7 @@ def _render_expression_tree(
         raise NotImplementedError(expression.type)
 
 
-_OPERAND_CACHE: Dict[int, str] = {}
+_OPERAND_CACHE: dict[int, str] = {}
 
 
 def render_operand(be2: BinExport2, operand: BinExport2.Operand, index: Optional[int] = None) -> str:
@@ -223,7 +223,7 @@ def inspect_operand(be2: BinExport2, operand: BinExport2.Operand):
     def rec(tree_index, indent=0):
         expression_index = operand.expression_index[tree_index]
         expression = be2.expression[expression_index]
-        children_tree_indexes: List[int] = expression_tree[tree_index]
+        children_tree_indexes: list[int] = expression_tree[tree_index]
 
         NEWLINE = "\n"
         print(f"    {'  ' * indent}expression: {str(expression).replace(NEWLINE, ', ')}")
@@ -435,7 +435,7 @@ def main(argv=None):
                 # appears to be code
                 continue
 
-            data_xrefs: List[int] = []
+            data_xrefs: list[int] = []
             for data_reference_index in idx.data_reference_index_by_target_address[data_address]:
                 data_reference = be2.data_reference[data_reference_index]
                 instruction_address = idx.get_insn_address(data_reference.instruction_index)

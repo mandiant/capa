@@ -11,7 +11,7 @@ import zlib
 import pickle
 import hashlib
 import logging
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 CacheIdentifier = str
 
 
-def compute_cache_identifier(rule_content: List[bytes]) -> CacheIdentifier:
+def compute_cache_identifier(rule_content: list[bytes]) -> CacheIdentifier:
     hash = hashlib.sha256()
 
     # note that this changes with each release,
@@ -96,7 +96,7 @@ class RuleCache:
         return cache
 
 
-def get_ruleset_content(ruleset: capa.rules.RuleSet) -> List[bytes]:
+def get_ruleset_content(ruleset: capa.rules.RuleSet) -> list[bytes]:
     rule_contents = []
     for rule in ruleset.rules.values():
         if rule.is_subscope_rule():
@@ -132,7 +132,7 @@ def cache_ruleset(cache_dir: Path, ruleset: capa.rules.RuleSet):
     return
 
 
-def load_cached_ruleset(cache_dir: Path, rule_contents: List[bytes]) -> Optional[capa.rules.RuleSet]:
+def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional[capa.rules.RuleSet]:
     """
     load a cached ruleset from disk, using the given cache directory.
     the raw rule contents are required here to prove that the rules haven't changed

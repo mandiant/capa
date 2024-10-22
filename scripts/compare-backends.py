@@ -15,7 +15,7 @@ import contextlib
 import statistics
 import subprocess
 import multiprocessing
-from typing import Set, Dict, List, Optional
+from typing import Optional
 from pathlib import Path
 from collections import Counter
 from dataclasses import dataclass
@@ -183,8 +183,8 @@ def report(args):
     for backend in BACKENDS:
         samples.update(doc[backend].keys())
 
-    failures_by_backend: Dict[str, Set[str]] = {backend: set() for backend in BACKENDS}
-    durations_by_backend: Dict[str, List[float]] = {backend: [] for backend in BACKENDS}
+    failures_by_backend: dict[str, set[str]] = {backend: set() for backend in BACKENDS}
+    durations_by_backend: dict[str, list[float]] = {backend: [] for backend in BACKENDS}
 
     console = rich.get_console()
     for key in sorted(samples):
@@ -193,7 +193,7 @@ def report(args):
 
         seen_rules: Counter[str] = Counter()
 
-        rules_by_backend: Dict[str, Set[str]] = {backend: set() for backend in BACKENDS}
+        rules_by_backend: dict[str, set[str]] = {backend: set() for backend in BACKENDS}
 
         for backend in BACKENDS:
             if key not in doc[backend]:

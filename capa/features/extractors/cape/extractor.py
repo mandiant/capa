@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, Tuple, Union, Iterator
+from typing import Union, Iterator
 
 import capa.features.extractors.cape.call
 import capa.features.extractors.cape.file
@@ -50,16 +50,16 @@ class CapeExtractor(DynamicFeatureExtractor):
         assert self.report.static is not None and self.report.static.pe is not None
         return AbsoluteVirtualAddress(self.report.static.pe.imagebase)
 
-    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from self.global_features
 
-    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.file.extract_features(self.report)
 
     def get_processes(self) -> Iterator[ProcessHandle]:
         yield from capa.features.extractors.cape.file.get_processes(self.report)
 
-    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.process.extract_features(ph)
 
     def get_process_name(self, ph) -> str:
@@ -69,7 +69,7 @@ class CapeExtractor(DynamicFeatureExtractor):
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         yield from capa.features.extractors.cape.process.get_threads(ph)
 
-    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
         if False:
             # force this routine to be a generator,
             # but we don't actually have any elements to generate.
@@ -81,7 +81,7 @@ class CapeExtractor(DynamicFeatureExtractor):
 
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-    ) -> Iterator[Tuple[Feature, Address]]:
+    ) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:
@@ -122,7 +122,7 @@ class CapeExtractor(DynamicFeatureExtractor):
         return "".join(parts)
 
     @classmethod
-    def from_report(cls, report: Dict) -> "CapeExtractor":
+    def from_report(cls, report: dict) -> "CapeExtractor":
         cr = CapeReport.model_validate(report)
 
         if cr.info.version not in TESTED_VERSIONS:

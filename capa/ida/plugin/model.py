@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Set, Dict, List, Tuple, Optional
+from typing import Optional
 from collections import deque
 
 import idc
@@ -354,7 +354,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         parent: CapaExplorerDataItem,
         match: rd.Match,
         statement: rd.Statement,
-        locations: List[Address],
+        locations: list[Address],
         doc: rd.ResultDocument,
     ):
         """render capa statement read from doc
@@ -447,9 +447,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
     def render_capa_doc_by_function(self, doc: rd.ResultDocument):
         """render rule matches by function meaning each rule match is nested under function where it was found"""
-        matches_by_function: Dict[AbsoluteVirtualAddress, Tuple[CapaExplorerFunctionItem, Set[str]]] = {}
+        matches_by_function: dict[AbsoluteVirtualAddress, tuple[CapaExplorerFunctionItem, set[str]]] = {}
         for rule in rutils.capability_rules(doc):
-            match_eas: List[int] = []
+            match_eas: list[int] = []
 
             # initial pass of rule matches
             for addr_, _ in rule.matches:
@@ -560,7 +560,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         parent: CapaExplorerDataItem,
         match: rd.Match,
         feature: frzf.Feature,
-        locations: List[Address],
+        locations: list[Address],
         doc: rd.ResultDocument,
     ):
         """process capa doc feature node

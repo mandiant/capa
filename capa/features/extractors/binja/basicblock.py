@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import string
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from binaryninja import Function
 from binaryninja import BasicBlock as BinjaBasicBlock
@@ -98,22 +98,22 @@ def bb_contains_stackstring(f: Function, bb: MediumLevelILBasicBlock) -> bool:
     return False
 
 
-def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract stackstring indicators from basic block"""
-    bb: Tuple[BinjaBasicBlock, MediumLevelILBasicBlock] = bbh.inner
+    bb: tuple[BinjaBasicBlock, MediumLevelILBasicBlock] = bbh.inner
     if bb[1] is not None and bb_contains_stackstring(fh.inner, bb[1]):
         yield Characteristic("stack string"), bbh.address
 
 
-def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract tight loop indicators from a basic block"""
-    bb: Tuple[BinjaBasicBlock, MediumLevelILBasicBlock] = bbh.inner
+    bb: tuple[BinjaBasicBlock, MediumLevelILBasicBlock] = bbh.inner
     for edge in bb[0].outgoing_edges:
         if edge.target.start == bb[0].start:
             yield Characteristic("tight loop"), bbh.address
 
 
-def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract basic block features"""
     for bb_handler in BASIC_BLOCK_HANDLERS:
         for feature, addr in bb_handler(fh, bbh):

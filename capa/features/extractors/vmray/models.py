@@ -6,11 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Dict, List, Union, Optional
+from typing import Union, Optional, Annotated
 
 import xmltodict
 from pydantic import Field, BaseModel
-from typing_extensions import Annotated
 from pydantic.functional_validators import BeforeValidator
 
 """
@@ -87,7 +86,7 @@ class Param(BaseModel):
     deref: Optional[ParamDeref] = None
 
 
-def validate_ensure_is_list(value: Union[List[Param], Param]) -> List[Param]:
+def validate_ensure_is_list(value: Union[list[Param], Param]) -> list[Param]:
     if isinstance(value, list):
         return value
     else:
@@ -95,9 +94,9 @@ def validate_ensure_is_list(value: Union[List[Param], Param]) -> List[Param]:
 
 
 # params may be stored as a list of Param or a single Param so we convert
-# the input value to Python list type before the inner validation (List[Param])
+# the input value to Python list type before the inner validation (list[Param])
 # is called
-ParamList = Annotated[List[Param], BeforeValidator(validate_ensure_is_list)]
+ParamList = Annotated[list[Param], BeforeValidator(validate_ensure_is_list)]
 
 
 class Params(BaseModel):
@@ -164,9 +163,9 @@ class MonitorThread(BaseModel):
 
 
 # handle if there's only single entries, but the model expects a list
-MonitorProcessList = Annotated[List[MonitorProcess], BeforeValidator(validate_ensure_is_list)]
-MonitorThreadList = Annotated[List[MonitorThread], BeforeValidator(validate_ensure_is_list)]
-FunctionCallList = Annotated[List[FunctionCall], BeforeValidator(validate_ensure_is_list)]
+MonitorProcessList = Annotated[list[MonitorProcess], BeforeValidator(validate_ensure_is_list)]
+MonitorThreadList = Annotated[list[MonitorThread], BeforeValidator(validate_ensure_is_list)]
+FunctionCallList = Annotated[list[FunctionCall], BeforeValidator(validate_ensure_is_list)]
 
 
 class Analysis(BaseModel):
@@ -177,7 +176,7 @@ class Analysis(BaseModel):
     monitor_processes: MonitorProcessList = Field(alias="monitor_process", default=[])
     monitor_threads: MonitorThreadList = Field(alias="monitor_thread", default=[])
     function_calls: FunctionCallList = Field(alias="fncall", default=[])
-    # function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
+    # function_returns: list[FunctionReturn] = Field(alias="fnret", default=[])
 
 
 class Flog(BaseModel):
@@ -186,7 +185,7 @@ class Flog(BaseModel):
 
 # models for summary_v2.json file, certain fields left as comments for documentation purposes
 class GenericReference(BaseModel):
-    path: List[str]
+    path: list[str]
     source: str
 
 
@@ -226,12 +225,12 @@ class PEFileImport(BaseModel):
 
 class PEFileImportModule(BaseModel):
     dll: str
-    apis: List[PEFileImport]
+    apis: list[PEFileImport]
 
 
 class PEFileSection(BaseModel):
     # entropy: float
-    # flags: List[str] = []
+    # flags: list[str] = []
     name: str
     # raw_data_offset: int
     # raw_data_size: int
@@ -241,9 +240,9 @@ class PEFileSection(BaseModel):
 
 class PEFile(BaseModel):
     basic_info: PEFileBasicInfo
-    exports: List[PEFileExport] = []
-    imports: List[PEFileImportModule] = []
-    sections: List[PEFileSection] = []
+    exports: list[PEFileExport] = []
+    imports: list[PEFileImportModule] = []
+    sections: list[PEFileSection] = []
 
 
 class ElfFileSectionHeader(BaseModel):
@@ -268,7 +267,7 @@ class ElfFileHeader(BaseModel):
 
 class ElfFile(BaseModel):
     # file_header: ElfFileHeader
-    sections: List[ElfFileSection]
+    sections: list[ElfFileSection]
 
 
 class StaticData(BaseModel):
@@ -284,7 +283,7 @@ class FileHashes(BaseModel):
 
 
 class File(BaseModel):
-    # categories: List[str]
+    # categories: list[str]
     hash_values: FileHashes
     # is_artifact: bool
     # is_ioc: bool
@@ -292,11 +291,11 @@ class File(BaseModel):
     # size: int
     # is_truncated: bool
     # mime_type: Optional[str] = None
-    # operations: List[str] = []
-    # ref_filenames: List[GenericReference] = []
-    # ref_gfncalls: List[GenericReference] = []
+    # operations: list[str] = []
+    # ref_filenames: list[GenericReference] = []
+    # ref_gfncalls: list[GenericReference] = []
     ref_static_data: Optional[StaticDataReference] = None
-    # ref_vti_matches: List[GenericReference] = []
+    # ref_vti_matches: list[GenericReference] = []
     # verdict: str
 
 
@@ -356,13 +355,13 @@ class AnalysisMetadata(BaseModel):
 class SummaryV2(BaseModel):
     analysis_metadata: AnalysisMetadata
 
-    static_data: Dict[str, StaticData] = {}
+    static_data: dict[str, StaticData] = {}
 
     # recorded artifacts
-    files: Dict[str, File] = {}
-    processes: Dict[str, Process] = {}
-    filenames: Dict[str, Filename] = {}
-    mutexes: Dict[str, Mutex] = {}
-    domains: Dict[str, Domain] = {}
-    ip_addresses: Dict[str, IPAddress] = {}
-    registry_records: Dict[str, Registry] = {}
+    files: dict[str, File] = {}
+    processes: dict[str, Process] = {}
+    filenames: dict[str, Filename] = {}
+    mutexes: dict[str, Mutex] = {}
+    domains: dict[str, Domain] = {}
+    ip_addresses: dict[str, IPAddress] = {}
+    registry_records: dict[str, Registry] = {}

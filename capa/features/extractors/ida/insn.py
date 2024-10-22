@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
-from typing import Any, Dict, Tuple, Iterator, Optional
+from typing import Any, Iterator, Optional
 
 import idc
 import ida_ua
@@ -25,19 +25,19 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def get_imports(ctx: Dict[str, Any]) -> Dict[int, Any]:
+def get_imports(ctx: dict[str, Any]) -> dict[int, Any]:
     if "imports_cache" not in ctx:
         ctx["imports_cache"] = capa.features.extractors.ida.helpers.get_file_imports()
     return ctx["imports_cache"]
 
 
-def get_externs(ctx: Dict[str, Any]) -> Dict[int, Any]:
+def get_externs(ctx: dict[str, Any]) -> dict[int, Any]:
     if "externs_cache" not in ctx:
         ctx["externs_cache"] = capa.features.extractors.ida.helpers.get_file_externs()
     return ctx["externs_cache"]
 
 
-def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Optional[Tuple[str, str]]:
+def check_for_api_call(insn: idaapi.insn_t, funcs: dict[int, Any]) -> Optional[tuple[str, str]]:
     """check instruction for API call"""
     info = None
     ref = insn.ea
@@ -65,7 +65,7 @@ def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Optional[T
     return info
 
 
-def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction API features
 
@@ -135,7 +135,7 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
 
 def extract_insn_number_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction number features
     example:
@@ -181,7 +181,7 @@ def extract_insn_number_features(
             yield OperandOffset(i, const), ih.address
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse referenced byte sequences
     example:
@@ -203,7 +203,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
 def extract_insn_string_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction string features
 
@@ -221,7 +221,7 @@ def extract_insn_string_features(
 
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction structure offset features
 
@@ -369,7 +369,7 @@ def is_nzxor_stack_cookie(f: idaapi.func_t, bb: idaapi.BasicBlock, insn: idaapi.
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction non-zeroing XOR instruction
     ignore expected non-zeroing XORs, e.g. security cookies
@@ -387,14 +387,14 @@ def extract_insn_nzxor_characteristic_features(
 
 def extract_insn_mnemonic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction mnemonic features"""
     yield Mnemonic(idc.print_insn_mnem(ih.inner.ea)), ih.address
 
 
 def extract_insn_obfs_call_plus_5_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
@@ -409,7 +409,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(
 
 def extract_insn_peb_access_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction peb access
 
     fs:[0x30] on x86, gs:[0x60] on x64
@@ -437,7 +437,7 @@ def extract_insn_peb_access_characteristic_features(
 
 def extract_insn_segment_access_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction fs or gs access
 
     TODO:
@@ -466,7 +466,7 @@ def extract_insn_segment_access_features(
 
 def extract_insn_cross_section_cflow(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
     insn: idaapi.insn_t = ih.inner
 
@@ -482,7 +482,7 @@ def extract_insn_cross_section_cflow(
         yield Characteristic("cross section flow"), ih.address
 
 
-def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
@@ -496,7 +496,7 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
 
@@ -509,7 +509,7 @@ def extract_function_indirect_call_characteristic_features(
         yield Characteristic("indirect call"), ih.address
 
 
-def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
         for feature, ea in inst_handler(f, bbh, insn):

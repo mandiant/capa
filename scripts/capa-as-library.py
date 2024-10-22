@@ -9,7 +9,7 @@
 
 import json
 import collections
-from typing import Any, Set, Dict
+from typing import Any
 from pathlib import Path
 
 import capa.main
@@ -34,7 +34,7 @@ def render_meta(doc: rd.ResultDocument, result):
     result["path"] = doc.meta.sample.path
 
 
-def find_subrule_matches(doc: rd.ResultDocument) -> Set[str]:
+def find_subrule_matches(doc: rd.ResultDocument) -> set[str]:
     """
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
@@ -158,8 +158,8 @@ def render_mbc(doc, result):
         result["MBC"].setdefault(objective.upper(), inner_rows)
 
 
-def render_dictionary(doc: rd.ResultDocument) -> Dict[str, Any]:
-    result: Dict[str, Any] = {}
+def render_dictionary(doc: rd.ResultDocument) -> dict[str, Any]:
+    result: dict[str, Any] = {}
     render_meta(doc, result)
     render_attack(doc, result)
     render_mbc(doc, result)

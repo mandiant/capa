@@ -8,7 +8,7 @@
 
 import copy
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping, Iterable, Iterator
+from typing import TYPE_CHECKING, Union, Mapping, Iterable, Iterator
 
 import capa.perf
 import capa.features.common
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 # to collect the locations of a feature, do: `features[Number(0x10)]`
 #
 # aliased here so that the type can be documented and xref'd.
-FeatureSet = Dict[Feature, Set[Address]]
+FeatureSet = dict[Feature, set[Address]]
 
 
 class Statement:
@@ -94,7 +94,7 @@ class And(Statement):
     match if all of the children evaluate to True.
 
     the order of evaluation is dictated by the property
-    `And.children` (type: List[Statement|Feature]).
+    `And.children` (type: list[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
 
@@ -127,7 +127,7 @@ class Or(Statement):
     match if any of the children evaluate to True.
 
     the order of evaluation is dictated by the property
-    `Or.children` (type: List[Statement|Feature]).
+    `Or.children` (type: list[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
 
@@ -176,7 +176,7 @@ class Some(Statement):
     match if at least N of the children evaluate to True.
 
     the order of evaluation is dictated by the property
-    `Some.children` (type: List[Statement|Feature]).
+    `Some.children` (type: list[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
 
@@ -267,7 +267,7 @@ class Subscope(Statement):
 #         inspect(match_details)
 #
 # aliased here so that the type can be documented and xref'd.
-MatchResults = Mapping[str, List[Tuple[Address, Result]]]
+MatchResults = Mapping[str, list[tuple[Address, Result]]]
 
 
 def get_rule_namespaces(rule: "capa.rules.Rule") -> Iterator[str]:
@@ -292,7 +292,7 @@ def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations:
         features[capa.features.common.MatchedRule(namespace)].update(locations)
 
 
-def match(rules: List["capa.rules.Rule"], features: FeatureSet, addr: Address) -> Tuple[FeatureSet, MatchResults]:
+def match(rules: list["capa.rules.Rule"], features: FeatureSet, addr: Address) -> tuple[FeatureSet, MatchResults]:
     """
     match the given rules against the given features,
     returning an updated set of features and the matches.

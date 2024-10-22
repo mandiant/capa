@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, List, Tuple, Iterator
+from typing import Iterator
 
 from capa.features.common import String, Feature
 from capa.features.address import Address, ThreadAddress, ProcessAddress
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_threads(
-    calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]], ph: ProcessHandle
+    calls: dict[ProcessAddress, dict[ThreadAddress, list[Call]]], ph: ProcessHandle
 ) -> Iterator[ThreadHandle]:
     """
     Get the threads associated with a given process.
@@ -27,11 +27,11 @@ def get_threads(
         yield ThreadHandle(address=thread_addr, inner={})
 
 
-def extract_process_name(ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_process_name(ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
     yield String(ph.inner["process_name"]), ph.address
 
 
-def extract_features(ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
     for handler in PROCESS_HANDLERS:
         for feature, addr in handler(ph):
             yield feature, addr

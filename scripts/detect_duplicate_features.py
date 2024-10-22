@@ -8,7 +8,6 @@
 import sys
 import logging
 import argparse
-from typing import Set
 from pathlib import Path
 
 import capa.main
@@ -18,7 +17,7 @@ from capa.features.common import Feature
 logger = logging.getLogger("detect_duplicate_features")
 
 
-def get_features(rule_path: str) -> Set[Feature]:
+def get_features(rule_path: str) -> set[Feature]:
     """
     Extracts all features from a given rule file.
 

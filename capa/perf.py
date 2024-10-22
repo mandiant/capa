@@ -5,11 +5,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import typing
 import collections
 
 # this structure is unstable and may change before the next major release.
-counters: typing.Counter[str] = collections.Counter()
+counters: collections.Counter[str] = collections.Counter()
 
 
 def reset():

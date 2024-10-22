@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, List, Iterator
+from typing import Iterator
 
 import ghidra
 import java.lang
@@ -20,7 +20,7 @@ from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 
-def ints_to_bytes(bytez: List[int]) -> bytes:
+def ints_to_bytes(bytez: list[int]) -> bytes:
     """convert Java signed ints to Python bytes
 
     args:
@@ -83,10 +83,10 @@ def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
         yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
-def get_file_imports() -> Dict[int, List[str]]:
+def get_file_imports() -> dict[int, list[str]]:
     """get all import names & addrs"""
 
-    import_dict: Dict[int, List[str]] = {}
+    import_dict: dict[int, list[str]] = {}
 
     for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
@@ -110,7 +110,7 @@ def get_file_imports() -> Dict[int, List[str]]:
     return import_dict
 
 
-def get_file_externs() -> Dict[int, List[str]]:
+def get_file_externs() -> dict[int, list[str]]:
     """
     Gets function names & addresses of statically-linked library functions
 
@@ -124,7 +124,7 @@ def get_file_externs() -> Dict[int, List[str]]:
     - Note: See Symbol Table labels
     """
 
-    extern_dict: Dict[int, List[str]] = {}
+    extern_dict: dict[int, list[str]] = {}
 
     for sym in currentProgram().getSymbolTable().getAllSymbols(True):  # type: ignore [name-defined] # noqa: F821
         # .isExternal() misses more than this config for the function symbols
@@ -143,7 +143,7 @@ def get_file_externs() -> Dict[int, List[str]]:
     return extern_dict
 
 
-def map_fake_import_addrs() -> Dict[int, List[int]]:
+def map_fake_import_addrs() -> dict[int, list[int]]:
     """
     Map ghidra's fake import entrypoints to their
     real addresses
@@ -162,7 +162,7 @@ def map_fake_import_addrs() -> Dict[int, List[int]]:
     - 0x473090 -> PTR_CreateServiceW_00473090
     - 'EXTERNAL:00000025' -> External Address (ghidra.program.model.address.SpecialAddress)
     """
-    fake_dict: Dict[int, List[int]] = {}
+    fake_dict: dict[int, list[int]] = {}
 
     for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
@@ -174,9 +174,9 @@ def map_fake_import_addrs() -> Dict[int, List[int]]:
 
 def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
-    fakes: Dict[int, List[int]],
-    imports: Dict[int, List[str]],
-    externs: Dict[int, List[str]],
+    fakes: dict[int, list[int]],
+    imports: dict[int, list[str]],
+    externs: dict[int, list[str]],
 ) -> bool:
     offset = addr.getOffset()
 

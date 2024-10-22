@@ -11,12 +11,8 @@ import hashlib
 import dataclasses
 from copy import copy
 from types import MethodType
-from typing import Any, Set, Dict, Tuple, Union, Iterator
+from typing import Any, Union, Iterator, TypeAlias
 from dataclasses import dataclass
-
-# TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
-# https://github.com/mandiant/capa/issues/1699
-from typing_extensions import TypeAlias
 
 import capa.features.address
 from capa.features.common import Feature
@@ -59,7 +55,7 @@ class FunctionHandle:
 
     address: Address
     inner: Any
-    ctx: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    ctx: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 @dataclass
@@ -135,7 +131,7 @@ class StaticFeatureExtractor:
         return self._sample_hashes
 
     @abc.abstractmethod
-    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         """
         extract features found at every scope ("global").
 
@@ -146,12 +142,12 @@ class StaticFeatureExtractor:
                 print('0x%x: %s', va, feature)
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         """
         extract file-scope features.
 
@@ -162,7 +158,7 @@ class StaticFeatureExtractor:
                 print('0x%x: %s', va, feature)
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -211,7 +207,7 @@ class StaticFeatureExtractor:
         raise KeyError(addr)
 
     @abc.abstractmethod
-    def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_function_features(self, f: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -227,7 +223,7 @@ class StaticFeatureExtractor:
           f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -240,7 +236,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
         """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -258,7 +254,7 @@ class StaticFeatureExtractor:
           bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -273,7 +269,7 @@ class StaticFeatureExtractor:
     @abc.abstractmethod
     def extract_insn_features(
         self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
-    ) -> Iterator[Tuple[Feature, Address]]:
+    ) -> Iterator[tuple[Feature, Address]]:
         """
         extract instruction-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -293,12 +289,12 @@ class StaticFeatureExtractor:
           insn [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
 
-def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticFeatureExtractor:
+def FunctionFilter(extractor: StaticFeatureExtractor, functions: set) -> StaticFeatureExtractor:
     original_get_functions = extractor.get_functions
 
     def filtered_get_functions(self):
@@ -387,7 +383,7 @@ class DynamicFeatureExtractor:
         return self._sample_hashes
 
     @abc.abstractmethod
-    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         """
         extract features found at every scope ("global").
 
@@ -398,12 +394,12 @@ class DynamicFeatureExtractor:
                 print(addr, feature)
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         """
         extract file-scope features.
 
@@ -414,7 +410,7 @@ class DynamicFeatureExtractor:
                 print(addr, feature)
 
         yields:
-          Tuple[Feature, Address]: feature and its location
+          tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -426,7 +422,7 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
         """
         Yields all the features of a process. These include:
         - file features of the process' image
@@ -449,7 +445,7 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
         """
         Yields all the features of a thread. These include:
         - sequenced api traces
@@ -466,7 +462,7 @@ class DynamicFeatureExtractor:
     @abc.abstractmethod
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-    ) -> Iterator[Tuple[Feature, Address]]:
+    ) -> Iterator[tuple[Feature, Address]]:
         """
         Yields all features of a call. These include:
         - api name
@@ -485,7 +481,7 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
 
-def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> DynamicFeatureExtractor:
+def ProcessFilter(extractor: DynamicFeatureExtractor, processes: set) -> DynamicFeatureExtractor:
     original_get_processes = extractor.get_processes
 
     def filtered_get_processes(self):

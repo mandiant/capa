@@ -5,9 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, List
 
-COM_INTERFACES: Dict[str, List[str]] = {
+COM_INTERFACES: dict[str, list[str]] = {
     "IClusterApplicationWizard": ["24F97151-6689-11D1-9AA7-00C04FB93A80"],
     "IWEExtendWizard97": ["97DEDE68-FC6B-11CF-B5F5-00A0C90AB505"],
     "IWCWizard97Callback": ["97DEDE67-FC6B-11CF-B5F5-00A0C90AB505"],
@@ -16334,7 +16333,7 @@ COM_INTERFACES: Dict[str, List[str]] = {
     "IRcsServiceDescription": ["416437de-e78b-44c9-990f-7ede1f2a0c91"],
     "IRcsServiceKindSupportedChangedEventArgs": ["f47ea244-e783-4866-b3a7-4e5ccf023070"],
     "IRcsServiceStatusChangedArgs": ["661ae45a-412a-460d-bdd4-dd8ea3c15583"],
-    "IRcsServiceTuple": ["ce17a39b-2e8b-41af-b5a9-5cb072cc373c"],
+    "IRcsServicetuple": ["ce17a39b-2e8b-41af-b5a9-5cb072cc373c"],
     "IRcsSubscriptionReceivedArgs": ["04eaf06d-42bc-46cc-a637-eeb3a8723fe4"],
     "IRcsTransport": ["fea34759-f37c-4319-8546-ec84d21d30ff"],
     "IRcsTransportConfiguration": ["1fccb102-2472-4bb9-9988-c1211c83e8a9"],

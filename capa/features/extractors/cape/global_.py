@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from capa.features.common import (
     OS,
@@ -28,7 +28,7 @@ from capa.features.extractors.cape.models import CapeReport
 logger = logging.getLogger(__name__)
 
 
-def extract_arch(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_arch(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     if "Intel 80386" in report.target.file.type:
         yield Arch(ARCH_I386), NO_ADDRESS
     elif "x86-64" in report.target.file.type:
@@ -40,7 +40,7 @@ def extract_arch(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
         )
 
 
-def extract_format(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_format(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     if "PE" in report.target.file.type:
         yield Format(FORMAT_PE), NO_ADDRESS
     elif "ELF" in report.target.file.type:
@@ -52,7 +52,7 @@ def extract_format(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
         )
 
 
-def extract_os(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     # this variable contains the output of the file command
     file_output = report.target.file.type
 
@@ -80,7 +80,7 @@ def extract_os(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
         yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_features(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
     for global_handler in GLOBAL_HANDLER:
         for feature, addr in global_handler(report):
             yield feature, addr

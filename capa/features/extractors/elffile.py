@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import io
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 from pathlib import Path
 
 from elftools.elf.elffile import ELFFile, DynamicSegment, SymbolTableSection
@@ -166,7 +166,7 @@ def extract_file_arch(elf: ELFFile, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -182,7 +182,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
+def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
     for global_handler in GLOBAL_HANDLERS:
         for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr

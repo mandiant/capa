@@ -10,7 +10,7 @@ import re
 import logging
 import binascii
 import contextlib
-from typing import Tuple, Iterator
+from typing import Iterator
 
 import pefile
 
@@ -45,7 +45,7 @@ MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
 
-def extract_file_strings(buf: bytes, **kwargs) -> Iterator[Tuple[String, Address]]:
+def extract_file_strings(buf: bytes, **kwargs) -> Iterator[tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
@@ -56,7 +56,7 @@ def extract_file_strings(buf: bytes, **kwargs) -> Iterator[Tuple[String, Address
         yield String(s.s), FileOffsetAddress(s.offset)
 
 
-def extract_format(buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+def extract_format(buf: bytes) -> Iterator[tuple[Feature, Address]]:
     if buf.startswith(MATCH_PE):
         yield Format(FORMAT_PE), NO_ADDRESS
     elif buf.startswith(MATCH_ELF):
@@ -79,7 +79,7 @@ def extract_format(buf: bytes) -> Iterator[Tuple[Feature, Address]]:
         return
 
 
-def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
+def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
     if buf.startswith(MATCH_PE):
         yield from capa.features.extractors.pefile.extract_file_arch(pe=pefile.PE(data=buf))
 
@@ -111,7 +111,7 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
         return
 
 
-def extract_os(buf, os=OS_AUTO) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
     if os != OS_AUTO:
         yield OS(os), NO_ADDRESS
 

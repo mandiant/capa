@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, List, Tuple, Iterator
+from typing import Iterator
 
 from capa.features.file import Import
 from capa.features.common import Feature
@@ -19,7 +19,7 @@ from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 logger = logging.getLogger(__name__)
 
 
-def get_processes(calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]) -> Iterator[ProcessHandle]:
+def get_processes(calls: dict[ProcessAddress, dict[ThreadAddress, list[Call]]]) -> Iterator[ProcessHandle]:
     """
     Get all the created processes for a sample.
     """
@@ -28,7 +28,7 @@ def get_processes(calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]]) 
         yield ProcessHandle(proc_addr, inner={"process_name": sample_call.process_name})
 
 
-def extract_import_names(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_import_names(report: DrakvufReport) -> Iterator[tuple[Feature, Address]]:
     """
     Extract imported function names.
     """
@@ -43,7 +43,7 @@ def extract_import_names(report: DrakvufReport) -> Iterator[Tuple[Feature, Addre
                 yield Import(name), AbsoluteVirtualAddress(function_address)
 
 
-def extract_features(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(report: DrakvufReport) -> Iterator[tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(report):
             yield feature, addr
