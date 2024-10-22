@@ -19,7 +19,10 @@ jobs:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:
     - name: debug
-      run: echo ${{ github.actor }}
+      run: |
+        echo "hello"
+        echo ${{ github.actor }}
+        echo ${{ github }}
     - name: Get changed files
       id: files
       uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
