@@ -5,9 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, List
 
-COM_CLASSES: Dict[str, List[str]] = {
+COM_CLASSES: dict[str, list[str]] = {
     "ClusAppWiz": ["24F97150-6689-11D1-9AA7-00C04FB93A80"],
     "ClusCfgAddNodesWizard": ["BB8D141E-C00A-469F-BC5C-ECD814F0BD74"],
     "ClusCfgCreateClusterWizard": ["B929818E-F5B0-44DC-8A00-1B5F5F5AA1F0"],

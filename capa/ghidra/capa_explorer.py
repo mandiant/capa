@@ -13,7 +13,7 @@ import sys
 import json
 import logging
 import pathlib
-from typing import Any, Dict, List
+from typing import Any
 
 from ghidra.app.cmd.label import AddLabelCmd, CreateNamespacesCmd
 from ghidra.program.model.symbol import Namespace, SourceType, SymbolType
@@ -68,8 +68,8 @@ class CapaMatchData:
         scope,
         capability,
         matches,
-        attack: List[Dict[Any, Any]],
-        mbc: List[Dict[Any, Any]],
+        attack: list[dict[Any, Any]],
+        mbc: list[dict[Any, Any]],
     ):
         self.namespace = namespace
         self.scope = scope
@@ -282,7 +282,7 @@ def parse_json(capa_data):
     for rule, capability in capa_data.get("rules", {}).items():
         # structure to contain rule match address & supporting feature data
         # {rule match addr:[{feature addr:{node_data}}]}
-        rule_matches: Dict[Any, List[Any]] = {}
+        rule_matches: dict[Any, list[Any]] = {}
         for i in range(len(capability.get("matches"))):
             # grab rule match location
             match_loc = capability.get("matches")[i][0].get("value")

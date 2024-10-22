@@ -14,7 +14,7 @@ import logging
 import tempfile
 import contextlib
 import importlib.util
-from typing import Dict, List, Union, BinaryIO, Iterator, NoReturn
+from typing import BinaryIO, Iterator, NoReturn
 from pathlib import Path
 from zipfile import ZipFile
 from datetime import datetime
@@ -164,7 +164,7 @@ def load_json_from_path(json_path: Path):
     return report
 
 
-def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
+def decode_json_lines(fd: BinaryIO | gzip.GzipFile):
     for line in fd:
         try:
             line_s = line.strip().decode()
@@ -175,7 +175,7 @@ def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
             logger.debug("bad DRAKVUF log line: %s", line)
 
 
-def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
+def load_jsonl_from_path(jsonl_path: Path) -> Iterator[dict]:
     try:
         with gzip.open(jsonl_path, "rb") as fg:
             yield from decode_json_lines(fg)
@@ -204,7 +204,7 @@ def get_format_from_report(sample: Path) -> str:
             return FORMAT_DRAKVUF
     elif sample.name.endswith(".zip"):
         with ZipFile(sample, "r") as zipfile:
-            namelist: List[str] = zipfile.namelist()
+            namelist: list[str] = zipfile.namelist()
             if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
                 # assume VMRay zipfile at a minimum has these files
                 return FORMAT_VMRAY

@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 import capa.features.extractors.ghidra.file
 import capa.features.extractors.ghidra.insn
@@ -40,7 +40,7 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
             )
         )
 
-        self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features: list[tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ghidra.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ghidra.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
@@ -73,7 +73,7 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         func = getFunctionContaining(toAddr(addr))  # type: ignore [name-defined] # noqa: F821
         return FunctionHandle(address=AbsoluteVirtualAddress(func.getEntryPoint().getOffset()), inner=func)
 
-    def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ghidra.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
@@ -81,7 +81,7 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 
         yield from ghidra_helpers.get_function_blocks(fh)
 
-    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ghidra.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:

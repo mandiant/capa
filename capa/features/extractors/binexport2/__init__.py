@@ -17,7 +17,7 @@ import io
 import hashlib
 import logging
 import contextlib
-from typing import Set, Dict, List, Tuple, Iterator
+from typing import Iterator
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
@@ -51,13 +51,13 @@ def compute_common_prefix_length(m: str, n: str) -> int:
     return len(m)
 
 
-def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: List[Path]) -> Path:
+def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: list[Path]) -> Path:
     """attempt to find the sample file, given a BinExport2 file.
 
     searches in the same directory as the BinExport2 file, and then in search_paths.
     """
 
-    def filename_similarity_key(p: Path) -> Tuple[int, str]:
+    def filename_similarity_key(p: Path) -> tuple[int, str]:
         # note closure over input_file.
         # sort first by length of common prefix, then by name (for stability)
         return (compute_common_prefix_length(p.name, input_file.name), p.name)
@@ -65,7 +65,7 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: 
     wanted_sha256: str = be2.meta_information.executable_id.lower()
 
     input_directory: Path = input_file.parent
-    siblings: List[Path] = [p for p in input_directory.iterdir() if p.is_file()]
+    siblings: list[Path] = [p for p in input_directory.iterdir() if p.is_file()]
     siblings.sort(key=filename_similarity_key, reverse=True)
     for sibling in siblings:
         # e.g. with open IDA files in the same directory on Windows
@@ -74,7 +74,7 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: 
                 return sibling
 
     for search_path in search_paths:
-        candidates: List[Path] = [p for p in search_path.iterdir() if p.is_file()]
+        candidates: list[Path] = [p for p in search_path.iterdir() if p.is_file()]
         candidates.sort(key=filename_similarity_key, reverse=True)
         for candidate in candidates:
             with contextlib.suppress(PermissionError):
@@ -88,27 +88,27 @@ class BinExport2Index:
     def __init__(self, be2: BinExport2):
         self.be2: BinExport2 = be2
 
-        self.callers_by_vertex_index: Dict[int, List[int]] = defaultdict(list)
-        self.callees_by_vertex_index: Dict[int, List[int]] = defaultdict(list)
+        self.callers_by_vertex_index: dict[int, list[int]] = defaultdict(list)
+        self.callees_by_vertex_index: dict[int, list[int]] = defaultdict(list)
 
         # note: flow graph != call graph (vertex)
-        self.flow_graph_index_by_address: Dict[int, int] = {}
-        self.flow_graph_address_by_index: Dict[int, int] = {}
+        self.flow_graph_index_by_address: dict[int, int] = {}
+        self.flow_graph_address_by_index: dict[int, int] = {}
 
         # edges that come from the given basic block
-        self.source_edges_by_basic_block_index: Dict[int, List[BinExport2.FlowGraph.Edge]] = defaultdict(list)
+        self.source_edges_by_basic_block_index: dict[int, list[BinExport2.FlowGraph.Edge]] = defaultdict(list)
         # edges that end up at the given basic block
-        self.target_edges_by_basic_block_index: Dict[int, List[BinExport2.FlowGraph.Edge]] = defaultdict(list)
+        self.target_edges_by_basic_block_index: dict[int, list[BinExport2.FlowGraph.Edge]] = defaultdict(list)
 
-        self.vertex_index_by_address: Dict[int, int] = {}
+        self.vertex_index_by_address: dict[int, int] = {}
 
-        self.data_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
-        self.data_reference_index_by_target_address: Dict[int, List[int]] = defaultdict(list)
-        self.string_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
+        self.data_reference_index_by_source_instruction_index: dict[int, list[int]] = defaultdict(list)
+        self.data_reference_index_by_target_address: dict[int, list[int]] = defaultdict(list)
+        self.string_reference_index_by_source_instruction_index: dict[int, list[int]] = defaultdict(list)
 
-        self.insn_address_by_index: Dict[int, int] = {}
-        self.insn_index_by_address: Dict[int, int] = {}
-        self.insn_by_address: Dict[int, BinExport2.Instruction] = {}
+        self.insn_address_by_index: dict[int, int] = {}
+        self.insn_index_by_address: dict[int, int] = {}
+        self.insn_by_address: dict[int, BinExport2.Instruction] = {}
 
         # must index instructions first
         self._index_insn_addresses()
@@ -208,7 +208,7 @@ class BinExport2Index:
 
     def basic_block_instructions(
         self, basic_block: BinExport2.BasicBlock
-    ) -> Iterator[Tuple[int, BinExport2.Instruction, int]]:
+    ) -> Iterator[tuple[int, BinExport2.Instruction, int]]:
         """
         For a given basic block, enumerate the instruction indices,
         the instruction instances, and their addresses.
@@ -253,7 +253,7 @@ class BinExport2Analysis:
         self.idx: BinExport2Index = idx
         self.buf: bytes = buf
         self.base_address: int = 0
-        self.thunks: Dict[int, int] = {}
+        self.thunks: dict[int, int] = {}
 
         self._find_base_address()
         self._compute_thunks()
@@ -279,7 +279,7 @@ class BinExport2Analysis:
 
             curr_idx: int = idx
             for _ in range(capa.features.common.THUNK_CHAIN_DEPTH_DELTA):
-                thunk_callees: List[int] = self.idx.callees_by_vertex_index[curr_idx]
+                thunk_callees: list[int] = self.idx.callees_by_vertex_index[curr_idx]
                 # if this doesn't hold, then it doesn't seem like this is a thunk,
                 # because either, len is:
                 #    0 and the thunk doesn't point to anything, or
@@ -324,7 +324,7 @@ class AddressNotMappedError(ReadMemoryError): ...
 @dataclass
 class AddressSpace:
     base_address: int
-    memory_regions: Tuple[MemoryRegion, ...]
+    memory_regions: tuple[MemoryRegion, ...]
 
     def read_memory(self, address: int, length: int) -> bytes:
         rva: int = address - self.base_address
@@ -337,7 +337,7 @@ class AddressSpace:
 
     @classmethod
     def from_pe(cls, pe: PE, base_address: int):
-        regions: List[MemoryRegion] = []
+        regions: list[MemoryRegion] = []
         for section in pe.sections:
             address: int = section.VirtualAddress
             size: int = section.Misc_VirtualSize
@@ -355,7 +355,7 @@ class AddressSpace:
 
     @classmethod
     def from_elf(cls, elf: ELFFile, base_address: int):
-        regions: List[MemoryRegion] = []
+        regions: list[MemoryRegion] = []
 
         # ELF segments are for runtime data,
         # ELF sections are for link-time data.
@@ -401,9 +401,9 @@ class AnalysisContext:
 class FunctionContext:
     ctx: AnalysisContext
     flow_graph_index: int
-    format: Set[str]
-    os: Set[str]
-    arch: Set[str]
+    format: set[str]
+    os: set[str]
+    arch: set[str]
 
 
 @dataclass

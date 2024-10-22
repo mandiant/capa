@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Optional, TypedDict
+from typing import Any, Optional, TypedDict
 from pathlib import Path
 
 import colorama
@@ -129,8 +129,8 @@ logger = logging.getLogger("capa")
 
 
 class FilterConfig(TypedDict, total=False):
-    processes: Set[int]
-    functions: Set[int]
+    processes: set[int]
+    functions: set[int]
 
 
 @contextlib.contextmanager
@@ -170,7 +170,7 @@ def get_default_root() -> Path:
         return Path(__file__).resolve().parent.parent
 
 
-def get_default_signatures() -> List[Path]:
+def get_default_signatures() -> list[Path]:
     """
     compute a list of file system paths to the default FLIRT signatures.
     """
@@ -214,7 +214,7 @@ def install_common_args(parser, wanted=None):
 
     args:
       parser (argparse.ArgumentParser): a parser to update in place, adding common arguments.
-      wanted (Set[str]): collection of arguments to opt-into, including:
+      wanted (set[str]): collection of arguments to opt-into, including:
         - "input_file": required positional argument to input file.
         - "format": flag to override file format.
         - "os": flag to override file operating system.
@@ -457,7 +457,7 @@ def handle_common_args(args):
         args.input_file = Path(args.input_file)
 
     if hasattr(args, "rules"):
-        rules_paths: List[Path] = []
+        rules_paths: list[Path] = []
 
         if args.rules == [RULES_PATH_DEFAULT_STRING]:
             logger.debug("-" * 80)
@@ -695,7 +695,7 @@ def get_rules_from_cli(args) -> RuleSet:
     return rules
 
 
-def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtractor]:
+def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtractor]:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -741,7 +741,7 @@ def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtract
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: List[FeatureExtractor]) -> bool:
+def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -776,7 +776,7 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: List[F
     return found_file_limitation
 
 
-def get_signatures_from_cli(args, input_format: str, backend: str) -> List[Path]:
+def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]:
     if backend != BACKEND_VIV:
         logger.debug("skipping library code matching: only supported by the vivisect backend")
         return []
@@ -896,7 +896,7 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
         raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
 
 
-def main(argv: Optional[List[str]] = None):
+def main(argv: Optional[list[str]] = None):
     if sys.version_info < (3, 10):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
 
@@ -967,7 +967,7 @@ def main(argv: Optional[List[str]] = None):
 
     meta: rdoc.Metadata
     capabilities: MatchResults
-    counts: Dict[str, Any]
+    counts: dict[str, Any]
 
     if input_format == FORMAT_RESULT:
         # result document directly parses into meta, capabilities

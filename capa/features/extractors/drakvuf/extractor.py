@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, List, Tuple, Union, Iterator
+from typing import Union, Iterator
 
 import capa.features.extractors.drakvuf.call
 import capa.features.extractors.drakvuf.file
@@ -39,7 +39,7 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         self.report: DrakvufReport = report
 
         # sort the api calls to prevent going through the entire list each time
-        self.sorted_calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]] = index_calls(report)
+        self.sorted_calls: dict[ProcessAddress, dict[ThreadAddress, list[Call]]] = index_calls(report)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features = list(capa.features.extractors.drakvuf.global_.extract_features(self.report))
@@ -48,16 +48,16 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         # DRAKVUF currently does not yield information about the PE's address
         return NO_ADDRESS
 
-    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from self.global_features
 
-    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.drakvuf.file.extract_features(self.report)
 
     def get_processes(self) -> Iterator[ProcessHandle]:
         yield from capa.features.extractors.drakvuf.file.get_processes(self.sorted_calls)
 
-    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.drakvuf.process.extract_features(ph)
 
     def get_process_name(self, ph: ProcessHandle) -> str:
@@ -66,7 +66,7 @@ class DrakvufExtractor(DynamicFeatureExtractor):
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         yield from capa.features.extractors.drakvuf.process.get_threads(self.sorted_calls, ph)
 
-    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
         if False:
             # force this routine to be a generator,
             # but we don't actually have any elements to generate.
@@ -87,10 +87,10 @@ class DrakvufExtractor(DynamicFeatureExtractor):
 
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-    ) -> Iterator[Tuple[Feature, Address]]:
+    ) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.drakvuf.call.extract_features(ph, th, ch)
 
     @classmethod
-    def from_report(cls, report: Iterator[Dict]) -> "DrakvufExtractor":
+    def from_report(cls, report: Iterator[dict]) -> "DrakvufExtractor":
         dr = DrakvufReport.from_raw_report(report)
         return DrakvufExtractor(report=dr)

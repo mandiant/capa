@@ -25,7 +25,7 @@ import sys
 import json
 import logging
 import argparse
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 
 from capa.version import __version__
@@ -241,7 +241,7 @@ def _populate_invocations(sarif_log: dict, meta_data: dict) -> None:
     sarif_log["runs"][0]["invocations"].append(invoke)
 
 
-def _enumerate_evidence(node: dict, related_count: int) -> List[dict]:
+def _enumerate_evidence(node: dict, related_count: int) -> list[dict]:
     related_locations = []
     if node.get("success") and node.get("node", {}).get("type") != "statement":
         label = ""

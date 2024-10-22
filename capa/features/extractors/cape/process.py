@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 from capa.features.common import String, Feature
 from capa.features.address import Address, ThreadAddress
@@ -22,14 +22,14 @@ def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     get the threads associated with a given process
     """
     process: Process = ph.inner
-    threads: List[int] = process.threads
+    threads: list[int] = process.threads
 
     for thread in threads:
         address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
         yield ThreadHandle(address=address, inner={})
 
 
-def extract_environ_strings(ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_environ_strings(ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract strings from a process' provided environment variables.
     """
@@ -39,7 +39,7 @@ def extract_environ_strings(ph: ProcessHandle) -> Iterator[Tuple[Feature, Addres
         yield String(value), ph.address
 
 
-def extract_features(ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
     for handler in PROCESS_HANDLERS:
         for feature, addr in handler(ph):
             yield feature, addr
