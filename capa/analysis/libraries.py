@@ -12,7 +12,7 @@ import argparse
 import tempfile
 import contextlib
 from enum import Enum
-from typing import List, Optional
+from typing import List, Iterable, Optional
 from pathlib import Path
 
 import rich
@@ -51,6 +51,7 @@ class Method(str, Enum):
     STRINGS = "strings"
     THUNK = "thunk"
     ENTRYPOINT = "entrypoint"
+    CALLGRAPH = "callgraph"
 
 
 class FunctionClassification(BaseModel):
@@ -68,6 +69,9 @@ class FunctionClassification(BaseModel):
     # if is library, these can optionally be provided.
     library_name: Optional[str] = None
     library_version: Optional[str] = None
+
+    # additional note on the classification, TODO removeme if not useful beyond dev/debug
+    note: Optional[str] = None
 
 
 class FunctionIdResults(BaseModel):
@@ -108,6 +112,54 @@ def ida_session(input_path: Path, use_temp_dir=True):
         idapro.close_database()
         if use_temp_dir:
             t.unlink()
+
+
+def get_library_called_functions(
+    function_classifications: list[FunctionClassification],
+) -> Iterable[FunctionClassification]:
+    MAX_PASSES = 10
+    classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
+    for n in range(MAX_PASSES):
+        found_new_lib_func = False
+
+        for fva in idautils.Functions():
+            if classifications_by_va.get(fva):
+                # already classified
+                continue
+
+            for ref in idautils.CodeRefsTo(fva, True):
+                f: idaapi.func_t = idaapi.get_func(ref)
+                if not f:
+                    # no function associated with reference location
+                    continue
+
+                ref_fva = f.start_ea
+                fname = idaapi.get_func_name(ref_fva)
+                if fname in ("___tmainCRTStartup",):
+                    # ignore library functions, where we know that they call user-code
+                    # TODO(mr): extend this list
+                    continue
+
+                if classifications := classifications_by_va.get(ref_fva):
+                    for c in classifications:
+                        if c.classification == Classification.LIBRARY:
+                            fc = FunctionClassification(
+                                va=fva,
+                                name=idaapi.get_func_name(fva),
+                                classification=Classification.LIBRARY,
+                                method=Method.CALLGRAPH,
+                                library_name=c.library_name,
+                                library_version=c.library_version,
+                                note=f"called by 0x{ref_fva:x} ({c.method.value})",
+                            )
+                            classifications_by_va[fva].append(fc)
+                            yield fc
+                            found_new_lib_func = True
+                            break
+
+        if not found_new_lib_func:
+            logger.debug("no update in pass %d, done here", n)
+            return
 
 
 def is_thunk_function(fva):
@@ -177,7 +229,11 @@ def main(argv=None):
 
         for va in idautils.Functions():
             name = idaapi.get_func_name(va)
-            if name not in {"WinMain", }:
+            if name not in {
+                "WinMain",
+                "_main",
+                "main",
+            }:
                 continue
 
             function_classifications.append(
@@ -188,6 +244,10 @@ def main(argv=None):
                     method=Method.ENTRYPOINT,
                 )
             )
+
+        with capa.main.timing("call graph based library identification"):
+            for fc in get_library_called_functions(function_classifications):
+                function_classifications.append(fc)
 
         doc = FunctionIdResults(function_classifications=[])
         classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
@@ -217,6 +277,7 @@ def main(argv=None):
 
             classifications_by_va = capa.analysis.strings.create_index(doc.function_classifications, "va", sorted_=True)
             for va, classifications in classifications_by_va.items():
+                # TODO count of classifications if multiple?
                 name = ", ".join({c.name for c in classifications})
                 if "sub_" in name:
                     name = Text(name, style="grey53")
@@ -224,13 +285,14 @@ def main(argv=None):
                 classification = {c.classification for c in classifications}
                 method = {c.method for c in classifications if c.method}
                 extra = {f"{c.library_name}@{c.library_version}" for c in classifications if c.library_name}
+                note = {f"{c.note}" for c in classifications if c.note}
 
                 table.add_row(
                     hex(va),
                     ", ".join(classification) if classification != {"unknown"} else Text("unknown", style="grey53"),
                     ", ".join(method),
                     name,
-                    ", ".join(extra),
+                    f"{', '.join(extra)} {', '.join(note)}",
                 )
 
             rich.print(table)
