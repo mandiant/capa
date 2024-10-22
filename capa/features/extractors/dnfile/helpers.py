@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Tuple, Union, Iterator, Optional
+from typing import Union, Iterator, Optional
 
 import dnfile
 from dncil.cil.body import CilMethodBody
@@ -144,7 +144,7 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
         )
 
 
-def get_dotnet_methoddef_property_accessors(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+def get_dotnet_methoddef_property_accessors(pe: dnfile.dnPE) -> Iterator[tuple[int, str]]:
     """get MethodDef methods used to access properties
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -194,7 +194,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
     """
     nested_class_table = get_dotnet_nested_class_table_index(pe)
 
-    accessor_map: Dict[int, str] = {}
+    accessor_map: dict[int, str] = {}
     for methoddef, methoddef_access in get_dotnet_methoddef_property_accessors(pe):
         accessor_map[methoddef] = methoddef_access
 
@@ -252,7 +252,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             yield DnType(token, typedefname, namespace=typedefnamespace, member=field.row.Name)
 
 
-def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
+def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
     for rid, method_def in iter_dotnet_table(pe, dnfile.mdtable.MethodDef.number):
         assert isinstance(method_def, dnfile.mdtable.MethodDefRow)
@@ -332,7 +332,7 @@ def get_dotnet_table_row(pe: dnfile.dnPE, table_index: int, row_index: int) -> O
 
 def resolve_nested_typedef_name(
     nested_class_table: dict, index: int, typedef: dnfile.mdtable.TypeDefRow, pe: dnfile.dnPE
-) -> Tuple[str, Tuple[str, ...]]:
+) -> tuple[str, tuple[str, ...]]:
     """Resolves all nested TypeDef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
 
     if index in nested_class_table:
@@ -368,7 +368,7 @@ def resolve_nested_typedef_name(
 
 def resolve_nested_typeref_name(
     index: int, typeref: dnfile.mdtable.TypeRefRow, pe: dnfile.dnPE
-) -> Tuple[str, Tuple[str, ...]]:
+) -> tuple[str, tuple[str, ...]]:
     """Resolves all nested TypeRef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
     # If the ResolutionScope decodes to a typeRef type then it is nested
     if isinstance(typeref.ResolutionScope.table, dnfile.mdtable.TypeRef):
@@ -398,7 +398,7 @@ def resolve_nested_typeref_name(
         return str(typeref.TypeNamespace), (str(typeref.TypeName),)
 
 
-def get_dotnet_nested_class_table_index(pe: dnfile.dnPE) -> Dict[int, int]:
+def get_dotnet_nested_class_table_index(pe: dnfile.dnPE) -> dict[int, int]:
     """Build index for EnclosingClass based off the NestedClass row index in the nestedclass table"""
     nested_class_table = {}
 
@@ -442,7 +442,7 @@ def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
     return not bool(pe.net.Flags.CLR_ILONLY)
 
 
-def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[Tuple[int, dnfile.base.MDTableRow]]:
+def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[tuple[int, dnfile.base.MDTableRow]]:
     assert pe.net is not None
     assert pe.net.mdtables is not None
 

@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 import binaryninja as binja
 
@@ -30,7 +30,7 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
         super().__init__(hashes=SampleHashes.from_bytes(bv.file.raw.read(0, bv.file.raw.length)))
         self.bv = bv
-        self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features: list[tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_os(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_arch(self.bv))
@@ -48,7 +48,7 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         for f in self.bv.functions:
             yield FunctionHandle(address=AbsoluteVirtualAddress(f.start), inner=f)
 
-    def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binja.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
@@ -63,13 +63,13 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
 
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=(bb, mlil_bb))
 
-    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binja.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         import capa.features.extractors.binja.helpers as binja_helpers
 
-        bb: Tuple[binja.BasicBlock, binja.MediumLevelILBasicBlock] = bbh.inner
+        bb: tuple[binja.BasicBlock, binja.MediumLevelILBasicBlock] = bbh.inner
         addr = bb[0].start
 
         for text, length in bb[0]:

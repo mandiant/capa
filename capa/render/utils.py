@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import io
-from typing import Dict, List, Tuple, Union, Iterator, Optional
+from typing import Union, Iterator, Optional
 
 import rich.console
 from rich.progress import Text
@@ -41,7 +41,7 @@ def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
     return f"{'::'.join(data.parts)} [{data.id}]"
 
 
-def sort_rules(rules: Dict[str, rd.RuleMatches]) -> List[Tuple[Optional[str], str, rd.RuleMatches]]:
+def sort_rules(rules: dict[str, rd.RuleMatches]) -> list[tuple[Optional[str], str, rd.RuleMatches]]:
     """Sort rules by namespace and name."""
     return sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in rules.values())
 

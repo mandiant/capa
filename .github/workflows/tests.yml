@@ -26,7 +26,7 @@ env:
 
 jobs:
   changelog_format:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -37,15 +37,15 @@ jobs:
         if [ $number != 1 ]; then exit 1; fi
 
   code_style:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     # use latest available python to take advantage of best performance
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
@@ -64,16 +64,16 @@ jobs:
       run: pre-commit run deptry --hook-stage manual
 
   rule_linter:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Install capa
       run: |
         pip install -r requirements.txt
@@ -90,15 +90,15 @@ jobs:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-12]
         # across all operating systems
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.10", "3.11"]
         include:
           # on Ubuntu run these as well
           - os: ubuntu-20.04
-            python-version: "3.8"
-          - os: ubuntu-20.04
-            python-version: "3.9"
-          - os: ubuntu-20.04
             python-version: "3.10"
+          - os: ubuntu-20.04
+            python-version: "3.11"
+          - os: ubuntu-20.04
+            python-version: "3.12"
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -131,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11"]
+        python-version: ["3.10", "3.11"]
     steps:
     - name: Checkout capa with submodules
       # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
@@ -173,7 +173,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.10", "3.11"]
         java-version: ["17"]
         ghidra-version: ["11.0.1"]
         public-version: ["PUBLIC_20240130"] # for ghidra releases

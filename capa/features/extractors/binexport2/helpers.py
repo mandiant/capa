@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
-from typing import Set, Dict, List, Tuple, Union, Iterator, Optional
+from typing import Union, Iterator, Optional
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -22,7 +22,7 @@ HAS_ARCH_INTEL = {ARCH_I386, ARCH_AMD64}
 HAS_ARCH_ARM = {ARCH_AARCH64}
 
 
-def mask_immediate(arch: Set[str], immediate: int) -> int:
+def mask_immediate(arch: set[str], immediate: int) -> int:
     if arch & HAS_ARCH64:
         immediate &= 0xFFFFFFFFFFFFFFFF
     elif arch & HAS_ARCH32:
@@ -30,7 +30,7 @@ def mask_immediate(arch: Set[str], immediate: int) -> int:
     return immediate
 
 
-def twos_complement(arch: Set[str], immediate: int, default: Optional[int] = None) -> int:
+def twos_complement(arch: set[str], immediate: int, default: Optional[int] = None) -> int:
     if default is not None:
         return capa.features.extractors.helpers.twos_complement(immediate, default)
     elif arch & HAS_ARCH64:
@@ -55,12 +55,12 @@ def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGr
 def _prune_expression_tree_empty_shifts(
     be2: BinExport2,
     operand: BinExport2.Operand,
-    expression_tree: List[List[int]],
+    expression_tree: list[list[int]],
     tree_index: int,
 ):
     expression_index = operand.expression_index[tree_index]
     expression = be2.expression[expression_index]
-    children_tree_indexes: List[int] = expression_tree[tree_index]
+    children_tree_indexes: list[int] = expression_tree[tree_index]
 
     if expression.type == BinExport2.Expression.OPERATOR:
         if len(children_tree_indexes) == 0 and expression.symbol in ("lsl", "lsr"):
@@ -85,12 +85,12 @@ def _prune_expression_tree_empty_shifts(
 def _prune_expression_tree_empty_commas(
     be2: BinExport2,
     operand: BinExport2.Operand,
-    expression_tree: List[List[int]],
+    expression_tree: list[list[int]],
     tree_index: int,
 ):
     expression_index = operand.expression_index[tree_index]
     expression = be2.expression[expression_index]
-    children_tree_indexes: List[int] = expression_tree[tree_index]
+    children_tree_indexes: list[int] = expression_tree[tree_index]
 
     if expression.type == BinExport2.Expression.OPERATOR:
         if len(children_tree_indexes) == 1 and expression.symbol == ",":
@@ -121,7 +121,7 @@ def _prune_expression_tree_empty_commas(
 def _prune_expression_tree(
     be2: BinExport2,
     operand: BinExport2.Operand,
-    expression_tree: List[List[int]],
+    expression_tree: list[list[int]],
 ):
     _prune_expression_tree_empty_shifts(be2, operand, expression_tree, 0)
     _prune_expression_tree_empty_commas(be2, operand, expression_tree, 0)
@@ -131,7 +131,7 @@ def _prune_expression_tree(
 def _build_expression_tree(
     be2: BinExport2,
     operand: BinExport2.Operand,
-) -> List[List[int]]:
+) -> list[list[int]]:
     # The reconstructed expression tree layout, linking parent nodes to their children.
     #
     # There is one list of integers for each expression in the operand.
@@ -159,7 +159,7 @@ def _build_expression_tree(
         # exist (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
         return []
 
-    tree: List[List[int]] = []
+    tree: list[list[int]] = []
     for i, expression_index in enumerate(operand.expression_index):
         children = []
 
@@ -181,16 +181,16 @@ def _build_expression_tree(
 def _fill_operand_expression_list(
     be2: BinExport2,
     operand: BinExport2.Operand,
-    expression_tree: List[List[int]],
+    expression_tree: list[list[int]],
     tree_index: int,
-    expression_list: List[BinExport2.Expression],
+    expression_list: list[BinExport2.Expression],
 ):
     """
     Walk the given expression tree and collect the expression nodes in-order.
     """
     expression_index = operand.expression_index[tree_index]
     expression = be2.expression[expression_index]
-    children_tree_indexes: List[int] = expression_tree[tree_index]
+    children_tree_indexes: list[int] = expression_tree[tree_index]
 
     if expression.type == BinExport2.Expression.REGISTER:
         assert len(children_tree_indexes) == 0
@@ -282,10 +282,10 @@ def _fill_operand_expression_list(
         raise NotImplementedError(expression.type)
 
 
-def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> List[BinExport2.Expression]:
+def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> list[BinExport2.Expression]:
     tree = _build_expression_tree(be2, op)
 
-    expressions: List[BinExport2.Expression] = []
+    expressions: list[BinExport2.Expression] = []
     _fill_operand_expression_list(be2, op, tree, 0, expressions)
 
     return expressions
@@ -331,11 +331,11 @@ def get_instruction_mnemonic(be2: BinExport2, instruction: BinExport2.Instructio
     return be2.mnemonic[instruction.mnemonic_index].name.lower()
 
 
-def get_instruction_operands(be2: BinExport2, instruction: BinExport2.Instruction) -> List[BinExport2.Operand]:
+def get_instruction_operands(be2: BinExport2, instruction: BinExport2.Instruction) -> list[BinExport2.Operand]:
     return [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
 
-def split_with_delimiters(s: str, delimiters: Tuple[str, ...]) -> Iterator[str]:
+def split_with_delimiters(s: str, delimiters: tuple[str, ...]) -> Iterator[str]:
     """
     Splits a string by any of the provided delimiter characters,
     including the delimiters in the results.
@@ -355,7 +355,7 @@ def split_with_delimiters(s: str, delimiters: Tuple[str, ...]) -> Iterator[str]:
         yield s[start:]
 
 
-BinExport2OperandPattern = Union[str, Tuple[str, ...]]
+BinExport2OperandPattern = Union[str, tuple[str, ...]]
 
 
 @dataclass
@@ -382,8 +382,8 @@ class BinExport2InstructionPattern:
     This matcher uses the BinExport2 data layout under the hood.
     """
 
-    mnemonics: Tuple[str, ...]
-    operands: Tuple[Union[str, BinExport2OperandPattern], ...]
+    mnemonics: tuple[str, ...]
+    operands: tuple[Union[str, BinExport2OperandPattern], ...]
     capture: Optional[str]
 
     @classmethod
@@ -438,7 +438,7 @@ class BinExport2InstructionPattern:
         mnemonic, _, rest = pattern.partition(" ")
         mnemonics = mnemonic.split("|")
 
-        operands: List[Union[str, Tuple[str, ...]]] = []
+        operands: list[Union[str, tuple[str, ...]]] = []
         while rest:
             rest = rest.strip()
             if not rest.startswith("["):
@@ -509,7 +509,7 @@ class BinExport2InstructionPattern:
         expression: BinExport2.Expression
 
     def match(
-        self, mnemonic: str, operand_expressions: List[List[BinExport2.Expression]]
+        self, mnemonic: str, operand_expressions: list[list[BinExport2.Expression]]
     ) -> Optional["BinExport2InstructionPattern.MatchResult"]:
         """
         Match the given BinExport2 data against this pattern.
@@ -602,10 +602,10 @@ class BinExport2InstructionPattern:
 class BinExport2InstructionPatternMatcher:
     """Index and match a collection of instruction patterns."""
 
-    def __init__(self, queries: List[BinExport2InstructionPattern]):
+    def __init__(self, queries: list[BinExport2InstructionPattern]):
         self.queries = queries
         # shard the patterns by (mnemonic, #operands)
-        self._index: Dict[Tuple[str, int], List[BinExport2InstructionPattern]] = defaultdict(list)
+        self._index: dict[tuple[str, int], list[BinExport2InstructionPattern]] = defaultdict(list)
 
         for query in queries:
             for mnemonic in query.mnemonics:
@@ -623,7 +623,7 @@ class BinExport2InstructionPatternMatcher:
         )
 
     def match(
-        self, mnemonic: str, operand_expressions: List[List[BinExport2.Expression]]
+        self, mnemonic: str, operand_expressions: list[list[BinExport2.Expression]]
     ) -> Optional[BinExport2InstructionPattern.MatchResult]:
         queries = self._index.get((mnemonic.lower(), len(operand_expressions)), [])
         for query in queries:

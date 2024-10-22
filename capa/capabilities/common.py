@@ -9,7 +9,7 @@
 import logging
 import itertools
 import collections
-from typing import Any, Tuple
+from typing import Any
 
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
@@ -64,7 +64,7 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
 
 def find_capabilities(
     ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
-) -> Tuple[MatchResults, Any]:
+) -> tuple[MatchResults, Any]:
     from capa.capabilities.static import find_static_capabilities
     from capa.capabilities.dynamic import find_dynamic_capabilities
 

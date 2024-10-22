@@ -9,10 +9,9 @@
 import re
 import abc
 import codecs
-import typing
 import logging
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional
+from typing import TYPE_CHECKING, Union, Optional
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -79,8 +78,8 @@ class Result:
         self,
         success: bool,
         statement: Union["capa.engine.Statement", "Feature"],
-        children: List["Result"],
-        locations: Optional[Set[Address]] = None,
+        children: list["Result"],
+        locations: Optional[set[Address]] = None,
     ):
         super().__init__()
         self.success = success
@@ -213,7 +212,7 @@ class Substring(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
+        matches: collections.defaultdict[str, set[Address]] = collections.defaultdict(set)
 
         assert isinstance(self.value, str)
         for feature, locations in features.items():
@@ -261,7 +260,7 @@ class _MatchedSubstring(Substring):
     note: this type should only ever be constructed by `Substring.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, substring: Substring, matches: Dict[str, Set[Address]]):
+    def __init__(self, substring: Substring, matches: dict[str, set[Address]]):
         """
         args:
           substring: the substring feature that matches.
@@ -305,7 +304,7 @@ class Regex(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
+        matches: collections.defaultdict[str, set[Address]] = collections.defaultdict(set)
 
         for feature, locations in features.items():
             if not isinstance(feature, (String,)):
@@ -353,7 +352,7 @@ class _MatchedRegex(Regex):
     note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, regex: Regex, matches: Dict[str, Set[Address]]):
+    def __init__(self, regex: Regex, matches: dict[str, set[Address]]):
         """
         args:
           regex: the regex feature that matches.

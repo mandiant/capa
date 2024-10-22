@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 from enum import Enum
-from typing import Dict, List
 
 from capa.helpers import assert_never
 
@@ -22,7 +21,7 @@ COM_PREFIXES = {
 }
 
 
-def load_com_database(com_type: ComType) -> Dict[str, List[str]]:
+def load_com_database(com_type: ComType) -> dict[str, list[str]]:
     # lazy load these python files since they are so large.
     # that is, don't load them unless a COM feature is being handled.
     import capa.features.com.classes

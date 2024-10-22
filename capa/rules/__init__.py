@@ -26,7 +26,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Callable, Iterator, Optional, cast
+from typing import Any, Union, Callable, Iterator, Optional, cast
 from dataclasses import asdict, dataclass
 
 import yaml
@@ -132,10 +132,10 @@ class Scopes:
             raise ValueError("invalid rules class. at least one scope must be specified")
 
     @classmethod
-    def from_dict(self, scopes: Dict[str, str]) -> "Scopes":
+    def from_dict(self, scopes: dict[str, str]) -> "Scopes":
         # make local copy so we don't make changes outside of this routine.
         # we'll use the value None to indicate the scope is not supported.
-        scopes_: Dict[str, Optional[str]] = dict(scopes)
+        scopes_: dict[str, Optional[str]] = dict(scopes)
 
         # mark non-specified scopes as invalid
         if "static" not in scopes_:
@@ -168,7 +168,7 @@ class Scopes:
         )
 
 
-SUPPORTED_FEATURES: Dict[str, Set] = {
+SUPPORTED_FEATURES: dict[str, set] = {
     Scope.GLOBAL: {
         # these will be added to other scopes, see below.
         capa.features.common.OS,
@@ -297,7 +297,7 @@ class InvalidRuleSet(ValueError):
 
 def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Statement]):
     # construct a dict of all supported features
-    supported_features: Set = set()
+    supported_features: set = set()
     if scopes.static:
         supported_features.update(SUPPORTED_FEATURES[scopes.static])
     if scopes.dynamic:
@@ -322,12 +322,12 @@ def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Stat
 
 def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Statement:
     com_db = capa.features.com.load_com_database(com_type)
-    guids: Optional[List[str]] = com_db.get(com_name)
+    guids: Optional[list[str]] = com_db.get(com_name)
     if not guids:
         logger.error(" %s doesn't exist in COM %s database", com_name, com_type)
         raise InvalidRule(f"'{com_name}' doesn't exist in COM {com_type} database")
 
-    com_features: List[Feature] = []
+    com_features: list[Feature] = []
     for guid in guids:
         hex_chars = guid.replace("-", "")
         h = [hex_chars[i : i + 2] for i in range(0, len(hex_chars), 2)]
@@ -823,11 +823,11 @@ def build_statements(d, scopes: Scopes):
         return feature
 
 
-def first(s: List[Any]) -> Any:
+def first(s: list[Any]) -> Any:
     return s[0]
 
 
-def second(s: List[Any]) -> Any:
+def second(s: list[Any]) -> Any:
     return s[1]
 
 
@@ -853,13 +853,13 @@ class Rule:
         compute the transitive dependency graph themself, if they want it.
 
         Args:
-          namespaces(Dict[str, List[Rule]]): mapping from namespace name to rules in it.
+          namespaces(dict[str, list[Rule]]): mapping from namespace name to rules in it.
             see `index_rules_by_namespace`.
 
         Returns:
-          List[str]: names of rules upon which this rule depends.
+          list[str]: names of rules upon which this rule depends.
         """
-        deps: Set[str] = set()
+        deps: set[str] = set()
 
         def rec(statement):
             if isinstance(statement, capa.features.common.MatchedRule):
@@ -968,8 +968,8 @@ class Rule:
 
         yield from self._extract_subscope_rules_rec(self.statement)
 
-    def _extract_all_features_rec(self, statement) -> Set[Feature]:
-        feature_set: Set[Feature] = set()
+    def _extract_all_features_rec(self, statement) -> set[Feature]:
+        feature_set: set[Feature] = set()
 
         for child in statement.get_children():
             if isinstance(child, Statement):
@@ -978,7 +978,7 @@ class Rule:
                 feature_set.add(child)
         return feature_set
 
-    def extract_all_features(self) -> Set[Feature]:
+    def extract_all_features(self) -> set[Feature]:
         """
         recursively extracts all feature statements in this rule.
 
@@ -1001,7 +1001,7 @@ class Rule:
         return self.statement.evaluate(features, short_circuit=short_circuit)
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any], definition: str) -> "Rule":
+    def from_dict(cls, d: dict[str, Any], definition: str) -> "Rule":
         meta = d["rule"]["meta"]
         name = meta["name"]
 
@@ -1214,14 +1214,14 @@ class Rule:
         return doc
 
 
-def get_rules_with_scope(rules, scope: Scope) -> List[Rule]:
+def get_rules_with_scope(rules, scope: Scope) -> list[Rule]:
     """
     from the given collection of rules, select those with the given scope.
     """
     return [rule for rule in rules if scope in rule.scopes]
 
 
-def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Rule]:
+def get_rules_and_dependencies(rules: list[Rule], rule_name: str) -> Iterator[Rule]:
     """
     from the given collection of rules, select a rule and its dependencies (transitively).
     """
@@ -1249,7 +1249,7 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
             yield rule
 
 
-def ensure_rules_are_unique(rules: List[Rule]) -> None:
+def ensure_rules_are_unique(rules: list[Rule]) -> None:
     seen = set()
     for rule in rules:
         if rule.name in seen:
@@ -1257,7 +1257,7 @@ def ensure_rules_are_unique(rules: List[Rule]) -> None:
         seen.add(rule.name)
 
 
-def ensure_rule_dependencies_are_met(rules: List[Rule]) -> None:
+def ensure_rule_dependencies_are_met(rules: list[Rule]) -> None:
     """
     raise an exception if a rule dependency does not exist.
 
@@ -1274,7 +1274,7 @@ def ensure_rule_dependencies_are_met(rules: List[Rule]) -> None:
                 raise InvalidRule(f'rule "{rule.name}" depends on missing rule "{dep}"')
 
 
-def index_rules_by_namespace(rules: List[Rule]) -> Dict[str, List[Rule]]:
+def index_rules_by_namespace(rules: list[Rule]) -> dict[str, list[Rule]]:
     """
     compute the rules that fit into each namespace found within the given rules.
 
@@ -1303,7 +1303,7 @@ def index_rules_by_namespace(rules: List[Rule]) -> Dict[str, List[Rule]]:
     return dict(namespaces)
 
 
-def topologically_order_rules(rules: List[Rule]) -> List[Rule]:
+def topologically_order_rules(rules: list[Rule]) -> list[Rule]:
     """
     order the given rules such that dependencies show up before dependents.
     this means that as we match rules, we can add features for the matches, and these
@@ -1351,7 +1351,7 @@ class RuleSet:
 
     def __init__(
         self,
-        rules: List[Rule],
+        rules: list[Rule],
     ):
         super().__init__()
 
@@ -1389,7 +1389,7 @@ class RuleSet:
         self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
 
         # these structures are unstable and may change before the next major release.
-        scores_by_rule: Dict[str, int] = {}
+        scores_by_rule: dict[str, int] = {}
         self._feature_indexes_by_scopes = {
             scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
         }
@@ -1433,7 +1433,7 @@ class RuleSet:
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
-    def _score_feature(scores_by_rule: Dict[str, int], node: capa.features.common.Feature) -> int:
+    def _score_feature(scores_by_rule: dict[str, int], node: capa.features.common.Feature) -> int:
         """
         Score the given feature by how "uncommon" we think it will be.
         Features that we expect to be very selective (ie. uniquely identify a rule and be required to match),
@@ -1577,17 +1577,17 @@ class RuleSet:
     @dataclass
     class _RuleFeatureIndex:
         # Mapping from hashable feature to a list of rules that might have this feature.
-        rules_by_feature: Dict[Feature, Set[str]]
+        rules_by_feature: dict[Feature, set[str]]
         # Mapping from rule name to list of Regex/Substring features that have to match.
         # All these features will be evaluated whenever a String feature is encountered.
-        string_rules: Dict[str, List[Feature]]
+        string_rules: dict[str, list[Feature]]
         # Mapping from rule name to list of Bytes features that have to match.
         # All these features will be evaluated whenever a Bytes feature is encountered.
-        bytes_rules: Dict[str, List[Feature]]
+        bytes_rules: dict[str, list[Feature]]
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
-    def _index_rules_by_feature(scope: Scope, rules: List[Rule], scores_by_rule: Dict[str, int]) -> _RuleFeatureIndex:
+    def _index_rules_by_feature(scope: Scope, rules: list[Rule], scores_by_rule: dict[str, int]) -> _RuleFeatureIndex:
         """
         Index the given rules by their minimal set of most "uncommon" features required to match.
 
@@ -1595,12 +1595,12 @@ class RuleSet:
         (which are not hashable and require a scan) that have to match, too.
         """
 
-        rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
+        rules_by_feature: dict[Feature, set[str]] = collections.defaultdict(set)
 
         def rec(
             rule_name: str,
             node: Union[Feature, Statement],
-        ) -> Optional[Tuple[int, Set[Feature]]]:
+        ) -> Optional[tuple[int, set[Feature]]]:
             """
             Walk through a rule's logic tree, picking the features to use for indexing,
             returning the feature and an associated score.
@@ -1667,7 +1667,7 @@ class RuleSet:
                 #
                 # In this case, we prefer to pick the pair of API features since each is expected
                 # to be more common than the mnemonic.
-                scores: List[Tuple[int, Set[Feature]]] = []
+                scores: list[tuple[int, set[Feature]]] = []
                 for child in node.children:
                     score = rec(rule_name, child)
 
@@ -1734,8 +1734,8 @@ class RuleSet:
 
         # These are the Regex/Substring/Bytes features that we have to use for filtering.
         # Ideally we find a way to get rid of all of these, eventually.
-        string_rules: Dict[str, List[Feature]] = {}
-        bytes_rules: Dict[str, List[Feature]] = {}
+        string_rules: dict[str, list[Feature]] = {}
+        bytes_rules: dict[str, list[Feature]] = {}
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1765,10 +1765,10 @@ class RuleSet:
                 logger.debug("        : [%d] %s", RuleSet._score_feature(scores_by_rule, feature), feature)
 
             if string_features:
-                string_rules[rule_name] = cast(List[Feature], string_features)
+                string_rules[rule_name] = cast(list[Feature], string_features)
 
             if bytes_features:
-                bytes_rules[rule_name] = cast(List[Feature], bytes_features)
+                bytes_rules[rule_name] = cast(list[Feature], bytes_features)
 
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
@@ -1785,7 +1785,7 @@ class RuleSet:
         return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
 
     @staticmethod
-    def _get_rules_for_scope(rules, scope) -> List[Rule]:
+    def _get_rules_for_scope(rules, scope) -> list[Rule]:
         """
         given a collection of rules, collect the rules that are needed at the given scope.
         these rules are ordered topologically.
@@ -1793,7 +1793,7 @@ class RuleSet:
         don't include auto-generated "subscope" rules.
         we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
-        scope_rules: Set[Rule] = set()
+        scope_rules: set[Rule] = set()
 
         # we need to process all rules, not just rules with the given scope.
         # this is because rules with a higher scope, e.g. file scope, may have subscope rules
@@ -1807,7 +1807,7 @@ class RuleSet:
         return get_rules_with_scope(topologically_order_rules(list(scope_rules)), scope)
 
     @staticmethod
-    def _extract_subscope_rules(rules) -> List[Rule]:
+    def _extract_subscope_rules(rules) -> list[Rule]:
         """
         process the given sequence of rules.
         for each one, extract any embedded subscope rules into their own rule.
@@ -1854,16 +1854,16 @@ class RuleSet:
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
-    def _sort_rules_by_index(rule_index_by_rule_name: Dict[str, int], rules: List[Rule]):
+    def _sort_rules_by_index(rule_index_by_rule_name: dict[str, int], rules: list[Rule]):
         """
-        Sort (in place) the given rules by their index provided by the given Dict.
+        Sort (in place) the given rules by their index provided by the given dict.
         This mapping is intended to represent the topologic index of the given rule;
          that is, rules with a lower index should be evaluated first, since their dependencies
          will be evaluated later.
         """
         rules.sort(key=lambda r: rule_index_by_rule_name[r.name])
 
-    def _match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
+    def _match(self, scope: Scope, features: FeatureSet, addr: Address) -> tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
 
@@ -1872,7 +1872,7 @@ class RuleSet:
         """
 
         feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
-        rules: List[Rule] = self.rules_by_scope[scope]
+        rules: list[Rule] = self.rules_by_scope[scope]
         # Topologic location of rule given its name.
         # That is, rules with a lower index should be evaluated first, since their dependencies
         # will be evaluated later.
@@ -1908,7 +1908,7 @@ class RuleSet:
         # Find all the rules that could match the given feature set.
         # Ideally we want this set to be as small and focused as possible,
         # and we can tune it by tweaking `_index_rules_by_feature`.
-        candidate_rule_names: Set[str] = set()
+        candidate_rule_names: set[str] = set()
         for feature in features:
             candidate_rule_names.update(feature_index.rules_by_feature.get(feature, ()))
 
@@ -2018,7 +2018,7 @@ class RuleSet:
                     new_features.append(capa.features.common.MatchedRule(namespace))
 
                 if new_features:
-                    new_candidates: List[str] = []
+                    new_candidates: list[str] = []
                     for new_feature in new_features:
                         new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
 
@@ -2031,7 +2031,7 @@ class RuleSet:
 
     def match(
         self, scope: Scope, features: FeatureSet, addr: Address, paranoid=False
-    ) -> Tuple[FeatureSet, ceng.MatchResults]:
+    ) -> tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
 
@@ -2053,7 +2053,7 @@ class RuleSet:
         features, matches = self._match(scope, features, addr)
 
         if paranoid:
-            rules: List[Rule] = self.rules_by_scope[scope]
+            rules: list[Rule] = self.rules_by_scope[scope]
             paranoid_features, paranoid_matches = capa.engine.match(rules, features, addr)
 
             if features != paranoid_features:
@@ -2086,7 +2086,7 @@ def is_nursery_rule_path(path: Path) -> bool:
     return "nursery" in path.parts
 
 
-def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
+def collect_rule_file_paths(rule_paths: list[Path]) -> list[Path]:
     """
     collect all rule file paths, including those in subdirectories.
     """
@@ -2127,7 +2127,7 @@ def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
 
 
 def get_rules(
-    rule_paths: List[RulePath],
+    rule_paths: list[RulePath],
     cache_dir=None,
     on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
     enable_cache: bool = True,
@@ -2154,7 +2154,7 @@ def get_rules(
         if ruleset is not None:
             return ruleset
 
-    rules: List[Rule] = []
+    rules: list[Rule] = []
 
     total_rule_count = len(rule_file_paths)
     for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):

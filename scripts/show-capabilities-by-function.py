@@ -59,7 +59,6 @@ import sys
 import logging
 import argparse
 import collections
-from typing import Dict
 
 import colorama
 
@@ -99,7 +98,7 @@ def render_matches_by_function(doc: rd.ResultDocument):
           - connect to HTTP server
     """
     assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
-    functions_by_bb: Dict[Address, Address] = {}
+    functions_by_bb: dict[Address, Address] = {}
     for finfo in doc.meta.analysis.layout.functions:
         faddress = finfo.address
 

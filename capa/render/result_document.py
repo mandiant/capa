@@ -8,11 +8,10 @@
 import datetime
 import collections
 from enum import Enum
-from typing import Dict, List, Tuple, Union, Literal, Optional
+from typing import Union, Literal, Optional, TypeAlias
 from pathlib import Path
 
 from pydantic import Field, BaseModel, ConfigDict
-from typing_extensions import TypeAlias
 
 import capa.rules
 import capa.engine
@@ -46,7 +45,7 @@ class BasicBlockLayout(Model):
 
 class FunctionLayout(Model):
     address: frz.Address
-    matched_basic_blocks: Tuple[BasicBlockLayout, ...]
+    matched_basic_blocks: tuple[BasicBlockLayout, ...]
 
 
 class CallLayout(Model):
@@ -56,21 +55,21 @@ class CallLayout(Model):
 
 class ThreadLayout(Model):
     address: frz.Address
-    matched_calls: Tuple[CallLayout, ...]
+    matched_calls: tuple[CallLayout, ...]
 
 
 class ProcessLayout(Model):
     address: frz.Address
     name: str
-    matched_threads: Tuple[ThreadLayout, ...]
+    matched_threads: tuple[ThreadLayout, ...]
 
 
 class StaticLayout(Model):
-    functions: Tuple[FunctionLayout, ...]
+    functions: tuple[FunctionLayout, ...]
 
 
 class DynamicLayout(Model):
-    processes: Tuple[ProcessLayout, ...]
+    processes: tuple[ProcessLayout, ...]
 
 
 Layout: TypeAlias = Union[StaticLayout, DynamicLayout]
@@ -93,12 +92,12 @@ class ProcessFeatureCount(Model):
 
 class StaticFeatureCounts(Model):
     file: int
-    functions: Tuple[FunctionFeatureCount, ...]
+    functions: tuple[FunctionFeatureCount, ...]
 
 
 class DynamicFeatureCounts(Model):
     file: int
-    processes: Tuple[ProcessFeatureCount, ...]
+    processes: tuple[ProcessFeatureCount, ...]
 
 
 FeatureCounts: TypeAlias = Union[StaticFeatureCounts, DynamicFeatureCounts]
@@ -109,11 +108,11 @@ class StaticAnalysis(Model):
     arch: str
     os: str
     extractor: str
-    rules: Tuple[str, ...]
+    rules: tuple[str, ...]
     base_address: frz.Address
     layout: StaticLayout
     feature_counts: StaticFeatureCounts
-    library_functions: Tuple[LibraryFunction, ...]
+    library_functions: tuple[LibraryFunction, ...]
 
 
 class DynamicAnalysis(Model):
@@ -121,7 +120,7 @@ class DynamicAnalysis(Model):
     arch: str
     os: str
     extractor: str
-    rules: Tuple[str, ...]
+    rules: tuple[str, ...]
     layout: DynamicLayout
     feature_counts: DynamicFeatureCounts
 
@@ -137,7 +136,7 @@ class Flavor(str, Enum):
 class Metadata(Model):
     timestamp: datetime.datetime
     version: str
-    argv: Optional[Tuple[str, ...]]
+    argv: Optional[tuple[str, ...]]
     sample: Sample
     flavor: Flavor
     analysis: Analysis
@@ -254,7 +253,7 @@ def node_from_capa(node: Union[capa.engine.Statement, capa.engine.Feature]) -> N
 
 
 def node_to_capa(
-    node: Node, children: List[Union[capa.engine.Statement, capa.engine.Feature]]
+    node: Node, children: list[Union[capa.engine.Statement, capa.engine.Feature]]
 ) -> Union[capa.engine.Statement, capa.engine.Feature]:
     if isinstance(node, StatementNode):
         if isinstance(node.statement, CompoundStatement):
@@ -313,9 +312,9 @@ class Match(FrozenModel):
 
     success: bool
     node: Node
-    children: Tuple["Match", ...]
-    locations: Tuple[frz.Address, ...]
-    captures: Dict[str, Tuple[frz.Address, ...]]
+    children: tuple["Match", ...]
+    locations: tuple[frz.Address, ...]
+    captures: dict[str, tuple[frz.Address, ...]]
 
     @classmethod
     def from_capa(
@@ -435,7 +434,7 @@ class Match(FrozenModel):
             captures={capture: tuple(captures[capture]) for capture in captures},
         )
 
-    def to_capa(self, rules_by_name: Dict[str, capa.rules.Rule]) -> capa.engine.Result:
+    def to_capa(self, rules_by_name: dict[str, capa.rules.Rule]) -> capa.engine.Result:
         children = [child.to_capa(rules_by_name) for child in self.children]
         statement = node_to_capa(self.node, [child.statement for child in children])
 
@@ -492,7 +491,7 @@ class AttackSpec(FrozenModel):
       id: like `Identifier` above, perhaps "T1059.006"
     """
 
-    parts: Tuple[str, ...]
+    parts: tuple[str, ...]
     tactic: str
     technique: str
     subtechnique: str
@@ -532,7 +531,7 @@ class MBCSpec(FrozenModel):
       id: like `Identifier` above, perhaps "E1056.m01"
     """
 
-    parts: Tuple[str, ...]
+    parts: tuple[str, ...]
     objective: str
     behavior: str
     method: str
@@ -572,12 +571,12 @@ class MaecMetadata(FrozenModel):
 class RuleMetadata(FrozenModel):
     name: str
     namespace: Optional[str] = None
-    authors: Tuple[str, ...]
+    authors: tuple[str, ...]
     scopes: capa.rules.Scopes
-    attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
-    mbc: Tuple[MBCSpec, ...]
-    references: Tuple[str, ...]
-    examples: Tuple[str, ...]
+    attack: tuple[AttackSpec, ...] = Field(alias="att&ck")
+    mbc: tuple[MBCSpec, ...]
+    references: tuple[str, ...]
+    examples: tuple[str, ...]
     description: str
 
     lib: bool = Field(False, alias="lib")
@@ -621,16 +620,16 @@ class RuleMatches(FrozenModel):
 
     meta: RuleMetadata
     source: str
-    matches: Tuple[Tuple[frz.Address, Match], ...]
+    matches: tuple[tuple[frz.Address, Match], ...]
 
 
 class ResultDocument(FrozenModel):
     meta: Metadata
-    rules: Dict[str, RuleMatches]
+    rules: dict[str, RuleMatches]
 
     @classmethod
     def from_capa(cls, meta: Metadata, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
-        rule_matches: Dict[str, RuleMatches] = {}
+        rule_matches: dict[str, RuleMatches] = {}
         for rule_name, matches in capabilities.items():
             rule = rules[rule_name]
 
@@ -648,8 +647,8 @@ class ResultDocument(FrozenModel):
 
         return ResultDocument(meta=meta, rules=rule_matches)
 
-    def to_capa(self) -> Tuple[Metadata, Dict]:
-        capabilities: Dict[str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]] = (
+    def to_capa(self) -> tuple[Metadata, dict]:
+        capabilities: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
             collections.defaultdict(list)
         )
 

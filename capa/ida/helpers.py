@@ -8,7 +8,7 @@
 import logging
 import datetime
 import contextlib
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 
 import idc
@@ -165,7 +165,7 @@ def get_file_sha256():
     return sha256
 
 
-def collect_metadata(rules: List[Path]):
+def collect_metadata(rules: list[Path]):
     """ """
     md5 = get_file_md5()
     sha256 = get_file_sha256()
