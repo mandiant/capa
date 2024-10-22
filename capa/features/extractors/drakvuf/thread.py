@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, List, Iterator
+from typing import Iterator
 
 from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_calls(
-    sorted_calls: Dict[ProcessAddress, Dict[ThreadAddress, List[Call]]], ph: ProcessHandle, th: ThreadHandle
+    sorted_calls: dict[ProcessAddress, dict[ThreadAddress, list[Call]]], ph: ProcessHandle, th: ThreadHandle
 ) -> Iterator[CallHandle]:
     for i, call in enumerate(sorted_calls[ph.address][th.address]):
         call_addr = DynamicCallAddress(thread=th.address, id=i)

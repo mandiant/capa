@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Any, Dict, List, Iterator
+from typing import Any, Iterator
 
 from pydantic import Field, BaseModel, ConfigDict, model_validator
 
@@ -47,7 +47,7 @@ class LoadedDLL(ConciseModel):
     plugin_name: str = Field(alias="Plugin")
     event: str = Field(alias="Event")
     name: str = Field(alias="DllName")
-    imports: Dict[str, int] = Field(alias="Rva")
+    imports: dict[str, int] = Field(alias="Rva")
 
 
 class Call(ConciseModel):
@@ -58,18 +58,18 @@ class Call(ConciseModel):
     pid: int = Field(alias="PID")
     tid: int = Field(alias="TID")
     name: str = Field(alias="Method")
-    arguments: Dict[str, str]
+    arguments: dict[str, str]
 
 
 class WinApiCall(Call):
     # This class models Windows API calls captured by DRAKVUF (DLLs, etc.).
-    arguments: Dict[str, str] = Field(alias="Arguments")
+    arguments: dict[str, str] = Field(alias="Arguments")
     event: str = Field(alias="Event")
     return_value: str = Field(alias="ReturnValue")
 
     @model_validator(mode="before")
     @classmethod
-    def build_arguments(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def build_arguments(cls, values: dict[str, Any]) -> dict[str, Any]:
         args = values["Arguments"]
         values["Arguments"] = dict(arg.split("=", 1) for arg in args)
         return values
@@ -100,7 +100,7 @@ class SystemCall(Call):
 
     @model_validator(mode="before")
     @classmethod
-    def build_extra(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def build_extra(cls, values: dict[str, Any]) -> dict[str, Any]:
         # DRAKVUF stores argument names and values as entries in the syscall's entry.
         # This model validator collects those arguments into a list in the model.
         values["arguments"] = {
@@ -110,13 +110,13 @@ class SystemCall(Call):
 
 
 class DrakvufReport(ConciseModel):
-    syscalls: List[SystemCall] = []
-    apicalls: List[WinApiCall] = []
-    discovered_dlls: List[DiscoveredDLL] = []
-    loaded_dlls: List[LoadedDLL] = []
+    syscalls: list[SystemCall] = []
+    apicalls: list[WinApiCall] = []
+    discovered_dlls: list[DiscoveredDLL] = []
+    loaded_dlls: list[LoadedDLL] = []
 
     @classmethod
-    def from_raw_report(cls, entries: Iterator[Dict]) -> "DrakvufReport":
+    def from_raw_report(cls, entries: Iterator[dict]) -> "DrakvufReport":
         report = cls()
 
         for entry in entries:

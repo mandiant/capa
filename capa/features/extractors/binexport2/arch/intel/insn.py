@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
@@ -63,7 +63,7 @@ NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_insn_number_features(
     fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -123,7 +123,7 @@ OFFSET_ZERO_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -161,7 +161,7 @@ def is_security_cookie(
 
     # security cookie check should use SP or BP
     op1: BinExport2.Operand = be2.operand[instruction.operand_index[1]]
-    op1_exprs: List[BinExport2.Expression] = [be2.expression[expr_i] for expr_i in op1.expression_index]
+    op1_exprs: list[BinExport2.Expression] = [be2.expression[expr_i] for expr_i in op1.expression_index]
     if all(expr.symbol.lower() not in ("bp", "esp", "ebp", "rbp", "rsp") for expr in op1_exprs):
         return False
 
@@ -192,7 +192,7 @@ NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
@@ -209,7 +209,7 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    operands: List[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
+    operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
     if operands[0] == operands[1]:
         return
@@ -236,7 +236,7 @@ INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
 
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
     be2: BinExport2 = fhi.ctx.be2

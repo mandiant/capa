@@ -14,7 +14,7 @@ jobs:
   check_changelog:
     # no need to check for dependency updates via dependabot
     if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:

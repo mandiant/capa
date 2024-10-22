@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
+
 ### New Rules (0)
 
 -

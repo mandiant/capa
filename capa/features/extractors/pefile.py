@@ -148,11 +148,11 @@ def extract_file_features(pe, buf):
       buf: the raw sample bytes
 
     yields:
-      Tuple[Feature, VA]: a feature and its location.
+      tuple[Feature, VA]: a feature and its location.
     """
 
     for file_handler in FILE_HANDLERS:
-        # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
+        # file_handler: type: (pe, bytes) -> Iterable[tuple[Feature, Address]]
         for feature, va in file_handler(pe=pe, buf=buf):  # type: ignore
             yield feature, va
 
@@ -177,10 +177,10 @@ def extract_global_features(pe, buf):
       buf: the raw sample bytes
 
     yields:
-      Tuple[Feature, VA]: a feature and its location.
+      tuple[Feature, VA]: a feature and its location.
     """
     for handler in GLOBAL_HANDLERS:
-        # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
+        # file_handler: type: (pe, bytes) -> Iterable[tuple[Feature, Address]]
         for feature, va in handler(pe=pe, buf=buf):  # type: ignore
             yield feature, va
 

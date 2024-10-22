@@ -9,7 +9,7 @@
 import logging
 import itertools
 import collections
-from typing import Any, List, Tuple
+from typing import Any
 
 import capa.perf
 import capa.features.freeze as frz
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def find_call_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-) -> Tuple[FeatureSet, MatchResults]:
+) -> tuple[FeatureSet, MatchResults]:
     """
     find matches for the given rules for the given call.
 
@@ -51,7 +51,7 @@ def find_call_capabilities(
 
 def find_thread_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle
-) -> Tuple[FeatureSet, MatchResults, MatchResults]:
+) -> tuple[FeatureSet, MatchResults, MatchResults]:
     """
     find matches for the given rules within the given thread.
 
@@ -89,7 +89,7 @@ def find_thread_capabilities(
 
 def find_process_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle
-) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
+) -> tuple[MatchResults, MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given process.
 
@@ -127,7 +127,7 @@ def find_process_capabilities(
 
 def find_dynamic_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress=None
-) -> Tuple[MatchResults, Any]:
+) -> tuple[MatchResults, Any]:
     all_process_matches: MatchResults = collections.defaultdict(list)
     all_thread_matches: MatchResults = collections.defaultdict(list)
     all_call_matches: MatchResults = collections.defaultdict(list)
@@ -135,7 +135,7 @@ def find_dynamic_capabilities(
     feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
 
     assert isinstance(extractor, DynamicFeatureExtractor)
-    processes: List[ProcessHandle] = list(extractor.get_processes())
+    processes: list[ProcessHandle] = list(extractor.get_processes())
     n_processes: int = len(processes)
 
     with capa.helpers.CapaProgressBar(

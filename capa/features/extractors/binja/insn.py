@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, List, Tuple, Iterator, Optional
+from typing import Any, Iterator, Optional
 
 from binaryninja import Function
 from binaryninja import BasicBlock as BinjaBasicBlock
@@ -64,7 +64,7 @@ def is_stub_function(bv: BinaryView, addr: int) -> Optional[int]:
     return None
 
 
-def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction API features
 
@@ -123,7 +123,7 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
 
 def extract_insn_number_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction number features
     example:
@@ -131,7 +131,7 @@ def extract_insn_number_features(
     """
     func: Function = fh.inner
 
-    results: List[Tuple[Any[Number, OperandNumber], Address]] = []
+    results: list[tuple[Any[Number, OperandNumber], Address]] = []
 
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation == LowLevelILOperation.LLIL_LOAD:
@@ -162,7 +162,7 @@ def extract_insn_number_features(
     yield from results
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse referenced byte sequences
     example:
@@ -209,7 +209,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
 def extract_insn_string_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction string features
 
@@ -266,7 +266,7 @@ def extract_insn_string_features(
 
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction structure offset features
 
@@ -275,7 +275,7 @@ def extract_insn_offset_features(
     """
     func: Function = fh.inner
 
-    results: List[Tuple[Any[Offset, OperandOffset], Address]] = []
+    results: list[tuple[Any[Offset, OperandOffset], Address]] = []
     address_size = func.view.arch.address_size * 8
 
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
@@ -353,7 +353,7 @@ def is_nzxor_stack_cookie(f: Function, bb: BinjaBasicBlock, llil: LowLevelILInst
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction non-zeroing XOR instruction
     ignore expected non-zeroing XORs, e.g. security cookies
@@ -382,7 +382,7 @@ def extract_insn_nzxor_characteristic_features(
 
 def extract_insn_mnemonic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction mnemonic features"""
     insn: DisassemblyInstruction = ih.inner
     yield Mnemonic(insn.text[0].text), ih.address
@@ -390,7 +390,7 @@ def extract_insn_mnemonic_features(
 
 def extract_insn_obfs_call_plus_5_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
@@ -401,7 +401,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(
 
 def extract_insn_peb_access_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction peb access
 
     fs:[0x30] on x86, gs:[0x60] on x64
@@ -444,7 +444,7 @@ def extract_insn_peb_access_characteristic_features(
 
 def extract_insn_segment_access_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
     func: Function = fh.inner
 
@@ -471,7 +471,7 @@ def extract_insn_segment_access_features(
 
 def extract_insn_cross_section_cflow(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
     func: Function = fh.inner
     bv: BinaryView = func.view
@@ -491,7 +491,7 @@ def extract_insn_cross_section_cflow(
             yield Characteristic("cross section flow"), ih.address
 
 
-def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
@@ -534,7 +534,7 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
 
@@ -562,7 +562,7 @@ def extract_function_indirect_call_characteristic_features(
     yield Characteristic("indirect call"), ih.address
 
 
-def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
         for feature, ea in inst_handler(f, bbh, insn):
