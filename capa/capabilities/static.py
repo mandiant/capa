@@ -10,7 +10,7 @@ import time
 import logging
 import itertools
 import collections
-from typing import Any, List, Tuple
+from typing import Any
 
 import capa.perf
 import capa.helpers
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def find_instruction_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
-) -> Tuple[FeatureSet, MatchResults]:
+) -> tuple[FeatureSet, MatchResults]:
     """
     find matches for the given rules for the given instruction.
 
@@ -53,7 +53,7 @@ def find_instruction_capabilities(
 
 def find_basic_block_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle
-) -> Tuple[FeatureSet, MatchResults, MatchResults]:
+) -> tuple[FeatureSet, MatchResults, MatchResults]:
     """
     find matches for the given rules within the given basic block.
 
@@ -93,7 +93,7 @@ def find_basic_block_capabilities(
 
 def find_code_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
-) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
+) -> tuple[MatchResults, MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given function.
 
@@ -131,16 +131,16 @@ def find_code_capabilities(
 
 def find_static_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
-) -> Tuple[MatchResults, Any]:
+) -> tuple[MatchResults, Any]:
     all_function_matches: MatchResults = collections.defaultdict(list)
     all_bb_matches: MatchResults = collections.defaultdict(list)
     all_insn_matches: MatchResults = collections.defaultdict(list)
 
     feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
-    library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
+    library_functions: tuple[rdoc.LibraryFunction, ...] = ()
 
     assert isinstance(extractor, StaticFeatureExtractor)
-    functions: List[FunctionHandle] = list(extractor.get_functions())
+    functions: list[FunctionHandle] = list(extractor.get_functions())
     n_funcs: int = len(functions)
     n_libs: int = 0
     percentage: float = 0

@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
@@ -32,7 +32,7 @@ from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 logger = logging.getLogger(__name__)
 
 
-def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -68,7 +68,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
 
 def extract_insn_number_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     if fhi.arch & HAS_ARCH_INTEL:
@@ -77,7 +77,7 @@ def extract_insn_number_features(
         yield from capa.features.extractors.binexport2.arch.arm.insn.extract_insn_number_features(fh, bbh, ih)
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -92,7 +92,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
         # disassembler already identified string reference from instruction
         return
 
-    reference_addresses: List[int] = []
+    reference_addresses: list[int] = []
 
     if instruction_index in idx.data_reference_index_by_source_instruction_index:
         for data_reference_index in idx.data_reference_index_by_source_instruction_index[instruction_index]:
@@ -142,7 +142,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
 def extract_insn_string_features(
     fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -161,7 +161,7 @@ def extract_insn_string_features(
 
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     if fhi.arch & HAS_ARCH_INTEL:
@@ -172,7 +172,7 @@ def extract_insn_offset_features(
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     if fhi.arch & HAS_ARCH_INTEL:
@@ -187,7 +187,7 @@ def extract_insn_nzxor_characteristic_features(
 
 def extract_insn_mnemonic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -199,7 +199,7 @@ def extract_insn_mnemonic_features(
     yield Mnemonic(mnemonic_name), ih.address
 
 
-def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope;
@@ -221,7 +221,7 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
     if fhi.arch & HAS_ARCH_INTEL:
@@ -234,7 +234,7 @@ def extract_function_indirect_call_characteristic_features(
         )
 
 
-def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
         for feature, ea in inst_handler(f, bbh, insn):

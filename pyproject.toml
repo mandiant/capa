@@ -20,7 +20,7 @@ authors = [
 description = "The FLARE team's open-source tool to identify capabilities in executable files."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE.txt"}
-requires-python = ">=3.8.1"
+requires-python = ">=3.10"
 keywords = ["malware analysis", "reverse engineering", "capability detection", "software behaviors", "capa", "FLARE"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -95,9 +95,7 @@ dependencies = [
     # typically due to dropping support for python releases
     # we still support.
 
-    # TODO(williballenthin): networkx 3.2 doesn't support python 3.8 while capa does.
-    # https://github.com/mandiant/capa/issues/1966
-    "networkx>=3,<3.2",
+    "networkx>=3",
 
     "dnfile>=0.15.0",
 ]
@@ -235,7 +233,7 @@ DEP002 = [
 
 # dependencies imported but missing from definitions
 DEP003 = [
-    "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
+    "typing_extensions" # TODO(s-ff): remove when Python 3.10 is deprecated, see #1699
 ]
 
 [tool.deptry.package_module_name_map]

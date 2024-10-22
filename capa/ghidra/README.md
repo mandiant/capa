@@ -55,7 +55,7 @@ You can also execute [capa_ghidra.py](https://raw.githubusercontent.com/mandiant
 | capa | `>= 7.0.0` | https://github.com/mandiant/capa/releases |
 | Ghidrathon | `>= 3.0.0` | https://github.com/mandiant/Ghidrathon/releases |
 | Ghidra | `>= 10.3.2` | https://github.com/NationalSecurityAgency/ghidra/releases |
-| Python | `>= 3.8.0` | https://www.python.org/downloads |
+| Python | `>= 3.10.0` | https://www.python.org/downloads |
 
 ## Installation
 

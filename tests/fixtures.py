@@ -9,7 +9,6 @@
 import binascii
 import contextlib
 import collections
-from typing import Set, Dict
 from pathlib import Path
 from functools import lru_cache
 
@@ -310,7 +309,7 @@ def extract_basic_block_features(extractor, fh, bbh):
 
 
 # f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
-def extract_instruction_features(extractor, fh, bbh, ih) -> Dict[Feature, Set[Address]]:
+def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Address]]:
     features = collections.defaultdict(set)
     for feature, addr in extractor.extract_insn_features(fh, bbh, ih):
         features[feature].add(addr)

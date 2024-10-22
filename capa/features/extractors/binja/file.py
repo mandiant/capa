@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from binaryninja import Segment, BinaryView, SymbolType, SymbolBinding
 
@@ -18,7 +18,7 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, Absolu
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
-def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[Tuple[Feature, Address]]:
+def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[tuple[Feature, Address]]:
     """check segment for embedded PE"""
     start = 0
     if bv.view_type == "PE" and seg.start == bv.start:
@@ -32,13 +32,13 @@ def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[Tuple[Feature
         yield Characteristic("embedded pe"), FileOffsetAddress(seg.start + offset)
 
 
-def extract_file_embedded_pe(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_embedded_pe(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract embedded PE features"""
     for seg in bv.segments:
         yield from check_segment_for_pe(bv, seg)
 
 
-def extract_file_export_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_export_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract function exports"""
     for sym in bv.get_symbols_of_type(SymbolType.FunctionSymbol) + bv.get_symbols_of_type(SymbolType.DataSymbol):
         if sym.binding in [SymbolBinding.GlobalBinding, SymbolBinding.WeakBinding]:
@@ -72,7 +72,7 @@ def extract_file_export_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address
         yield Characteristic("forwarded export"), AbsoluteVirtualAddress(sym.address)
 
 
-def extract_file_import_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_import_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract function imports
 
     1. imports by ordinal:
@@ -96,19 +96,19 @@ def extract_file_import_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address
                 yield Import(name), addr
 
 
-def extract_file_section_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_section_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract section names"""
     for name, section in bv.sections.items():
         yield Section(name), AbsoluteVirtualAddress(section.start)
 
 
-def extract_file_strings(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_strings(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
     for s in bv.strings:
         yield String(s.value), FileOffsetAddress(s.start)
 
 
-def extract_file_function_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """
     extract the names of statically-linked library functions.
     """
@@ -127,7 +127,7 @@ def extract_file_function_names(bv: BinaryView) -> Iterator[Tuple[Feature, Addre
                 yield FunctionName(name[1:]), sym.address
 
 
-def extract_file_format(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_format(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     view_type = bv.view_type
     if view_type in ["PE", "COFF"]:
         yield Format(FORMAT_PE), NO_ADDRESS
@@ -140,7 +140,7 @@ def extract_file_format(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError(f"unexpected file format: {view_type}")
 
 
-def extract_features(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract file features"""
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(bv):
