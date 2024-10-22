@@ -6,11 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Union, Optional
+from typing import Union, Optional, Annotated
 
 import xmltodict
 from pydantic import Field, BaseModel
-from typing_extensions import Annotated
 from pydantic.functional_validators import BeforeValidator
 
 """

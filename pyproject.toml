@@ -233,7 +233,7 @@ DEP002 = [
 
 # dependencies imported but missing from definitions
 DEP003 = [
-    "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
+    "typing_extensions" # TODO(s-ff): remove when Python 3.10 is deprecated, see #1699
 ]
 
 [tool.deptry.package_module_name_map]

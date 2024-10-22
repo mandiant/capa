@@ -6,10 +6,9 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import binascii
-from typing import Any, Union, Literal, Optional, TypeAlias
+from typing import Any, Union, Literal, Optional, Annotated, TypeAlias
 
 from pydantic import Field, BaseModel, ConfigDict
-from typing_extensions import Annotated
 from pydantic.functional_validators import BeforeValidator
 
 
