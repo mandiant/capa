@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from binaryninja import Function, BinaryView, SymbolType, RegisterValueType, LowLevelILOperation
 
@@ -95,7 +95,7 @@ def extract_function_name(fh: FunctionHandle):
             yield FunctionName(name[1:]), sym.address
 
 
-def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr

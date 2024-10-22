@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Iterator
+from typing import Iterator
 
 import idaapi
 
@@ -36,7 +36,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
                 sha256=capa.ida.helpers.retrieve_input_file_sha256(),
             )
         )
-        self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features: list[tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
@@ -61,7 +61,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         f = idaapi.get_func(ea)
         return FunctionHandle(address=AbsoluteVirtualAddress(f.start_ea), inner=f)
 
-    def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
@@ -70,7 +70,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         for bb in ida_helpers.get_function_blocks(fh.inner):
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start_ea), inner=bb)
 
-    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:

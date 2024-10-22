@@ -67,7 +67,6 @@ Example::
 import sys
 import logging
 import argparse
-from typing import Tuple
 
 import capa.main
 import capa.rules
@@ -136,7 +135,7 @@ def print_static_analysis(extractor: StaticFeatureExtractor, args):
         for feature, addr in extractor.extract_file_features():
             print(f"file: {format_address(addr)}: {feature}")
 
-    function_handles: Tuple[FunctionHandle, ...]
+    function_handles: tuple[FunctionHandle, ...]
     if isinstance(extractor, capa.features.extractors.pefile.PefileFeatureExtractor):
         # pefile extractor doesn't extract function features
         function_handles = ()

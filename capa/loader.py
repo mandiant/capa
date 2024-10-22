@@ -10,7 +10,7 @@ import os
 import logging
 import datetime
 import contextlib
-from typing import Set, Dict, List, Optional
+from typing import Optional
 from pathlib import Path
 
 from rich.console import Console
@@ -128,7 +128,7 @@ def get_meta_str(vw):
     return f"{', '.join(meta)}, number of functions: {len(vw.getFunctions())}"
 
 
-def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
+def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     """
     load the program at the given path into a vivisect workspace using the given format.
     also apply the given FLIRT signatures.
@@ -198,7 +198,7 @@ def get_extractor(
     input_format: str,
     os_: str,
     backend: str,
-    sigpaths: List[Path],
+    sigpaths: list[Path],
     should_save_workspace=False,
     disable_progress=False,
     sample_path: Optional[Path] = None,
@@ -346,7 +346,7 @@ def get_extractor(
         raise ValueError("unexpected backend: " + backend)
 
 
-def _get_binexport2_file_extractors(input_file: Path) -> List[FeatureExtractor]:
+def _get_binexport2_file_extractors(input_file: Path) -> list[FeatureExtractor]:
     # I'm not sure this is where this logic should live, but it works for now.
     # we'll keep this a "private" routine until we're sure.
     import capa.features.extractors.binexport2
@@ -368,8 +368,8 @@ def _get_binexport2_file_extractors(input_file: Path) -> List[FeatureExtractor]:
         return []
 
 
-def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
-    file_extractors: List[FeatureExtractor] = []
+def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtractor]:
+    file_extractors: list[FeatureExtractor] = []
 
     # we use lazy importing here to avoid eagerly loading dependencies
     # that some specialized environments may not have,
@@ -416,11 +416,11 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
     return file_extractors
 
 
-def get_signatures(sigs_path: Path) -> List[Path]:
+def get_signatures(sigs_path: Path) -> list[Path]:
     if not sigs_path.exists():
         raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
 
-    paths: List[Path] = []
+    paths: list[Path] = []
     if sigs_path.is_file():
         paths.append(sigs_path)
     elif sigs_path.is_dir():
@@ -478,11 +478,11 @@ def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
 
 
 def collect_metadata(
-    argv: List[str],
+    argv: list[str],
     input_path: Path,
     input_format: str,
     os_: str,
-    rules_path: List[Path],
+    rules_path: list[Path],
     extractor: FeatureExtractor,
     counts: dict,
 ) -> rdoc.Metadata:
@@ -545,7 +545,7 @@ def compute_dynamic_layout(
     """
     assert isinstance(extractor, DynamicFeatureExtractor)
 
-    matched_calls: Set[Address] = set()
+    matched_calls: set[Address] = set()
 
     def result_rec(result: capa.features.common.Result):
         for loc in result.locations:
@@ -558,14 +558,14 @@ def compute_dynamic_layout(
         for _, result in matches:
             result_rec(result)
 
-    names_by_process: Dict[Address, str] = {}
-    names_by_call: Dict[Address, str] = {}
+    names_by_process: dict[Address, str] = {}
+    names_by_call: dict[Address, str] = {}
 
-    matched_processes: Set[Address] = set()
-    matched_threads: Set[Address] = set()
+    matched_processes: set[Address] = set()
+    matched_threads: set[Address] = set()
 
-    threads_by_process: Dict[Address, List[Address]] = {}
-    calls_by_thread: Dict[Address, List[Address]] = {}
+    threads_by_process: dict[Address, list[Address]] = {}
+    calls_by_thread: dict[Address, list[Address]] = {}
 
     for p in extractor.get_processes():
         threads_by_process[p.address] = []
@@ -625,8 +625,8 @@ def compute_static_layout(rules: RuleSet, extractor: StaticFeatureExtractor, cap
     otherwise, we may pollute the json document with
     a large amount of un-referenced data.
     """
-    functions_by_bb: Dict[Address, Address] = {}
-    bbs_by_function: Dict[Address, List[Address]] = {}
+    functions_by_bb: dict[Address, Address] = {}
+    bbs_by_function: dict[Address, list[Address]] = {}
     for f in extractor.get_functions():
         bbs_by_function[f.address] = []
         for bb in extractor.get_basic_blocks(f):
