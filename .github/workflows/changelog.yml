@@ -11,10 +11,6 @@ permissions:
   pull-requests: write
 
 jobs:
-  debug:
-   runs-on: ubuntu-latest
-   steps:
-   - run: echo ${{ github.actor }}
   check_changelog:
     # no need to check for dependency updates via dependabot
     if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot-preview[bot]'
@@ -22,6 +18,8 @@ jobs:
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:
+    - name: debug
+      run: echo ${{ github.actor }}
     - name: Get changed files
       id: files
       uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
