@@ -30,7 +30,7 @@ jobs:
           - os: ubuntu-20.04
             artifact_name: capa
             asset_name: linux-py312
-            python_version: "3.12"
+            python_version: '3.12'
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
@@ -85,6 +85,9 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux
+          - os: ubuntu-22.04
+            artifact_name: capa
+            asset_name: linux-py312
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
@@ -103,7 +106,7 @@ jobs:
     # upload zipped binaries to Release page
     if: github.event_name == 'release'
     name: zip and upload ${{ matrix.asset_name }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [build]
     strategy:
       matrix:
