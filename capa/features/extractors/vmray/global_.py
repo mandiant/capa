@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Tuple, Iterator
+from typing import Iterator
 
 from capa.features.common import (
     OS,
@@ -27,7 +27,7 @@ from capa.features.extractors.vmray import VMRayAnalysis
 logger = logging.getLogger(__name__)
 
 
-def extract_arch(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+def extract_arch(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
     file_type: str = analysis.file_type
 
     if "x86-32" in file_type:
@@ -38,7 +38,7 @@ def extract_arch(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
         raise ValueError("unrecognized arch from the VMRay report: %s" % file_type)
 
 
-def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+def extract_format(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
     assert analysis.sample_file_static_data is not None
     if analysis.sample_file_static_data.pe:
         yield Format(FORMAT_PE), NO_ADDRESS
@@ -48,7 +48,7 @@ def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]
         raise ValueError("unrecognized file format from the VMRay report: %s" % analysis.file_type)
 
 
-def extract_os(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
     file_type: str = analysis.file_type
 
     if "windows" in file_type.lower():
@@ -59,7 +59,7 @@ def extract_os(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
         raise ValueError("unrecognized OS from the VMRay report: %s" % file_type)
 
 
-def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
     for global_handler in GLOBAL_HANDLER:
         for feature, addr in global_handler(analysis):
             yield feature, addr

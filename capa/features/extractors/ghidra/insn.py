@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, Dict, Tuple, Iterator
+from typing import Any, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
@@ -26,21 +26,21 @@ SECURITY_COOKIE_BYTES_DELTA = 0x40
 OPERAND_TYPE_DYNAMIC_ADDRESS = OperandType.DYNAMIC | OperandType.ADDRESS
 
 
-def get_imports(ctx: Dict[str, Any]) -> Dict[int, Any]:
+def get_imports(ctx: dict[str, Any]) -> dict[int, Any]:
     """Populate the import cache for this context"""
     if "imports_cache" not in ctx:
         ctx["imports_cache"] = capa.features.extractors.ghidra.helpers.get_file_imports()
     return ctx["imports_cache"]
 
 
-def get_externs(ctx: Dict[str, Any]) -> Dict[int, Any]:
+def get_externs(ctx: dict[str, Any]) -> dict[int, Any]:
     """Populate the externs cache for this context"""
     if "externs_cache" not in ctx:
         ctx["externs_cache"] = capa.features.extractors.ghidra.helpers.get_file_externs()
     return ctx["externs_cache"]
 
 
-def get_fakes(ctx: Dict[str, Any]) -> Dict[int, Any]:
+def get_fakes(ctx: dict[str, Any]) -> dict[int, Any]:
     """Populate the fake import addrs cache for this context"""
     if "fakes_cache" not in ctx:
         ctx["fakes_cache"] = capa.features.extractors.ghidra.helpers.map_fake_import_addrs()
@@ -48,7 +48,7 @@ def get_fakes(ctx: Dict[str, Any]) -> Dict[int, Any]:
 
 
 def check_for_api_call(
-    insn, externs: Dict[int, Any], fakes: Dict[int, Any], imports: Dict[int, Any], imp_or_ex: bool
+    insn, externs: dict[int, Any], fakes: dict[int, Any], imports: dict[int, Any], imp_or_ex: bool
 ) -> Iterator[Any]:
     """check instruction for API call
 
@@ -110,7 +110,7 @@ def check_for_api_call(
             yield info
 
 
-def extract_insn_api_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
     if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
@@ -131,7 +131,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) 
             yield API(ext), ih.address
 
 
-def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction number features
     example:
@@ -186,7 +186,7 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
                 yield OperandOffset(i, const), addr
 
 
-def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction structure offset features
 
@@ -219,7 +219,7 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
             yield OperandOffset(i, op_off), ih.address
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse referenced byte sequences
 
@@ -234,7 +234,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
                 yield Bytes(extracted_bytes), ih.address
 
 
-def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction string features
 
@@ -249,7 +249,7 @@ def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
 
 def extract_insn_mnemonic_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction mnemonic features"""
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
@@ -258,7 +258,7 @@ def extract_insn_mnemonic_features(
 
 def extract_insn_obfs_call_plus_5_characteristic_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
@@ -279,7 +279,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(
 
 def extract_insn_segment_access_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
@@ -294,7 +294,7 @@ def extract_insn_segment_access_features(
 
 def extract_insn_peb_access_characteristic_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """parse instruction peb access
 
     fs:[0x30] on x86, gs:[0x60] on x64
@@ -310,7 +310,7 @@ def extract_insn_peb_access_characteristic_features(
 
 def extract_insn_cross_section_cflow(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
@@ -364,7 +364,7 @@ def extract_function_calls_from(
     fh: FunctionHandle,
     bb: BBHandle,
     ih: InsnHandle,
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
@@ -393,7 +393,7 @@ def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle,
     bb: BBHandle,
     ih: InsnHandle,
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
 
@@ -442,7 +442,7 @@ def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle,
     bb: BBHandle,
     ih: InsnHandle,
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     f: ghidra.program.database.function.FunctionDB = fh.inner
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
@@ -461,7 +461,7 @@ def extract_features(
     fh: FunctionHandle,
     bb: BBHandle,
     insn: InsnHandle,
-) -> Iterator[Tuple[Feature, Address]]:
+) -> Iterator[tuple[Feature, Address]]:
     for insn_handler in INSTRUCTION_HANDLERS:
         for feature, addr in insn_handler(fh, bb, insn):
             yield feature, addr

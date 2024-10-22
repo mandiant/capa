@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Tuple, Iterator
+from typing import Iterator
 
 import envi
 import viv_utils
@@ -19,7 +19,7 @@ from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse features from the given function.
 
@@ -32,7 +32,7 @@ def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature
     raise NotImplementedError
 
 
-def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     if fh.inner.vw.metadata["Format"] == "elf":
         # the file's symbol table gets added to the metadata of the vivisect workspace.
         # this is in order to eliminate the computational overhead of refetching symtab each time.
@@ -54,13 +54,13 @@ def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[Tuple[Feature,
                     yield FunctionName(sym_name), fh.address
 
 
-def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     f: viv_utils.Function = fhandle.inner
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
         yield Characteristic("calls to"), AbsoluteVirtualAddress(src)
 
 
-def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_loop(fhandle: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse if a function has a loop
     """
@@ -88,7 +88,7 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Ad
         yield Characteristic("loop"), fhandle.address
 
 
-def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given function.
 
@@ -96,7 +96,7 @@ def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
       fh: the function handle from which to extract features
 
     yields:
-      Tuple[Feature, int]: the features and their location found in this function.
+      tuple[Feature, int]: the features and their location found in this function.
     """
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):

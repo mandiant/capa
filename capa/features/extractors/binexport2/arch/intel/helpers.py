@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Optional
+from typing import Optional
 from dataclasses import dataclass
 
 from capa.features.extractors.binexport2.helpers import get_operand_expressions
@@ -32,7 +32,7 @@ def get_operand_phrase_info(be2: BinExport2, operand: BinExport2.Operand) -> Opt
     # Base: Any general purpose register
     # Displacement: An integral offset
 
-    expressions: List[BinExport2.Expression] = get_operand_expressions(be2, operand)
+    expressions: list[BinExport2.Expression] = get_operand_expressions(be2, operand)
 
     # skip expression up to and including BinExport2.Expression.DEREFERENCE, assume caller
     # has checked for BinExport2.Expression.DEREFERENCE

@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
 import contextlib
-from typing import Tuple, Iterator
+from typing import Iterator
 
 import ida_loader
 
@@ -19,7 +19,7 @@ from capa.features.address import NO_ADDRESS, Address
 logger = logging.getLogger(__name__)
 
 
-def extract_os() -> Iterator[Tuple[Feature, Address]]:
+def extract_os() -> Iterator[tuple[Feature, Address]]:
     format_name: str = ida_loader.get_file_type_name()
 
     if "PE" in format_name:
@@ -46,7 +46,7 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
         return
 
 
-def extract_arch() -> Iterator[Tuple[Feature, Address]]:
+def extract_arch() -> Iterator[tuple[Feature, Address]]:
     procname = capa.ida.helpers.get_processor_name()
     if procname == "metapc" and capa.ida.helpers.is_64bit():
         yield Arch(ARCH_AMD64), NO_ADDRESS

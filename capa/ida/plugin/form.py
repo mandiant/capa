@@ -10,7 +10,7 @@ import logging
 import itertools
 import collections
 from enum import IntFlag
-from typing import Any, List, Optional
+from typing import Any, Optional
 from pathlib import Path
 
 import idaapi
@@ -1146,7 +1146,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def update_rule_status(self, rule_text: str):
         """ """
         rule: capa.rules.Rule
-        rules: List[Rule]
+        rules: list[Rule]
         ruleset: capa.rules.RuleSet
 
         if self.view_rulegen_editor.invisibleRootItem().childCount() == 0:

@@ -25,7 +25,7 @@ $ protoc.exe --python_out=. --mypy_out=. <path_to_proto> (e.g. capa/render/proto
 Alternatively, --pyi_out=. can be used to generate a Python Interface file that supports development
 """
 import datetime
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import google.protobuf.json_format
 
@@ -553,7 +553,7 @@ def rule_metadata_to_pb2(rule_metadata: rd.RuleMetadata) -> capa_pb2.RuleMetadat
 
 
 def doc_to_pb2(doc: rd.ResultDocument) -> capa_pb2.ResultDocument:
-    rule_matches: Dict[str, capa_pb2.RuleMatches] = {}
+    rule_matches: dict[str, capa_pb2.RuleMatches] = {}
     for rule_name, matches in doc.rules.items():
         m = capa_pb2.RuleMatches(
             meta=rule_metadata_to_pb2(matches.meta),
@@ -977,7 +977,7 @@ def rule_metadata_from_pb2(pb: capa_pb2.RuleMetadata) -> rd.RuleMetadata:
 
 
 def doc_from_pb2(doc: capa_pb2.ResultDocument) -> rd.ResultDocument:
-    rule_matches: Dict[str, rd.RuleMatches] = {}
+    rule_matches: dict[str, rd.RuleMatches] = {}
     for rule_name, matches in doc.rules.items():
         m = rd.RuleMatches(
             meta=rule_metadata_from_pb2(matches.meta),
