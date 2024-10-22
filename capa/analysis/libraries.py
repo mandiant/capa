@@ -50,6 +50,7 @@ class Method(str, Enum):
     FLIRT = "flirt"
     STRINGS = "strings"
     THUNK = "thunk"
+    ENTRYPOINT = "entrypoint"
 
 
 class FunctionClassification(BaseModel):
@@ -173,6 +174,20 @@ def main(argv=None):
                         library_version=string_match.metadata.library_version,
                     )
                 )
+
+        for va in idautils.Functions():
+            name = idaapi.get_func_name(va)
+            if name not in {"WinMain", }:
+                continue
+
+            function_classifications.append(
+                FunctionClassification(
+                    va=va,
+                    name=name,
+                    classification=Classification.USER,
+                    method=Method.ENTRYPOINT,
+                )
+            )
 
         doc = FunctionIdResults(function_classifications=[])
         classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
