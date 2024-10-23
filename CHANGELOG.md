@@ -186,6 +186,7 @@ Special thanks to our repeat and new contributors:
 - CI: update tests.yml workflow to exclude web and documentation files #2263 @s-ff
 - CI: update build.yml workflow to exclude web and documentation files #2270 @s-ff
 - CI: add web releases workflow #2455 @s-ff
+- CI: skip changelog.yml for dependabot PRs #2471
 
 ### Raw diffs
 
