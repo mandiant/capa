@@ -11,6 +11,7 @@ import logging
 import argparse
 import tempfile
 import contextlib
+import collections
 from enum import Enum
 from typing import List, Iterable, Optional
 from pathlib import Path
@@ -74,8 +75,15 @@ class FunctionClassification(BaseModel):
     note: Optional[str] = None
 
 
+class BinaryLayout(BaseModel):
+    va: int
+    # size of the function chunks in bytes
+    size: int
+
+
 class FunctionIdResults(BaseModel):
     function_classifications: List[FunctionClassification]
+    layout: List[BinaryLayout]
 
 
 @contextlib.contextmanager
@@ -165,6 +173,12 @@ def is_thunk_function(fva):
     return bool(f.flags & idaapi.FUNC_THUNK)
 
 
+def get_function_size(fva):
+    f = idaapi.get_func(fva)
+    assert f.start_ea == fva
+    return sum([end_ea - start_ea for (start_ea, end_ea) in idautils.Chunks(fva)])
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -247,7 +261,7 @@ def main(argv=None):
             for fc in get_library_called_functions(function_classifications):
                 function_classifications.append(fc)
 
-        doc = FunctionIdResults(function_classifications=[])
+        doc = FunctionIdResults(function_classifications=[], layout=[])
         classifications_by_va = capa.analysis.strings.create_index(function_classifications, "va")
         for va in idautils.Functions():
             if classifications := classifications_by_va.get(va):
@@ -261,19 +275,29 @@ def main(argv=None):
                         method=None,
                     )
                 )
+            doc.layout.append(
+                BinaryLayout(
+                    va=va,
+                    size=get_function_size(va),
+                )
+            )
 
         if args.json:
             print(doc.model_dump_json())  # noqa: T201 print found
 
         else:
-            table = rich.table.Table()
-            table.add_column("FVA")
-            table.add_column("CLASSIFICATION")
-            table.add_column("METHOD")
-            table.add_column("FNAME")
-            table.add_column("EXTRA INFO")
+            table = rich.table.Table(
+                "FVA",
+                "CLASSIFICATION",
+                "METHOD",
+                "FNAME",
+                "EXTRA",
+                "SIZE"
+            )
 
             classifications_by_va = capa.analysis.strings.create_index(doc.function_classifications, "va", sorted_=True)
+            size_by_va = {layout.va: layout.size for layout in doc.layout}
+            size_by_classification = collections.defaultdict(int)
             for va, classifications in classifications_by_va.items():
                 # TODO count of classifications if multiple?
                 name = ", ".join({c.name for c in classifications})
@@ -291,9 +315,20 @@ def main(argv=None):
                     ", ".join(method),
                     name,
                     f"{', '.join(extra)} {', '.join(note)}",
+                    f"{size_by_va[va]}",
                 )
 
+                size_by_classification["-".join(classification)] += size_by_va[va]
+
             rich.print(table)
+
+            stats_table = rich.table.Table(
+                "ID", rich.table.Column("SIZE", justify="right"), rich.table.Column("%", justify="right")
+            )
+            size_all = sum(size_by_classification.values())
+            for k, s in size_by_classification.items():
+                stats_table.add_row(k, f"{s:d}", f"{100 * s / size_all:.2f}")
+            rich.print(stats_table)
 
 
 if __name__ == "__main__":
