@@ -148,9 +148,7 @@ def get_library_called_functions(
                                 name=idaapi.get_func_name(fva),
                                 classification=Classification.LIBRARY,
                                 method=Method.CALLGRAPH,
-                                library_name=c.library_name,
-                                library_version=c.library_version,
-                                note=f"called by 0x{ref_fva:x} ({c.method.value})",
+                                note=f"called by 0x{ref_fva:x} ({c.method.value}{f', {c.library_name}@{c.library_version})' if c.library_name else ')'}",
                             )
                             classifications_by_va[fva].append(fc)
                             yield fc
