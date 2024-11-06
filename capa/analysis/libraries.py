@@ -177,7 +177,9 @@ def main(argv=None):
 
         for va in idautils.Functions():
             name = idaapi.get_func_name(va)
-            if name not in {"WinMain", }:
+            if name not in {
+                "WinMain",
+            }:
                 continue
 
             function_classifications.append(
