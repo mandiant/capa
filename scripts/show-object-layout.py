@@ -268,19 +268,7 @@ def main(argv=None):
     address_space = lancelot.be2utils.AddressSpace.from_pe(pe, base_address)
     thunks = compute_thunks(be2, idx)
 
-    @dataclass(frozen=True, order=True)
-    class Node:
-        address: int
-        type: str
-
-    @dataclass(frozen=True, order=True)
-    class Edge:
-        source: int
-        destination: int
-        type: str
-
-    nodes: set[Node] = set()
-    edges: set[Edge] = set()
+    g = nx.MultiDiGraph()
 
     for flow_graph_index, flow_graph in enumerate(be2.flow_graph):
         datas: set[int] = set()
@@ -319,36 +307,44 @@ def main(argv=None):
         vertex_index = idx.vertex_index_by_address[flow_graph_address]
         name = idx.get_function_name_by_vertex(vertex_index)
 
-        nodes.add(Node(
+        g.add_node(
+            flow_graph_address,
             address=flow_graph_address,
             type="function",
-        ))
+        )
         if datas or callees:
             logger.info("%s @ 0x%X:", name, flow_graph_address)
 
             for data in sorted(datas):
                 logger.info("  - 0x%X", data)
-                nodes.add(Node(
+                g.add_node(
+                    data,
                     address=data,
                     type="data",
-                ))
-                edges.add(Edge(
-                    source=flow_graph_address,
-                    destination=data,
-                    type="data",
-                ))
+                )
+                g.add_edge(
+                    flow_graph_address,
+                    data,
+                    key="reference",
+                    source_address=flow_graph_address,
+                    destination_address=data,
+                )
 
             for callee in sorted(callees):
                 logger.info("  - %s", idx.get_function_name_by_address(callee))
-                nodes.add(Node(
+
+                g.add_node(
+                    callee,
                     address=callee,
                     type="function",
-                ))
-                edges.add(Edge(
-                    source=flow_graph_address,
-                    destination=callee,
-                    type="call",
-                ))
+                )
+                g.add_edge(
+                    flow_graph_address,
+                    callee,
+                    key="call",
+                    source_address=flow_graph_address,
+                    destination_address=callee,
+                )
 
         else:
             logger.info("%s @ 0x%X: (none)", name, flow_graph_address)
@@ -357,30 +353,37 @@ def main(argv=None):
         # within each section, emit a neighbor edge for each pair of neighbors.
 
         section_nodes = [
-            node for node in nodes 
-            if section.VirtualAddress + base_address <= node.address < base_address + section.VirtualAddress + section.Misc_VirtualSize
+            node for node, attrs in g.nodes(data=True)
+            if (section.VirtualAddress + base_address) <= attrs["address"] < (base_address + section.VirtualAddress + section.Misc_VirtualSize)
         ]
 
         for i in range(1, len(section_nodes)):
             a = section_nodes[i-1]
             b = section_nodes[i]
 
-            edges.add(Edge(
-                type="neighbor",
-                source=a.address,
-                destination=b.address,
-            ))
+            g.add_edge(
+                a,
+                b,
+                key="neighbor",
+                source_address=a,
+                destination_address=b,
+            )
 
-    g = nx.MultiDiGraph()
-
-    for node in sorted(nodes):
-        g.add_node(node.address, type=node.type)
-
-    for edge in sorted(edges):
-        g.add_edge(edge.source, edge.destination, key=edge.type)
+    for function in functions:
+        g.nodes[base_address+function.start_rva]["name"] = function.name
+        g.nodes[base_address+function.start_rva]["file"] = function.file
 
     for line in nx.generate_gexf(g):
         print(line)
+
+    communities = nx.algorithms.community.louvain_communities(g)
+    for i, community in enumerate(communities):
+        print(f"[{i}]:")
+        for node in community:
+            if "name" in g.nodes[node]:
+                print(f"  - {hex(node)}: {g.nodes[node]['file']}")
+            else:
+                print(f"  - {hex(node)}")
 
     # db.conn.close()
 
