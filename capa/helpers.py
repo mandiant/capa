@@ -19,7 +19,6 @@ from pathlib import Path
 from zipfile import ZipFile
 from datetime import datetime
 
-import msgspec.json
 from rich.console import Console
 from rich.progress import (
     Task,
@@ -154,6 +153,7 @@ def stdout_redirector(stream):
 
 
 def load_json_from_path(json_path: Path):
+    import msgspec.json
     with gzip.open(json_path, "r") as compressed_report:
         try:
             report_json = compressed_report.read()
@@ -165,6 +165,7 @@ def load_json_from_path(json_path: Path):
 
 
 def decode_json_lines(fd: Union[BinaryIO, gzip.GzipFile]):
+    import msgspec.json
     for line in fd:
         try:
             line_s = line.strip().decode()
@@ -186,6 +187,7 @@ def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
 
 def load_one_jsonl_from_path(jsonl_path: Path):
     # this loads one json line to avoid the overhead of loading the entire file
+    import msgspec.json
     try:
         with gzip.open(jsonl_path, "rb") as f:
             line = next(iter(f))
