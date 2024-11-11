@@ -28,6 +28,7 @@
 - fix saving of base address @mr-tz
 
 ### Development
+- CI: use macos-13 since macos-12 is deprecated and will be removed on December 3rd, 2024 #2173 @mr-tz
 
 ### Raw diffs
 - [capa v7.4.0...master](https://github.com/mandiant/capa/compare/v7.4.0...master)
