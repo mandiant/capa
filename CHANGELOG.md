@@ -8,8 +8,10 @@
 
 - remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
 
-### New Rules (0)
+### New Rules (2)
 
+- nursery/get-shadow-password-file-entry-on-linux jonathanlepore@google.com
+- nursery/set-shadow-password-file-entry-on-linux jonathanlepore@google.com
 -
 
 ### Bug Fixes
