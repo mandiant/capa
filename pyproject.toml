@@ -118,7 +118,7 @@ dev = [
     "pytest==8.0.0",
     "pytest-sugar==1.0.0",
     "pytest-instafail==0.5.0",
-    "pytest-cov==5.0.0",
+    "pytest-cov==6.0.0",
     "flake8==7.1.1",
     "flake8-bugbear==24.8.19",
     "flake8-encodings==0.5.1",
@@ -140,7 +140,7 @@ dev = [
     "types-backports==0.1.3",
     "types-colorama==0.4.15.11",
     "types-PyYAML==6.0.8",
-    "types-psutil==6.0.0.20240901",
+    "types-psutil==6.1.0.20241102",
     "types_requests==2.32.0.20240712",
     "types-protobuf==5.28.0.20240924",
     "deptry==0.20.0"
@@ -150,7 +150,7 @@ build = [
     # we want all developer environments to be consistent.
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
-    "pyinstaller==6.10.0",
+    "pyinstaller==6.11.1",
     "setuptools==75.3.0",
     "build==1.2.2"
 ]
