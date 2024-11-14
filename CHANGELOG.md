@@ -4,6 +4,8 @@
 
 ### New Features
 
+- allow call as valid subscope for call scoped rules @mr-tz
+
 ### Breaking Changes
 
 - remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
