@@ -8,10 +8,13 @@
 
 - remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
 
-### New Rules (2)
+### New Rules (5)
 
 - nursery/get-shadow-password-file-entry-on-linux jonathanlepore@google.com
 - nursery/set-shadow-password-file-entry-on-linux jonathanlepore@google.com
+- collection/browser/get-chrome-cookiemonster still@teamt5.org
+- collection/browser/get-elevation-service-for-chromium-based-browsers still@teamt5.org
+- collection/get-steam-token still@teamt5.org
 -
 
 ### Bug Fixes
