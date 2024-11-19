@@ -630,8 +630,8 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "call":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD)):
-            raise InvalidRule("call subscope supported only for the process and thread scopes")
+        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.CALL)):
+            raise InvalidRule("call subscope supported only for the process, thread, and call scopes")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
