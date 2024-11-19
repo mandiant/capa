@@ -122,7 +122,7 @@ dev = [
     "flake8==7.1.1",
     "flake8-bugbear==24.10.31",
     "flake8-encodings==0.5.1",
-    "flake8-comprehensions==3.15.0",
+    "flake8-comprehensions==3.16.0",
     "flake8-logging-format==0.9.0",
     "flake8-no-implicit-concat==0.3.5",
     "flake8-print==5.0.0",
