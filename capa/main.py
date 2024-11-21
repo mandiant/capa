@@ -92,6 +92,7 @@ from capa.features.common import (
     FORMAT_DRAKVUF,
     STATIC_FORMATS,
     DYNAMIC_FORMATS,
+    FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
@@ -266,6 +267,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_VMRAY, "VMRay sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
             (FORMAT_BINEXPORT2, "BinExport2"),
+            (FORMAT_BINJA_DB, "Binary Ninja Database"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 

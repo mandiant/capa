@@ -48,6 +48,7 @@ from capa.features.common import (
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_DRAKVUF,
+    FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
 )
 from capa.features.address import Address
@@ -251,7 +252,7 @@ def get_extractor(
 
         import capa.features.extractors.binja.extractor
 
-        if input_format not in (FORMAT_SC32, FORMAT_SC64):
+        if input_format not in (FORMAT_SC32, FORMAT_SC64, FORMAT_BINJA_DB):
             if not is_supported_format(input_path):
                 raise UnsupportedFormatError()
 

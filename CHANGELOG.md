@@ -5,6 +5,7 @@
 ### New Features
 
 - allow call as valid subscope for call scoped rules @mr-tz
+- support loading and analyzing a Binary Ninja database #2496 @xusheng6
 
 ### Breaking Changes
 
