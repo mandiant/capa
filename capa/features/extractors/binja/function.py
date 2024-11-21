@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Iterator
 
-from binaryninja import Function, BinaryView, SymbolType, RegisterValueType, LowLevelILOperation
+from binaryninja import Function, BinaryView, SymbolType, ILException, RegisterValueType, LowLevelILOperation
 
 from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
@@ -24,7 +24,14 @@ def extract_function_calls_to(fh: FunctionHandle):
         # Everything that is a code reference to the current function is considered a caller, which actually includes
         # many other references that are NOT a caller. For example, an instruction `push function_start` will also be
         # considered a caller to the function
-        llil = caller.llil
+        llil = None
+        try:
+            # Temporary fix for https://github.com/Vector35/binaryninja-api/issues/6020. Since `.llil` can throw an
+            # exception rather than returning None
+            llil = caller.llil
+        except ILException:
+            continue
+
         if (llil is None) or llil.operation not in [
             LowLevelILOperation.LLIL_CALL,
             LowLevelILOperation.LLIL_CALL_STACK_ADJUST,

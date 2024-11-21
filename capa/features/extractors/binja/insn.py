@@ -13,6 +13,7 @@ from binaryninja import (
     BinaryView,
     ILRegister,
     SymbolType,
+    ILException,
     BinaryReader,
     RegisterValueType,
     LowLevelILOperation,
@@ -43,7 +44,15 @@ def is_stub_function(bv: BinaryView, addr: int) -> Optional[int]:
 
         call_count = 0
         call_target = None
-        for il in func.llil.instructions:
+        try:
+            llil = func.llil
+        except ILException:
+            return None
+
+        if llil is None:
+            continue
+
+        for il in llil.instructions:
             if il.operation in [
                 LowLevelILOperation.LLIL_CALL,
                 LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
