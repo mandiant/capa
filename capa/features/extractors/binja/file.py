@@ -13,7 +13,16 @@ import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    Format,
+    String,
+    Feature,
+    Characteristic,
+)
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
@@ -133,6 +142,13 @@ def extract_file_format(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
         yield Format(FORMAT_PE), NO_ADDRESS
     elif view_type == "ELF":
         yield Format(FORMAT_ELF), NO_ADDRESS
+    elif view_type == "Mapped":
+        if bv.arch.name == "x86":
+            yield Format(FORMAT_SC32), NO_ADDRESS
+        elif bv.arch.name == "x86_64":
+            yield Format(FORMAT_SC64), NO_ADDRESS
+        else:
+            raise NotImplementedError(f"unexpected raw file with arch: {bv.arch}")
     elif view_type == "Raw":
         # no file type to return when processing a binary file, but we want to continue processing
         return

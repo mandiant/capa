@@ -27,6 +27,7 @@
 - extractor: fix exception when PE extractor encounters unknown architecture #2440 @Tamir-K
 - IDA Pro: rename ida to idapro module for plugin and idalib in IDA 9.0 #2453 @mr-tz
 - ghidra: fix saving of base address @mr-tz
+- binja: support loading raw x86/x86_64 shellcode #2489 @xusheng6
 
 ### capa Explorer Web
 
