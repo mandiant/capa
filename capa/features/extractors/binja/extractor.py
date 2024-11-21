@@ -8,6 +8,7 @@
 from typing import Iterator
 
 import binaryninja as binja
+from binaryninja import ILException
 
 import capa.features.extractors.elf
 import capa.features.extractors.binja.file
@@ -55,7 +56,15 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         f: binja.Function = fh.inner
         # Set up a MLIL basic block dict look up to associate the disassembly basic block with its MLIL basic block
         mlil_lookup = {}
-        for mlil_bb in f.mlil.basic_blocks:
+        try:
+            mlil = f.mlil
+        except ILException:
+            return
+
+        if mlil is None:
+            return
+
+        for mlil_bb in mlil.basic_blocks:
             mlil_lookup[mlil_bb.source_block.start] = mlil_bb
 
         for bb in f.basic_blocks:
