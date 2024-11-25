@@ -34,7 +34,7 @@ pydantic==2.9.2
 xmltodict==0.14.2
 pyelftools==0.31
 pygments==2.18.0
-python-flirt==0.8.10
+python-flirt==0.9.2
 pyyaml==6.0.2
 rich==13.9.2
 ruamel-yaml==0.18.6
