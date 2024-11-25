@@ -143,7 +143,7 @@ dev = [
     "types-psutil==6.1.0.20241102",
     "types_requests==2.32.0.20240712",
     "types-protobuf==5.28.0.20240924",
-    "deptry==0.20.0"
+    "deptry==0.21.1"
 ]
 build = [
     # Dev and build dependencies are not relaxed because
