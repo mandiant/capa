@@ -26,7 +26,7 @@ protobuf==5.28.2
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
 pycparser==2.22
-pydantic==2.9.2
+pydantic==2.10.1
 # pydantic pins pydantic-core, 
 # but dependabot updates these separately (which is broken) and is annoying,
 # so we rely on pydantic to pull in the right version of pydantic-core.
