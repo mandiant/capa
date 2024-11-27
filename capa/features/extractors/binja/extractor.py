@@ -61,40 +61,11 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
 
         f: Function
         for f in self.bv.functions:
-            bv: BinaryView = f.view
-
-            for bbil in f.llil:
-                for llil in bbil:
-                    if llil.operation not in (
-                        LowLevelILOperation.LLIL_CALL,
-                        LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
-                        LowLevelILOperation.LLIL_JUMP,
-                        LowLevelILOperation.LLIL_TAILCALL,
-                    ):
-                        continue
-
-                    if llil.dest.value.type not in (
-                        RegisterValueType.ImportedAddressValue,
-                        RegisterValueType.ConstantValue,
-                        RegisterValueType.ConstantPointerValue,
-                    ):
-                        continue
-
-                    address = llil.dest.value.value
-
-                    for sym in bv.get_symbols(address):
-                        if not sym:
-                            continue
-
-                        if sym.type not in (
-                            SymbolType.ImportAddressSymbol,
-                            SymbolType.ImportedFunctionSymbol,
-                            SymbolType.FunctionSymbol,
-                        ):
-                            continue
-
-                        calls_from[f.start].add(address)
-                        calls_to[address].add(f.start)
+            for caller in f.callers:
+                if caller == f:
+                    logger.debug("recursive: 0x%x", f.start)
+                calls_from[caller.start].add(f.start)
+                calls_to[f.start].add(caller.start)
 
         call_graph = {
             "calls_to": calls_to,
