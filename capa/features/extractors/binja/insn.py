@@ -23,7 +23,7 @@ from binaryninja import (
 import capa.features.extractors.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address
 from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -500,47 +500,6 @@ def extract_insn_cross_section_cflow(
             yield Characteristic("cross section flow"), ih.address
 
 
-def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
-    """extract functions calls from features
-
-    most relevant at the function scope, however, its most efficient to extract at the instruction scope
-    """
-    func: Function = fh.inner
-    bv: BinaryView = func.view
-
-    if bv is None:
-        return
-
-    for il in func.get_llils_at(ih.address):
-        if il.operation not in [
-            LowLevelILOperation.LLIL_CALL,
-            LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
-            LowLevelILOperation.LLIL_TAILCALL,
-        ]:
-            continue
-
-        dest = il.dest
-        if dest.operation == LowLevelILOperation.LLIL_CONST_PTR:
-            value = dest.value.value
-            yield Characteristic("calls from"), AbsoluteVirtualAddress(value)
-        elif dest.operation == LowLevelILOperation.LLIL_CONST:
-            yield Characteristic("calls from"), AbsoluteVirtualAddress(dest.value)
-        elif dest.operation == LowLevelILOperation.LLIL_LOAD:
-            indirect_src = dest.src
-            if indirect_src.operation == LowLevelILOperation.LLIL_CONST_PTR:
-                value = indirect_src.value.value
-                yield Characteristic("calls from"), AbsoluteVirtualAddress(value)
-            elif indirect_src.operation == LowLevelILOperation.LLIL_CONST:
-                yield Characteristic("calls from"), AbsoluteVirtualAddress(indirect_src.value)
-        elif dest.operation == LowLevelILOperation.LLIL_REG:
-            if dest.value.type in [
-                RegisterValueType.ImportedAddressValue,
-                RegisterValueType.ConstantValue,
-                RegisterValueType.ConstantPointerValue,
-            ]:
-                yield Characteristic("calls from"), AbsoluteVirtualAddress(dest.value.value)
-
-
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
@@ -590,6 +549,5 @@ INSTRUCTION_HANDLERS = (
     extract_insn_peb_access_characteristic_features,
     extract_insn_cross_section_cflow,
     extract_insn_segment_access_features,
-    extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
 )

@@ -5,11 +5,14 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import logging
 from typing import Iterator
+from collections import defaultdict
 
 import binaryninja as binja
-from binaryninja import ILException
+from binaryninja import Function, BinaryView, SymbolType, ILException, RegisterValueType, LowLevelILOperation
 
+import capa.perf
 import capa.features.extractors.elf
 import capa.features.extractors.binja.file
 import capa.features.extractors.binja.insn
@@ -26,6 +29,8 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
@@ -36,6 +41,9 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.binja.global_.extract_os(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_arch(self.bv))
 
+        with capa.perf.timing("binary ninja: computing call graph"):
+            self._call_graph = self._build_call_graph()
+
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.bv.start)
 
@@ -45,9 +53,58 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
     def extract_file_features(self):
         yield from capa.features.extractors.binja.file.extract_features(self.bv)
 
+    def _build_call_graph(self):
+        # from function address to function addresses
+        calls_from: defaultdict[int, set[int]] = defaultdict(set)
+        calls_to: defaultdict[int, set[int]] = defaultdict(set)
+
+        f: Function
+        for f in self.bv.functions:
+            bv: BinaryView = f.view
+
+            for bbil in f.llil:
+                for llil in bbil:
+                    if llil.operation not in (
+                        LowLevelILOperation.LLIL_CALL,
+                        LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
+                        LowLevelILOperation.LLIL_JUMP,
+                        LowLevelILOperation.LLIL_TAILCALL,
+                    ):
+                        continue
+
+                    if llil.dest.value.type not in (
+                        RegisterValueType.ImportedAddressValue,
+                        RegisterValueType.ConstantValue,
+                        RegisterValueType.ConstantPointerValue,
+                    ):
+                        continue
+
+                    address = llil.dest.value.value
+
+                    for sym in bv.get_symbols(address):
+                        if not sym:
+                            continue
+
+                        if sym.type not in (
+                            SymbolType.ImportAddressSymbol,
+                            SymbolType.ImportedFunctionSymbol,
+                            SymbolType.FunctionSymbol,
+                        ):
+                            continue
+
+                        calls_from[f.start].add(address)
+                        calls_to[address].add(f.start)
+
+        call_graph = {
+            "calls_to": calls_to,
+            "calls_from": calls_from,
+        }
+
+        return call_graph
+
     def get_functions(self) -> Iterator[FunctionHandle]:
         for f in self.bv.functions:
-            yield FunctionHandle(address=AbsoluteVirtualAddress(f.start), inner=f)
+            yield FunctionHandle(address=AbsoluteVirtualAddress(f.start), inner=f, ctx={"call_graph": self._call_graph})
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binja.function.extract_features(fh)
