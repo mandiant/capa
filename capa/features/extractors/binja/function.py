@@ -21,7 +21,7 @@ def extract_function_calls_to(fh: FunctionHandle):
     func: Function = fh.inner
 
     caller: int
-    for caller in fh.ctx["call_graph"].get("calls_to", []):
+    for caller in fh.ctx["call_graph"]["calls_to"].get(func.start, []):
         if caller == func.start:
             continue
 
@@ -33,7 +33,7 @@ def extract_function_calls_from(fh: FunctionHandle):
     func: Function = fh.inner
 
     callee: int
-    for callee in fh.ctx["call_graph"].get("calls_from", []):
+    for callee in fh.ctx["call_graph"]["calls_from"].get(func.start, []):
         if callee == func.start:
             continue
 
@@ -60,7 +60,7 @@ def extract_recursive_call(fh: FunctionHandle):
     func: Function = fh.inner
 
     caller: int
-    for caller in fh.ctx["call_graph"].get("calls_to", []):
+    for caller in fh.ctx["call_graph"]["calls_to"].get(func.start, []):
         if caller == func.start:
             yield Characteristic("recursive call"), fh.address
             return

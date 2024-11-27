@@ -62,8 +62,6 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         f: Function
         for f in self.bv.functions:
             for caller in f.callers:
-                if caller == f:
-                    logger.debug("recursive: 0x%x", f.start)
                 calls_from[caller.start].add(f.start)
                 calls_to[f.start].add(caller.start)
 
