@@ -9,7 +9,7 @@ import re
 from typing import Callable
 from dataclasses import dataclass
 
-from binaryninja import BinaryView, LowLevelILInstruction
+from binaryninja import BinaryView, LowLevelILOperation, LowLevelILInstruction
 from binaryninja.architecture import InstructionTextToken
 
 
@@ -18,6 +18,24 @@ class DisassemblyInstruction:
     address: int
     length: int
     text: list[InstructionTextToken]
+    llil: list[LowLevelILInstruction]
+
+    @property
+    def is_call(self):
+        if not self.llil:
+            return False
+
+        # TODO(williballenthin): when to use one vs many llil instructions
+        # https://github.com/Vector35/binaryninja-api/issues/6205
+        llil = self.llil[0]
+        if not llil:
+            return False
+
+        return llil.operation in [
+            LowLevelILOperation.LLIL_CALL,
+            LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
+            LowLevelILOperation.LLIL_TAILCALL,
+        ]
 
 
 LLIL_VISITOR = Callable[[LowLevelILInstruction, LowLevelILInstruction, int], bool]

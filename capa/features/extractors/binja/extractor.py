@@ -17,6 +17,7 @@ import capa.features.extractors.elf
 import capa.features.extractors.binja.file
 import capa.features.extractors.binja.insn
 import capa.features.extractors.binja.global_
+import capa.features.extractors.binja.helpers
 import capa.features.extractors.binja.function
 import capa.features.extractors.binja.basicblock
 from capa.features.common import Feature
@@ -133,13 +134,16 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         yield from capa.features.extractors.binja.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
-        import capa.features.extractors.binja.helpers as binja_helpers
+        f: binja.Function = fh.inner
 
-        bb: tuple[binja.BasicBlock, binja.MediumLevelILBasicBlock] = bbh.inner
-        addr = bb[0].start
+        bb: binja.BasicBlock
+        mlbb: binja.MediumLevelILBasicBlock
+        bb, mlbb = bbh.inner
 
-        for text, length in bb[0]:
-            insn = binja_helpers.DisassemblyInstruction(addr, length, text)
+        addr: int = bb.start
+        for text, length in bb:
+            llil = f.get_llils_at(addr)
+            insn = capa.features.extractors.binja.helpers.DisassemblyInstruction(addr, length, text, llil)
             yield InsnHandle(address=AbsoluteVirtualAddress(addr), inner=insn)
             addr += length
 

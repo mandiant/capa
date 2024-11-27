@@ -32,6 +32,7 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
+# TODO: move this to call graph pass
 # check if a function is a stub function to another function/symbol. The criteria is:
 # 1. The function must only have one basic block
 # 2. The function must only make one call/jump to another address
@@ -82,8 +83,9 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
     """
     func: Function = fh.inner
     bv: BinaryView = func.view
+    insn: DisassemblyInstruction = ih.inner
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         if llil.operation in [
             LowLevelILOperation.LLIL_CALL,
             LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
@@ -138,10 +140,11 @@ def extract_insn_number_features(
     example:
         push    3136B0h         ; dwControlCode
     """
-    func: Function = fh.inner
+    insn: DisassemblyInstruction = ih.inner
 
     results: list[tuple[Any[Number, OperandNumber], Address]] = []
 
+    # TODO: try to move this out of line
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation == LowLevelILOperation.LLIL_LOAD:
             return False
@@ -165,7 +168,7 @@ def extract_insn_number_features(
 
         return False
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     yield from results
@@ -179,11 +182,11 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     """
     func: Function = fh.inner
     bv: BinaryView = func.view
+    insn: DisassemblyInstruction = ih.inner
 
     candidate_addrs = set()
 
-    llil = func.get_llil_at(ih.address)
-    if llil is None or llil.operation in [LowLevelILOperation.LLIL_CALL, LowLevelILOperation.LLIL_CALL_STACK_ADJUST]:
+    if insn.is_call:
         return
 
     for ref in bv.get_code_refs_from(ih.address):
@@ -205,7 +208,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
         return True
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     for addr in candidate_addrs:
@@ -227,6 +230,7 @@ def extract_insn_string_features(
     """
     func: Function = fh.inner
     bv: BinaryView = func.view
+    insn: DisassemblyInstruction = ih.inner
 
     candidate_addrs = set()
 
@@ -250,7 +254,7 @@ def extract_insn_string_features(
 
         return True
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     # Now we have all the candidate address, check them for string or pointer to string
@@ -283,6 +287,7 @@ def extract_insn_offset_features(
         .text:0040112F cmp [esi+4], ebx
     """
     func: Function = fh.inner
+    insn: DisassemblyInstruction = ih.inner
 
     results: list[tuple[Any[Offset, OperandOffset], Address]] = []
     address_size = func.view.arch.address_size * 8
@@ -327,7 +332,7 @@ def extract_insn_offset_features(
 
         return True
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     yield from results
@@ -367,7 +372,7 @@ def extract_insn_nzxor_characteristic_features(
     parse instruction non-zeroing XOR instruction
     ignore expected non-zeroing XORs, e.g. security cookies
     """
-    func: Function = fh.inner
+    insn: DisassemblyInstruction = ih.inner
 
     results = []
 
@@ -383,7 +388,7 @@ def extract_insn_nzxor_characteristic_features(
         else:
             return True
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     yield from results
@@ -415,7 +420,7 @@ def extract_insn_peb_access_characteristic_features(
 
     fs:[0x30] on x86, gs:[0x60] on x64
     """
-    func: Function = fh.inner
+    insn: DisassemblyInstruction = ih.inner
 
     results = []
 
@@ -445,7 +450,7 @@ def extract_insn_peb_access_characteristic_features(
         results.append((Characteristic("peb access"), ih.address))
         return False
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     yield from results
@@ -455,7 +460,7 @@ def extract_insn_segment_access_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
-    func: Function = fh.inner
+    insn: DisassemblyInstruction = ih.inner
 
     results = []
 
@@ -472,7 +477,7 @@ def extract_insn_segment_access_features(
 
         return True
 
-    for llil in func.get_llils_at(ih.address):
+    for llil in insn.llil:
         visit_llil_exprs(llil, llil_checker)
 
     yield from results
@@ -509,14 +514,15 @@ def extract_function_indirect_call_characteristic_features(
     most relevant at the function or basic block scope;
     however, its most efficient to extract at the instruction scope
     """
-    func: Function = fh.inner
+    insn: DisassemblyInstruction = ih.inner
 
-    llil = func.get_llil_at(ih.address)
-    if llil is None or llil.operation not in [
-        LowLevelILOperation.LLIL_CALL,
-        LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
-        LowLevelILOperation.LLIL_TAILCALL,
-    ]:
+    if not insn.is_call:
+        return
+
+    # TODO(williballenthin): when to use one vs many llil instructions
+    # https://github.com/Vector35/binaryninja-api/issues/6205
+    llil = insn.llil[0]
+    if not llil:
         return
 
     if llil.dest.operation in [LowLevelILOperation.LLIL_CONST, LowLevelILOperation.LLIL_CONST_PTR]:
