@@ -77,7 +77,7 @@ jobs:
         git add -u web/explorer/releases/
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v7
+      uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         title: "explorer web: add release v${{ github.event.inputs.version }}"
