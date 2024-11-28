@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Iterator
 
-from binaryninja import Function, BinaryView, SymbolType, ILException, RegisterValueType, LowLevelILOperation
+from binaryninja import Function, BinaryView, SymbolType
 
 from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
@@ -20,38 +20,24 @@ def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""
     func: Function = fh.inner
 
-    for caller in func.caller_sites:
-        # Everything that is a code reference to the current function is considered a caller, which actually includes
-        # many other references that are NOT a caller. For example, an instruction `push function_start` will also be
-        # considered a caller to the function
-        llil = None
-        try:
-            # Temporary fix for https://github.com/Vector35/binaryninja-api/issues/6020. Since `.llil` can throw an
-            # exception rather than returning None
-            llil = caller.llil
-        except ILException:
+    caller: int
+    for caller in fh.ctx["call_graph"]["calls_to"].get(func.start, []):
+        if caller == func.start:
             continue
 
-        if (llil is None) or llil.operation not in [
-            LowLevelILOperation.LLIL_CALL,
-            LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
-            LowLevelILOperation.LLIL_JUMP,
-            LowLevelILOperation.LLIL_TAILCALL,
-        ]:
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(caller)
+
+
+def extract_function_calls_from(fh: FunctionHandle):
+    """extract callers from a function"""
+    func: Function = fh.inner
+
+    callee: int
+    for callee in fh.ctx["call_graph"]["calls_from"].get(func.start, []):
+        if callee == func.start:
             continue
 
-        if llil.dest.value.type not in [
-            RegisterValueType.ImportedAddressValue,
-            RegisterValueType.ConstantValue,
-            RegisterValueType.ConstantPointerValue,
-        ]:
-            continue
-
-        address = llil.dest.value.value
-        if address != func.start:
-            continue
-
-        yield Characteristic("calls to"), AbsoluteVirtualAddress(caller.address)
+        yield Characteristic("calls from"), AbsoluteVirtualAddress(callee)
 
 
 def extract_function_loop(fh: FunctionHandle):
@@ -72,13 +58,12 @@ def extract_function_loop(fh: FunctionHandle):
 def extract_recursive_call(fh: FunctionHandle):
     """extract recursive function call"""
     func: Function = fh.inner
-    bv: BinaryView = func.view
-    if bv is None:
-        return
 
-    for ref in bv.get_code_refs(func.start):
-        if ref.function == func:
+    caller: int
+    for caller in fh.ctx["call_graph"]["calls_to"].get(func.start, []):
+        if caller == func.start:
             yield Characteristic("recursive call"), fh.address
+            return
 
 
 def extract_function_name(fh: FunctionHandle):
@@ -108,4 +93,10 @@ def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call, extract_function_name)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_calls_from,
+    extract_function_loop,
+    extract_recursive_call,
+    extract_function_name,
+)

@@ -239,6 +239,7 @@ def get_extractor(
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(input_path)
 
     elif backend == BACKEND_BINJA:
+        import capa.perf as perf
         import capa.features.extractors.binja.find_binja_api as finder
 
         if not finder.has_binaryninja():
@@ -262,9 +263,10 @@ def get_extractor(
                 raise UnsupportedOSError()
 
         with console.status("analyzing program...", spinner="dots"):
-            bv: binaryninja.BinaryView = binaryninja.load(str(input_path))
-            if bv is None:
-                raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
+            with perf.timing("binary ninja: loading program"):
+                bv: binaryninja.BinaryView = binaryninja.load(str(input_path))
+                if bv is None:
+                    raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
 
         return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 

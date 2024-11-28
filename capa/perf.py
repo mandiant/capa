@@ -5,6 +5,9 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import time
+import inspect
+import contextlib
 import collections
 
 # this structure is unstable and may change before the next major release.
@@ -14,3 +17,20 @@ counters: collections.Counter[str] = collections.Counter()
 def reset():
     global counters
     counters = collections.Counter()
+
+
+@contextlib.contextmanager
+def timing(msg: str):
+    """log the given message start/stop and time taken, using the caller's `logger` instance."""
+    # stack:
+    #   0: here
+    #   1: contextlib
+    #   2: caller
+    caller = inspect.stack()[2]
+    caller_logger = caller.frame.f_globals.get("logger")
+
+    caller_logger.debug("%s...", msg)
+    t0 = time.time()
+    yield
+    t1 = time.time()
+    caller_logger.debug("%s done in %0.1fs.", msg, t1 - t0)
