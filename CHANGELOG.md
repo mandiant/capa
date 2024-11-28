@@ -10,7 +10,7 @@
 
 - remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
 
-### New Rules (8)
+### New Rules (10)
 
 - nursery/get-shadow-password-file-entry-on-linux jonathanlepore@google.com
 - nursery/set-shadow-password-file-entry-on-linux jonathanlepore@google.com
@@ -20,6 +20,8 @@
 - nursery/persist-via-application-shimming j.j.vannielen@utwente.nl
 - nursery/persist-via-bits-job j.j.vannielen@utwente.nl
 - nursery/persist-via-print-processors-registry-key j.j.vannielen@utwente.nl
+- linking/static/touchsocket/linked-against-touchsocket still@teamt5.org
+- runtime/dotnet/compiled-with-dotnet-aot still@teamt5.org
 -
 
 ### Bug Fixes
