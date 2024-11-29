@@ -529,12 +529,21 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         # inform model changes have ended
         self.endResetModel()
 
-    def capa_doc_feature_to_display(self, feature: frzf.Feature):
+    def capa_doc_feature_to_display(self, feature: frzf.Feature) -> str:
         """convert capa doc feature type string to display string for ui
 
         @param feature: capa feature read from doc
         """
-        key = feature.type
+        # Use the specific type from the feature instead of direct string assignment
+        FeatureType = Union[Literal[
+        'os', 'arch', 'format', 'match', 'characteristic',
+        'export', 'import', 'section', 'function name',
+        'substring', 'regex', 'string', 'class', 'namespace',
+        'api', 'property', 'number', 'bytes', 'offset',
+        'mnemonic', 'operand number', 'operand offset',
+        'basic block'
+        ]]
+        key: FeatureType = feature.type
         value = feature.dict(by_alias=True).get(feature.type)
 
         if value:
