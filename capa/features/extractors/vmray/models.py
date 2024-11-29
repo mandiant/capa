@@ -189,7 +189,8 @@ class GenericReference(BaseModel):
     source: str
 
 
-class StaticDataReference(GenericReference): ...
+class StaticDataReference(GenericReference):
+    ...
 
 
 class PEFileBasicInfo(BaseModel):
