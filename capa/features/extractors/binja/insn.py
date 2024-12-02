@@ -13,7 +13,6 @@ from binaryninja import (
     BinaryView,
     ILRegister,
     SymbolType,
-    ILException,
     BinaryReader,
     RegisterValueType,
     LowLevelILOperation,
@@ -24,7 +23,7 @@ import capa.features.extractors.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs
+from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs, get_llil_instr_at_addr
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -37,40 +36,23 @@ SECURITY_COOKIE_BYTES_DELTA = 0x40
 # 2. The function must only make one call/jump to another address
 # If the function being checked is a stub function, returns the target address. Otherwise, return None.
 def is_stub_function(bv: BinaryView, addr: int) -> Optional[int]:
-    funcs = bv.get_functions_at(addr)
-    for func in funcs:
-        if len(func.basic_blocks) != 1:
-            continue
+    llil = get_llil_instr_at_addr(bv, addr)
+    if llil is None or llil.operation not in [
+        LowLevelILOperation.LLIL_CALL,
+        LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
+        LowLevelILOperation.LLIL_JUMP,
+        LowLevelILOperation.LLIL_TAILCALL,
+    ]:
+        return None
 
-        call_count = 0
-        call_target = None
-        try:
-            llil = func.llil
-        except ILException:
-            return None
+    if llil.dest.value.type not in [
+        RegisterValueType.ImportedAddressValue,
+        RegisterValueType.ConstantValue,
+        RegisterValueType.ConstantPointerValue,
+    ]:
+        return None
 
-        if llil is None:
-            continue
-
-        for il in llil.instructions:
-            if il.operation in [
-                LowLevelILOperation.LLIL_CALL,
-                LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
-                LowLevelILOperation.LLIL_JUMP,
-                LowLevelILOperation.LLIL_TAILCALL,
-            ]:
-                call_count += 1
-                if il.dest.value.type in [
-                    RegisterValueType.ImportedAddressValue,
-                    RegisterValueType.ConstantValue,
-                    RegisterValueType.ConstantPointerValue,
-                ]:
-                    call_target = il.dest.value.value
-
-        if call_count == 1 and call_target is not None:
-            return call_target
-
-    return None
+    return llil.dest.value.value
 
 
 def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:

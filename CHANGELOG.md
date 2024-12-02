@@ -31,6 +31,7 @@
 - ghidra: fix saving of base address @mr-tz
 - binja: support loading raw x86/x86_64 shellcode #2489 @xusheng6
 - binja: fix crash when the IL of certain functions are not available. #2249 @xusheng6
+- binja: major performance improvement on the binja extractor. #1414 @xusheng6
 
 ### capa Explorer Web
 
