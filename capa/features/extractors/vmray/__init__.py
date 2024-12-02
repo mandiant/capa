@@ -13,15 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import (
-    File,
-    Flog,
-    SummaryV2,
-    StaticData,
-    FunctionCall,
-    xml_to_dict,
-    sanitize_string,
-)
+from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall, xml_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -174,8 +166,8 @@ class VMRayAnalysis:
                 ppid,
                 process.monitor_id,
                 process.image_name,
-                sanitize_string(process.filename),
-                sanitize_string(process.cmd_line),
+                process.filename,
+                process.cmd_line,
             )
 
         # not all processes are recorded in SummaryV2.json, get missing data from flog.xml, see #2394

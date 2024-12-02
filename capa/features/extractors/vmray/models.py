@@ -315,9 +315,9 @@ class Process(BaseModel):
     monitor_id: int
     # monitor_reason: str
     os_pid: int
-    filename: str
+    filename: SanitizedString
     image_name: str
-    cmd_line: str
+    cmd_line: SanitizedString
     ref_parent_process: Optional[GenericReference] = None
 
 
