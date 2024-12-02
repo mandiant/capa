@@ -6,6 +6,7 @@
 
 - allow call as valid subscope for call scoped rules @mr-tz
 - support loading and analyzing a Binary Ninja database #2496 @xusheng6
+- vmray: record process command line details @mr-tz
 
 ### Breaking Changes
 

@@ -136,11 +136,20 @@ class FunctionReturn(BaseModel):
     from_addr: HexInt = Field(alias="from")
 
 
+def sanitize_string(value: str) -> str:
+    # e.g. "cmd_line": "\"C:\\Users\\38lTTV5Kii\\Desktop\\filename.exe\" ",
+    return value.replace("\\\\", "\\").strip(' "')
+
+
+# unify representation
+SanitizedString = Annotated[str, BeforeValidator(sanitize_string)]
+
+
 class MonitorProcess(BaseModel):
     ts: HexInt
     process_id: int
     image_name: str
-    filename: str
+    filename: SanitizedString
     # page_root: HexInt
     os_pid: HexInt
     # os_integrity_level: HexInt
@@ -148,7 +157,7 @@ class MonitorProcess(BaseModel):
     monitor_reason: str
     parent_id: int
     os_parent_pid: HexInt
-    # cmd_line: str
+    cmd_line: SanitizedString
     # cur_dir: str
     # os_username: str
     # bitness: int
@@ -308,6 +317,7 @@ class Process(BaseModel):
     os_pid: int
     filename: str
     image_name: str
+    cmd_line: str
     ref_parent_process: Optional[GenericReference] = None
 
 

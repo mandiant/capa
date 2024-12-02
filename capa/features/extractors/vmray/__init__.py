@@ -13,7 +13,15 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall, xml_to_dict
+from capa.features.extractors.vmray.models import (
+    File,
+    Flog,
+    SummaryV2,
+    StaticData,
+    FunctionCall,
+    xml_to_dict,
+    sanitize_string,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +43,8 @@ class VMRayMonitorProcess:
     ppid: int  # parent process ID assigned by OS
     monitor_id: int  # unique ID assigned to process by VMRay
     image_name: str
+    filename: str
+    cmd_line: str
 
 
 class VMRayAnalysis:
@@ -160,7 +170,12 @@ class VMRayAnalysis:
                 self.sv2.processes[process.ref_parent_process.path[1]].os_pid if process.ref_parent_process else 0
             )
             self.monitor_processes[process.monitor_id] = VMRayMonitorProcess(
-                process.os_pid, ppid, process.monitor_id, process.image_name
+                process.os_pid,
+                ppid,
+                process.monitor_id,
+                process.image_name,
+                sanitize_string(process.filename),
+                sanitize_string(process.cmd_line),
             )
 
         # not all processes are recorded in SummaryV2.json, get missing data from flog.xml, see #2394
@@ -170,6 +185,8 @@ class VMRayAnalysis:
                 monitor_process.os_parent_pid,
                 monitor_process.process_id,
                 monitor_process.image_name,
+                monitor_process.filename,
+                monitor_process.cmd_line,
             )
 
             if monitor_process.process_id not in self.monitor_processes:
