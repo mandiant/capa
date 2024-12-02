@@ -6,10 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
-from typing import Callable
+from typing import Callable, Optional
 from dataclasses import dataclass
 
-from binaryninja import BinaryView, LowLevelILInstruction
+from binaryninja import BinaryView, LowLevelILFunction, LowLevelILInstruction
 from binaryninja.architecture import InstructionTextToken
 
 
@@ -67,3 +67,13 @@ def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
         s.append(chr(c))
 
     return "".join(s)
+
+
+def get_llil_instr_at_addr(bv: BinaryView, addr: int) -> Optional[LowLevelILInstruction]:
+    arch = bv.arch
+    buffer = bv.read(addr, arch.max_instr_length)
+    llil = LowLevelILFunction(arch=arch)
+    llil.current_address = addr
+    if arch.get_instruction_low_level_il(buffer, addr, llil) == 0:
+        return None
+    return llil[0]

@@ -7,12 +7,13 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Iterator
 
-from binaryninja import Function, BinaryView, SymbolType, ILException, RegisterValueType, LowLevelILOperation
+from binaryninja import Function, BinaryView, SymbolType, LowLevelILOperation
 
 from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
+from capa.features.extractors.binja.helpers import get_llil_instr_at_addr
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
@@ -24,14 +25,7 @@ def extract_function_calls_to(fh: FunctionHandle):
         # Everything that is a code reference to the current function is considered a caller, which actually includes
         # many other references that are NOT a caller. For example, an instruction `push function_start` will also be
         # considered a caller to the function
-        llil = None
-        try:
-            # Temporary fix for https://github.com/Vector35/binaryninja-api/issues/6020. Since `.llil` can throw an
-            # exception rather than returning None
-            llil = caller.llil
-        except ILException:
-            continue
-
+        llil = get_llil_instr_at_addr(func.view, caller.address)
         if (llil is None) or llil.operation not in [
             LowLevelILOperation.LLIL_CALL,
             LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
@@ -40,14 +34,13 @@ def extract_function_calls_to(fh: FunctionHandle):
         ]:
             continue
 
-        if llil.dest.value.type not in [
-            RegisterValueType.ImportedAddressValue,
-            RegisterValueType.ConstantValue,
-            RegisterValueType.ConstantPointerValue,
+        if llil.dest.operation not in [
+            LowLevelILOperation.LLIL_CONST,
+            LowLevelILOperation.LLIL_CONST_PTR,
         ]:
             continue
 
-        address = llil.dest.value.value
+        address = llil.dest.constant
         if address != func.start:
             continue
 
