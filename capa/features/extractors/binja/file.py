@@ -18,6 +18,7 @@ from capa.features.common import (
     FORMAT_ELF,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_BINJA_DB,
     Format,
     String,
     Feature,
@@ -137,6 +138,9 @@ def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Addre
 
 
 def extract_file_format(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
+    if bv.file.database is not None:
+        yield Format(FORMAT_BINJA_DB), NO_ADDRESS
+
     view_type = bv.view_type
     if view_type in ["PE", "COFF"]:
         yield Format(FORMAT_PE), NO_ADDRESS

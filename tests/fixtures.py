@@ -332,6 +332,8 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "Practical Malware Analysis Lab 12-04.exe_"
     elif name == "pma16-01":
         return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
+    elif name == "pma16-01_binja_db":
+        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_.bndb"
     elif name == "pma21-01":
         return CD / "data" / "Practical Malware Analysis Lab 21-01.exe_"
     elif name == "al-khaser x86":
@@ -1386,6 +1388,43 @@ FEATURE_PRESENCE_TESTS_IDA = [
     # IDA can recover more names of APIs imported by ordinal
     ("mimikatz", "file", capa.features.file.Import("cabinet.FCIAddFile"), True),
 ]
+
+FEATURE_BINJA_DATABASE_TESTS = sorted(
+    [
+        # insn/regex
+        ("pma16-01_binja_db", "function=0x4021B0", capa.features.common.Regex("HTTP/1.0"), True),
+        (
+            "pma16-01_binja_db",
+            "function=0x402F40",
+            capa.features.common.Regex("www.practicalmalwareanalysis.com"),
+            True,
+        ),
+        (
+            "pma16-01_binja_db",
+            "function=0x402F40",
+            capa.features.common.Substring("practicalmalwareanalysis.com"),
+            True,
+        ),
+        ("pma16-01_binja_db", "file", capa.features.file.FunctionName("__aulldiv"), True),
+        # os & format & arch
+        ("pma16-01_binja_db", "file", OS(OS_WINDOWS), True),
+        ("pma16-01_binja_db", "file", OS(OS_LINUX), False),
+        ("pma16-01_binja_db", "function=0x404356", OS(OS_WINDOWS), True),
+        ("pma16-01_binja_db", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("pma16-01_binja_db", "file", Arch(ARCH_I386), True),
+        ("pma16-01_binja_db", "file", Arch(ARCH_AMD64), False),
+        ("pma16-01_binja_db", "function=0x404356", Arch(ARCH_I386), True),
+        ("pma16-01_binja_db", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
+        ("pma16-01_binja_db", "file", Format(FORMAT_PE), True),
+        ("pma16-01_binja_db", "file", Format(FORMAT_ELF), False),
+        # format is also a global feature
+        ("pma16-01_binja_db", "function=0x404356", Format(FORMAT_PE), True),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
 
 FEATURE_COUNT_TESTS = [
     ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),

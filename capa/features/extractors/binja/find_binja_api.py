@@ -105,13 +105,13 @@ def find_binaryninja() -> Optional[Path]:
             logger.debug("detected OS: linux")
         elif sys.platform == "darwin":
             logger.warning("unsupported platform to find Binary Ninja: %s", sys.platform)
-            return False
+            return None
         elif sys.platform == "win32":
             logger.warning("unsupported platform to find Binary Ninja: %s", sys.platform)
-            return False
+            return None
         else:
             logger.warning("unsupported platform to find Binary Ninja: %s", sys.platform)
-            return False
+            return None
 
         desktop_entry = get_desktop_entry("com.vector35.binaryninja.desktop")
         if not desktop_entry:
