@@ -40,6 +40,10 @@ except ImportError:
     indirect=["sample", "scope"],
 )
 def test_binja_features(sample, scope, feature, expected):
+    # TODO(mr-tz): BinaryNinja does not recognize this function
+    # https://github.com/mandiant/capa/issues/2507
+    if scope.__name__ == "function=0x14004B4F0":
+        pytest.xfail("BinaryNinja does not recognize this function")
     fixtures.do_test_feature_presence(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 

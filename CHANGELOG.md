@@ -12,7 +12,7 @@
 
 - remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
 
-### New Rules (10)
+### New Rules (18)
 
 - nursery/get-shadow-password-file-entry-on-linux jonathanlepore@google.com
 - nursery/set-shadow-password-file-entry-on-linux jonathanlepore@google.com
@@ -24,6 +24,14 @@
 - nursery/persist-via-print-processors-registry-key j.j.vannielen@utwente.nl
 - linking/static/touchsocket/linked-against-touchsocket still@teamt5.org
 - runtime/dotnet/compiled-with-dotnet-aot still@teamt5.org
+- nursery/persist-via-errorhandler-script j.j.vannielen@utwente.nl
+- nursery/persist-via-get-variable-hijack j.j.vannielen@utwente.nl
+- nursery/persist-via-iphlpapi-dll-hijack j.j.vannielen@utwente.nl
+- nursery/persist-via-lnk-shortcut j.j.vannielen@utwente.nl
+- nursery/persist-via-powershell-profile j.j.vannielen@utwente.nl
+- nursery/persist-via-windows-accessibility-tools j.j.vannielen@utwente.nl
+- nursery/persist-via-windows-terminal-profile j.j.vannielen@utwente.nl
+- nursery/write-to-browser-extension-directory j.j.vannielen@utwente.nl
 -
 
 ### Bug Fixes
@@ -34,6 +42,7 @@
 - binja: support loading raw x86/x86_64 shellcode #2489 @xusheng6
 - binja: fix crash when the IL of certain functions are not available. #2249 @xusheng6
 - binja: major performance improvement on the binja extractor. #1414 @xusheng6
+- cape: make Process model flexible and procmemory optional to load newest reports #2466 @mr-tz
 
 ### capa Explorer Web
 
