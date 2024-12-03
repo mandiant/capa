@@ -86,7 +86,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def get_process_name(self, ph) -> str:
         monitor_process: VMRayMonitorProcess = ph.inner
-        return monitor_process.image_name
+        return f"{monitor_process.image_name} ({monitor_process.cmd_line})"
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         for monitor_thread_id in self.analysis.monitor_threads_by_monitor_process[ph.inner.monitor_id]:
