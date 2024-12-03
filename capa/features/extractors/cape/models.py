@@ -297,7 +297,10 @@ class Call(ExactModel):
     id: int
 
 
-class Process(ExactModel):
+# FlexibleModel to account for extended fields
+# refs: https://github.com/mandiant/capa/issues/2466
+# https://github.com/kevoreilly/CAPEv2/pull/2199
+class Process(FlexibleModel):
     process_id: int
     process_name: str
     parent_id: int
@@ -400,7 +403,7 @@ class CapeReport(FlexibleModel):
     CAPE: Optional[Union[Cape, list]] = None
     dropped: Optional[list[File]] = None
     procdump: Optional[list[ProcessFile]] = None
-    procmemory: ListTODO
+    procmemory: Optional[ListTODO] = None
 
     # =========================================================================
     # information we won't use in capa
