@@ -10,8 +10,7 @@ import abc
 
 class Address(abc.ABC):
     @abc.abstractmethod
-    def __eq__(self, other):
-        ...
+    def __eq__(self, other): ...
 
     @abc.abstractmethod
     def __lt__(self, other):
