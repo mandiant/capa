@@ -44,6 +44,7 @@
 - binja: major performance improvement on the binja extractor. #1414 @xusheng6
 - cape: make Process model flexible and procmemory optional to load newest reports #2466 @mr-tz
 - binja: fix unit test failure by fixing up the analysis for file al-khaser_x64.exe_ #2507 @xusheng6
+- binja: move the stack string detection to function level #2516 @xusheng6
 
 ### capa Explorer Web
 
