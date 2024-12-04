@@ -45,14 +45,15 @@ def is_stub_function(bv: BinaryView, addr: int) -> Optional[int]:
     ]:
         return None
 
-    if llil.dest.value.type not in [
-        RegisterValueType.ImportedAddressValue,
-        RegisterValueType.ConstantValue,
-        RegisterValueType.ConstantPointerValue,
+    # The LLIL instruction retrieved by `get_llil_instr_at_addr` did not go through a full analysis, so we cannot check
+    # `llil.dest.value.type` here
+    if llil.dest.operation not in [
+        LowLevelILOperation.LLIL_CONST,
+        LowLevelILOperation.LLIL_CONST_PTR,
     ]:
         return None
 
-    return llil.dest.value.value
+    return llil.dest.constant
 
 
 def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
