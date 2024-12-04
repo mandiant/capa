@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Union, Literal, Optional
+from typing import Optional
 from collections import deque
 
 import idc
@@ -553,35 +553,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         @param feature: capa feature read from doc
         """
-        # Use the specific type from the feature instead of direct string assignment
-        FeatureType = Union[
-            Literal[
-                "os",
-                "arch",
-                "format",
-                "match",
-                "characteristic",
-                "export",
-                "import",
-                "section",
-                "function name",
-                "substring",
-                "regex",
-                "string",
-                "class",
-                "namespace",
-                "api",
-                "property",
-                "number",
-                "bytes",
-                "offset",
-                "mnemonic",
-                "operand number",
-                "operand offset",
-                "basic block",
-            ]
-        ]
-        key: FeatureType = feature.type
+        key = str(feature.type)
         value = feature.dict(by_alias=True).get(feature.type)
 
         if value:
