@@ -180,6 +180,12 @@ def get_binja_extractor(path: Path):
     if path.name.endswith("kernel32-64.dll_"):
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
 
+    # TODO(xusheng6): Temporary fix for https://github.com/mandiant/capa/issues/2507. Remove this once it is fixed in
+    # binja
+    if "al-khaser_x64.exe_" in path.name:
+        bv.create_user_function(0x14004B4F0)
+        bv.update_analysis_and_wait()
+
     extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
     # overload the extractor so that the fixture exposes `extractor.path`
