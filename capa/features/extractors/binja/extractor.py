@@ -8,7 +8,6 @@
 from typing import Iterator
 
 import binaryninja as binja
-from binaryninja import ILException
 
 import capa.features.extractors.elf
 import capa.features.extractors.binja.file
@@ -54,23 +53,8 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         f: binja.Function = fh.inner
-        # Set up a MLIL basic block dict look up to associate the disassembly basic block with its MLIL basic block
-        mlil_lookup = {}
-        try:
-            mlil = f.mlil
-        except ILException:
-            return
-
-        if mlil is None:
-            return
-
-        for mlil_bb in mlil.basic_blocks:
-            mlil_lookup[mlil_bb.source_block.start] = mlil_bb
-
         for bb in f.basic_blocks:
-            mlil_bb = mlil_lookup.get(bb.start)
-
-            yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=(bb, mlil_bb))
+            yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=bb)
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binja.basicblock.extract_features(fh, bbh)
@@ -78,10 +62,10 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         import capa.features.extractors.binja.helpers as binja_helpers
 
-        bb: tuple[binja.BasicBlock, binja.MediumLevelILBasicBlock] = bbh.inner
-        addr = bb[0].start
+        bb: binja.BasicBlock = bbh.inner
+        addr = bb.start
 
-        for text, length in bb[0]:
+        for text, length in bb:
             insn = binja_helpers.DisassemblyInstruction(addr, length, text)
             yield InsnHandle(address=AbsoluteVirtualAddress(addr), inner=insn)
             addr += length
