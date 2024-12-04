@@ -45,14 +45,15 @@ def is_stub_function(bv: BinaryView, addr: int) -> Optional[int]:
     ]:
         return None
 
-    if llil.dest.value.type not in [
-        RegisterValueType.ImportedAddressValue,
-        RegisterValueType.ConstantValue,
-        RegisterValueType.ConstantPointerValue,
+    # The LLIL instruction retrieved by `get_llil_instr_at_addr` did not go through a full analysis, so we cannot check
+    # `llil.dest.value.type` here
+    if llil.dest.operation not in [
+        LowLevelILOperation.LLIL_CONST,
+        LowLevelILOperation.LLIL_CONST_PTR,
     ]:
         return None
 
-    return llil.dest.value.value
+    return llil.dest.constant
 
 
 def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
@@ -358,7 +359,7 @@ def extract_insn_nzxor_characteristic_features(
         # e.g., <llil: eax = 0>, (LLIL_SET_REG). So we do not need to check whether the two operands are the same.
         if il.operation == LowLevelILOperation.LLIL_XOR:
             # Exclude cases related to the stack cookie
-            if is_nzxor_stack_cookie(fh.inner, bbh.inner[0], il):
+            if is_nzxor_stack_cookie(fh.inner, bbh.inner, il):
                 return False
             results.append((Characteristic("nzxor"), ih.address))
             return False
