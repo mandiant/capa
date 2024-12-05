@@ -168,7 +168,7 @@ def render_feature(
 ):
     console.write("  " * indent)
 
-    key = feature.type
+    key = str(feature.type)
     value: Optional[str]
     if isinstance(feature, frzf.BasicBlockFeature):
         # i don't think it makes sense to have standalone basic block features.

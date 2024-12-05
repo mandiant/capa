@@ -271,7 +271,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param checked: True, item checked, False item not checked
         """
         if not isinstance(
-            item, (CapaExplorerStringViewItem, CapaExplorerInstructionViewItem, CapaExplorerByteViewItem)
+            item,
+            (
+                CapaExplorerStringViewItem,
+                CapaExplorerInstructionViewItem,
+                CapaExplorerByteViewItem,
+            ),
         ):
             # ignore other item types
             return
@@ -433,11 +438,19 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if isinstance(match.node, rd.StatementNode):
             parent2 = self.render_capa_doc_statement_node(
-                parent, match, match.node.statement, [addr.to_capa() for addr in match.locations], doc
+                parent,
+                match,
+                match.node.statement,
+                [addr.to_capa() for addr in match.locations],
+                doc,
             )
         elif isinstance(match.node, rd.FeatureNode):
             parent2 = self.render_capa_doc_feature_node(
-                parent, match, match.node.feature, [addr.to_capa() for addr in match.locations], doc
+                parent,
+                match,
+                match.node.feature,
+                [addr.to_capa() for addr in match.locations],
+                doc,
             )
         else:
             raise RuntimeError("unexpected node type: " + str(match.node.type))
@@ -494,7 +507,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         for rule in rutils.capability_rules(doc):
             rule_name = rule.meta.name
             rule_namespace = rule.meta.namespace or ""
-            parent = CapaExplorerRuleItem(self.root_node, rule_name, rule_namespace, len(rule.matches), rule.source)
+            parent = CapaExplorerRuleItem(
+                self.root_node,
+                rule_name,
+                rule_namespace,
+                len(rule.matches),
+                rule.source,
+            )
 
             for location_, match in rule.matches:
                 location = location_.to_capa()
@@ -529,12 +548,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         # inform model changes have ended
         self.endResetModel()
 
-    def capa_doc_feature_to_display(self, feature: frzf.Feature):
+    def capa_doc_feature_to_display(self, feature: frzf.Feature) -> str:
         """convert capa doc feature type string to display string for ui
 
         @param feature: capa feature read from doc
         """
-        key = feature.type
+        key = str(feature.type)
         value = feature.dict(by_alias=True).get(feature.type)
 
         if value:
@@ -640,7 +659,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     assert isinstance(addr, frz.Address)
                     if location == addr.value:
                         return CapaExplorerStringViewItem(
-                            parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
+                            parent,
+                            display,
+                            location,
+                            '"' + capa.features.common.escape_string(capture) + '"',
                         )
 
             # programming error: the given location should always be found in the regex matches
@@ -671,7 +693,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         elif isinstance(feature, frzf.StringFeature):
             # display string preview
             return CapaExplorerStringViewItem(
-                parent, display, location, f'"{capa.features.common.escape_string(feature.string)}"'
+                parent,
+                display,
+                location,
+                f'"{capa.features.common.escape_string(feature.string)}"',
             )
 
         elif isinstance(
@@ -713,7 +738,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         # recursive search for all instances of old function name
         for model_index in self.match(
-            root_index, QtCore.Qt.DisplayRole, old_name, hits=-1, flags=QtCore.Qt.MatchRecursive
+            root_index,
+            QtCore.Qt.DisplayRole,
+            old_name,
+            hits=-1,
+            flags=QtCore.Qt.MatchRecursive,
         ):
             if not isinstance(model_index.internalPointer(), CapaExplorerFunctionItem):
                 continue

@@ -125,7 +125,6 @@ def collect(args):
         key = str(file)
 
         for backend in BACKENDS:
-
             if (backend, file.name) in {
                 ("binja", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_")
             }:

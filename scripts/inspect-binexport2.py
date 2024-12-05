@@ -75,7 +75,6 @@ def _render_expression_tree(
     tree_index: int,
     o: io.StringIO,
 ):
-
     expression_index = operand.expression_index[tree_index]
     expression = be2.expression[expression_index]
     children_tree_indexes: list[int] = expression_tree[tree_index]
@@ -124,7 +123,6 @@ def _render_expression_tree(
         return
 
     elif expression.type == BinExport2.Expression.OPERATOR:
-
         if len(children_tree_indexes) == 1:
             # prefix operator, like "ds:"
             if expression.symbol != "!":
@@ -250,7 +248,6 @@ def inspect_instruction(be2: BinExport2, instruction: BinExport2.Instruction, ad
 
 
 def main(argv=None):
-
     if argv is None:
         argv = sys.argv[1:]
 
