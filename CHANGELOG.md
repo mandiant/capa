@@ -46,6 +46,7 @@
 - binja: fix unit test failure by fixing up the analysis for file al-khaser_x64.exe_ #2507 @xusheng6
 - binja: move the stack string detection to function level #2516 @xusheng6
 - BinExport2: fix handling of incorrect thunk functions #2524 @williballenthin
+- BinExport2: more precise pruning of expressions @williballenthin
 
 ### capa Explorer Web
 
