@@ -128,6 +128,11 @@ def _render_expression_tree(
             if expression.symbol != "!":
                 o.write(expression.symbol)
 
+            if expression.symbol in ("lsl", "lsr"):
+                # like:     lsl 16
+                # not like: lsl16
+                o.write(" ")
+
             child_index = children_tree_indexes[0]
             _render_expression_tree(be2, operand, expression_tree, child_index, o)
 
@@ -141,7 +146,13 @@ def _render_expression_tree(
             child_a = children_tree_indexes[0]
             child_b = children_tree_indexes[1]
             _render_expression_tree(be2, operand, expression_tree, child_a, o)
+
             o.write(expression.symbol)
+            if expression.symbol == ",":
+                # like:    10, 20
+                # not like 10,20
+                o.write(" ")
+
             _render_expression_tree(be2, operand, expression_tree, child_b, o)
             return
 
@@ -152,9 +163,17 @@ def _render_expression_tree(
             child_c = children_tree_indexes[2]
             _render_expression_tree(be2, operand, expression_tree, child_a, o)
             o.write(expression.symbol)
+            if expression.symbol == ",":
+                o.write(" ")
             _render_expression_tree(be2, operand, expression_tree, child_b, o)
             o.write(expression.symbol)
+            if expression.symbol == ",":
+                o.write(" ")
             _render_expression_tree(be2, operand, expression_tree, child_c, o)
+            return
+
+        elif len(children_tree_indexes) == 0:
+            # like when all subtrees have been pruned: don't render anything
             return
 
         else:
@@ -362,10 +381,17 @@ def main(argv=None):
                                 operands = []
                                 for operand_index in instruction.operand_index:
                                     operand = be2.operand[operand_index]
-                                    # Ghidra bug where empty operands (no expressions) may
-                                    # exist so we skip those for now (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
-                                    if len(operand.expression_index) > 0:
-                                        operands.append(render_operand(be2, operand, index=operand_index))
+                                    if not operand.expression_index:
+                                        # Ghidra bug where empty operands (no expressions) may
+                                        # exist so we skip those for now (see https://github.com/NationalSecurityAgency/ghidra/issues/6817)
+                                        continue
+
+                                    op = render_operand(be2, operand, index=operand_index)
+                                    if not op:
+                                        # operand has been pruned away, so don't show it
+                                        continue
+
+                                    operands.append(op)
 
                                 call_targets = ""
                                 if instruction.call_target:
