@@ -280,11 +280,13 @@ class BinExport2Analysis:
             curr_idx: int = idx
             for _ in range(capa.features.common.THUNK_CHAIN_DEPTH_DELTA):
                 thunk_callees: list[int] = self.idx.callees_by_vertex_index[curr_idx]
-                # if this doesn't hold, then it doesn't seem like this is a thunk,
+                # If this doesn't hold, then it doesn't seem like this is a thunk,
                 # because either, len is:
-                #    0 and the thunk doesn't point to anything, or
+                #    0 and the thunk doesn't point to anything or is indirect, like `call eax`, or
                 #   >1 and the thunk may end up at many functions.
-                assert len(thunk_callees) == 1, f"thunk @ {hex(addr)} failed"
+                # In any case, this doesn't appear to be the sort of thunk we're looking for.
+                if len(thunk_callees) != 1:
+                    break
 
                 thunked_idx: int = thunk_callees[0]
                 thunked_vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[thunked_idx]
