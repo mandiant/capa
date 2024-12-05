@@ -99,12 +99,48 @@ def _prune_expression_tree_empty_shifts(
 
 # internal to `build_expression_tree`
 # this is unstable: it is subject to change, so don't rely on it!
+def _fixup_expression_tree_references_to_tree_index(
+    expression_tree: list[list[int]],
+    existing_index: int,
+    new_index: int,
+):
+    for tree_node in expression_tree:
+        for i, index in enumerate(tree_node):
+            if index == existing_index:
+                tree_node[i] = new_index
+
+
+# internal to `build_expression_tree`
+# this is unstable: it is subject to change, so don't rely on it!
+def _fixup_expression_tree_lonely_commas(
+    be2: BinExport2,
+    operand: BinExport2.Operand,
+    expression_tree: list[list[int]],
+    tree_index: int,
+):
+    expression_index = operand.expression_index[tree_index]
+    expression = be2.expression[expression_index]
+    children_tree_indexes: list[int] = expression_tree[tree_index]
+
+    if expression.type == BinExport2.Expression.OPERATOR:
+        if len(children_tree_indexes) == 1 and expression.symbol == ",":
+            existing_index = tree_index
+            new_index = children_tree_indexes[0]
+            _fixup_expression_tree_references_to_tree_index(expression_tree, existing_index, new_index)
+
+    for child_tree_index in children_tree_indexes:
+        _fixup_expression_tree_lonely_commas(be2, operand, expression_tree, child_tree_index)
+
+
+# internal to `build_expression_tree`
+# this is unstable: it is subject to change, so don't rely on it!
 def _prune_expression_tree(
     be2: BinExport2,
     operand: BinExport2.Operand,
     expression_tree: list[list[int]],
 ):
     _prune_expression_tree_empty_shifts(be2, operand, expression_tree, 0)
+    _fixup_expression_tree_lonely_commas(be2, operand, expression_tree, 0)
 
 
 # this is unstable: it is subject to change, so don't rely on it!
