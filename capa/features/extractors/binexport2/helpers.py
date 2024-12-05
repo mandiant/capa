@@ -52,6 +52,25 @@ def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGr
 
 # internal to `build_expression_tree`
 # this is unstable: it is subject to change, so don't rely on it!
+def _prune_expression_tree_references_to_tree_index(
+    expression_tree: list[list[int]],
+    tree_index: int,
+):
+    # `i` is the index of the tree node that we'll search for `tree_index`
+    # if we remove `tree_index` from it, and it is now empty,
+    # then we'll need to prune references to `i`.
+    for i, tree_node in enumerate(expression_tree):
+        if tree_index in tree_node:
+            tree_node.remove(tree_index)
+
+            if len(tree_node) == 0:
+                # if the parent node is now empty,
+                # remove references to that parent node.
+                _prune_expression_tree_references_to_tree_index(expression_tree, i)
+
+
+# internal to `build_expression_tree`
+# this is unstable: it is subject to change, so don't rely on it!
 def _prune_expression_tree_empty_shifts(
     be2: BinExport2,
     operand: BinExport2.Operand,
@@ -70,50 +89,12 @@ def _prune_expression_tree_empty_shifts(
             #
             # Which seems to be as if the shift wasn't there (shift of #0)
             # so we want to remove references to this node from any parent nodes.
-            for tree_node in expression_tree:
-                if tree_index in tree_node:
-                    tree_node.remove(tree_index)
+            _prune_expression_tree_references_to_tree_index(expression_tree, tree_index)
 
             return
 
     for child_tree_index in children_tree_indexes:
         _prune_expression_tree_empty_shifts(be2, operand, expression_tree, child_tree_index)
-
-
-# internal to `build_expression_tree`
-# this is unstable: it is subject to change, so don't rely on it!
-def _prune_expression_tree_empty_commas(
-    be2: BinExport2,
-    operand: BinExport2.Operand,
-    expression_tree: list[list[int]],
-    tree_index: int,
-):
-    expression_index = operand.expression_index[tree_index]
-    expression = be2.expression[expression_index]
-    children_tree_indexes: list[int] = expression_tree[tree_index]
-
-    if expression.type == BinExport2.Expression.OPERATOR:
-        if len(children_tree_indexes) == 1 and expression.symbol == ",":
-            # Due to the above pruning of empty LSL or LSR expressions,
-            # the parents might need to be fixed up.
-            #
-            # Specifically, if the pruned node was part of a comma list with two children,
-            # now there's only a single child, which renders as an extra comma,
-            # so we replace references to the comma node with the immediate child.
-            #
-            # A more correct way of doing this might be to walk up the parents and do fixups,
-            # but I'm not quite sure how to do this yet. Just do two passes right now.
-            child = children_tree_indexes[0]
-
-            for tree_node in expression_tree:
-                tree_node.index
-                if tree_index in tree_node:
-                    tree_node[tree_node.index(tree_index)] = child
-
-            return
-
-    for child_tree_index in children_tree_indexes:
-        _prune_expression_tree_empty_commas(be2, operand, expression_tree, child_tree_index)
 
 
 # internal to `build_expression_tree`
@@ -124,7 +105,6 @@ def _prune_expression_tree(
     expression_tree: list[list[int]],
 ):
     _prune_expression_tree_empty_shifts(be2, operand, expression_tree, 0)
-    _prune_expression_tree_empty_commas(be2, operand, expression_tree, 0)
 
 
 # this is unstable: it is subject to change, so don't rely on it!
@@ -172,7 +152,6 @@ def _build_expression_tree(
 
         tree.append(children)
 
-    _prune_expression_tree(be2, operand, tree)
     _prune_expression_tree(be2, operand, tree)
 
     return tree
