@@ -12,8 +12,6 @@
 
 ### Bug Fixes
 
-- handle IDA 8.3/8.4 vs. 9.0 API change @mr-tz
-
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
@@ -21,8 +19,20 @@
 ### Development
 
 ### Raw diffs
-- [capa v8.0.0...master](https://github.com/mandiant/capa/compare/v8.0.0...master)
-- [capa-rules v8.0.0...master](https://github.com/mandiant/capa-rules/compare/v8.0.0...master)
+- [capa v8.0.1...master](https://github.com/mandiant/capa/compare/v8.0.1...master)
+- [capa-rules v8.0.1...master](https://github.com/mandiant/capa-rules/compare/v8.0.1...master)
+
+## v8.0.1
+
+This point release fixes an issue with the IDAPython API to now handle IDA Pro 8.3, 8.4, and 9.0 correctly.
+
+### Bug Fixes
+
+- handle IDA 8.3/8.4 vs. 9.0 API change @mr-tz
+
+### Raw diffs
+- [capa v8.0.0...v8.0.1](https://github.com/mandiant/capa/compare/v8.0.0...v8.0.1)
+- [capa-rules v8.0.0...v8.0.1](https://github.com/mandiant/capa-rules/compare/v8.0.0...v8.0.1)
 
 ## v8.0.0
 
