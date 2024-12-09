@@ -504,4 +504,16 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, processes: set) -> Dynamic
     return new_extractor
 
 
+def ThreadFilter(extractor: DynamicFeatureExtractor, threads: set) -> DynamicFeatureExtractor:
+    original_get_threads = extractor.get_threads
+
+    def filtered_get_threads(self, ph: ProcessHandle):
+        yield from (t for t in original_get_threads(ph) if t.address in threads)
+
+    new_extractor = copy(extractor)
+    new_extractor.get_threads = MethodType(filtered_get_threads, extractor)  # type: ignore
+
+    return new_extractor
+
+
 FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]
