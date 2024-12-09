@@ -208,9 +208,22 @@ def _fill_operand_expression_list(
     children_tree_indexes: list[int] = expression_tree[tree_index]
 
     if expression.type == BinExport2.Expression.REGISTER:
-        assert len(children_tree_indexes) == 0
+        assert len(children_tree_indexes) <= 1
         expression_list.append(expression)
-        return
+
+        if len(children_tree_indexes) == 0:
+            return
+        elif len(children_tree_indexes) == 1:
+            # like for aarch64 with vector instructions, indicating vector data size:
+            #
+            #     FADD V0.4S, V1.4S, V2.4S
+            #
+            # see: https://github.com/mandiant/capa/issues/2528
+            child_index = children_tree_indexes[0]
+            _fill_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
+            return
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
 
     elif expression.type == BinExport2.Expression.SYMBOL:
         assert len(children_tree_indexes) <= 1
@@ -233,9 +246,23 @@ def _fill_operand_expression_list(
             raise NotImplementedError(len(children_tree_indexes))
 
     elif expression.type == BinExport2.Expression.IMMEDIATE_INT:
-        assert len(children_tree_indexes) == 0
+        assert len(children_tree_indexes) <= 1
         expression_list.append(expression)
-        return
+
+        if len(children_tree_indexes) == 0:
+            return
+        elif len(children_tree_indexes) == 1:
+            # the ghidra exporter can produce some weird expressions,
+            # particularly for MSRs, like for:
+            #
+            #     sreg(3, 0, c.0, c.4, 4)
+            #
+            # see: https://github.com/mandiant/capa/issues/2530
+            child_index = children_tree_indexes[0]
+            _fill_operand_expression_list(be2, operand, expression_tree, child_index, expression_list)
+            return
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
 
     elif expression.type == BinExport2.Expression.SIZE_PREFIX:
         # like: b4
