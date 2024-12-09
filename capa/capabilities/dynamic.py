@@ -35,6 +35,10 @@ class CallCapabilities:
     matches: MatchResults
 
 
+# The number of calls that make up a sequence.
+SEQUENCE_SIZE = 5
+
+
 def find_call_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
 ) -> CallCapabilities:
@@ -64,6 +68,7 @@ def find_call_capabilities(
 class ThreadCapabilities:
     features: FeatureSet
     thread_matches: MatchResults
+    sequence_matches: MatchResults
     call_matches: MatchResults
 
 
@@ -81,6 +86,11 @@ def find_thread_capabilities(
     # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
 
+    # matches found at the sequence scope.
+    sequence_matches: MatchResults = collections.defaultdict(list)
+
+    sequence: collections.deque[FeatureSet] = collections.deque(maxlen=SEQUENCE_SIZE)
+
     for ch in extractor.get_calls(ph, th):
         call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
         for feature, vas in call_capabilities.features.items():
@@ -88,6 +98,16 @@ def find_thread_capabilities(
 
         for rule_name, res in call_capabilities.matches.items():
             call_matches[rule_name].extend(res)
+
+        sequence.append(call_capabilities.features)
+        sequence_features: FeatureSet = collections.defaultdict(set)
+        for call in sequence:
+            for feature, vas in call.items():
+                sequence_features[feature].update(vas)
+
+        _, smatches = ruleset.match(Scope.SEQUENCE, sequence_features, ch.address)
+        for rule_name, res in smatches.items():
+            sequence_matches[rule_name].extend(res)
 
     for feature, va in itertools.chain(extractor.extract_thread_features(ph, th), extractor.extract_global_features()):
         features[feature].add(va)
@@ -100,7 +120,7 @@ def find_thread_capabilities(
         for va, _ in res:
             capa.engine.index_rule_matches(features, rule, [va])
 
-    return ThreadCapabilities(features, matches, call_matches)
+    return ThreadCapabilities(features, matches, sequence_matches, call_matches)
 
 
 @dataclass
@@ -125,6 +145,10 @@ def find_process_capabilities(
     # might be found at different threads, that's ok.
     thread_matches: MatchResults = collections.defaultdict(list)
 
+    # matches found at the sequence scope.
+    # might be found at different sequences, that's ok.
+    sequence_matches: MatchResults = collections.defaultdict(list)
+
     # matches found at the call scope.
     # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
@@ -136,6 +160,9 @@ def find_process_capabilities(
 
         for rule_name, res in thread_capabilities.thread_matches.items():
             thread_matches[rule_name].extend(res)
+
+        for rule_name, res in thread_capabilities.sequence_matches.items():
+            sequence_matches[rule_name].extend(res)
 
         for rule_name, res in thread_capabilities.call_matches.items():
             call_matches[rule_name].extend(res)
@@ -152,6 +179,7 @@ def find_dynamic_capabilities(
 ) -> Capabilities:
     all_process_matches: MatchResults = collections.defaultdict(list)
     all_thread_matches: MatchResults = collections.defaultdict(list)
+    all_sequence_matches: MatchResults = collections.defaultdict(list)
     all_call_matches: MatchResults = collections.defaultdict(list)
 
     feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
@@ -177,6 +205,8 @@ def find_dynamic_capabilities(
                 all_process_matches[rule_name].extend(res)
             for rule_name, res in process_capabilities.thread_matches.items():
                 all_thread_matches[rule_name].extend(res)
+            for rule_name, res in process_capabilities.sequence_matches.items():
+                all_sequence_matches[rule_name].extend(res)
             for rule_name, res in process_capabilities.call_matches.items():
                 all_call_matches[rule_name].extend(res)
 
@@ -186,7 +216,7 @@ def find_dynamic_capabilities(
     # mapping from feature (matched rule) to set of addresses at which it matched.
     process_and_lower_features: FeatureSet = collections.defaultdict(set)
     for rule_name, results in itertools.chain(
-        all_process_matches.items(), all_thread_matches.items(), all_call_matches.items()
+        all_process_matches.items(), all_thread_matches.items(), all_sequence_matches.items(), all_call_matches.items()
     ):
         locations = {p[0] for p in results}
         rule = ruleset[rule_name]
@@ -200,6 +230,8 @@ def find_dynamic_capabilities(
             # each rule exists in exactly one scope,
             # so there won't be any overlap among these following MatchResults,
             # and we can merge the dictionaries naively.
+            all_call_matches.items(),
+            all_sequence_matches.items(),
             all_thread_matches.items(),
             all_process_matches.items(),
             all_file_capabilities.matches.items(),

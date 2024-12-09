@@ -86,6 +86,7 @@ class Scope(str, Enum):
     FILE = "file"
     PROCESS = "process"
     THREAD = "thread"
+    SEQUENCE = "sequence"
     CALL = "call"
     FUNCTION = "function"
     BASIC_BLOCK = "basic block"
@@ -114,6 +115,7 @@ DYNAMIC_SCOPES = {
     Scope.GLOBAL,
     Scope.PROCESS,
     Scope.THREAD,
+    Scope.SEQUENCE,
     Scope.CALL,
 }
 
@@ -199,6 +201,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.common.MatchedRule,
     },
     Scope.THREAD: set(),
+    Scope.SEQUENCE: set(),
     Scope.CALL: {
         capa.features.common.MatchedRule,
         capa.features.common.Regex,
@@ -253,11 +256,14 @@ SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.FILE].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.THREAD].update(SUPPORTED_FEATURES[Scope.GLOBAL])
+SUPPORTED_FEATURES[Scope.SEQUENCE].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.CALL].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 
 
-# all call scope features are also thread features
-SUPPORTED_FEATURES[Scope.THREAD].update(SUPPORTED_FEATURES[Scope.CALL])
+# all call scope features are also sequence features
+SUPPORTED_FEATURES[Scope.SEQUENCE].update(SUPPORTED_FEATURES[Scope.CALL])
+# all sequence scope features (and therefore, call features) are also thread features
+SUPPORTED_FEATURES[Scope.THREAD].update(SUPPORTED_FEATURES[Scope.SEQUENCE])
 # all thread scope features are also process features
 SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.THREAD])
 
@@ -636,8 +642,19 @@ def build_statements(d, scopes: Scopes):
             Scope.THREAD, build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)), description=description
         )
 
+    elif key == "sequence":
+        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD)):
+            raise InvalidRule("sequence subscope supported only for the process and thread scopes")
+
+        if len(d[key]) != 1:
+            raise InvalidRule("subscope must have exactly one child statement")
+
+        return ceng.Subscope(
+            Scope.SEQUENCE, build_statements(d[key][0], Scopes(dynamic=Scope.SEQUENCE)), description=description
+        )
+
     elif key == "call":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.CALL)):
+        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SEQUENCE, Scope.CALL)):
             raise InvalidRule("call subscope supported only for the process, thread, and call scopes")
 
         if len(d[key]) != 1:
@@ -1383,6 +1400,7 @@ class RuleSet:
 
         scopes = (
             Scope.CALL,
+            Scope.SEQUENCE,
             Scope.THREAD,
             Scope.PROCESS,
             Scope.INSTRUCTION,
@@ -1412,6 +1430,10 @@ class RuleSet:
     @property
     def thread_rules(self):
         return self.rules_by_scope[Scope.THREAD]
+
+    @property
+    def sequence_rules(self):
+        return self.rules_by_scope[Scope.SEQUENCE]
 
     @property
     def call_rules(self):
