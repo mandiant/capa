@@ -12,7 +12,7 @@
 
 - remove support for Python 3.8 and use Python 3.10 as minimum now #1966 @mr-tz
 
-### New Rules (18)
+### New Rules (54)
 
 - nursery/get-shadow-password-file-entry-on-linux jonathanlepore@google.com
 - nursery/set-shadow-password-file-entry-on-linux jonathanlepore@google.com
@@ -32,6 +32,42 @@
 - nursery/persist-via-windows-accessibility-tools j.j.vannielen@utwente.nl
 - nursery/persist-via-windows-terminal-profile j.j.vannielen@utwente.nl
 - nursery/write-to-browser-extension-directory j.j.vannielen@utwente.nl
+- nursery/persist-via-aedebug-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-amsi-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-app-paths-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-appcertdlls-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-appx-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-autodialdll-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-autoplayhandlers-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-bootverificationprogram-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-code-signing-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-com-hijack j.j.vannielen@utwente.nl
+- nursery/persist-via-command-processor-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-contextmenuhandlers-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-cor_profiler_path-registry-value j.j.vannielen@utwente.nl
+- nursery/persist-via-default-file-association-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-disk-cleanup-handler-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-dotnet-dbgmanageddebugger-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-dotnet_startup_hooks-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-explorer-tools-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-filter-handlers-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-group-policy-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-hhctrl-com-hijack j.j.vannielen@utwente.nl
+- nursery/persist-via-htmlhelp-author-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-image-file-execution-options-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-lsa-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-natural-language-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-netsh-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-network-provider-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-path-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-print-monitors-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-rdp-startup-programs-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-silentprocessexit-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-telemetrycontroller-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-timeproviders-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-ts-initialprogram-registry-key j.j.vannielen@utwente.nl
+- nursery/persist-via-userinitmprlogonscript-registry-value j.j.vannielen@utwente.nl
+- nursery/persist-via-windows-error-reporting-registry-key j.j.vannielen@utwente.nl
 -
 
 ### Bug Fixes
