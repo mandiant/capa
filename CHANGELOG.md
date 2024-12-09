@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- handle IDA 8.3/8.4 vs. 9.0 API change @mr-tz
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

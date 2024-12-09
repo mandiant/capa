@@ -41,7 +41,15 @@ if hasattr(ida_bytes, "parse_binpat_str"):
             return
 
         while True:
-            ea, _ = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+            ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+            if isinstance(ea, int):
+                # "ea_t" in IDA 8.4, 8.3
+                pass
+            elif isinstance(ea, tuple):
+                # "drc_t" in IDA 9
+                ea = ea[0]
+            else:
+                raise NotImplementedError(f"bin_search returned unhandled type: {type(ea)}")
             if ea == idaapi.BADADDR:
                 break
             start = ea + 1
