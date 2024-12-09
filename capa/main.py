@@ -198,7 +198,7 @@ def simple_message_exception_handler(
     else:
         print(
             f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-            + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+            + "to see the stack trace.\nPlease also report your issue on the capa GitHub page so we "
             + "can improve the code! (https://github.com/mandiant/capa/issues)",
             file=sys.stderr,
         )
