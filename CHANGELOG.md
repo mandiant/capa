@@ -47,6 +47,7 @@
 - binja: move the stack string detection to function level #2516 @xusheng6
 - BinExport2: fix handling of incorrect thunk functions #2524 @williballenthin
 - BinExport2: more precise pruning of expressions @williballenthin
+- BinExport2: better handle weird expression trees from Ghidra #2528 #2530 @williballenthin
 
 ### capa Explorer Web
 
