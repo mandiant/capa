@@ -81,8 +81,21 @@ def _render_expression_tree(
 
     if expression.type == BinExport2.Expression.REGISTER:
         o.write(expression.symbol)
-        assert len(children_tree_indexes) == 0
-        return
+        assert len(children_tree_indexes) <= 1
+
+        if len(children_tree_indexes) == 0:
+            return
+        elif len(children_tree_indexes) == 1:
+            # like for aarch64 with vector instructions, indicating vector data size:
+            #
+            #     FADD V0.4S, V1.4S, V2.4S
+            #
+            # see: https://github.com/mandiant/capa/issues/2528
+            child_index = children_tree_indexes[0]
+            _render_expression_tree(be2, operand, expression_tree, child_index, o)
+            return
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
 
     elif expression.type == BinExport2.Expression.SYMBOL:
         o.write(expression.symbol)
