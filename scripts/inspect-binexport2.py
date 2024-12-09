@@ -119,8 +119,22 @@ def _render_expression_tree(
 
     elif expression.type == BinExport2.Expression.IMMEDIATE_INT:
         o.write(f"0x{expression.immediate:X}")
-        assert len(children_tree_indexes) == 0
-        return
+        assert len(children_tree_indexes) <= 1
+
+        if len(children_tree_indexes) == 0:
+            return
+        elif len(children_tree_indexes) == 1:
+            # the ghidra exporter can produce some weird expressions,
+            # particularly for MSRs, like for:
+            #
+            #     sreg(3, 0, c.0, c.4, 4)
+            #
+            # see: https://github.com/mandiant/capa/issues/2530
+            child_index = children_tree_indexes[0]
+            _render_expression_tree(be2, operand, expression_tree, child_index, o)
+            return
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
 
     elif expression.type == BinExport2.Expression.SIZE_PREFIX:
         # like: b4
