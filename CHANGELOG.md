@@ -4,6 +4,36 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v8.0.0...master](https://github.com/mandiant/capa/compare/v8.0.0...master)
+- [capa-rules v8.0.0...master](https://github.com/mandiant/capa-rules/compare/v8.0.0...master)
+
+## v8.0.0
+
+capa version 8 adds support for IDA Pro 9.0 (and idalib). The release comes with various improvements and bug fixes for the Binary Ninja backend (including to load with database files) -- thanks to @xusheng6.
+
+Additional bug fixes improve the dynamic and BinExport backends.
+
+capa version 8 now requires Python 3.10 or newer.
+
+Special thanks to @Tamir-K, @harshit-wadhwani, @jorik-utwente for their great contributions.
+
+### New Features
+
 - allow call as valid subscope for call scoped rules @mr-tz
 - support loading and analyzing a Binary Ninja database #2496 @xusheng6
 - vmray: record process command line details @mr-tz
@@ -68,7 +98,6 @@
 - nursery/persist-via-ts-initialprogram-registry-key j.j.vannielen@utwente.nl
 - nursery/persist-via-userinitmprlogonscript-registry-value j.j.vannielen@utwente.nl
 - nursery/persist-via-windows-error-reporting-registry-key j.j.vannielen@utwente.nl
--
 
 ### Bug Fixes
 
@@ -97,8 +126,8 @@
 - CI: update Binary Ninja version to 4.2 #2499 @xusheng6
 
 ### Raw diffs
-- [capa v7.4.0...master](https://github.com/mandiant/capa/compare/v7.4.0...master)
-- [capa-rules v7.4.0...master](https://github.com/mandiant/capa-rules/compare/v7.4.0...master)
+- [capa v7.4.0...v8.0.0](https://github.com/mandiant/capa/compare/v7.4.0...v8.0.0)
+- [capa-rules v7.4.0...v8.0.0](https://github.com/mandiant/capa-rules/compare/v7.4.0...v8.0.0)
 
 ## v7.4.0
 
