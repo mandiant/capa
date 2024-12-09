@@ -311,6 +311,36 @@ def render_match(
         render_match(console, layout, rule, child, indent=indent + 1, mode=child_mode)
 
 
+def collect_call_locations(
+    match: rd.Match,
+    mode=MODE_SUCCESS,
+):
+    """
+    Find all the DynamicCallAddress locations in the given match, recursively.
+    Useful to collect the calls used to match a sequence scoped rule.
+    """
+    if isinstance(match.node, rd.StatementNode):
+        if (
+            isinstance(match.node.statement, rd.CompoundStatement)
+            and match.node.statement.type == rd.CompoundStatementType.NOT
+        ):
+            child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
+            for child in match.children:
+                yield from collect_call_locations(child, child_mode)
+        else:
+            for child in match.children:
+                yield from collect_call_locations(child, mode)
+    elif isinstance(match.node, rd.FeatureNode):
+        for location in match.locations:
+            if location.type != frz.AddressType.CALL:
+                continue
+            if mode == MODE_FAILURE:
+                continue
+            yield location
+    else:
+        raise ValueError("unexpected node type")
+
+
 def render_rules(console: Console, doc: rd.ResultDocument):
     """
     like:
@@ -450,6 +480,9 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                         console.write(v.render_process(doc.meta.analysis.layout, location))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                         console.write(v.render_thread(doc.meta.analysis.layout, location))
+                    elif rule.meta.scopes.dynamic == capa.rules.Scope.SEQUENCE:
+                        calls = sorted(set(collect_call_locations(match)))
+                        console.write(hanging_indent(v.render_sequence(doc.meta.analysis.layout, calls), indent=1))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
                         console.write(hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1))
                     else:

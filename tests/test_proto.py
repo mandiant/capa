@@ -129,6 +129,7 @@ def test_scope_to_pb2():
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.INSTRUCTION) == capa_pb2.SCOPE_INSTRUCTION
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.PROCESS) == capa_pb2.SCOPE_PROCESS
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.THREAD) == capa_pb2.SCOPE_THREAD
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.SEQUENCE) == capa_pb2.SCOPE_SEQUENCE
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.CALL) == capa_pb2.SCOPE_CALL
 
 

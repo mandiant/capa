@@ -1,0 +1,256 @@
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
+
+
+# tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      ...
+#      thread: 3064
+#        call 8: GetSystemTimeAsFileTime()
+#        call 9: GetSystemInfo()
+#        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 13: LdrGetProcedureAddress(2010595072, 0, RemoveVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 14: RtlAddVectoredExceptionHandler(1921490089, 0)
+#        call 15: GetSystemTime()
+#        call 16: NtAllocateVirtualMemory(no, 4, 786432, 4784128, 4294967295)
+#        call 17: NtAllocateVirtualMemory(no, 4, 12288, 4784128, 4294967295)
+#        call 18: GetSystemInfo()
+#        ...
+#      ...
+
+import textwrap
+from functools import lru_cache
+
+import fixtures
+
+import capa.main
+import capa.capabilities.dynamic
+from capa.features.extractors.base_extractor import ThreadFilter, DynamicFeatureExtractor
+
+
+def filter_threads(extractor: DynamicFeatureExtractor, ppid: int, pid: int, tid: int) -> DynamicFeatureExtractor:
+    for ph in extractor.get_processes():
+        if (ph.address.ppid, ph.address.pid) != (ppid, pid):
+            continue
+
+        for th in extractor.get_threads(ph):
+            if th.address.tid != tid:
+                continue
+
+            return ThreadFilter(
+                extractor,
+                {
+                    th.address,
+                },
+            )
+
+    raise ValueError("failed to find target thread")
+
+
+@lru_cache(maxsize=1)
+def get_0000a657_thread3064():
+    extractor = fixtures.get_cape_extractor(fixtures.get_data_path_by_name("0000a657"))
+    extractor = filter_threads(extractor, 2456, 3052, 3064)
+    return extractor
+
+
+def get_call_ids(matches):
+    for address, _ in matches:
+        yield address.id
+
+
+# sanity check: match the first call
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        call 8: GetSystemTimeAsFileTime()
+def test_dynamic_call_scope():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: call
+            features:
+                - api: GetSystemTimeAsFileTime
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in matches
+    assert 8 in get_call_ids(matches[r.name])
+
+
+# match the first 5-tuple sequence.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        call 8: GetSystemTimeAsFileTime()
+#        call 9: GetSystemInfo()
+#        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
+def test_dynamic_sequence_scope():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - api: GetSystemTimeAsFileTime
+                    - api: GetSystemInfo
+                    - api: LdrGetDllHandle
+                    - api: LdrGetProcedureAddress
+                    - count(api(LdrGetDllHandle)): 2
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in matches
+    assert 12 in get_call_ids(matches[r.name])
+
+
+# show the sequence is only 5 calls long, and doesn't match beyond that 5-tuple.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        call 8: GetSystemTimeAsFileTime()
+#        call 9: GetSystemInfo()
+#        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 13: LdrGetProcedureAddress(2010595072, 0, RemoveVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 14: RtlAddVectoredExceptionHandler(1921490089, 0)
+#        call 15: GetSystemTime()
+#        call 16: NtAllocateVirtualMemory(no, 4, 786432, 4784128, 4294967295)
+def test_dynamic_sequence_scope2():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - api: GetSystemTimeAsFileTime
+                    - api: RtlAddVectoredExceptionHandler
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name not in matches
+
+
+# show how you might use a sequence rule: to match a small window for a collection of features.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: ...
+#        call 13: ...
+#        call 14: RtlAddVectoredExceptionHandler(1921490089, 0)
+def test_dynamic_sequence_example():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - call:
+                        - and:
+                            - api: LdrGetDllHandle
+                            - string: "kernel32.dll"
+                    - call:
+                        - and:
+                            - api: LdrGetProcedureAddress
+                            - string: "AddVectoredExceptionHandler"
+                    - api: RtlAddVectoredExceptionHandler
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in matches
+    assert 14 in get_call_ids(matches[r.name])
+
+
+# show how sequences that overlap a single event are handled.
+# TODO(williballenthin): but I think we really just want one match for this, not copies of the same thing.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        ...
+#        call 10: ...
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: ...
+#        call 13: ...
+#        call 14: ...
+#        call 15: ...
+#        ...
+def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - call:
+                        - and:
+                            - api: LdrGetProcedureAddress
+                            - string: "AddVectoredExceptionHandler"
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in matches
+    assert [11, 12, 13, 14, 15] == list(get_call_ids(matches[r.name]))
+
