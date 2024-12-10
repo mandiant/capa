@@ -21,6 +21,7 @@ import capa
 import capa.engine as ceng
 import capa.render.result_document as rdoc
 import capa.features.freeze.features as frzf
+from capa.capabilities.common import Capabilities
 
 
 def test_optional_node_from_capa():
@@ -289,4 +290,4 @@ def test_rdoc_to_capa():
 
     meta, capabilites = rd.to_capa()
     assert isinstance(meta, rdoc.Metadata)
-    assert isinstance(capabilites, dict)
+    assert isinstance(capabilites, Capabilities)

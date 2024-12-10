@@ -16,26 +16,30 @@
 import logging
 import itertools
 import collections
-from typing import Any
+from dataclasses import dataclass
 
 import capa.perf
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.capabilities.common import find_file_capabilities
+from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class CallCapabilities:
+    features: FeatureSet
+    matches: MatchResults
+
+
 def find_call_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-) -> tuple[FeatureSet, MatchResults]:
+) -> CallCapabilities:
     """
     find matches for the given rules for the given call.
-
-    returns: tuple containing (features for call, match results for call)
     """
     # all features found for the call.
     features: FeatureSet = collections.defaultdict(set)
@@ -53,16 +57,21 @@ def find_call_capabilities(
         for addr, _ in res:
             capa.engine.index_rule_matches(features, rule, [addr])
 
-    return features, matches
+    return CallCapabilities(features, matches)
+
+
+@dataclass
+class ThreadCapabilities:
+    features: FeatureSet
+    thread_matches: MatchResults
+    call_matches: MatchResults
 
 
 def find_thread_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle
-) -> tuple[FeatureSet, MatchResults, MatchResults]:
+) -> ThreadCapabilities:
     """
     find matches for the given rules within the given thread.
-
-    returns: tuple containing (features for thread, match results for thread, match results for calls)
     """
     # all features found within this thread,
     # includes features found within calls.
@@ -73,11 +82,11 @@ def find_thread_capabilities(
     call_matches: MatchResults = collections.defaultdict(list)
 
     for ch in extractor.get_calls(ph, th):
-        ifeatures, imatches = find_call_capabilities(ruleset, extractor, ph, th, ch)
-        for feature, vas in ifeatures.items():
+        call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
+        for feature, vas in call_capabilities.features.items():
             features[feature].update(vas)
 
-        for rule_name, res in imatches.items():
+        for rule_name, res in call_capabilities.matches.items():
             call_matches[rule_name].extend(res)
 
     for feature, va in itertools.chain(extractor.extract_thread_features(ph, th), extractor.extract_global_features()):
@@ -91,16 +100,22 @@ def find_thread_capabilities(
         for va, _ in res:
             capa.engine.index_rule_matches(features, rule, [va])
 
-    return features, matches, call_matches
+    return ThreadCapabilities(features, matches, call_matches)
+
+
+@dataclass
+class ProcessCapabilities:
+    process_matches: MatchResults
+    thread_matches: MatchResults
+    call_matches: MatchResults
+    feature_count: int
 
 
 def find_process_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle
-) -> tuple[MatchResults, MatchResults, MatchResults, int]:
+) -> ProcessCapabilities:
     """
     find matches for the given rules within the given process.
-
-    returns: tuple containing (match results for process, match results for threads, match results for calls, number of features)
     """
     # all features found within this process,
     # includes features found within threads (and calls).
@@ -115,26 +130,26 @@ def find_process_capabilities(
     call_matches: MatchResults = collections.defaultdict(list)
 
     for th in extractor.get_threads(ph):
-        features, tmatches, cmatches = find_thread_capabilities(ruleset, extractor, ph, th)
-        for feature, vas in features.items():
+        thread_capabilities = find_thread_capabilities(ruleset, extractor, ph, th)
+        for feature, vas in thread_capabilities.features.items():
             process_features[feature].update(vas)
 
-        for rule_name, res in tmatches.items():
+        for rule_name, res in thread_capabilities.thread_matches.items():
             thread_matches[rule_name].extend(res)
 
-        for rule_name, res in cmatches.items():
+        for rule_name, res in thread_capabilities.call_matches.items():
             call_matches[rule_name].extend(res)
 
     for feature, va in itertools.chain(extractor.extract_process_features(ph), extractor.extract_global_features()):
         process_features[feature].add(va)
 
     _, process_matches = ruleset.match(Scope.PROCESS, process_features, ph.address)
-    return process_matches, thread_matches, call_matches, len(process_features)
+    return ProcessCapabilities(process_matches, thread_matches, call_matches, len(process_features))
 
 
 def find_dynamic_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress=None
-) -> tuple[MatchResults, Any]:
+) -> Capabilities:
     all_process_matches: MatchResults = collections.defaultdict(list)
     all_thread_matches: MatchResults = collections.defaultdict(list)
     all_call_matches: MatchResults = collections.defaultdict(list)
@@ -150,19 +165,19 @@ def find_dynamic_capabilities(
     ) as pbar:
         task = pbar.add_task("matching", total=n_processes, unit="processes")
         for p in processes:
-            process_matches, thread_matches, call_matches, feature_count = find_process_capabilities(
-                ruleset, extractor, p
-            )
+            process_capabilities = find_process_capabilities(ruleset, extractor, p)
             feature_counts.processes += (
-                rdoc.ProcessFeatureCount(address=frz.Address.from_capa(p.address), count=feature_count),
+                rdoc.ProcessFeatureCount(
+                    address=frz.Address.from_capa(p.address), count=process_capabilities.feature_count
+                ),
             )
-            logger.debug("analyzed %s and extracted %d features", p.address, feature_count)
+            logger.debug("analyzed %s and extracted %d features", p.address, process_capabilities.feature_count)
 
-            for rule_name, res in process_matches.items():
+            for rule_name, res in process_capabilities.process_matches.items():
                 all_process_matches[rule_name].extend(res)
-            for rule_name, res in thread_matches.items():
+            for rule_name, res in process_capabilities.thread_matches.items():
                 all_thread_matches[rule_name].extend(res)
-            for rule_name, res in call_matches.items():
+            for rule_name, res in process_capabilities.call_matches.items():
                 all_call_matches[rule_name].extend(res)
 
             pbar.advance(task)
@@ -177,8 +192,8 @@ def find_dynamic_capabilities(
         rule = ruleset[rule_name]
         capa.engine.index_rule_matches(process_and_lower_features, rule, locations)
 
-    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, process_and_lower_features)
-    feature_counts.file = feature_count
+    all_file_capabilities = find_file_capabilities(ruleset, extractor, process_and_lower_features)
+    feature_counts.file = all_file_capabilities.feature_count
 
     matches = dict(
         itertools.chain(
@@ -187,13 +202,8 @@ def find_dynamic_capabilities(
             # and we can merge the dictionaries naively.
             all_thread_matches.items(),
             all_process_matches.items(),
-            all_call_matches.items(),
-            all_file_matches.items(),
+            all_file_capabilities.matches.items(),
         )
     )
 
-    meta = {
-        "feature_counts": feature_counts,
-    }
-
-    return matches, meta
+    return Capabilities(matches, feature_counts)

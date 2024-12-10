@@ -125,8 +125,8 @@ def test_null_feature_extractor():
             ),
         ]
     )
-    capabilities, _ = capa.main.find_capabilities(rules, EXTRACTOR)
-    assert "create file" in capabilities
+    capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
+    assert "create file" in capabilities.matches
 
 
 def compare_extractors(a: DynamicFeatureExtractor, b: DynamicFeatureExtractor):
