@@ -776,13 +776,15 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
-                    capabilities, counts = capa.capabilities.common.find_capabilities(
+                    capabilities = capa.capabilities.common.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )
 
-                    meta.analysis.feature_counts = counts["feature_counts"]
-                    meta.analysis.library_functions = counts["library_functions"]
-                    meta.analysis.layout = capa.loader.compute_layout(ruleset, self.feature_extractor, capabilities)
+                    meta.analysis.feature_counts = capabilities.feature_counts
+                    meta.analysis.library_functions = capabilities.library_functions
+                    meta.analysis.layout = capa.loader.compute_layout(
+                        ruleset, self.feature_extractor, capabilities.matches
+                    )
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False
@@ -818,7 +820,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
 
-                    if capa.capabilities.common.has_file_limitation(ruleset, capabilities, is_standalone=False):
+                    if capa.capabilities.common.has_file_limitation(ruleset, capabilities.matches, is_standalone=False):
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
                 except Exception as e:
                     logger.exception("Failed to check for file limitations (error: %s)", e)
@@ -832,7 +834,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     self.resdoc_cache = capa.render.result_document.ResultDocument.from_capa(
-                        meta, ruleset, capabilities
+                        meta, ruleset, capabilities.matches
                     )
                 except Exception as e:
                     logger.exception("Failed to collect results (error: %s)", e)

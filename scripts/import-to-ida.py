@@ -91,7 +91,7 @@ def main():
         return -2
 
     rows = []
-    for name in capabilities.keys():
+    for name in capabilities.matches.keys():
         rule = result_doc.rules[name]
         if rule.meta.lib:
             continue
