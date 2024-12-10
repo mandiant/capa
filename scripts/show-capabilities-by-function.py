@@ -155,18 +155,18 @@ def main(argv=None):
     except capa.main.ShouldExitError as e:
         return e.status_code
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
-    if capa.capabilities.common.has_file_limitation(rules, capabilities):
+    if capa.capabilities.common.has_file_limitation(rules, capabilities.matches):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose or args.json):
             return capa.main.E_FILE_LIMITATION
 
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
     print(render_matches_by_function(doc))
     colorama.deinit()
 

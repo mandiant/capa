@@ -15,7 +15,7 @@
 import datetime
 import collections
 from enum import Enum
-from typing import Union, Literal, Optional, TypeAlias
+from typing import TYPE_CHECKING, Union, Literal, Optional, TypeAlias
 from pathlib import Path
 
 from pydantic import Field, BaseModel, ConfigDict
@@ -29,6 +29,9 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never, load_json_from_path
+
+if TYPE_CHECKING:
+    from capa.capabilities.common import Capabilities
 
 
 class FrozenModel(BaseModel):
@@ -674,8 +677,10 @@ class ResultDocument(FrozenModel):
 
         return ResultDocument(meta=meta, rules=rule_matches)
 
-    def to_capa(self) -> tuple[Metadata, dict]:
-        capabilities: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
+    def to_capa(self) -> tuple[Metadata, "Capabilities"]:
+        from capa.capabilities.common import Capabilities
+
+        matches: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
             collections.defaultdict(list)
         )
 
@@ -688,7 +693,14 @@ class ResultDocument(FrozenModel):
             for addr, match in rule_match.matches:
                 result: capa.engine.Result = match.to_capa(rules_by_name)
 
-                capabilities[rule_name].append((addr.to_capa(), result))
+                matches[rule_name].append((addr.to_capa(), result))
+
+        if isinstance(self.meta.analysis, StaticAnalysis):
+            capabilities = Capabilities(
+                matches, self.meta.analysis.feature_counts, self.meta.analysis.library_functions
+            )
+        elif isinstance(self.meta.analysis, DynamicAnalysis):
+            capabilities = Capabilities(matches, self.meta.analysis.feature_counts)
 
         return self.meta, capabilities
 

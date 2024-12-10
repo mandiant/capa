@@ -17,7 +17,7 @@ import time
 import logging
 import itertools
 import collections
-from typing import Any
+from dataclasses import dataclass
 
 import capa.perf
 import capa.helpers
@@ -25,19 +25,23 @@ import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.capabilities.common import find_file_capabilities
+from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class InstructionCapabilities:
+    features: FeatureSet
+    matches: MatchResults
+
+
 def find_instruction_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
-) -> tuple[FeatureSet, MatchResults]:
+) -> InstructionCapabilities:
     """
     find matches for the given rules for the given instruction.
-
-    returns: tuple containing (features for instruction, match results for instruction)
     """
     # all features found for the instruction.
     features: FeatureSet = collections.defaultdict(set)
@@ -55,16 +59,21 @@ def find_instruction_capabilities(
         for addr, _ in res:
             capa.engine.index_rule_matches(features, rule, [addr])
 
-    return features, matches
+    return InstructionCapabilities(features, matches)
+
+
+@dataclass
+class BasicBlockCapabilities:
+    features: FeatureSet
+    basic_block_matches: MatchResults
+    instruction_matches: MatchResults
 
 
 def find_basic_block_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle
-) -> tuple[FeatureSet, MatchResults, MatchResults]:
+) -> BasicBlockCapabilities:
     """
     find matches for the given rules within the given basic block.
-
-    returns: tuple containing (features for basic block, match results for basic block, match results for instructions)
     """
     # all features found within this basic block,
     # includes features found within instructions.
@@ -75,11 +84,11 @@ def find_basic_block_capabilities(
     insn_matches: MatchResults = collections.defaultdict(list)
 
     for insn in extractor.get_instructions(f, bb):
-        ifeatures, imatches = find_instruction_capabilities(ruleset, extractor, f, bb, insn)
-        for feature, vas in ifeatures.items():
+        instruction_capabilities = find_instruction_capabilities(ruleset, extractor, f, bb, insn)
+        for feature, vas in instruction_capabilities.features.items():
             features[feature].update(vas)
 
-        for rule_name, res in imatches.items():
+        for rule_name, res in instruction_capabilities.matches.items():
             insn_matches[rule_name].extend(res)
 
     for feature, va in itertools.chain(
@@ -95,16 +104,20 @@ def find_basic_block_capabilities(
         for va, _ in res:
             capa.engine.index_rule_matches(features, rule, [va])
 
-    return features, matches, insn_matches
+    return BasicBlockCapabilities(features, matches, insn_matches)
 
 
-def find_code_capabilities(
-    ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
-) -> tuple[MatchResults, MatchResults, MatchResults, int]:
+@dataclass
+class CodeCapabilities:
+    function_matches: MatchResults
+    basic_block_matches: MatchResults
+    instruction_matches: MatchResults
+    feature_count: int
+
+
+def find_code_capabilities(ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle) -> CodeCapabilities:
     """
     find matches for the given rules within the given function.
-
-    returns: tuple containing (match results for function, match results for basic blocks, match results for instructions, number of features)
     """
     # all features found within this function,
     # includes features found within basic blocks (and instructions).
@@ -119,26 +132,26 @@ def find_code_capabilities(
     insn_matches: MatchResults = collections.defaultdict(list)
 
     for bb in extractor.get_basic_blocks(fh):
-        features, bmatches, imatches = find_basic_block_capabilities(ruleset, extractor, fh, bb)
-        for feature, vas in features.items():
+        basic_block_capabilities = find_basic_block_capabilities(ruleset, extractor, fh, bb)
+        for feature, vas in basic_block_capabilities.features.items():
             function_features[feature].update(vas)
 
-        for rule_name, res in bmatches.items():
+        for rule_name, res in basic_block_capabilities.basic_block_matches.items():
             bb_matches[rule_name].extend(res)
 
-        for rule_name, res in imatches.items():
+        for rule_name, res in basic_block_capabilities.instruction_matches.items():
             insn_matches[rule_name].extend(res)
 
     for feature, va in itertools.chain(extractor.extract_function_features(fh), extractor.extract_global_features()):
         function_features[feature].add(va)
 
     _, function_matches = ruleset.match(Scope.FUNCTION, function_features, fh.address)
-    return function_matches, bb_matches, insn_matches, len(function_features)
+    return CodeCapabilities(function_matches, bb_matches, insn_matches, len(function_features))
 
 
 def find_static_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
-) -> tuple[MatchResults, Any]:
+) -> Capabilities:
     all_function_matches: MatchResults = collections.defaultdict(list)
     all_bb_matches: MatchResults = collections.defaultdict(list)
     all_insn_matches: MatchResults = collections.defaultdict(list)
@@ -172,30 +185,36 @@ def find_static_capabilities(
                 pbar.advance(task)
                 continue
 
-            function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
+            code_capabilities = find_code_capabilities(ruleset, extractor, f)
             feature_counts.functions += (
-                rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
+                rdoc.FunctionFeatureCount(
+                    address=frz.Address.from_capa(f.address), count=code_capabilities.feature_count
+                ),
             )
             t1 = time.time()
 
             match_count = 0
-            for name, matches_ in itertools.chain(function_matches.items(), bb_matches.items(), insn_matches.items()):
+            for name, matches_ in itertools.chain(
+                code_capabilities.function_matches.items(),
+                code_capabilities.basic_block_matches.items(),
+                code_capabilities.instruction_matches.items(),
+            ):
                 if not ruleset.rules[name].is_subscope_rule():
                     match_count += len(matches_)
 
             logger.debug(
                 "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
                 f.address,
-                feature_count,
+                code_capabilities.feature_count,
                 match_count,
                 t1 - t0,
             )
 
-            for rule_name, res in function_matches.items():
+            for rule_name, res in code_capabilities.function_matches.items():
                 all_function_matches[rule_name].extend(res)
-            for rule_name, res in bb_matches.items():
+            for rule_name, res in code_capabilities.basic_block_matches.items():
                 all_bb_matches[rule_name].extend(res)
-            for rule_name, res in insn_matches.items():
+            for rule_name, res in code_capabilities.instruction_matches.items():
                 all_insn_matches[rule_name].extend(res)
 
             pbar.advance(task)
@@ -210,8 +229,8 @@ def find_static_capabilities(
         rule = ruleset[rule_name]
         capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
-    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
-    feature_counts.file = feature_count
+    all_file_capabilities = find_file_capabilities(ruleset, extractor, function_and_lower_features)
+    feature_counts.file = all_file_capabilities.feature_count
 
     matches: MatchResults = dict(
         itertools.chain(
@@ -221,13 +240,8 @@ def find_static_capabilities(
             all_insn_matches.items(),
             all_bb_matches.items(),
             all_function_matches.items(),
-            all_file_matches.items(),
+            all_file_capabilities.matches.items(),
         )
     )
 
-    meta = {
-        "feature_counts": feature_counts,
-        "library_functions": library_functions,
-    }
-
-    return matches, meta
+    return Capabilities(matches, feature_counts, library_functions)
