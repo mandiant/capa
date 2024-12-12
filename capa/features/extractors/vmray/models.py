@@ -276,7 +276,7 @@ class ElfFileHeader(BaseModel):
 
 class ElfFile(BaseModel):
     # file_header: ElfFileHeader
-    sections: list[ElfFileSection]
+    sections: Optional[list[ElfFileSection]] = None
 
 
 class StaticData(BaseModel):
@@ -316,9 +316,9 @@ class Process(BaseModel):
     # monitor_reason: str
     origin_monitor_id: int  # VMRay ID of parent process
     os_pid: int
-    filename: SanitizedString
+    filename: Optional[SanitizedString] = ""
     image_name: str
-    cmd_line: SanitizedString
+    cmd_line: Optional[SanitizedString] = ""
     ref_parent_process: Optional[GenericReference] = None
 
 

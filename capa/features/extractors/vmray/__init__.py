@@ -36,8 +36,8 @@ class VMRayMonitorProcess:
     monitor_id: int  # unique ID assigned to process by VMRay
     origin_monitor_id: int  # unique VMRay ID of parent process
     image_name: str
-    filename: str
-    cmd_line: str
+    filename: Optional[str] = ""
+    cmd_line: Optional[str] = ""
 
 
 class VMRayAnalysis:
@@ -151,8 +151,9 @@ class VMRayAnalysis:
             for pefile_section in self.sample_file_static_data.pe.sections:
                 self.sections[pefile_section.virtual_address] = pefile_section.name
         elif self.sample_file_static_data.elf:
-            for elffile_section in self.sample_file_static_data.elf.sections:
-                self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
+            if self.sample_file_static_data.elf.sections:
+                for elffile_section in self.sample_file_static_data.elf.sections:
+                    self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
 
     def _compute_monitor_processes(self):
         for process in self.sv2.processes.values():

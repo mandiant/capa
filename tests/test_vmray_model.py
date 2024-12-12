@@ -103,8 +103,8 @@ def test_vmray_model_elffile():
         """
     )
 
-    assert elffile.sections[0].header.sh_name == "abcd1234"
-    assert elffile.sections[0].header.sh_addr == 2863311530
+    assert elffile.sections and elffile.sections[0].header.sh_name == "abcd1234"
+    assert elffile.sections and elffile.sections[0].header.sh_addr == 2863311530
 
 
 def test_vmray_model_pefile():
