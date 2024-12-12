@@ -314,6 +314,7 @@ class Process(BaseModel):
     # is_ioc: bool
     monitor_id: int
     # monitor_reason: str
+    origin_monitor_id: int  # VMRay ID of parent process
     os_pid: int
     filename: SanitizedString
     image_name: str
