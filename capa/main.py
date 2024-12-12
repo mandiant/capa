@@ -748,15 +748,13 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[F
     args:
       args: The parsed command line arguments from `install_common_args`.
 
+    Dynamic feature extractors can handle packed samples and do not need to be considered here.
+
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     found_file_limitation = False
     for file_extractor in file_extractors:
-        if isinstance(file_extractor, DynamicFeatureExtractor):
-            # Dynamic feature extractors can handle packed samples
-            continue
-
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
@@ -962,8 +960,11 @@ def main(argv: Optional[list[str]] = None):
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
         rules = get_rules_from_cli(args)
-        file_extractors = get_file_extractors_from_cli(args, input_format)
-        found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
+        found_file_limitation = False
+        if input_format in STATIC_FORMATS:
+            # only static extractors have file limitations
+            file_extractors = get_file_extractors_from_cli(args, input_format)
+            found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
     except ShouldExitError as e:
         return e.status_code
 
