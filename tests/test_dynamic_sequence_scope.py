@@ -134,7 +134,7 @@ def test_dynamic_sequence_scope():
     assert 12 in get_call_ids(matches[r.name])
 
 
-# show the sequence is only 5 calls long, and doesn't match beyond that 5-tuple.
+# show that when the sequence is only 5 calls long (for example), it doesn't match beyond that 5-tuple.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -168,8 +168,14 @@ def test_dynamic_sequence_scope2():
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
 
-    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
-    assert r.name not in matches
+    # patch SEQUENCE_SIZE since we may use a much larger value in the real world.
+    from pytest import MonkeyPatch
+
+    with MonkeyPatch.context() as m:
+        m.setattr(capa.capabilities.dynamic, "SEQUENCE_SIZE", 5)
+        capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+
+    assert r.name not in capabilities.matches
 
 
 # show how you might use a sequence rule: to match a small window for a collection of features.
@@ -215,7 +221,6 @@ def test_dynamic_sequence_example():
 
 
 # show how sequences that overlap a single event are handled.
-# TODO(williballenthin): but I think we really just want one match for this, not copies of the same thing.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -250,7 +255,7 @@ def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
 
-    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
-    assert r.name in matches
-    assert [11, 12, 13, 14, 15] == list(get_call_ids(matches[r.name]))
-
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in capabilities.matches
+    # we only match the first overlapping sequence
+    assert [11] == list(get_call_ids(capabilities.matches[r.name]))
