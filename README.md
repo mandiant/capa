@@ -53,8 +53,8 @@ $ capa.exe suspicious.exe
 +-------------------------------------------+-------------------------------------------------+
 | CAPABILITY                                | NAMESPACE                                       |
 |-------------------------------------------+-------------------------------------------------|
-| read and send data from client to server  |  c2/file-transfer                               |
-| execute shell command and capture output  |  c2/shell                                       |
+| read and send data from client to server  | c2/file-transfer                               |
+| execute shell command and capture output  | c2/shell                                       |
 | receive data (2 matches)                  | communication                                   |
 | send data (6 matches)                     | communication                                   |
 | connect to HTTP server (3 matches)        | communication/http/client                       |
