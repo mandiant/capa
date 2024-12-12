@@ -29,6 +29,13 @@ from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, Pr
 logger = logging.getLogger(__name__)
 
 
+# The number of calls that make up a sequence.
+#
+# The larger this is, the more calls are grouped together to match rule logic.
+# This means a longer chain can be recognized; however, its a bit more expensive.
+SEQUENCE_SIZE = 20
+
+
 @dataclass
 class CallCapabilities:
     features: FeatureSet
@@ -76,7 +83,8 @@ def find_thread_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle
 ) -> ThreadCapabilities:
     """
-    find matches for the given rules within the given thread.
+    find matches for the given rules within the given thread,
+    which includes matches for all the sequences and calls within it.
     """
     # all features found within this thread,
     # includes features found within calls.
@@ -89,7 +97,17 @@ def find_thread_capabilities(
     # matches found at the sequence scope.
     sequence_matches: MatchResults = collections.defaultdict(list)
 
+    # We matches sequences as the sliding window of calls with size SEQUENCE_SIZE.
+    #
+    # For each call, we consider the window of SEQUENCE_SIZE calls leading up to it,
+    #  merging all their features and doing a match.
+    # Here's the primary data structure: a deque of those features found in the prior calls.
+    # We'll append to it, and as it grows larger than SEQUENCE_SIZE, the oldest items are removed.
     sequence: collections.deque[FeatureSet] = collections.deque(maxlen=SEQUENCE_SIZE)
+
+    # the names of rules matched at the last sequence,
+    # so that we can deduplicate long strings of the same matche.
+    last_sequence_matches: set[str] = set()
 
     for ch in extractor.get_calls(ph, th):
         call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
@@ -99,7 +117,13 @@ def find_thread_capabilities(
         for rule_name, res in call_capabilities.matches.items():
             call_matches[rule_name].extend(res)
 
+        #
+        # sequence scope matching
+        #
+        # as we add items to the end of the deque, the oldest items will overflow and get dropped.
         sequence.append(call_capabilities.features)
+        # collect all the features seen across the last SEQUENCE_SIZE calls,
+        # and match against them.
         sequence_features: FeatureSet = collections.defaultdict(set)
         for call in sequence:
             for feature, vas in call.items():
@@ -107,7 +131,20 @@ def find_thread_capabilities(
 
         _, smatches = ruleset.match(Scope.SEQUENCE, sequence_features, ch.address)
         for rule_name, res in smatches.items():
+            if rule_name in last_sequence_matches:
+                # don't emit match results for rules seen during the immediately preceeding sequence.
+                #
+                # This means that we won't emit duplicate matches when there are multiple sequences
+                #  that overlap a single matching event.
+                # It also handles the case of a tight loop containing matched logic;
+                #  only the first match will be recorded.
+                #
+                # In theory, this means the result document doesn't have *every* possible match location,
+                # but in practice, humans will only be interested in the first handful anyways.
+                continue
             sequence_matches[rule_name].extend(res)
+
+        last_sequence_matches = set(smatches.keys())
 
     for feature, va in itertools.chain(extractor.extract_thread_features(ph, th), extractor.extract_global_features()):
         features[feature].add(va)
