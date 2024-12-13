@@ -151,9 +151,8 @@ class VMRayAnalysis:
             for pefile_section in self.sample_file_static_data.pe.sections:
                 self.sections[pefile_section.virtual_address] = pefile_section.name
         elif self.sample_file_static_data.elf:
-            if self.sample_file_static_data.elf.sections:
-                for elffile_section in self.sample_file_static_data.elf.sections:
-                    self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
+            for elffile_section in self.sample_file_static_data.elf.sections:
+                self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
 
     def _compute_monitor_processes(self):
         for process in self.sv2.processes.values():
@@ -193,13 +192,14 @@ class VMRayAnalysis:
                 # for the other fields we've observed cases with slight deviations, e.g.,
                 # the ppid for a process in flog.xml is not set correctly, all other data is equal
                 sv2p = self.monitor_processes[monitor_process.process_id]
+                if self.monitor_processes[monitor_process.process_id] != vmray_monitor_process:
+                    logger.debug("processes differ: %s (sv2) vs. %s (flog)", sv2p, vmray_monitor_process)
+
                 assert (sv2p.pid, sv2p.monitor_id, sv2p.origin_monitor_id) == (
                     vmray_monitor_process.pid,
                     vmray_monitor_process.monitor_id,
                     vmray_monitor_process.origin_monitor_id,
                 )
-                if self.monitor_processes[monitor_process.process_id] != vmray_monitor_process:
-                    logger.debug("processes differ: %s (sv2) vs. %s (flog)", sv2p, vmray_monitor_process)
 
     def _compute_monitor_threads(self):
         for monitor_thread in self.flog.analysis.monitor_threads:

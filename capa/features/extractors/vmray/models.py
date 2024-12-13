@@ -276,7 +276,7 @@ class ElfFileHeader(BaseModel):
 
 class ElfFile(BaseModel):
     # file_header: ElfFileHeader
-    sections: Optional[list[ElfFileSection]] = None
+    sections: list[ElfFileSection] = []
 
 
 class StaticData(BaseModel):
