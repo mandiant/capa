@@ -18,11 +18,13 @@ import itertools
 import collections
 from dataclasses import dataclass
 
+from capa.features.address import NO_ADDRESS
 import capa.perf
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
+from capa.features.common import Feature
 from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
@@ -101,9 +103,18 @@ def find_thread_capabilities(
     #
     # For each call, we consider the window of SEQUENCE_SIZE calls leading up to it,
     #  merging all their features and doing a match.
-    # Here's the primary data structure: a deque of those features found in the prior calls.
-    # We'll append to it, and as it grows larger than SEQUENCE_SIZE, the oldest items are removed.
-    sequence: collections.deque[FeatureSet] = collections.deque(maxlen=SEQUENCE_SIZE)
+    #
+    # We track these features in two data structures:
+    #   1. a deque of those features found in the prior calls.
+    #      We'll append to it, and as it grows larger than SEQUENCE_SIZE, the oldest items are removed.
+    #   2. a live set of features seen in the sequence.
+    #      As we pop from the deque, we remove features from the current set,
+    #      and as we push to the deque, we insert features to the current set.
+    # With this approach, our algorithm performance is independent of SEQUENCE_SIZE.
+    # The naive algorithm, of merging all the trailing feature sets at each call, is dependent upon SEQUENCE_SIZE
+    # (that is, runtime gets slower the larger SEQUENCE_SIZE is).
+    sequence_feature_sets: collections.deque[FeatureSet] = collections.deque(maxlen=SEQUENCE_SIZE)
+    sequence_features: FeatureSet = collections.defaultdict(set)
 
     # the names of rules matched at the last sequence,
     # so that we can deduplicate long strings of the same matche.
@@ -120,14 +131,29 @@ def find_thread_capabilities(
         #
         # sequence scope matching
         #
-        # as we add items to the end of the deque, the oldest items will overflow and get dropped.
-        sequence.append(call_capabilities.features)
-        # collect all the features seen across the last SEQUENCE_SIZE calls,
-        # and match against them.
-        sequence_features: FeatureSet = collections.defaultdict(set)
-        for call in sequence:
-            for feature, vas in call.items():
-                sequence_features[feature].update(vas)
+        # As we add items to the end of the deque, overflow and drop the oldest items (at the left end).
+        # While we could rely on `deque.append` with `maxlen` set (which we provide above),
+        # we want to use the dropped item first, to remove the old features, so we manually pop it here.
+        if len(sequence_feature_sets) == SEQUENCE_SIZE:
+            overflowing_feature_set = sequence_feature_sets.popleft()
+
+            # these are the top-level features that will no longer have any associated addresses.
+            for feature, vas in overflowing_feature_set.items():
+                if vas == { NO_ADDRESS, }:
+                    # ignore the common case of global features getting added/removed/trimmed repeatedly,
+                    # like arch/os/format.
+                    continue
+
+                feature_vas = sequence_features[feature]
+                feature_vas.difference_update(vas)
+                if not feature_vas:
+                    del sequence_features[feature]
+
+        # update the deque and set of features with the latest call's worth of features.
+        latest_features = call_capabilities.features
+        sequence_feature_sets.append(latest_features)
+        for feature, vas in latest_features.items():
+            sequence_features[feature].update(vas)
 
         _, smatches = ruleset.match(Scope.SEQUENCE, sequence_features, ch.address)
         for rule_name, res in smatches.items():
