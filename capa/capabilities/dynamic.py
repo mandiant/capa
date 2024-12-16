@@ -18,13 +18,12 @@ import itertools
 import collections
 from dataclasses import dataclass
 
-from capa.features.address import NO_ADDRESS
 import capa.perf
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.features.common import Feature
+from capa.features.address import _NoAddress
 from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
@@ -137,9 +136,10 @@ def find_thread_capabilities(
         if len(sequence_feature_sets) == SEQUENCE_SIZE:
             overflowing_feature_set = sequence_feature_sets.popleft()
 
-            # these are the top-level features that will no longer have any associated addresses.
             for feature, vas in overflowing_feature_set.items():
-                if vas == { NO_ADDRESS, }:
+                if len(vas) == 1 and isinstance(next(iter(vas)), _NoAddress):
+                    # `vas == { NO_ADDRESS }` without the garbage.
+                    #
                     # ignore the common case of global features getting added/removed/trimmed repeatedly,
                     # like arch/os/format.
                     continue
@@ -238,7 +238,7 @@ def find_process_capabilities(
 
 
 def find_dynamic_capabilities(
-    ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress=None
+    ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress: bool = False
 ) -> Capabilities:
     all_process_matches: MatchResults = collections.defaultdict(list)
     all_thread_matches: MatchResults = collections.defaultdict(list)
