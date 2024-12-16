@@ -643,7 +643,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "sequence":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD)):
+        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SEQUENCE)):
             raise InvalidRule("sequence subscope supported only for the process and thread scopes")
 
         if len(d[key]) != 1:
