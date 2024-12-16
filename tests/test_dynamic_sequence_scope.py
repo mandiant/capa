@@ -27,11 +27,14 @@
 #      ...
 
 import textwrap
+from typing import Iterator
 from functools import lru_cache
 
+import pytest
 import fixtures
 
 import capa.main
+import capa.rules
 import capa.capabilities.dynamic
 from capa.features.extractors.base_extractor import ThreadFilter, DynamicFeatureExtractor
 
@@ -62,7 +65,7 @@ def get_0000a657_thread3064():
     return extractor
 
 
-def get_call_ids(matches):
+def get_call_ids(matches) -> Iterator[int]:
     for address, _ in matches:
         yield address.id
 
@@ -96,7 +99,7 @@ def test_dynamic_call_scope():
     assert 8 in get_call_ids(matches[r.name])
 
 
-# match the first 5-tuple sequence.
+# match the first sequence.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -147,7 +150,7 @@ def test_dynamic_sequence_scope():
 #        call 14: RtlAddVectoredExceptionHandler(1921490089, 0)
 #        call 15: GetSystemTime()
 #        call 16: NtAllocateVirtualMemory(no, 4, 786432, 4784128, 4294967295)
-def test_dynamic_sequence_scope2():
+def test_dynamic_sequence_scope_length():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -176,6 +179,108 @@ def test_dynamic_sequence_scope2():
         capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
 
     assert r.name not in capabilities.matches
+
+
+# show that you can use a call subscope in sequence rules.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        ...
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        ...
+def test_dynamic_sequence_call_subscope():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - call:
+                        - and:
+                            - api: LdrGetProcedureAddress
+                            - string: AddVectoredExceptionHandler
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in capabilities.matches
+    assert 11 in get_call_ids(capabilities.matches[r.name])
+
+
+# show that you can use a sequence subscope in sequence rules.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        ...
+#        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 13: LdrGetProcedureAddress(2010595072, 0, RemoveVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        ...
+def test_dynamic_sequence_scope_sequence_subscope():
+    extractor = get_0000a657_thread3064()
+
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - sequence:
+                        - description: resolve add VEH  # should match at 11
+                        - and:
+                            - api: LdrGetDllHandle
+                            - api: LdrGetProcedureAddress
+                            - string: AddVectoredExceptionHandler
+                    - sequence:
+                        - description: resolve remove VEH  # should match at 13
+                        - and:
+                            - api: LdrGetDllHandle
+                            - api: LdrGetProcedureAddress
+                            - string: RemoveVectoredExceptionHandler
+        """
+    )
+
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in capabilities.matches
+    assert 13 in get_call_ids(capabilities.matches[r.name])
+
+
+# show that you can't use thread subscope in sequence rules.
+def test_dynamic_sequence_scope_thread_subscope():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: unsupported
+                    dynamic: sequence
+            features:
+                - and:
+                    - thread:
+                        - string: "foo"
+        """
+    )
+
+    with pytest.raises(capa.rules.InvalidRule):
+        capa.rules.Rule.from_yaml(rule)
 
 
 # show how you might use a sequence rule: to match a small window for a collection of features.
