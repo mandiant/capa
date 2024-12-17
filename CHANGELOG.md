@@ -12,6 +12,9 @@
 
 ### Bug Fixes
 
+- vmray: load more analysis archives @mr-tz
+- dynamic: only check file limitations for static file formats @mr-tz
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

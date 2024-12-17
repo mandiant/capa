@@ -34,9 +34,10 @@ class VMRayMonitorProcess:
     pid: int  # process ID assigned by OS
     ppid: int  # parent process ID assigned by OS
     monitor_id: int  # unique ID assigned to process by VMRay
+    origin_monitor_id: int  # unique VMRay ID of parent process
     image_name: str
-    filename: str
-    cmd_line: str
+    filename: Optional[str] = ""
+    cmd_line: Optional[str] = ""
 
 
 class VMRayAnalysis:
@@ -165,6 +166,7 @@ class VMRayAnalysis:
                 process.os_pid,
                 ppid,
                 process.monitor_id,
+                process.origin_monitor_id,
                 process.image_name,
                 process.filename,
                 process.cmd_line,
@@ -176,6 +178,7 @@ class VMRayAnalysis:
                 monitor_process.os_pid,
                 monitor_process.os_parent_pid,
                 monitor_process.process_id,
+                monitor_process.parent_id,
                 monitor_process.image_name,
                 monitor_process.filename,
                 monitor_process.cmd_line,
@@ -185,7 +188,18 @@ class VMRayAnalysis:
                 self.monitor_processes[monitor_process.process_id] = vmray_monitor_process
             else:
                 # we expect monitor processes recorded in both SummaryV2.json and flog.xml to equal
-                assert self.monitor_processes[monitor_process.process_id] == vmray_monitor_process
+                # to ensure this, we compare the pid, monitor_id, and origin_monitor_id
+                # for the other fields we've observed cases with slight deviations, e.g.,
+                # the ppid for a process in flog.xml is not set correctly, all other data is equal
+                sv2p = self.monitor_processes[monitor_process.process_id]
+                if self.monitor_processes[monitor_process.process_id] != vmray_monitor_process:
+                    logger.debug("processes differ: %s (sv2) vs. %s (flog)", sv2p, vmray_monitor_process)
+
+                assert (sv2p.pid, sv2p.monitor_id, sv2p.origin_monitor_id) == (
+                    vmray_monitor_process.pid,
+                    vmray_monitor_process.monitor_id,
+                    vmray_monitor_process.origin_monitor_id,
+                )
 
     def _compute_monitor_threads(self):
         for monitor_thread in self.flog.analysis.monitor_threads:
