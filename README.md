@@ -38,49 +38,47 @@ Below you find a list of [our capa blog posts with more details.](#blog-posts)
 ```
 $ capa.exe suspicious.exe
 
-+------------------------+--------------------------------------------------------------------------------+
-| ATT&CK Tactic          | ATT&CK Technique                                                               |
-|------------------------+--------------------------------------------------------------------------------|
-| DEFENSE EVASION        | Obfuscated Files or Information [T1027]                                        |
-| DISCOVERY              | Query Registry [T1012]                                                         |
-|                        | System Information Discovery [T1082]                                           |
-| EXECUTION              | Command and Scripting Interpreter::Windows Command Shell [T1059.003]           |
-|                        | Shared Modules [T1129]                                                         |
-| EXFILTRATION           | Exfiltration Over C2 Channel [T1041]                                           |
-| PERSISTENCE            | Create or Modify System Process::Windows Service [T1543.003]                   |
-+------------------------+--------------------------------------------------------------------------------+
++--------------------+------------------------------------------------------------------------+
+| ATT&CK Tactic      | ATT&CK Technique                                                       |
+|--------------------+------------------------------------------------------------------------|
+| DEFENSE EVASION    | Obfuscated Files or Information [T1027]                                |
+| DISCOVERY          | Query Registry [T1012]                                                 |
+|                    | System Information Discovery [T1082]                                   |
+| EXECUTION          | Command and Scripting Interpreter::Windows Command Shell [T1059.003]   |
+|                    | Shared Modules [T1129]                                                 |
+| EXFILTRATION       | Exfiltration Over C2 Channel [T1041]                                   |
+| PERSISTENCE        | Create or Modify System Process::Windows Service [T1543.003]           |
++--------------------+------------------------------------------------------------------------+
 
-+-------------------------------------------------------+-------------------------------------------------+
-| CAPABILITY                                            | NAMESPACE                                       |
-|-------------------------------------------------------+-------------------------------------------------|
-| check for OutputDebugString error                     | anti-analysis/anti-debugging/debugger-detection |
-| read and send data from client to server              | c2/file-transfer                                |
-| execute shell command and capture output              | c2/shell                                        |
-| receive data (2 matches)                              | communication                                   |
-| send data (6 matches)                                 | communication                                   |
-| connect to HTTP server (3 matches)                    | communication/http/client                       |
-| send HTTP request (3 matches)                         | communication/http/client                       |
-| create pipe                                           | communication/named-pipe/create                 |
-| get socket status (2 matches)                         | communication/socket                            |
-| receive data on socket (2 matches)                    | communication/socket/receive                    |
-| send data on socket (3 matches)                       | communication/socket/send                       |
-| connect TCP socket                                    | communication/socket/tcp                        |
-| encode data using Base64                              | data-manipulation/encoding/base64               |
-| encode data using XOR (6 matches)                     | data-manipulation/encoding/xor                  |
-| run as a service                                      | executable/pe                                   |
-| get common file path (3 matches)                      | host-interaction/file-system                    |
-| read file                                             | host-interaction/file-system/read               |
-| write file (2 matches)                                | host-interaction/file-system/write              |
-| print debug messages (2 matches)                      | host-interaction/log/debug/write-event          |
-| resolve DNS                                           | host-interaction/network/dns/resolve            |
-| get hostname                                          | host-interaction/os/hostname                    |
-| create a process with modified I/O handles and window | host-interaction/process/create                 |
-| create process                                        | host-interaction/process/create                 |
-| create registry key                                   | host-interaction/registry/create                |
-| create service                                        | host-interaction/service/create                 |
-| create thread                                         | host-interaction/thread/create                  |
-| persist via Windows service                           | persistence/service                             |
-+-------------------------------------------------------+-------------------------------------------------+
++-------------------------------------------+-------------------------------------------------+
+| CAPABILITY                                | NAMESPACE                                       |
+|-------------------------------------------+-------------------------------------------------|
+| read and send data from client to server  | c2/file-transfer                               |
+| execute shell command and capture output  | c2/shell                                       |
+| receive data (2 matches)                  | communication                                   |
+| send data (6 matches)                     | communication                                   |
+| connect to HTTP server (3 matches)        | communication/http/client                       |
+| send HTTP request (3 matches)             | communication/http/client                       |
+| create pipe                               | communication/named-pipe/create                 |
+| get socket status (2 matches)             | communication/socket                            |
+| receive data on socket (2 matches)        | communication/socket/receive                    |
+| send data on socket (3 matches)           | communication/socket/send                       |
+| connect TCP socket                        | communication/socket/tcp                        |
+| encode data using Base64                  | data-manipulation/encoding/base64               |
+| encode data using XOR (6 matches)         | data-manipulation/encoding/xor                  |
+| run as a service                          | executable/pe                                   |
+| get common file path (3 matches)          | host-interaction/file-system                    |
+| read file                                 | host-interaction/file-system/read               |
+| write file (2 matches)                    | host-interaction/file-system/write              |
+| print debug messages (2 matches)          | host-interaction/log/debug/write-event          |
+| resolve DNS                               | host-interaction/network/dns/resolve            |
+| get hostname                              | host-interaction/os/hostname                    |
+| create process                            | host-interaction/process/create                 |
+| create registry key                       | host-interaction/registry/create                |
+| create service                            | host-interaction/service/create                 |
+| create thread                             | host-interaction/thread/create                  |
+| persist via Windows service               | persistence/service                             |
++-------------------------------------------+-------------------------------------------------+
 ```
 
 # download and usage
