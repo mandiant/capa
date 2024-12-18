@@ -364,3 +364,101 @@ def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
     assert r.name in capabilities.matches
     # we only match the first overlapping sequence
     assert [11] == list(get_call_ids(capabilities.matches[r.name]))
+
+
+# show that you can use match statements in sequence rules.
+#
+#    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
+#      thread: 3064
+#        ...
+#        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
+#        call 13: LdrGetProcedureAddress(2010595072, 0, RemoveVectoredExceptionHandler, 1974337536, kernel32.dll)
+#        ...
+def test_dynamic_sequence_scope_match_statements():
+    extractor = get_0000a657_thread3064()
+
+    ruleset = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                rule:
+                    meta:
+                        name: resolve add VEH
+                        namespace: linking/runtime-linking/veh
+                        scopes:
+                            static: unsupported
+                            dynamic: sequence
+                    features:
+                        - and:
+                            - api: LdrGetDllHandle
+                            - api: LdrGetProcedureAddress
+                            - string: AddVectoredExceptionHandler
+                """
+                )
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                rule:
+                    meta:
+                        name: resolve remove VEH
+                        namespace: linking/runtime-linking/veh
+                        scopes:
+                            static: unsupported
+                            dynamic: sequence
+                    features:
+                        - and:
+                            - api: LdrGetDllHandle
+                            - api: LdrGetProcedureAddress
+                            - string: RemoveVectoredExceptionHandler
+                """
+                )
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                rule:
+                    meta:
+                        name: resolve add and remove VEH
+                        scopes:
+                            static: unsupported
+                            dynamic: sequence
+                    features:
+                        - and:
+                            - match: resolve add VEH
+                            - match: resolve remove VEH
+                """
+                )
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                rule:
+                    meta:
+                        name: has VEH runtime linking
+                        scopes:
+                            static: unsupported
+                            dynamic: sequence
+                    features:
+                        - and:
+                            - match: linking/runtime-linking/veh
+                """
+                )
+            ),
+        ]
+    )
+
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+
+    # basic functionality, already known to work
+    assert "resolve add VEH" in capabilities.matches
+    assert "resolve remove VEH" in capabilities.matches
+
+    # requires `match: <rule name>` to be working
+    assert "resolve add and remove VEH" in capabilities.matches
+
+    # requires `match: <namespace>` to be working
+    assert "has VEH runtime linking" in capabilities.matches

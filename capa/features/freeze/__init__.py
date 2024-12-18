@@ -64,7 +64,14 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, tuple[int, ...], None] = None  # None default value to support deserialization of NO_ADDRESS
+    value: Union[
+        # for absolute, relative, file
+        int,
+        # for DNToken, Process, Thread, Call
+        tuple[int, ...],
+        # for NO_ADDRESS,
+        None,
+    ] = None  # None default value to support deserialization of NO_ADDRESS
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":

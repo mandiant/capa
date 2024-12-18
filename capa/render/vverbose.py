@@ -230,7 +230,8 @@ def render_feature(
             # if we're in call scope, then the call will have been rendered at the top
             # of the output, so don't re-render it again for each feature.
             pass
-        elif isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
+        elif isinstance(layout, rd.DynamicLayout) and isinstance(feature, frzf.MatchFeature):
+            # don't render copies of the sequence address for submatches
             pass
         else:
             render_locations(console, layout, match.locations, indent)
@@ -311,13 +312,13 @@ def render_match(
         render_match(console, layout, rule, child, indent=indent + 1, mode=child_mode)
 
 
-def collect_call_locations(
+def collect_sequence_locations(
     match: rd.Match,
     mode=MODE_SUCCESS,
 ):
     """
-    Find all the DynamicCallAddress locations in the given match, recursively.
-    Useful to collect the calls used to match a sequence scoped rule.
+    Find all the (call, sequence) locations used in a given sequence match, recursively.
+    Useful to collect the events used to match a sequence scoped rule.
     """
     if isinstance(match.node, rd.StatementNode):
         if (
@@ -326,13 +327,13 @@ def collect_call_locations(
         ):
             child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
             for child in match.children:
-                yield from collect_call_locations(child, child_mode)
+                yield from collect_sequence_locations(child, child_mode)
         else:
             for child in match.children:
-                yield from collect_call_locations(child, mode)
+                yield from collect_sequence_locations(child, mode)
     elif isinstance(match.node, rd.FeatureNode):
         for location in match.locations:
-            if location.type != frz.AddressType.CALL:
+            if location.type not in (frz.AddressType.CALL, ):
                 continue
             if mode == MODE_FAILURE:
                 continue
@@ -481,7 +482,7 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                         console.write(v.render_thread(doc.meta.analysis.layout, location))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.SEQUENCE:
-                        calls = sorted(set(collect_call_locations(match)))
+                        calls = sorted(set(collect_sequence_locations(match)))
                         console.write(hanging_indent(v.render_sequence(doc.meta.analysis.layout, calls), indent=1))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
                         console.write(hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1))
