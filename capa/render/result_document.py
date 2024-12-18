@@ -29,6 +29,7 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never, load_json_from_path
+from capa.features.address import DynamicCallAddress
 
 if TYPE_CHECKING:
     from capa.capabilities.common import Capabilities
@@ -392,7 +393,33 @@ class Match(FrozenModel):
                     )
 
                 for location in result.locations:
-                    children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+
+                    # keep this in sync with the copy below
+                    if isinstance(location, DynamicCallAddress):
+                        if location in rule_matches:
+                            # exact match, such as matching a call-scoped rule.
+                            children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+                        # we'd like to assert the scope of the current rule is "sequence"
+                        # but we don't have that data here.
+                        else:
+                            # Sequence scopes can match each other, but they don't strictly contain each other,
+                            #  like the way a function contains a basic block.
+                            # So when we have a match within a sequence for another sequence, we need to look
+                            #  for all the places it might be found.
+                            # 
+                            # Despite the edge cases (like API hammering), this turns out to be pretty easy:
+                            #  collect the most recent match (with the given name) prior to the wanted location.
+                            matches_in_thread = sorted([
+                                                       (a.id, m) for a, m in rule_matches.items()
+                                                       if isinstance(a, DynamicCallAddress)
+                                                       and a.thread == location.thread
+                                                       and a.id <= location.id
+                                                   ])
+                            _, most_recent_match = matches_in_thread[-1]
+                            children.append(Match.from_capa(rules, capabilities, most_recent_match))
+
+                    else:
+                        children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
             else:
                 # this is a namespace that we're matching
                 #
@@ -433,8 +460,23 @@ class Match(FrozenModel):
                             # this is a subset of doc[locations].
                             #
                             # so, grab only the locations for current rule.
-                            if location in rule_matches:
-                                children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+
+                            # keep this in sync with the block above.
+                            if isinstance(location, DynamicCallAddress):
+                                if location in rule_matches:
+                                    children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+                                else:
+                                    matches_in_thread = sorted([
+                                                               (a.id, m) for a, m in rule_matches.items()
+                                                               if isinstance(a, DynamicCallAddress)
+                                                               and a.thread == location.thread
+                                                               and a.id <= location.id
+                                                           ])
+                                    _, most_recent_match = matches_in_thread[-1]
+                                    children.append(Match.from_capa(rules, capabilities, most_recent_match))
+                            else:
+                                if location in rule_matches:
+                                    children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
 
         return cls(
             success=success,

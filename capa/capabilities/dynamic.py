@@ -80,6 +80,89 @@ class ThreadCapabilities:
     call_matches: MatchResults
 
 
+class SequenceMatcher:
+    def __init__(self, ruleset: RuleSet):
+        super().__init__()
+        self.ruleset = ruleset
+
+        # matches found at the sequence scope.
+        self.matches: MatchResults = collections.defaultdict(list)
+
+        # We matches sequences as the sliding window of calls with size SEQUENCE_SIZE.
+        #
+        # For each call, we consider the window of SEQUENCE_SIZE calls leading up to it,
+        #  merging all their features and doing a match.
+        #
+        # We track these features in two data structures:
+        #   1. a deque of those features found in the prior calls.
+        #      We'll append to it, and as it grows larger than SEQUENCE_SIZE, the oldest items are removed.
+        #   2. a live set of features seen in the sequence.
+        #      As we pop from the deque, we remove features from the current set,
+        #      and as we push to the deque, we insert features to the current set.
+        # With this approach, our algorithm performance is independent of SEQUENCE_SIZE.
+        # The naive algorithm, of merging all the trailing feature sets at each call, is dependent upon SEQUENCE_SIZE
+        # (that is, runtime gets slower the larger SEQUENCE_SIZE is).
+        self.current_feature_sets: collections.deque[FeatureSet] = collections.deque(maxlen=SEQUENCE_SIZE)
+        self.current_features: FeatureSet = collections.defaultdict(set)
+
+        # the names of rules matched at the last sequence,
+        # so that we can deduplicate long strings of the same matche.
+        self.last_sequence_matches: set[str] = set()
+
+    def next(self, ch: CallHandle, call_features: FeatureSet):
+        # As we add items to the end of the deque, overflow and drop the oldest items (at the left end).
+        # While we could rely on `deque.append` with `maxlen` set (which we provide above),
+        # we want to use the dropped item first, to remove the old features, so we manually pop it here.
+        if len(self.current_feature_sets) == SEQUENCE_SIZE:
+            overflowing_feature_set = self.current_feature_sets.popleft()
+
+            for feature, vas in overflowing_feature_set.items():
+                if len(vas) == 1 and isinstance(next(iter(vas)), _NoAddress):
+                    # `vas == { NO_ADDRESS }` without the garbage.
+                    #
+                    # ignore the common case of global features getting added/removed/trimmed repeatedly,
+                    # like arch/os/format.
+                    continue
+
+                feature_vas = self.current_features[feature]
+                feature_vas.difference_update(vas)
+                if not feature_vas:
+                    del self.current_features[feature]
+
+        # update the deque and set of features with the latest call's worth of features.
+        self.current_feature_sets.append(call_features)
+        for feature, vas in call_features.items():
+            self.current_features[feature].update(vas)
+
+        _, matches = self.ruleset.match(Scope.SEQUENCE, self.current_features, ch.address)
+
+        newly_encountered_rules = set(matches.keys()) - self.last_sequence_matches
+
+        # don't emit match results for rules seen during the immediately preceeding sequence.
+        #
+        # This means that we won't emit duplicate matches when there are multiple sequences
+        #  that overlap a single matching event.
+        # It also handles the case of a tight loop containing matched logic;
+        #  only the first match will be recorded.
+        #
+        # In theory, this means the result document doesn't have *every* possible match location,
+        # but in practice, humans will only be interested in the first handful anyways.
+        suppressed_rules = set(self.last_sequence_matches)
+
+        # however, if a newly encountered rule depends on a suppressed rule,
+        # don't suppress that rule match, or we won't be able to reconstruct the vverbose output.
+        # see: https://github.com/mandiant/capa/pull/2532#issuecomment-2548508130
+        for new_rule in newly_encountered_rules:
+            suppressed_rules -= set(self.ruleset.rules[new_rule].get_dependencies(self.ruleset.rules_by_namespace))
+        
+        for rule_name, res in matches.items():
+            if rule_name in suppressed_rules:
+                continue
+            self.matches[rule_name].extend(res)
+
+        self.last_sequence_matches = set(matches.keys())
+
+
 def find_thread_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle
 ) -> ThreadCapabilities:
@@ -95,31 +178,11 @@ def find_thread_capabilities(
     # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
 
-    # matches found at the sequence scope.
-    sequence_matches: MatchResults = collections.defaultdict(list)
+    sequence_matcher = SequenceMatcher(ruleset)
 
-    # We matches sequences as the sliding window of calls with size SEQUENCE_SIZE.
-    #
-    # For each call, we consider the window of SEQUENCE_SIZE calls leading up to it,
-    #  merging all their features and doing a match.
-    #
-    # We track these features in two data structures:
-    #   1. a deque of those features found in the prior calls.
-    #      We'll append to it, and as it grows larger than SEQUENCE_SIZE, the oldest items are removed.
-    #   2. a live set of features seen in the sequence.
-    #      As we pop from the deque, we remove features from the current set,
-    #      and as we push to the deque, we insert features to the current set.
-    # With this approach, our algorithm performance is independent of SEQUENCE_SIZE.
-    # The naive algorithm, of merging all the trailing feature sets at each call, is dependent upon SEQUENCE_SIZE
-    # (that is, runtime gets slower the larger SEQUENCE_SIZE is).
-    sequence_feature_sets: collections.deque[FeatureSet] = collections.deque(maxlen=SEQUENCE_SIZE)
-    sequence_features: FeatureSet = collections.defaultdict(set)
-
-    # the names of rules matched at the last sequence,
-    # so that we can deduplicate long strings of the same matche.
-    last_sequence_matches: set[str] = set()
-
+    call_count = 0
     for ch in extractor.get_calls(ph, th):
+        call_count += 1
         call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
         for feature, vas in call_capabilities.features.items():
             features[feature].update(vas)
@@ -127,50 +190,7 @@ def find_thread_capabilities(
         for rule_name, res in call_capabilities.matches.items():
             call_matches[rule_name].extend(res)
 
-        #
-        # sequence scope matching
-        #
-        # As we add items to the end of the deque, overflow and drop the oldest items (at the left end).
-        # While we could rely on `deque.append` with `maxlen` set (which we provide above),
-        # we want to use the dropped item first, to remove the old features, so we manually pop it here.
-        if len(sequence_feature_sets) == SEQUENCE_SIZE:
-            overflowing_feature_set = sequence_feature_sets.popleft()
-
-            for feature, vas in overflowing_feature_set.items():
-                if len(vas) == 1 and isinstance(next(iter(vas)), _NoAddress):
-                    # `vas == { NO_ADDRESS }` without the garbage.
-                    #
-                    # ignore the common case of global features getting added/removed/trimmed repeatedly,
-                    # like arch/os/format.
-                    continue
-
-                feature_vas = sequence_features[feature]
-                feature_vas.difference_update(vas)
-                if not feature_vas:
-                    del sequence_features[feature]
-
-        # update the deque and set of features with the latest call's worth of features.
-        latest_features = call_capabilities.features
-        sequence_feature_sets.append(latest_features)
-        for feature, vas in latest_features.items():
-            sequence_features[feature].update(vas)
-
-        _, smatches = ruleset.match(Scope.SEQUENCE, sequence_features, ch.address)
-        for rule_name, res in smatches.items():
-            if rule_name in last_sequence_matches:
-                # don't emit match results for rules seen during the immediately preceeding sequence.
-                #
-                # This means that we won't emit duplicate matches when there are multiple sequences
-                #  that overlap a single matching event.
-                # It also handles the case of a tight loop containing matched logic;
-                #  only the first match will be recorded.
-                #
-                # In theory, this means the result document doesn't have *every* possible match location,
-                # but in practice, humans will only be interested in the first handful anyways.
-                continue
-            sequence_matches[rule_name].extend(res)
-
-        last_sequence_matches = set(smatches.keys())
+        sequence_matcher.next(ch, call_capabilities.features)
 
     for feature, va in itertools.chain(extractor.extract_thread_features(ph, th), extractor.extract_global_features()):
         features[feature].add(va)
@@ -183,13 +203,22 @@ def find_thread_capabilities(
         for va, _ in res:
             capa.engine.index_rule_matches(features, rule, [va])
 
-    return ThreadCapabilities(features, matches, sequence_matches, call_matches)
+    logger.debug(
+        "analyzed thread %d[%d] with %d events, %d features, and %d matches",
+        th.address.process.pid,
+        th.address.tid,
+        call_count,
+        len(features),
+        len(matches) + len(sequence_matcher.matches) + len(call_matches),
+    )
+    return ThreadCapabilities(features, matches, sequence_matcher.matches, call_matches)
 
 
 @dataclass
 class ProcessCapabilities:
     process_matches: MatchResults
     thread_matches: MatchResults
+    sequence_matches: MatchResults
     call_matches: MatchResults
     feature_count: int
 
@@ -234,7 +263,14 @@ def find_process_capabilities(
         process_features[feature].add(va)
 
     _, process_matches = ruleset.match(Scope.PROCESS, process_features, ph.address)
-    return ProcessCapabilities(process_matches, thread_matches, call_matches, len(process_features))
+
+    logger.debug(
+        "analyzed process %d and extracted %d features with %d matches",
+        ph.address.pid,
+        len(process_features),
+        len(process_matches),
+    )
+    return ProcessCapabilities(process_matches, thread_matches, sequence_matches, call_matches, len(process_features))
 
 
 def find_dynamic_capabilities(
@@ -262,7 +298,6 @@ def find_dynamic_capabilities(
                     address=frz.Address.from_capa(p.address), count=process_capabilities.feature_count
                 ),
             )
-            logger.debug("analyzed %s and extracted %d features", p.address, process_capabilities.feature_count)
 
             for rule_name, res in process_capabilities.process_matches.items():
                 all_process_matches[rule_name].extend(res)

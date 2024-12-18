@@ -114,8 +114,7 @@ class DynamicCallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        assert isinstance(other, DynamicCallAddress)
-        return (self.thread, self.id) == (other.thread, other.id)
+        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (other.thread, other.id)
 
     def __lt__(self, other):
         assert isinstance(other, DynamicCallAddress)
