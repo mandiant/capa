@@ -43,7 +43,6 @@ from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.render.utils import Console
 
-
 def format_address(address: frz.Address) -> str:
     if address.type == frz.AddressType.ABSOLUTE:
         assert isinstance(address.value, int)
