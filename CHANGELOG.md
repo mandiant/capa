@@ -14,6 +14,7 @@
 
 - vmray: load more analysis archives @mr-tz
 - dynamic: only check file limitations for static file formats @mr-tz
+- vmray: skip non-printable strings @mike-hunhoff
 
 ### capa Explorer Web
 

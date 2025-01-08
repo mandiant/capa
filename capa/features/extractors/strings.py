@@ -9,6 +9,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import re
+import string
 import contextlib
 from collections import namedtuple
 
@@ -19,6 +20,7 @@ ASCII_RE_4 = re.compile(b"([%s]{%d,})" % (ASCII_BYTE, 4))
 UNICODE_RE_4 = re.compile(b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, 4))
 REPEATS = [b"A", b"\x00", b"\xfe", b"\xff"]
 SLICE_SIZE = 4096
+PRINTABLE_CHAR_SET = set(string.printable)
 
 String = namedtuple("String", ["s", "offset"])
 
@@ -84,3 +86,7 @@ def extract_unicode_strings(buf, n=4):
     for match in r.finditer(buf):
         with contextlib.suppress(UnicodeDecodeError):
             yield String(match.group().decode("utf-16"), match.start())
+
+
+def is_printable_str(s: str) -> bool:
+    return set(s).issubset(PRINTABLE_CHAR_SET)
