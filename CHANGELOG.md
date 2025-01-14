@@ -22,6 +22,8 @@
 
 ### Development
 
+- license: Correct LICENSE file @Ana06
+
 ### Raw diffs
 - [capa v8.0.1...master](https://github.com/mandiant/capa/compare/v8.0.1...master)
 - [capa-rules v8.0.1...master](https://github.com/mandiant/capa-rules/compare/v8.0.1...master)
