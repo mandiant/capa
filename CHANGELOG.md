@@ -23,6 +23,7 @@
 ### Development
 
 - license: Correct LICENSE file @Ana06
+- documentation: Improve CLA information in CONTRIBUTING @Ana06
 
 ### Raw diffs
 - [capa v8.0.1...master](https://github.com/mandiant/capa/compare/v8.0.1...master)
