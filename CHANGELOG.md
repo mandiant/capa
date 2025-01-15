@@ -15,6 +15,7 @@
 - vmray: load more analysis archives @mr-tz
 - dynamic: only check file limitations for static file formats @mr-tz
 - vmray: skip non-printable strings @mike-hunhoff
+- elffile: handle symbols without a name @williballenthin #2553
 
 ### capa Explorer Web
 
