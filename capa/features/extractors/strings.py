@@ -11,38 +11,71 @@
 import re
 import string
 import contextlib
-from collections import namedtuple
+from dataclasses import dataclass
+from collections.abc import Iterator
 
 ASCII_BYTE = r" !\"#\$%&\'\(\)\*\+,-\./0123456789:;<=>\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_`abcdefghijklmnopqrstuvwxyz\{\|\}\\\~\t".encode(
     "ascii"
 )
 ASCII_RE_4 = re.compile(b"([%s]{%d,})" % (ASCII_BYTE, 4))
 UNICODE_RE_4 = re.compile(b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, 4))
-REPEATS = [b"A", b"\x00", b"\xfe", b"\xff"]
+REPEATS = {ord("A"), 0x00, 0xFE, 0xFF}
 SLICE_SIZE = 4096
 PRINTABLE_CHAR_SET = set(string.printable)
 
-String = namedtuple("String", ["s", "offset"])
+
+@dataclass
+class String:
+    s: str
+    offset: int
 
 
-def buf_filled_with(buf, character):
-    dupe_chunk = character * SLICE_SIZE
+def buf_filled_with(buf: bytes, character: int) -> bool:
+    """Check if the given buffer is filled with the given character, repeatedly.
+
+    Args:
+        buf: The bytes buffer to check
+        character: The byte value (0-255) to check for
+
+    Returns:
+        bool: True if all bytes in the buffer match the character, False otherwise.
+        The empty buffer contains no bytes, therefore always returns False.
+    """
+    if not buf:
+        return False
+
+    if len(buf) < SLICE_SIZE:
+        return all(b == character for b in buf)
+
+    # single big allocation, re-used each loop
+    dupe_chunk = bytes(character) * SLICE_SIZE
+
     for offset in range(0, len(buf), SLICE_SIZE):
-        new_chunk = buf[offset : offset + SLICE_SIZE]
-        if dupe_chunk[: len(new_chunk)] != new_chunk:
-            return False
+        # bytes objects are immutable, so the slices share the underlying array,
+        # and therefore this is cheap.
+        current_chunk = buf[offset : offset + SLICE_SIZE]
+
+        if len(current_chunk) == SLICE_SIZE:
+            # chunk-aligned comparison
+
+            if dupe_chunk != current_chunk:
+                return False
+
+        else:
+            # last loop, final chunk size is not aligned
+            if not all(b == character for b in current_chunk):
+                return False
+
     return True
 
 
-def extract_ascii_strings(buf, n=4):
+def extract_ascii_strings(buf: bytes, n: int = 4) -> Iterator[String]:
     """
     Extract ASCII strings from the given binary data.
 
-    :param buf: A bytestring.
-    :type buf: str
-    :param n: The minimum length of strings to extract.
-    :type n: int
-    :rtype: Sequence[String]
+    Params:
+      buf: the bytes from which to extract strings
+      n: minimum string length
     """
 
     if not buf:
@@ -61,15 +94,13 @@ def extract_ascii_strings(buf, n=4):
         yield String(match.group().decode("ascii"), match.start())
 
 
-def extract_unicode_strings(buf, n=4):
+def extract_unicode_strings(buf: bytes, n: int = 4) -> Iterator[String]:
     """
     Extract naive UTF-16 strings from the given binary data.
 
-    :param buf: A bytestring.
-    :type buf: str
-    :param n: The minimum length of strings to extract.
-    :type n: int
-    :rtype: Sequence[String]
+    Params:
+      buf: the bytes from which to extract strings
+      n: minimum string length
     """
 
     if not buf:
