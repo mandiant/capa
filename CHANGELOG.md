@@ -22,7 +22,7 @@
 
 ### Development
 
-- license: Correct LICENSE file @Ana06
+- license & copyright: Correct LICENSE file and improve copyright and license information headers in the source code files @Ana06
 - documentation: Improve CLA and Code of Conduct information in CONTRIBUTING @Ana06
 
 ### Raw diffs
