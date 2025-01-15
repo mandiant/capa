@@ -25,7 +25,7 @@ The following is a set of guidelines for contributing to capa and its packages, 
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [Capa Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the maintainers.
+This project follows [Google's Open Source Community Guidelines](https://opensource.google/conduct).
 
 ## What should I know before I get started?
 
