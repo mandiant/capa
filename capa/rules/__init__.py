@@ -853,18 +853,18 @@ class Rule:
     def __repr__(self):
         return f"Rule(scope={self.scopes}, name={self.name})"
 
-    def get_dependencies(self, namespaces):
+    def get_dependencies(self, namespaces: dict[str, list["Rule"]]) -> set[str]:
         """
         fetch the names of rules this rule relies upon.
         these are only the direct dependencies; a user must
         compute the transitive dependency graph themself, if they want it.
 
         Args:
-          namespaces(dict[str, list[Rule]]): mapping from namespace name to rules in it.
+          namespaces: mapping from namespace name to rules in it.
             see `index_rules_by_namespace`.
 
         Returns:
-          list[str]: names of rules upon which this rule depends.
+          set[str]: names of rules upon which this rule depends.
         """
         deps: set[str] = set()
 

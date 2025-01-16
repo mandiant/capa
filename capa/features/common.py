@@ -92,7 +92,7 @@ class Result:
         self.success = success
         self.statement = statement
         self.children = children
-        self.locations = locations if locations is not None else set()
+        self.locations = frozenset(locations) if locations is not None else frozenset()
 
     def __eq__(self, other):
         if isinstance(other, bool):
@@ -194,7 +194,11 @@ class Feature(abc.ABC):  # noqa: B024
     def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
-        return Result(self in features, self, [], locations=features.get(self, set()))
+        success = self in features
+        if success:
+            return Result(True, self, [], locations=features[self])
+        else:
+            return Result(False, self, [], locations=None)
 
 
 class MatchedRule(Feature):
