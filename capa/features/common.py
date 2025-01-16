@@ -105,6 +105,25 @@ class Result:
     def __nonzero__(self):
         return self.success
 
+    def __str__(self):
+        # as this object isn't user facing, this formatting is just to help with debugging
+
+        lines = []
+        def rec(m: "Result", indent: int):
+            if isinstance(m.statement, capa.engine.Statement):
+                line = ("  " * indent) + str(m.statement.name) + " " + str(m.success)
+            else:
+                line = ("  " * indent) + str(m.statement) + " " + str(m.success) + " " + str(m.locations)
+
+            lines.append(line)
+
+            for child in m.children:
+                rec(child, indent + 1)
+
+        rec(self, 0)
+        return "\n".join(lines)
+
+
 
 class Feature(abc.ABC):  # noqa: B024
     # this is an abstract class, since we don't want anyone to instantiate it directly,

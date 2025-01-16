@@ -474,6 +474,26 @@ class Match(FrozenModel):
             children=children,
         )
 
+    def __str__(self):
+        # as this object isn't user facing, this formatting is just to help with debugging
+
+        lines = []
+        def rec(m: "Match", indent: int):
+            if isinstance(m.node, StatementNode):
+                line = ("  " * indent) + str(m.node.statement.type) + " " + str(m.success)
+            elif isinstance(m.node, FeatureNode):
+                line = ("  " * indent) + str(m.node.feature) + " " + str(m.success) + " " + str(m.locations)
+            else:
+                raise ValueError("unexpected node type")
+
+            lines.append(line)
+
+            for child in m.children:
+                rec(child, indent + 1)
+
+        rec(self, 0)
+        return "\n".join(lines)
+
 
 def parse_parts_id(s: str):
     id_ = ""
