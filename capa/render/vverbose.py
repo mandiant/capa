@@ -328,6 +328,13 @@ def collect_sequence_locations(
             child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
             for child in match.children:
                 yield from collect_sequence_locations(child, child_mode)
+        elif isinstance(match.node.statement, rd.RangeStatement):
+            for location in match.locations:
+                if location.type not in (frz.AddressType.CALL, ):
+                    continue
+                if mode == MODE_FAILURE:
+                    continue
+                yield location
         else:
             for child in match.children:
                 yield from collect_sequence_locations(child, mode)
