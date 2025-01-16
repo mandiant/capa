@@ -38,11 +38,14 @@ def buf_filled_with(buf: bytes, character: int) -> bool:
         character: The byte value (0-255) to check for
 
     Returns:
-        bool: True if all bytes in the buffer match the character, False otherwise.
+        True if all bytes in the buffer match the character, False otherwise.
         The empty buffer contains no bytes, therefore always returns False.
     """
     if not buf:
         return False
+
+    if not (0 <= character <= 255):
+        raise ValueError(f"Character value {character} outside valid byte range (0-255)")
 
     if len(buf) < SLICE_SIZE:
         return all(b == character for b in buf)
@@ -81,6 +84,9 @@ def extract_ascii_strings(buf: bytes, n: int = 4) -> Iterator[String]:
     if not buf:
         return
 
+    if n < 1:
+        raise ValueError("minimum string length must be positive")
+
     if (buf[0] in REPEATS) and buf_filled_with(buf, buf[0]):
         return
 
@@ -105,6 +111,9 @@ def extract_unicode_strings(buf: bytes, n: int = 4) -> Iterator[String]:
 
     if not buf:
         return
+
+    if n < 1:
+        raise ValueError("minimum string length must be positive")
 
     if (buf[0] in REPEATS) and buf_filled_with(buf, buf[0]):
         return

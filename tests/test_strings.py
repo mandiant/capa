@@ -30,6 +30,9 @@ def test_buf_filled_with():
 
 
 def test_extract_ascii_strings():
+    # test empty buffer
+    assert list(extract_ascii_strings(b"")) == []
+
     buf = b"Hello World\x00This is a test\x00"
     strings = list(extract_ascii_strings(buf))
     assert len(strings) == 2
@@ -48,6 +51,9 @@ def test_extract_ascii_strings():
     assert len(strings) == 2
     assert strings[0] == String("Hello", 0)
     assert strings[1] == String("World", 6)
+
+    # only non-ASCII
+    assert list(extract_ascii_strings(b"\xFF\xFF\xFF")) == []
 
     buf = b"\x00" * 8 + b"ValidString\x00"
     strings = list(extract_ascii_strings(buf))
