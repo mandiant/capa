@@ -16,12 +16,16 @@
 - dynamic: only check file limitations for static file formats @mr-tz
 - vmray: skip non-printable strings @mike-hunhoff
 - strings: add type hints and fix uncovered bugs @williballenthin @2555
+- elffile: handle symbols without a name @williballenthin #2553
 
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
 
 ### Development
+
+- license & copyright: Correct LICENSE file and improve copyright and license information headers in the source code files @Ana06
+- documentation: Improve CLA and Code of Conduct information in CONTRIBUTING @Ana06
 
 ### Raw diffs
 - [capa v8.0.1...master](https://github.com/mandiant/capa/compare/v8.0.1...master)

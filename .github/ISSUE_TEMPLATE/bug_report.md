@@ -10,8 +10,8 @@ We use submodules to separate code, rules and test data. If your issue is relate
 # Have you checked that your issue isn't already filed?
 Please search if there is a similar issue at https://github.com/mandiant/capa/issues. If there is already a similar issue, please add more details there instead of opening a new one.
 
-# Have you read capa's Code of Conduct?
-By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/mandiant/capa/blob/master/.github/CODE_OF_CONDUCT.md
+# Have you read Google's Code of Conduct?
+By filing an issue, you are expected to comply with it, including treating everyone with respect: https://opensource.google/conduct
 
 # Have you read capa's CONTRIBUTING guide?
 It contains helpful information about how to contribute to capa. Check https://github.com/mandiant/capa/blob/master/.github/CONTRIBUTING.md#reporting-bugs

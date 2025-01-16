@@ -1,10 +1,17 @@
-# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
+# Copyright 2021 Google LLC
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at: [package root]/LICENSE.txt
-# Unless required by applicable law or agreed to in writing, software distributed under the License
-#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and limitations under the License.
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import io
 import logging
 from typing import Iterator
@@ -73,8 +80,7 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
 
 
 def extract_file_import_names(elf: ELFFile, **kwargs):
-    # Create a dictionary to store symbol names by their index
-    symbol_names = {}
+    symbol_name_by_index: dict[int, str] = {}
 
     # Extract symbol names and store them in the dictionary
     for segment in elf.iter_segments():
@@ -86,7 +92,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
             logger.debug("Dynamic segment doesn't contain DT_SYMTAB")
             continue
 
-        for _, symbol in enumerate(segment.iter_symbols()):
+        for i, symbol in enumerate(segment.iter_symbols()):
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if not symbol.name:
@@ -100,7 +106,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
             if symbol.entry.st_name == 0:
                 continue
 
-            symbol_names[_] = symbol.name
+            symbol_name_by_index[i] = symbol.name
 
     for segment in elf.iter_segments():
         if not isinstance(segment, DynamicSegment):
@@ -120,10 +126,17 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
                     break
 
             for relocation in relocations:
-                # Extract the symbol name from the symbol table using the symbol index in the relocation
-                if relocation["r_info_sym"] not in symbol_names:
+                if "r_info_sym" not in relocation.entry or "r_offset" not in relocation.entry:
                     continue
-                yield Import(symbol_names[relocation["r_info_sym"]]), FileOffsetAddress(relocation["r_offset"])
+
+                symbol_address: int = relocation["r_offset"]
+                symbol_index: int = relocation["r_info_sym"]
+
+                if symbol_index not in symbol_name_by_index:
+                    continue
+                symbol_name = symbol_name_by_index[symbol_index]
+
+                yield Import(symbol_name), FileOffsetAddress(symbol_address)
 
 
 def extract_file_section_names(elf: ELFFile, **kwargs):
