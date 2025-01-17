@@ -399,12 +399,12 @@ class Match(FrozenModel):
                         if location in rule_matches:
                             # exact match, such as matching a call-scoped rule.
                             children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
-                        # we'd like to assert the scope of the current rule is "sequence"
+                        # we'd like to assert the scope of the current rule is span-of-calls
                         # but we don't have that data here.
                         else:
-                            # Sequence scopes can match each other, but they don't strictly contain each other,
+                            # Span-of-calls scopes can match each other, but they don't strictly contain each other,
                             #  like the way a function contains a basic block.
-                            # So when we have a match within a sequence for another sequence, we need to look
+                            # So when we have a match within a span for another span, we need to look
                             #  for all the places it might be found.
                             #
                             # Despite the edge cases (like API hammering), this turns out to be pretty easy:
