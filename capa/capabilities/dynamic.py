@@ -19,6 +19,8 @@ import collections
 from dataclasses import dataclass
 
 import capa.perf
+import capa.engine
+import capa.helpers
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
@@ -106,7 +108,7 @@ class SequenceMatcher:
         self.current_features: FeatureSet = collections.defaultdict(set)
 
         # the names of rules matched at the last sequence,
-        # so that we can deduplicate long strings of the same matche.
+        # so that we can deduplicate long strings of the same matches.
         self.last_sequence_matches: set[str] = set()
 
     def next(self, ch: CallHandle, call_features: FeatureSet):
@@ -124,15 +126,14 @@ class SequenceMatcher:
                     # like arch/os/format.
                     continue
 
-                feature_vas = self.current_features[feature]
-                feature_vas.difference_update(vas)
-                if not feature_vas:
+                self.current_features[feature] -= vas
+                if not self.current_features[feature]:
                     del self.current_features[feature]
 
         # update the deque and set of features with the latest call's worth of features.
         self.current_feature_sets.append(call_features)
         for feature, vas in call_features.items():
-            self.current_features[feature].update(vas)
+            self.current_features[feature] |= vas
 
         _, matches = self.ruleset.match(Scope.SEQUENCE, self.current_features, ch.address)
 
@@ -154,7 +155,7 @@ class SequenceMatcher:
         # see: https://github.com/mandiant/capa/pull/2532#issuecomment-2548508130
         for new_rule in newly_encountered_rules:
             suppressed_rules -= set(self.ruleset.rules[new_rule].get_dependencies(self.ruleset.rules_by_namespace))
-        
+
         for rule_name, res in matches.items():
             if rule_name in suppressed_rules:
                 continue
@@ -181,8 +182,7 @@ def find_thread_capabilities(
     sequence_matcher = SequenceMatcher(ruleset)
 
     call_count = 0
-    for ch in extractor.get_calls(ph, th):
-        call_count += 1
+    for call_count, ch in enumerate(extractor.get_calls(ph, th)):  # noqa: B007
         call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
         for feature, vas in call_capabilities.features.items():
             features[feature].update(vas)

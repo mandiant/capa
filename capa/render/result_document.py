@@ -406,15 +406,18 @@ class Match(FrozenModel):
                             #  like the way a function contains a basic block.
                             # So when we have a match within a sequence for another sequence, we need to look
                             #  for all the places it might be found.
-                            # 
+                            #
                             # Despite the edge cases (like API hammering), this turns out to be pretty easy:
                             #  collect the most recent match (with the given name) prior to the wanted location.
-                            matches_in_thread = sorted([
-                                                       (a.id, m) for a, m in rule_matches.items()
-                                                       if isinstance(a, DynamicCallAddress)
-                                                       and a.thread == location.thread
-                                                       and a.id <= location.id
-                                                   ])
+                            matches_in_thread = sorted(
+                                [
+                                    (a.id, m)
+                                    for a, m in rule_matches.items()
+                                    if isinstance(a, DynamicCallAddress)
+                                    and a.thread == location.thread
+                                    and a.id <= location.id
+                                ]
+                            )
                             _, most_recent_match = matches_in_thread[-1]
                             children.append(Match.from_capa(rules, capabilities, most_recent_match))
 
@@ -466,12 +469,15 @@ class Match(FrozenModel):
                                 if location in rule_matches:
                                     children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
                                 else:
-                                    matches_in_thread = sorted([
-                                                               (a.id, m) for a, m in rule_matches.items()
-                                                               if isinstance(a, DynamicCallAddress)
-                                                               and a.thread == location.thread
-                                                               and a.id <= location.id
-                                                           ])
+                                    matches_in_thread = sorted(
+                                        [
+                                            (a.id, m)
+                                            for a, m in rule_matches.items()
+                                            if isinstance(a, DynamicCallAddress)
+                                            and a.thread == location.thread
+                                            and a.id <= location.id
+                                        ]
+                                    )
                                     _, most_recent_match = matches_in_thread[-1]
                                     children.append(Match.from_capa(rules, capabilities, most_recent_match))
                             else:
@@ -523,6 +529,7 @@ class Match(FrozenModel):
         # as this object isn't user facing, this formatting is just to help with debugging
 
         lines = []
+
         def rec(m: "Match", indent: int):
             if isinstance(m.node, StatementNode):
                 line = ("  " * indent) + str(m.node.statement.type) + " " + str(m.success)
