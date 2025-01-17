@@ -194,7 +194,7 @@ class InvalidDynamicScope(Lint):
             "file",
             "process",
             "thread",
-            "sequence",
+            "span of calls",
             "call",
             "unsupported",
         )

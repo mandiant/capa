@@ -86,7 +86,7 @@ class Scope(str, Enum):
     FILE = "file"
     PROCESS = "process"
     THREAD = "thread"
-    SEQUENCE = "sequence"
+    SPAN_OF_CALLS = "span of calls"
     CALL = "call"
     FUNCTION = "function"
     BASIC_BLOCK = "basic block"
@@ -115,7 +115,7 @@ DYNAMIC_SCOPES = {
     Scope.GLOBAL,
     Scope.PROCESS,
     Scope.THREAD,
-    Scope.SEQUENCE,
+    Scope.SPAN_OF_CALLS,
     Scope.CALL,
 }
 
@@ -201,7 +201,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.common.MatchedRule,
     },
     Scope.THREAD: set(),
-    Scope.SEQUENCE: set(),
+    Scope.SPAN_OF_CALLS: set(),
     Scope.CALL: {
         capa.features.common.MatchedRule,
         capa.features.common.Regex,
@@ -256,14 +256,14 @@ SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.FILE].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.THREAD].update(SUPPORTED_FEATURES[Scope.GLOBAL])
-SUPPORTED_FEATURES[Scope.SEQUENCE].update(SUPPORTED_FEATURES[Scope.GLOBAL])
+SUPPORTED_FEATURES[Scope.SPAN_OF_CALLS].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.CALL].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 
 
-# all call scope features are also sequence features
-SUPPORTED_FEATURES[Scope.SEQUENCE].update(SUPPORTED_FEATURES[Scope.CALL])
-# all sequence scope features (and therefore, call features) are also thread features
-SUPPORTED_FEATURES[Scope.THREAD].update(SUPPORTED_FEATURES[Scope.SEQUENCE])
+# all call scope features are also span-of-calls features
+SUPPORTED_FEATURES[Scope.SPAN_OF_CALLS].update(SUPPORTED_FEATURES[Scope.CALL])
+# all span-of-calls scope features (and therefore, call features) are also thread features
+SUPPORTED_FEATURES[Scope.THREAD].update(SUPPORTED_FEATURES[Scope.SPAN_OF_CALLS])
 # all thread scope features are also process features
 SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.THREAD])
 
@@ -622,7 +622,7 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "process":
         if Scope.FILE not in scopes:
-            raise InvalidRule("process subscope supported only for file scope")
+            raise InvalidRule("`process` subscope supported only for `file` scope")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -633,7 +633,7 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "thread":
         if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS)):
-            raise InvalidRule("thread subscope supported only for the process scope")
+            raise InvalidRule("`thread` subscope supported only for the `process` scope")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -642,20 +642,22 @@ def build_statements(d, scopes: Scopes):
             Scope.THREAD, build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)), description=description
         )
 
-    elif key == "sequence":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SEQUENCE)):
-            raise InvalidRule("sequence subscope supported only for the process and thread scopes")
+    elif key == "span of calls":
+        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SPAN_OF_CALLS)):
+            raise InvalidRule("`span of calls` subscope supported only for the `process` and `thread` scopes")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.SEQUENCE, build_statements(d[key][0], Scopes(dynamic=Scope.SEQUENCE)), description=description
+            Scope.SPAN_OF_CALLS,
+            build_statements(d[key][0], Scopes(dynamic=Scope.SPAN_OF_CALLS)),
+            description=description,
         )
 
     elif key == "call":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SEQUENCE, Scope.CALL)):
-            raise InvalidRule("call subscope supported only for the process, thread, and call scopes")
+        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SPAN_OF_CALLS, Scope.CALL)):
+            raise InvalidRule("`call` subscope supported only for the `process`, `thread`, and `call` scopes")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -666,7 +668,7 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "function":
         if Scope.FILE not in scopes:
-            raise InvalidRule("function subscope supported only for file scope")
+            raise InvalidRule("`function` subscope supported only for `file` scope")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -677,7 +679,7 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "basic block":
         if Scope.FUNCTION not in scopes:
-            raise InvalidRule("basic block subscope supported only for function scope")
+            raise InvalidRule("`basic block` subscope supported only for `function` scope")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -688,7 +690,7 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "instruction":
         if all(s not in scopes for s in (Scope.FUNCTION, Scope.BASIC_BLOCK)):
-            raise InvalidRule("instruction subscope supported only for function and basic block scope")
+            raise InvalidRule("`instruction` subscope supported only for `function` and `basic block` scope")
 
         if len(d[key]) == 1:
             statements = build_statements(d[key][0], Scopes(static=Scope.INSTRUCTION))
@@ -1401,7 +1403,7 @@ class RuleSet:
 
         scopes = (
             Scope.CALL,
-            Scope.SEQUENCE,
+            Scope.SPAN_OF_CALLS,
             Scope.THREAD,
             Scope.PROCESS,
             Scope.INSTRUCTION,
@@ -1433,8 +1435,8 @@ class RuleSet:
         return self.rules_by_scope[Scope.THREAD]
 
     @property
-    def sequence_rules(self):
-        return self.rules_by_scope[Scope.SEQUENCE]
+    def span_of_calls_rules(self):
+        return self.rules_by_scope[Scope.SPAN_OF_CALLS]
 
     @property
     def call_rules(self):

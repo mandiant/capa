@@ -99,12 +99,12 @@ def test_dynamic_call_scope():
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
 
-    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
-    assert r.name in matches
-    assert 8 in get_call_ids(matches[r.name])
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in capabilities.matches
+    assert 8 in get_call_ids(capabilities.matches[r.name])
 
 
-# match the first sequence.
+# match the first span.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -113,7 +113,7 @@ def test_dynamic_call_scope():
 #        call 10: LdrGetDllHandle(1974337536, kernel32.dll)
 #        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
 #        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
-def test_dynamic_sequence_scope():
+def test_dynamic_span_scope():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -123,7 +123,7 @@ def test_dynamic_sequence_scope():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
                     - api: GetSystemTimeAsFileTime
@@ -137,12 +137,12 @@ def test_dynamic_sequence_scope():
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
 
-    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
-    assert r.name in matches
-    assert 12 in get_call_ids(matches[r.name])
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in capabilities.matches
+    assert 12 in get_call_ids(capabilities.matches[r.name])
 
 
-# show that when the sequence is only 5 calls long (for example), it doesn't match beyond that 5-tuple.
+# show that when the span is only 5 calls long (for example), it doesn't match beyond that 5-tuple.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -155,7 +155,7 @@ def test_dynamic_sequence_scope():
 #        call 14: RtlAddVectoredExceptionHandler(1921490089, 0)
 #        call 15: GetSystemTime()
 #        call 16: NtAllocateVirtualMemory(no, 4, 786432, 4784128, 4294967295)
-def test_dynamic_sequence_scope_length():
+def test_dynamic_span_scope_length():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -165,7 +165,7 @@ def test_dynamic_sequence_scope_length():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
                     - api: GetSystemTimeAsFileTime
@@ -176,24 +176,24 @@ def test_dynamic_sequence_scope_length():
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
 
-    # patch SEQUENCE_SIZE since we may use a much larger value in the real world.
+    # patch SPAN_SIZE since we may use a much larger value in the real world.
     from pytest import MonkeyPatch
 
     with MonkeyPatch.context() as m:
-        m.setattr(capa.capabilities.dynamic, "SEQUENCE_SIZE", 5)
+        m.setattr(capa.capabilities.dynamic, "SPAN_SIZE", 5)
         capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
 
     assert r.name not in capabilities.matches
 
 
-# show that you can use a call subscope in sequence rules.
+# show that you can use a call subscope in span-of-calls rules.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
 #        ...
 #        call 11: LdrGetProcedureAddress(2010595649, 0, AddVectoredExceptionHandler, 1974337536, kernel32.dll)
 #        ...
-def test_dynamic_sequence_call_subscope():
+def test_dynamic_span_call_subscope():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -203,7 +203,7 @@ def test_dynamic_sequence_call_subscope():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
                     - call:
@@ -221,7 +221,7 @@ def test_dynamic_sequence_call_subscope():
     assert 11 in get_call_ids(capabilities.matches[r.name])
 
 
-# show that you can use a sequence subscope in sequence rules.
+# show that you can use a span subscope in span rules.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -231,7 +231,7 @@ def test_dynamic_sequence_call_subscope():
 #        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
 #        call 13: LdrGetProcedureAddress(2010595072, 0, RemoveVectoredExceptionHandler, 1974337536, kernel32.dll)
 #        ...
-def test_dynamic_sequence_scope_sequence_subscope():
+def test_dynamic_span_scope_span_subscope():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -241,16 +241,16 @@ def test_dynamic_sequence_scope_sequence_subscope():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
-                    - sequence:
+                    - span of calls:
                         - description: resolve add VEH  # should match at 11
                         - and:
                             - api: LdrGetDllHandle
                             - api: LdrGetProcedureAddress
                             - string: AddVectoredExceptionHandler
-                    - sequence:
+                    - span of calls:
                         - description: resolve remove VEH  # should match at 13
                         - and:
                             - api: LdrGetDllHandle
@@ -267,8 +267,8 @@ def test_dynamic_sequence_scope_sequence_subscope():
     assert 13 in get_call_ids(capabilities.matches[r.name])
 
 
-# show that you can't use thread subscope in sequence rules.
-def test_dynamic_sequence_scope_thread_subscope():
+# show that you can't use thread subscope in span rules.
+def test_dynamic_span_scope_thread_subscope():
     rule = textwrap.dedent(
         """
         rule:
@@ -276,7 +276,7 @@ def test_dynamic_sequence_scope_thread_subscope():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
                     - thread:
@@ -288,7 +288,7 @@ def test_dynamic_sequence_scope_thread_subscope():
         capa.rules.Rule.from_yaml(rule)
 
 
-# show how you might use a sequence rule: to match a small window for a collection of features.
+# show how you might use a span-of-calls rule: to match a small window for a collection of features.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -297,7 +297,7 @@ def test_dynamic_sequence_scope_thread_subscope():
 #        call 12: ...
 #        call 13: ...
 #        call 14: RtlAddVectoredExceptionHandler(1921490089, 0)
-def test_dynamic_sequence_example():
+def test_dynamic_span_example():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -307,7 +307,7 @@ def test_dynamic_sequence_example():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
                     - call:
@@ -325,12 +325,12 @@ def test_dynamic_sequence_example():
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
 
-    matches, features = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
-    assert r.name in matches
-    assert 14 in get_call_ids(matches[r.name])
+    capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
+    assert r.name in capabilities.matches
+    assert 14 in get_call_ids(capabilities.matches[r.name])
 
 
-# show how sequences that overlap a single event are handled.
+# show how spans that overlap a single event are handled.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -342,7 +342,7 @@ def test_dynamic_sequence_example():
 #        call 14: ...
 #        call 15: ...
 #        ...
-def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
+def test_dynamic_span_multiple_spans_overlapping_single_event():
     extractor = get_0000a657_thread3064()
 
     rule = textwrap.dedent(
@@ -352,7 +352,7 @@ def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
                 name: test rule
                 scopes:
                     static: unsupported
-                    dynamic: sequence
+                    dynamic: span of calls
             features:
                 - and:
                     - call:
@@ -367,11 +367,11 @@ def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
 
     capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
     assert r.name in capabilities.matches
-    # we only match the first overlapping sequence
+    # we only match the first overlapping span
     assert [11] == list(get_call_ids(capabilities.matches[r.name]))
 
 
-# show that you can use match statements in sequence rules.
+# show that you can use match statements in span-of-calls rules.
 #
 #    proc: 0000A65749F5902C4D82.exe (ppid=2456, pid=3052)
 #      thread: 3064
@@ -381,7 +381,7 @@ def test_dynamic_sequence_multiple_sequences_overlapping_single_event():
 #        call 12: LdrGetDllHandle(1974337536, kernel32.dll)
 #        call 13: LdrGetProcedureAddress(2010595072, 0, RemoveVectoredExceptionHandler, 1974337536, kernel32.dll)
 #        ...
-def test_dynamic_sequence_scope_match_statements():
+def test_dynamic_span_scope_match_statements():
     extractor = get_0000a657_thread3064()
 
     ruleset = capa.rules.RuleSet(
@@ -395,7 +395,7 @@ def test_dynamic_sequence_scope_match_statements():
                         namespace: linking/runtime-linking/veh
                         scopes:
                             static: unsupported
-                            dynamic: sequence
+                            dynamic: span of calls
                     features:
                         - and:
                             - api: LdrGetDllHandle
@@ -413,7 +413,7 @@ def test_dynamic_sequence_scope_match_statements():
                         namespace: linking/runtime-linking/veh
                         scopes:
                             static: unsupported
-                            dynamic: sequence
+                            dynamic: span of calls
                     features:
                         - and:
                             - api: LdrGetDllHandle
@@ -430,7 +430,7 @@ def test_dynamic_sequence_scope_match_statements():
                         name: resolve add and remove VEH
                         scopes:
                             static: unsupported
-                            dynamic: sequence
+                            dynamic: span of calls
                     features:
                         - and:
                             - match: resolve add VEH
@@ -446,7 +446,7 @@ def test_dynamic_sequence_scope_match_statements():
                         name: has VEH runtime linking
                         scopes:
                             static: unsupported
-                            dynamic: sequence
+                            dynamic: span of calls
                     features:
                         - and:
                             - match: linking/runtime-linking/veh

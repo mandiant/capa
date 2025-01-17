@@ -4,11 +4,11 @@
 
 ### New Features
 
-- add sequence scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
+- add span-of-calls scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
 
 ### Breaking Changes
 
-- add sequence scope to rule format
+- add span-of-calls scope to rule format
 - capabilities functions return dataclasses instead of tuples
 
 ### New Rules (0)
