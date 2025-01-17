@@ -108,7 +108,8 @@ class Result:
     def __str__(self):
         # as this object isn't user facing, this formatting is just to help with debugging
 
-        lines = []
+        lines: list[str] = []
+
         def rec(m: "Result", indent: int):
             if isinstance(m.statement, capa.engine.Statement):
                 line = ("  " * indent) + str(m.statement.name) + " " + str(m.success)
@@ -122,7 +123,6 @@ class Result:
 
         rec(self, 0)
         return "\n".join(lines)
-
 
 
 class Feature(abc.ABC):  # noqa: B024

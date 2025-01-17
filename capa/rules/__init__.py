@@ -897,6 +897,7 @@ class Rule:
                 # but, namespaces tend to use `-` while rule names use ` `. so, unlikely, but possible.
                 if statement.value in namespaces:
                     # matches a namespace, so take precedence and don't even check rule names.
+                    assert isinstance(statement.value, str)
                     deps.update(r.name for r in namespaces[statement.value])
                 else:
                     # not a namespace, assume it's a rule name.
