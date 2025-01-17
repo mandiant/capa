@@ -126,7 +126,7 @@ def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
 
 
-def render_sequence(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> str:
+def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> str:
     calls: list[capa.features.address.DynamicCallAddress] = [addr.to_capa() for addr in addrs]  # type: ignore
     for call in calls:
         assert isinstance(call, capa.features.address.DynamicCallAddress)
@@ -328,7 +328,7 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                     lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
                 elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                     lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
-                elif rule.meta.scopes.dynamic in (capa.rules.Scope.CALL, capa.rules.Scope.SEQUENCE):
+                elif rule.meta.scopes.dynamic in (capa.rules.Scope.CALL, capa.rules.Scope.SPAN_OF_CALLS):
                     # because we're only in verbose mode, we won't show the full call details (name, args, retval)
                     # we'll only show the details of the thread in which the calls are found.
                     # so select the thread locations and render those.

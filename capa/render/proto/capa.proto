@@ -378,7 +378,7 @@ enum Scope {
   SCOPE_PROCESS = 5;
   SCOPE_THREAD = 6;
   SCOPE_CALL = 7;
-  SCOPE_SEQUENCE = 8;
+  SCOPE_SPAN_OF_CALLS = 8;
 }
 
 message Scopes {

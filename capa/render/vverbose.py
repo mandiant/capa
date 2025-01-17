@@ -231,7 +231,7 @@ def render_feature(
             # of the output, so don't re-render it again for each feature.
             pass
         elif isinstance(layout, rd.DynamicLayout) and isinstance(feature, frzf.MatchFeature):
-            # don't render copies of the sequence address for submatches
+            # don't render copies of the span of calls address for submatches
             pass
         else:
             render_locations(console, layout, match.locations, indent)
@@ -312,13 +312,13 @@ def render_match(
         render_match(console, layout, rule, child, indent=indent + 1, mode=child_mode)
 
 
-def collect_sequence_locations(
+def collect_span_of_calls_locations(
     match: rd.Match,
     mode=MODE_SUCCESS,
 ):
     """
-    Find all the (call, sequence) locations used in a given sequence match, recursively.
-    Useful to collect the events used to match a sequence scoped rule.
+    Find all the call locations used in a given span-of-calls match, recursively.
+    Useful to collect the events used to match a span-of-calls scoped rule.
     """
     if isinstance(match.node, rd.StatementNode):
         if (
@@ -327,7 +327,7 @@ def collect_sequence_locations(
         ):
             child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
             for child in match.children:
-                yield from collect_sequence_locations(child, child_mode)
+                yield from collect_span_of_calls_locations(child, child_mode)
         elif isinstance(match.node.statement, rd.RangeStatement):
             for location in match.locations:
                 if location.type not in (frz.AddressType.CALL,):
@@ -337,7 +337,7 @@ def collect_sequence_locations(
                 yield location
         else:
             for child in match.children:
-                yield from collect_sequence_locations(child, mode)
+                yield from collect_span_of_calls_locations(child, mode)
     elif isinstance(match.node, rd.FeatureNode):
         for location in match.locations:
             if location.type not in (frz.AddressType.CALL,):
@@ -488,9 +488,9 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                         console.write(v.render_process(doc.meta.analysis.layout, location))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                         console.write(v.render_thread(doc.meta.analysis.layout, location))
-                    elif rule.meta.scopes.dynamic == capa.rules.Scope.SEQUENCE:
-                        calls = sorted(set(collect_sequence_locations(match)))
-                        console.write(hanging_indent(v.render_sequence(doc.meta.analysis.layout, calls), indent=1))
+                    elif rule.meta.scopes.dynamic == capa.rules.Scope.SPAN_OF_CALLS:
+                        calls = sorted(set(collect_span_of_calls_locations(match)))
+                        console.write(hanging_indent(v.render_span_of_calls(doc.meta.analysis.layout, calls), indent=1))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
                         console.write(hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1))
                     else:
