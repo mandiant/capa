@@ -330,7 +330,7 @@ def collect_sequence_locations(
                 yield from collect_sequence_locations(child, child_mode)
         elif isinstance(match.node.statement, rd.RangeStatement):
             for location in match.locations:
-                if location.type not in (frz.AddressType.CALL, ):
+                if location.type not in (frz.AddressType.CALL,):
                     continue
                 if mode == MODE_FAILURE:
                     continue
@@ -340,7 +340,7 @@ def collect_sequence_locations(
                 yield from collect_sequence_locations(child, mode)
     elif isinstance(match.node, rd.FeatureNode):
         for location in match.locations:
-            if location.type not in (frz.AddressType.CALL, ):
+            if location.type not in (frz.AddressType.CALL,):
                 continue
             if mode == MODE_FAILURE:
                 continue
