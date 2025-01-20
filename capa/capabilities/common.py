@@ -46,6 +46,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     _, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
     return matches, len(file_features)
 
+
 def has_limitation(rules: list, capabilities: MatchResults, is_standalone: bool) -> bool:
     # given list of rules and capabilities, finds the limitation if it exists, logs warning and returns True
     # else logs nothing and returns False
@@ -66,14 +67,17 @@ def has_limitation(rules: list, capabilities: MatchResults, is_standalone: bool)
         return True
     return False
 
+
 def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
     file_limitation_rules = list(filter(lambda r: r.is_file_limitation_rule(), rules.rules.values()))
 
-    return has_limitation(file_limitation_rules,capabilities,is_standalone)
+    return has_limitation(file_limitation_rules, capabilities, is_standalone)
+
 
 def has_dynamic_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
     dynamic_limitation_rules = list(filter(lambda r: r.is_dynamic_limitation_rule(), rules.rules.values()))
     return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)
+
 
 def find_capabilities(
     ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs

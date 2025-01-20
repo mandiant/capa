@@ -100,7 +100,12 @@ from capa.features.common import (
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
 )
-from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities, has_dynamic_limitation
+from capa.capabilities.common import (
+    find_capabilities,
+    has_file_limitation,
+    find_file_capabilities,
+    has_dynamic_limitation,
+)
 from capa.features.extractors.base_extractor import (
     ProcessFilter,
     FunctionFilter,
@@ -781,6 +786,7 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[F
                 raise ShouldExitError(E_FILE_LIMITATION)
     return found_file_limitation
 
+
 def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
     """
     args:
@@ -805,6 +811,7 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
             logger.debug("file limitation short circuit, won't analyze fully.")
             raise ShouldExitError(E_FILE_LIMITATION)
     return found_dynamic_limitation
+
 
 def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]:
     if backend != BACKEND_VIV:
