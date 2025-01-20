@@ -33,7 +33,7 @@ pydantic==2.10.1
 # pydantic-core==2.23.4
 xmltodict==0.14.2
 pyelftools==0.31
-pygments==2.18.0
+pygments==2.19.1
 python-flirt==0.9.2
 pyyaml==6.0.2
 rich==13.9.2
