@@ -320,33 +320,26 @@ def collect_span_of_calls_locations(
     Find all the call locations used in a given span-of-calls match, recursively.
     Useful to collect the events used to match a span-of-calls scoped rule.
     """
-    if isinstance(match.node, rd.StatementNode):
-        if (
-            isinstance(match.node.statement, rd.CompoundStatement)
-            and match.node.statement.type == rd.CompoundStatementType.NOT
-        ):
-            child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
-            for child in match.children:
-                yield from collect_span_of_calls_locations(child, child_mode)
-        elif isinstance(match.node.statement, rd.RangeStatement):
-            for location in match.locations:
-                if location.type not in (frz.AddressType.CALL,):
-                    continue
-                if mode == MODE_FAILURE:
-                    continue
-                yield location
-        else:
-            for child in match.children:
-                yield from collect_span_of_calls_locations(child, mode)
-    elif isinstance(match.node, rd.FeatureNode):
-        for location in match.locations:
-            if location.type not in (frz.AddressType.CALL,):
-                continue
-            if mode == MODE_FAILURE:
-                continue
-            yield location
-    else:
-        raise ValueError("unexpected node type")
+    if not match.success:
+        return
+
+    for location in match.locations:
+        if location.type != frz.AddressType.CALL:
+            continue
+
+        if mode == MODE_FAILURE:
+            # only collect positive evidence,
+            # not things that filter out branches.
+            continue
+
+        yield location
+
+    child_mode = mode
+    if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.NOT:
+        child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
+
+    for child in match.children:
+        yield from collect_span_of_calls_locations(child, child_mode)
 
 
 def render_rules(console: Console, doc: rd.ResultDocument):
