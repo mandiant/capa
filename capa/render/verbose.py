@@ -164,6 +164,25 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     )
 
 
+def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    cname = _get_call_name(layout, addr)
+
+    fname, _, rest = cname.partition("(")
+    args, _, rest = rest.rpartition(")")
+
+    s = []
+    s.append(f"{fname}(")
+    for arg in args.split(", "):
+        s.append(f"  {arg},")
+    s.append(f"){rest}")
+
+    newline = "\n"
+    return f"call:{call.id}\n{rutils.mute(newline.join(s))}"
+
+
 def render_static_meta(console: Console, meta: rd.StaticMetadata):
     """
     like:
