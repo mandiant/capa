@@ -54,7 +54,19 @@ def hanging_indent(s: str, indent: int) -> str:
     return textwrap.indent(s, prefix=prefix)[len(prefix) :]
 
 
-def render_locations(console: Console, layout: rd.Layout, locations: Iterable[frz.Address], indent: int):
+def render_locations(
+    console: Console, layout: rd.Layout, locations: Iterable[frz.Address], indent: int, use_short_format: bool = False
+):
+    """
+    Render the given locations, such as virtual address or pid/tid/callid with process name.
+
+    If `use_short_format` is True:
+    render a small representation of the given locations, such as just the call id,
+    assuming another region of output specified the full location details (like pid/tid).
+
+    In effect, rather than rendering ppid/pid/tid/callid everywhere,
+    describe ppid/pid/tid once, and then refer to just callid in the subsequent blocklin the subsequent block.
+    """
     import capa.render.verbose as v
 
     # it's possible to have an empty locations array here,
@@ -73,7 +85,11 @@ def render_locations(console: Console, layout: rd.Layout, locations: Iterable[fr
 
         if location.type == frz.AddressType.CALL:
             assert isinstance(layout, rd.DynamicLayout)
-            console.write(hanging_indent(v.render_call(layout, location), indent + 1))
+            if use_short_format:
+                render_call = v.render_short_call
+            else:
+                render_call = v.render_call
+            console.write(hanging_indent(render_call(layout, location), indent + 1))
         else:
             console.write(v.format_address(locations[0]))
 
@@ -81,6 +97,10 @@ def render_locations(console: Console, layout: rd.Layout, locations: Iterable[fr
         location = locations[0]
 
         assert isinstance(layout, rd.DynamicLayout)
+        if use_short_format:
+            render_call = v.render_short_call
+        else:
+            render_call = v.render_call
         s = f"{v.render_call(layout, location)}\nand {(len(locations) - 1)} more..."
         console.write(hanging_indent(s, indent + 1))
 
@@ -234,7 +254,7 @@ def render_feature(
             # don't render copies of the span of calls address for submatches
             pass
         else:
-            render_locations(console, layout, match.locations, indent)
+            render_locations(console, layout, match.locations, indent, use_short_format=True)
         console.writeln()
     else:
         # like:
@@ -251,7 +271,7 @@ def render_feature(
                 # like above, don't re-render calls when in call scope.
                 pass
             else:
-                render_locations(console, layout, locations, indent=indent)
+                render_locations(console, layout, locations, indent=indent + 1, use_short_format=True)
             console.writeln()
 
 
