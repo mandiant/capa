@@ -435,7 +435,7 @@ def check_nzxor_security_cookie_delta(
 
     if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA) and first_bb.contains(insn_addr):
         return True
-    elif insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1) and last_bb.contains(insn_addr):
+    if insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1) and last_bb.contains(insn_addr):
         return True
 
     return False
