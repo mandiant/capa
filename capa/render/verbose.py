@@ -128,12 +128,18 @@ def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
 
 def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> str:
     calls: list[capa.features.address.DynamicCallAddress] = [addr.to_capa() for addr in addrs]  # type: ignore
+    assert len(calls) > 0
     for call in calls:
         assert isinstance(call, capa.features.address.DynamicCallAddress)
+    call = calls[0]
 
     pname = _get_process_name(layout, frz.Address.from_capa(calls[0].thread.process))
     call_ids = [str(call.id) for call in calls]
-    return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},calls:{{{','.join(call_ids)}}}}}"
+    if len(call_ids) == 1:
+        call_id = call_ids[0]
+        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call_id}}}"
+    else:
+        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},calls:{{{','.join(call_ids)}}}}}"
 
 
 def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
