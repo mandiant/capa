@@ -949,6 +949,9 @@ class Rule:
     def is_file_limitation_rule(self) -> bool:
         return self.meta.get("namespace", "") == "internal/limitation/file"
 
+    def is_dynamic_limitation_rule(self) -> bool:
+        return self.meta.get("namespace","") == "internal/limitation/dynamic"
+
     def is_subscope_rule(self):
         return bool(self.meta.get("capa/subscope-rule", False))
 

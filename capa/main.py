@@ -100,7 +100,7 @@ from capa.features.common import (
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
 )
-from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
+from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities, has_dynamic_limitation
 from capa.features.extractors.base_extractor import (
     ProcessFilter,
     FunctionFilter,
@@ -762,6 +762,7 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[F
     for file_extractor in file_extractors:
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+            # logger.info("file capabilities: ", pure_file_capabilities)
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
@@ -780,6 +781,30 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[F
                 raise ShouldExitError(E_FILE_LIMITATION)
     return found_file_limitation
 
+def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+    """
+    args:
+      args: The parsed command line arguments from `install_common_args`.
+
+    Handles dynamic dotnet samples.
+
+    raises:
+      ShouldExitError: if the program is invoked incorrectly and should exit.
+    """
+    found_dynamic_limitation = False
+    for file_extractor in file_extractors:
+        pure_dynamic_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+    found_dynamic_limitation = has_dynamic_limitation(rules, pure_dynamic_capabilities)
+
+    # file limitations that rely on non-file scope won't be detected here.
+    # nor on FunctionName features, because pefile doesn't support this.
+    if found_dynamic_limitation:
+        # bail if capa encountered file limitation e.g. a dotnet sample is detected
+        # do show the output in verbose mode, though.
+        if not (args.verbose or args.vverbose or args.json):
+            logger.debug("file limitation short circuit, won't analyze fully.")
+            raise ShouldExitError(E_FILE_LIMITATION)
+    return found_dynamic_limitation
 
 def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]:
     if backend != BACKEND_VIV:
@@ -965,11 +990,14 @@ def main(argv: Optional[list[str]] = None):
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
         rules = get_rules_from_cli(args)
-        found_file_limitation = False
+        # logger.info(rules.rules)
+        found_limitation = False
+        file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
             # only static extractors have file limitations
-            file_extractors = get_file_extractors_from_cli(args, input_format)
-            found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
+            found_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
+        if input_format in DYNAMIC_FORMATS:
+            found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
     except ShouldExitError as e:
         return e.status_code
 
@@ -1002,8 +1030,9 @@ def main(argv: Optional[list[str]] = None):
         meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
         meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
-        if isinstance(extractor, StaticFeatureExtractor) and found_file_limitation:
+        if found_limitation:
             # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
+            # or capa's dynamic feature extractor encountered some limitation e.g. a dotnet sample
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION
