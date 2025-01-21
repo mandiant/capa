@@ -428,15 +428,18 @@ def check_nzxor_security_cookie_delta(
     model = SimpleBlockModel(currentProgram())  # type: ignore [name-defined] # noqa: F821
     insn_addr = insn.getAddress()
     func_asv = fh.getBody()
-    first_addr = func_asv.getMinAddress()
-    last_addr = func_asv.getMaxAddress()
-    first_bb = model.getFirstCodeBlockContaining(first_addr, monitor())  # type: ignore [name-defined] # noqa: F821
-    last_bb = model.getFirstCodeBlockContaining(last_addr, monitor())  # type: ignore [name-defined] # noqa: F821
 
-    if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA) and first_bb.contains(insn_addr):
-        return True
-    if insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1) and last_bb.contains(insn_addr):
-        return True
+    first_addr = func_asv.getMinAddress()
+    if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA):
+        first_bb = model.getFirstCodeBlockContaining(first_addr, monitor())  # type: ignore [name-defined] # noqa: F821
+        if first_bb.contains(insn_addr):
+            return True
+
+    last_addr = func_asv.getMaxAddress()
+    if insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1):
+        last_bb = model.getFirstCodeBlockContaining(last_addr, monitor())  # type: ignore [name-defined] # noqa: F821
+        if last_bb.contains(insn_addr):
+            return True
 
     return False
 
