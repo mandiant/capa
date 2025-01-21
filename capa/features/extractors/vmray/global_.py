@@ -35,35 +35,37 @@ logger = logging.getLogger(__name__)
 
 
 def extract_arch(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    file_type: str = analysis.file_type
-
-    if "x86-32" in file_type:
+    if "x86-32" in analysis.file_type:
         yield Arch(ARCH_I386), NO_ADDRESS
-    elif "x86-64" in file_type:
+    elif "x86-64" in analysis.file_type:
         yield Arch(ARCH_AMD64), NO_ADDRESS
-    else:
-        raise ValueError("unrecognized arch from the VMRay report: %s" % file_type)
+
+    logger.warning(
+        "unrecognized arch found in the VMRay report (file_type: %s): results may be incomplete", analysis.file_type
+    )
 
 
 def extract_format(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    assert analysis.sample_file_static_data is not None
-    if analysis.sample_file_static_data.pe:
-        yield Format(FORMAT_PE), NO_ADDRESS
-    elif analysis.sample_file_static_data.elf:
-        yield Format(FORMAT_ELF), NO_ADDRESS
-    else:
-        raise ValueError("unrecognized file format from the VMRay report: %s" % analysis.file_type)
+    if analysis.sample_file_static_data is not None:
+        if analysis.sample_file_static_data.pe:
+            yield Format(FORMAT_PE), NO_ADDRESS
+        elif analysis.sample_file_static_data.elf:
+            yield Format(FORMAT_ELF), NO_ADDRESS
+
+    logger.warning(
+        "unrecognized format found in the VMRay report (file_type: %s): results may be incomplete", analysis.file_type
+    )
 
 
 def extract_os(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    file_type: str = analysis.file_type
-
-    if "windows" in file_type.lower():
+    if "windows" in analysis.file_type.lower():
         yield OS(OS_WINDOWS), NO_ADDRESS
-    elif "linux" in file_type.lower():
+    elif "linux" in analysis.file_type.lower():
         yield OS(OS_LINUX), NO_ADDRESS
-    else:
-        raise ValueError("unrecognized OS from the VMRay report: %s" % file_type)
+
+    logger.warning(
+        "unrecognized os found in the VMRay report (file_type: %s): results may be incomplete", analysis.file_type
+    )
 
 
 def extract_features(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:

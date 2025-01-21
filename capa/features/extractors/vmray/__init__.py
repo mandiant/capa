@@ -80,7 +80,7 @@ class VMRayAnalysis:
         # map function calls to their associated monitor thread ID mapped to its associated monitor process ID
         self.monitor_process_calls: dict[int, dict[int, list[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
 
-        self.base_address: int
+        self.base_address: int = 0
 
         self.sample_file_name: Optional[str] = None
         self.sample_file_analysis: Optional[File] = None
@@ -94,12 +94,10 @@ class VMRayAnalysis:
         if self.sample_file_name is None or self.sample_file_analysis is None:
             raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)" % self.file_type)
 
-        if not self.sample_file_static_data:
-            raise UnsupportedFormatError("VMRay archive does not contain static data (file_type: %s)" % self.file_type)
-
-        if not self.sample_file_static_data.pe and not self.sample_file_static_data.elf:
-            raise UnsupportedFormatError(
-                "VMRay feature extractor only supports PE and ELF at this time (file_type: %s)" % self.file_type
+        if self.sample_file_static_data is not None:
+            # we continue to process without static data to support additional file types e.g. ZIP
+            logger.warning(
+                "VMRay archive does not contain static data (file_type: %s): results may be incomplete", self.file_type
             )
 
         # VMRay does not store static strings for the sample file so we must use the source file
@@ -109,7 +107,11 @@ class VMRayAnalysis:
 
         logger.debug("file_type: %s, file_path: %s", self.file_type, sample_file_path)
 
-        self.sample_file_buf: bytes = self.zipfile.read(sample_file_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
+        self.sample_file_buf: bytes = (
+            self.zipfile.read(sample_file_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
+            if self.sample_file_static_data is not None
+            else bytes()
+        )
 
         # do not change order, it matters
         self._compute_base_address()
@@ -135,31 +137,31 @@ class VMRayAnalysis:
                 break
 
     def _compute_base_address(self):
-        assert self.sample_file_static_data is not None
-        if self.sample_file_static_data.pe:
-            self.base_address = self.sample_file_static_data.pe.basic_info.image_base
+        if self.sample_file_static_data is not None:
+            if self.sample_file_static_data.pe:
+                self.base_address = self.sample_file_static_data.pe.basic_info.image_base
 
     def _compute_exports(self):
-        assert self.sample_file_static_data is not None
-        if self.sample_file_static_data.pe:
-            for export in self.sample_file_static_data.pe.exports:
-                self.exports[export.address] = export.api.name
+        if self.sample_file_static_data is not None:
+            if self.sample_file_static_data.pe:
+                for export in self.sample_file_static_data.pe.exports:
+                    self.exports[export.address] = export.api.name
 
     def _compute_imports(self):
-        assert self.sample_file_static_data is not None
-        if self.sample_file_static_data.pe:
-            for module in self.sample_file_static_data.pe.imports:
-                for api in module.apis:
-                    self.imports[api.address] = (module.dll, api.api.name)
+        if self.sample_file_static_data is not None:
+            if self.sample_file_static_data.pe:
+                for module in self.sample_file_static_data.pe.imports:
+                    for api in module.apis:
+                        self.imports[api.address] = (module.dll, api.api.name)
 
     def _compute_sections(self):
-        assert self.sample_file_static_data is not None
-        if self.sample_file_static_data.pe:
-            for pefile_section in self.sample_file_static_data.pe.sections:
-                self.sections[pefile_section.virtual_address] = pefile_section.name
-        elif self.sample_file_static_data.elf:
-            for elffile_section in self.sample_file_static_data.elf.sections:
-                self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
+        if self.sample_file_static_data is not None:
+            if self.sample_file_static_data.pe:
+                for pefile_section in self.sample_file_static_data.pe.sections:
+                    self.sections[pefile_section.virtual_address] = pefile_section.name
+            elif self.sample_file_static_data.elf:
+                for elffile_section in self.sample_file_static_data.elf.sections:
+                    self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
 
     def _compute_monitor_processes(self):
         for process in self.sv2.processes.values():
