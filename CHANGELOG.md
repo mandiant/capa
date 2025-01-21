@@ -6,8 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (2)
 
+- data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library Ana06
+- data-manipulation/encryption/use-bigint-function Ana06
 -
 
 ### Bug Fixes
