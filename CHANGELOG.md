@@ -6,9 +6,11 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+- add warning for dynamic .NET samples #1864
 
--
+### New Rules (1)
+
+- internal/limitation/dynamic/internal-dynamic-analysis-limitation @v1bh475u
 
 ### Bug Fixes
 
