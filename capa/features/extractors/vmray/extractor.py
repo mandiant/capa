@@ -56,13 +56,13 @@ def get_formatted_params(params: ParamList) -> list[str]:
 
 class VMRayExtractor(DynamicFeatureExtractor):
     def __init__(self, analysis: VMRayAnalysis):
-        assert analysis.sample_file_analysis is not None
+        assert analysis.submission_meta is not None
 
         super().__init__(
             hashes=SampleHashes(
-                md5=analysis.sample_file_analysis.hash_values.md5.lower(),
-                sha1=analysis.sample_file_analysis.hash_values.sha1.lower(),
-                sha256=analysis.sample_file_analysis.hash_values.sha256.lower(),
+                md5=analysis.submission_meta.hash_values.md5.lower(),
+                sha1=analysis.submission_meta.hash_values.sha1.lower(),
+                sha256=analysis.submission_meta.hash_values.sha256.lower(),
             )
         )
 
@@ -73,7 +73,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def get_base_address(self) -> Address:
         # value according to the PE header, the actual trace may use a different imagebase
-        return AbsoluteVirtualAddress(self.analysis.base_address)
+        return AbsoluteVirtualAddress(self.analysis.submission_base_address)
 
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.vmray.file.extract_features(self.analysis)

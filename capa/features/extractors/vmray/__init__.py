@@ -56,7 +56,8 @@ class VMRayAnalysis:
         self.sv2 = SummaryV2.model_validate_json(
             self.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD)
         )
-        self.file_type: str = self.sv2.analysis_metadata.sample_type
+        self.submission_type: str = self.sv2.analysis_metadata.sample_type
+        self.submission_name: str = self.sv2.analysis_metadata.submission_filename
 
         # flog.xml contains all of the call information that VMRay captured during execution
         flog_xml = self.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
@@ -80,38 +81,59 @@ class VMRayAnalysis:
         # map function calls to their associated monitor thread ID mapped to its associated monitor process ID
         self.monitor_process_calls: dict[int, dict[int, list[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
 
-        self.base_address: int = 0
+        self.submission_base_address: int = 0
+        self.submission_sha256: Optional[str] = None
+        self.submission_meta: Optional[File] = None
+        self.submission_static: Optional[StaticData] = None
 
-        self.sample_file_name: Optional[str] = None
-        self.sample_file_analysis: Optional[File] = None
-        self.sample_file_static_data: Optional[StaticData] = None
-
+        # order matters, call this before attempting the analysis that follows
         self._find_sample_file()
 
-        # VMRay analysis archives in various shapes and sizes and file type does not definitively tell us what data
-        # we can expect to find in the archive, so to be explicit we check for the various pieces that we need at
-        # minimum to run capa analysis
-        if self.sample_file_name is None or self.sample_file_analysis is None:
-            raise UnsupportedFormatError("VMRay archive does not contain sample file (file_type: %s)" % self.file_type)
+        # something bad must have happened if there is no submission analysis
+        if self.submission_meta is None:
+            raise UnsupportedFormatError(
+                "archive does not contain submission analysis (submission_name: %s, submission_type: %s)"
+                % (self.submission_name, self.submission_type)
+            )
 
-        if self.sample_file_static_data is not None:
-            # we continue to process without static data to support additional file types e.g. ZIP
+        if self.submission_static is not None:
+            if self.submission_static.pe is None and self.submission_static.elf is None:
+                # we only support static analysis for PE and ELF files for now
+                raise UnsupportedFormatError(
+                    "archive does not contain a supported file format (submission_name: %s, submission_type: %s)"
+                    % (self.submission_name, self.submission_type)
+                )
+        else:
+            # VMRay may not record static analysis for certain file types, e.g. MSI, but we'd still like to match dynamic
+            # execution so we continue without and accept that the results may be incomplete
             logger.warning(
-                "VMRay archive does not contain static data (file_type: %s): results may be incomplete", self.file_type
+                "archive does not contain submission static data analysis, results may be incomplete (submission_name: %s, submission_type: %s)",
+                self.submission_name,
+                self.submission_type,
             )
 
         # VMRay does not store static strings for the sample file so we must use the source file
         # stored in the archive
-        sample_sha256: str = self.sample_file_analysis.hash_values.sha256.lower()
-        sample_file_path: str = f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}"
+        submission_path: str = (
+            f"internal/static_analyses/{self.submission_sha256}/objects/files/{self.submission_sha256}"
+        )
 
-        logger.debug("file_type: %s, file_path: %s", self.file_type, sample_file_path)
+        logger.debug(
+            "\nsubmission_name: %s\nsubmission_type: %s\nsubmission_sha256: %s\nsubmission_zip_path: %s",
+            self.submission_name,
+            self.submission_type,
+            self.submission_sha256,
+            submission_path,
+        )
 
-        self.sample_file_buf: bytes = (
-            self.zipfile.read(sample_file_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
-            if self.sample_file_static_data is not None
+        # only collect submission bytes if VMRay recorded static anlaysis for the submission
+        self.submission_bytes: bytes = (
+            self.zipfile.read(submission_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
+            if self.submission_static is not None
             else bytes()
         )
+
+        logger.debug("submission_bytes: %s", self.submission_bytes[:10])
 
         # do not change order, it matters
         self._compute_base_address()
@@ -123,44 +145,51 @@ class VMRayAnalysis:
         self._compute_monitor_process_calls()
 
     def _find_sample_file(self):
-        for file_name, file_analysis in self.sv2.files.items():
-            if file_analysis.is_sample:
-                # target the sample submitted for analysis
-                self.sample_file_name = file_name
-                self.sample_file_analysis = file_analysis
+        logger.debug("searching archive for submission")
 
-                if file_analysis.ref_static_data:
-                    # like "path": ["static_data","static_data_0"] where "static_data_0" is the summary_v2 static data
-                    # key for the file's static data
-                    self.sample_file_static_data = self.sv2.static_data[file_analysis.ref_static_data.path[1]]
+        # VMRay may mark more than one file as the submission, e.g., when a compound ZIP file is used
+        # both the ZIP file and embedded target file are marked as submissions. We have yet to find a
+        # guarenteed way to differentiate which is the actual submission, so we opt to choose the last
+        # file that is marked as the submission for now
+        for file_analysis in self.sv2.files.values():
+            if not file_analysis.is_sample:
+                continue
 
-                break
+            self.submission_meta = file_analysis
+            self.submission_sha256 = self.submission_meta.hash_values.sha256
+
+            logger.debug("sha256: %s marked as submission", self.submission_sha256)
+
+            if file_analysis.ref_static_data is not None:
+                # like "path": ["static_data","static_data_0"] where "static_data_0" is the summary_v2 static data
+                # key for the file's static data
+                self.submission_static = self.sv2.static_data[file_analysis.ref_static_data.path[1]]
 
     def _compute_base_address(self):
-        if self.sample_file_static_data is not None:
-            if self.sample_file_static_data.pe:
-                self.base_address = self.sample_file_static_data.pe.basic_info.image_base
+        if self.submission_static is not None:
+            if self.submission_static.pe:
+                self.submission_base_address = self.submission_static.pe.basic_info.image_base
 
     def _compute_exports(self):
-        if self.sample_file_static_data is not None:
-            if self.sample_file_static_data.pe:
-                for export in self.sample_file_static_data.pe.exports:
+        if self.submission_static is not None:
+            if self.submission_static.pe:
+                for export in self.submission_static.pe.exports:
                     self.exports[export.address] = export.api.name
 
     def _compute_imports(self):
-        if self.sample_file_static_data is not None:
-            if self.sample_file_static_data.pe:
-                for module in self.sample_file_static_data.pe.imports:
+        if self.submission_static is not None:
+            if self.submission_static.pe:
+                for module in self.submission_static.pe.imports:
                     for api in module.apis:
                         self.imports[api.address] = (module.dll, api.api.name)
 
     def _compute_sections(self):
-        if self.sample_file_static_data is not None:
-            if self.sample_file_static_data.pe:
-                for pefile_section in self.sample_file_static_data.pe.sections:
+        if self.submission_static is not None:
+            if self.submission_static.pe:
+                for pefile_section in self.submission_static.pe.sections:
                     self.sections[pefile_section.virtual_address] = pefile_section.name
-            elif self.sample_file_static_data.elf:
-                for elffile_section in self.sample_file_static_data.elf.sections:
+            elif self.submission_static.elf:
+                for elffile_section in self.submission_static.elf.sections:
                     self.sections[elffile_section.header.sh_addr] = elffile_section.header.sh_name
 
     def _compute_monitor_processes(self):

@@ -18,6 +18,8 @@ from typing import Iterator
 
 from capa.features.common import (
     OS,
+    OS_ANY,
+    ARCH_ANY,
     OS_LINUX,
     ARCH_I386,
     FORMAT_PE,
@@ -35,37 +37,50 @@ logger = logging.getLogger(__name__)
 
 
 def extract_arch(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    if "x86-32" in analysis.file_type:
+    if "x86-32" in analysis.submission_type:
         yield Arch(ARCH_I386), NO_ADDRESS
-    elif "x86-64" in analysis.file_type:
+    elif "x86-64" in analysis.submission_type:
         yield Arch(ARCH_AMD64), NO_ADDRESS
+    else:
+        yield Arch(ARCH_ANY), NO_ADDRESS
 
-    logger.warning(
-        "unrecognized arch found in the VMRay report (file_type: %s): results may be incomplete", analysis.file_type
-    )
+        logger.debug(
+            "unrecognized arch for file submission (filename: %s, file_type: %s)",
+            analysis.submission_name,
+            analysis.submission_type,
+        )
 
 
 def extract_format(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    if analysis.sample_file_static_data is not None:
-        if analysis.sample_file_static_data.pe:
+    if analysis.submission_static is not None:
+        if analysis.submission_static.pe:
             yield Format(FORMAT_PE), NO_ADDRESS
-        elif analysis.sample_file_static_data.elf:
+        elif analysis.submission_static.elf:
             yield Format(FORMAT_ELF), NO_ADDRESS
+    else:
+        # there is no "FORMAT_ANY" to yield here, but few rules rely on the "format" feature
+        # so this should be fine for now
 
-    logger.warning(
-        "unrecognized format found in the VMRay report (file_type: %s): results may be incomplete", analysis.file_type
-    )
+        logger.debug(
+            "unrecognized format for file submission (filename: %s, file_type: %s)",
+            analysis.submission_name,
+            analysis.submission_type,
+        )
 
 
 def extract_os(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    if "windows" in analysis.file_type.lower():
+    if "windows" in analysis.submission_type.lower():
         yield OS(OS_WINDOWS), NO_ADDRESS
-    elif "linux" in analysis.file_type.lower():
+    elif "linux" in analysis.submission_type.lower():
         yield OS(OS_LINUX), NO_ADDRESS
+    else:
+        yield OS(OS_ANY), NO_ADDRESS
 
-    logger.warning(
-        "unrecognized os found in the VMRay report (file_type: %s): results may be incomplete", analysis.file_type
-    )
+        logger.debug(
+            "unrecognized os for file submission (filename: %s, file_type: %s)",
+            analysis.submission_name,
+            analysis.submission_type,
+        )
 
 
 def extract_features(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
