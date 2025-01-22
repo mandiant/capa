@@ -20,15 +20,8 @@ import capa.helpers
 import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import Feature, Characteristic
-from capa.features.address import (
-    NO_ADDRESS,
-    Address,
-    ThreadAddress,
-    ProcessAddress,
-    DynamicCallAddress,
-    AbsoluteVirtualAddress,
-)
+from capa.features.common import Feature
+from capa.features.address import Address, ThreadAddress, ProcessAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis, VMRayMonitorThread, VMRayMonitorProcess
 from capa.features.extractors.vmray.models import PARAM_TYPE_STR, ParamList, FunctionCall
 from capa.features.extractors.base_extractor import (
