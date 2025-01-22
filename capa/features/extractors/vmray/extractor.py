@@ -72,7 +72,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
         self.global_features = list(capa.features.extractors.vmray.global_.extract_features(self.analysis))
 
     def get_base_address(self) -> Address:
-        # value according to the PE header, the actual trace may use a different imagebase
+        # value according to submission file header, the actual trace may use a different imagebase
+        # value may be zero for certain submission file types, e.g. PS1
         return AbsoluteVirtualAddress(self.analysis.submission_base_address)
 
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
@@ -102,11 +103,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
             yield ThreadHandle(address=address, inner=monitor_thread)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
-        if False:
-            # force this routine to be a generator,
-            # but we don't actually have any elements to generate.
-            yield Characteristic("never"), NO_ADDRESS
-        return
+        # we have not identified thread-specific features for VMRay yet
+        yield from []
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         for function_call in self.analysis.monitor_process_calls[ph.inner.monitor_id][th.inner.monitor_id]:

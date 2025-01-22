@@ -45,7 +45,7 @@ def extract_arch(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
         yield Arch(ARCH_ANY), NO_ADDRESS
 
         logger.debug(
-            "unrecognized arch for file submission (filename: %s, file_type: %s)",
+            "unrecognized arch for submission (filename: %s, file_type: %s)",
             analysis.submission_name,
             analysis.submission_type,
         )
@@ -62,7 +62,7 @@ def extract_format(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]
         # so this should be fine for now
 
         logger.debug(
-            "unrecognized format for file submission (filename: %s, file_type: %s)",
+            "unrecognized format for submission (filename: %s, file_type: %s)",
             analysis.submission_name,
             analysis.submission_type,
         )
@@ -77,7 +77,7 @@ def extract_os(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
         yield OS(OS_ANY), NO_ADDRESS
 
         logger.debug(
-            "unrecognized os for file submission (filename: %s, file_type: %s)",
+            "unrecognized os for submission (filename: %s, file_type: %s)",
             analysis.submission_name,
             analysis.submission_type,
         )
