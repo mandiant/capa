@@ -419,30 +419,29 @@ def extract_function_indirect_call_characteristic_features(
 def check_nzxor_security_cookie_delta(
     fh: ghidra.program.database.function.FunctionDB, insn: ghidra.program.database.code.InstructionDB
 ):
-    """Get the function containing the insn
-    Get the last block of the function that contains the insn
-
-    Check the bb containing the insn
-    Check the last bb of the function containing the insn
+    """
+    Get the first and last blocks of the function
+    Check if insn within first addr of first bb + delta
+    Check if insn within last addr of last bb - delta
     """
 
     model = SimpleBlockModel(currentProgram())  # type: ignore [name-defined] # noqa: F821
     insn_addr = insn.getAddress()
     func_asv = fh.getBody()
-    first_addr = func_asv.getMinAddress()
-    last_addr = func_asv.getMaxAddress()
 
-    if model.getFirstCodeBlockContaining(
-        first_addr, monitor()  # type: ignore [name-defined] # noqa: F821
-    ) == model.getFirstCodeBlockContaining(
-        last_addr, monitor()  # type: ignore [name-defined] # noqa: F821
-    ):
-        if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA):
+    first_addr = func_asv.getMinAddress()
+    if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA):
+        first_bb = model.getFirstCodeBlockContaining(first_addr, monitor())  # type: ignore [name-defined] # noqa: F821
+        if first_bb.contains(insn_addr):
             return True
-        else:
-            return insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1)
-    else:
-        return False
+
+    last_addr = func_asv.getMaxAddress()
+    if insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1):
+        last_bb = model.getFirstCodeBlockContaining(last_addr, monitor())  # type: ignore [name-defined] # noqa: F821
+        if last_bb.contains(insn_addr):
+            return True
+
+    return False
 
 
 def extract_insn_nzxor_characteristic_features(
