@@ -49,9 +49,9 @@ def main(argv=None):
     vmra = VMRayAnalysis(analysis_archive)
     sv2_json = vmra.zipfile.read("logs/summary_v2.json", pwd=DEFAULT_ARCHIVE_PASSWORD)
     flog_xml = vmra.zipfile.read("logs/flog.xml", pwd=DEFAULT_ARCHIVE_PASSWORD)
-    sample_file_buf = vmra.sample_file_buf
-    assert vmra.sample_file_analysis is not None
-    sample_sha256: str = vmra.sample_file_analysis.hash_values.sha256.lower()
+    sample_file_buf = vmra.submission_bytes
+    assert vmra.submission_meta is not None
+    sample_sha256: str = vmra.submission_meta.hash_values.sha256.lower()
 
     new_zip_name = f"{analysis_archive.parent / analysis_archive.stem}_min.zip"
     with zipfile.ZipFile(new_zip_name, "w") as new_zip:
