@@ -67,7 +67,8 @@ def extract_referenced_registry_key_names(analysis: VMRayAnalysis) -> Iterator[t
 
 
 def extract_file_strings(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(analysis.submission_bytes)
+    if analysis.submission_static is not None:
+        yield from capa.features.extractors.common.extract_file_strings(analysis.submission_bytes)
 
 
 def extract_features(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:

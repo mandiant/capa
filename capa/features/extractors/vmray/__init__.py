@@ -126,12 +126,7 @@ class VMRayAnalysis:
             submission_path,
         )
 
-        # only collect submission bytes if VMRay recorded static anlaysis for the submission
-        self.submission_bytes: bytes = (
-            self.zipfile.read(submission_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
-            if self.submission_static is not None
-            else bytes()
-        )
+        self.submission_bytes: bytes = self.zipfile.read(submission_path, pwd=DEFAULT_ARCHIVE_PASSWORD)
 
         logger.debug("submission_bytes: %s", self.submission_bytes[:10])
 
