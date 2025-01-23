@@ -81,7 +81,7 @@ class VMRayAnalysis:
         # map function calls to their associated monitor thread ID mapped to its associated monitor process ID
         self.monitor_process_calls: dict[int, dict[int, list[FunctionCall]]] = defaultdict(lambda: defaultdict(list))
 
-        self.submission_base_address: int = 0
+        self.submission_base_address: Optional[int] = None
         self.submission_sha256: Optional[str] = None
         self.submission_meta: Optional[File] = None
         self.submission_static: Optional[StaticData] = None
