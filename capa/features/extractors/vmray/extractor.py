@@ -73,7 +73,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def get_base_address(self) -> Address:
         # value according to submission file header, the actual trace may use a different imagebase
-        # value may be zero for certain submission file types, e.g. PS1
+        # value may not exist for certain submission file types, e.g. PS1
         if self.analysis.submission_base_address is None:
             return NO_ADDRESS
         else:
