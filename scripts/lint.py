@@ -509,7 +509,7 @@ class DuplicateFeatureUnderStatement(Lint):
     violation = False
 
     def check_rule(self, ctx: Context, rule: Rule):
-
+        self.recommendation = ""
         # STATEMENTS is a set of all possible statements in capa rules that can have children
         STATEMENTS = frozenset(
             {
@@ -522,6 +522,7 @@ class DuplicateFeatureUnderStatement(Lint):
                 "- function:",
                 "- instruction:",
                 "- call:",
+                " or more:",
             }
         )
         self.violation = False
