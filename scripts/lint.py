@@ -511,7 +511,19 @@ class DuplicateFeatureUnderStatement(Lint):
     def check_rule(self, ctx: Context, rule: Rule):
 
         # STATEMENTS is a set of all possible statements in capa rules that can have children
-        STATEMENTS = frozenset({"- or:", "- and:", "- not:", "- optional:", "- some:"})
+        STATEMENTS = frozenset(
+            {
+                "- or:",
+                "- and:",
+                "- not:",
+                "- optional:",
+                "- some:",
+                "- basic block:",
+                "- function:",
+                "- instruction:",
+                "- call:",
+            }
+        )
         self.violation = False
         lines = rule.definition.split("\n")
         feature_maps: List[DefaultDict[str, List[int]]] = []
