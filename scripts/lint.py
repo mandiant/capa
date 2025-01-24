@@ -508,9 +508,81 @@ class DuplicateFeatureUnderStatement(Lint):
     recommendation_template = '\n\tduplicate line: "{:s}"\t: line numbers: {:s}'
     violation = False
 
-    def check_rule(self, ctx: Context, rule: Rule):
-        self.recommendation = ""
-        # STATEMENTS is a set of all possible statements in capa rules that can have children
+    # def check_rule(self, ctx: Context, rule: Rule):
+    #     self.recommendation = ""
+    #     # STATEMENTS is a set of all possible statements in capa rules that can have children
+    #     STATEMENTS = frozenset(
+    #         {
+    #             "- or:",
+    #             "- and:",
+    #             "- not:",
+    #             "- optional:",
+    #             "- some:",
+    #             "- basic block:",
+    #             "- function:",
+    #             "- instruction:",
+    #             "- call:",
+    #             " or more:",
+    #         }
+    #     )
+    #     self.violation = False
+    #     lines = rule.definition.split("\n")
+    #     feature_maps: List[DefaultDict[str, List[int]]] = []
+    #     indent_stack: List[int] = []
+
+    #     def is_statement(line: str) -> bool:
+    #         return any(stmt in line for stmt in STATEMENTS)
+
+    #     def get_indent(line: str) -> int:
+    #         return line.find("-")
+
+    #     def exit_prev_scope():
+    #         prev_map = feature_maps.pop()
+    #         for feature, numbers in prev_map.items():
+    #             if len(numbers) > 1:
+    #                 line_index = ", ".join(map(str, numbers))
+    #                 self.recommendation += self.recommendation_template.format(feature, line_index)
+    #                 self.violation = True
+    #         indent_stack.pop()
+    #     feature_line_number = 0
+    #     features = []
+    #     inside_feature_scope = False
+    #     feature = ""
+    #     for line_num, line in enumerate(lines, 1):
+    #         if "features:" in line:
+    #             feature_line_number = line_num
+    #             inside_feature_scope = True
+    #         elif inside_feature_scope:
+    #             if "-" in line:
+    #                 if feature:
+    #                     features.append(feature)
+    #                 feature = line
+    #             else:
+    #                 feature += line
+
+    #     # adding the last feature
+    #     features.append(feature)
+    #     features.append("")
+    #     for line_num, line in enumerate(features, feature_line_number):
+    #         if not line.strip():
+    #             while len(indent_stack) > 0:
+    #                 exit_prev_scope()
+    #             continue
+
+    #         current_indent = get_indent(line)
+    #         if current_indent == -1:
+    #             continue
+    #         while len(indent_stack) > 0 and current_indent <= indent_stack[-1]:
+    #             exit_prev_scope()
+    #         if is_statement(line):
+    #             feature_maps.append(defaultdict(list))
+    #             indent_stack.append(current_indent)
+    #         else:
+    #             if feature_maps and current_indent > indent_stack[-1]:
+    #                 feature_maps[-1][line].append(line_num)
+
+    # return self.violation
+    def check_rule(self, ctx: Context, rule: Rule) -> bool:
         STATEMENTS = frozenset(
             {
                 "- or:",
@@ -525,10 +597,6 @@ class DuplicateFeatureUnderStatement(Lint):
                 " or more:",
             }
         )
-        self.violation = False
-        lines = rule.definition.split("\n")
-        feature_maps: List[DefaultDict[str, List[int]]] = []
-        indent_stack: List[int] = []
 
         def is_statement(line: str) -> bool:
             return any(stmt in line for stmt in STATEMENTS)
@@ -536,32 +604,64 @@ class DuplicateFeatureUnderStatement(Lint):
         def get_indent(line: str) -> int:
             return line.find("-")
 
-        def exit_prev_scope():
-            prev_map = feature_maps.pop()
-            for feature, numbers in prev_map.items():
+        def process_duplicates(feature_map: DefaultDict[str, List[int]]) -> None:
+            for feature, numbers in feature_map.items():
                 if len(numbers) > 1:
                     line_index = ", ".join(map(str, numbers))
                     self.recommendation += self.recommendation_template.format(feature, line_index)
                     self.violation = True
-            indent_stack.pop()
 
-        for line_num, line in enumerate(lines, 1):
-            if not line.strip():
-                while len(indent_stack) > 0:
-                    exit_prev_scope()
+        def extract_features(lines: List[str]) -> tuple[list[str], int]:
+            feature_line_number = 0
+            features = []
+            inside_feature_scope = False
+            feature = ""
+            for line_num, line in enumerate(lines, 1):
+                if "features:" in line:
+                    feature_line_number = line_num
+                    inside_feature_scope = True
+                elif inside_feature_scope:
+                    if "-" in line:
+                        if feature:
+                            features.append(feature)
+                        feature = line
+                    else:
+                        feature += line
+
+            # adding the last feature
+            features.append(feature)
+            features.append("")
+            return features, feature_line_number
+
+        self.recommendation = ""
+        self.violation = False
+
+        lines = [line for line in rule.definition.split("\n") if line.strip()]
+        feature_maps: List[DefaultDict[str, List[int]]] = []
+        indent_stack: List[int] = []
+
+        features, feature_definition_line = extract_features(lines)
+        for feature_line_num, feature in enumerate(features, feature_definition_line):
+            if "-" not in feature:
                 continue
 
-            current_indent = get_indent(line)
-            if current_indent == -1:
-                continue
-            while len(indent_stack) > 0 and current_indent <= indent_stack[-1]:
-                exit_prev_scope()
-            if is_statement(line):
+            current_indent = get_indent(feature)
+
+            # Handle scope changes based on indentation
+            while indent_stack and current_indent <= indent_stack[-1]:
+                process_duplicates(feature_maps.pop())
+                indent_stack.pop()
+
+            # Process current line
+            if is_statement(feature):
                 feature_maps.append(defaultdict(list))
                 indent_stack.append(current_indent)
-            else:
-                if feature_maps and current_indent > indent_stack[-1]:
-                    feature_maps[-1][line].append(line_num)
+            elif feature_maps and current_indent > indent_stack[-1]:
+                feature_maps[-1][feature].append(feature_line_num)
+
+        # Process remaining scopes
+        while feature_maps:
+            process_duplicates(feature_maps.pop())
 
         return self.violation
 
