@@ -33,7 +33,9 @@ import logging
 import argparse
 import itertools
 import posixpath
+from typing import List, DefaultDict
 from pathlib import Path
+from collections import defaultdict
 from dataclasses import field, dataclass
 
 import pydantic
@@ -500,6 +502,57 @@ class OptionalNotUnderAnd(Lint):
         return self.violation
 
 
+class DuplicateFeatureUnderStatement(Lint):
+    name = "rule contains a duplicate feature under `or`/`and` statement"
+    recommendation = "remove the duplicate features"
+    recommendation_template = '\n\tduplicate line: "{:s}"\t: line numbers: {:s}'
+    violation = False
+
+    def check_rule(self, ctx: Context, rule: Rule):
+
+        # STATEMENTS is a set of all possible statements in capa rules that can have children
+        STATEMENTS = frozenset({"- or:", "- and:", "- not:", "- optional:", "- some:"})
+        self.violation = False
+        lines = rule.definition.split("\n")
+        feature_maps: List[DefaultDict[str, List[int]]] = []
+        indent_stack: List[int] = []
+
+        def is_statement(line: str) -> bool:
+            return any(stmt in line for stmt in STATEMENTS)
+
+        def get_indent(line: str) -> int:
+            return line.find("-")
+
+        def exit_prev_scope():
+            prev_map = feature_maps.pop()
+            for feature, numbers in prev_map.items():
+                if len(numbers) > 1:
+                    line_index = ", ".join(map(str, numbers))
+                    self.recommendation += self.recommendation_template.format(feature, line_index)
+                    self.violation = True
+            indent_stack.pop()
+
+        for line_num, line in enumerate(lines, 1):
+            if not line.strip():
+                while len(indent_stack) > 0:
+                    exit_prev_scope()
+                continue
+
+            current_indent = get_indent(line)
+            if current_indent == -1:
+                continue
+            while len(indent_stack) > 0 and current_indent <= indent_stack[-1]:
+                exit_prev_scope()
+            if is_statement(line):
+                feature_maps.append(defaultdict(list))
+                indent_stack.append(current_indent)
+            else:
+                if feature_maps and current_indent > indent_stack[-1]:
+                    feature_maps[-1][line].append(line_num)
+
+        return self.violation
+
+
 class UnusualMetaField(Lint):
     name = "unusual meta field"
     recommendation = "Remove the meta field"
@@ -819,6 +872,7 @@ LOGIC_LINTS = (
     OrStatementWithAlwaysTrueChild(),
     NotNotUnderAnd(),
     OptionalNotUnderAnd(),
+    DuplicateFeatureUnderStatement(),
 )
 
 
