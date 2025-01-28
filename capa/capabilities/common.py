@@ -47,26 +47,28 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, len(file_features)
 
 
+def is_static_limitation_rule(r: Rule) -> bool:
+    return r.meta.get("namespace", "") == "internal/limitation/static"
+
+
 def has_static_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
-    def is_static_limitation_rule(r: Rule) -> bool:
-        return r.meta.get("namespace", "") == "internal/limitation/static/file"
 
     file_limitation_rules = list(filter(lambda r: is_static_limitation_rule(r), rules.rules.values()))
 
     return has_limitation(file_limitation_rules, capabilities, is_standalone)
 
 
+def is_dynamic_limitation_rule(r: Rule) -> bool:
+    return r.meta.get("namespace", "") == "internal/limitation/dynamic"
+
+
 def has_dynamic_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
-    def is_dynamic_limitation_rule(r: Rule) -> bool:
-        return r.meta.get("namespace", "") == "internal/limitation/dynamic"
 
     dynamic_limitation_rules = list(filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values()))
     return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)
 
 
 def has_limitation(rules: list, capabilities: MatchResults, is_standalone: bool) -> bool:
-    # given list of rules and capabilities, finds the limitation if it exists, logs warning and returns True
-    # else logs nothing and returns False
 
     for rule in rules:
         if rule.name not in capabilities:

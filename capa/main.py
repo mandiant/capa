@@ -767,7 +767,6 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
     for file_extractor in file_extractors:
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
-            # logger.info("file capabilities: ", pure_file_capabilities)
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
@@ -792,7 +791,7 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
     args:
       args: The parsed command line arguments from `install_common_args`.
 
-    Handles dynamic dotnet samples.
+      For example, notifies when handling .NET samples in a sandbox, which may rely on different API patterns.
 
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
@@ -997,7 +996,6 @@ def main(argv: Optional[list[str]] = None):
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
         rules = get_rules_from_cli(args)
-        # logger.info(rules.rules)
         found_limitation = False
         file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
