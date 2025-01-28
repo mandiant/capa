@@ -6,8 +6,7 @@
 - add warning for dynamic .NET samples #1864 @v1bh475u
 
 ### Breaking Changes
-- move `is_static_limitation` class function from `capa.rules.__init__.py` to inline function in `capa.capabilities.common.py`
-- move `is_dynamic_limitation` class function from `capa.rules.__init__.py` to inline function in `capa.capabilities.common.py` #1864 @v1bh475u
+- remove `is_static_limitation` class function from `capa.rules.Rule` to inline function in `capa.capabilities.common.py`
  
 ### New Rules (2)
 
