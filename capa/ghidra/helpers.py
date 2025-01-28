@@ -23,6 +23,7 @@ import capa.features.common
 import capa.features.freeze
 import capa.render.result_document as rdoc
 import capa.features.extractors.ghidra.helpers
+from capa.features.address import AbsoluteVirtualAddress
 
 logger = logging.getLogger("capa")
 

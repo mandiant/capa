@@ -35,6 +35,7 @@ DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
         ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("DoesNotExist"), False),
         # call/api
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2361", capa.features.insn.API("GetAddrInfoW"), True),
+        ("eb1287-vmray", "process=(4968:0),thread=5992,call=10981", capa.features.insn.API("CreateMutexW"), True),
         # call/string argument
         (
             "93b2d1-vmray",

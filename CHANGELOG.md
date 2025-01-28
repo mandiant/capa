@@ -3,22 +3,24 @@
 ## master (unreleased)
 
 ### New Features
-- 
-### Breaking Changes
-
 - add warning for dynamic .NET samples #1864
 
-### New Rules (1)
+### Breaking Changes
 
-- internal/limitation/dynamic/internal-dynamic-analysis-limitation @v1bh475u
+### New Rules (2)
+
+- data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library @Ana06
+- data-manipulation/encryption/use-bigint-function @Ana06
+-
 
 ### Bug Fixes
 
 - vmray: load more analysis archives @mr-tz
 - dynamic: only check file limitations for static file formats @mr-tz
 - vmray: skip non-printable strings @mike-hunhoff
-- strings: add type hints and fix uncovered bugs @williballenthin @2555
+- strings: add type hints and fix uncovered bugs @williballenthin #2555
 - elffile: handle symbols without a name @williballenthin #2553
+- vmray: loosen file checks to enable processing more file types @mike-hunhoff #2571
 
 ### capa Explorer Web
 
