@@ -18,7 +18,7 @@ import itertools
 import collections
 from typing import Any
 
-from capa.rules import Scope, RuleSet, Rule
+from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
@@ -51,7 +51,6 @@ def has_static_limitation(rules: RuleSet, capabilities: MatchResults, is_standal
     def is_static_limitation_rule(r: Rule) -> bool:
         return r.meta.get("namespace", "") == "internal/limitation/static/file"
 
-
     file_limitation_rules = list(filter(lambda r: is_static_limitation_rule(r), rules.rules.values()))
 
     return has_limitation(file_limitation_rules, capabilities, is_standalone)
@@ -60,6 +59,7 @@ def has_static_limitation(rules: RuleSet, capabilities: MatchResults, is_standal
 def has_dynamic_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
     def is_dynamic_limitation_rule(r: Rule) -> bool:
         return r.meta.get("namespace", "") == "internal/limitation/dynamic"
+
     dynamic_limitation_rules = list(filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values()))
     return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)
 
