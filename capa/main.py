@@ -102,7 +102,7 @@ from capa.features.common import (
 )
 from capa.capabilities.common import (
     find_capabilities,
-    has_file_limitation,
+    has_static_limitation,
     find_file_capabilities,
     has_dynamic_limitation,
 )
@@ -753,7 +753,7 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -777,7 +777,7 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: list[F
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
-        found_file_limitation = has_file_limitation(rules, pure_file_capabilities)
+        found_file_limitation = has_static_limitation(rules, pure_file_capabilities)
         if found_file_limitation:
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
@@ -1002,7 +1002,7 @@ def main(argv: Optional[list[str]] = None):
         file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
             # only static extractors have file limitations
-            found_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
+            found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
         if input_format in DYNAMIC_FORMATS:
             found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
     except ShouldExitError as e:
@@ -1092,7 +1092,7 @@ def ida_main():
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
 
-    if has_file_limitation(rules, capabilities, is_standalone=False):
+    if has_static_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
     colorama.init(strip=True)
@@ -1130,7 +1130,7 @@ def ghidra_main():
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
 
-    if has_file_limitation(rules, capabilities, is_standalone=False):
+    if has_static_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
 
     print(capa.render.default.render(meta, rules, capabilities))
