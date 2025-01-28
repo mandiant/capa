@@ -121,7 +121,7 @@ dev = [
     # we want all developer environments to be consistent.
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
-    "pre-commit==4.0.1",
+    "pre-commit==4.1.0",
     "pytest==8.0.0",
     "pytest-sugar==1.0.0",
     "pytest-instafail==0.5.0",
@@ -150,7 +150,7 @@ dev = [
     "types-psutil==6.1.0.20241102",
     "types_requests==2.32.0.20240712",
     "types-protobuf==5.29.1.20241207",
-    "deptry==0.22.0"
+    "deptry==0.23.0"
 ]
 build = [
     # Dev and build dependencies are not relaxed because
