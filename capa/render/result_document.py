@@ -15,7 +15,7 @@
 import datetime
 import collections
 from enum import Enum
-from typing import Union, Literal, Optional, TypeAlias
+from typing import TYPE_CHECKING, Union, Literal, Optional, TypeAlias
 from pathlib import Path
 
 from pydantic import Field, BaseModel, ConfigDict
@@ -29,6 +29,10 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never, load_json_from_path
+from capa.features.address import DynamicCallAddress
+
+if TYPE_CHECKING:
+    from capa.capabilities.common import Capabilities
 
 
 class FrozenModel(BaseModel):
@@ -389,7 +393,36 @@ class Match(FrozenModel):
                     )
 
                 for location in result.locations:
-                    children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+
+                    # keep this in sync with the copy below
+                    if isinstance(location, DynamicCallAddress):
+                        if location in rule_matches:
+                            # exact match, such as matching a call-scoped rule.
+                            children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+                        # we'd like to assert the scope of the current rule is span-of-calls
+                        # but we don't have that data here.
+                        else:
+                            # Span-of-calls scopes can match each other, but they don't strictly contain each other,
+                            #  like the way a function contains a basic block.
+                            # So when we have a match within a span for another span, we need to look
+                            #  for all the places it might be found.
+                            #
+                            # Despite the edge cases (like API hammering), this turns out to be pretty easy:
+                            #  collect the most recent match (with the given name) prior to the wanted location.
+                            matches_in_thread = sorted(
+                                [
+                                    (a.id, m)
+                                    for a, m in rule_matches.items()
+                                    if isinstance(a, DynamicCallAddress)
+                                    and a.thread == location.thread
+                                    and a.id <= location.id
+                                ]
+                            )
+                            _, most_recent_match = matches_in_thread[-1]
+                            children.append(Match.from_capa(rules, capabilities, most_recent_match))
+
+                    else:
+                        children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
             else:
                 # this is a namespace that we're matching
                 #
@@ -430,8 +463,26 @@ class Match(FrozenModel):
                             # this is a subset of doc[locations].
                             #
                             # so, grab only the locations for current rule.
-                            if location in rule_matches:
-                                children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+
+                            # keep this in sync with the block above.
+                            if isinstance(location, DynamicCallAddress):
+                                if location in rule_matches:
+                                    children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
+                                else:
+                                    matches_in_thread = sorted(
+                                        [
+                                            (a.id, m)
+                                            for a, m in rule_matches.items()
+                                            if isinstance(a, DynamicCallAddress)
+                                            and a.thread == location.thread
+                                            and a.id <= location.id
+                                        ]
+                                    )
+                                    _, most_recent_match = matches_in_thread[-1]
+                                    children.append(Match.from_capa(rules, capabilities, most_recent_match))
+                            else:
+                                if location in rule_matches:
+                                    children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
 
         return cls(
             success=success,
@@ -473,6 +524,27 @@ class Match(FrozenModel):
             locations={loc.to_capa() for loc in self.locations},
             children=children,
         )
+
+    def __str__(self):
+        # as this object isn't user facing, this formatting is just to help with debugging
+
+        lines = []
+
+        def rec(m: "Match", indent: int):
+            if isinstance(m.node, StatementNode):
+                line = ("  " * indent) + str(m.node.statement.type) + " " + str(m.success)
+            elif isinstance(m.node, FeatureNode):
+                line = ("  " * indent) + str(m.node.feature) + " " + str(m.success) + " " + str(m.locations)
+            else:
+                raise ValueError("unexpected node type")
+
+            lines.append(line)
+
+            for child in m.children:
+                rec(child, indent + 1)
+
+        rec(self, 0)
+        return "\n".join(lines)
 
 
 def parse_parts_id(s: str):
@@ -654,8 +726,10 @@ class ResultDocument(FrozenModel):
 
         return ResultDocument(meta=meta, rules=rule_matches)
 
-    def to_capa(self) -> tuple[Metadata, dict]:
-        capabilities: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
+    def to_capa(self) -> tuple[Metadata, "Capabilities"]:
+        from capa.capabilities.common import Capabilities
+
+        matches: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
             collections.defaultdict(list)
         )
 
@@ -668,7 +742,14 @@ class ResultDocument(FrozenModel):
             for addr, match in rule_match.matches:
                 result: capa.engine.Result = match.to_capa(rules_by_name)
 
-                capabilities[rule_name].append((addr.to_capa(), result))
+                matches[rule_name].append((addr.to_capa(), result))
+
+        if isinstance(self.meta.analysis, StaticAnalysis):
+            capabilities = Capabilities(
+                matches, self.meta.analysis.feature_counts, self.meta.analysis.library_functions
+            )
+        elif isinstance(self.meta.analysis, DynamicAnalysis):
+            capabilities = Capabilities(matches, self.meta.analysis.feature_counts)
 
         return self.meta, capabilities
 

@@ -488,11 +488,11 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
 
-def ProcessFilter(extractor: DynamicFeatureExtractor, processes: set) -> DynamicFeatureExtractor:
+def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> DynamicFeatureExtractor:
     original_get_processes = extractor.get_processes
 
     def filtered_get_processes(self):
-        yield from (f for f in original_get_processes() if f.address.pid in processes)
+        yield from (f for f in original_get_processes() if f.address.pid in pids)
 
     # we make a copy of the original extractor object and then update its get_processes() method with the decorated filter one.
     # this is in order to preserve the original extractor object's get_processes() method, in case it is used elsewhere in the code.
@@ -500,6 +500,18 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, processes: set) -> Dynamic
     # with some of these tests needing to install a processes filter on the extractor object.
     new_extractor = copy(extractor)
     new_extractor.get_processes = MethodType(filtered_get_processes, extractor)  # type: ignore
+
+    return new_extractor
+
+
+def ThreadFilter(extractor: DynamicFeatureExtractor, threads: set[Address]) -> DynamicFeatureExtractor:
+    original_get_threads = extractor.get_threads
+
+    def filtered_get_threads(self, ph: ProcessHandle):
+        yield from (t for t in original_get_threads(ph) if t.address in threads)
+
+    new_extractor = copy(extractor)
+    new_extractor.get_threads = MethodType(filtered_get_threads, extractor)  # type: ignore
 
     return new_extractor
 
