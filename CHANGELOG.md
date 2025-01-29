@@ -5,6 +5,7 @@
 ### New Features
 
 - add span-of-calls scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
+- add lint to catch rules that depend on other rules with impossible scope @williballenthin #2124
 
 ### Breaking Changes
 
