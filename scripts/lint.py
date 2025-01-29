@@ -539,31 +539,44 @@ class DuplicateFeatureUnderStatement(Lint):
             # to generalize the check for 'n or more' statements
             return any(statement in key for statement in STATEMENTS)
 
+        def get_feature_key(feature_dict: Dict[str, Any]) -> str:
+            # need this for generating key for multi-lined feature
+            # for example,         - string: /dbghelp\.dll/i
+            #                        description: WindBG
+            parts = []
+            for key, value in list(feature_dict.items()):
+                parts.append(f"{key}: {value}")
+            return "- " + ", ".join(parts)
+
         def find_duplicates(features: List[Any]) -> None:
             if not isinstance(features, list):
                 return
 
-            seen_features: Dict[str, Dict[str, Any]] = {}
+            seen_features: Dict[str, List[int]] = {}
             for item in features:
                 if not isinstance(item, dict):
                     continue
 
-                for key, value in item.items():
-                    if is_statement(key):
-                        # recursively check nested features
-                        find_duplicates(value)
-                        continue
+                if any(is_statement(key) for key in item.keys()):
+                    for key, value in item.items():
+                        if is_statement(key):
+                            # recursively check nested features
+                            find_duplicates(value)
+                    continue
 
-                    feature_key = f"{key}:{value}"
-                    if feature_key in seen_features:
-                        self.violation = True
-                        prev_line = get_line_number(seen_features[feature_key])
-                        curr_line = get_line_number(item)
-                        self.recommendation += self.recommendation_template.format(
-                            feature_key, f"{prev_line}, {curr_line}"
-                        )
-                    else:
-                        seen_features[feature_key] = item
+                feature_key = get_feature_key(item)
+                line_num = get_line_number(item)
+                if feature_key in seen_features:
+                    self.violation = True
+                    seen_features[feature_key].append(line_num)
+                else:
+                    seen_features[feature_key] = [line_num]
+            for feature_key, line_numbers in seen_features.items():
+                if len(line_numbers) > 1:
+                    sorted_lines = sorted(line_numbers)
+                    self.recommendation += self.recommendation_template.format(
+                        feature_key, ", ".join(str(line) for line in sorted_lines)
+                    )
 
         features = data["rule"].get("features", [])
         find_duplicates(features)
