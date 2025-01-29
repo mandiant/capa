@@ -59,6 +59,7 @@ from capa.features.common import (
     FORMAT_BINEXPORT2,
 )
 from capa.features.address import Address
+from capa.capabilities.common import Capabilities
 from capa.features.extractors.base_extractor import (
     SampleHashes,
     FeatureExtractor,
@@ -450,7 +451,7 @@ def get_signatures(sigs_path: Path) -> list[Path]:
     return paths
 
 
-def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
+def get_sample_analysis(format_, arch, os_, extractor, rules_path, feature_counts, library_functions):
     if isinstance(extractor, StaticFeatureExtractor):
         return rdoc.StaticAnalysis(
             format=format_,
@@ -466,8 +467,8 @@ def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
-            feature_counts=counts["feature_counts"],
-            library_functions=counts["library_functions"],
+            feature_counts=feature_counts,
+            library_functions=library_functions,
         )
     elif isinstance(extractor, DynamicFeatureExtractor):
         return rdoc.DynamicAnalysis(
@@ -479,7 +480,7 @@ def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
             layout=rdoc.DynamicLayout(
                 processes=(),
             ),
-            feature_counts=counts["feature_counts"],
+            feature_counts=feature_counts,
         )
     else:
         raise ValueError("invalid extractor type")
@@ -492,7 +493,7 @@ def collect_metadata(
     os_: str,
     rules_path: list[Path],
     extractor: FeatureExtractor,
-    counts: dict,
+    capabilities: Capabilities,
 ) -> rdoc.Metadata:
     # if it's a binary sample we hash it, if it's a report
     # we fetch the hashes from the report
@@ -535,7 +536,8 @@ def collect_metadata(
             os_,
             extractor,
             rules,
-            counts,
+            capabilities.feature_counts,
+            capabilities.library_functions,
         ),
     )
 

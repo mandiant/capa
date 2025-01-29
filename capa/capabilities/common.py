@@ -16,17 +16,28 @@
 import logging
 import itertools
 import collections
-from typing import Any
+from typing import Optional
+from dataclasses import dataclass
 
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
+from capa.render.result_document import LibraryFunction, StaticFeatureCounts, DynamicFeatureCounts
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
-def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
+@dataclass
+class FileCapabilities:
+    features: FeatureSet
+    matches: MatchResults
+    feature_count: int
+
+
+def find_file_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet
+) -> FileCapabilities:
     file_features: FeatureSet = collections.defaultdict(set)
 
     for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
@@ -43,8 +54,8 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 
     file_features.update(function_features)
 
-    _, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
-    return matches, len(file_features)
+    features, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
+    return FileCapabilities(features, matches, len(file_features))
 
 
 def is_static_limitation_rule(r: Rule) -> bool:
@@ -87,9 +98,14 @@ def has_limitation(rules: list, capabilities: MatchResults, is_standalone: bool)
     return False
 
 
-def find_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
-) -> tuple[MatchResults, Any]:
+@dataclass
+class Capabilities:
+    matches: MatchResults
+    feature_counts: StaticFeatureCounts | DynamicFeatureCounts
+    library_functions: Optional[tuple[LibraryFunction, ...]] = None
+
+
+def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs) -> Capabilities:
     from capa.capabilities.static import find_static_capabilities
     from capa.capabilities.dynamic import find_dynamic_capabilities
 

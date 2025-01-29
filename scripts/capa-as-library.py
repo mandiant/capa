@@ -184,25 +184,25 @@ def capa_details(rules_path: Path, input_file: Path, output_format="dictionary")
     extractor = capa.loader.get_extractor(
         input_file, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], should_save_workspace=False, disable_progress=True
     )
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.loader.collect_metadata([], input_file, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, counts)
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata([], input_file, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     capa_output: Any = False
 
     if output_format == "dictionary":
         # ...as python dictionary, simplified as textable but in dictionary
-        doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+        doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
         capa_output = render_dictionary(doc)
     elif output_format == "json":
         # render results
         # ...as json
-        capa_output = json.loads(capa.render.json.render(meta, rules, capabilities))
+        capa_output = json.loads(capa.render.json.render(meta, rules, capabilities.matches))
     elif output_format == "texttable":
         # ...as human readable text table
-        capa_output = capa.render.default.render(meta, rules, capabilities)
+        capa_output = capa.render.default.render(meta, rules, capabilities.matches)
 
     return capa_output
 

@@ -245,13 +245,13 @@ def get_capabilities():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, True)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor, True)
 
     if capa.capabilities.common.has_static_limitation(rules, capabilities, is_standalone=False):
         popup("capa explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
         logger.info("capa encountered warnings during analysis")
 
-    return capa.render.json.render(meta, rules, capabilities)
+    return capa.render.json.render(meta, rules, capabilities.matches)
 
 
 def get_locations(match_dict):

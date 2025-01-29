@@ -107,8 +107,8 @@ def test_null_feature_extractor():
             ),
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, EXTRACTOR)
-    assert "xor loop" in capabilities
+    capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
+    assert "xor loop" in capabilities.matches
 
 
 def compare_extractors(a, b):

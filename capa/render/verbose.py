@@ -126,6 +126,22 @@ def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
 
 
+def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> str:
+    calls: list[capa.features.address.DynamicCallAddress] = [addr.to_capa() for addr in addrs]  # type: ignore
+    assert len(calls) > 0
+    for call in calls:
+        assert isinstance(call, capa.features.address.DynamicCallAddress)
+    call = calls[0]
+
+    pname = _get_process_name(layout, frz.Address.from_capa(calls[0].thread.process))
+    call_ids = [str(call.id) for call in calls]
+    if len(call_ids) == 1:
+        call_id = call_ids[0]
+        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call_id}}}"
+    else:
+        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},calls:{{{','.join(call_ids)}}}}}"
+
+
 def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     call = addr.to_capa()
     assert isinstance(call, capa.features.address.DynamicCallAddress)
@@ -146,6 +162,25 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     return (
         f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{rutils.mute(newline.join(s))}"
     )
+
+
+def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    cname = _get_call_name(layout, addr)
+
+    fname, _, rest = cname.partition("(")
+    args, _, rest = rest.rpartition(")")
+
+    s = []
+    s.append(f"{fname}(")
+    for arg in args.split(", "):
+        s.append(f"  {arg},")
+    s.append(f"){rest}")
+
+    newline = "\n"
+    return f"call:{call.id}\n{rutils.mute(newline.join(s))}"
 
 
 def render_static_meta(console: Console, meta: rd.StaticMetadata):
@@ -318,7 +353,7 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                     lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
                 elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                     lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
-                elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+                elif rule.meta.scopes.dynamic in (capa.rules.Scope.CALL, capa.rules.Scope.SPAN_OF_CALLS):
                     # because we're only in verbose mode, we won't show the full call details (name, args, retval)
                     # we'll only show the details of the thread in which the calls are found.
                     # so select the thread locations and render those.

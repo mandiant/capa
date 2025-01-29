@@ -22,7 +22,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Optional, TypedDict
+from typing import Optional, TypedDict
 from pathlib import Path
 
 import colorama
@@ -47,7 +47,6 @@ import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
-from capa.engine import MatchResults
 from capa.loader import (
     BACKEND_IDA,
     BACKEND_VIV,
@@ -766,7 +765,7 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
     found_file_limitation = False
     for file_extractor in file_extractors:
         try:
-            pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+            pure_file_capabilities = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
@@ -1007,8 +1006,7 @@ def main(argv: Optional[list[str]] = None):
         return e.status_code
 
     meta: rdoc.Metadata
-    capabilities: MatchResults
-    counts: dict[str, Any]
+    capabilities: Capabilities
 
     if input_format == FORMAT_RESULT:
         # result document directly parses into meta, capabilities
@@ -1030,10 +1028,12 @@ def main(argv: Optional[list[str]] = None):
         except ShouldExitError as e:
             return e.status_code
 
-        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-        meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
-        meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+        meta = capa.loader.collect_metadata(
+            argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+        )
+        meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
         if found_limitation:
             # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
@@ -1043,13 +1043,13 @@ def main(argv: Optional[list[str]] = None):
                 return E_FILE_LIMITATION
 
     if args.json:
-        print(capa.render.json.render(meta, rules, capabilities))
+        print(capa.render.json.render(meta, rules, capabilities.matches))
     elif args.vverbose:
-        print(capa.render.vverbose.render(meta, rules, capabilities))
+        print(capa.render.vverbose.render(meta, rules, capabilities.matches))
     elif args.verbose:
-        print(capa.render.verbose.render(meta, rules, capabilities))
+        print(capa.render.verbose.render(meta, rules, capabilities.matches))
     else:
-        print(capa.render.default.render(meta, rules, capabilities))
+        print(capa.render.default.render(meta, rules, capabilities.matches))
     colorama.deinit()
 
     logger.debug("done.")
@@ -1085,16 +1085,16 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
-    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
+    capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
+    meta.analysis.feature_counts = capabilities.feature_counts
+    meta.analysis.library_functions = capabilities.library_functions
 
     if has_static_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
     colorama.init(strip=True)
-    print(capa.render.default.render(meta, rules, capabilities))
+    print(capa.render.default.render(meta, rules, capabilities.matches))
 
 
 def ghidra_main():
@@ -1119,19 +1119,19 @@ def ghidra_main():
 
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
 
-    capabilities, counts = find_capabilities(
+    capabilities = find_capabilities(
         rules,
         capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(),
         not capa.ghidra.helpers.is_running_headless(),
     )
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
+    meta.analysis.feature_counts = capabilities.feature_counts
+    meta.analysis.library_functions = capabilities.library_functions
 
     if has_static_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
 
-    print(capa.render.default.render(meta, rules, capabilities))
+    print(capa.render.default.render(meta, rules, capabilities.matches))
 
 
 if __name__ == "__main__":

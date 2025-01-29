@@ -100,12 +100,12 @@ def main(argv=None):
     except capa.main.ShouldExitError as e:
         return e.status_code
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
     pb = capa.render.proto.doc_to_pb2(doc)
 
     sys.stdout.buffer.write(pb.SerializeToString(deterministic=True))

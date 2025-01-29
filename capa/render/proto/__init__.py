@@ -163,6 +163,8 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
         return capa_pb2.Scope.SCOPE_PROCESS
     elif scope == capa.rules.Scope.THREAD:
         return capa_pb2.Scope.SCOPE_THREAD
+    elif scope == capa.rules.Scope.SPAN_OF_CALLS:
+        return capa_pb2.Scope.SCOPE_SPAN_OF_CALLS
     elif scope == capa.rules.Scope.CALL:
         return capa_pb2.Scope.SCOPE_CALL
     else:
@@ -655,6 +657,8 @@ def scope_from_pb2(scope: capa_pb2.Scope.ValueType) -> capa.rules.Scope:
         return capa.rules.Scope.PROCESS
     elif scope == capa_pb2.Scope.SCOPE_THREAD:
         return capa.rules.Scope.THREAD
+    elif scope == capa_pb2.Scope.SCOPE_SPAN_OF_CALLS:
+        return capa.rules.Scope.SPAN_OF_CALLS
     elif scope == capa_pb2.Scope.SCOPE_CALL:
         return capa.rules.Scope.CALL
     else:

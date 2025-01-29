@@ -81,23 +81,23 @@ def run_headless():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, False)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor, False)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+    meta.analysis.feature_counts = capabilities.feature_counts
+    meta.analysis.library_functions = capabilities.library_functions
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     if capa.capabilities.common.has_static_limitation(rules, capabilities, is_standalone=True):
         logger.info("capa encountered warnings during analysis")
 
     if args.json:
-        print(capa.render.json.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.json.render(meta, rules, capabilities.matches))  # noqa: T201
     elif args.vverbose:
-        print(capa.render.vverbose.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.vverbose.render(meta, rules, capabilities.matches))  # noqa: T201
     elif args.verbose:
-        print(capa.render.verbose.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.verbose.render(meta, rules, capabilities.matches))  # noqa: T201
     else:
-        print(capa.render.default.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.default.render(meta, rules, capabilities.matches))  # noqa: T201
 
     return 0
 
@@ -131,21 +131,21 @@ def run_ui():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, True)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor, True)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+    meta.analysis.feature_counts = capabilities.feature_counts
+    meta.analysis.library_functions = capabilities.library_functions
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     if capa.capabilities.common.has_static_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
 
     if verbose == "vverbose":
-        print(capa.render.vverbose.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.vverbose.render(meta, rules, capabilities.matches))  # noqa: T201
     elif verbose == "verbose":
-        print(capa.render.verbose.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.verbose.render(meta, rules, capabilities.matches))  # noqa: T201
     else:
-        print(capa.render.default.render(meta, rules, capabilities))  # noqa: T201
+        print(capa.render.default.render(meta, rules, capabilities.matches))  # noqa: T201
 
     return 0
 

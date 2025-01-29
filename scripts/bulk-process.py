@@ -146,12 +146,12 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, format_, os_, [], extractor, counts)
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.input_file, format_, os_, [], extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
     return {"path": input_file, "status": "ok", "ok": doc.model_dump()}
 
 
