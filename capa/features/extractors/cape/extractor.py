@@ -77,12 +77,8 @@ class CapeExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.cape.process.get_threads(ph)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
-        if False:
-            # force this routine to be a generator,
-            # but we don't actually have any elements to generate.
-            yield Characteristic("never"), NO_ADDRESS
-        return
-
+        yield from []
+        
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         yield from capa.features.extractors.cape.thread.get_calls(ph, th)
 
