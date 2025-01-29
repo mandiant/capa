@@ -3,7 +3,8 @@
 ## master (unreleased)
 
 ### New Features
-
+- add lint for detecting duplicate features in capa-rules #2250 @v1bh475u
+- 
 ### Breaking Changes
 
 ### New Rules (2)
