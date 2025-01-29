@@ -11,10 +11,11 @@
 - add span-of-calls scope to rule format
 - capabilities functions return dataclasses instead of tuples
 
-### New Rules (2)
+### New Rules (3)
 
 - data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library Ana06
 - data-manipulation/encryption/use-bigint-function Ana06
+- nursery/dynamic-add-veh wballenthin@google.com
 -
 
 ### Bug Fixes
