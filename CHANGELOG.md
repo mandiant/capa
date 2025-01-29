@@ -5,7 +5,7 @@
 ### New Features
 - add lint for detecting duplicate features in capa-rules #2250 @v1bh475u
 - add span-of-calls scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
-- 
+
 ### Breaking Changes
 
 - add span-of-calls scope to rule format
