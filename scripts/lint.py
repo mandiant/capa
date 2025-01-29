@@ -33,9 +33,8 @@ import logging
 import argparse
 import itertools
 import posixpath
-from typing import List, DefaultDict
+from typing import Any, Dict, List
 from pathlib import Path
-from collections import defaultdict
 from dataclasses import field, dataclass
 
 import pydantic
@@ -503,91 +502,68 @@ class OptionalNotUnderAnd(Lint):
 
 
 class DuplicateFeatureUnderStatement(Lint):
-    name = "rule contains a duplicate feature under `or`/`and` statement"
+    name = "rule contains a duplicate features"
     recommendation = "remove the duplicate features"
     recommendation_template = '\n\tduplicate line: "{:s}"\t: line numbers: {:s}'
     violation = False
 
     def check_rule(self, ctx: Context, rule: Rule) -> bool:
+        self.violation = False
+        self.recommendation = ""
         STATEMENTS = frozenset(
             {
-                "- or:",
-                "- and:",
-                "- not:",
-                "- optional:",
-                "- some:",
-                "- basic block:",
-                "- function:",
-                "- instruction:",
-                "- call:",
-                " or more:",
+                "or",
+                "and",
+                "not",
+                "optional",
+                "some",
+                "basic block",
+                "function",
+                "instruction",
+                "call",
+                " or more",
             }
         )
+        data = rule._get_ruamel_yaml_parser().load(rule.definition)
 
-        def is_statement(line: str) -> bool:
-            return any(stmt in line for stmt in STATEMENTS)
+        def get_line_number(line: Dict[str, Any]) -> int:
+            lc = getattr(line, "lc", None)
+            if lc and hasattr(lc, "line"):
+                return lc.line + 1
+            return 0
 
-        def get_indent(line: str) -> int:
-            return line.find("-")
+        def is_statement(key: str) -> bool:
+            # to generalize the check for 'n or more' statements
+            return any(statement in key for statement in STATEMENTS)
 
-        def process_duplicates(feature_map: DefaultDict[str, List[int]]) -> None:
-            for feature, numbers in feature_map.items():
-                if len(numbers) > 1:
-                    line_index = ", ".join(map(str, numbers))
-                    self.recommendation += self.recommendation_template.format(feature, line_index)
-                    self.violation = True
+        def find_duplicates(features: List[Any]) -> None:
+            if not isinstance(features, list):
+                return
 
-        def extract_features(lines: List[str]) -> tuple[list[str], int]:
-            feature_line_number = 0
-            features = []
-            inside_feature_scope = False
-            feature = ""
-            for line_num, line in enumerate(lines, 1):
-                if "features:" in line:
-                    feature_line_number = line_num
-                    inside_feature_scope = True
-                elif inside_feature_scope:
-                    if "-" in line:
-                        if feature:
-                            features.append(feature)
-                        feature = line
+            seen_features: Dict[str, Dict[str, Any]] = {}
+            for item in features:
+                if not isinstance(item, dict):
+                    continue
+
+                for key, value in item.items():
+                    if is_statement(key):
+                        # recursively check nested features
+                        find_duplicates(value)
+                        continue
+
+                    feature_key = f"{key}:{value}"
+                    if feature_key in seen_features:
+                        self.violation = True
+                        prev_line = get_line_number(seen_features[feature_key])
+                        curr_line = get_line_number(item)
+                        self.recommendation += self.recommendation_template.format(
+                            feature_key, f"{prev_line}, {curr_line}"
+                        )
                     else:
-                        feature += line
+                        seen_features[feature_key] = item
 
-            # adding the last feature
-            features.append(feature)
-            features.append("")
-            return features, feature_line_number
-
-        self.recommendation = ""
-        self.violation = False
-
-        lines = [line for line in rule.definition.split("\n") if line.strip()]
-        feature_maps: List[DefaultDict[str, List[int]]] = []
-        indent_stack: List[int] = []
-
-        features, feature_definition_line = extract_features(lines)
-        for feature_line_num, feature in enumerate(features, feature_definition_line):
-            if "-" not in feature:
-                continue
-
-            current_indent = get_indent(feature)
-
-            # Handle scope changes based on indentation
-            while indent_stack and current_indent <= indent_stack[-1]:
-                process_duplicates(feature_maps.pop())
-                indent_stack.pop()
-
-            # Process current line
-            if is_statement(feature):
-                feature_maps.append(defaultdict(list))
-                indent_stack.append(current_indent)
-            elif feature_maps and current_indent > indent_stack[-1]:
-                feature_maps[-1][feature].append(feature_line_num)
-
-        # Process remaining scopes
-        while feature_maps:
-            process_duplicates(feature_maps.pop())
+        features = data["rule"].get("features", [])
+        find_duplicates(features)
 
         return self.violation
 
