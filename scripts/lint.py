@@ -524,6 +524,8 @@ class DuplicateFeatureUnderStatement(Lint):
                 " or more",
             }
         )
+        # rule.statement discards the duplicate features by default so
+        # need to use the rule definition to check for duplicates
         data = rule._get_ruamel_yaml_parser().load(rule.definition)
 
         def get_line_number(line: Dict[str, Any]) -> int:
