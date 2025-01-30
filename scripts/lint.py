@@ -47,7 +47,7 @@ import capa.loader
 import capa.helpers
 import capa.features.insn
 import capa.capabilities.common
-from capa.rules import Rule, RuleSet
+from capa.rules import Rule, Scope, RuleSet
 from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
@@ -74,11 +74,11 @@ class Lint:
     WARN = "[yellow]WARN[/yellow]"
     FAIL = "[red]FAIL[/red]"
 
-    name = "lint"
-    level = FAIL
-    recommendation = ""
+    name: str = "lint"
+    level: str = FAIL
+    recommendation: str = ""
 
-    def check_rule(self, ctx: Context, rule: Rule):
+    def check_rule(self, ctx: Context, rule: Rule) -> bool:
         return False
 
 
@@ -478,6 +478,102 @@ class NotNotUnderAnd(Lint):
         return self.violation
 
 
+class RuleDependencyScopeMismatch(Lint):
+    name = "rule dependency scope mismatch"
+    level = Lint.FAIL
+    recommendation_template: str = "rule '{:s}' ({:s}) depends on rule '{:s}' ({:s})."
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        # get all rules by name for quick lookup
+        rules_by_name = {r.name: r for r in ctx.rules.rules.values()}
+
+        # get all dependencies of this rule
+        namespaces = ctx.rules.rules_by_namespace
+        dependencies = rule.get_dependencies(namespaces)
+
+        for dep_name in dependencies:
+            if dep_name not in rules_by_name:
+                # another lint will catch missing dependencies
+                continue
+
+            dep_rule = rules_by_name[dep_name]
+
+            if rule.scopes.static and not self._is_static_scope_compatible(rule, dep_rule):
+                self.recommendation = self.recommendation_template.format(
+                    rule.name,
+                    rule.scopes.static or "static: unsupported",
+                    dep_name,
+                    dep_rule.scopes.static or "static: unsupported",
+                )
+                return True
+
+            if rule.scopes.dynamic and not self._is_dynamic_scope_compatible(rule, dep_rule):
+                self.recommendation = self.recommendation_template.format(
+                    rule.name,
+                    rule.scopes.dynamic or "dynamic: unsupported",
+                    dep_name,
+                    dep_rule.scopes.dynamic or "dynamic: unsupported",
+                )
+                return True
+
+        return False
+
+    @staticmethod
+    def _is_static_scope_compatible(parent: Rule, child: Rule) -> bool:
+        """
+        A child rule's scope is compatible if it is equal to or lower than the parent scope.
+        """
+
+        if parent.scopes.static and not child.scopes.static and child.is_subscope_rule():
+            # this is ok: the child isn't a static subscope rule
+            return True
+
+        if parent.scopes.static and not child.scopes.static:
+            # This is not really ok, but we can't really be sure here:
+            #  the parent is a static rule, and the child is not,
+            #  and we don't know if this is strictly required to match.
+            # Assume for now it is not.
+            return True
+
+        static_scope_order = [
+            None,
+            Scope.FILE,
+            Scope.FUNCTION,
+            Scope.BASIC_BLOCK,
+            Scope.INSTRUCTION,
+        ]
+
+        return static_scope_order.index(child.scopes.static) >= static_scope_order.index(parent.scopes.static)
+
+    @staticmethod
+    def _is_dynamic_scope_compatible(parent: Rule, child: Rule) -> bool:
+        """
+        A child rule's scope is compatible if it is equal to or lower than the parent scope.
+        """
+
+        if parent.scopes.dynamic and not child.scopes.dynamic and child.is_subscope_rule():
+            # this is ok: the child isn't a dynamic subscope rule
+            return True
+
+        if parent.scopes.dynamic and not child.scopes.dynamic:
+            # This is not really ok, but we can't really be sure here:
+            #  the parent is a dynamic rule, and the child is not,
+            #  and we don't know if this is strictly required to match.
+            # Assume for now it is not.
+            return True
+
+        dynamic_scope_order = [
+            None,
+            Scope.FILE,
+            Scope.PROCESS,
+            Scope.THREAD,
+            Scope.SPAN_OF_CALLS,
+            Scope.CALL,
+        ]
+
+        return dynamic_scope_order.index(child.scopes.dynamic) >= dynamic_scope_order.index(parent.scopes.dynamic)
+
+
 class OptionalNotUnderAnd(Lint):
     name = "rule contains an `optional` or `0 or more` statement that's not found under an `and` statement"
     recommendation = "clarify the rule logic and ensure `optional` and `0 or more` is always found under `and`"
@@ -820,6 +916,7 @@ LOGIC_LINTS = (
     OrStatementWithAlwaysTrueChild(),
     NotNotUnderAnd(),
     OptionalNotUnderAnd(),
+    RuleDependencyScopeMismatch(),
 )
 
 
@@ -915,7 +1012,7 @@ def lint(ctx: Context):
     source_rules = [rule for rule in ctx.rules.rules.values() if not rule.is_subscope_rule()]
     n_rules: int = len(source_rules)
 
-    with capa.helpers.CapaProgressBar(transient=True, console=capa.helpers.log_console) as pbar:
+    with capa.helpers.CapaProgressBar(transient=True, console=capa.helpers.log_console, disable=True) as pbar:
         task = pbar.add_task(description="linting", total=n_rules, unit="rule")
         for rule in source_rules:
             name = rule.name

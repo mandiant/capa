@@ -6,6 +6,7 @@
 
 - add warning for dynamic .NET samples #1864 @v1bh475u
 - add span-of-calls scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
+- add lint to catch rules that depend on other rules with impossible scope @williballenthin #2124
 
 ### Breaking Changes
 
@@ -22,12 +23,13 @@
 
 ### Bug Fixes
 
-- vmray: load more analysis archives @mr-tz
 - dynamic: only check file limitations for static file formats @mr-tz
+- vmray: load more analysis archives @mr-tz
 - vmray: skip non-printable strings @mike-hunhoff
+- vmray: loosen file checks to enable processing more file types @mike-hunhoff #2571
 - strings: add type hints and fix uncovered bugs @williballenthin #2555
 - elffile: handle symbols without a name @williballenthin #2553
-- vmray: loosen file checks to enable processing more file types @mike-hunhoff #2571
+- project: remove pytest-cov that wasn't used @williballenthin @2491
 
 ### capa Explorer Web
 
