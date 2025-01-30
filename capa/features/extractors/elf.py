@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import struct
 import logging
 import itertools
 import collections
 from enum import Enum
-from typing import TYPE_CHECKING, BinaryIO, Iterator, Optional
+from typing import TYPE_CHECKING, Literal, BinaryIO, Iterator, Optional
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
@@ -132,7 +131,7 @@ class ELF:
 
         # these will all be initialized in `_parse()`
         self.bitness: int
-        self.endian: str
+        self.endian: Literal["little", "big"]
         self.e_phentsize: int
         self.e_phnum: int
         self.e_shentsize: int
@@ -150,7 +149,7 @@ class ELF:
         if not self.file_header.startswith(b"\x7fELF"):
             raise CorruptElfFile("missing magic header")
 
-        ei_class, ei_data = struct.unpack_from("BB", self.file_header, 4)
+        ei_class, ei_data = int.from_bytes(self.file_header[4:5]), int.from_bytes(self.file_header[5:6])
         logger.debug("ei_class: 0x%02x ei_data: 0x%02x", ei_class, ei_data)
         if ei_class == 1:
             self.bitness = 32
@@ -160,24 +159,28 @@ class ELF:
             raise CorruptElfFile(f"invalid ei_class: 0x{ei_class:02x}")
 
         if ei_data == 1:
-            self.endian = "<"
+            self.endian = "little"
         elif ei_data == 2:
-            self.endian = ">"
+            self.endian = "big"
         else:
             raise CorruptElfFile(f"not an ELF file: invalid ei_data: 0x{ei_data:02x}")
 
         if self.bitness == 32:
-            e_phoff, e_shoff = struct.unpack_from(self.endian + "II", self.file_header, 0x1C)
-            self.e_phentsize, self.e_phnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x2A)
-            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(
-                self.endian + "HHH", self.file_header, 0x2E
-            )
+            e_phoff = int.from_bytes(self.file_header[0x1C:0x20], byteorder=self.endian, signed=False)
+            e_shoff = int.from_bytes(self.file_header[0x20:0x24], byteorder=self.endian, signed=False)
+            self.e_phentsize = int.from_bytes(self.file_header[0x2A:0x2C], byteorder=self.endian, signed=False)
+            self.e_phnum = int.from_bytes(self.file_header[0x2C:0x2E], byteorder=self.endian, signed=False)
+            self.e_shentsize = int.from_bytes(self.file_header[0x2E:0x30], byteorder=self.endian, signed=False)
+            self.e_shnum = int.from_bytes(self.file_header[0x30:0x32], byteorder=self.endian, signed=False)
+            self.e_shstrndx = int.from_bytes(self.file_header[0x32:0x34], byteorder=self.endian, signed=False)
         elif self.bitness == 64:
-            e_phoff, e_shoff = struct.unpack_from(self.endian + "QQ", self.file_header, 0x20)
-            self.e_phentsize, self.e_phnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x36)
-            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(
-                self.endian + "HHH", self.file_header, 0x3A
-            )
+            e_phoff = int.from_bytes(self.file_header[0x20:0x28], byteorder=self.endian, signed=False)
+            e_shoff = int.from_bytes(self.file_header[0x28:0x30], byteorder=self.endian, signed=False)
+            self.e_phentsize = int.from_bytes(self.file_header[0x36:0x38], byteorder=self.endian, signed=False)
+            self.e_phnum = int.from_bytes(self.file_header[0x38:0x3A], byteorder=self.endian, signed=False)
+            self.e_shentsize = int.from_bytes(self.file_header[0x3A:0x3C], byteorder=self.endian, signed=False)
+            self.e_shnum = int.from_bytes(self.file_header[0x3C:0x3E], byteorder=self.endian, signed=False)
+            self.e_shstrndx = int.from_bytes(self.file_header[0x3E:0x40], byteorder=self.endian, signed=False)
         else:
             raise NotImplementedError()
 
@@ -227,7 +230,7 @@ class ELF:
 
     @property
     def ei_osabi(self) -> Optional[OS]:
-        (ei_osabi,) = struct.unpack_from(self.endian + "B", self.file_header, 7)
+        ei_osabi = int.from_bytes(self.file_header[7:8], byteorder=self.endian, signed=False)
         return ELF.OSABI.get(ei_osabi)
 
     MACHINE = {
@@ -324,7 +327,7 @@ class ELF:
 
     @property
     def e_machine(self) -> Optional[str]:
-        (e_machine,) = struct.unpack_from(self.endian + "H", self.file_header, 0x12)
+        (e_machine,) = (int.from_bytes(self.file_header[0x12:0x14], byteorder=self.endian, signed=False),)
         return ELF.MACHINE.get(e_machine)
 
     def parse_program_header(self, i) -> Phdr:
@@ -332,13 +335,21 @@ class ELF:
         phent = self.phbuf[phent_offset : phent_offset + self.e_phentsize]
 
         if self.bitness == 32:
-            p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags = struct.unpack_from(
-                self.endian + "IIIIIII", phent, 0x0
-            )
+            p_type = int.from_bytes(phent[0:4], byteorder=self.endian, signed=False)
+            p_offset = int.from_bytes(phent[4:8], byteorder=self.endian, signed=False)
+            p_vaddr = int.from_bytes(phent[8:12], byteorder=self.endian, signed=False)
+            p_paddr = int.from_bytes(phent[12:16], byteorder=self.endian, signed=False)
+            p_filesz = int.from_bytes(phent[16:20], byteorder=self.endian, signed=False)
+            p_memsz = int.from_bytes(phent[20:24], byteorder=self.endian, signed=False)
+            p_flags = int.from_bytes(phent[24:28], byteorder=self.endian, signed=False)
         elif self.bitness == 64:
-            p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz = struct.unpack_from(
-                self.endian + "IIQQQQQ", phent, 0x0
-            )
+            p_type = int.from_bytes(phent[0:4], byteorder=self.endian, signed=False)
+            p_flags = int.from_bytes(phent[4:8], byteorder=self.endian, signed=False)
+            p_offset = int.from_bytes(phent[8:16], byteorder=self.endian, signed=False)
+            p_vaddr = int.from_bytes(phent[16:24], byteorder=self.endian, signed=False)
+            p_paddr = int.from_bytes(phent[24:32], byteorder=self.endian, signed=False)
+            p_filesz = int.from_bytes(phent[32:40], byteorder=self.endian, signed=False)
+            p_memsz = int.from_bytes(phent[40:48], byteorder=self.endian, signed=False)
         else:
             raise NotImplementedError()
 
@@ -362,13 +373,23 @@ class ELF:
         shent = self.shbuf[shent_offset : shent_offset + self.e_shentsize]
 
         if self.bitness == 32:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, _, _, sh_entsize = struct.unpack_from(
-                self.endian + "IIIIIIIIII", shent, 0x0
-            )
+            sh_name = int.from_bytes(shent[0:4], byteorder=self.endian, signed=False)
+            sh_type = int.from_bytes(shent[4:8], byteorder=self.endian, signed=False)
+            sh_flags = int.from_bytes(shent[8:12], byteorder=self.endian, signed=False)
+            sh_addr = int.from_bytes(shent[12:16], byteorder=self.endian, signed=False)
+            sh_offset = int.from_bytes(shent[16:20], byteorder=self.endian, signed=False)
+            sh_size = int.from_bytes(shent[20:24], byteorder=self.endian, signed=False)
+            sh_link = int.from_bytes(shent[24:28], byteorder=self.endian, signed=False)
+            sh_entsize = int.from_bytes(shent[36:40], byteorder=self.endian, signed=False)
         elif self.bitness == 64:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, _, _, sh_entsize = struct.unpack_from(
-                self.endian + "IIQQQQIIQQ", shent, 0x0
-            )
+            sh_name = int.from_bytes(shent[0:4], byteorder=self.endian, signed=False)
+            sh_type = int.from_bytes(shent[4:8], byteorder=self.endian, signed=False)
+            sh_flags = int.from_bytes(shent[8:16], byteorder=self.endian, signed=False)
+            sh_addr = int.from_bytes(shent[16:24], byteorder=self.endian, signed=False)
+            sh_offset = int.from_bytes(shent[24:32], byteorder=self.endian, signed=False)
+            sh_size = int.from_bytes(shent[32:40], byteorder=self.endian, signed=False)
+            sh_link = int.from_bytes(shent[40:44], byteorder=self.endian, signed=False)
+            sh_entsize = int.from_bytes(shent[56:64], byteorder=self.endian, signed=False)
         else:
             raise NotImplementedError()
 
@@ -426,9 +447,11 @@ class ELF:
             vn_offset = 0x0
             while True:
                 # ElfXX_Verneed layout is the same on 32 and 64 bit
-                vn_version, vn_cnt, vn_file, vn_aux, vn_next = struct.unpack_from(
-                    self.endian + "HHIII", shdr.buf, vn_offset
-                )
+                vn_version = int.from_bytes(shdr.buf[vn_offset : vn_offset + 2], byteorder=self.endian, signed=False)
+                vn_cnt = int.from_bytes(shdr.buf[vn_offset + 2 : vn_offset + 4], byteorder=self.endian, signed=False)
+                vn_file = int.from_bytes(shdr.buf[vn_offset + 4 : vn_offset + 8], byteorder=self.endian, signed=False)
+                vn_aux = int.from_bytes(shdr.buf[vn_offset + 8 : vn_offset + 12], byteorder=self.endian, signed=False)
+                vn_next = int.from_bytes(shdr.buf[vn_offset + 12 : vn_offset + 16], byteorder=self.endian, signed=False)
                 if vn_version != 1:
                     # unexpected format, don't try to keep parsing
                     break
@@ -442,7 +465,12 @@ class ELF:
                 vna_offset = vn_offset + vn_aux
                 for _ in range(vn_cnt):
                     # ElfXX_Vernaux layout is the same on 32 and 64 bit
-                    _, _, _, vna_name, vna_next = struct.unpack_from(self.endian + "IHHII", shdr.buf, vna_offset)
+                    vna_name = int.from_bytes(
+                        shdr.buf[vna_offset + 8 : vna_offset + 12], byteorder=self.endian, signed=False
+                    )
+                    vna_next = int.from_bytes(
+                        shdr.buf[vna_offset + 12 : vna_offset + 16], byteorder=self.endian, signed=False
+                    )
 
                     # ABI names, like: "GLIBC_2.2.5"
                     abi = read_cstr(linked_shdr.buf, vna_name)
@@ -473,10 +501,12 @@ class ELF:
             offset = 0x0
             while True:
                 if self.bitness == 32:
-                    d_tag, d_val = struct.unpack_from(self.endian + "II", phdr.buf, offset)
+                    d_tag = int.from_bytes(phdr.buf[offset : offset + 4], byteorder=self.endian, signed=False)
+                    d_val = int.from_bytes(phdr.buf[offset + 4 : offset + 8], byteorder=self.endian, signed=False)
                     offset += 8
                 elif self.bitness == 64:
-                    d_tag, d_val = struct.unpack_from(self.endian + "QQ", phdr.buf, offset)
+                    d_tag = int.from_bytes(phdr.buf[offset : offset + 8], byteorder=self.endian, signed=False)
+                    d_val = int.from_bytes(phdr.buf[offset + 8 : offset + 16], byteorder=self.endian, signed=False)
                     offset += 16
                 else:
                     raise NotImplementedError()
@@ -580,7 +610,7 @@ class ABITag:
 
 
 class PHNote:
-    def __init__(self, endian: str, buf: bytes):
+    def __init__(self, endian: Literal["big", "little"], buf: bytes):
         self.endian = endian
         self.buf = buf
 
@@ -592,7 +622,9 @@ class PHNote:
         self._parse()
 
     def _parse(self):
-        namesz, self.descsz, self.type_ = struct.unpack_from(self.endian + "III", self.buf, 0x0)
+        namesz = int.from_bytes(self.buf[0x0:0x4], byteorder=self.endian, signed=False)
+        self.descsz = int.from_bytes(self.buf[0x4:0x8], byteorder=self.endian, signed=False)
+        self.type_ = int.from_bytes(self.buf[0x8:0xC], byteorder=self.endian, signed=False)
         name_offset = 0xC
         self.desc_offset = name_offset + align(namesz, 0x4)
 
@@ -616,7 +648,10 @@ class PHNote:
             return None
 
         desc = self.buf[self.desc_offset : self.desc_offset + self.descsz]
-        abi_tag, kmajor, kminor, kpatch = struct.unpack_from(self.endian + "IIII", desc, 0x0)
+        abi_tag = int.from_bytes(desc[0:4], byteorder=self.endian, signed=False)
+        kmajor = int.from_bytes(desc[4:8], byteorder=self.endian, signed=False)
+        kminor = int.from_bytes(desc[8:12], byteorder=self.endian, signed=False)
+        kpatch = int.from_bytes(desc[12:16], byteorder=self.endian, signed=False)
         logger.debug("GNU_ABI_TAG: 0x%02x", abi_tag)
 
         os = GNU_ABI_TAG.get(abi_tag)
@@ -629,7 +664,7 @@ class PHNote:
 
 
 class SHNote:
-    def __init__(self, endian: str, buf: bytes):
+    def __init__(self, endian: Literal["big", "little"], buf: bytes):
         self.endian = endian
         self.buf = buf
 
@@ -641,7 +676,9 @@ class SHNote:
         self._parse()
 
     def _parse(self):
-        namesz, self.descsz, self.type_ = struct.unpack_from(self.endian + "III", self.buf, 0x0)
+        namesz = int.from_bytes(self.buf[0x0:0x4], byteorder=self.endian, signed=False)
+        self.descsz = int.from_bytes(self.buf[0x4:0x8], byteorder=self.endian, signed=False)
+        self.type_ = int.from_bytes(self.buf[0x8:0xC], byteorder=self.endian, signed=False)
         name_offset = 0xC
         self.desc_offset = name_offset + align(namesz, 0x4)
 
@@ -660,7 +697,10 @@ class SHNote:
             return None
 
         desc = self.buf[self.desc_offset : self.desc_offset + self.descsz]
-        abi_tag, kmajor, kminor, kpatch = struct.unpack_from(self.endian + "IIII", desc, 0x0)
+        abi_tag = int.from_bytes(desc[0:4], byteorder=self.endian, signed=False)
+        kmajor = int.from_bytes(desc[4:8], byteorder=self.endian, signed=False)
+        kminor = int.from_bytes(desc[8:12], byteorder=self.endian, signed=False)
+        kpatch = int.from_bytes(desc[12:16], byteorder=self.endian, signed=False)
         logger.debug("GNU_ABI_TAG: 0x%02x", abi_tag)
 
         os = GNU_ABI_TAG.get(abi_tag)
@@ -684,7 +724,7 @@ class Symbol:
 class SymTab:
     def __init__(
         self,
-        endian: str,
+        endian: Literal["big", "little"],
         bitness: int,
         symtab: Shdr,
         strtab: Shdr,
@@ -696,7 +736,7 @@ class SymTab:
 
         self._parse(endian, bitness, symtab.buf)
 
-    def _parse(self, endian: str, bitness: int, symtab_buf: bytes) -> None:
+    def _parse(self, endian: Literal["big", "little"], bitness: int, symtab_buf: bytes) -> None:
         """
         return the symbol's information in
         the order specified by sys/elf32.h
@@ -706,12 +746,62 @@ class SymTab:
 
         for i in range(int(len(self.symtab.buf) / self.symtab.entsize)):
             if bitness == 32:
-                name_offset, value, size, info, other, shndx = struct.unpack_from(
-                    endian + "IIIBBH", symtab_buf, i * self.symtab.entsize
+                name_offset = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize : i * self.symtab.entsize + 4], byteorder=endian, signed=False
+                )
+                value = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 4 : i * self.symtab.entsize + 8],
+                    byteorder=endian,
+                    signed=False,
+                )
+                size = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 8 : i * self.symtab.entsize + 12],
+                    byteorder=endian,
+                    signed=False,
+                )
+                info = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 12 : i * self.symtab.entsize + 13],
+                    byteorder=endian,
+                    signed=False,
+                )
+                other = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 13 : i * self.symtab.entsize + 14],
+                    byteorder=endian,
+                    signed=False,
+                )
+                shndx = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 14 : i * self.symtab.entsize + 16],
+                    byteorder=endian,
+                    signed=False,
                 )
             elif bitness == 64:
-                name_offset, info, other, shndx, value, size = struct.unpack_from(
-                    endian + "IBBHQQ", symtab_buf, i * self.symtab.entsize
+                name_offset = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize : i * self.symtab.entsize + 4], byteorder=endian, signed=False
+                )
+                info = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 4 : i * self.symtab.entsize + 5],
+                    byteorder=endian,
+                    signed=False,
+                )
+                other = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 5 : i * self.symtab.entsize + 6],
+                    byteorder=endian,
+                    signed=False,
+                )
+                shndx = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 6 : i * self.symtab.entsize + 8],
+                    byteorder=endian,
+                    signed=False,
+                )
+                value = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 8 : i * self.symtab.entsize + 16],
+                    byteorder=endian,
+                    signed=False,
+                )
+                size = int.from_bytes(
+                    symtab_buf[i * self.symtab.entsize + 16 : i * self.symtab.entsize + 24],
+                    byteorder=endian,
+                    signed=False,
                 )
 
             self.symbols.append(Symbol(name_offset, value, size, info, other, shndx))
@@ -739,7 +829,7 @@ class SymTab:
 
     @classmethod
     def from_viv(cls, elf: "Elf.Elf") -> Optional["SymTab"]:
-        endian = "<" if elf.getEndian() == 0 else ">"
+        endian: Literal["big", "little"] = "little" if elf.getEndian() == 0 else "big"
         bitness = elf.bits
 
         SHT_SYMTAB = 0x2
@@ -1034,12 +1124,13 @@ def read_data(elf: ELF, rva: int, size: int) -> Optional[bytes]:
 
 
 def read_go_slice(elf: ELF, rva: int) -> Optional[bytes]:
+    psize: int = 0
     if elf.bitness == 32:
         struct_size = 8
-        struct_format = elf.endian + "II"
+        psize = 4
     elif elf.bitness == 64:
         struct_size = 16
-        struct_format = elf.endian + "QQ"
+        psize = 8
     else:
         raise ValueError("invalid psize")
 
@@ -1047,7 +1138,8 @@ def read_go_slice(elf: ELF, rva: int) -> Optional[bytes]:
     if not struct_buf:
         return None
 
-    addr, length = struct.unpack_from(struct_format, struct_buf, 0)
+    addr = int.from_bytes(struct_buf[0:psize], byteorder=elf.endian, signed=False)
+    length = int.from_bytes(struct_buf[psize : psize * 2], byteorder=elf.endian, signed=False)
 
     return read_data(elf, addr, length)
 
@@ -1096,7 +1188,12 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
         logger.debug("go buildinfo: no buildinfo magic")
         return None
 
-    psize, flags = struct.unpack_from("<bb", buf, index + len(BUILDINFO_MAGIC))
+    psize = int.from_bytes(
+        buf[index + len(BUILDINFO_MAGIC) : index + len(BUILDINFO_MAGIC) + 1], byteorder="little", signed=True
+    )
+    flags = int.from_bytes(
+        buf[index + len(BUILDINFO_MAGIC) + 1 : index + len(BUILDINFO_MAGIC) + 2], byteorder="little", signed=True
+    )
     assert psize in (4, 8)
     is_big_endian = flags & 0b01
     has_inline_strings = flags & 0b10
@@ -1143,27 +1240,29 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
         # This is the uncommon path. Most samples will have an inline GOOS string.
         #
         # To find samples on VT, use the referenced VTGrep content searches.
-        info_format = {
-            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 00}
-            # like: 71e617e5cc7fda89bf67422ff60f437e9d54622382c5ed6ff31f75e601f9b22e
-            # in which the modinfo doesn't have GOOS.
-            (4, False): "<II",
-            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 00}
-            # like: 93d3b3e2a904c6c909e20f2f76c3c2e8d0c81d535eb46e5493b5701f461816c3
-            # in which the modinfo doesn't have GOOS.
-            (8, False): "<QQ",
-            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 01}
-            # (no matches on VT today)
-            (4, True): ">II",
-            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 01}
-            # like: d44ba497964050c0e3dd2a192c511e4c3c4f17717f0322a554d64b797ee4690a
-            # in which the modinfo doesn't have GOOS.
-            (8, True): ">QQ",
-        }
+        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 00}
+        # like: 71e617e5cc7fda89bf67422ff60f437e9d54622382c5ed6ff31f75e601f9b22e
+        # in which the modinfo doesn't have GOOS.
+        # 4 byte size and little endian
+        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 00}
+        # like: 93d3b3e2a904c6c909e20f2f76c3c2e8d0c81d535eb46e5493b5701f461816c3
+        # in which the modinfo doesn't have GOOS.
+        # 8 byte size and little endian
+        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 01}
+        # (no matches on VT today)
+        # 4 byte size and little endian
+        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 01}
+        # like: d44ba497964050c0e3dd2a192c511e4c3c4f17717f0322a554d64b797ee4690a
+        # in which the modinfo doesn't have GOOS.
+        # 8 byte size and big endian
 
-        build_version_address, modinfo_address = struct.unpack_from(
-            info_format[(psize, is_big_endian)], buf, index + 0x10
-        )
+        endian: Literal["big", "little"] = "big" if is_big_endian else "little"
+        if psize == 4:
+            build_version_address = int.from_bytes(buf[index + 0x10 : index + 0x14], byteorder=endian, signed=False)
+            modinfo_address = int.from_bytes(buf[index + 0x14 : index + 0x18], byteorder=endian, signed=False)
+        else:  # psize == 8
+            build_version_address = int.from_bytes(buf[index + 0x10 : index + 0x18], byteorder=endian, signed=False)
+            modinfo_address = int.from_bytes(buf[index + 0x18 : index + 0x20], byteorder=endian, signed=False)
         logger.debug("go buildinfo: build version address: 0x%x", build_version_address)
         logger.debug("go buildinfo: modinfo address: 0x%x", modinfo_address)
 

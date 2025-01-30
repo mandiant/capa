@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import re
-import struct
 from typing import Iterator
 
 from ghidra.program.model.symbol import SourceType, SymbolType
@@ -52,7 +51,7 @@ def find_embedded_pe(block_bytez: bytes, mz_xor: list[tuple[bytes, bytes, int]])
             continue
 
         e_lfanew_bytes = block_bytez[e_lfanew : e_lfanew + 4]
-        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
+        newoff = int.from_bytes(capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i), "little")
 
         # assume XOR'd "PE" bytes exist within threshold
         if newoff > MAX_OFFSET_PE_AFTER_MZ:

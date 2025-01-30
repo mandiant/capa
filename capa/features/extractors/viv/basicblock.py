@@ -14,7 +14,6 @@
 
 
 import string
-import struct
 from typing import Iterator
 
 import envi
@@ -119,13 +118,13 @@ def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     Return string length if all operand bytes are ascii or utf16-le printable
     """
     if oper.tsize == 1:
-        chars = struct.pack("<B", oper.imm)
+        chars = (oper.imm).to_bytes(1, "little")
     elif oper.tsize == 2:
-        chars = struct.pack("<H", oper.imm)
+        chars = (oper.imm).to_bytes(2, "little")
     elif oper.tsize == 4:
-        chars = struct.pack("<I", oper.imm)
+        chars = (oper.imm).to_bytes(4, "little")
     elif oper.tsize == 8:
-        chars = struct.pack("<Q", oper.imm)
+        chars = (oper.imm).to_bytes(8, "little")
     else:
         raise ValueError(f"unexpected oper.tsize: {oper.tsize}")
 
