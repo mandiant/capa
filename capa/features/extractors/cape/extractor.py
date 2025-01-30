@@ -78,7 +78,6 @@ class CapeExtractor(DynamicFeatureExtractor):
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
         yield from []
-        
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         yield from capa.features.extractors.cape.thread.get_calls(ph, th)
 
