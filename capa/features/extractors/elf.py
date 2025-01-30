@@ -149,7 +149,7 @@ class ELF:
         if not self.file_header.startswith(b"\x7fELF"):
             raise CorruptElfFile("missing magic header")
 
-        ei_class, ei_data = int.from_bytes(self.file_header[4:5]), int.from_bytes(self.file_header[5:6])
+        ei_class, ei_data = self.file_header[4], self.file_header[5]
         logger.debug("ei_class: 0x%02x ei_data: 0x%02x", ei_class, ei_data)
         if ei_class == 1:
             self.bitness = 32
