@@ -100,6 +100,7 @@ from capa.features.common import (
     FORMAT_BINEXPORT2,
 )
 from capa.capabilities.common import (
+    Capabilities,
     find_capabilities,
     has_static_limitation,
     find_file_capabilities,
@@ -797,7 +798,7 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
     """
     found_dynamic_limitation = False
     for file_extractor in file_extractors:
-        pure_dynamic_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+        pure_dynamic_capabilities = find_file_capabilities(rules, file_extractor, {})
         found_dynamic_limitation = has_dynamic_limitation(rules, pure_dynamic_capabilities)
 
     # file limitations that rely on non-file scope won't be detected here.
