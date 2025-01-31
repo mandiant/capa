@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import struct
 from typing import Iterator
 
 import idc
@@ -63,7 +64,7 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
         if seg_max < (e_lfanew + 4):
             continue
 
-        newoff = int.from_bytes(capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i), "little")
+        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i))[0]
 
         # assume XOR'd "PE" bytes exist within threshold
         if newoff > MAX_OFFSET_PE_AFTER_MZ:

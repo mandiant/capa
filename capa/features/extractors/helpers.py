@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import struct
 import builtins
 from typing import Iterator
 
@@ -156,7 +157,7 @@ def carve_pe(pbytes: bytes, offset: int = 0) -> Iterator[tuple[int, int]]:
         if pblen < (e_lfanew + 4):
             continue
 
-        newoff = int.from_bytes(xor_static(pbytes[e_lfanew : e_lfanew + 4], key), "little")
+        newoff = struct.unpack("<I", xor_static(pbytes[e_lfanew : e_lfanew + 4], key))[0]
 
         nextres = pbytes.find(mzx, off + 1)
         if nextres != -1:

@@ -14,6 +14,7 @@
 
 
 import string
+import struct
 from typing import Iterator
 
 import idaapi
@@ -32,13 +33,13 @@ def get_printable_len(op: idaapi.op_t) -> int:
     op_val = capa.features.extractors.ida.helpers.mask_op_val(op)
 
     if op.dtype == idaapi.dt_byte:
-        chars = (op_val).to_bytes(1, "little")
+        chars = struct.pack("<B", op_val)
     elif op.dtype == idaapi.dt_word:
-        chars = (op_val).to_bytes(2, "little")
+        chars = struct.pack("<H", op_val)
     elif op.dtype == idaapi.dt_dword:
-        chars = (op_val).to_bytes(4, "little")
+        chars = struct.pack("<I", op_val)
     elif op.dtype == idaapi.dt_qword:
-        chars = (op_val).to_bytes(8, "little")
+        chars = struct.pack("<Q", op_val)
     else:
         raise ValueError(f"Unhandled operand data type 0x{op.dtype:x}.")
 

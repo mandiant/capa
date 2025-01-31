@@ -14,6 +14,7 @@
 
 
 import string
+import struct
 from typing import Iterator
 
 import ghidra
@@ -34,13 +35,13 @@ def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
     op_val = op.getValue()
 
     if op_bit_len == 8:
-        chars = (op_val & 0xFF).to_bytes(1, "little")
+        chars = struct.pack("<B", op_val & 0xFF)
     elif op_bit_len == 16:
-        chars = (op_val & 0xFFFF).to_bytes(2, "little")
+        chars = struct.pack("<H", op_val & 0xFFFF)
     elif op_bit_len == 32:
-        chars = (op_val & 0xFFFFFFFF).to_bytes(4, "little")
+        chars = struct.pack("<I", op_val & 0xFFFFFFFF)
     elif op_bit_len == 64:
-        chars = (op_val & 0xFFFFFFFFFFFFFFFF).to_bytes(8, "little")
+        chars = struct.pack("<Q", op_val & 0xFFFFFFFFFFFFFFFF)
     else:
         raise ValueError(f"Unhandled operand data type 0x{op_bit_len:x}.")
 
