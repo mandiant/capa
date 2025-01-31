@@ -14,19 +14,10 @@
 
 from typing import Any, Iterator, Optional
 
-from binaryninja import (
-    Function,
-)
+from binaryninja import Function
 from binaryninja import BasicBlock as BinjaBasicBlock
-from binaryninja import (
-    BinaryView,
-    ILRegister,
-    SymbolType,
-    BinaryReader,
-    RegisterValueType,
-    LowLevelILOperation,
-    LowLevelILInstruction,
-)
+from binaryninja import BinaryView, ILRegister, SymbolType, BinaryReader, RegisterValueType, LowLevelILOperation, LowLevelILInstruction
+
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
