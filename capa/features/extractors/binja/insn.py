@@ -14,7 +14,9 @@
 
 from typing import Any, Iterator, Optional
 
-from binaryninja import Function
+from binaryninja import (
+    Function,
+)
 from binaryninja import BasicBlock as BinjaBasicBlock
 from binaryninja import (
     BinaryView,

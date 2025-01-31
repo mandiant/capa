@@ -50,9 +50,7 @@ class CapeExtractor(DynamicFeatureExtractor):
         self.report: CapeReport = report
 
         # pre-compute these because we'll yield them at *every* scope.
-        self.global_features = list(
-            capa.features.extractors.cape.global_.extract_features(self.report)
-        )
+        self.global_features = list(capa.features.extractors.cape.global_.extract_features(self.report))
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # value according to the PE header, the actual trace may use a different imagebase
@@ -68,9 +66,7 @@ class CapeExtractor(DynamicFeatureExtractor):
     def get_processes(self) -> Iterator[ProcessHandle]:
         yield from capa.features.extractors.cape.file.get_processes(self.report)
 
-    def extract_process_features(
-        self, ph: ProcessHandle
-    ) -> Iterator[tuple[Feature, Address]]:
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.process.extract_features(ph)
 
     def get_process_name(self, ph) -> str:
@@ -80,9 +76,7 @@ class CapeExtractor(DynamicFeatureExtractor):
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         yield from capa.features.extractors.cape.process.get_threads(ph)
 
-    def extract_thread_features(
-        self, ph: ProcessHandle, th: ThreadHandle
-    ) -> Iterator[tuple[Feature, Address]]:
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
         yield from []
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
@@ -135,9 +129,7 @@ class CapeExtractor(DynamicFeatureExtractor):
         cr = CapeReport.model_validate(report)
 
         if cr.info.version not in TESTED_VERSIONS:
-            logger.warning(
-                "CAPE version '%s' not tested/supported yet", cr.info.version
-            )
+            logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
         # TODO(mr-tz): support more file types
         # https://github.com/mandiant/capa/issues/1933
