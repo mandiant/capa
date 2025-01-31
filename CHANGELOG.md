@@ -28,6 +28,7 @@
 - strings: add type hints and fix uncovered bugs @williballenthin #2555
 - elffile: handle symbols without a name @williballenthin #2553
 - project: remove pytest-cov that wasn't used @williballenthin @2491
+- replace binascii methods with native Python methods @v1bh475u #2582
 
 ### capa Explorer Web
 

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import binascii
 from typing import cast
 
 import pytest
@@ -302,7 +301,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         (
             "d1e650.ghidra.be2",
             "function=0x1165a4",
-            capa.features.common.Bytes(binascii.unhexlify("E405B89370BA6B419CD7925275BF6FCC1E8360CC")),
+            capa.features.common.Bytes(bytes.fromhex("E405B89370BA6B419CD7925275BF6FCC1E8360CC")),
             True,
         ),
         # # don't extract byte features for obvious strings

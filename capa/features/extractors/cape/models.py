@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import binascii
 from typing import Any, Union, Literal, Optional, Annotated, TypeAlias
 
 from pydantic import Field, BaseModel, ConfigDict
@@ -27,7 +26,7 @@ def validate_hex_int(value):
 
 
 def validate_hex_bytes(value):
-    return binascii.unhexlify(value) if isinstance(value, str) else value
+    return bytes.fromhex(value) if isinstance(value, str) else value
 
 
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
