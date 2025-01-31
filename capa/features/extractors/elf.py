@@ -1088,7 +1088,7 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
     #  and the 32-byte header is followed by varint-prefixed string data
     #  for the two string values we care about.
     # https://github.com/mandiant/GoReSym/blob/0860a1b1b4f3495e9fb7e71eb4386bf3e0a7c500/buildinfo/buildinfo.go#L185-L193
-    BUILDINFO_MAGIC = b"\xFF Go buildinf:"
+    BUILDINFO_MAGIC = b"\xff Go buildinf:"
 
     try:
         index = buf.index(BUILDINFO_MAGIC)
