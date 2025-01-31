@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-- remove `is_static_limitation` class function from `capa.rules.Rule` to inline function in `capa.capabilities.common.py`
+- remove `is_static_limitation` method from `capa.rules.Rule`
 - add span-of-calls scope to rule format
 - capabilities functions return dataclasses instead of tuples
 
