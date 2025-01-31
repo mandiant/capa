@@ -19,7 +19,7 @@ import collections
 from typing import Optional
 from dataclasses import dataclass
 
-from capa.rules import Scope, RuleSet
+from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
 from capa.render.result_document import LibraryFunction, StaticFeatureCounts, DynamicFeatureCounts
@@ -58,28 +58,6 @@ def find_file_capabilities(
     return FileCapabilities(features, matches, len(file_features))
 
 
-def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
-    file_limitation_rules = list(filter(lambda r: r.is_file_limitation_rule(), rules.rules.values()))
-
-    for file_limitation_rule in file_limitation_rules:
-        if file_limitation_rule.name not in capabilities:
-            continue
-
-        logger.warning("-" * 80)
-        for line in file_limitation_rule.meta.get("description", "").split("\n"):
-            logger.warning(" %s", line)
-        logger.warning(" Identified via rule: %s", file_limitation_rule.name)
-        if is_standalone:
-            logger.warning(" ")
-            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
-        logger.warning("-" * 80)
-
-        # bail on first file limitation
-        return True
-
-    return False
-
-
 @dataclass
 class Capabilities:
     matches: MatchResults
@@ -100,3 +78,40 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
         return find_dynamic_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
 
     raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
+
+
+def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, is_standalone: bool) -> bool:
+
+    for rule in rules:
+        if rule.name not in capabilities.matches:
+            continue
+        logger.warning("-" * 80)
+        for line in rule.meta.get("description", "").split("\n"):
+            logger.warning(" %s", line)
+        logger.warning(" Identified via rule: %s", rule.name)
+        if is_standalone:
+            logger.warning(" ")
+            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
+        logger.warning("-" * 80)
+
+        # bail on first file limitation
+        return True
+    return False
+
+
+def is_static_limitation_rule(r: Rule) -> bool:
+    return r.meta.get("namespace", "") == "internal/limitation/static"
+
+
+def has_static_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
+    file_limitation_rules = list(filter(lambda r: is_static_limitation_rule(r), rules.rules.values()))
+    return has_limitation(file_limitation_rules, capabilities, is_standalone)
+
+
+def is_dynamic_limitation_rule(r: Rule) -> bool:
+    return r.meta.get("namespace", "") == "internal/limitation/dynamic"
+
+
+def has_dynamic_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
+    dynamic_limitation_rules = list(filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values()))
+    return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)

@@ -160,7 +160,7 @@ def main(argv=None):
     meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
     meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
-    if capa.capabilities.common.has_file_limitation(rules, capabilities.matches):
+    if capa.capabilities.common.has_static_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose or args.json):

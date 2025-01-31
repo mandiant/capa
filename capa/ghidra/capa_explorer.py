@@ -247,7 +247,7 @@ def get_capabilities():
 
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor, True)
 
-    if capa.capabilities.common.has_file_limitation(rules, capabilities.matches, is_standalone=False):
+    if capa.capabilities.common.has_static_limitation(rules, capabilities, is_standalone=False):
         popup("capa explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
         logger.info("capa encountered warnings during analysis")
 

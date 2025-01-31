@@ -820,7 +820,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
 
-                    if capa.capabilities.common.has_file_limitation(ruleset, capabilities.matches, is_standalone=False):
+                    if capa.capabilities.common.has_static_limitation(ruleset, capabilities, is_standalone=False):
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
                 except Exception as e:
                     logger.exception("Failed to check for file limitations (error: %s)", e)
