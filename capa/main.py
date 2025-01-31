@@ -758,6 +758,7 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
     args:
       args: The parsed command line arguments from `install_common_args`.
 
+    Only file-scoped feature extractors like pefile are used.
     Dynamic feature extractors can handle packed samples and do not need to be considered here.
 
     raises:
@@ -788,21 +789,20 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
 
 def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
     """
+    Does the dynamic analysis describe some trace that we may not support well?
+    For example, .NET samples detonated in a sandbox, which may rely on different API patterns than we currently describe in our rules.
+
     args:
       args: The parsed command line arguments from `install_common_args`.
 
-      For example, notifies when handling .NET samples in a sandbox, which may rely on different API patterns.
-
     raises:
-      ShouldExitError: if the program is invoked incorrectly and should exit.
+      ShouldExitError: if the program is invoked incorrectly and should exit..
     """
     found_dynamic_limitation = False
     for file_extractor in file_extractors:
         pure_dynamic_capabilities = find_file_capabilities(rules, file_extractor, {})
         found_dynamic_limitation = has_dynamic_limitation(rules, pure_dynamic_capabilities)
 
-    # file limitations that rely on non-file scope won't be detected here.
-    # nor on FunctionName features, because pefile doesn't support this.
     if found_dynamic_limitation:
         # bail if capa encountered file limitation e.g. a dotnet sample is detected
         # do show the output in verbose mode, though.

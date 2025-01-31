@@ -80,27 +80,6 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
 
-def is_static_limitation_rule(r: Rule) -> bool:
-    return r.meta.get("namespace", "") == "internal/limitation/static"
-
-
-def has_static_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
-
-    file_limitation_rules = list(filter(lambda r: is_static_limitation_rule(r), rules.rules.values()))
-
-    return has_limitation(file_limitation_rules, capabilities, is_standalone)
-
-
-def is_dynamic_limitation_rule(r: Rule) -> bool:
-    return r.meta.get("namespace", "") == "internal/limitation/dynamic"
-
-
-def has_dynamic_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
-
-    dynamic_limitation_rules = list(filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values()))
-    return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)
-
-
 def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, is_standalone: bool) -> bool:
 
     for rule in rules:
@@ -118,3 +97,21 @@ def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, i
         # bail on first file limitation
         return True
     return False
+
+
+def is_static_limitation_rule(r: Rule) -> bool:
+    return r.meta.get("namespace", "") == "internal/limitation/static"
+
+
+def has_static_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
+    file_limitation_rules = list(filter(lambda r: is_static_limitation_rule(r), rules.rules.values()))
+    return has_limitation(file_limitation_rules, capabilities, is_standalone)
+
+
+def is_dynamic_limitation_rule(r: Rule) -> bool:
+    return r.meta.get("namespace", "") == "internal/limitation/dynamic"
+
+
+def has_dynamic_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
+    dynamic_limitation_rules = list(filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values()))
+    return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)
