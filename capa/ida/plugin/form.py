@@ -183,6 +183,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
 # Add this import at the top of the file
 from PyQt5.QtGui import QFont
 
+
 # Modify the __init__ method of the CapaExplorerForm class
 class CapaExplorerForm(idaapi.PluginForm):
     def __init__(self, name: str, option=Options.NO_ANALYSIS):
