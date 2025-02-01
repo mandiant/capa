@@ -180,9 +180,11 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         )
 
 
-class CapaExplorerForm(idaapi.PluginForm):
-    """form element for plugin interface"""
+# Add this import at the top of the file
+from PyQt5.QtGui import QFont
 
+# Modify the __init__ method of the CapaExplorerForm class
+class CapaExplorerForm(idaapi.PluginForm):
     def __init__(self, name: str, option=Options.NO_ANALYSIS):
         """initialize form elements"""
         super().__init__()
@@ -233,6 +235,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_limit_features_by_ea: QtWidgets.QCheckBox
         self.view_rulegen_status_label: QtWidgets.QLabel
 
+        # Font settings
+        self.font_size = 10  # Default font size
+        self.font_family = "Courier"  # Default font family
+
         self.Show()
 
         analyze = settings.user.get(CAPA_SETTINGS_ANALYZE)
@@ -253,6 +259,34 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.load_interface()
         self.load_ida_hooks()
+
+        # Add font menu
+        self.add_font_menu()
+
+    def add_font_menu(self):
+        """Add a menu option to adjust font size."""
+        menu = idaapi.create_menu("Options")
+        idaapi.add_menu_item(menu, "Increase Font Size", "", 0, self.increase_font_size, ())
+        idaapi.add_menu_item(menu, "Decrease Font Size", "", 0, self.decrease_font_size, ())
+
+    def increase_font_size(self):
+        """Increase the font size."""
+        self.font_size += 1
+        self.apply_font()
+
+    def decrease_font_size(self):
+        """Decrease the font size."""
+        self.font_size -= 1
+        self.apply_font()
+
+    def apply_font(self):
+        """Apply the font to all widgets."""
+        font = QFont(self.font_family, self.font_size)
+        self.parent.setFont(font)
+        self.view_tree.setFont(font)
+        self.view_rulegen_preview.setFont(font)
+        self.view_rulegen_editor.setFont(font)
+        self.view_rulegen_features.setFont(font)
 
     def Show(self):
         """creates form if not already create, else brings plugin to front"""
