@@ -515,6 +515,36 @@ def test_meta_scope_keywords():
         )
 
 
+def test_subscope_same_as_scope():
+    static_scopes = sorted(
+        [e.value for e in capa.rules.STATIC_SCOPES if e not in (capa.rules.Scope.FILE, capa.rules.Scope.GLOBAL)]
+    )
+    dynamic_scopes = sorted(
+        [e.value for e in capa.rules.DYNAMIC_SCOPES if e not in (capa.rules.Scope.FILE, capa.rules.Scope.GLOBAL)]
+    )
+
+    for static_scope in static_scopes:
+        for dynamic_scope in dynamic_scopes:
+            _ = capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    f"""
+                    rule:
+                        meta:
+                            name: test rule
+                            scopes:
+                                static: {static_scope}
+                                dynamic: {dynamic_scope}
+                        features:
+                            - or:
+                                - {static_scope}:
+                                    - format: pe
+                                - {dynamic_scope}:
+                                    - format: pe
+                    """
+                )
+            )
+
+
 def test_lib_rules():
     rules = capa.rules.RuleSet(
         [
