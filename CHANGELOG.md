@@ -4,6 +4,35 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v9.0.0...master](https://github.com/mandiant/capa/compare/v9.0.0...master)
+- [capa-rules v9.0.0...master](https://github.com/mandiant/capa-rules/compare/v9.0.0...master)
+
+## v9.0.0
+
+This release introduces a new scope for dynamic analysis, "span of calls",
+ that matches features against a across a sliding window of API calls within a thread.
+Its useful for identifying behaviors that span multiple API calls,
+ such as `OpenFile`/`ReadFile`/`CloseFile`, without having to analyze an entire thread, which may be very long.
+
+The release also contains a number of bug fixes and enhancements by a new contributor: @v1bh475u. Welcome and thank you!
+
+### New Features
+
 - add warning for dynamic .NET samples #1864 @v1bh475u
 - add lint for detecting duplicate features in capa-rules #2250 @v1bh475u
 - add span-of-calls scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
@@ -15,11 +44,10 @@
 - add span-of-calls scope to rule format
 - capabilities functions return dataclasses instead of tuples
 
-### New Rules (3)
+### New Rules (2)
 
 - data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library @Ana06
 - data-manipulation/encryption/use-bigint-function @Ana06
--
 
 ### Bug Fixes
 
@@ -43,8 +71,8 @@
 - documentation: Improve CLA and Code of Conduct information in CONTRIBUTING @Ana06
 
 ### Raw diffs
-- [capa v8.0.1...master](https://github.com/mandiant/capa/compare/v8.0.1...master)
-- [capa-rules v8.0.1...master](https://github.com/mandiant/capa-rules/compare/v8.0.1...master)
+- [capa v8.0.1...v9.0.0](https://github.com/mandiant/capa/compare/v8.0.1...v9.0.0)
+- [capa-rules v8.0.1...v9.0.0](https://github.com/mandiant/capa-rules/compare/v8.0.1...v9.0.0)
 
 ## v8.0.1
 
