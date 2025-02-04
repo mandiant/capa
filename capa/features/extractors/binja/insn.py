@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any, Optional
+from collections.abc import Iterator
 
-from typing import Any, Iterator, Optional
-
-from binaryninja import Function
-from binaryninja import BasicBlock as BinjaBasicBlock
+import binaryninja as bn
 from binaryninja import (
+    Function,
     BinaryView,
     ILRegister,
     SymbolType,
@@ -323,7 +323,7 @@ def extract_insn_offset_features(
     yield from results
 
 
-def is_nzxor_stack_cookie(f: Function, bb: BinjaBasicBlock, llil: LowLevelILInstruction) -> bool:
+def is_nzxor_stack_cookie(f: Function, bb: bn.BasicBlock, llil: LowLevelILInstruction) -> bool:
     """check if nzxor exists within stack cookie delta"""
     # TODO(xusheng): use LLIL SSA to do more accurate analysis
     # https://github.com/mandiant/capa/issues/1609
