@@ -24,7 +24,7 @@ from capa.features.extractors.strings import (
 def test_buf_filled_with():
     # single repeating byte
     assert buf_filled_with(b"\x00" * 8, 0x00) is True
-    assert buf_filled_with(b"\xFF" * 8, 0xFF) is True
+    assert buf_filled_with(b"\xff" * 8, 0xFF) is True
 
     # mixed bytes
     assert buf_filled_with(b"\x00\x01" * 8, 0x00) is False
@@ -52,14 +52,14 @@ def test_extract_ascii_strings():
     assert strings[0] == String("Test", 3)
 
     # non-ASCII strings
-    buf = b"Hello\xFFWorld\x00"
+    buf = b"Hello\xffWorld\x00"
     strings = list(extract_ascii_strings(buf))
     assert len(strings) == 2
     assert strings[0] == String("Hello", 0)
     assert strings[1] == String("World", 6)
 
     # only non-ASCII
-    assert list(extract_ascii_strings(b"\xFF\xFF\xFF")) == []
+    assert list(extract_ascii_strings(b"\xff\xff\xff")) == []
 
     buf = b"\x00" * 8 + b"ValidString\x00"
     strings = list(extract_ascii_strings(buf))
@@ -80,7 +80,7 @@ def test_extract_unicode_strings():
     assert strings[0] == String("Test", 6)
 
     # invalid Unicode sequences
-    buf = b"H\x00\xFF\x00l\x00l\x00o\x00\x00\x00"
+    buf = b"H\x00\xff\x00l\x00l\x00o\x00\x00\x00"
     strings = list(extract_unicode_strings(buf))
     assert len(strings) == 0
 

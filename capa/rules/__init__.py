@@ -597,6 +597,43 @@ def unique(sequence):
     return [x for x in sequence if not (x in seen or seen.add(x))]  # type: ignore [func-returns-value]
 
 
+STATIC_SCOPE_ORDER = [
+    Scope.FILE,
+    Scope.FUNCTION,
+    Scope.BASIC_BLOCK,
+    Scope.INSTRUCTION,
+]
+
+
+DYNAMIC_SCOPE_ORDER = [
+    Scope.FILE,
+    Scope.PROCESS,
+    Scope.THREAD,
+    Scope.SPAN_OF_CALLS,
+    Scope.CALL,
+]
+
+
+def is_subscope_compatible(scope: Scope | None, subscope: Scope) -> bool:
+    if not scope:
+        return False
+
+    if subscope in STATIC_SCOPE_ORDER:
+        try:
+            return STATIC_SCOPE_ORDER.index(subscope) >= STATIC_SCOPE_ORDER.index(scope)
+        except ValueError:
+            return False
+
+    elif subscope in DYNAMIC_SCOPE_ORDER:
+        try:
+            return DYNAMIC_SCOPE_ORDER.index(subscope) >= DYNAMIC_SCOPE_ORDER.index(scope)
+        except ValueError:
+            return False
+
+    else:
+        raise ValueError("unexpected scope")
+
+
 def build_statements(d, scopes: Scopes):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
@@ -621,7 +658,7 @@ def build_statements(d, scopes: Scopes):
         return ceng.Some(0, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
 
     elif key == "process":
-        if Scope.FILE not in scopes:
+        if not is_subscope_compatible(scopes.dynamic, Scope.PROCESS):
             raise InvalidRule("`process` subscope supported only for `file` scope")
 
         if len(d[key]) != 1:
@@ -632,7 +669,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "thread":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS)):
+        if not is_subscope_compatible(scopes.dynamic, Scope.THREAD):
             raise InvalidRule("`thread` subscope supported only for the `process` scope")
 
         if len(d[key]) != 1:
@@ -643,7 +680,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "span of calls":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SPAN_OF_CALLS)):
+        if not is_subscope_compatible(scopes.dynamic, Scope.SPAN_OF_CALLS):
             raise InvalidRule("`span of calls` subscope supported only for the `process` and `thread` scopes")
 
         if len(d[key]) != 1:
@@ -656,7 +693,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "call":
-        if all(s not in scopes for s in (Scope.FILE, Scope.PROCESS, Scope.THREAD, Scope.SPAN_OF_CALLS, Scope.CALL)):
+        if not is_subscope_compatible(scopes.dynamic, Scope.CALL):
             raise InvalidRule("`call` subscope supported only for the `process`, `thread`, and `call` scopes")
 
         if len(d[key]) != 1:
@@ -667,7 +704,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "function":
-        if Scope.FILE not in scopes:
+        if not is_subscope_compatible(scopes.static, Scope.FUNCTION):
             raise InvalidRule("`function` subscope supported only for `file` scope")
 
         if len(d[key]) != 1:
@@ -678,7 +715,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "basic block":
-        if Scope.FUNCTION not in scopes:
+        if not is_subscope_compatible(scopes.static, Scope.BASIC_BLOCK):
             raise InvalidRule("`basic block` subscope supported only for `function` scope")
 
         if len(d[key]) != 1:
@@ -689,7 +726,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "instruction":
-        if all(s not in scopes for s in (Scope.FUNCTION, Scope.BASIC_BLOCK)):
+        if not is_subscope_compatible(scopes.static, Scope.INSTRUCTION):
             raise InvalidRule("`instruction` subscope supported only for `function` and `basic block` scope")
 
         if len(d[key]) == 1:

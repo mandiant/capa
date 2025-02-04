@@ -115,10 +115,7 @@ def extract_file_function_names(**kwargs):
     """
     extract the names of statically-linked library functions.
     """
-    if False:
-        # using a `yield` here to force this to be a generator, not function.
-        yield NotImplementedError("pefile doesn't have library matching")
-    return
+    yield from []
 
 
 def extract_file_os(**kwargs):

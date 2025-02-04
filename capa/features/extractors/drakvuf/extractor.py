@@ -21,7 +21,7 @@ import capa.features.extractors.drakvuf.file
 import capa.features.extractors.drakvuf.thread
 import capa.features.extractors.drakvuf.global_
 import capa.features.extractors.drakvuf.process
-from capa.features.common import Feature, Characteristic
+from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress, _NoAddress
 from capa.features.extractors.base_extractor import (
     CallHandle,
@@ -74,11 +74,7 @@ class DrakvufExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.drakvuf.process.get_threads(self.sorted_calls, ph)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
-        if False:
-            # force this routine to be a generator,
-            # but we don't actually have any elements to generate.
-            yield Characteristic("never"), NO_ADDRESS
-        return
+        yield from []
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         yield from capa.features.extractors.drakvuf.thread.get_calls(self.sorted_calls, ph, th)
