@@ -3,19 +3,22 @@
 ## master (unreleased)
 
 ### New Features
+
+- add warning for dynamic .NET samples #1864 @v1bh475u
 - add lint for detecting duplicate features in capa-rules #2250 @v1bh475u
 - add span-of-calls scope to match features against a across a sliding window of API calls within a thread @williballenthin #2532
 - add lint to catch rules that depend on other rules with impossible scope @williballenthin #2124
 
 ### Breaking Changes
 
+- remove `is_static_limitation` method from `capa.rules.Rule`
 - add span-of-calls scope to rule format
 - capabilities functions return dataclasses instead of tuples
 
 ### New Rules (3)
 
-- data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library Ana06
-- data-manipulation/encryption/use-bigint-function Ana06
+- data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library @Ana06
+- data-manipulation/encryption/use-bigint-function @Ana06
 - nursery/dynamic-add-veh wballenthin@google.com
 -
 
@@ -29,6 +32,7 @@
 - elffile: handle symbols without a name @williballenthin #2553
 - project: remove pytest-cov that wasn't used @williballenthin @2491
 - replace binascii methods with native Python methods @v1bh475u #2582
+- rules: scopes can now have subscope blocks with the same scope @williballenthin #2584
 
 ### capa Explorer Web
 
