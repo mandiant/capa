@@ -31,6 +31,7 @@
 - strings: add type hints and fix uncovered bugs @williballenthin #2555
 - elffile: handle symbols without a name @williballenthin #2553
 - project: remove pytest-cov that wasn't used @williballenthin @2491
+- rules: scopes can now have subscope blocks with the same scope @williballenthin #2584
 
 ### capa Explorer Web
 

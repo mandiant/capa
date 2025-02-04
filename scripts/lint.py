@@ -48,7 +48,7 @@ import capa.loader
 import capa.helpers
 import capa.features.insn
 import capa.capabilities.common
-from capa.rules import Rule, Scope, RuleSet
+from capa.rules import Rule, RuleSet
 from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
@@ -536,15 +536,8 @@ class RuleDependencyScopeMismatch(Lint):
             # Assume for now it is not.
             return True
 
-        static_scope_order = [
-            None,
-            Scope.FILE,
-            Scope.FUNCTION,
-            Scope.BASIC_BLOCK,
-            Scope.INSTRUCTION,
-        ]
-
-        return static_scope_order.index(child.scopes.static) >= static_scope_order.index(parent.scopes.static)
+        assert child.scopes.static is not None
+        return capa.rules.is_subscope_compatible(parent.scopes.static, child.scopes.static)
 
     @staticmethod
     def _is_dynamic_scope_compatible(parent: Rule, child: Rule) -> bool:
@@ -563,16 +556,8 @@ class RuleDependencyScopeMismatch(Lint):
             # Assume for now it is not.
             return True
 
-        dynamic_scope_order = [
-            None,
-            Scope.FILE,
-            Scope.PROCESS,
-            Scope.THREAD,
-            Scope.SPAN_OF_CALLS,
-            Scope.CALL,
-        ]
-
-        return dynamic_scope_order.index(child.scopes.dynamic) >= dynamic_scope_order.index(parent.scopes.dynamic)
+        assert child.scopes.dynamic is not None
+        return capa.rules.is_subscope_compatible(parent.scopes.dynamic, child.scopes.dynamic)
 
 
 class OptionalNotUnderAnd(Lint):

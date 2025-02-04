@@ -22,8 +22,8 @@ import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
-from capa.features.common import Feature, Characteristic
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
+from capa.features.common import Feature
+from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress
 from capa.features.extractors.cape.models import Call, Static, Process, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
@@ -77,11 +77,7 @@ class CapeExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.cape.process.get_threads(ph)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
-        if False:
-            # force this routine to be a generator,
-            # but we don't actually have any elements to generate.
-            yield Characteristic("never"), NO_ADDRESS
-        return
+        yield from []
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         yield from capa.features.extractors.cape.thread.get_calls(ph, th)
