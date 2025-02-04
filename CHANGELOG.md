@@ -15,11 +15,12 @@
 - add span-of-calls scope to rule format
 - capabilities functions return dataclasses instead of tuples
 
-### New Rules (3)
+### New Rules (4)
 
 - data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library @Ana06
 - data-manipulation/encryption/use-bigint-function @Ana06
 - nursery/dynamic-add-veh wballenthin@google.com
+- internal/limitation/dynamic/internal-dotnet-file-limitation @v1bh475u
 -
 
 ### Bug Fixes
