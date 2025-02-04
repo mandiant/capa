@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import binascii
 from typing import Union, Literal, Optional, Annotated
 
 from pydantic import Field, BaseModel, ConfigDict
@@ -85,7 +84,7 @@ class FeatureModel(BaseModel):
             return capa.features.insn.Number(self.number, description=self.description)
 
         elif isinstance(self, BytesFeature):
-            return capa.features.common.Bytes(binascii.unhexlify(self.bytes), description=self.description)
+            return capa.features.common.Bytes(bytes.fromhex(self.bytes), description=self.description)
 
         elif isinstance(self, OffsetFeature):
             return capa.features.insn.Offset(self.offset, description=self.description)
@@ -191,7 +190,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.common.Bytes):
         buf = f.value
         assert isinstance(buf, bytes)
-        return BytesFeature(bytes=binascii.hexlify(buf).decode("ascii"), description=f.description)
+        return BytesFeature(bytes=bytes.hex(buf), description=f.description)
 
     elif isinstance(f, capa.features.insn.Offset):
         assert isinstance(f.value, int)

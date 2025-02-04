@@ -36,7 +36,6 @@ Check the output window for any errors, and/or the summary of changes.
 """
 
 import logging
-import binascii
 from pathlib import Path
 
 import ida_nalt
@@ -85,7 +84,7 @@ def main():
     #
     # see: https://github.com/idapython/bin/issues/11
     a = meta.sample.md5.lower()
-    b = binascii.hexlify(ida_nalt.retrieve_input_file_md5()).decode("ascii").lower()
+    b = bytes.hex(ida_nalt.retrieve_input_file_md5()).lower()
     if not a.startswith(b):
         logger.error("sample mismatch")
         return -2

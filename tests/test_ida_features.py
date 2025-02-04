@@ -60,7 +60,6 @@ import io
 import sys
 import inspect
 import logging
-import binascii
 import traceback
 from pathlib import Path
 
@@ -86,7 +85,7 @@ def check_input_file(wanted):
     except UnicodeDecodeError:
         # in IDA 7.5 or so, GetInputFileMD5 started returning raw binary
         # rather than the hex digest
-        found = binascii.hexlify(idautils.GetInputFileMD5()[:15]).decode("ascii").lower()
+        found = bytes.hex(idautils.GetInputFileMD5()[:15]).lower()
 
     if not wanted.startswith(found):
         raise RuntimeError(f"please run the tests against sample with MD5: `{wanted}`")
