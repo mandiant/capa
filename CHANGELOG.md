@@ -19,7 +19,6 @@
 
 - data-manipulation/encryption/rsa/encrypt-data-using-rsa-via-embedded-library @Ana06
 - data-manipulation/encryption/use-bigint-function @Ana06
-- nursery/dynamic-add-veh wballenthin@google.com
 -
 
 ### Bug Fixes
