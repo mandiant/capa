@@ -216,22 +216,35 @@
         <!-- TODO(williballenthin): add date -->
         <li>
           added:
-          <a href="./rules/overwrite DLL .text section to remove hooks/">
-            overwrite DLL .text section to remove hooks
+          <a href="./rules/use bigint function/">
+            use bigint function
           </a>
         </li>
 
         <li>
           added:
-          <a href="./rules/attach BPF to socket on Linux/">
-            attach BPF to socket on Linux
+          <a href="./rules/encrypt data using RSA via embedded library/">
+            encrypt data using RSA via embedded library
           </a>
         </li>
       </ul>
 
       <h2 class="mt-3">Tool Updates</h2>
 
-      <h3 class="mt-2">v8.0.0 (<em>2024-12-09</em>)</h3>
+      <h3 class="mt-2">v9.0.0 (<em>2025-02-05</em>)</h3>
+      <p class="mt-0">
+        This release introduces a new scope for dynamic analysis, "span of calls",
+         that matches features against a across a sliding window of API calls within a thread.
+        Its useful for identifying behaviors that span multiple API calls,
+         such as <code>OpenFile</code>/<code>ReadFile</code>/<code>CloseFile</code>,
+        without having to analyze an entire thread, which may be very long.
+
+        The release also contains a number of bug fixes and enhancements by new contributors:
+         <a href="https://github.com/v1bh475u">@v1bh475u</a> and <a href="https://github.com/dhruvak001">@dhruvak001</a>.
+        Welcome and thank you!
+      </p>
+
+      <h3 class="mt-2">v8.0.1 (<em>2024-12-09</em>)</h3>
       <p class="mt-0">
         This point release fixes an issue with the IDAPython API to now handle IDA Pro 8.3, 8.4, and 9.0 correctly.
       </p>
