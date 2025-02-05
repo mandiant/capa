@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       # set to false for debugging
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-20.04
