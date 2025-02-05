@@ -181,7 +181,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
     def __init__(self, parent=None):
         """ """
         super().__init__(parent)
-        self.setFont(QtGui.QFont("Courier", 10, weight=QtGui.QFont.Bold))  # Set default font size
+        self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))  
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setAcceptRichText(False)
@@ -326,7 +326,6 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
-        self.setFont(QtGui.QFont("Courier", 10))
         # configure view columns to auto-resize
         for idx in range(3):
             self.header().setSectionResizeMode(idx, QtWidgets.QHeaderView.Interactive)
@@ -816,7 +815,6 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         self.setHeaderLabels(["Feature", "Address"])
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
-        self.setFont(QtGui.QFont("Courier", 10))
         # configure view columns to auto-resize
         for idx in range(2):
             self.header().setSectionResizeMode(idx, QtWidgets.QHeaderView.Interactive)
