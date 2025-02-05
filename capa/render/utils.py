@@ -58,6 +58,8 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
     for _, _, rule in sort_rules(doc.rules):
         if rule.meta.lib:
             continue
+        if (rule.meta.namespace or "").startswith("internal/"):
+            continue
         if rule.meta.is_subscope_rule:
             continue
         if rule.meta.maec.analysis_conclusion:

@@ -2227,8 +2227,8 @@ def get_rules(
         on_load_rule(path, i, total_rule_count)
 
         try:
-            rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
-        except capa.rules.InvalidRule:
+            rule = Rule.from_yaml(content.decode("utf-8"))
+        except InvalidRule:
             raise
         else:
             rule.meta["capa/path"] = path.as_posix()
@@ -2237,7 +2237,7 @@ def get_rules(
             rules.append(rule)
             logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
 
-    ruleset = capa.rules.RuleSet(rules)
+    ruleset = RuleSet(rules)
 
     capa.rules.cache.cache_ruleset(cache_dir, ruleset)
 
