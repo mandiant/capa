@@ -33,6 +33,7 @@ import logging
 import argparse
 import itertools
 import posixpath
+from typing import Any, Dict, List
 from pathlib import Path
 from dataclasses import field, dataclass
 
@@ -47,7 +48,7 @@ import capa.loader
 import capa.helpers
 import capa.features.insn
 import capa.capabilities.common
-from capa.rules import Rule, Scope, RuleSet
+from capa.rules import Rule, RuleSet
 from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
@@ -535,15 +536,8 @@ class RuleDependencyScopeMismatch(Lint):
             # Assume for now it is not.
             return True
 
-        static_scope_order = [
-            None,
-            Scope.FILE,
-            Scope.FUNCTION,
-            Scope.BASIC_BLOCK,
-            Scope.INSTRUCTION,
-        ]
-
-        return static_scope_order.index(child.scopes.static) >= static_scope_order.index(parent.scopes.static)
+        assert child.scopes.static is not None
+        return capa.rules.is_subscope_compatible(parent.scopes.static, child.scopes.static)
 
     @staticmethod
     def _is_dynamic_scope_compatible(parent: Rule, child: Rule) -> bool:
@@ -562,16 +556,8 @@ class RuleDependencyScopeMismatch(Lint):
             # Assume for now it is not.
             return True
 
-        dynamic_scope_order = [
-            None,
-            Scope.FILE,
-            Scope.PROCESS,
-            Scope.THREAD,
-            Scope.SPAN_OF_CALLS,
-            Scope.CALL,
-        ]
-
-        return dynamic_scope_order.index(child.scopes.dynamic) >= dynamic_scope_order.index(parent.scopes.dynamic)
+        assert child.scopes.dynamic is not None
+        return capa.rules.is_subscope_compatible(parent.scopes.dynamic, child.scopes.dynamic)
 
 
 class OptionalNotUnderAnd(Lint):
@@ -593,6 +579,88 @@ class OptionalNotUnderAnd(Lint):
                     rec(child)
 
         rec(rule.statement)
+
+        return self.violation
+
+
+class DuplicateFeatureUnderStatement(Lint):
+    name = "rule contains a duplicate features"
+    recommendation = "remove the duplicate features"
+    recommendation_template = '\n\tduplicate line: "{:s}"\t: line numbers: {:s}'
+    violation = False
+
+    def check_rule(self, ctx: Context, rule: Rule) -> bool:
+        self.violation = False
+        self.recommendation = ""
+        STATEMENTS = frozenset(
+            {
+                "or",
+                "and",
+                "not",
+                "optional",
+                "some",
+                "basic block",
+                "function",
+                "instruction",
+                "call",
+                " or more",
+            }
+        )
+        # rule.statement discards the duplicate features by default so
+        # need to use the rule definition to check for duplicates
+        data = rule._get_ruamel_yaml_parser().load(rule.definition)
+
+        def get_line_number(line: Dict[str, Any]) -> int:
+            lc = getattr(line, "lc", None)
+            if lc and hasattr(lc, "line"):
+                return lc.line + 1
+            return 0
+
+        def is_statement(key: str) -> bool:
+            # to generalize the check for 'n or more' statements
+            return any(statement in key for statement in STATEMENTS)
+
+        def get_feature_key(feature_dict: Dict[str, Any]) -> str:
+            # need this for generating key for multi-lined feature
+            # for example,         - string: /dbghelp\.dll/i
+            #                        description: WindBG
+            parts = []
+            for key, value in list(feature_dict.items()):
+                parts.append(f"{key}: {value}")
+            return "- " + ", ".join(parts)
+
+        def find_duplicates(features: List[Any]) -> None:
+            if not isinstance(features, list):
+                return
+
+            seen_features: Dict[str, List[int]] = {}
+            for item in features:
+                if not isinstance(item, dict):
+                    continue
+
+                if any(is_statement(key) for key in item.keys()):
+                    for key, value in item.items():
+                        if is_statement(key):
+                            # recursively check nested features
+                            find_duplicates(value)
+                    continue
+
+                feature_key = get_feature_key(item)
+                line_num = get_line_number(item)
+                if feature_key in seen_features:
+                    self.violation = True
+                    seen_features[feature_key].append(line_num)
+                else:
+                    seen_features[feature_key] = [line_num]
+            for feature_key, line_numbers in seen_features.items():
+                if len(line_numbers) > 1:
+                    sorted_lines = sorted(line_numbers)
+                    self.recommendation += self.recommendation_template.format(
+                        feature_key, ", ".join(str(line) for line in sorted_lines)
+                    )
+
+        features = data["rule"].get("features", [])
+        find_duplicates(features)
 
         return self.violation
 
@@ -916,6 +984,7 @@ LOGIC_LINTS = (
     OrStatementWithAlwaysTrueChild(),
     NotNotUnderAnd(),
     OptionalNotUnderAnd(),
+    DuplicateFeatureUnderStatement(),
     RuleDependencyScopeMismatch(),
 )
 

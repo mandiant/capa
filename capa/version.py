@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "8.0.1"
+__version__ = "9.0.0"
 
 
 def get_major_version():
