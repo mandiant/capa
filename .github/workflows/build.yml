@@ -29,7 +29,7 @@ jobs:
             python_version: '3.10'
           - os: ubuntu-20.04
             artifact_name: capa
-            asset_name: linux-py312
+            asset_name: linux-py313
             python_version: '3.13'
           - os: windows-2019
             artifact_name: capa.exe
@@ -87,7 +87,7 @@ jobs:
             asset_name: linux
           - os: ubuntu-22.04
             artifact_name: capa
-            asset_name: linux-py312
+            asset_name: linux-py313
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
@@ -113,7 +113,7 @@ jobs:
         include:
           - asset_name: linux
             artifact_name: capa
-          - asset_name: linux-py312
+          - asset_name: linux-py313
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe
