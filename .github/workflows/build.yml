@@ -53,10 +53,25 @@ jobs:
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
         run: python -m pip install --upgrade pip setuptools
+      - name: Capture installed packages before installation
+        run: pip freeze > before.txt
       - name: Install capa with build requirements
         run: |
           pip install -r requirements.txt
           pip install -e .[build]
+      - name: Capture installed packages after installation
+        run: pip freeze > after.txt
+      - name: Check for extra packages
+        run: |
+          diff <(sort before.txt) <(sort after.txt) > diff.txt
+          grep -v -e 'capa==' -e 'some-other-package==' diff.txt > unexpected.txt
+          if [ -s unexpected.txt ]; then
+            echo "Error: Unexpected extra packages were installed:"
+            cat unexpected.txt
+            exit 1
+          else
+            echo "No extra packages were installed."
+          fi
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run (PE)?
