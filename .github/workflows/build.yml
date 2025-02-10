@@ -64,11 +64,10 @@ jobs:
       - name: Check for extra packages
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt
-          grep -v -e 'capa==' -e 'some-other-package==' diff.txt > unexpected.txt
-          if [ -s unexpected.txt ]; then
-            echo "Error: Unexpected extra packages were installed:"
-            cat unexpected.txt
-            exit 1
+          if [ -s diff.txt ]; then
+            echo "Error: Extra packages were installed:"
+            cat diff.txt
+            exit 1  # Exit with non-zero status to fail the CI job
           else
             echo "No extra packages were installed."
           fi
