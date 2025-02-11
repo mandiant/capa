@@ -1653,3 +1653,15 @@ def test_circular_dependency():
     ]
     with pytest.raises(capa.rules.InvalidRule):
         list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
+
+
+def test_trim_dll_part():
+    from capa.rules import trim_dll_part
+
+    assert trim_dll_part("GetModuleHandle") == "GetModuleHandle"
+    assert trim_dll_part("kernel32.CreateFileA") == "CreateFileA"
+    assert trim_dll_part("System.Convert::FromBase64String") == "System.Convert::FromBase64String"
+    assert trim_dll_part("System.Diagnostics.Debugger::IsLogging") == "System.Diagnostics.Debugger::IsLogging"
+    assert trim_dll_part("ws2_32.#1") == "ws2_32.#1"
+    assert trim_dll_part("Debugger::IsLogging") == "Debugger::IsLogging"
+    assert trim_dll_part("kernel32.ws2.#1") == "kernel32.ws2.#1"
