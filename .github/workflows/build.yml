@@ -71,6 +71,14 @@ jobs:
           else
             echo "No extra packages were installed."
           fi
+      - name: Upload artifacts for debugging
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-files
+          path: |
+            before.txt
+            after.txt
+            diff.txt
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run (PE)?
