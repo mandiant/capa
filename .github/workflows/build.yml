@@ -73,7 +73,7 @@ jobs:
       - name: Upload artifacts for debugging
         uses: actions/upload-artifact@v4
         with:
-          name: debug-files
+          name: debug-files-${{ github.run_id }}
           path: |
             before.txt
             after.txt
