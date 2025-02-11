@@ -62,6 +62,7 @@ jobs:
       - name: Capture installed packages after installation
         run: pip freeze > after.txt
       - name: Check for extra packages
+        shell: bash
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
           if [ -s diff.txt ]; then
