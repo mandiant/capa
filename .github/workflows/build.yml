@@ -73,11 +73,12 @@ jobs:
       - name: Upload artifacts for debugging
         uses: actions/upload-artifact@v4
         with:
-          name: debug-files-${{ github.run_id }}
+          name: debug-files
           path: |
             before.txt
             after.txt
             diff.txt
+          overwrite: true 
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run (PE)?
