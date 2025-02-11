@@ -81,7 +81,6 @@ dependencies = [
     "pydantic>=2",
     "rich>=13",
     "humanize>=4",
-    "protobuf>=5",
     "msgspec>=0.18.6",
     "xmltodict>=0.13.0",
 
