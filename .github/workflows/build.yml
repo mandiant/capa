@@ -66,11 +66,13 @@ jobs:
         shell: bash
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
-          if [ -s diff.txt ]; then
-            echo "Warning: Extra packages were installed:"
-            cat diff.txt
+          grep -v -e 'flare_capa==' -e 'altgraph==' -e 'build==' -e 'pyinstaller==' -e 'pywin32-ctypes==' -e 'tomli==' diff.txt > unexpected.txt
+          if [ -s unexpected.txt ]; then
+            echo "Error: Unexpected extra packages were installed:"
+            cat unexpected.txt
+            exit 1  # Exit with non-zero status to fail the CI job
           else
-            echo "No extra packages were installed."
+            echo "No unexpected extra packages were installed."
           fi
       - name: Upload artifacts for debugging
         uses: actions/upload-artifact@v4
