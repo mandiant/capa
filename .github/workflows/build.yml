@@ -66,7 +66,17 @@ jobs:
         shell: bash
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
-          grep -v -e 'flare_capa==' -e 'altgraph==' -e 'build==' -e 'pyinstaller==' -e 'pywin32-ctypes==' -e 'tomli==' diff.txt > unexpected.txt
+          grep -v -e 'flare_capa==' \
+                  -e 'altgraph==' \
+                  -e 'build==' \
+                  -e 'pyinstaller==' \
+                  -e 'pywin32-ctypes==' \
+                  -e 'tomli==' \
+                  -e 'packaging==' \
+                  -e 'pyinstaller-hooks-contrib==' \
+                  -e 'pyproject_hooks==' \
+                  -e 'pefile==' \
+                  -e '^[0-9]' diff.txt > unexpected.txt || true
           if [ -s unexpected.txt ]; then
             echo "Warning: Unexpected extra packages were installed:"
             cat unexpected.txt
