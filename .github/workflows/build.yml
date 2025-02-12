@@ -67,6 +67,7 @@ jobs:
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
           grep -v -e 'flare_capa==' \
+                  -e '^\-e git\+https://github.com/mandiant/capa@' \
                   -e 'altgraph==' \
                   -e 'build==' \
                   -e 'pyinstaller==' \
@@ -78,20 +79,12 @@ jobs:
                   -e 'pefile==' \
                   -e '^[0-9]' diff.txt > unexpected.txt || true
           if [ -s unexpected.txt ]; then
-            echo "Warning: Unexpected extra packages were installed:"
+            echo "Error: Unexpected extra packages were installed:"
             cat unexpected.txt
+            exit 1
           else
             echo "No unexpected extra packages were installed."
           fi
-      - name: Upload artifacts for debugging
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-files
-          path: |
-            before.txt
-            after.txt
-            diff.txt
-          overwrite: true 
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run (PE)?
