@@ -18,8 +18,8 @@ jobs:
     name: PyInstaller for ${{ matrix.os }} / Py ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
-      # set to false for debugging
-      fail-fast: false
+      
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-20.04

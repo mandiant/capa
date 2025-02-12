@@ -180,7 +180,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         )
 
 
-# Modify the __init__ method of the CapaExplorerForm class
+
 class CapaExplorerForm(idaapi.PluginForm):
     """form element for plugin interface"""
 
