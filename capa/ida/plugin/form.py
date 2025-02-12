@@ -180,7 +180,6 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         )
 
 
-
 class CapaExplorerForm(idaapi.PluginForm):
     """form element for plugin interface"""
 

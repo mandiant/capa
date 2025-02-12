@@ -817,7 +817,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         self.setHeaderLabels(["Feature", "Address"])
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
-        
+
         # configure view columns to auto-resize
         for idx in range(2):
             self.header().setSectionResizeMode(idx, QtWidgets.QHeaderView.Interactive)
