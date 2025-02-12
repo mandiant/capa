@@ -67,7 +67,7 @@ jobs:
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
           grep -v -e 'flare_capa==' \
-                  -e '^-e git\+https://github.com/mandiant/capa@.*' \
+                  -e '^-e git\+https://github\.com/mandiant/capa@.*' \
                   -e 'altgraph==' \
                   -e 'build==' \
                   -e 'pyinstaller==' \
