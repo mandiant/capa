@@ -154,7 +154,7 @@ class Signer(ExactModel):
     aux_valid: Optional[bool] = None
     aux_error: Optional[bool] = None
     aux_error_desc: Optional[str] = None
-    aux_signers: Optional[list[AuxSigner]] = None
+    aux_signers: list[AuxSigner] = []
 
 
 class Overlay(ExactModel):
@@ -249,7 +249,7 @@ class File(FlexibleModel):
     ep_bytes: Optional[HexBytes] = None
     entrypoint: Optional[int] = None
     data: Optional[str] = None
-    strings: Optional[list[str]] = None
+    strings: list[str] = []
 
     #
     # detections (skip)
@@ -397,7 +397,7 @@ class CapeReport(FlexibleModel):
     # static analysis results
     #
     static: Optional[Static] = None
-    strings: Optional[list[str]] = None
+    strings: list[str] = []
 
     #
     # dynamic analysis results
@@ -407,8 +407,8 @@ class CapeReport(FlexibleModel):
 
     # post-processed results: payloads and extracted configs
     CAPE: Optional[Union[Cape, list]] = None
-    dropped: Optional[list[File]] = None
-    procdump: Optional[list[ProcessFile]] = None
+    dropped: list[File] = []
+    procdump: list[ProcessFile] = []
     procmemory: Optional[ListTODO] = None
 
     # =========================================================================
