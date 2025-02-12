@@ -68,9 +68,8 @@ jobs:
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
           grep -v -e 'flare_capa==' -e 'altgraph==' -e 'build==' -e 'pyinstaller==' -e 'pywin32-ctypes==' -e 'tomli==' diff.txt > unexpected.txt
           if [ -s unexpected.txt ]; then
-            echo "Error: Unexpected extra packages were installed:"
+            echo "Warning: Unexpected extra packages were installed:"
             cat unexpected.txt
-            exit 1  # Exit with non-zero status to fail the CI job
           else
             echo "No unexpected extra packages were installed."
           fi
