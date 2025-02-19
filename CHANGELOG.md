@@ -12,6 +12,7 @@
 
 ### Bug Fixes
 - only parse CAPE fields required for analysis @mike-hunhoff #2607
+- improve _number_ feature extraction for BinExport @mike-hunhoff #2609
 
 ### capa Explorer Web
 
