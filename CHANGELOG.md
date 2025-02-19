@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- only parse CAPE fields required for analysis @mike-hunhoff #2607
 
 ### capa Explorer Web
 
