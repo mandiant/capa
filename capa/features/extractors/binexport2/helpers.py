@@ -349,30 +349,9 @@ def get_operand_register_expression(be2: BinExport2, operand: BinExport2.Operand
 
 
 def get_operand_immediate_expression(be2: BinExport2, operand: BinExport2.Operand) -> Optional[BinExport2.Expression]:
-    if len(operand.expression_index) == 1:
-        # - type: IMMEDIATE_INT
-        #   immediate: 20588728364
-        #   parent_index: 0
-        expression: BinExport2.Expression = be2.expression[operand.expression_index[0]]
+    for expression in get_operand_expressions(be2, operand):
         if expression.type == BinExport2.Expression.IMMEDIATE_INT:
             return expression
-
-    elif len(operand.expression_index) == 2:
-        # from IDA, which provides a size hint for every operand,
-        # we get the following pattern for immediate constants:
-        #
-        # - type: SIZE_PREFIX
-        #   symbol: "b8"
-        # - type: IMMEDIATE_INT
-        #   immediate: 20588728364
-        #   parent_index: 0
-        expression0: BinExport2.Expression = be2.expression[operand.expression_index[0]]
-        expression1: BinExport2.Expression = be2.expression[operand.expression_index[1]]
-
-        if expression0.type == BinExport2.Expression.SIZE_PREFIX:
-            if expression1.type == BinExport2.Expression.IMMEDIATE_INT:
-                return expression1
-
     return None
 
 
