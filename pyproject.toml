@@ -162,7 +162,7 @@ build = [
 ]
 scripts = [
     "jschema_to_python==1.2.3",
-    "psutil==6.1.0",
+    "psutil==7.0.0",
     "stix2==3.0.1",
     "sarif_om==1.0.4",
     "requests==2.32.3",
