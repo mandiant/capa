@@ -13,6 +13,8 @@
 ### Bug Fixes
 - separate execution paths for all supported formats of `api` in `trim_dll_part` #1899 @v1bh475u
 - add test for `trim_dll_part` #1899 @v1bh475u
+- only parse CAPE fields required for analysis @mike-hunhoff #2607
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
