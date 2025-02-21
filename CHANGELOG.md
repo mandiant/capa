@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- host-interaction/registry/change-registry-key-timestamp wballenthin@google.com
 -
 
 ### Bug Fixes
