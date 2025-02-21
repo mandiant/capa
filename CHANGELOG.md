@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (3)
 
 - host-interaction/registry/change-registry-key-timestamp wballenthin@google.com
+- host-interaction/mutex/check-mutex-and-terminate-process-on-windows @_re_fox moritz.raabe@mandiant.com mehunhoff@google.com
 -
 
 ### Bug Fixes
