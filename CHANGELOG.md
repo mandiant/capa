@@ -15,6 +15,7 @@
 
 ### Bug Fixes
 - only parse CAPE fields required for analysis @mike-hunhoff #2607
+- main: render result document without needing associated rules @williballenthin #2610
 
 ### capa Explorer Web
 
