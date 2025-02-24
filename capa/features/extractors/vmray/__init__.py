@@ -223,16 +223,15 @@ class VMRayAnalysis:
                 # we expect monitor processes recorded in both SummaryV2.json and flog.xml to equal
                 # to ensure this, we compare the pid, monitor_id, and origin_monitor_id
                 # for the other fields we've observed cases with slight deviations, e.g.,
-                # the ppid for a process in flog.xml is not set correctly, all other data is equal
+                # the ppid, origin monitor id, etc. for a process in flog.xml is not set correctly, all other 
+                # data is equal
                 sv2p = self.monitor_processes[monitor_process.process_id]
                 if self.monitor_processes[monitor_process.process_id] != vmray_monitor_process:
                     logger.debug("processes differ: %s (sv2) vs. %s (flog)", sv2p, vmray_monitor_process)
 
-                assert (sv2p.pid, sv2p.monitor_id, sv2p.origin_monitor_id) == (
-                    vmray_monitor_process.pid,
-                    vmray_monitor_process.monitor_id,
-                    vmray_monitor_process.origin_monitor_id,
-                )
+                # we need, at a minimum, for the process id and monitor id to match, otherwise there is likely a bug
+                # in the way that VMRay tracked one of the processes
+                assert (sv2p.pid, sv2p.monitor_id) == (vmray_monitor_process.pid, vmray_monitor_process.monitor_id)
 
     def _compute_monitor_threads(self):
         for monitor_thread in self.flog.analysis.monitor_threads:
