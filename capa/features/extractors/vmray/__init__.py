@@ -223,7 +223,7 @@ class VMRayAnalysis:
                 # we expect monitor processes recorded in both SummaryV2.json and flog.xml to equal
                 # to ensure this, we compare the pid, monitor_id, and origin_monitor_id
                 # for the other fields we've observed cases with slight deviations, e.g.,
-                # the ppid, origin monitor id, etc. for a process in flog.xml is not set correctly, all other 
+                # the ppid, origin monitor id, etc. for a process in flog.xml is not set correctly, all other
                 # data is equal
                 sv2p = self.monitor_processes[monitor_process.process_id]
                 if self.monitor_processes[monitor_process.process_id] != vmray_monitor_process:
