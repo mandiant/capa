@@ -6,14 +6,19 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (4)
 
+- host-interaction/registry/change-registry-key-timestamp wballenthin@google.com
+- host-interaction/mutex/check-mutex-and-terminate-process-on-windows @_re_fox moritz.raabe@mandiant.com mehunhoff@google.com
+- anti-analysis/anti-forensic/clear-logs/clear-windows-event-logs-remotely 99.elad.levi@gmail.com
 -
 
 ### Bug Fixes
 - separate execution paths for all supported formats of `api` in `trim_dll_part` #1899 @v1bh475u
 - add test for `trim_dll_part` #1899 @v1bh475u
 - only parse CAPE fields required for analysis @mike-hunhoff #2607
+- main: render result document without needing associated rules @williballenthin #2610
+- vmray: only verify process OS and monitor IDs match @mike-hunhoff #2613
 
 ### capa Explorer Web
 
