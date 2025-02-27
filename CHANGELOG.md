@@ -14,6 +14,8 @@
 -
 
 ### Bug Fixes
+- separate execution paths for all supported formats of `api` in `trim_dll_part` #1899 @v1bh475u
+- add test for `trim_dll_part` #1899 @v1bh475u
 - only parse CAPE fields required for analysis @mike-hunhoff #2607
 - main: render result document without needing associated rules @williballenthin #2610
 - vmray: only verify process OS and monitor IDs match @mike-hunhoff #2613
