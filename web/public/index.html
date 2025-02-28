@@ -214,22 +214,36 @@
 
       <ul class="mt-2 ps-5">
         <!-- TODO(williballenthin): add date -->
+
         <li>
           added:
-          <a href="./rules/use bigint function/">
-            use bigint function
+          <a href="./rules/change registry key timestamp/">
+            change registry key timestamp
           </a>
         </li>
 
         <li>
           added:
-          <a href="./rules/encrypt data using RSA via embedded library/">
-            encrypt data using RSA via embedded library
+          <a href="./rules/check mutex and terminate process on windows/">
+            check mutex and terminate process on Windows
+          </a>
+        </li>
+
+        <li>
+          added:
+          <a href="./rules/clear windows event logs remotely/">
+            clear windows event logs remotely
           </a>
         </li>
       </ul>
 
       <h2 class="mt-3">Tool Updates</h2>
+      
+      <h3 class="mt-2">v9.1.0 (<em>2025-03-02</em>)</h3>
+      <p class="mt-0">
+        This release improves a few aspects of dynamic analysis, relaxing our validation on fields across many CAPE versions, for example.
+        It also includes an updated rule pack in which many dynamic rules make better use of the "span of calls" scope.
+      </p>
 
       <h3 class="mt-2">v9.0.0 (<em>2025-02-05</em>)</h3>
       <p class="mt-0">
