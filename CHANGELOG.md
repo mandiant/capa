@@ -38,6 +38,7 @@ It also includes an updated rule pack in which many dynamic rules make better us
 - only parse CAPE fields required for analysis @mike-hunhoff #2607
 - main: render result document without needing associated rules @williballenthin #2610
 - vmray: only verify process OS and monitor IDs match @mike-hunhoff #2613
+- render: don't assume prior matches exist within a thread @mike-hunhoff #2612
 
 ### Raw diffs
 - [capa v9.0.0...v9.1.0](https://github.com/mandiant/capa/compare/v9.0.0...v9.1.0)
