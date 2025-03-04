@@ -418,8 +418,9 @@ class Match(FrozenModel):
                                     and a.id <= location.id
                                 ]
                             )
-                            _, most_recent_match = matches_in_thread[-1]
-                            children.append(Match.from_capa(rules, capabilities, most_recent_match))
+                            if matches_in_thread:
+                                _, most_recent_match = matches_in_thread[-1]
+                                children.append(Match.from_capa(rules, capabilities, most_recent_match))
 
                     else:
                         children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
@@ -478,8 +479,11 @@ class Match(FrozenModel):
                                             and a.id <= location.id
                                         ]
                                     )
-                                    _, most_recent_match = matches_in_thread[-1]
-                                    children.append(Match.from_capa(rules, capabilities, most_recent_match))
+                                    # namespace matches may not occur within the same thread as the result, so only
+                                    # proceed if a match within the same thread is found
+                                    if matches_in_thread:
+                                        _, most_recent_match = matches_in_thread[-1]
+                                        children.append(Match.from_capa(rules, capabilities, most_recent_match))
                             else:
                                 if location in rule_matches:
                                     children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
