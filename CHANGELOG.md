@@ -6,17 +6,11 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (0)
 
-- host-interaction/registry/change-registry-key-timestamp wballenthin@google.com
-- host-interaction/mutex/check-mutex-and-terminate-process-on-windows @_re_fox moritz.raabe@mandiant.com mehunhoff@google.com
-- anti-analysis/anti-forensic/clear-logs/clear-windows-event-logs-remotely 99.elad.levi@gmail.com
 -
 
 ### Bug Fixes
-- only parse CAPE fields required for analysis @mike-hunhoff #2607
-- main: render result document without needing associated rules @williballenthin #2610
-- vmray: only verify process OS and monitor IDs match @mike-hunhoff #2613
 
 ### capa Explorer Web
 
@@ -25,8 +19,30 @@
 ### Development
 
 ### Raw diffs
-- [capa v9.0.0...master](https://github.com/mandiant/capa/compare/v9.0.0...master)
-- [capa-rules v9.0.0...master](https://github.com/mandiant/capa-rules/compare/v9.0.0...master)
+- [capa v9.1.0...master](https://github.com/mandiant/capa/compare/v9.1.0...master)
+- [capa-rules v9.1.0...master](https://github.com/mandiant/capa-rules/compare/v9.1.0...master)
+
+## v9.1.0
+
+This release improves a few aspects of dynamic analysis, relaxing our validation on fields across many CAPE versions, for example.
+It also includes an updated rule pack in which many dynamic rules make better use of the "span of calls" scope.
+
+
+### New Rules (3)
+
+- host-interaction/registry/change-registry-key-timestamp wballenthin@google.com
+- host-interaction/mutex/check-mutex-and-terminate-process-on-windows @_re_fox moritz.raabe@mandiant.com mehunhoff@google.com
+- anti-analysis/anti-forensic/clear-logs/clear-windows-event-logs-remotely 99.elad.levi@gmail.com
+
+### Bug Fixes
+- only parse CAPE fields required for analysis @mike-hunhoff #2607
+- main: render result document without needing associated rules @williballenthin #2610
+- vmray: only verify process OS and monitor IDs match @mike-hunhoff #2613
+- render: don't assume prior matches exist within a thread @mike-hunhoff #2612
+
+### Raw diffs
+- [capa v9.0.0...v9.1.0](https://github.com/mandiant/capa/compare/v9.0.0...v9.1.0)
+- [capa-rules v9.0.0...v9.1.0](https://github.com/mandiant/capa-rules/compare/v9.0.0...v9.1.0)
 
 ## v9.0.0
 
