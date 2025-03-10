@@ -6,8 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (2)
 
+- communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
+- communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
 -
 
 ### Bug Fixes
