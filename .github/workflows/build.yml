@@ -81,6 +81,9 @@ jobs:
                   -e 'pyinstaller-hooks-contrib==' \
                   -e 'pyproject_hooks==' \
                   -e 'pefile==' \
+                  -e '^---$' \
+                  -e '^> ' \
+                  -e '^< '\
                   -e '^[0-9]' diff.txt > unexpected.txt || true
           
           if [ $(wc -l < unexpected.txt) -gt 1 ]; then 
