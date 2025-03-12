@@ -243,7 +243,7 @@ def get_binexport_extractor(path):
     import capa.features.extractors.binexport2.extractor
 
     be2 = capa.features.extractors.binexport2.get_binexport2(path)
-    search_paths = [ CD / "data" / "malware" , CD / "data" / "aarch64" ]
+    search_paths = [CD / "data" / "malware", CD / "data" / "aarch64"]
     path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
     buf = path.read_bytes()
 
@@ -387,7 +387,7 @@ def get_data_path_by_name(name) -> Path:
     elif name.startswith("2f7f5f"):
         return CD / "data" / "malware" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
     elif name.startswith("b9f5b"):
-        return CD / "data" / "malware" /"b9f5bd514485fb06da39beff051b9fdc.exe_"
+        return CD / "data" / "malware" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
     elif name.startswith("mixed-mode-64"):
         return DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
     elif name.startswith("hello-world"):
@@ -463,7 +463,7 @@ def get_data_path_by_name(name) -> Path:
     elif name.startswith("ea2876"):
         return CD / "data" / "malware" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):
-        return CD / "data" / "malware" /"1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
+        return CD / "data" / "malware" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
     elif name.startswith("3da7c"):
         return CD / "data" / "malware" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
     elif name.startswith("nested_typedef"):

@@ -96,7 +96,7 @@ def test_scripts(script, args):
 )
 def test_binexport_scripts(script, args):
     # define sample bytes location
-    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data" / "benign" ))
+    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data" / "benign"))
 
     script_path = get_script_path(script)
     p = run_program(script_path, args)
