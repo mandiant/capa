@@ -73,6 +73,7 @@ jobs:
                   -e 'flare_capa==' \
                   -e 'altgraph==' \
                   -e 'build==' \
+                  -e 'macholib==' \
                   -e 'pyinstaller==' \
                   -e 'pywin32-ctypes==' \
                   -e 'tomli==' \
