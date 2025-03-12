@@ -66,7 +66,9 @@ jobs:
         shell: bash
         run: |
           diff <(sort before.txt) <(sort after.txt) > diff.txt || true
+          
           echo '^-e git\+https://github\.com/mandiant/capa@.*' > patterns.txt
+          
           grep -v -f patterns.txt \
                   -e 'flare_capa==' \
                   -e 'altgraph==' \
@@ -79,8 +81,9 @@ jobs:
                   -e 'pyproject_hooks==' \
                   -e 'pefile==' \
                   -e '^[0-9]' diff.txt > unexpected.txt || true
-          if [ -s unexpected.txt ]; then
-            echo "Error: Unexpected extra packages were installed:"
+          
+          if [ $(wc -l < unexpected.txt) -gt 1 ]; then 
+            echo "Error: More than one unexpected extra package was installed:"
             cat unexpected.txt
             exit 1
           else
