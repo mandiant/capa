@@ -60,23 +60,22 @@ jobs:
       run: pre-commit run flake8 --hook-stage manual
     - name: Check types with mypy
       run: pre-commit run mypy --hook-stage manual
-    - name: Check imports against dependencies
-      run: pre-commit run deptry --hook-stage manual
+    - name: Install GitHub CLI
       run: |
-        curl -sL https://api.github.com/repos/google/addlicense/releases/latest | \
-          grep "browser_download_url.*Linux_x86_64.tar.gz" | \
-          cut -d '"' -f 4 | \
-          xargs curl -sL -o addlicense.tar.gz
-
-        tar -xzf addlicense.tar.gz
+        apt update
+        apt install gh -y
+    - name: Check imports against dependencies
+      run: |
+        gh release download latest --repo google/addlicense --pattern "addlicense_*_Linux_x86_64.tar.gz"
+        tar -xzf addlicense_*_Linux_x86_64.tar.gz
         chmod +x addlicense
         mv addlicense /usr/local/bin/
-        rm addlicense.tar.gz
+        rm addlicense_*_Linux_x86_64.tar.gz
     - name: Check license headers
       run: |
         addlicense -c "Google LLC" .
         if [ -n "$(git status --porcelain)" ]; then
-          echo "License headers missing or incorrect! Please run addlicense locally and commit the changes."
+          echo "License headers missing or incorrect! Please run 'addlicense -c \"Google LLC\" .' locally and commit the changes."
           git diff
           exit 1
         fi
