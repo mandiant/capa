@@ -75,16 +75,16 @@ jobs:
         rm addlicense_*_Linux_x86_64.tar.gz
     - name: Check license headers
       run: |
-        addlicense -c "Google LLC" \
+        addlicense -check \
+          -c "Google LLC" \
           -ignore "**/*_pb2.py" \
+          -ignore "**/*_pb2.pyi" \
           -ignore "**/__init__.py" \
           -ignore "**/.*" \
-          -ignore "**/.*/**" .
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "License headers missing or incorrect! Please run 'addlicense -c \"Google LLC\" .' locally and commit the changes."
-          git diff
-          exit 1
-        fi
+          -ignore "**/.*/**" . || {
+            echo "License headers missing or incorrect! Please run 'addlicense -c \"Google LLC\" .' locally and commit the changes."
+            exit 1
+          }
 
   rule_linter:
     runs-on: ubuntu-22.04
