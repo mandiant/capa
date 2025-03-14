@@ -62,14 +62,14 @@ jobs:
       run: pre-commit run mypy --hook-stage manual
     - name: Install GitHub CLI
       run: |
-        apt update
-        apt install gh -y
+        sudo apt update
+        sudo apt install gh -y
     - name: Check imports against dependencies
       run: |
         gh release download latest --repo google/addlicense --pattern "addlicense_*_Linux_x86_64.tar.gz"
         tar -xzf addlicense_*_Linux_x86_64.tar.gz
         chmod +x addlicense
-        mv addlicense /usr/local/bin/
+        sudo mv addlicense /usr/local/bin/
         rm addlicense_*_Linux_x86_64.tar.gz
     - name: Check license headers
       run: |
