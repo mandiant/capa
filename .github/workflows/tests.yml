@@ -65,6 +65,8 @@ jobs:
         sudo apt update
         sudo apt install gh -y
     - name: Check imports against dependencies
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh release download latest --repo google/addlicense --pattern "addlicense_*_Linux_x86_64.tar.gz"
         tar -xzf addlicense_*_Linux_x86_64.tar.gz
