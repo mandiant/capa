@@ -243,7 +243,7 @@ def get_binexport_extractor(path):
     import capa.features.extractors.binexport2.extractor
 
     be2 = capa.features.extractors.binexport2.get_binexport2(path)
-    search_paths = [CD / "data" / "malware", CD / "data" / "aarch64"]
+    search_paths = [CD / "data" / "native", CD / "data" / "aarch64"]
     path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
     buf = path.read_bytes()
 
@@ -331,63 +331,63 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Ad
 # note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name) -> Path:
     if name == "mimikatz":
-        return CD / "data" / "benign" / "mimikatz.exe_"
+        return CD / "data" / "native" / "mimikatz.exe_"
     elif name == "kernel32":
-        return CD / "data" / "malware" / "kernel32.dll_"
+        return CD / "data" / "native" / "kernel32.dll_"
     elif name == "kernel32-64":
-        return CD / "data" / "malware" / "kernel32-64.dll_"
+        return CD / "data" / "native" / "kernel32-64.dll_"
     elif name == "pma01-01":
-        return CD / "data" / "pma_labs" / "Practical Malware Analysis Lab 01-01.dll_"
+        return CD / "data" / "pma" / "Practical Malware Analysis Lab 01-01.dll_"
     elif name == "pma01-01-rd":
         return CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
     elif name == "pma12-04":
-        return CD / "data" / "pma_labs" / "Practical Malware Analysis Lab 12-04.exe_"
+        return CD / "data" / "pma" / "Practical Malware Analysis Lab 12-04.exe_"
     elif name == "pma16-01":
-        return CD / "data" / "pma_labs" / "Practical Malware Analysis Lab 16-01.exe_"
+        return CD / "data" / "pma" / "Practical Malware Analysis Lab 16-01.exe_"
     elif name == "pma16-01_binja_db":
-        return CD / "data" / "pma_labs" / "Practical Malware Analysis Lab 16-01.exe_.bndb"
+        return CD / "data" / "pma" / "Practical Malware Analysis Lab 16-01.exe_.bndb"
     elif name == "pma21-01":
-        return CD / "data" / "pma_labs" / "Practical Malware Analysis Lab 21-01.exe_"
+        return CD / "data" / "pma" / "Practical Malware Analysis Lab 21-01.exe_"
     elif name == "al-khaser x86":
-        return CD / "data" / "benign" / "al-khaser_x86.exe_"
+        return CD / "data" / "native" / "al-khaser_x86.exe_"
     elif name == "al-khaser x64":
-        return CD / "data" / "benign" / "al-khaser_x64.exe_"
+        return CD / "data" / "native" / "al-khaser_x64.exe_"
     elif name.startswith("39c05"):
-        return CD / "data" / "malware" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
+        return CD / "data" / "native" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
     elif name.startswith("499c2"):
-        return CD / "data" / "malware" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
+        return CD / "data" / "native" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
     elif name.startswith("9324d"):
-        return CD / "data" / "malware" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
+        return CD / "data" / "native" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
     elif name.startswith("395eb"):
-        return CD / "data" / "malware" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
+        return CD / "data" / "native" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
     elif name.startswith("a1982"):
-        return CD / "data" / "malware" / "a198216798ca38f280dc413f8c57f2c2.exe_"
+        return CD / "data" / "native" / "a198216798ca38f280dc413f8c57f2c2.exe_"
     elif name.startswith("a933a"):
-        return CD / "data" / "malware" / "a933a1a402775cfa94b6bee0963f4b46.dll_"
+        return CD / "data" / "native" / "a933a1a402775cfa94b6bee0963f4b46.dll_"
     elif name.startswith("bfb9b"):
-        return CD / "data" / "malware" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_"
+        return CD / "data" / "native" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_"
     elif name.startswith("c9188"):
-        return CD / "data" / "malware" / "c91887d861d9bd4a5872249b641bc9f9.exe_"
+        return CD / "data" / "native" / "c91887d861d9bd4a5872249b641bc9f9.exe_"
     elif name.startswith("64d9f"):
-        return CD / "data" / "malware" / "64d9f7d96b99467f36e22fada623c3bb.dll_"
+        return CD / "data" / "native" / "64d9f7d96b99467f36e22fada623c3bb.dll_"
     elif name.startswith("82bf6"):
-        return CD / "data" / "malware" / "82BF6347ACF15E5D883715DC289D8A2B.exe_"
+        return CD / "data" / "native" / "82BF6347ACF15E5D883715DC289D8A2B.exe_"
     elif name.startswith("pingtaest"):
-        return CD / "data" / "malware" / "ping_täst.exe_"
+        return CD / "data" / "native" / "ping_täst.exe_"
     elif name.startswith("77329"):
-        return CD / "data" / "malware" / "773290480d5445f11d3dc1b800728966.exe_"
+        return CD / "data" / "native" / "773290480d5445f11d3dc1b800728966.exe_"
     elif name.startswith("3b13b"):
-        return CD / "data" / "malware" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
+        return CD / "data" / "native" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
     elif name == "7351f.elf":
-        return CD / "data" / "malware" / "7351f8a40c5450557b24622417fc478d.elf_"
+        return CD / "data" / "native" / "7351f8a40c5450557b24622417fc478d.elf_"
     elif name.startswith("79abd"):
-        return CD / "data" / "malware" / "79abd17391adc6251ecdc58d13d76baf.dll_"
+        return CD / "data" / "native" / "79abd17391adc6251ecdc58d13d76baf.dll_"
     elif name.startswith("946a9"):
-        return CD / "data" / "malware" / "946a99f36a46d335dec080d9a4371940.dll_"
+        return CD / "data" / "native" / "946a99f36a46d335dec080d9a4371940.dll_"
     elif name.startswith("2f7f5f"):
-        return CD / "data" / "malware" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
+        return CD / "data" / "native" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
     elif name.startswith("b9f5b"):
-        return CD / "data" / "malware" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
+        return CD / "data" / "native" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
     elif name.startswith("mixed-mode-64"):
         return DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
     elif name.startswith("hello-world"):
@@ -399,17 +399,17 @@ def get_data_path_by_name(name) -> Path:
     elif name.startswith("_692f"):
         return DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_"
     elif name.startswith("_0953c"):
-        return CD / "data" / "malware" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
+        return CD / "data" / "native" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
     elif name.startswith("_039a6"):
-        return CD / "data" / "malware" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
+        return CD / "data" / "native" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
     elif name.startswith("b5f052"):
-        return CD / "data" / "malware" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
+        return CD / "data" / "native" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
     elif name.startswith("bf7a9c"):
-        return CD / "data" / "malware" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
+        return CD / "data" / "native" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
     elif name.startswith("294b8d"):
-        return CD / "data" / "malware" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
+        return CD / "data" / "native" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
     elif name.startswith("2bf18d"):
-        return CD / "data" / "malware" / "2bf18d0403677378adad9001b1243211.elf_"
+        return CD / "data" / "native" / "2bf18d0403677378adad9001b1243211.elf_"
     elif name.startswith("0000a657"):
         return (
             CD
@@ -461,11 +461,11 @@ def get_data_path_by_name(name) -> Path:
             / "eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip"
         )
     elif name.startswith("ea2876"):
-        return CD / "data" / "malware" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
+        return CD / "data" / "native" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):
-        return CD / "data" / "malware" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
+        return CD / "data" / "native" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
     elif name.startswith("3da7c"):
-        return CD / "data" / "malware" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
+        return CD / "data" / "native" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
     elif name.startswith("nested_typedef"):
         return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
     elif name.startswith("nested_typeref"):
