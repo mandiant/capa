@@ -594,7 +594,7 @@ def test_pattern_matching_not_stack():
 
 
 BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(
-    CD / "data" / "native" / "binexport2" / "mimikatz.exe_.ghidra.BinExport"
+    CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport"
 )
 
 

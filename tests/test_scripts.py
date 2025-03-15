@@ -47,7 +47,7 @@ def get_cape_report_file_path():
 
 
 def get_binexport2_file_path():
-    return str(CD / "data" / "native" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
+    return str(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
 
 
 def get_rules_path():
@@ -96,7 +96,7 @@ def test_scripts(script, args):
 )
 def test_binexport_scripts(script, args):
     # define sample bytes location
-    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data" / "native"))
+    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data" / "native" ))
 
     script_path = get_script_path(script)
     p = run_program(script_path, args)
