@@ -593,9 +593,7 @@ def test_pattern_matching_not_stack():
     assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918) is None
 
 
-BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(
-    CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport"
-)
+BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
 
 
 def test_pattern_matching_x86():
