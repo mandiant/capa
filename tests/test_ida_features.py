@@ -88,7 +88,9 @@ def check_input_file(wanted):
 
 def get_ida_extractor(_path):
     import capa.features.extractors.ida.extractor
+
     return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+
 
 
 @pytest.mark.parametrize(
