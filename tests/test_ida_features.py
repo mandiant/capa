@@ -91,8 +91,6 @@ def get_ida_extractor(_path):
 
     return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
-
-
 @pytest.mark.parametrize(
     "sample, scope, feature, expected",
     fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_PRESENCE_TESTS_IDA,
@@ -144,4 +142,3 @@ if __name__ == "__main__":
 
     if "--CAPA_AUTOEXIT=true" in idc.ARGV:
         sys.exit(0)
-
