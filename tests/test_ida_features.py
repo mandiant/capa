@@ -56,9 +56,8 @@ Flushing buffers, please wait...ok
 
 Look for lines that start with "FAIL" to identify test failures.
 """
-import io
+
 import sys
-import inspect
 import logging
 import binascii
 import traceback
