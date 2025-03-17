@@ -60,6 +60,7 @@ import io
 import sys
 import inspect
 import logging
+import binascii
 import traceback
 from pathlib import Path
 
@@ -71,93 +72,62 @@ try:
 finally:
     sys.path.pop()
 
-
 logger = logging.getLogger("test_ida_features")
 
 
 def check_input_file(wanted):
     import idautils
 
-    # some versions (7.4) of IDA return a truncated version of the MD5.
-    # https://github.com/idapython/bin/issues/11
     try:
         found = idautils.GetInputFileMD5()[:31].decode("ascii").lower()
     except UnicodeDecodeError:
-        # in IDA 7.5 or so, GetInputFileMD5 started returning raw binary
-        # rather than the hex digest
-        found = bytes.hex(idautils.GetInputFileMD5()[:15]).lower()
+        found = binascii.hexlify(idautils.GetInputFileMD5()[:15]).decode("ascii").lower()
 
     if not wanted.startswith(found):
         raise RuntimeError(f"please run the tests against sample with MD5: `{wanted}`")
 
 
 def get_ida_extractor(_path):
-    # have to import this inline so pytest doesn't bail outside of IDA
     import capa.features.extractors.ida.extractor
-
     return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
 
-def nocollect(f):
-    "don't collect the decorated function as a pytest test"
-    f.__test__ = False
-    return f
+@pytest.mark.parametrize(
+    "sample, scope, feature, expected",
+    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_PRESENCE_TESTS_IDA,
+)
+def test_ida_features(sample, scope, feature, expected):
+    try:
+        check_input_file(fixtures.get_sample_md5_by_name(sample))
+    except RuntimeError:
+        pytest.skip("Sample MD5 mismatch. Skipping test.")
+
+    scope = fixtures.resolve_scope(scope)
+    sample = fixtures.resolve_sample(sample)
+
+    try:
+        fixtures.do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
+    except Exception as e:
+        pytest.fail(f"Test failed with exception: {e}\n{traceback.format_exc()}")
 
 
-# although these look like pytest tests, they're not, because they don't run within pytest
-# (the runner is below) and they use `yield`, which is deprecated.
-@nocollect
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_ida_features():
-    # we're guaranteed to be in a function here, so there's a stack frame
-    this_name = inspect.currentframe().f_code.co_name  # type: ignore
-    for sample, scope, feature, expected in fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_PRESENCE_TESTS_IDA:
-        id = fixtures.make_test_id((sample, scope, feature, expected))
+@pytest.mark.parametrize(
+    "sample, scope, feature, expected",
+    fixtures.FEATURE_COUNT_TESTS,
+)
+def test_ida_feature_counts(sample, scope, feature, expected):
+    try:
+        check_input_file(fixtures.get_sample_md5_by_name(sample))
+    except RuntimeError:
+        pytest.skip("Sample MD5 mismatch. Skipping test.")
 
-        try:
-            check_input_file(fixtures.get_sample_md5_by_name(sample))
-        except RuntimeError:
-            yield this_name, id, "skip", None
-            continue
+    scope = fixtures.resolve_scope(scope)
+    sample = fixtures.resolve_sample(sample)
 
-        scope = fixtures.resolve_scope(scope)
-        sample = fixtures.resolve_sample(sample)
-
-        try:
-            fixtures.do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
-        except Exception:
-            f = io.StringIO()
-            traceback.print_exc(file=f)
-            yield this_name, id, "fail", f.getvalue()
-        else:
-            yield this_name, id, "pass", None
-
-
-@nocollect
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_ida_feature_counts():
-    # we're guaranteed to be in a function here, so there's a stack frame
-    this_name = inspect.currentframe().f_code.co_name  # type: ignore
-    for sample, scope, feature, expected in fixtures.FEATURE_COUNT_TESTS:
-        id = fixtures.make_test_id((sample, scope, feature, expected))
-
-        try:
-            check_input_file(fixtures.get_sample_md5_by_name(sample))
-        except RuntimeError:
-            yield this_name, id, "skip", None
-            continue
-
-        scope = fixtures.resolve_scope(scope)
-        sample = fixtures.resolve_sample(sample)
-
-        try:
-            fixtures.do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
-        except Exception:
-            f = io.StringIO()
-            traceback.print_exc(file=f)
-            yield this_name, id, "fail", f.getvalue()
-        else:
-            yield this_name, id, "pass", None
+    try:
+        fixtures.do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
+    except Exception as e:
+        pytest.fail(f"Test failed with exception: {e}\n{traceback.format_exc()}")
 
 
 if __name__ == "__main__":
@@ -165,23 +135,12 @@ if __name__ == "__main__":
     import ida_auto
 
     ida_auto.auto_wait()
-
     print("-" * 80)
 
-    # invoke all functions in this module that start with `test_`
-    for name in dir(sys.modules[__name__]):
-        if not name.startswith("test_"):
-            continue
-
-        test = getattr(sys.modules[__name__], name)
-        logger.debug("invoking test: %s", name)
-        sys.stderr.flush()
-        for name, id, state, info in test():
-            print(f"{state.upper()}: {name}/{id}")
-            if info:
-                print(info)
+    pytest.main([__file__])
 
     print("DONE")
 
     if "--CAPA_AUTOEXIT=true" in idc.ARGV:
         sys.exit(0)
+
