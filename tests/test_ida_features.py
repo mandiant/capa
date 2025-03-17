@@ -73,7 +73,6 @@ finally:
 
 logger = logging.getLogger("test_ida_features")
 
-
 def check_input_file(wanted):
     import idautils
 
@@ -83,8 +82,7 @@ def check_input_file(wanted):
         found = binascii.hexlify(idautils.GetInputFileMD5()[:15]).decode("ascii").lower()
 
     if not wanted.startswith(found):
-        raise RuntimeError(f"please run the tests against sample with MD5: `{wanted}`")
-
+        raise RuntimeError(f"Please run the tests against sample with MD5: `{wanted}`")
 
 def get_ida_extractor(_path):
     import capa.features.extractors.ida.extractor
