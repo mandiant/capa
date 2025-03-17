@@ -109,7 +109,6 @@ def test_ida_features(sample, scope, feature, expected):
     except Exception as e:
         pytest.fail(f"Test failed with exception: {e}\n{traceback.format_exc()}")
 
-
 @pytest.mark.parametrize(
     "sample, scope, feature, expected",
     fixtures.FEATURE_COUNT_TESTS,
@@ -127,7 +126,6 @@ def test_ida_feature_counts(sample, scope, feature, expected):
         fixtures.do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
     except Exception as e:
         pytest.fail(f"Test failed with exception: {e}\n{traceback.format_exc()}")
-
 
 if __name__ == "__main__":
     import idc
