@@ -594,6 +594,13 @@ def extract_op_number_features(
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
 
+    if insn.mnem == "xor" and insn.opers[0].isReg() and insn.opers[1].isReg() and insn.opers[0].reg == insn.opers[1].reg:
+        # for pattern like:
+        #
+        #     xor eax, eax
+        #
+        yield Number(0), ih.address
+
     # this is for both x32 and x64
     if not isinstance(oper, (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper)):
         return
