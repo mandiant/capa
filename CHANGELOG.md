@@ -15,6 +15,7 @@
 
 ### Bug Fixes
 - cape: make some fields optional @williballenthin #2631 #2632
+- lint: add WARN for regex features that contain unescaped dot #2635
 
 ### capa Explorer Web
 
