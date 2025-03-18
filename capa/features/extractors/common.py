@@ -52,14 +52,14 @@ MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
 
-def extract_file_strings(buf: bytes, **kwargs) -> Iterator[tuple[String, Address]]:
+def extract_file_strings(buf: bytes, min_str_len, **kwargs) -> Iterator[tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
-    for s in capa.features.extractors.strings.extract_ascii_strings(buf):
+    for s in capa.features.extractors.strings.extract_ascii_strings(buf, min_str_len = min_str_len):
         yield String(s.s), FileOffsetAddress(s.offset)
 
-    for s in capa.features.extractors.strings.extract_unicode_strings(buf):
+    for s in capa.features.extractors.strings.extract_unicode_strings(buf, min_str_len = min_str_len):
         yield String(s.s), FileOffsetAddress(s.offset)
 
 
