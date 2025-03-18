@@ -749,7 +749,7 @@ class FeatureRegexContainsUnescapedPeriod(Lint):
                     return True
 
                 if pat[index - 1] != "\\":
-                    # like "/test.exe/"
+                    # like "/test.exe/" which should be "/test\.exe/"
                     self.recommendation = self.recommendation_template.format(feature.value)
                     return True
 
