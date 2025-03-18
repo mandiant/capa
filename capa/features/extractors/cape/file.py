@@ -88,31 +88,49 @@ def extract_file_strings(report: CapeReport) -> Iterator[tuple[Feature, Address]
 
 
 def extract_used_regkeys(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
+    if not report.behavior.summary:
+        return
+
     for regkey in report.behavior.summary.keys:
         yield String(regkey), NO_ADDRESS
 
 
 def extract_used_files(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
+    if not report.behavior.summary:
+        return
+
     for file in report.behavior.summary.files:
         yield String(file), NO_ADDRESS
 
 
 def extract_used_mutexes(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
+    if not report.behavior.summary:
+        return
+
     for mutex in report.behavior.summary.mutexes:
         yield String(mutex), NO_ADDRESS
 
 
 def extract_used_commands(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
+    if not report.behavior.summary:
+        return
+
     for cmd in report.behavior.summary.executed_commands:
         yield String(cmd), NO_ADDRESS
 
 
 def extract_used_apis(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
+    if not report.behavior.summary:
+        return
+
     for symbol in report.behavior.summary.resolved_apis:
         yield String(symbol), NO_ADDRESS
 
 
 def extract_used_services(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
+    if not report.behavior.summary:
+        return
+
     for svc in report.behavior.summary.created_services:
         yield String(svc), NO_ADDRESS
     for svc in report.behavior.summary.started_services:

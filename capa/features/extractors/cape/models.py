@@ -364,7 +364,7 @@ class EncryptedBuffer(FlexibleModel):
 
 
 class Behavior(FlexibleModel):
-    summary: Summary
+    summary: Summary | None = None
 
     # list of processes, of threads, of calls
     processes: list[Process]
