@@ -744,7 +744,7 @@ class FeatureRegexContainsUnescapedPeriod(Lint):
                         return False
 
                 if index == 0:
-                    # like "/.exe/"
+                    # like "/.exe/" which should be "/\.exe/"
                     self.recommendation = self.recommendation_template.format(feature.value)
                     return True
 
