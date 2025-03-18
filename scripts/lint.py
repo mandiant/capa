@@ -731,11 +731,8 @@ class FeatureRegexContainsUnescapedPeriod(Lint):
             if isinstance(feature, (Regex,)):
                 assert isinstance(feature.value, str)
 
-                pat = (
-                    feature.value[len("/") : -len("/i")]
-                    if feature.value.endswith("/i")
-                    else feature.value[len("/") : -len("/")]
-                )
+                pat = feature.value.removeprefix("/")
+                pat = pat.removesuffix("/i").removesuffix("/")
 
                 index = pat.find(".")
                 if index == -1:
