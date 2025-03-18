@@ -757,12 +757,12 @@ class FeatureRegexContainsUnescapedPeriod(Lint):
                     return True
 
                 if pat[index - 1] == "\\":
-                    # like "/\\\\.\\pipe\\VBoxTrayIPC/"
                     for i, char in enumerate(pat[0:index][::-1]):
                         if char == "\\":
                             continue
 
                         if i % 2 == 0:
+                            # like "/\\\\.\\pipe\\VBoxTrayIPC/"
                             self.recommendation = self.recommendation_template.format(feature.value)
                             return True
 
