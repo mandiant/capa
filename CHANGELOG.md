@@ -14,6 +14,7 @@
 -
 
 ### Bug Fixes
+- cape: make some fields optional @williballenthin #2631 #2632
 
 ### capa Explorer Web
 
