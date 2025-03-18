@@ -188,15 +188,15 @@ class PE(FlexibleModel):
     # timestamp: str
 
     # list[ImportedDll], or dict[basename(dll), ImportedDll]
-    imports: Union[list[ImportedDll], dict[str, ImportedDll]]
+    imports: list[ImportedDll] | dict[str, ImportedDll] = Field(default_factory=list)  # type: ignore
     # imported_dll_count: Optional[int] = None
     # imphash: str
 
     # exported_dll_name: Optional[str] = None
-    exports: list[ExportedSymbol]
+    exports: list[ExportedSymbol] = Field(default_factory=list)
 
     # dirents: list[DirectoryEntry]
-    sections: list[Section]
+    sections: list[Section] = Field(default_factory=list)
 
     # ep_bytes: Optional[HexBytes] = None
 
