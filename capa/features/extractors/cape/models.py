@@ -324,8 +324,8 @@ class Process(FlexibleModel):
     # module_path: str
     # first_seen: str
     calls: list[Call]
-    environ: dict[str, str]
     threads: list[int] | None = None  # this can be None for CAPE for Linux, which doesn't track threads.
+    environ: dict[str, str] = Field(default_factory=dict)  # type: ignore
 
 
 """

@@ -49,6 +49,9 @@ def extract_environ_strings(ph: ProcessHandle) -> Iterator[tuple[Feature, Addres
     """
     process: Process = ph.inner
 
+    if not process.environ:
+        return
+
     for value in (value for value in process.environ.values() if value):
         yield String(value), ph.address
 
