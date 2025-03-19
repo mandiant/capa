@@ -71,8 +71,13 @@ Emptydict: TypeAlias = BaseModel
 EmptyList: TypeAlias = list[Any]
 
 
+class Machine(FlexibleModel):
+    platform: Optional[str] = None
+
+
 class Info(FlexibleModel):
     version: str
+    machine: Optional[Machine] = None
 
 
 class ImportedSymbol(FlexibleModel):

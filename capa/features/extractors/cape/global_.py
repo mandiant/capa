@@ -81,6 +81,10 @@ def extract_os(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
             # if the operating system information is missing from the cape report, it's likely a bug
             logger.warning("unrecognized OS: %s", file_output)
             raise ValueError(f"unrecognized OS from the CAPE report; output of file command: {file_output}")
+    elif report.info.machine and report.info.machine.platform == "windows":
+        yield OS(OS_WINDOWS), NO_ADDRESS
+    elif report.info.machine and report.info.machine.platform == "linux":
+        yield OS(OS_LINUX), NO_ADDRESS
     else:
         # the sample is shellcode
         logger.debug("unsupported file format, file command output: %s", file_output)
