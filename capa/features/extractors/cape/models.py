@@ -320,7 +320,7 @@ class Call(FlexibleModel):
 class Process(FlexibleModel):
     process_id: int
     process_name: str
-    parent_id: int
+    parent_id: int | None
     # module_path: str
     # first_seen: str
     calls: list[Call]

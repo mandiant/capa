@@ -32,7 +32,13 @@ def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
     seen_processes = {}
     for process in report.behavior.processes:
-        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
+        if process.parent_id is None:
+            # on CAPE for Linux, the root process may have no parent id, so we set that to 0
+            ppid = 0
+        else:
+            ppid = process.parent_id
+
+        addr = ProcessAddress(pid=process.process_id, ppid=ppid)
         yield ProcessHandle(address=addr, inner=process)
 
         # check for pid and ppid reuse
