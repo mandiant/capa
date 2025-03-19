@@ -294,7 +294,7 @@ class Argument(FlexibleModel):
 
 class Call(FlexibleModel):
     # timestamp: str
-    thread_id: int
+    thread_id: int | None = None
     # category: str
 
     api: str
@@ -324,8 +324,8 @@ class Process(FlexibleModel):
     # module_path: str
     # first_seen: str
     calls: list[Call]
-    threads: list[int]
     environ: dict[str, str]
+    threads: list[int] | None = None  # this can be None for CAPE for Linux, which doesn't track threads.
 
 
 """

@@ -29,6 +29,13 @@ def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     get the threads associated with a given process
     """
     process: Process = ph.inner
+
+    if not process.threads:
+        # CAPE for linux doesn't record threads
+        # so we return a default 0 value
+        yield ThreadHandle(address=ThreadAddress(process=ph.address, tid=0), inner={})
+        return
+
     threads: list[int] = process.threads
 
     for thread in threads:
