@@ -135,9 +135,7 @@ def extract_file_format(**kwargs):
     yield Format(FORMAT_PE), NO_ADDRESS
 
 
-def extract_file_arch(ctx):
-    pe = ctx["pe"]
-
+def extract_file_arch(pe, **kwargs):
     if pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_I386"]:
         yield Arch(ARCH_I386), NO_ADDRESS
     elif pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_AMD64"]:
@@ -169,7 +167,7 @@ def extract_file_features(ctx):
 
     for file_handler in FILE_HANDLERS:
         # file_handler: type: (pe, bytes) -> Iterable[tuple[Feature, Address]]
-        for feature, va in file_handler(pe=pe, buf=buf):  # type: ignore
+        for feature, va in file_handler(ctx = ctx):  # type: ignore
             yield feature, va
 
 

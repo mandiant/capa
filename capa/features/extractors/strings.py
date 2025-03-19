@@ -79,7 +79,7 @@ def buf_filled_with(buf: bytes, character: int) -> bool:
     return True
 
 
-def extract_ascii_strings(buf: bytes, min_len = DEFAULT_STRING_LENGTH) -> Iterator[String]:
+def extract_ascii_strings(buf: bytes, min_str_len = DEFAULT_STRING_LENGTH) -> Iterator[String]:
     """
     Extract ASCII strings from the given binary data.
 
@@ -91,23 +91,23 @@ def extract_ascii_strings(buf: bytes, min_len = DEFAULT_STRING_LENGTH) -> Iterat
     if not buf:
         return
 
-    if min_len < 1:
+    if min_str_len < 1:
         raise ValueError("minimum string length must be positive")
 
     if (buf[0] in REPEATS) and buf_filled_with(buf, buf[0]):
         return
 
     r = None
-    if min_len == DEFAULT_STRING_LENGTH:
+    if min_str_len == DEFAULT_STRING_LENGTH:
         r = ASCII_RE_DEFAULT
     else:
-        reg = b"([%s]{%d,})" % (ASCII_BYTE, min_len)
+        reg = b"([%s]{%d,})" % (ASCII_BYTE, min_str_len)
         r = re.compile(reg)
     for match in r.finditer(buf):
         yield String(match.group().decode("ascii"), match.start())
 
 
-def extract_unicode_strings(buf: bytes, min_len = DEFAULT_STRING_LENGTH) -> Iterator[String]:
+def extract_unicode_strings(buf: bytes, min_str_len = DEFAULT_STRING_LENGTH) -> Iterator[String]:
     """
     Extract naive UTF-16 strings from the given binary data.
 
@@ -119,16 +119,16 @@ def extract_unicode_strings(buf: bytes, min_len = DEFAULT_STRING_LENGTH) -> Iter
     if not buf:
         return
 
-    if min_len < 1:
+    if min_str_len < 1:
         raise ValueError("minimum string length must be positive")
 
     if (buf[0] in REPEATS) and buf_filled_with(buf, buf[0]):
         return
 
-    if min_len == DEFAULT_STRING_LENGTH:
+    if min_str_len == DEFAULT_STRING_LENGTH:
         r = UNICODE_RE_DEFAULT
     else:
-        reg = b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, min_len)
+        reg = b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, min_str_len)
         r = re.compile(reg)
     for match in r.finditer(buf):
         with contextlib.suppress(UnicodeDecodeError):
