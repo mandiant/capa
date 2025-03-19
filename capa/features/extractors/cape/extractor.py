@@ -23,7 +23,7 @@ import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress
+from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress, NO_ADDRESS
 from capa.features.extractors.cape.models import Call, Static, Process, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
@@ -53,9 +53,14 @@ class CapeExtractor(DynamicFeatureExtractor):
         self.global_features = list(capa.features.extractors.cape.global_.extract_features(self.report))
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
+        if self.report.static is None:
+            return NO_ADDRESS
+
+        if self.report.static.pe is None:
+            # TODO: handle ELF
+            return NO_ADDRESS
+
         # value according to the PE header, the actual trace may use a different imagebase
-        assert self.report.static is not None
-        assert self.report.static.pe is not None
         return AbsoluteVirtualAddress(self.report.static.pe.imagebase)
 
     def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
