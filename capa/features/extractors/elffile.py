@@ -29,7 +29,7 @@ from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 logger = logging.getLogger(__name__)
 
 
-def extract_file_export_names(ctx, **kwargs):
+def extract_file_export_names(ctx):
     elf = ctx["elf"]
 
     for section in elf.iter_sections():
@@ -82,7 +82,7 @@ def extract_file_export_names(ctx, **kwargs):
             yield Export(symbol.name), AbsoluteVirtualAddress(symbol.entry.st_value)
 
 
-def extract_file_import_names(ctx, **kwargs):
+def extract_file_import_names(ctx):
     elf = ctx["elf"]
     symbol_name_by_index: dict[int, str] = {}
 
@@ -143,7 +143,7 @@ def extract_file_import_names(ctx, **kwargs):
                 yield Import(symbol_name), FileOffsetAddress(symbol_address)
 
 
-def extract_file_section_names(ctx, **kwargs):
+def extract_file_section_names(ctx):
     elf = ctx["elf"]
 
     for section in elf.iter_sections():
@@ -153,10 +153,9 @@ def extract_file_section_names(ctx, **kwargs):
             yield Section("NULL"), AbsoluteVirtualAddress(section.header.sh_addr)
 
 
-def extract_file_strings(ctx, **kwargs):
-    buf = ctx["buf"]
+def extract_file_strings(ctx):
 
-    yield from capa.features.extractors.common.extract_file_strings(buf)
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_str_len"])
 
 
 def extract_file_os(elf: ELFFile, buf, **kwargs):
@@ -206,10 +205,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(ctx) -> Iterator[tuple[Feature, int]]:
-    elf = ctx["elf"]
-    buf = ctx["buf"]
-    
+def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:    
     for global_handler in GLOBAL_HANDLERS:
         for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -237,7 +233,7 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
     def extract_global_features(self):
         buf = self.path.read_bytes()
 
-        for feature, addr in extract_global_features(ctx = {"elf": self.elf, "buf": buf, "min_str_len": self.min_str_len}):
+        for feature, addr in extract_global_features(self.elf, buf):
             yield feature, addr
 
     def extract_file_features(self):
