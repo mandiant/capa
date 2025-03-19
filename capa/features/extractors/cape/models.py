@@ -29,8 +29,26 @@ def validate_hex_bytes(value):
     return bytes.fromhex(value) if isinstance(value, str) else value
 
 
+def validate_status_code(value):
+    if isinstance(value, str):
+        if value == "?":
+            # TODO: check for this in the return handling
+            return None
+
+        # like: -1 EINVAL (Invalid argument)
+        # like: 0 (Timeout)
+        # like: 0x8002 (flags O_RDWR|O_LARGEFILE)
+        assert value.endswith(")")
+        num = value.partition(" ")[0]
+        return int(num, 16) if num.startswith("0x") else int(num, 10)
+    else:
+        return value
+
+
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 HexBytes = Annotated[bytes, BeforeValidator(validate_hex_bytes)]
+# this is a status code, such as returned by CAPE for Linux, like: "0 (Timeout)" or "0x8002 (flags O_RDWR|O_LARGEFILE)
+StatusCode = Annotated[int | None, BeforeValidator(validate_status_code)]
 
 
 # a model that *cannot* have extra fields
@@ -301,7 +319,7 @@ class Call(FlexibleModel):
 
     arguments: list[Argument]
     # status: bool
-    return_: HexInt = Field(alias="return")
+    return_: HexInt | StatusCode = Field(alias="return")
     pretty_return: Optional[str] = None
 
     # repeated: int

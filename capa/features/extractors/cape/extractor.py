@@ -21,9 +21,9 @@ import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
-from capa.exceptions import EmptyReportError, UnsupportedFormatError
+from capa.exceptions import EmptyReportError
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress, NO_ADDRESS
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
 from capa.features.extractors.cape.models import Call, Static, Process, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
@@ -125,8 +125,10 @@ class CapeExtractor(DynamicFeatureExtractor):
         parts.append(" -> ")
         if call.pretty_return:
             parts.append(call.pretty_return)
-        else:
+        elif call.return_:
             parts.append(hex(call.return_))
+        else:
+            parts.append("?")
 
         return "".join(parts)
 
