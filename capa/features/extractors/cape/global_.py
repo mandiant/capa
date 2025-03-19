@@ -42,9 +42,6 @@ def extract_arch(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
         logger.warning("unrecognized Architecture: %s", report.target.file.type)
-        raise ValueError(
-            f"unrecognized Architecture from the CAPE report; output of file command: {report.target.file.type}"
-        )
 
 
 def extract_format(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
@@ -54,9 +51,6 @@ def extract_format(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
         logger.warning("unknown file format, file command output: %s", report.target.file.type)
-        raise ValueError(
-            f"unrecognized file format from the CAPE report; output of file command: {report.target.file.type}"
-        )
 
 
 def extract_os(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
@@ -80,7 +74,6 @@ def extract_os(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
         else:
             # if the operating system information is missing from the cape report, it's likely a bug
             logger.warning("unrecognized OS: %s", file_output)
-            raise ValueError(f"unrecognized OS from the CAPE report; output of file command: {file_output}")
     elif report.info.machine and report.info.machine.platform == "windows":
         yield OS(OS_WINDOWS), NO_ADDRESS
     elif report.info.machine and report.info.machine.platform == "linux":
