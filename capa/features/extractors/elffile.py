@@ -24,11 +24,14 @@ from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 logger = logging.getLogger(__name__)
 
 
-def extract_file_export_names(elf: ELFFile, **kwargs):
+def extract_file_export_names(ctx, **kwargs):
+    elf = ctx["elf"]
+
     for section in elf.iter_sections():
         if not isinstance(section, SymbolTableSection):
             continue
@@ -79,7 +82,8 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
             yield Export(symbol.name), AbsoluteVirtualAddress(symbol.entry.st_value)
 
 
-def extract_file_import_names(elf: ELFFile, **kwargs):
+def extract_file_import_names(ctx, **kwargs):
+    elf = ctx["elf"]
     symbol_name_by_index: dict[int, str] = {}
 
     # Extract symbol names and store them in the dictionary
@@ -139,7 +143,9 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
                 yield Import(symbol_name), FileOffsetAddress(symbol_address)
 
 
-def extract_file_section_names(elf: ELFFile, **kwargs):
+def extract_file_section_names(ctx, **kwargs):
+    elf = ctx["elf"]
+
     for section in elf.iter_sections():
         if section.name:
             yield Section(section.name), AbsoluteVirtualAddress(section.header.sh_addr)
@@ -147,7 +153,9 @@ def extract_file_section_names(elf: ELFFile, **kwargs):
             yield Section("NULL"), AbsoluteVirtualAddress(section.header.sh_addr)
 
 
-def extract_file_strings(buf, **kwargs):
+def extract_file_strings(ctx, **kwargs):
+    buf = ctx["buf"]
+
     yield from capa.features.extractors.common.extract_file_strings(buf)
 
 
@@ -179,7 +187,10 @@ def extract_file_arch(elf: ELFFile, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
+def extract_file_features(ctx) -> Iterator[tuple[Feature, int]]:
+    elf = ctx["elf"]
+    buf = ctx["buf"]
+    
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -195,7 +206,10 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
+def extract_global_features(ctx) -> Iterator[tuple[Feature, int]]:
+    elf = ctx["elf"]
+    buf = ctx["buf"]
+    
     for global_handler in GLOBAL_HANDLERS:
         for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -208,9 +222,10 @@ GLOBAL_HANDLERS = (
 
 
 class ElfFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__(SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
+        self.min_str_len = min_str_len
         self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
     def get_base_address(self):
@@ -222,13 +237,13 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
     def extract_global_features(self):
         buf = self.path.read_bytes()
 
-        for feature, addr in extract_global_features(self.elf, buf):
+        for feature, addr in extract_global_features(ctx = {"elf": self.elf, "buf": buf, "min_str_len": self.min_str_len}):
             yield feature, addr
 
     def extract_file_features(self):
         buf = self.path.read_bytes()
 
-        for feature, addr in extract_file_features(self.elf, buf):
+        for feature, addr in extract_file_features(ctx = {"elf": self.elf, "buf": buf, "min_str_len": self.min_str_len}):
             yield feature, addr
 
     def get_functions(self):
