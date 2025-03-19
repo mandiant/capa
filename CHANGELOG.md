@@ -6,10 +6,16 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (4)
+
+- communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
+- communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
+- nursery/enter-debug-mode-in-dotnet @v1bh475u
 -
 
 ### Bug Fixes
+- cape: make some fields optional @williballenthin #2631 #2632
+- lint: add WARN for regex features that contain unescaped dot #2635
 - separate execution paths for all supported formats of `api` in `trim_dll_part` #1899 @v1bh475u
 - add test for `trim_dll_part` #1899 @v1bh475u
 
