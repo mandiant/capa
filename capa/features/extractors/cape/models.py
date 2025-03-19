@@ -310,6 +310,28 @@ class Argument(FlexibleModel):
     pretty_value: Optional[str] = None
 
 
+def validate_argument(value):
+    if isinstance(value, str):
+        # for a few calls on CAPE for Linux, we see arguments like in this call:
+        #
+        #    timestamp: "18:12:17.199276"
+        #    category: "misc"
+        #    api: "uname"
+        #    return: "0"
+        #  ▽ arguments:
+        #       [0]: "{sysname=\"Linux\", nodename=\"laptop\", ...}"
+        #
+        # which is just a string with a JSON-like thing inside,
+        # that we want to map a default unnamed argument.
+        return Argument(name="", value=value)
+    else:
+        return value
+
+
+# mypy isn't happy about assigning to type
+Argument = Annotated[Argument, BeforeValidator(validate_argument)]  # type: ignore
+
+
 class Call(FlexibleModel):
     # timestamp: str
     thread_id: int | None = None
