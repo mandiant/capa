@@ -113,6 +113,7 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
     DynamicFeatureExtractor,
 )
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -707,7 +708,7 @@ def get_rules_from_cli(args) -> RuleSet:
     return rules
 
 
-def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtractor]:
+def get_file_extractors_from_cli(args, input_format: str, min_str_len: int) -> list[FeatureExtractor]:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -724,7 +725,7 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
     # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
     # various limitations
     try:
-        return capa.loader.get_file_extractors(args.input_file, input_format)
+        return capa.loader.get_file_extractors(args.input_file, input_format, min_str_len)
     except PEFormatError as e:
         logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
         raise ShouldExitError(E_CORRUPT_FILE) from e
@@ -877,6 +878,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             should_save_workspace=should_save_workspace,
             disable_progress=args.quiet or args.debug,
             sample_path=sample_path,
+            min_str_len=DEFAULT_STRING_LENGTH,
         )
         return apply_extractor_filters(extractor, extractor_filters)
     except UnsupportedFormatError as e:
@@ -1017,7 +1019,7 @@ def main(argv: Optional[list[str]] = None):
         rules: RuleSet = get_rules_from_cli(args)
 
         found_limitation = False
-        file_extractors = get_file_extractors_from_cli(args, input_format)
+        file_extractors = get_file_extractors_from_cli(args, input_format, DEFAULT_STRING_LENGTH)
         if input_format in STATIC_FORMATS:
             # only static extractors have file limitations
             found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
@@ -1034,19 +1036,20 @@ def main(argv: Optional[list[str]] = None):
     except ShouldExitError as e:
         return e.status_code
 
-    capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
+    if input_format != FORMAT_RESULT:
+        capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-    meta: rdoc.Metadata = capa.loader.collect_metadata(
-        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
-    )
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+        meta: rdoc.Metadata = capa.loader.collect_metadata(
+            argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+        )
+        meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
-    if found_limitation:
-        # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
-        # or capa's dynamic feature extractor encountered some limitation e.g. a dotnet sample
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
+        if found_limitation:
+            # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
+            # or capa's dynamic feature extractor encountered some limitation e.g. a dotnet sample
+            # do show the output in verbose mode, though.
+            if not (args.verbose or args.vverbose or args.json):
+                return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities.matches))
@@ -1091,7 +1094,9 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
-    capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
+    capabilities = find_capabilities(
+        rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor(DEFAULT_STRING_LENGTH)
+        )
 
     meta.analysis.feature_counts = capabilities.feature_counts
     meta.analysis.library_functions = capabilities.library_functions
@@ -1127,7 +1132,7 @@ def ghidra_main():
 
     capabilities = find_capabilities(
         rules,
-        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(),
+        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(DEFAULT_STRING_LENGTH),
         not capa.ghidra.helpers.is_running_headless(),
     )
 

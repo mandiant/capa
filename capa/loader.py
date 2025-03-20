@@ -60,6 +60,7 @@ from capa.features.common import (
 )
 from capa.features.address import Address
 from capa.capabilities.common import Capabilities
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import (
     SampleHashes,
     FeatureExtractor,
@@ -211,6 +212,7 @@ def get_extractor(
     should_save_workspace=False,
     disable_progress=False,
     sample_path: Optional[Path] = None,
+    min_str_len=DEFAULT_STRING_LENGTH,
 ) -> FeatureExtractor:
     """
     raises:
@@ -245,7 +247,7 @@ def get_extractor(
         if input_format not in (FORMAT_PE, FORMAT_DOTNET):
             raise UnsupportedFormatError()
 
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(input_path)
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(input_path, min_str_len)
 
     elif backend == BACKEND_BINJA:
         import capa.features.extractors.binja.find_binja_api as finder
@@ -280,7 +282,7 @@ def get_extractor(
     elif backend == BACKEND_PEFILE:
         import capa.features.extractors.pefile
 
-        return capa.features.extractors.pefile.PefileFeatureExtractor(input_path)
+        return capa.features.extractors.pefile.PefileFeatureExtractor(input_path, min_str_len)
 
     elif backend == BACKEND_VIV:
         import capa.features.extractors.viv.extractor
@@ -308,7 +310,7 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, input_path, os_)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, input_path, os_, min_str_len)
 
     elif backend == BACKEND_FREEZE:
         return frz.load(input_path.read_bytes())
@@ -377,7 +379,7 @@ def _get_binexport2_file_extractors(input_file: Path) -> list[FeatureExtractor]:
         return []
 
 
-def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtractor]:
+def get_file_extractors(input_file: Path, input_format: str, min_str_len: int) -> list[FeatureExtractor]:
     file_extractors: list[FeatureExtractor] = []
 
     # we use lazy importing here to avoid eagerly loading dependencies
@@ -387,19 +389,19 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
     if input_format == FORMAT_PE:
         import capa.features.extractors.pefile
 
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file, min_str_len))
 
     elif input_format == FORMAT_DOTNET:
         import capa.features.extractors.pefile
         import capa.features.extractors.dotnetfile
 
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file, min_str_len))
         file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_ELF:
         import capa.features.extractors.elffile
 
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input_file))
+        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input_file, min_str_len))
 
     elif input_format == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
