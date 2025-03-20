@@ -54,7 +54,8 @@ class CapeExtractor(DynamicFeatureExtractor):
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # value according to the PE header, the actual trace may use a different imagebase
-        assert self.report.static is not None and self.report.static.pe is not None
+        assert self.report.static is not None
+        assert self.report.static.pe is not None
         return AbsoluteVirtualAddress(self.report.static.pe.imagebase)
 
     def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
