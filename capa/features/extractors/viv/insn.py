@@ -594,7 +594,12 @@ def extract_op_number_features(
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
 
-    if insn.mnem == "xor" and insn.opers[0].isReg() and insn.opers[1].isReg() and insn.opers[0].reg == insn.opers[1].reg:
+    if (
+        insn.mnem == "xor"
+        and insn.opers[0].isReg()
+        and insn.opers[1].isReg()
+        and insn.opers[0].reg == insn.opers[1].reg
+    ):
         # for pattern like:
         #
         #     xor eax, eax
