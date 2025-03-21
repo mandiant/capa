@@ -25,6 +25,7 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.common import (
     OS,
     OS_ANY,
@@ -117,7 +118,12 @@ def get_viv_extractor(path: Path):
     else:
         vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(
+        vw,
+        path,
+        OS_AUTO,
+        DEFAULT_STRING_LENGTH
+        )
     fixup_viv(path, extractor)
     return extractor
 
@@ -137,8 +143,9 @@ def fixup_viv(path: Path, extractor):
 @lru_cache(maxsize=1)
 def get_pefile_extractor(path: Path):
     import capa.features.extractors.pefile
+    from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
-    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
+    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path, DEFAULT_STRING_LENGTH)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -149,8 +156,9 @@ def get_pefile_extractor(path: Path):
 @lru_cache(maxsize=1)
 def get_dnfile_extractor(path: Path):
     import capa.features.extractors.dnfile.extractor
+    from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path, DEFAULT_STRING_LENGTH)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -161,8 +169,9 @@ def get_dnfile_extractor(path: Path):
 @lru_cache(maxsize=1)
 def get_dotnetfile_extractor(path: Path):
     import capa.features.extractors.dotnetfile
+    from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path, DEFAULT_STRING_LENGTH)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
