@@ -160,6 +160,13 @@ def extract_insn_number_features(
         #   .text:00401145 add esp, 0Ch
         return
 
+    if insn.itype == idaapi.NN_xor:
+        # for pattern like:
+        #
+        #     xor eax, eax
+        if insn.ops[0].type == idaapi.o_reg and insn.ops[1].type == idaapi.o_reg and insn.ops[0].reg == insn.ops[1].reg:
+            yield Number(0), ih.address
+
     for i, op in enumerate(insn.ops):
         if op.type == idaapi.o_void:
             break
