@@ -1022,6 +1022,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("79abd...", "function=0x10002385,bb=0x10002385", capa.features.common.Characteristic("call $+5"), True),
         ("946a9...", "function=0x10001510,bb=0x100015c0", capa.features.common.Characteristic("call $+5"), True),
         ("9324d...", "function=0x40806C,bb=0x40806C,insn=0x40806C", capa.features.insn.Number(0), True),
+        ("mimikatz", "function=0x40105d", capa.features.insn.Number(0), True),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
