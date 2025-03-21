@@ -49,7 +49,7 @@ import capa.helpers
 import capa.features.insn
 import capa.capabilities.common
 from capa.rules import Rule, RuleSet
-from capa.features.common import OS_AUTO, String, Feature, Substring
+from capa.features.common import OS_AUTO, Regex, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")
@@ -721,6 +721,53 @@ class FeatureStringTooShort(Lint):
         return False
 
 
+class FeatureRegexContainsUnescapedPeriod(Lint):
+    name = "feature regex contains unescaped period"
+    recommendation_template = 'escape the period in "{:s}" unless it should be treated as a regex dot operator'
+    level = Lint.WARN
+
+    def check_features(self, ctx: Context, features: list[Feature]):
+        for feature in features:
+            if isinstance(feature, (Regex,)):
+                assert isinstance(feature.value, str)
+
+                pat = feature.value.removeprefix("/")
+                pat = pat.removesuffix("/i").removesuffix("/")
+
+                index = pat.find(".")
+                if index == -1:
+                    return False
+
+                if index < len(pat) - 1:
+                    if pat[index + 1] in ("*", "+", "?", "{"):
+                        # like "/VB5!.*/"
+                        return False
+
+                if index == 0:
+                    # like "/.exe/" which should be "/\.exe/"
+                    self.recommendation = self.recommendation_template.format(feature.value)
+                    return True
+
+                if pat[index - 1] != "\\":
+                    # like "/test.exe/" which should be "/test\.exe/"
+                    self.recommendation = self.recommendation_template.format(feature.value)
+                    return True
+
+                if pat[index - 1] == "\\":
+                    for i, char in enumerate(pat[0:index][::-1]):
+                        if char == "\\":
+                            continue
+
+                        if i % 2 == 0:
+                            # like "/\\\\.\\pipe\\VBoxTrayIPC/"
+                            self.recommendation = self.recommendation_template.format(feature.value)
+                            return True
+
+                        break
+
+        return False
+
+
 class FeatureNegativeNumber(Lint):
     name = "feature value is negative"
     recommendation = "specify the number's two's complement representation"
@@ -931,7 +978,12 @@ def lint_meta(ctx: Context, rule: Rule):
     return run_lints(META_LINTS, ctx, rule)
 
 
-FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi())
+FEATURE_LINTS = (
+    FeatureStringTooShort(),
+    FeatureNegativeNumber(),
+    FeatureNtdllNtoskrnlApi(),
+    FeatureRegexContainsUnescapedPeriod(),
+)
 
 
 def lint_features(ctx: Context, rule: Rule):

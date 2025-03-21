@@ -4,17 +4,21 @@
 
 ### New Features
 - emit number(0) for instructions like "xor eax,eax" #2622 @v1bh475u
-- 
+
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (6)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
 - nursery/enter-debug-mode-in-dotnet @v1bh475u
+- nursery/decrypt-data-using-tripledes-in-dotnet 0xRavenspar
+- nursery/encrypt-data-using-tripledes-in-dotnet 0xRavenspar
+-
 
 ### Bug Fixes
 - cape: make some fields optional @williballenthin #2631 #2632
+- lint: add WARN for regex features that contain unescaped dot #2635
 
 ### capa Explorer Web
 
