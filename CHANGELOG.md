@@ -7,13 +7,14 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (7)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
 - nursery/enter-debug-mode-in-dotnet @v1bh475u
 - nursery/decrypt-data-using-tripledes-in-dotnet 0xRavenspar
 - nursery/encrypt-data-using-tripledes-in-dotnet 0xRavenspar
+- nursery/disable-system-features-via-registry-on-windows mehunhoff@google.com
 -
 
 ### Bug Fixes
