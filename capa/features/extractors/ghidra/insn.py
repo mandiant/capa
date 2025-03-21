@@ -156,6 +156,14 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         #   .text:00401145 add esp, 0Ch
         return
 
+    if insn.getMnemonicString().startswith("XOR"):
+        # for patern like:
+        #
+        #   xor eax, eax
+        if insn.getNumOperands() == 2:
+            if insn.getOpObjects(0)[-1] == insn.getOpObjects(1)[-1]:
+                yield Number(0), ih.address
+
     for i in range(insn.getNumOperands()):
         # Exceptions for LEA insn:
         # invalid operand encoding, considered numbers instead of offsets
