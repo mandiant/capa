@@ -53,6 +53,16 @@ def extract_insn_number_features(
 
     mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
+    if mnemonic == "xor":
+        instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+        operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
+        if operands[1] == operands[2]:
+            # for pattern like:
+            #
+            #   eor x0, x0, x0
+            #
+            yield Number(0), ih.address
+
     if mnemonic in ("add", "sub"):
         assert len(instruction.operand_index) == 3
 

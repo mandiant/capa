@@ -81,6 +81,17 @@ def extract_insn_number_features(
 
     match = NUMBER_PATTERNS.match_with_be2(be2, ii.instruction_index)
     if not match:
+        if BinExport2InstructionPatternMatcher.from_str("xor reg, reg").match_with_be2(be2, ii.instruction_index):
+            # for pattern like:
+            #
+            #   xor eax, eax
+            #
+            instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+            operands: list[BinExport2.Operand] = [
+                be2.operand[operand_index] for operand_index in instruction.operand_index
+            ]
+            if operands[0] == operands[1]:
+                yield Number(0), ih.address
         return
 
     value: int = mask_immediate(fhi.arch, match.expression.immediate)
