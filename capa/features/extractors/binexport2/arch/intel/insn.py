@@ -102,9 +102,9 @@ def extract_insn_number_features(
     yield OperandNumber(match.operand_index, value), ih.address
 
     instruction_index: int = ii.instruction_index
-    instruction: BinExport2.Instruction = be2.instruction[instruction_index]
+    current_instruction: BinExport2.Instruction = be2.instruction[instruction_index]
 
-    mnemonic: str = get_instruction_mnemonic(be2, instruction)
+    mnemonic: str = get_instruction_mnemonic(be2, current_instruction)
     if mnemonic.startswith("add"):
         if 0 < value < MAX_STRUCTURE_SIZE:
             yield Offset(value), ih.address
