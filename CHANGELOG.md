@@ -3,7 +3,8 @@
 ## master (unreleased)
 
 ### New Features
-
+- emit number(0) for instructions like "xor eax,eax" #2622 @v1bh475u
+- 
 ### Breaking Changes
 
 ### New Rules (4)
@@ -11,7 +12,6 @@
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
 - nursery/enter-debug-mode-in-dotnet @v1bh475u
--
 
 ### Bug Fixes
 - cape: make some fields optional @williballenthin #2631 #2632
