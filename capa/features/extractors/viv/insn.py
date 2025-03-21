@@ -32,7 +32,6 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
