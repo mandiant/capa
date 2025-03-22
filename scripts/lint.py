@@ -1179,7 +1179,7 @@ def main(argv=None):
 
     default_samples_path = str(Path(__file__).resolve().parent.parent / "tests" / "data")
 
-    parser = argparse.ArgumentParser(description="Lint capa rules.")
+    parser = argparse.ArgumentParser(description="Lint capa rules.", add_help=False)
     capa.main.install_common_args(parser, wanted={"tag"})
     parser.add_argument("rules", type=str, action="append", help="Path to rules")
     parser.add_argument("--samples", type=str, default=default_samples_path, help="Path to samples")

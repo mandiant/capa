@@ -525,14 +525,18 @@ def handle_help_from_cli(argv, fh_wanted):
     """
     Generate the full-length help menu dynamically using argparse.
     """
-    desc = """
-The FLARE team's open-source tool to identify capabilities in executable files.
-Github: https://github.com/mandiant/capa
+    DOC_LINKS = """
 Useful Links:
     -Quick start: https://github.com/mandiant/capa/blob/master/doc/capa_quickstart.pdf
     -Installation: https://github.com/mandiant/capa/blob/master/doc/installation.md
     -Usage: https://github.com/mandiant/capa/blob/master/doc/usage.md
     -FAQs: https://github.com/mandiant/capa/blob/master/doc/faq.md
+    """
+
+    desc = f"""
+The FLARE team's open-source tool to identify capabilities in executable files.
+Github: https://github.com/mandiant/capa
+{DOC_LINKS}
     """
 
     short_epilog = "Use --help for detailed help menu and examples."
