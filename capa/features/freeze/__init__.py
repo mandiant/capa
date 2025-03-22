@@ -690,7 +690,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description="save capa features to a file")
+    parser = argparse.ArgumentParser(description="save capa features to a file", add_help=False)
     capa.main.install_common_args(parser, {"input_file", "format", "backend", "os", "signatures"})
     parser.add_argument("output", type=str, help="Path to output file")
     args = parser.parse_args(args=argv)

@@ -40,6 +40,9 @@ This release improves a few aspects of dynamic analysis, relaxing our validation
 It also includes an updated rule pack in which many dynamic rules make better use of the "span of calls" scope.
 
 
+### Breaking Changes
+- split single help menu to short and full help menu and adding gihub documentation links @AdityaPatadiya #2640
+
 ### New Rules (3)
 
 - host-interaction/registry/change-registry-key-timestamp wballenthin@google.com
