@@ -240,6 +240,8 @@ def install_common_args(parser, wanted=None):
     # common arguments that all scripts will have
     #
 
+    parser.add_argument("-h", action="store_true", help="display help menu and exit.")
+    parser.add_argument("--help", action="store_true", help="display full length help menu and exit.")
     parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
@@ -517,6 +519,67 @@ def handle_common_args(args):
             args.is_default_signatures = False
 
         args.signatures = sigs_path
+
+
+def handle_help_from_cli(argv, fh_wanted):
+    """
+    Generate the full-length help menu dynamically using argparse.
+    """
+    desc = """
+The FLARE team's open-source tool to identify capabilities in executable files.
+Github: https://github.com/mandiant/capa
+Useful Links:
+    -Quick start: https://github.com/mandiant/capa/blob/master/doc/capa_quickstart.pdf
+    -Installation: https://github.com/mandiant/capa/blob/master/doc/installation.md
+    -Usage: https://github.com/mandiant/capa/blob/master/doc/usage.md
+    -FAQs: https://github.com/mandiant/capa/blob/master/doc/faq.md
+    """
+
+    short_epilog = "Use --help for detailed help menu and examples."
+    full_epilog = textwrap.dedent(
+        """
+        By default, capa uses a default set of embedded rules.
+        You can see the rule set here:
+          https://github.com/mandiant/capa-rules
+
+        You can load capa JSON output to capa Explorer Web:
+          https://github.com/mandiant/capa/explorer
+
+        To provide your own rule set, use the `-r` flag:
+          capa  --rules /path/to/rules  suspicious.exe
+          capa  -r      /path/to/rules  suspicious.exe
+
+        examples:
+          identify capabilities in a binary
+            capa suspicious.exe
+
+          identify capabilities in 32-bit shellcode, see `-f` for all supported formats
+            capa -f sc32 shellcode.bin
+
+          report match locations
+            capa -v suspicious.exe
+
+          report all feature match details
+            capa -vv suspicious.exe
+
+          filter rules by meta fields, e.g. rule name or namespace
+            capa -t "create TCP socket" suspicious.exe
+         """
+    )
+
+    if "-h" in argv:
+        parser = argparse.ArgumentParser(
+            description=desc, epilog=short_epilog, formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False
+        )
+        install_common_args(parser)
+        return parser.format_help()
+    elif "--help" in argv:
+        parser = argparse.ArgumentParser(
+            description=desc, epilog=full_epilog, formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False
+        )
+        install_common_args(parser, fh_wanted)
+        return parser.format_help()
+    return ""
 
 
 def ensure_input_exists_from_cli(args):
@@ -939,56 +1002,27 @@ def main(argv: Optional[list[str]] = None):
     if argv is None:
         argv = sys.argv[1:]
 
-    desc = "The FLARE team's open-source tool to identify capabilities in executable files."
-    epilog = textwrap.dedent(
-        """
-        By default, capa uses a default set of embedded rules.
-        You can see the rule set here:
-          https://github.com/mandiant/capa-rules
+    wanted = {
+        "input_file",
+        "format",
+        "backend",
+        "os",
+        "signatures",
+        "rules",
+        "tag",
+        "restrict-to-functions",
+        "restrict-to-processes",
+    }
 
-        You can load capa JSON output to capa Explorer Web:
-          https://github.com/mandiant/capa/explorer
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    install_common_args(parser, wanted)
 
-        To provide your own rule set, use the `-r` flag:
-          capa  --rules /path/to/rules  suspicious.exe
-          capa  -r      /path/to/rules  suspicious.exe
-
-        examples:
-          identify capabilities in a binary
-            capa suspicious.exe
-
-          identify capabilities in 32-bit shellcode, see `-f` for all supported formats
-            capa -f sc32 shellcode.bin
-
-          report match locations
-            capa -v suspicious.exe
-
-          report all feature match details
-            capa -vv suspicious.exe
-
-          filter rules by meta fields, e.g. rule name or namespace
-            capa -t "create TCP socket" suspicious.exe
-         """
-    )
-
-    parser = argparse.ArgumentParser(
-        description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    install_common_args(
-        parser,
-        {
-            "input_file",
-            "format",
-            "backend",
-            "os",
-            "signatures",
-            "rules",
-            "tag",
-            "restrict-to-functions",
-            "restrict-to-processes",
-        },
-    )
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
+
+    if "-h" in argv or "--help" in argv:
+        print(handle_help_from_cli(argv, wanted))
+        sys.exit(0)
+
     args = parser.parse_args(args=argv)
 
     try:
