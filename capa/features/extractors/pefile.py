@@ -161,10 +161,6 @@ def extract_file_features(ctx):
     yields:
       tuple[Feature, VA]: a feature and its location.
     """
-
-    pe = ctx["pe"]
-    buf = ctx["buf"]
-
     for file_handler in FILE_HANDLERS:
         # file_handler: type: (pe, bytes) -> Iterable[tuple[Feature, Address]]
         for feature, va in file_handler(ctx = ctx):  # type: ignore

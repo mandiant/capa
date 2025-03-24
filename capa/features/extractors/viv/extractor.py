@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, vw, path: Path, os, min_str_len: int = DEFAULT_STRING_LENGTH):
+    def __init__(self, vw, path: Path, os, min_str_len: int=DEFAULT_STRING_LENGTH):
         self.vw = vw
         self.path = path
         self.buf = path.read_bytes()

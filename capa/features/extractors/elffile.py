@@ -187,11 +187,8 @@ def extract_file_arch(elf: ELFFile, **kwargs):
 
 
 def extract_file_features(ctx) -> Iterator[tuple[Feature, int]]:
-    elf = ctx["elf"]
-    buf = ctx["buf"]
-    
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
+        for feature, addr in file_handler(ctx=ctx):  # type: ignore
             yield feature, addr
 
 
