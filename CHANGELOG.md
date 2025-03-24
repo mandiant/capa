@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (11)
+### New Rules (15)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
@@ -18,6 +18,10 @@
 - data-manipulation/encryption/speck/encrypt-data-using-speck still@teamt5.org
 - load-code/dotnet/load-assembly-via-iassembly still@teamt5.org
 - malware-family/donut-loader/load-shellcode-via-donut still@teamt5.org
+- nursery/disable-device-guard-features-via-registry-on-windows mehunhoff@google.com
+- nursery/disable-firewall-features-via-registry-on-windows mehunhoff@google.com
+- nursery/disable-system-restore-features-via-registry-on-windows mehunhoff@google.com
+- nursery/disable-windows-defender-features-via-registry-on-windows mehunhoff@google.com
 -
 
 ### Bug Fixes
