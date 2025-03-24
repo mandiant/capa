@@ -721,6 +721,29 @@ class FeatureStringTooShort(Lint):
         return False
 
 
+class FeatureRegexRegistryControlSetMatchIncomplete(Lint):
+    name = "feature regex registry control set match incomplete"
+    recommendation = (
+        'use "(ControlSet\\d{3}|CurrentControlSet)" to match both indirect references '
+        + 'via "CurrentControlSet" and direct references via "ControlSetXXX"'
+    )
+
+    def check_features(self, ctx: Context, features: list[Feature]):
+        for feature in features:
+            if not isinstance(feature, (Regex,)):
+                continue
+
+            assert isinstance(feature.value, str)
+
+            pat = feature.value.lower()
+
+            if "system\\\\" in pat and "controlset" in pat or "currentcontrolset" in pat:
+                if "system\\\\(controlset\\d{3}|currentcontrolset)" not in pat:
+                    return True
+
+            return False
+
+
 class FeatureRegexContainsUnescapedPeriod(Lint):
     name = "feature regex contains unescaped period"
     recommendation_template = 'escape the period in "{:s}" unless it should be treated as a regex dot operator'
@@ -983,6 +1006,7 @@ FEATURE_LINTS = (
     FeatureNegativeNumber(),
     FeatureNtdllNtoskrnlApi(),
     FeatureRegexContainsUnescapedPeriod(),
+    FeatureRegexRegistryControlSetMatchIncomplete(),
 )
 
 
