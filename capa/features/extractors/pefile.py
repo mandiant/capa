@@ -40,7 +40,7 @@ def extract_file_embedded_pe(ctx):
 
 
 def extract_file_export_names(ctx):
-    pe = ctx["pe"]
+    pe = ctx
     base_address = pe.OPTIONAL_HEADER.ImageBase
 
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
@@ -76,7 +76,7 @@ def extract_file_import_names(ctx):
      - modulename.importname
      - importname
     """
-    pe = ctx["pe"]
+    pe = ctx
 
     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
         for dll in pe.DIRECTORY_ENTRY_IMPORT:
@@ -102,7 +102,7 @@ def extract_file_import_names(ctx):
 
 
 def extract_file_section_names(ctx):
-    pe = ctx["pe"]
+    pe = ctx
     base_address = pe.OPTIONAL_HEADER.ImageBase
 
     for section in pe.sections:

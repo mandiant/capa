@@ -47,7 +47,7 @@ def test_extract_ascii_strings():
 
     # min length
     buf = b"Hi\x00Test\x00"
-    strings = list(extract_ascii_strings(buf, n=4))
+    strings = list(extract_ascii_strings(buf, min_str_len=4))
     assert len(strings) == 1
     assert strings[0] == String("Test", 3)
 
@@ -75,7 +75,7 @@ def test_extract_unicode_strings():
 
     # min length
     buf = b"H\x00i\x00\x00\x00T\x00e\x00s\x00t\x00\x00\x00"
-    strings = list(extract_unicode_strings(buf, n=4))
+    strings = list(extract_unicode_strings(buf, min_str_len=4))
     assert len(strings) == 1
     assert strings[0] == String("Test", 6)
 

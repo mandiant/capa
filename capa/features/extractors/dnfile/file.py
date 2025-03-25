@@ -26,31 +26,37 @@ from capa.features.address import Address
 
 
 def extract_file_import_names(ctx) -> Iterator[tuple[Import, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe=ctx["pe"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe)
 
 
 def extract_file_format(ctx) -> Iterator[tuple[Format, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_format(pe=ctx["pe"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    yield from capa.features.extractors.dotnetfile.extract_file_format(pe)
 
 
 def extract_file_function_names(ctx) -> Iterator[tuple[FunctionName, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe=ctx["pe"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe)
 
 
 def extract_file_strings(ctx) -> Iterator[tuple[String, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_strings(pe=ctx["pe"])
+    yield from capa.features.extractors.dotnetfile.extract_file_strings(ctx)
 
 
 def extract_file_mixed_mode_characteristic_features(ctx) -> Iterator[tuple[Characteristic, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(pe=ctx["pe"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(pe)
 
 
 def extract_file_namespace_features(ctx) -> Iterator[tuple[Namespace, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(pe=ctx["pe"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(pe)
 
 
 def extract_file_class_features(ctx) -> Iterator[tuple[Class, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_class_features(pe=ctx["pe"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    yield from capa.features.extractors.dotnetfile.extract_file_class_features(pe)
 
 
 def extract_features(ctx) -> Iterator[tuple[Feature, Address]]:

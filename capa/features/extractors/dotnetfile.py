@@ -61,8 +61,7 @@ def extract_file_format(ctx) -> Iterator[tuple[Format, Address]]:
     yield Format(FORMAT_PE), NO_ADDRESS
 
 
-def extract_file_import_names(ctx) -> Iterator[tuple[Import, Address]]:
-    pe = ctx["pe"]
+def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[tuple[Import, Address]]:
     for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
         yield Import(str(method)), DNTokenAddress(method.token)
@@ -73,17 +72,15 @@ def extract_file_import_names(ctx) -> Iterator[tuple[Import, Address]]:
             yield Import(name), DNTokenAddress(imp.token)
 
 
-def extract_file_function_names(ctx) -> Iterator[tuple[FunctionName, Address]]:
-    pe = ctx["pe"]
+def extract_file_function_names(pe: dnfile.dnPE) -> Iterator[tuple[FunctionName, Address]]:
     for method in get_dotnet_managed_methods(pe):
         yield FunctionName(str(method)), DNTokenAddress(method.token)
 
 
-def extract_file_namespace_features(ctx) -> Iterator[tuple[Namespace, Address]]:
+def extract_file_namespace_features(pe: dnfile.dnPE) -> Iterator[tuple[Namespace, Address]]:
     """emit namespace features from TypeRef and TypeDef tables"""
 
     # namespaces may be referenced multiple times, so we need to filter
-    pe = ctx["pe"]
     namespaces = set()
 
     for _, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
@@ -104,9 +101,8 @@ def extract_file_namespace_features(ctx) -> Iterator[tuple[Namespace, Address]]:
         yield Namespace(namespace), NO_ADDRESS
 
 
-def extract_file_class_features(ctx) -> Iterator[tuple[Class, Address]]:
+def extract_file_class_features(pe: dnfile.dnPE) -> Iterator[tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
-    pe = ctx["pe"]
     nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
@@ -147,16 +143,16 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address
 
 
 def extract_file_strings(ctx) -> Iterator[tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(ctx["pe"].__data__, ctx["min_str_len"])
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    min_str_len = ctx.get("min_str_len", DEFAULT_STRING_LENGTH) if isinstance(ctx, dict) else DEFAULT_STRING_LENGTH
+    yield from capa.features.extractors.common.extract_file_strings(pe.__data__, min_str_len)
 
 
 def extract_file_mixed_mode_characteristic_features(
-    ctx
+    pe: dnfile.dnPE
 ) -> Iterator[tuple[Characteristic, Address]]:
-    pe = ctx["pe"]
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), NO_ADDRESS
-
 
 def extract_file_features(ctx) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:

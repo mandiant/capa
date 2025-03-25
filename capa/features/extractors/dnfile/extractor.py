@@ -94,7 +94,7 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: list[tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format())
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format(self.pe))
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
 
