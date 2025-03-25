@@ -14,6 +14,7 @@
 
 from typing import Optional
 
+import envi
 from vivisect import VivWorkspace
 from vivisect.const import XR_TO, REF_CODE
 
@@ -28,3 +29,14 @@ def get_coderef_from(vw: VivWorkspace, va: int) -> Optional[int]:
         return xrefs[0][XR_TO]
     else:
         return None
+
+
+def is_xor(insn: envi.Opcode):
+    return insn.mnem in ("xor", "xorpd", "xorps", "pxor")
+
+
+def is_zxor(insn: envi.Opcode):
+    if is_xor(insn):
+        return insn.opers[0] == insn.opers[1]
+
+    return True

@@ -387,10 +387,8 @@ def extract_insn_nzxor_characteristic_features(
     bb: viv_utils.BasicBlock = bbhandle.inner
     f: viv_utils.Function = fh.inner
 
-    if insn.mnem not in ("xor", "xorpd", "xorps", "pxor"):
-        return
-
-    if insn.opers[0] == insn.opers[1]:
+    # also checks if the insn is xor
+    if capa.features.extractors.viv.helpers.is_zxor(insn):
         return
 
     if is_security_cookie(f, bb, insn):
@@ -594,12 +592,7 @@ def extract_op_number_features(
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
 
-    if (
-        insn.mnem == "xor"
-        and insn.opers[0].isReg()
-        and insn.opers[1].isReg()
-        and insn.opers[0].reg == insn.opers[1].reg
-    ):
+    if capa.features.extractors.viv.helpers.is_zxor(insn):
         # for pattern like:
         #
         #     xor eax, eax
