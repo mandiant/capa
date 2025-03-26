@@ -61,7 +61,8 @@ def extract_file_format(ctx) -> Iterator[tuple[Format, Address]]:
     yield Format(FORMAT_PE), NO_ADDRESS
 
 
-def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[tuple[Import, Address]]:
+def extract_file_import_names(ctx) -> Iterator[tuple[Import, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
         yield Import(str(method)), DNTokenAddress(method.token)
@@ -72,16 +73,18 @@ def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[tuple[Import, Address
             yield Import(name), DNTokenAddress(imp.token)
 
 
-def extract_file_function_names(pe: dnfile.dnPE) -> Iterator[tuple[FunctionName, Address]]:
+def extract_file_function_names(ctx) -> Iterator[tuple[FunctionName, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     for method in get_dotnet_managed_methods(pe):
         yield FunctionName(str(method)), DNTokenAddress(method.token)
 
 
-def extract_file_namespace_features(pe: dnfile.dnPE) -> Iterator[tuple[Namespace, Address]]:
+def extract_file_namespace_features(ctx) -> Iterator[tuple[Namespace, Address]]:
     """emit namespace features from TypeRef and TypeDef tables"""
 
     # namespaces may be referenced multiple times, so we need to filter
     namespaces = set()
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
 
     for _, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET namespaces
@@ -101,8 +104,9 @@ def extract_file_namespace_features(pe: dnfile.dnPE) -> Iterator[tuple[Namespace
         yield Namespace(namespace), NO_ADDRESS
 
 
-def extract_file_class_features(pe: dnfile.dnPE) -> Iterator[tuple[Class, Address]]:
+def extract_file_class_features(ctx) -> Iterator[tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
@@ -124,13 +128,14 @@ def extract_file_class_features(pe: dnfile.dnPE) -> Iterator[tuple[Class, Addres
         yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
 
 
-def extract_file_os(**kwargs) -> Iterator[tuple[OS, Address]]:
+def extract_file_os(ctx) -> Iterator[tuple[OS, Address]]:
     yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address]]:
+def extract_file_arch(ctx) -> Iterator[tuple[Arch, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     assert pe.net is not None
     assert pe.net.Flags is not None
 
@@ -149,14 +154,15 @@ def extract_file_strings(ctx) -> Iterator[tuple[String, Address]]:
 
 
 def extract_file_mixed_mode_characteristic_features(
-    pe: dnfile.dnPE
+    ctx
 ) -> Iterator[tuple[Characteristic, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), NO_ADDRESS
 
 def extract_file_features(ctx) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(ctx=ctx):  # type: ignore
+        for feature, addr in file_handler(ctx):  # type: ignore
             yield feature, addr
 
 
@@ -171,9 +177,9 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe: dnfile.dnPE) -> Iterator[tuple[Feature, Address]]:
+def extract_global_features(ctx) -> Iterator[tuple[Feature, Address]]:
     for handler in GLOBAL_HANDLERS:
-        for feature, va in handler(pe=pe):  # type: ignore
+        for feature, va in handler(ctx):  # type: ignore
             yield feature, va
 
 

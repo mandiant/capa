@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_file_export_names(ctx):
-    elf = ctx["elf"]
+    elf = ctx["elf"] if isinstance(ctx, dict) else ctx
 
     for section in elf.iter_sections():
         if not isinstance(section, SymbolTableSection):
@@ -83,7 +83,7 @@ def extract_file_export_names(ctx):
 
 
 def extract_file_import_names(ctx):
-    elf = ctx["elf"]
+    elf = ctx["elf"] if isinstance(ctx, dict) else ctx
     symbol_name_by_index: dict[int, str] = {}
 
     # Extract symbol names and store them in the dictionary
@@ -144,7 +144,7 @@ def extract_file_import_names(ctx):
 
 
 def extract_file_section_names(ctx):
-    elf = ctx["elf"]
+    elf = ctx["elf"] if isinstance(ctx, dict) else ctx
 
     for section in elf.iter_sections():
         if section.name:
