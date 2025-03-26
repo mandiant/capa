@@ -32,7 +32,7 @@ def get_script_path(s: str):
 
 
 def get_binary_file_path():
-    return str(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
+    return str(CD / "data" / "native" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 def get_cape_report_file_path():
@@ -96,7 +96,7 @@ def test_scripts(script, args):
 )
 def test_binexport_scripts(script, args):
     # define sample bytes location
-    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data"))
+    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data" / "native"))
 
     script_path = get_script_path(script)
     p = run_program(script_path, args)
@@ -108,7 +108,7 @@ def test_bulk_process(tmp_path):
     t = tmp_path / "test"
     t.mkdir()
 
-    source_file = Path(__file__).resolve().parent / "data" / "ping_täst.exe_"
+    source_file = Path(__file__).resolve().parent / "data" / "native" / "ping_täst.exe_"
     dest_file = t / "test.exe_"
 
     dest_file.write_bytes(source_file.read_bytes())
