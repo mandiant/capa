@@ -38,6 +38,7 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.dnfile.types import DnType
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
@@ -55,12 +56,13 @@ from capa.features.extractors.dnfile.helpers import (
 logger = logging.getLogger(__name__)
 
 
-def extract_file_format(**kwargs) -> Iterator[tuple[Format, Address]]:
+def extract_file_format(ctx) -> Iterator[tuple[Format, Address]]:
     yield Format(FORMAT_DOTNET), NO_ADDRESS
     yield Format(FORMAT_PE), NO_ADDRESS
 
 
-def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Import, Address]]:
+def extract_file_import_names(ctx) -> Iterator[tuple[Import, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
         yield Import(str(method)), DNTokenAddress(method.token)
@@ -71,16 +73,18 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Impor
             yield Import(name), DNTokenAddress(imp.token)
 
 
-def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[FunctionName, Address]]:
+def extract_file_function_names(ctx) -> Iterator[tuple[FunctionName, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     for method in get_dotnet_managed_methods(pe):
         yield FunctionName(str(method)), DNTokenAddress(method.token)
 
 
-def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Namespace, Address]]:
+def extract_file_namespace_features(ctx) -> Iterator[tuple[Namespace, Address]]:
     """emit namespace features from TypeRef and TypeDef tables"""
 
     # namespaces may be referenced multiple times, so we need to filter
     namespaces = set()
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
 
     for _, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET namespaces
@@ -100,8 +104,9 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple
         yield Namespace(namespace), NO_ADDRESS
 
 
-def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Class, Address]]:
+def extract_file_class_features(ctx) -> Iterator[tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
@@ -123,13 +128,14 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Cla
         yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
 
 
-def extract_file_os(**kwargs) -> Iterator[tuple[OS, Address]]:
+def extract_file_os(ctx) -> Iterator[tuple[OS, Address]]:
     yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address]]:
+def extract_file_arch(ctx) -> Iterator[tuple[Arch, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     assert pe.net is not None
     assert pe.net.Flags is not None
 
@@ -141,20 +147,21 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
+def extract_file_strings(ctx) -> Iterator[tuple[String, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
+    min_str_len = ctx.get("min_str_len", DEFAULT_STRING_LENGTH) if isinstance(ctx, dict) else DEFAULT_STRING_LENGTH
+    yield from capa.features.extractors.common.extract_file_strings(pe.__data__, min_str_len)
 
 
-def extract_file_mixed_mode_characteristic_features(
-    pe: dnfile.dnPE, **kwargs
-) -> Iterator[tuple[Characteristic, Address]]:
+def extract_file_mixed_mode_characteristic_features(ctx) -> Iterator[tuple[Characteristic, Address]]:
+    pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE) -> Iterator[tuple[Feature, Address]]:
+def extract_file_features(ctx) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(pe=pe):  # type: ignore
+        for feature, addr in file_handler(ctx):  # type: ignore
             yield feature, addr
 
 
@@ -169,9 +176,9 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe: dnfile.dnPE) -> Iterator[tuple[Feature, Address]]:
+def extract_global_features(ctx) -> Iterator[tuple[Feature, Address]]:
     for handler in GLOBAL_HANDLERS:
-        for feature, va in handler(pe=pe):  # type: ignore
+        for feature, va in handler(ctx):  # type: ignore
             yield feature, va
 
 
@@ -182,10 +189,11 @@ GLOBAL_HANDLERS = (
 
 
 class DotnetFileFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.min_str_len = min_str_len
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -203,7 +211,7 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
         yield from extract_global_features(self.pe)
 
     def extract_file_features(self):
-        yield from extract_file_features(self.pe)
+        yield from extract_file_features(ctx={"pe": self.pe, "min_str_len": DEFAULT_STRING_LENGTH})
 
     def is_dotnet_file(self) -> bool:
         return bool(self.pe.net)

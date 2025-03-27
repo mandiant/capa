@@ -28,6 +28,7 @@ import capa.features.extractors.dnfile.insn
 import capa.features.extractors.dnfile.function
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 from capa.features.extractors.base_extractor import (
     BBHandle,
@@ -82,8 +83,9 @@ class DnFileFeatureExtractorCache:
 
 
 class DnfileFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, min_str_len: int = DEFAULT_STRING_LENGTH):
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.min_str_len = min_str_len
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
@@ -92,9 +94,9 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: list[tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format())
-        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
-        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format(self.pe))
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(self.pe))
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(self.pe))
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -103,7 +105,9 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.dnfile.file.extract_features(self.pe)
+        yield from capa.features.extractors.dnfile.file.extract_features(
+            ctx={"pe": self.pe, "min_str_len": self.min_str_len}
+        )
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         # create a method lookup table
@@ -112,7 +116,13 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
             fh: FunctionHandle = FunctionHandle(
                 address=DNTokenAddress(token),
                 inner=method,
-                ctx={"pe": self.pe, "calls_from": set(), "calls_to": set(), "cache": self.token_cache},
+                ctx={
+                    "pe": self.pe,
+                    "calls_from": set(),
+                    "calls_to": set(),
+                    "cache": self.token_cache,
+                    "min_str_len": self.min_str_len,
+                },
             )
 
             # method tokens should be unique
