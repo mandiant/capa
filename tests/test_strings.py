@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 from capa.features.extractors.strings import (
     String,
     buf_filled_with,
@@ -103,3 +104,46 @@ def test_is_printable_str():
     assert is_printable_str("") is True  # empty string
     assert is_printable_str(" ") is True  # single space
     assert is_printable_str("\x7f") is False  # DEL character
+
+def test_min_str_len():
+    # Test invalid min_str_len values
+    with pytest.raises(ValueError):
+        list(extract_ascii_strings(b"test", min_str_len=0))
+    with pytest.raises(ValueError):
+        list(extract_ascii_strings(b"test", min_str_len=-1))
+
+    # Test with ASCII strings
+    buf = b"a\x00ab\x00abc\x00abcd\x00abcde\x00"
+
+    # Test with min_str_len=1 (minimum allowed)
+    strings = list(extract_ascii_strings(buf, min_str_len=1))
+    assert len(strings) == 5
+    assert [s.s for s in strings] == ["a", "ab", "abc", "abcd", "abcde"]
+
+    # Test with min_str_len=3
+    strings = list(extract_ascii_strings(buf, min_str_len=3))
+    assert len(strings) == 3
+    assert [s.s for s in strings] == ["abc", "abcd", "abcde"]
+
+    # Test with min_str_len=5
+    strings = list(extract_ascii_strings(buf, min_str_len=5))
+    assert len(strings) == 1
+    assert strings[0].s == "abcde"
+
+    # Test Unicode strings
+    unicode_buf = (
+        b"a\x00\x00\x00"          # 'a' (len 1)
+        b"a\x00b\x00\x00\x00"     # 'ab' (len 2)
+        b"a\x00b\x00c\x00\x00\x00" # 'abc' (len 3)
+        b"a\x00b\x00c\x00d\x00\x00\x00" # 'abcd' (len 4)
+    )
+
+    # Test with default min_str_len=4 for Unicode
+    strings = list(extract_unicode_strings(unicode_buf))
+    assert len(strings) == 1
+    assert strings[0].s == "abcd"
+
+    # Test with min_str_len=2 for Unicode
+    strings = list(extract_unicode_strings(unicode_buf, min_str_len=2))
+    assert len(strings) == 3
+    assert [s.s for s in strings] == ["ab", "abc", "abcd"]
