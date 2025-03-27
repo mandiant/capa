@@ -387,8 +387,10 @@ def extract_insn_nzxor_characteristic_features(
     bb: viv_utils.BasicBlock = bbhandle.inner
     f: viv_utils.Function = fh.inner
 
-    # also checks if the insn is xor
-    if capa.features.extractors.viv.helpers.is_zxor(insn):
+    if not capa.features.extractors.viv.helpers.is_xor(insn):
+        return
+
+    if capa.features.extractors.viv.helpers.is_operands_equal(insn):
         return
 
     if is_security_cookie(f, bb, insn):
