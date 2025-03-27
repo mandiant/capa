@@ -143,7 +143,7 @@ def extract_features(ctx) -> Iterator[tuple[Feature, Address]]:
     args:
       vw (vivisect.VivWorkspace): the vivisect workspace
       buf: the raw input file bytes
-      ctx (dict): A context dictionary containing metadata and configuration information for extraction. 
+      ctx (dict): A context dictionary containing metadata and configuration information for extraction.
 
     yields:
       tuple[Feature, Address]: a feature and its location.

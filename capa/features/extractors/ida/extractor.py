@@ -69,10 +69,8 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
     def get_function(self, ea: int) -> FunctionHandle:
         f = idaapi.get_func(ea)
         return FunctionHandle(
-            address=AbsoluteVirtualAddress(f.start_ea),
-            inner=f,
-            ctx={"min_str_len": self.min_str_len}
-            )
+            address=AbsoluteVirtualAddress(f.start_ea), inner=f, ctx={"min_str_len": self.min_str_len}
+        )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.function.extract_features(fh)

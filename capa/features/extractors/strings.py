@@ -79,7 +79,7 @@ def buf_filled_with(buf: bytes, character: int) -> bool:
     return True
 
 
-def extract_ascii_strings(buf: bytes, min_str_len = DEFAULT_STRING_LENGTH) -> Iterator[String]:
+def extract_ascii_strings(buf: bytes, min_str_len=DEFAULT_STRING_LENGTH) -> Iterator[String]:
     """
     Extract ASCII strings from the given binary data.
 
@@ -107,7 +107,7 @@ def extract_ascii_strings(buf: bytes, min_str_len = DEFAULT_STRING_LENGTH) -> It
         yield String(match.group().decode("ascii"), match.start())
 
 
-def extract_unicode_strings(buf: bytes, min_str_len = DEFAULT_STRING_LENGTH) -> Iterator[String]:
+def extract_unicode_strings(buf: bytes, min_str_len=DEFAULT_STRING_LENGTH) -> Iterator[String]:
     """
     Extract naive UTF-16 strings from the given binary data.
 

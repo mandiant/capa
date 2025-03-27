@@ -21,7 +21,6 @@ import pefile
 
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.common import (
     OS,
     OS_ANY,
@@ -39,6 +38,7 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.dnfile.types import DnType
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
@@ -153,12 +153,11 @@ def extract_file_strings(ctx) -> Iterator[tuple[String, Address]]:
     yield from capa.features.extractors.common.extract_file_strings(pe.__data__, min_str_len)
 
 
-def extract_file_mixed_mode_characteristic_features(
-    ctx
-) -> Iterator[tuple[Characteristic, Address]]:
+def extract_file_mixed_mode_characteristic_features(ctx) -> Iterator[tuple[Characteristic, Address]]:
     pe = ctx["pe"] if isinstance(ctx, dict) else ctx
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), NO_ADDRESS
+
 
 def extract_file_features(ctx) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
@@ -190,7 +189,7 @@ GLOBAL_HANDLERS = (
 
 
 class DotnetFileFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, path: Path, min_str_len: int=DEFAULT_STRING_LENGTH):
+    def __init__(self, path: Path, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))

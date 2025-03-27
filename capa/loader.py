@@ -379,7 +379,9 @@ def _get_binexport2_file_extractors(input_file: Path) -> list[FeatureExtractor]:
         return []
 
 
-def get_file_extractors(input_file: Path, input_format: str, min_str_len: int) -> list[FeatureExtractor]:
+def get_file_extractors(
+    input_file: Path, input_format: str, min_str_len: int = DEFAULT_STRING_LENGTH
+) -> list[FeatureExtractor]:
     file_extractors: list[FeatureExtractor] = []
 
     # we use lazy importing here to avoid eagerly loading dependencies

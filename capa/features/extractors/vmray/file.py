@@ -22,6 +22,7 @@ from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,7 +69,9 @@ def extract_referenced_registry_key_names(analysis: VMRayAnalysis) -> Iterator[t
 
 def extract_file_strings(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
     if analysis.submission_static is not None:
-        yield from capa.features.extractors.common.extract_file_strings(analysis.submission_bytes, min_str_len=DEFAULT_STRING_LENGTH)
+        yield from capa.features.extractors.common.extract_file_strings(
+            analysis.submission_bytes, min_str_len=DEFAULT_STRING_LENGTH
+        )
 
 
 def extract_features(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:

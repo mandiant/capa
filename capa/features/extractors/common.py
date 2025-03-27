@@ -41,8 +41,8 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.freeze import is_freeze
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +53,16 @@ MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
 
-def extract_file_strings(buf: bytes, min_str_len: int=DEFAULT_STRING_LENGTH, **kwargs) -> Iterator[tuple[String, Address]]:
+def extract_file_strings(
+    buf: bytes, min_str_len: int = DEFAULT_STRING_LENGTH, **kwargs
+) -> Iterator[tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
-    for s in capa.features.extractors.strings.extract_ascii_strings(buf, min_str_len = min_str_len):
+    for s in capa.features.extractors.strings.extract_ascii_strings(buf, min_str_len=min_str_len):
         yield String(s.s), FileOffsetAddress(s.offset)
 
-    for s in capa.features.extractors.strings.extract_unicode_strings(buf, min_str_len = min_str_len):
+    for s in capa.features.extractors.strings.extract_unicode_strings(buf, min_str_len=min_str_len):
         yield String(s.s), FileOffsetAddress(s.offset)
 
 

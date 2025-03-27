@@ -28,8 +28,8 @@ import capa.features.extractors.dnfile.insn
 import capa.features.extractors.dnfile.function
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
-from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
@@ -121,7 +121,8 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
                     "calls_from": set(),
                     "calls_to": set(),
                     "cache": self.token_cache,
-                    "min_str_len": self.min_str_len},
+                    "min_str_len": self.min_str_len,
+                },
             )
 
             # method tokens should be unique

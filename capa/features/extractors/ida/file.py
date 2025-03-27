@@ -184,7 +184,7 @@ def extract_file_function_names(ctx) -> Iterator[tuple[Feature, Address]]:
                 yield FunctionName(name[1:]), addr
 
 
-def extract_file_format(ctx) -> Iterator[tuple[Feature, Address]]:
+def extract_file_format(ctx = None) -> Iterator[tuple[Feature, Address]]:
     filetype = capa.ida.helpers.get_filetype()
 
     if filetype in (idaapi.f_PE, idaapi.f_COFF):

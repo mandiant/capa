@@ -23,8 +23,8 @@ import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +202,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:    
+def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
     for global_handler in GLOBAL_HANDLERS:
         for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -236,7 +236,7 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
     def extract_file_features(self):
         buf = self.path.read_bytes()
 
-        for feature, addr in extract_file_features(ctx = {"elf": self.elf, "buf": buf, "min_str_len": self.min_str_len}):
+        for feature, addr in extract_file_features(ctx={"elf": self.elf, "buf": buf, "min_str_len": self.min_str_len}):
             yield feature, addr
 
     def get_functions(self):

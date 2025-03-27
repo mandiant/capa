@@ -23,6 +23,7 @@ import ida_bytes
 import ida_segment
 
 from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import FunctionHandle
 
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)  # use one byte-per-character encoding
@@ -246,7 +247,7 @@ def read_bytes_at(ea: int, count: int) -> bytes:
         return idc.get_bytes(ea, count)
 
 
-def find_string_at(ea: int, min_str_len: int) -> str:
+def find_string_at(ea: int, min_str_len: int = DEFAULT_STRING_LENGTH) -> str:
     """check if ASCII string exists at a given virtual address"""
     found = idaapi.get_strlit_contents(ea, -1, idaapi.STRTYPE_C)
     if found and len(found) >= min_str_len:

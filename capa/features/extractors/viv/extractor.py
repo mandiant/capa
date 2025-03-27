@@ -25,9 +25,9 @@ import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.global_
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, vw, path: Path, os, min_str_len: int=DEFAULT_STRING_LENGTH):
+    def __init__(self, vw, path: Path, os, min_str_len: int = DEFAULT_STRING_LENGTH):
         self.vw = vw
         self.path = path
         self.buf = path.read_bytes()
@@ -49,7 +49,7 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: list[tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(ctx={"buf":self.buf}))
+        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(ctx={"buf": self.buf}))
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf, os))
         self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
@@ -63,13 +63,15 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
     def extract_file_features(self):
         yield from capa.features.extractors.viv.file.extract_features(
             ctx={"vw": self.vw, "buf": self.buf, "min_str_len": self.min_str_len}
-            )
+        )
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         cache: dict[str, Any] = {}
         for va in sorted(self.vw.getFunctions()):
             yield FunctionHandle(
-                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"cache": cache, "min_str_len": self.min_str_len}
+                address=AbsoluteVirtualAddress(va),
+                inner=viv_utils.Function(self.vw, va),
+                ctx={"cache": cache, "min_str_len": self.min_str_len},
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:

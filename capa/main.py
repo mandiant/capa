@@ -106,6 +106,7 @@ from capa.capabilities.common import (
     find_file_capabilities,
     has_dynamic_limitation,
 )
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import (
     ProcessFilter,
     FunctionFilter,
@@ -113,7 +114,6 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
     DynamicFeatureExtractor,
 )
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -1096,7 +1096,7 @@ def ida_main():
 
     capabilities = find_capabilities(
         rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor(DEFAULT_STRING_LENGTH)
-        )
+    )
 
     meta.analysis.feature_counts = capabilities.feature_counts
     meta.analysis.library_functions = capabilities.library_functions
@@ -1132,7 +1132,7 @@ def ghidra_main():
 
     capabilities = find_capabilities(
         rules,
-        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(DEFAULT_STRING_LENGTH),
+        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(),
         not capa.ghidra.helpers.is_running_headless(),
     )
 

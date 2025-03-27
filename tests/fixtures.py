@@ -25,7 +25,6 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.common import (
     OS,
     OS_ANY,
@@ -44,6 +43,7 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -119,11 +119,8 @@ def get_viv_extractor(path: Path):
         vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
     extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(
-        vw,
-        path,
-        OS_AUTO,
-        DEFAULT_STRING_LENGTH
-        )
+        vw, path, OS_AUTO, DEFAULT_STRING_LENGTH
+    )
     fixup_viv(path, extractor)
     return extractor
 
