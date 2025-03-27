@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+- Added configurable string length (`min_str_len`) across backends (#1303)
+
 ### New Features
 
 ### Breaking Changes
