@@ -35,12 +35,8 @@ def is_xor(insn: envi.Opcode):
     return insn.mnem in ("xor", "xorpd", "xorps", "pxor")
 
 
-def is_operands_equal(insn: envi.Opcode):
-    return insn.opers[0] == insn.opers[1]
-
-
 def is_zxor(insn: envi.Opcode):
     if is_xor(insn):
-        return is_operands_equal(insn)
+        return insn.opers[0] == insn.opers[1]
 
     return False

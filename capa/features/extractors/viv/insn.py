@@ -390,7 +390,7 @@ def extract_insn_nzxor_characteristic_features(
     if not capa.features.extractors.viv.helpers.is_xor(insn):
         return
 
-    if capa.features.extractors.viv.helpers.is_operands_equal(insn):
+    if insn.opers[0] == insn.opers[1]:
         return
 
     if is_security_cookie(f, bb, insn):
