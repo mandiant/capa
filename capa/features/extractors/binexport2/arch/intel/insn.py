@@ -29,7 +29,7 @@ from capa.features.extractors.binexport2.helpers import (
     get_instruction_mnemonic,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOKIE_BYTES_DELTA
+from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOKIE_BYTES_DELTA, is_operands_equal
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +86,7 @@ def extract_insn_number_features(
             #
             #   xor eax, eax
             #
-            instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
-            operands: list[BinExport2.Operand] = [
-                be2.operand[operand_index] for operand_index in instruction.operand_index
-            ]
-            if operands[0] == operands[1]:
+            if is_operands_equal(be2, be2.instruction[ii.instruction_index]):
                 yield Number(0), ih.address
         return
 
@@ -102,9 +98,9 @@ def extract_insn_number_features(
     yield OperandNumber(match.operand_index, value), ih.address
 
     instruction_index: int = ii.instruction_index
-    current_instruction: BinExport2.Instruction = be2.instruction[instruction_index]
+    instruction: BinExport2.Instruction = be2.instruction[instruction_index]
 
-    mnemonic: str = get_instruction_mnemonic(be2, current_instruction)
+    mnemonic: str = get_instruction_mnemonic(be2, instruction)
     if mnemonic.startswith("add"):
         if 0 < value < MAX_STRUCTURE_SIZE:
             yield Offset(value), ih.address
@@ -227,9 +223,7 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
-
-    if operands[0] == operands[1]:
+    if is_operands_equal(be2, instruction):
         return
 
     instruction_address: int = idx.insn_address_by_index[ii.instruction_index]

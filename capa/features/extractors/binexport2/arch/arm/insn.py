@@ -30,7 +30,7 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.arm.helpers import is_operands_equal, is_stack_register_expression
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +54,7 @@ def extract_insn_number_features(
     mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
     if mnemonic == "xor":
-        operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
-        if operands[1] == operands[2]:
+        if is_operands_equal(be2, instruction):
             # for pattern like:
             #
             #   eor x0, x0, x0
@@ -147,9 +146,7 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
-
-    if operands[1] != operands[2]:
+    if not is_operands_equal(be2, instruction):
         yield Characteristic("nzxor"), ih.address
 
 
