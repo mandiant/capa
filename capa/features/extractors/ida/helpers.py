@@ -188,6 +188,10 @@ def get_instructions_in_range(start: int, end: int) -> Iterator[idaapi.insn_t]:
             yield insn
 
 
+def is_xor(insn: idaapi.insn_t) -> bool:
+    return insn.itype in (idaapi.NN_xor, idaapi.NN_xorpd, idaapi.NN_xorps, idaapi.NN_pxor)
+
+
 def is_operand_equal(op1: idaapi.op_t, op2: idaapi.op_t) -> bool:
     """compare two IDA op_t"""
     if op1.flags != op2.flags:
@@ -212,6 +216,12 @@ def is_operand_equal(op1: idaapi.op_t, op2: idaapi.op_t) -> bool:
         return False
 
     return True
+
+
+def is_zxor(insn: idaapi.insn_t) -> bool:
+    if is_xor(insn):
+        return is_operand_equal(insn.Op1, insn.Op2)
+    return False
 
 
 def is_basic_block_equal(bb1: idaapi.BasicBlock, bb2: idaapi.BasicBlock) -> bool:
