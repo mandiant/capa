@@ -219,9 +219,7 @@ def is_operand_equal(op1: idaapi.op_t, op2: idaapi.op_t) -> bool:
 
 
 def is_zxor(insn: idaapi.insn_t) -> bool:
-    if is_xor(insn):
-        return is_operand_equal(insn.Op1, insn.Op2)
-    return False
+    return is_xor(insn) and is_operand_equal(insn)
 
 
 def is_basic_block_equal(bb1: idaapi.BasicBlock, bb2: idaapi.BasicBlock) -> bool:
