@@ -36,7 +36,4 @@ def is_xor(insn: envi.Opcode):
 
 
 def is_zxor(insn: envi.Opcode):
-    if is_xor(insn):
-        return insn.opers[0] == insn.opers[1]
-
-    return False
+    return is_xor(insn) and insn.opers[0] == insn.opers[1]
