@@ -29,7 +29,7 @@ from capa.features.extractors.binexport2.helpers import (
     get_instruction_mnemonic,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOKIE_BYTES_DELTA, is_operands_equal
+from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOKIE_BYTES_DELTA, are_operands_equal
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def extract_insn_number_features(
             #
             #   xor eax, eax
             #
-            if is_operands_equal(be2, be2.instruction[ii.instruction_index]):
+            if are_operands_equal(be2, be2.instruction[ii.instruction_index]):
                 yield Number(0), ih.address
         return
 
@@ -223,7 +223,7 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    if is_operands_equal(be2, instruction):
+    if are_operands_equal(be2, instruction):
         return
 
     instruction_address: int = idx.insn_address_by_index[ii.instruction_index]

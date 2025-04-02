@@ -22,6 +22,6 @@ def is_stack_register_expression(be2: BinExport2, expression: BinExport2.Express
     )
 
 
-def is_operands_equal(be2: BinExport2, instruction: BinExport2.Instruction) -> bool:
+def are_operands_equal(be2: BinExport2, instruction: BinExport2.Instruction) -> bool:
     operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
     return operands[1] == operands[2]
