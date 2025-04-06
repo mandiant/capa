@@ -152,9 +152,9 @@ class CapaMatchData:
 
     def create_capa_namespace(self):
         """create namespace and labels for matched rules"""
-        if not self.do_labels:  
-            return 
-        
+        if not self.do_labels:
+            return
+
         capa_namespace = create_namespace(self.namespace)
         symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
 
@@ -208,26 +208,26 @@ class CapaMatchData:
 
     def create_capa_comments(self):
         """create comments for matched rules"""
-        if not self.do_comments:  
-            return 
-        
-        #create plate comments for the main rule match
+        if not self.do_comments:
+            return
+
+        # create plate comments for the main rule match
         for addr in self.matches.keys():
-            ghidra_addr = toAddr(hex(addr)) # type: ignore [name-defined] # noqa: F821
+            ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
             if self.scope == "function":
                 self.set_plate_comment(ghidra_addr)
             else:
                 func = getFunctionContaining(ghidra_addr)  # type: ignore [name-defined] # noqa: F821
                 if func is not None:
                     self.set_plate_comment(func.getEntryPoint())
-        
+
         # create pre comments for subscoped matches of main rules
         for addr in self.matches.keys():
             for sub_match in self.matches.get(addr):
                 for loc, node in sub_match.items():
-                    sub_ghidra_addr = toAddr(hex(loc)) # type: ignore [name-defined] # noqa: F821
+                    sub_ghidra_addr = toAddr(hex(loc))  # type: ignore [name-defined] # noqa: F821
                     func = getFunctionContaining(sub_ghidra_addr)  # type: ignore [name-defined] # noqa: F821
-                    
+
                     if node != {}:
                         if func is not None:
                             # basic block / insn scope under resolved function
@@ -396,11 +396,8 @@ def main():
         return capa.main.E_EMPTY_REPORT
 
     options = ["Add Labels/Namespace", "Add Comments", "Add Bookmarks"]
-    selected_options = askChoices("Capa Explorer Options",  # type: ignore [name-defined] # noqa: F821
-                                  "Select options for capa analysis",
-                                  options,
-                                  options)  
-    
+    selected_options = askChoices("Capa Explorer Options", "Select options for capa analysis", options, options)  # type: ignore [name-defined] # noqa: F821
+
     do_labels = "Add Labels/Namespace" in selected_options
     do_comments = "Add Comments" in selected_options
     do_bookmarks = "Add Bookmarks" in selected_options
