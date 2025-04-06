@@ -2,6 +2,11 @@
 
 ## master (unreleased)
 
+- Adds user-options for adding comments, bookmarks, and namespaces via a dialog box in `capa_explorer.py`.
+- Implemented granular control over annotations:
+- `create_capa_namespace`: Handles namespace creation and labels.
+- `create_capa_comments`: Manages plate and pre-comments.
+
 ### New Features
 
 ### Breaking Changes
