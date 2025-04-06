@@ -184,7 +184,7 @@ class CapaMatchData:
                     create_label(func_addr, func.getName(), capa_namespace)
 
                 for sub_match in self.matches.get(addr):
-                    for loc in sub_match.items():
+                    for loc, node in sub_match.items():
                         sub_ghidra_addr = toAddr(hex(loc))  # type: ignore [name-defined] # noqa: F821
                         if func is not None:
                             # basic block/ insn scope under resolved function
@@ -226,6 +226,7 @@ class CapaMatchData:
             for sub_match in self.matches.get(addr):
                 for loc, node in sub_match.items():
                     sub_ghidra_addr = toAddr(hex(loc)) # type: ignore [name-defined] # noqa: F821
+                    func = getFunctionContaining(sub_ghidra_addr)  # type: ignore [name-defined] # noqa: F821
                     
                     if node != {}:
                         if func is not None:
@@ -395,12 +396,14 @@ def main():
         return capa.main.E_EMPTY_REPORT
 
     options = ["Add Labels/Namespace", "Add Comments", "Add Bookmarks"]
-    selected_options = askChoices("Capa Explorer Options",
-                                  "Select options for capa analysis", options, [])  # type: ignore [name-defined] # noqa: F821
+    selected_options = askChoices("Capa Explorer Options",  # type: ignore [name-defined] # noqa: F821
+                                  "Select options for capa analysis",
+                                  options,
+                                  options)  
     
-    do_labels = "Labels/Namespace" in selected_options
-    do_comments = "Comments" in selected_options
-    do_bookmarks = "Bookmarks" in selected_options
+    do_labels = "Add Labels/Namespace" in selected_options
+    do_comments = "Add Comments" in selected_options
+    do_bookmarks = "Add Bookmarks" in selected_options
 
     if not any([do_bookmarks, do_comments, do_labels]):
         logger.info("No annotations selected")
