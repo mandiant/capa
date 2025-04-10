@@ -6,16 +6,28 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (15)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
 - nursery/enter-debug-mode-in-dotnet @v1bh475u
+- nursery/decrypt-data-using-tripledes-in-dotnet 0xRavenspar
+- nursery/encrypt-data-using-tripledes-in-dotnet 0xRavenspar
+- nursery/disable-system-features-via-registry-on-windows mehunhoff@google.com
+- data-manipulation/encryption/chaskey/encrypt-data-using-chaskey still@teamt5.org
+- data-manipulation/encryption/speck/encrypt-data-using-speck still@teamt5.org
+- load-code/dotnet/load-assembly-via-iassembly still@teamt5.org
+- malware-family/donut-loader/load-shellcode-via-donut still@teamt5.org
+- nursery/disable-device-guard-features-via-registry-on-windows mehunhoff@google.com
+- nursery/disable-firewall-features-via-registry-on-windows mehunhoff@google.com
+- nursery/disable-system-restore-features-via-registry-on-windows mehunhoff@google.com
+- nursery/disable-windows-defender-features-via-registry-on-windows mehunhoff@google.com
 -
 
 ### Bug Fixes
 - cape: make some fields optional @williballenthin #2631 #2632
 - lint: add WARN for regex features that contain unescaped dot #2635
+- lint: add ERROR for incomplete registry control set regex #2643
 
 ### capa Explorer Web
 
