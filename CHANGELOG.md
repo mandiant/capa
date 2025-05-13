@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- emit number(0) for instructions like "xor eax,eax" #2622 @v1bh475u
 
 ### Breaking Changes
 
