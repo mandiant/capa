@@ -1014,7 +1014,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f is not None:
-                self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
+                self.rulegen_current_function = self.rulegen_feature_extractor.get_function(ea=f.start_ea)
         except Exception as e:
             logger.exception("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e)
             return False
