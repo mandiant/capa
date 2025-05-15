@@ -117,7 +117,9 @@ def render_locations(
         raise RuntimeError("unreachable")
 
 
-def render_statement(console: Console, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int):
+def render_statement(
+    console: Console, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int, is_superblock=False
+):
     console.write("  " * indent)
 
     if isinstance(statement, rd.SubscopeStatement):
@@ -128,6 +130,9 @@ def render_statement(console: Console, layout: rd.Layout, match: rd.Match, state
         console.write(":")
         if statement.description:
             console.write(f" = {statement.description}")
+        logger.debug("is_superblock: %s", is_superblock)
+        if statement.scope == capa.rules.Scope.BASIC_BLOCK and is_superblock:
+            render_locations(console, layout, match.locations, indent)
         console.writeln()
 
     elif isinstance(statement, (rd.CompoundStatement)):
@@ -275,9 +280,17 @@ def render_feature(
             console.writeln()
 
 
-def render_node(console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, node: rd.Node, indent: int):
+def render_node(
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    node: rd.Node,
+    indent: int,
+    is_superblock=False,
+):
     if isinstance(node, rd.StatementNode):
-        render_statement(console, layout, match, node.statement, indent=indent)
+        render_statement(console, layout, match, node.statement, indent=indent, is_superblock=is_superblock)
     elif isinstance(node, rd.FeatureNode):
         render_feature(console, layout, rule, match, node.feature, indent=indent)
     else:
@@ -293,7 +306,13 @@ MODE_FAILURE = "failure"
 
 
 def render_match(
-    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, indent=0, mode=MODE_SUCCESS
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    indent=0,
+    mode=MODE_SUCCESS,
+    is_superblock=False,
 ):
     child_mode = mode
     if mode == MODE_SUCCESS:
@@ -326,10 +345,18 @@ def render_match(
     else:
         raise RuntimeError("unexpected mode: " + mode)
 
-    render_node(console, layout, rule, match, match.node, indent=indent)
+    render_node(console, layout, rule, match, match.node, indent=indent, is_superblock=is_superblock)
 
     for child in match.children:
-        render_match(console, layout, rule, child, indent=indent + 1, mode=child_mode)
+        render_match(
+            console,
+            layout,
+            rule,
+            child,
+            indent=indent + 1,
+            mode=child_mode,
+            is_superblock=True if is_superblock or rule.meta.scopes.static == capa.rules.Scope.SUPERBLOCK else False,
+        )
 
 
 def collect_span_of_calls_locations(
@@ -477,6 +504,11 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                 # because we do the file-scope evaluation a single time.
                 # but i'm not 100% sure if this is/will always be true.
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
+                if len(matches) > 1:
+                    # this is expected, if the file scope rule didn't match.
+                    # so, don't raise an exception.
+                    logger.debug("%s: %s", rule, matches[0])
+                    logger.debug("unexpected file scope match count: %s", matches[1])
                 raise RuntimeError(f"unexpected file scope match count: {len(matches)}")
             _, first_match = matches[0]
             render_match(console, doc.meta.analysis.layout, rule, first_match, indent=0)

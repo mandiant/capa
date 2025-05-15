@@ -153,6 +153,12 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
             inner=f.inner,
         )
 
+    def get_next_basic_blocks(self, bb):
+        yield from []
+
+    def get_basic_block_size(self, bb: BBHandle) -> int:
+        return bb.inner.code_size
+
     def extract_basic_block_features(self, fh, bbh):
         # we don't support basic block features
         yield from []

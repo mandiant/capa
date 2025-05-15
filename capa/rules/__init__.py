@@ -89,6 +89,7 @@ class Scope(str, Enum):
     SPAN_OF_CALLS = "span of calls"
     CALL = "call"
     FUNCTION = "function"
+    SUPERBLOCK = "superblock"
     BASIC_BLOCK = "basic block"
     INSTRUCTION = "instruction"
 
@@ -107,6 +108,7 @@ STATIC_SCOPES = {
     Scope.FILE,
     Scope.GLOBAL,
     Scope.FUNCTION,
+    Scope.SUPERBLOCK,
     Scope.BASIC_BLOCK,
     Scope.INSTRUCTION,
 }
@@ -219,6 +221,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.common.Characteristic("recursive call"),
         # plus basic block scope features, see below
     },
+    Scope.SUPERBLOCK: set(),
     Scope.BASIC_BLOCK: {
         capa.features.common.MatchedRule,
         capa.features.common.Characteristic("tight loop"),
@@ -252,6 +255,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
 # global scope features are available in all other scopes
 SUPPORTED_FEATURES[Scope.INSTRUCTION].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.BASIC_BLOCK].update(SUPPORTED_FEATURES[Scope.GLOBAL])
+SUPPORTED_FEATURES[Scope.SUPERBLOCK].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.FILE].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.GLOBAL])
@@ -269,8 +273,10 @@ SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.THREAD])
 
 # all instruction scope features are also basic block features
 SUPPORTED_FEATURES[Scope.BASIC_BLOCK].update(SUPPORTED_FEATURES[Scope.INSTRUCTION])
+# all superblock scope features are also basic block features
+SUPPORTED_FEATURES[Scope.SUPERBLOCK].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
 # all basic block scope features are also function scope features
-SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
+SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.SUPERBLOCK])
 
 
 class InvalidRule(ValueError):
@@ -600,6 +606,7 @@ def unique(sequence):
 STATIC_SCOPE_ORDER = [
     Scope.FILE,
     Scope.FUNCTION,
+    Scope.SUPERBLOCK,
     Scope.BASIC_BLOCK,
     Scope.INSTRUCTION,
 ]
@@ -714,6 +721,17 @@ def build_statements(d, scopes: Scopes):
             Scope.FUNCTION, build_statements(d[key][0], Scopes(static=Scope.FUNCTION)), description=description
         )
 
+    elif key == "superblock":
+        if not is_subscope_compatible(scopes.static, Scope.SUPERBLOCK):
+            raise InvalidRule("`superblock` subscope supported only for `function` scope")
+
+        if len(d[key]) != 1:
+            raise InvalidRule("subscope must have exactly one child statement")
+
+        return ceng.Subscope(
+            Scope.SUPERBLOCK, build_statements(d[key][0], Scopes(static=Scope.SUPERBLOCK)), description=description
+        )
+
     elif key == "basic block":
         if not is_subscope_compatible(scopes.static, Scope.BASIC_BLOCK):
             raise InvalidRule("`basic block` subscope supported only for `function` scope")
@@ -727,7 +745,9 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "instruction":
         if not is_subscope_compatible(scopes.static, Scope.INSTRUCTION):
-            raise InvalidRule("`instruction` subscope supported only for `function` and `basic block` scope")
+            raise InvalidRule(
+                "`instruction` subscope supported only for `function`, `superblock`, and `basic block` scope"
+            )
 
         if len(d[key]) == 1:
             statements = build_statements(d[key][0], Scopes(static=Scope.INSTRUCTION))
@@ -1442,6 +1462,7 @@ class RuleSet:
             Scope.PROCESS,
             Scope.INSTRUCTION,
             Scope.BASIC_BLOCK,
+            Scope.SUPERBLOCK,
             Scope.FUNCTION,
             Scope.FILE,
         )
@@ -1479,6 +1500,10 @@ class RuleSet:
     @property
     def function_rules(self):
         return self.rules_by_scope[Scope.FUNCTION]
+
+    @property
+    def superblock_rules(self):
+        return self.rules_by_scope[Scope.SUPERBLOCK]
 
     @property
     def basic_block_rules(self):

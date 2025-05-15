@@ -53,6 +53,7 @@ class HashableModel(BaseModel):
 class AddressType(str, Enum):
     ABSOLUTE = "absolute"
     RELATIVE = "relative"
+    SUPERBLOCK = "superblock"
     FILE = "file"
     DN_TOKEN = "dn token"
     DN_TOKEN_OFFSET = "dn token offset"
@@ -67,7 +68,7 @@ class Address(HashableModel):
     value: Union[
         # for absolute, relative, file
         int,
-        # for DNToken, Process, Thread, Call
+        # for DNToken, Process, Thread, Call, Superblock
         tuple[int, ...],
         # for NO_ADDRESS,
         None,
@@ -80,6 +81,9 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.RelativeVirtualAddress):
             return cls(type=AddressType.RELATIVE, value=int(a))
+
+        elif isinstance(a, capa.features.address.SuperblockAddress):
+            return cls(type=AddressType.SUPERBLOCK, value=tuple(a.addresses))
 
         elif isinstance(a, capa.features.address.FileOffsetAddress):
             return cls(type=AddressType.FILE, value=int(a))
@@ -119,6 +123,10 @@ class Address(HashableModel):
         elif self.type is AddressType.RELATIVE:
             assert isinstance(self.value, int)
             return capa.features.address.RelativeVirtualAddress(self.value)
+
+        elif self.type is AddressType.SUPERBLOCK:
+            assert isinstance(self.value, tuple)
+            return capa.features.address.SuperblockAddress(list(self.value))
 
         elif self.type is AddressType.FILE:
             assert isinstance(self.value, int)
