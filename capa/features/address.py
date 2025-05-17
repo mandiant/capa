@@ -54,6 +54,7 @@ class SuperblockAddress(Address):
 
     def __init__(self, addresses: list[Address]):
         for address in addresses:
+            assert isinstance(address, AbsoluteVirtualAddress)
             assert address >= 0
         self.addresses: list[Address] = addresses
 

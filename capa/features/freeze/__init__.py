@@ -83,7 +83,7 @@ class Address(HashableModel):
             return cls(type=AddressType.RELATIVE, value=int(a))
 
         elif isinstance(a, capa.features.address.SuperblockAddress):
-            return cls(type=AddressType.SUPERBLOCK, value=tuple(a.addresses))
+            return cls(type=AddressType.SUPERBLOCK, value=(*a.addresses,))
 
         elif isinstance(a, capa.features.address.FileOffsetAddress):
             return cls(type=AddressType.FILE, value=int(a))

@@ -88,6 +88,14 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 
         yield from ghidra_helpers.get_function_blocks(fh)
 
+    def get_next_basic_blocks(self, bb: BBHandle):
+        # not implemented yet
+        return []
+
+    def get_basic_block_size(self, bb: BBHandle):
+        # not implemented yet
+        return 0
+
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ghidra.basicblock.extract_features(fh, bbh)
 

@@ -16,7 +16,13 @@ from typing import Union, TypeAlias
 from dataclasses import dataclass
 
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, DynamicCallAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+)
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -86,6 +92,14 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
     def get_basic_blocks(self, f):
         for address in sorted(self.functions[f.address].basic_blocks.keys()):
             yield BBHandle(address, None)
+
+    def get_next_basic_blocks(self, bb):
+        # not implemented yet
+        return []
+
+    def get_basic_block_size(self, bb):
+        # not implemented yet
+        return 0
 
     def extract_basic_block_features(self, f, bb):
         for address, feature in self.functions[f.address].basic_blocks[bb.address].features:

@@ -17,7 +17,7 @@ import time
 import logging
 import itertools
 import collections
-from typing import Optional, Union
+from typing import Optional
 from dataclasses import dataclass
 
 import intervaltree
@@ -126,7 +126,7 @@ class FlowGraphNode:
     # This dataclass will be used in the construction of the function's basic block flow graph.
     # Some analysis backends provide native support for flow graphs, but we construct it here regardless
     # to decrease the amount of code required on the analysis backend's side (feature extractors).
-    bb: BBHandle
+    bva: Address
     left: Optional[Address]
     right: Optional[Address]
 
@@ -158,15 +158,15 @@ class SuperblockMatcher:
 
         # Add the basic block to the flow graph.
         self.flow_graph[bb.address] = FlowGraphNode(
-            bb=bb,
-            left=branches[0] if branches else None,
-            right=branches[1] if len(branches) > 1 else None,
+            bva=bb.address,
+            left=branches[0] if branches and branches[0] != bb.address else None,
+            right=branches[1] if len(branches) > 1 and branches[1] != bb.address else None,
         )
 
         # Register bb's address space in the interval tree.
         # This will later be used to determine the bb that a feature was extracted from.
         if bb_size != 0:
-            self.addr_to_bb[bb.address : bb.address + bb_size] = bb.address
+            self.addr_to_bb[int(bb.address) : int(bb.address) + bb_size] = bb.address
 
         # Add features extracted from this bb into the matcher's overall collection of features.
         for feature, va in features.items():
@@ -177,48 +177,51 @@ class SuperblockMatcher:
         # and then check if the self.matches[rule_name].locations or locations in each child of self.matches[rule_name].children
         # have basic block gaps in them. If so, remove that specific match from self.matches[rule_name].
         # if self.matches[rule_name] then becomes empty, remove it from self.matches.
-        def get_superblock_head(bb_locations: set[Address]) -> list[Address]:
-            cycles: set[Address] = set()
-            cycle: list[Address] = []
+        def form_superblock_from_bbs(bb_locations: set[Address]) -> list[Address]:
+            cycle_heads: dict[Address, list] = collections.defaultdict(list)
+
+            # If one of the basic blocks has both a left and a right branch in the list of basic blocks,
+            # then we cannot form a superblock and we return an empty list
+            for location in bb_locations:
+                if self.flow_graph[location].left in bb_locations and self.flow_graph[location].right in bb_locations:
+                    return []
+
+            # Go through the list of provided basic blocks and form superblocks from it.
+            # If we find that only one cycle exits, and not multiple disjoint cycles, we return that cycle.
+            # Otherwise, we return an empty list.
             while bb_locations:
-                # pick a cycle head
-                node: Union[Address, FlowGraphNode] = self.flow_graph[bb_locations.pop()]
-                cycles.add(node.bb.address)
-                current_cycle = []
+                # We pick a random basic block and try to form a cycle from it.
+                # The resulting cycle (of length greater or equal to 1) is storred
+                head: FlowGraphNode = self.flow_graph[bb_locations.pop()]
+                node = head
                 while node:
-                    current_cycle.append(node.bb.address)
-                    # find all nodes in that cycle
-                    if node.left in locations and node.right in locations:
-                        # Do not accept superblock matches that have both left and right branches, because features
-                        # from the two disjoint blocks could be incorrectly correlated.
-                        # It is possible however that a bb would loop back to an earlier block that exists at
-                        # a bb in a parallel superblock. Attention should be paid to this case when writing rules.
-                        return []
-                    if node.left in locations:
-                        node = node.left
-                    elif node.right in locations:
-                        node = node.right
-                    else:
-                        node = []
-                    if node in bb_locations:
-                        # next node in cycle found in locations
-                        bb_locations.remove(node)
-                        node = self.flow_graph[node]
-                    elif node in cycles:
-                        # cycle we embarked on connectes with the previously identified one.
-                        cycles.remove(node)
-                        cycle = current_cycle + cycle
+                    cycle_heads[head.bva].append(node.bva)
+                    # Check if branch is in the list of basic blocks. If so, add to current cycle.
+                    if node.left in bb_locations:
+                        bb_locations.remove(node.left)
+                        node = self.flow_graph[node.left]
+                    elif node.right in bb_locations:
+                        bb_locations.remove(node.right)
+                        node = self.flow_graph[node.right]
+                    # Check if branch is the start of an encountered cycle. If so, connect the two cycles.
+                    elif node.left in cycle_heads:
+                        cycle_heads[head.bva] += cycle_heads.pop(node.left)
                         break
+                    elif node.right in cycle_heads:
+                        cycle_heads[head.bva] += cycle_heads.pop(node.right)
+                        break
+                    # The current basic block either branches to a basic block that holds no relevant features,
+                    # or loops back to a basic block in the cycle, or the basic block is at the end of the function.
                     else:
-                        # reached end of cycle because either the next node is null or it is the last bb in the function.
-                        cycle = cycle + current_cycle
                         break
 
-            if len(cycles) == 1:
-                # has a single cycle (i.e., superblock).
-                return cycle
+            if len(cycle_heads) == 1 and len(list(cycle_heads.values())[0]) > 1:
+                # Inputted basic blocks form a single cycle (i.e., superblock) of length > 1.
+                # Return that cycle (superblock).
+                return cycle_heads.popitem()[1]
             else:
-                # has multiple disjoint cycles.
+                # Inputted basic blocks form either multiple disjoint cycles, or a cycle of length <= 1.
+                # Return an empty list (i.e., boolean False).
                 return []
 
         def get_bbs_from_locations(locations: set[Address]) -> set[Address]:
@@ -226,7 +229,7 @@ class SuperblockMatcher:
             for location in locations:
                 # get the bb address from the location
                 # and add it to the set of bb addresses.
-                bbs_addresses.add(list(self.addr_to_bb[location])[0].data)
+                bbs_addresses.add(list(self.addr_to_bb[int(location)])[0].begin)
             return bbs_addresses
 
         def get_locations(result: Result) -> set[Address]:
@@ -236,14 +239,14 @@ class SuperblockMatcher:
                 # Logically this is still valid because "not" is usually used to make sure features do not exist.
                 return set()
             if result.children:
-                # statements are usually what returns children, and they usually do not have locations.
+                # Statements are usually what returns children, and they usually do not have locations.
                 locations: set[Address] = set()
                 for child in result.children:
                     locations.update(get_locations(child))
                 return locations
             if result.locations:
-                # we're dealing with a feature. return its location.
-                return result.locations
+                # We are dealing with a feature. Convert locations from frozenset to set then return it.
+                return set(result.locations)
             return set()
 
         pruned_matches: MatchResults = collections.defaultdict(list)
@@ -251,11 +254,10 @@ class SuperblockMatcher:
             for _, result in matches:
                 locations = get_locations(result)
                 features_bbs = get_bbs_from_locations(locations)
-                cycle = get_superblock_head(features_bbs)
-                if cycle and len(cycle) > 1:
-                    # We consider a match only if it spans 2 or more contiguous basic blocks (i.e., a superblock).
-                    # We do not consider superblocks with a single basic block in them to avoid match duplication at function level.
-                    pruned_matches[rule_name].append((SuperblockAddress(cycle), result))
+                superblock = form_superblock_from_bbs(features_bbs)
+                if superblock:
+                    # The match spans multiple basic blocks that form a superblock. Therefore, we keep it.
+                    pruned_matches[rule_name].append((SuperblockAddress(superblock), result))
 
         # update the list of valid matches.
         self.matches = pruned_matches
