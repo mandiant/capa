@@ -266,6 +266,20 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_next_basic_blocks(self, bb: BBHandle) -> Iterator[Address]:
+        """
+        for a given basic block, retrieve the basic blocks that follow it (if any).
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_basic_block_size(self, bb: BBHandle) -> int:
+        """
+        get the size of the given basic block.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
         """
         enumerate the instructions in the given basic block and provide opaque values that will
