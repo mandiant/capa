@@ -355,7 +355,7 @@ def render_match(
             child,
             indent=indent + 1,
             mode=child_mode,
-            is_superblock=True if is_superblock or rule.meta.scopes.static == capa.rules.Scope.SUPERBLOCK else False,
+            is_superblock=bool(is_superblock or rule.meta.scopes.static == capa.rules.Scope.SUPERBLOCK),
         )
 
 

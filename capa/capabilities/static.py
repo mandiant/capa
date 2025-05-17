@@ -137,7 +137,7 @@ class SuperblockMatcher:
         self.extractor: StaticFeatureExtractor = extractor
         self.features: FeatureSet = collections.defaultdict(set)
         self.matches: MatchResults = collections.defaultdict(list)
-        self.flow_graph: dict[Address, FlowGraphNode] = dict()
+        self.flow_graph: dict[Address, FlowGraphNode] = {}
         self.addr_to_bb = intervaltree.IntervalTree()
 
     def add_basic_block(self, bb: BBHandle, features: FeatureSet):
