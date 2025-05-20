@@ -21,7 +21,7 @@ mdurl==0.1.2
 msgpack==1.0.8
 networkx==3.4.2
 pefile==2024.8.26
-pip==25.0
+pip==25.1.1
 protobuf==6.30.1
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
