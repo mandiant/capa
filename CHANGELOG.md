@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (15)
+### New Rules (17)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
@@ -22,6 +22,8 @@
 - nursery/disable-firewall-features-via-registry-on-windows mehunhoff@google.com
 - nursery/disable-system-restore-features-via-registry-on-windows mehunhoff@google.com
 - nursery/disable-windows-defender-features-via-registry-on-windows mehunhoff@google.com
+- host-interaction/file-system/write/clear-file-content jakeperalta7
+- host-interaction/filter/unload-minifilter-driver JakePeralta7
 -
 
 ### Bug Fixes
