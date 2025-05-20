@@ -157,7 +157,7 @@ build = [
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
     "pyinstaller==6.12.0",
-    "setuptools==76.0.0",
+    "setuptools==78.1.1",
     "build==1.2.2"
 ]
 scripts = [
