@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (21)
+### New Rules (22)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
@@ -28,6 +28,7 @@
 - exploitation/gadgets/load-ntoskrnl zdw@google.com
 - exploitation/gadgets/resolve-ntoskrnl-gadgets zdw@google.com
 - exploitation/spraying/make-suspicious-ntfscontrolfile-call zdw@google.com
+- anti-analysis/anti-forensic/unload-sysmon JakePeralta7
 -
 
 ### Bug Fixes
