@@ -406,6 +406,7 @@ class DoesntMatchExample(Lint):
                 return True
 
             if rule.name not in capabilities:
+                logger.info('rule "%s" does not match for sample %s', rule.name, example_id)
                 return True
 
 
