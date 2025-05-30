@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- vmray: do not restrict analysis to PE and ELF files, e.g. docx @mike-hunhoff #2672
 
 ### Breaking Changes
 
