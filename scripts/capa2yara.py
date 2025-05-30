@@ -175,8 +175,6 @@ def convert_rule(rule, rulename, cround, depth):
     depth += 1
     logger.info("recursion depth: %d", depth)
 
-    global var_names
-
     def do_statement(s_type, kid):
         yara_strings = ""
         yara_condition = ""

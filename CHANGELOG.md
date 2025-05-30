@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (17)
+### New Rules (22)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
@@ -24,12 +24,18 @@
 - nursery/disable-windows-defender-features-via-registry-on-windows mehunhoff@google.com
 - host-interaction/file-system/write/clear-file-content jakeperalta7
 - host-interaction/filter/unload-minifilter-driver JakePeralta7
+- exploitation/enumeration/make-suspicious-ntquerysysteminformation-call zdw@google.com
+- exploitation/gadgets/load-ntoskrnl zdw@google.com
+- exploitation/gadgets/resolve-ntoskrnl-gadgets zdw@google.com
+- exploitation/spraying/make-suspicious-ntfscontrolfile-call zdw@google.com
+- anti-analysis/anti-forensic/unload-sysmon JakePeralta7
 -
 
 ### Bug Fixes
 - cape: make some fields optional @williballenthin #2631 #2632
 - lint: add WARN for regex features that contain unescaped dot #2635
 - lint: add ERROR for incomplete registry control set regex #2643
+- binja: update unit test core version #2670
 
 ### capa Explorer Web
 
