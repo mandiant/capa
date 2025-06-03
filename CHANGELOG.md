@@ -3,9 +3,32 @@
 ## master (unreleased)
 
 ### New Features
-- vmray: do not restrict analysis to PE and ELF files, e.g. docx @mike-hunhoff #2672
 
 ### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v9.2.0...master](https://github.com/mandiant/capa/compare/v9.2.0...master)
+- [capa-rules v9.2.0...master](https://github.com/mandiant/capa-rules/compare/v9.2.0...master)
+
+## v9.2.0
+
+This release improves a few aspects of dynamic analysis, including relaxing our validation on fields across many CAPE versions and processing additional VMRay submission file types, for example.
+It also includes an updated rule pack containing new rules and rule fixes.
+
+### New Features
+- vmray: do not restrict analysis to PE and ELF files, e.g. docx @mike-hunhoff #2672
 
 ### New Rules (22)
 
@@ -38,15 +61,9 @@
 - lint: add ERROR for incomplete registry control set regex #2643
 - binja: update unit test core version #2670
 
-### capa Explorer Web
-
-### capa Explorer IDA Pro plugin
-
-### Development
-
 ### Raw diffs
-- [capa v9.1.0...master](https://github.com/mandiant/capa/compare/v9.1.0...master)
-- [capa-rules v9.1.0...master](https://github.com/mandiant/capa-rules/compare/v9.1.0...master)
+- [capa v9.1.0...v9.2.0](https://github.com/mandiant/capa/compare/v9.1.0...v9.2.0)
+- [capa-rules v9.1.0...v9.2.0](https://github.com/mandiant/capa-rules/compare/v9.1.0...v9.2.0)
 
 ## v9.1.0
 

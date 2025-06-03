@@ -133,7 +133,7 @@ dev = [
     "flake8-no-implicit-concat==0.3.5",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.1",
-    "flake8-simplify==0.21.0",
+    "flake8-simplify==0.22.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.11.0",
@@ -157,7 +157,7 @@ build = [
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
     "pyinstaller==6.12.0",
-    "setuptools==78.1.1",
+    "setuptools==80.9.0",
     "build==1.2.2"
 ]
 scripts = [
