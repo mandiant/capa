@@ -1,0 +1,52 @@
+rule:
+  meta:
+    name: file collection
+    namespace: collection/files
+    author: capa-android
+    description: collect files by reading and writing
+    scopes:
+      static: file
+      dynamic: process
+  features:
+    - and:
+      - api: java.io.FileInputStream.<init>
+      - api: java.io.FileOutputStream.write
+
+---
+rule:
+  meta:
+    name: file destruction
+    namespace: impact/files
+    author: capa-android
+    description: destroy files by deletion
+    scopes:
+      static: file
+      dynamic: process
+  features:
+    - api: java.io.File.delete
+
+---
+rule:
+  meta:
+    name: file reading
+    namespace: collection/files
+    author: capa-android
+    description: read file contents
+    scopes:
+      static: file
+      dynamic: process
+  features:
+    - api: java.io.FileInputStream.<init>
+
+---
+rule:
+  meta:
+    name: file writing
+    namespace: impact/files
+    author: capa-android
+    description: write data to files
+    scopes:
+      static: file
+      dynamic: process
+  features:
+    - api: java.io.FileOutputStream.write
