@@ -18,6 +18,11 @@
 
 ### Development
 
+- ci: exclude pkg_resources from PyInstaller build @mike-hunhoff #2684
+- ci: upgrade Windows version to avoid deprecation @mike-hunhoff #2684
+- ci: downgrade Ubuntu version to accommodate older GLIBC versions @mike-hunhoff #2684
+- ci: check if build runs without warnings or errors @mike-hunhoff #2684
+
 ### Raw diffs
 - [capa v9.2.0...master](https://github.com/mandiant/capa/compare/v9.2.0...master)
 - [capa-rules v9.2.0...master](https://github.com/mandiant/capa-rules/compare/v9.2.0...master)
