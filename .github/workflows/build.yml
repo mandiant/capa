@@ -60,9 +60,17 @@ jobs:
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run without warnings or errors?
+        shell: bash
         run: |
           set -o pipefail
-          dist/capa --version 2>&1 | (! grep -iE 'error|warning')
+
+          if [[ "${{ matrix.os }}" == "windows-2022" ]]; then
+            EXECUTABLE=".\\dist\\capa"
+          else
+            EXECUTABLE="./dist/capa"
+          fi
+
+          ${EXECUTABLE} 2>&1 | tee /dev/stdout | (! grep -iE 'error|warning')
       - name: Does it run (PE)?
         run: dist/capa -d "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - name: Does it run (Shellcode)?
