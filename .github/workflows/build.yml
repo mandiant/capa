@@ -70,8 +70,14 @@ jobs:
             EXECUTABLE="./dist/capa"
           fi
 
-          ${EXECUTABLE} --version
+          ./dist/capa --version > stdout.txt 2> stderr.txt
           echo $?
+          cat stdout.txt
+          if [[ -s stderr.txt ]]; then
+            cat stderr.txt
+          else
+            echo "(stderr was empty)"
+          fi
 
           ${EXECUTABLE} --version 2>&1 | tee /dev/stdout | (! grep -iE 'error|warning')
       - name: Does it run (PE)?
