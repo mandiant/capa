@@ -62,24 +62,25 @@ jobs:
       - name: Does it run without warnings or errors?
         shell: bash
         run: |
-          set -o pipefail
-
           if [[ "${{ matrix.os }}" == "windows-2022" ]]; then
             EXECUTABLE=".\\dist\\capa"
           else
             EXECUTABLE="./dist/capa"
           fi
 
-          ./dist/capa --version > stdout.txt 2> stderr.txt
-          echo $?
-          cat stdout.txt
-          if [[ -s stderr.txt ]]; then
-            cat stderr.txt
-          else
-            echo "(stderr was empty)"
+          output=$(${EXECUTABLE} --version 2>&1)
+          exit_code=$?
+
+          echo "${output}"
+          echo "${exit_code}"
+
+          if echo "${output}" | grep -iE 'error|warning'; then
+            exit 1
           fi
 
-          ${EXECUTABLE} --version 2>&1 | tee /dev/stdout | (! grep -iE 'error|warning')
+          if [[ "${exit_code}" -ne 0 ]]; then
+            exit 1
+          fi
       - name: Does it run (PE)?
         run: dist/capa -d "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - name: Does it run (Shellcode)?
