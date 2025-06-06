@@ -70,6 +70,9 @@ jobs:
             EXECUTABLE="./dist/capa"
           fi
 
+          ${EXECUTABLE} --version
+          echo $?
+
           ${EXECUTABLE} --version 2>&1 | tee /dev/stdout | (! grep -iE 'error|warning')
       - name: Does it run (PE)?
         run: dist/capa -d "tests/data/Practical Malware Analysis Lab 01-01.dll_"
