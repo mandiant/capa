@@ -76,7 +76,7 @@ a = Analysis(
         "ida",
         # remove once https://github.com/mandiant/capa/issues/2681 has
         # been addressed by PyInstaller
-        pkg_resources,
+        "pkg_resources",
     ],
 )
 
