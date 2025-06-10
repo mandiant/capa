@@ -19,6 +19,8 @@
 
 ### Development
 
+- ci: remove redundant "test_run" action from build workflow @mike-hunhoff #2692
+
 ### Raw diffs
 - [capa v9.2.1...master](https://github.com/mandiant/capa/compare/v9.2.1...master)
 - [capa-rules v9.2.1...master](https://github.com/mandiant/capa-rules/compare/v9.2.1...master)
