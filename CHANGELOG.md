@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- ci: add support for arm64 binary releases
 
 ### Breaking Changes
 
