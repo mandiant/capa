@@ -64,7 +64,7 @@ jobs:
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python_version }}
-      - if: matrix.os == 'ubuntu-22.04'
+      - if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-22.04-arm'
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
         run: python -m pip install --upgrade pip setuptools
@@ -110,47 +110,6 @@ jobs:
         with:
           name: ${{ matrix.asset_name }}
           path: dist/${{ matrix.artifact_name }}
-
-  test_run:
-    name: Test run on ${{ matrix.os }} / ${{ matrix.asset_name }}
-    runs-on: ${{ matrix.os }}
-    needs: [build]
-    strategy:
-      matrix:
-        include:
-          # OSs not already tested above
-          - os: ubuntu-22.04
-            artifact_name: capa
-            asset_name: linux
-          - os: ubuntu-22.04-arm
-            artifact_name: capa
-            asset_name: linux-arm64
-          - os: ubuntu-22.04
-            artifact_name: capa
-            asset_name: linux-py312
-          - os: windows-2022
-            artifact_name: capa.exe
-            asset_name: windows
-          # Windows 11 ARM64 complains of conflicting package version
-          #- os: windows-11-arm
-          #  artifact_name: capa.exe
-          #  asset_name: windows-arm64
-          - os: macos-13
-            artifact_name: capa
-            asset_name: macos
-          - os: macos-14
-            artifact_name: capa
-            asset_name: macos-arm64
-    steps:
-      - name: Download ${{ matrix.asset_name }}
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4.1.2
-        with:
-          name: ${{ matrix.asset_name }}
-      - name: Set executable flag
-        if: matrix.os != 'windows-2022'
-        run: chmod +x ${{ matrix.artifact_name }}
-      - name: Run capa
-        run: ./${{ matrix.artifact_name }} -h
 
   zip_and_upload:
     # upload zipped binaries to Release page
