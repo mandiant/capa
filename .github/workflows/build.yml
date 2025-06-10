@@ -9,6 +9,7 @@ on:
       - '**.md'
   release:
     types: [edited, published]
+  workflow_dispatch: # manual trigger for testing
 
 permissions:
   contents: write
@@ -27,6 +28,10 @@ jobs:
             artifact_name: capa
             asset_name: linux
             python_version: '3.10'
+          - os: ubuntu-22.04-arm
+            artifact_name: capa
+            asset_name: linux-arm64
+            python_version: '3.10'
           - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux-py312
@@ -35,10 +40,20 @@ jobs:
             artifact_name: capa.exe
             asset_name: windows
             python_version: '3.10'
+          # Windows 11 ARM64 complains of conflicting package version
+          # Additionally, there is no ARM64 build of Python for Python 3.10 on Windows 11 ARM: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
+          #- os: windows-11-arm
+          #  artifact_name: capa.exe
+          #  asset_name: windows-arm64
+          #  python_version: '3.12'
           - os: macos-13
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
+            python_version: '3.10'
+          - os: macos-14
+            artifact_name: capa
+            asset_name: macos-arm64
             python_version: '3.10'
     steps:
       - name: Checkout capa
@@ -62,7 +77,7 @@ jobs:
       - name: Does it run without warnings or errors?
         shell: bash
         run: |
-          if [[ "${{ matrix.os }}" == "windows-2022" ]]; then
+          if [[ "${{ matrix.os }}" == "windows-2022" ]] || [[ "${{ matrix.os }}" == "windows-11-arm" ]]; then
             EXECUTABLE=".\\dist\\capa"
           else
             EXECUTABLE="./dist/capa"
@@ -107,12 +122,25 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux
+          - os: ubuntu-22.04-arm
+            artifact_name: capa
+            asset_name: linux-arm64
           - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux-py312
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
+          # Windows 11 ARM64 complains of conflicting package version
+          #- os: windows-11-arm
+          #  artifact_name: capa.exe
+          #  asset_name: windows-arm64
+          - os: macos-13
+            artifact_name: capa
+            asset_name: macos
+          - os: macos-14
+            artifact_name: capa
+            asset_name: macos-arm64
     steps:
       - name: Download ${{ matrix.asset_name }}
         uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4.1.2
@@ -135,11 +163,17 @@ jobs:
         include:
           - asset_name: linux
             artifact_name: capa
+          - asset_name: linux-arm64
+            artifact_name: capa
           - asset_name: linux-py312
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe
+          #- asset_name: windows-arm64
+          #  artifact_name: capa.exe
           - asset_name: macos
+            artifact_name: capa
+          - asset_name: macos-arm64
             artifact_name: capa
     steps:
       - name: Download ${{ matrix.asset_name }}
