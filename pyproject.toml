@@ -121,11 +121,11 @@ dev = [
     # we want all developer environments to be consistent.
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
-    "pre-commit==4.1.0",
+    "pre-commit==4.2.0",
     "pytest==8.0.0",
     "pytest-sugar==1.0.0",
     "pytest-instafail==0.5.0",
-    "flake8==7.1.1",
+    "flake8==7.2.0",
     "flake8-bugbear==24.12.12",
     "flake8-encodings==0.5.1",
     "flake8-comprehensions==3.16.0",
@@ -133,7 +133,7 @@ dev = [
     "flake8-no-implicit-concat==0.3.5",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.1",
-    "flake8-simplify==0.21.0",
+    "flake8-simplify==0.22.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.11.0",
@@ -148,7 +148,7 @@ dev = [
     "types-PyYAML==6.0.8",
     "types-psutil==7.0.0.20250218",
     "types_requests==2.32.0.20240712",
-    "types-protobuf==5.29.1.20241207",
+    "types-protobuf==6.30.2.20250516",
     "deptry==0.23.0"
 ]
 build = [
@@ -156,8 +156,8 @@ build = [
     # we want all developer environments to be consistent.
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
-    "pyinstaller==6.12.0",
-    "setuptools==76.0.0",
+    "pyinstaller==6.14.1",
+    "setuptools==80.9.0",
     "build==1.2.2"
 ]
 scripts = [
