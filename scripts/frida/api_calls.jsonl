@@ -1,0 +1,10 @@
+{"id":0,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":0,"api_name":"java.io.File.<init>"}}}
+{"id":1,"metadata":{"process_id":14881,"arch":"arm64","platform":"linux","package_name":"com.example.fridatestjavaapp"}}
+{"id":2,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":1,"api_name":"java.io.File.<init>"}}}
+{"id":3,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":2,"api_name":"java.io.File.<init>"}}}
+{"id":4,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":3,"api_name":"java.io.FileOutputStream.write"}}}
+{"id":5,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":4,"api_name":"java.io.File.<init>"}}}
+{"id":6,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":5,"api_name":"java.io.File.<init>"}}}
+{"id":7,"api":{"java_api":{"process_id":14881,"thread_id":14881,"call_id":6,"api_name":"java.io.FileInputStream.<init>(File)"}}}
+{"id":8,"api":{"java_api":{"process_id":14881,"thread_id":14924,"call_id":7,"api_name":"java.io.File.<init>"}}}
+{"id":9,"api":{"java_api":{"process_id":14881,"thread_id":14924,"call_id":8,"api_name":"java.io.FileInputStream.<init>(File)"}}}
