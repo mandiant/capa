@@ -1,7 +1,7 @@
 from typing import Union, Iterator
 from pathlib import Path
 
-from models import FridaReport, Call
+from .models import FridaReport, Call
 from capa.features.common import Feature, String, OS, Arch, Format
 from capa.features.insn import API, Number
 from capa.features.address import (
@@ -28,9 +28,6 @@ class FridaExtractor(DynamicFeatureExtractor):
     Processes JSON output from Frida instrumentation to extract behavioral features.
     """
     def __init__(self, report: FridaReport):
-        # TODO: From what I’ve found, Frida cannot access original APK file to compute hashes at runtime.
-        # we may need to require users to provide both the Frida-generated log file and original file to capa,
-        # like we do with other extractors e.g. BinExport, VMRay, etc..
         super().__init__(
             hashes=SampleHashes(md5="", sha1="", sha256="")
         )
@@ -42,27 +39,12 @@ class FridaExtractor(DynamicFeatureExtractor):
 
     def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         """Basic global features"""
-        yield OS("android"), NO_ADDRESS # OS: Frida doesn't provide OS info
+        yield OS("android"), NO_ADDRESS
+        yield Arch("aarch64"), NO_ADDRESS 
+        yield Format("android"), NO_ADDRESS
 
-        if self.report.processes:
-            process = self.report.processes[0]
-            
-            if process.arch:
-                arch_mapping = {
-                    "arm64": "aarch64",
-                    "arm": "arm",
-                    "x64": "amd64", 
-                    "x86": "i386"
-                }
-                capa_arch = arch_mapping.get(process.arch, process.arch)
-                yield Arch(capa_arch), NO_ADDRESS
-            
-            if process.platform:
-                # TODO: capa doesn't have a dedicated FORMAT_ANDROID constant yet.
-                yield Format("android"), NO_ADDRESS
-        
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
-        """Basic file features"""
+        """Baisc file features"""
         yield String(self.report.package_name), NO_ADDRESS
 
     def get_processes(self) -> Iterator[ProcessHandle]:
@@ -96,24 +78,20 @@ class FridaExtractor(DynamicFeatureExtractor):
         """Get all API calls in a specific thread"""
         for i, call in enumerate(ph.inner.calls):
             if call.thread_id == th.address.tid:
-                addr = DynamicCallAddress(thread=th.address, id=call.call_id)
+                addr = DynamicCallAddress(thread=th.address, id=i)
                 yield CallHandle(address=addr, inner=call)
 
     def extract_call_features(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[tuple[Feature, Address]]:
         """Extract features from individual API calls"""
-        # TODO: Implement call feature extraction from arguments and return value
-        call: Call = ch.inner
-
-        yield API(call.api_name), ch.address
-
+        # TODO: Implement call feature extraction
+        
     def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
         """Format API call name and parameters"""
-        # TODO: Implement after extract_call_features
         call: Call = ch.inner
         
         parts = []
-        parts.append(call.api_name)
+        parts.append(call.api)
         parts.append("(")
         
         if call.arguments:
