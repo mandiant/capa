@@ -41,6 +41,7 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
+import capa.features.extractors.frida.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
@@ -57,6 +58,7 @@ from capa.features.common import (
     FORMAT_DRAKVUF,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
+    FORMAT_FRIDA,
 )
 from capa.features.address import Address
 from capa.capabilities.common import Capabilities
@@ -79,6 +81,7 @@ BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
+BACKEND_FRIDA = "frida"
 
 
 class CorruptFile(ValueError):
@@ -350,7 +353,11 @@ def get_extractor(
             logger.debug("idalib: opened database.")
 
         return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
-
+    
+    elif backend == BACKEND_FRIDA:
+        import capa.features.extractors.frida.extractor
+        return capa.features.extractors.frida.extractor.FridaExtractor.from_json_file(input_path)
+   
     else:
         raise ValueError("unexpected backend: " + backend)
 
@@ -421,6 +428,11 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
 
     elif input_format == FORMAT_BINEXPORT2:
         file_extractors = _get_binexport2_file_extractors(input_file)
+
+    elif input_format == FORMAT_FRIDA:
+        import capa.features.extractors.frida.extractor
+        
+        file_extractors.append(capa.features.extractors.frida.extractor.FridaExtractor.from_json_file(input_file))
 
     return file_extractors
 

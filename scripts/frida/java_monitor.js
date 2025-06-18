@@ -151,14 +151,14 @@ Java.perform(function() {
         
         FileInputStream.$init.overload('java.io.File').implementation = function(file) {
             var path = file.getAbsolutePath();
-            recordApiCall("java.io.FileInputStream.<init>(File)");
-            debugLog("java.io.FileInputStream.<init>(File)", {"path": path});
+            recordApiCall("java.io.FileInputStream.<init>");
+            debugLog("java.io.FileInputStream.<init>", {"path": path});
             return this.$init(file);
         };
         
         FileInputStream.$init.overload('java.lang.String').implementation = function(path) {
-            recordApiCall("java.io.FileInputStream.<init>(String)");
-            debugLog("java.io.FileInputStream.<init>(String)", {"path": path});
+            recordApiCall("java.io.FileInputStream.<init>");
+            debugLog("java.io.FileInputStream.<init>", {"path": path});
             return this.$init(path);
         };
         

@@ -1,0 +1,15 @@
+# TODO: Review them together next week. I think they need some changes.
+rule:
+  meta:
+    name: file collection
+    namespace: collection/files
+    authors:
+      - capa-frida-test
+    description: collect files by reading and writing
+    scopes: 
+      static: function
+      dynamic: process
+  features:
+    - and:
+      - api: java.io.FileInputStream.<init>
+      - api: java.io.FileOutputStream.write

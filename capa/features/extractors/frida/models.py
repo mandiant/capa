@@ -14,7 +14,7 @@ class Call(FlexibleModel):
     thread_id: int 
     call_id: int                             
     # timestamp: Optional[str] = None
-    # arguments: Dict[str, Any] = Field(default_factory=dict)
+    arguments: Dict[str, Any] = Field(default_factory=dict)
     # return_value: Optional[Any] = None     # Not very sure if we should use str as the return value type
     # caller: Optional[str] = None
 
@@ -49,6 +49,14 @@ class FridaReport(FlexibleModel):
                         metadata = record["metadata"]
                     elif "api" in record and "java_api" in record["api"]:
                         api_calls.append(record["api"]["java_api"])
+
+        if not metadata:
+            from capa.exceptions import UnsupportedFormatError
+            raise UnsupportedFormatError("No metadata found in Frida report")
+
+        if not api_calls:
+            from capa.exceptions import EmptyReportError 
+            raise EmptyReportError("No API calls found in Frida report")
 
         process = Process(
             pid=metadata["process_id"],

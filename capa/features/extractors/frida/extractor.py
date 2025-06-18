@@ -1,7 +1,7 @@
 from typing import Union, Iterator
 from pathlib import Path
 
-from models import FridaReport, Call
+from capa.features.extractors.frida.models import FridaReport, Call
 from capa.features.common import Feature, String, OS, Arch, Format, FORMAT_ANDROID
 from capa.features.insn import API, Number
 from capa.features.address import (
@@ -19,7 +19,9 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
+import logging
 
+logger = logging.getLogger(__name__)
 
 class FridaExtractor(DynamicFeatureExtractor):
     """
@@ -128,4 +130,5 @@ class FridaExtractor(DynamicFeatureExtractor):
     def from_json_file(cls, json_path: Path) -> "FridaExtractor":
         """Entry point: Create an extractor from a JSON file""" 
         report = FridaReport.from_json_file(json_path)
+        logger.info(f"Successfully loaded report with {len(report.processes)} processes")
         return cls(report)
