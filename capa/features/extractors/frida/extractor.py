@@ -94,7 +94,7 @@ class FridaExtractor(DynamicFeatureExtractor):
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         """Get all API calls in a specific thread"""
-        for i, call in enumerate(ph.inner.calls):
+        for call in ph.inner.calls:
             if call.thread_id == th.address.tid:
                 addr = DynamicCallAddress(thread=th.address, id=call.call_id)
                 yield CallHandle(address=addr, inner=call)
