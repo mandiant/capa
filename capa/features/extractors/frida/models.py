@@ -7,6 +7,13 @@ class FlexibleModel(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class Metadata(FlexibleModel):
+    process_id: int
+    package_name: Optional[str] = None
+    arch: Optional[str] = None
+    platform: Optional[str] = None
+
+
 class Call(FlexibleModel):
     """Represents a single API call captured by Frida"""
     api_name: str           # API name like "java.io.File.<init>", not sure if need to seperate 'japi' 'napi' 'jni'...
@@ -28,6 +35,7 @@ class Process(FlexibleModel):
     platform: Optional[str] = None
     calls: List[Call] = Field(default_factory=list)
 
+
 class FridaReport(FlexibleModel):
     """Main report structure for Android analysis"""
     # TODO: Some more file-level information may go here
@@ -42,23 +50,24 @@ class FridaReport(FlexibleModel):
 
         with open(json_path, 'r') as f:
             for line in f.splitlines():
-                    record = json.loads(line)
-                    
-                    if "metadata" in record:
-                        metadata = record["metadata"]
-                    elif "api" in record and "java_api" in record["api"]:
-                        api_calls.append(record["api"]["java_api"])
+                record = json.loads(line)
+                
+                if "metadata" in record:
+                    metadata = Metadata(**record["metadata"])
+                elif "api" in record and "java_api" in record["api"]:
+                    call = Call(**record["api"]["java_api"])
+                    api_calls.append(call)
 
         process = Process(
-            pid=metadata["process_id"],
-            package_name=metadata.get("package_name"),
-            arch=metadata.get("arch"),
-            platform=metadata.get("platform"),
-            calls=[Call(**call) for call in api_calls]
+            pid=metadata.process_id,
+            package_name=metadata.package_name,
+            arch=metadata.arch,
+            platform=metadata.platform,
+            calls=api_calls
         )
         
         return cls(
-            package_name=metadata.get("package_name"),
+            package_name=metadata.package_name,
             processes=[process]
         )
     
