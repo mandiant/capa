@@ -2,7 +2,7 @@ from typing import Union, Iterator
 from pathlib import Path
 
 from models import FridaReport, Call
-from capa.features.common import Feature, String, OS, Arch, Format, FORMAT_ANDROID
+from capa.features.common import Feature, String, OS, Arch, Format, FORMAT_APK
 from capa.features.insn import API, Number
 from capa.features.address import (
     NO_ADDRESS,
@@ -58,8 +58,7 @@ class FridaExtractor(DynamicFeatureExtractor):
                 yield Arch(capa_arch), NO_ADDRESS
             
             if process.platform:
-                # TODO: capa doesn't have a dedicated FORMAT_ANDROID constant yet.
-                yield Format(FORMAT_ANDROID), NO_ADDRESS
+                yield Format(FORMAT_APK), NO_ADDRESS
         
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         """Basic file features"""
