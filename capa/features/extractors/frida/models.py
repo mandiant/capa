@@ -49,7 +49,8 @@ class FridaReport(FlexibleModel):
         api_calls = []
 
         with open(json_path, 'r') as f:
-            for line in f.splitlines():
+            content = f.read()
+            for line in content.splitlines():
                 record = json.loads(line)
                 
                 if "metadata" in record:
