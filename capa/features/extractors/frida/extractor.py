@@ -60,7 +60,6 @@ class FridaExtractor(DynamicFeatureExtractor):
                 yield Arch(capa_arch), NO_ADDRESS
             
             if process.platform:
-                # TODO: capa doesn't have a dedicated FORMAT_ANDROID constant yet.
                 yield Format(FORMAT_ANDROID), NO_ADDRESS
         
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
@@ -96,7 +95,7 @@ class FridaExtractor(DynamicFeatureExtractor):
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         """Get all API calls in a specific thread"""
-        for i, call in enumerate(ph.inner.calls):
+        for call in ph.inner.calls:
             if call.thread_id == th.address.tid:
                 addr = DynamicCallAddress(thread=th.address, id=call.call_id)
                 yield CallHandle(address=addr, inner=call)
@@ -104,14 +103,20 @@ class FridaExtractor(DynamicFeatureExtractor):
     def extract_call_features(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[tuple[Feature, Address]]:
         """Extract features from individual API calls"""
-        # TODO: Implement call feature extraction from arguments and return value
         call: Call = ch.inner
 
         yield API(call.api_name), ch.address
 
+        if call.arguments:
+            for arg_obj in call.arguments:
+                arg_value = arg_obj.value
+                if isinstance(arg_value, (int, float, bool)):
+                    yield Number(arg_value), ch.address
+                elif isinstance(arg_value, str):
+                    yield String(arg_value), ch.address
+
     def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
         """Format API call name and parameters"""
-        # TODO: Implement after extract_call_features agruments
         call: Call = ch.inner
         
         parts = []
@@ -119,8 +124,12 @@ class FridaExtractor(DynamicFeatureExtractor):
         parts.append("(")
         
         if call.arguments:
-            args = [f"{k}={v}" for k, v in call.arguments.items()]
-            parts.append(", ".join(args))
+            args_display = []
+            for arg_obj in call.arguments: 
+                display_value = str(arg_obj.value)
+                # Current implementation: Display name=value, since we have arg name
+                args_display.append(f"{arg_obj.name}={display_value}")
+            parts.append(", ".join(args_display))
         
         parts.append(")")
             
