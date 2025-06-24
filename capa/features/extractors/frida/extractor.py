@@ -1,7 +1,6 @@
 from typing import Union, Iterator
 from pathlib import Path
 
-
 from capa.features.extractors.frida.models import FridaReport, Call
 from capa.features.common import (
     Feature, 
