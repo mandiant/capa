@@ -439,9 +439,10 @@ class Bytes(Feature):
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
 ARCH_AARCH64 = "aarch64"
+ARCH_ARM = "arm"
 # dotnet
 ARCH_ANY = "any"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_AARCH64, ARCH_ANY)
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_AARCH64, ARCH_ARM, ARCH_ANY)
 
 
 class Arch(Feature):
@@ -485,8 +486,8 @@ class OS(Feature):
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
 FORMAT_DOTNET = "dotnet"
-FORMAT_ANDROID = 'android'
-VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET, FORMAT_ANDROID)
+FORMAT_APK = 'apk'
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET, FORMAT_APK)
 # internal only, not to be used in rules
 FORMAT_AUTO = "auto"
 FORMAT_SC32 = "sc32"

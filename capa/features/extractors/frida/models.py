@@ -41,6 +41,7 @@ class Process(FlexibleModel):
     platform: Optional[str] = None
     calls: List[Call] = Field(default_factory=list)
 
+
 class FridaReport(FlexibleModel):
     """Main report structure for Android analysis"""
     # TODO: Some more file-level information may go here
@@ -63,14 +64,6 @@ class FridaReport(FlexibleModel):
                 elif "api" in record and "java_api" in record["api"]:
                     call = Call(**record["api"]["java_api"])
                     api_calls.append(call)
-
-        if not metadata:
-            from capa.exceptions import UnsupportedFormatError
-            raise UnsupportedFormatError("No metadata found in Frida report")
-
-        if not api_calls:
-            from capa.exceptions import EmptyReportError 
-            raise EmptyReportError("No API calls found in Frida report")
 
         process = Process(
             pid=metadata.process_id,

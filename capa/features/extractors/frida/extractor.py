@@ -1,8 +1,20 @@
 from typing import Union, Iterator
 from pathlib import Path
 
+
 from capa.features.extractors.frida.models import FridaReport, Call
-from capa.features.common import Feature, String, OS, Arch, Format, FORMAT_ANDROID
+from capa.features.common import (
+    Feature, 
+    String, 
+    OS, 
+    Arch, 
+    Format, 
+    OS_ANDROID,
+    ARCH_AARCH64,
+    ARCH_AMD64,
+    ARCH_I386,
+    FORMAT_APK
+)
 from capa.features.insn import API, Number
 from capa.features.address import (
     NO_ADDRESS,
@@ -19,9 +31,7 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
-import logging
 
-logger = logging.getLogger(__name__)
 
 class FridaExtractor(DynamicFeatureExtractor):
     """
@@ -44,23 +54,22 @@ class FridaExtractor(DynamicFeatureExtractor):
 
     def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         """Basic global features"""
-        yield OS("android"), NO_ADDRESS  # OS: Frida doesn't provide OS info
+        yield OS(OS_ANDROID), NO_ADDRESS  
 
         if self.report.processes:
             process = self.report.processes[0]
             
             if process.arch:
                 arch_mapping = {
-                    "arm64": "aarch64",
-                    "arm": "arm",
-                    "x64": "amd64", 
-                    "x86": "i386"
+                    "arm64": ARCH_AARCH64,
+                    "arm": ARCH_ARM,
+                    "x64": ARCH_AMD64, 
+                    "ia32": ARCH_I386
                 }
                 capa_arch = arch_mapping.get(process.arch, process.arch)
                 yield Arch(capa_arch), NO_ADDRESS
             
-            if process.platform:
-                yield Format(FORMAT_ANDROID), NO_ADDRESS
+        yield Format(FORMAT_APK), NO_ADDRESS
         
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         """Basic file features"""
@@ -139,5 +148,4 @@ class FridaExtractor(DynamicFeatureExtractor):
     def from_json_file(cls, json_path: Path) -> "FridaExtractor":
         """Entry point: Create an extractor from a JSON file""" 
         report = FridaReport.from_json_file(json_path)
-        logger.info(f"Successfully loaded report with {len(report.processes)} processes")
         return cls(report)

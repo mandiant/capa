@@ -168,7 +168,8 @@ Java.perform(function() {
         File.delete.implementation = function() {
             var path = this.getAbsolutePath();
             var result = this.delete();
-            recordApiCall("java.io.File.delete", []);
+            var args = [];
+            recordApiCall("java.io.File.delete", args);
             debugLog("java.io.File.delete", {"path": path}, result);
             return result;
         };
