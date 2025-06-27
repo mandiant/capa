@@ -14,6 +14,12 @@ class Metadata(FlexibleModel):
     platform: Optional[str] = None
 
 
+class Argument(FlexibleModel):
+    """Represents a single argument in an API call"""
+    name: str
+    value: Union[str, int, float, bool, None]
+
+
 class Call(FlexibleModel):
     """Represents a single API call captured by Frida"""
     api_name: str           # API name like "java.io.File.<init>", not sure if need to seperate 'japi' 'napi' 'jni'...
@@ -21,7 +27,7 @@ class Call(FlexibleModel):
     thread_id: int 
     call_id: int                             
     # timestamp: Optional[str] = None
-    # arguments: Dict[str, Any] = Field(default_factory=dict)
+    arguments: List[Argument] = Field(default_factory=list)
     # return_value: Optional[Any] = None     # Not very sure if we should use str as the return value type
     # caller: Optional[str] = None
 

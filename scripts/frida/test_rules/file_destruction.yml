@@ -1,0 +1,12 @@
+rule:
+  meta:
+    name: file destruction
+    namespace: impact/files
+    authors:
+      - capa-frida-test
+    description: destroy files by deletion
+    scopes:
+      static: instruction
+      dynamic: call
+  features:
+    - api: java.io.File.delete

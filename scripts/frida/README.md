@@ -8,7 +8,8 @@
 
 ```bash
 # Create output directory with full permissions
-adb shell su -c "mkdir -p /data/local/tmp/frida_output && chmod 777 /data/local/tmp/frida_output"
+adb shell su -c "mkdir -p /data/local/tmp/frida_output"
+adb shell su -c "chmod -R 777 /data/local/tmp/frida_output"
 
 # Disable SELinux enforcement (resets on reboot)
 adb shell su -c "setenforce 0"
@@ -23,6 +24,13 @@ adb shell su -c "/data/local/tmp/frida-server &"
 # Attach Frida to the target app and log Java API calls
 frida -U -f com.example.app -l java_monitor.js
 ```
+
+**Notes:**
+- File Permission Conflicts
+Root Cause: Android apps create files with their UID ownership. App A cannot overwrite files created by App B.
+- Solution 1: Delete this file before next analysis
+- Solution 2: Change to a new filename in java_monitor.js:
+  var filePath = "/data/local/tmp/frida_output/api_calls_02.jsonl"
 
 ### Step 2: Retrieve Analysis Data
 
@@ -39,6 +47,10 @@ adb pull /data/local/tmp/frida_output/api_calls.jsonl ./api_calls.jsonl
 
 ### Step 3: Analyze with capa
 ```bash
+# Using custom Frida rules (for development/testing)
+python capa/main.py -r scripts/frida/test_rules/ -d frida_reports/api_calls.jsonls
+
+# Using this after integrated
 capa api_calls.jsonl
 ```
 

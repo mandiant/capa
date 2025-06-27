@@ -439,9 +439,10 @@ class Bytes(Feature):
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
 ARCH_AARCH64 = "aarch64"
+ARCH_ARM = "arm"
 # dotnet
 ARCH_ANY = "any"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_AARCH64, ARCH_ANY)
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_AARCH64, ARCH_ARM, ARCH_ANY)
 
 
 class Arch(Feature):
@@ -498,6 +499,7 @@ FORMAT_BINEXPORT2 = "binexport2"
 FORMAT_FREEZE = "freeze"
 FORMAT_RESULT = "result"
 FORMAT_BINJA_DB = "binja_database"
+FORMAT_FRIDA = "frida"
 STATIC_FORMATS = {
     FORMAT_SC32,
     FORMAT_SC64,
@@ -515,6 +517,7 @@ DYNAMIC_FORMATS = {
     FORMAT_VMRAY,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_FRIDA,
 }
 FORMAT_UNKNOWN = "unknown"
 

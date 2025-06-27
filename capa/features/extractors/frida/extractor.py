@@ -1,8 +1,19 @@
 from typing import Union, Iterator
 from pathlib import Path
 
-from models import FridaReport, Call
-from capa.features.common import Feature, String, OS, Arch, Format, FORMAT_APK
+from capa.features.extractors.frida.models import FridaReport, Call
+from capa.features.common import (
+    Feature, 
+    String, 
+    OS, 
+    Arch, 
+    Format, 
+    OS_ANDROID,
+    ARCH_AARCH64,
+    ARCH_AMD64,
+    ARCH_I386,
+    FORMAT_APK
+)
 from capa.features.insn import API, Number
 from capa.features.address import (
     NO_ADDRESS,
@@ -42,23 +53,22 @@ class FridaExtractor(DynamicFeatureExtractor):
 
     def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         """Basic global features"""
-        yield OS("android"), NO_ADDRESS  # OS: Frida doesn't provide OS info
+        yield OS(OS_ANDROID), NO_ADDRESS  
 
         if self.report.processes:
             process = self.report.processes[0]
             
             if process.arch:
                 arch_mapping = {
-                    "arm64": "aarch64",
-                    "arm": "arm",
-                    "x64": "amd64", 
-                    "x86": "i386"
+                    "arm64": ARCH_AARCH64,
+                    "arm": ARCH_ARM,
+                    "x64": ARCH_AMD64, 
+                    "ia32": ARCH_I386
                 }
                 capa_arch = arch_mapping.get(process.arch, process.arch)
                 yield Arch(capa_arch), NO_ADDRESS
             
-            if process.platform:
-                yield Format(FORMAT_APK), NO_ADDRESS
+        yield Format(FORMAT_APK), NO_ADDRESS
         
     def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         """Basic file features"""
@@ -101,14 +111,20 @@ class FridaExtractor(DynamicFeatureExtractor):
     def extract_call_features(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[tuple[Feature, Address]]:
         """Extract features from individual API calls"""
-        # TODO: Implement call feature extraction from arguments and return value
         call: Call = ch.inner
 
         yield API(call.api_name), ch.address
 
+        if call.arguments:
+            for arg_obj in call.arguments:
+                arg_value = arg_obj.value
+                if isinstance(arg_value, (int, float, bool)):
+                    yield Number(arg_value), ch.address
+                elif isinstance(arg_value, str):
+                    yield String(arg_value), ch.address
+
     def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
         """Format API call name and parameters"""
-        # TODO: Implement after extract_call_features agruments
         call: Call = ch.inner
         
         parts = []
@@ -116,8 +132,12 @@ class FridaExtractor(DynamicFeatureExtractor):
         parts.append("(")
         
         if call.arguments:
-            args = [f"{k}={v}" for k, v in call.arguments.items()]
-            parts.append(", ".join(args))
+            args_display = []
+            for arg_obj in call.arguments: 
+                display_value = str(arg_obj.value)
+                # Current implementation: Display name=value, since we have arg name
+                args_display.append(f"{arg_obj.name}={display_value}")
+            parts.append(", ".join(args_display))
         
         parts.append(")")
             

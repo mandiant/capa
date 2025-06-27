@@ -70,6 +70,26 @@ function collectBasicInfo() {
 
 collectBasicInfo();
 
+function processValue(arg) {
+    if (arg === null || typeof arg === 'undefined') {
+        return null;
+    }
+    
+    if (typeof arg === 'string' || typeof arg === 'number' || typeof arg === 'boolean') {
+        return arg;
+    }
+
+    // Handle Frida-wrapped Java objects
+    if (typeof arg === 'object' && arg.$className) {
+        return arg.toString();
+    }
+
+    // Handle arrays and other objects with toString()
+    // Note: JavaScript objects may become "[object Object]",
+    // beacause non-overridden Object.prototype.toString() returns type info, not content
+    return arg.toString();
+}
+
 Java.perform(function() {
     console.log("[+] Capa Frida Java Monitor started");
 
@@ -96,12 +116,13 @@ Java.perform(function() {
 
     // Currently recordApiCall only captures basic: process_id, thread_id, call_id, api_name
     // TODO: Will implement arguments and return_value parameters after testing current basic structure.
-    function recordApiCall(apiName) {
+    function recordApiCall(apiName, argumentsList) {
         var apiCallRecord = {
             "process_id": Process.id,
             "thread_id": Process.getCurrentThreadId(),
             "call_id": call_id++,
-            "api_name": apiName
+            "api_name": apiName,
+            "arguments": argumentsList || []
         };
         
         writeJavaApiCall(apiCallRecord);
@@ -116,7 +137,7 @@ Java.perform(function() {
             "timestamp": Date.now(),
             "process_id": Process.id,
             "thread_id": Process.getCurrentThreadId(),
-            "call_id": call_id,
+            "call_id": call_id - 1,
         };
         console.log("CAPA_API_LOG_ENTRY:" + JSON.stringify(logEntry));
     }
@@ -126,16 +147,37 @@ Java.perform(function() {
         var File = Java.use("java.io.File");
         
         File.$init.overload('java.lang.String').implementation = function(path) {
-            recordApiCall("java.io.File.<init>");
+            var args = [
+                {"name": "pathname", "value": processValue(path)}
+            ];
+            recordApiCall("java.io.File.<init>", args);
             debugLog("java.io.File.<init>", {"path": path});
             return this.$init(path);
         };
         
+        File.$init.overload('java.lang.String', 'java.lang.String').implementation = function(parent, child) {
+            var args = [
+                {"name": "parent_dir", "value": processValue(parent)},
+                {"name": "child_name", "value": processValue(child)}
+            ];
+            recordApiCall("java.io.File.<init>", args);
+            debugLog("java.io.File.<init>", {"parent": parent.toString(), "child": child.toString()});
+            return this.$init(parent, child);
+        };
+
         File.delete.implementation = function() {
             var path = this.getAbsolutePath();
             var result = this.delete();
-            recordApiCall("java.io.File.delete");
+            var args = [];
+            recordApiCall("java.io.File.delete", args);
             debugLog("java.io.File.delete", {"path": path}, result);
+            return result;
+        };
+
+        File.exists.implementation = function() {
+            recordApiCall("java.io.File.exists", []);
+            var result = this.exists();
+            debugLog("java.io.File.exists", {"file_path": this.getAbsolutePath().toString()}, result);
             return result;
         };
         
@@ -150,15 +192,20 @@ Java.perform(function() {
         var FileInputStream = Java.use("java.io.FileInputStream");
         
         FileInputStream.$init.overload('java.io.File').implementation = function(file) {
-            var path = file.getAbsolutePath();
-            recordApiCall("java.io.FileInputStream.<init>(File)");
-            debugLog("java.io.FileInputStream.<init>(File)", {"path": path});
+            var args = [
+                {"name": "file", "value": processValue(file)}
+            ];
+            recordApiCall("java.io.FileInputStream.<init>", args);
+            debugLog("java.io.FileInputStream.<init>", {"file_path": file.getAbsolutePath().toString()});
             return this.$init(file);
         };
         
         FileInputStream.$init.overload('java.lang.String').implementation = function(path) {
-            recordApiCall("java.io.FileInputStream.<init>(String)");
-            debugLog("java.io.FileInputStream.<init>(String)", {"path": path});
+            var args = [
+                {"name": "file_path", "value": processValue(path)}
+            ];
+            recordApiCall("java.io.FileInputStream.<init>", args);
+            debugLog("java.io.FileInputStream.<init>", {"path": path});
             return this.$init(path);
         };
         
@@ -173,15 +220,32 @@ Java.perform(function() {
         var FileOutputStream = Java.use("java.io.FileOutputStream");
         
         FileOutputStream.$init.overload('java.lang.String').implementation = function(path) {
-            recordApiCall("java.io.FileOutputStream.<init>");
+            var args = [
+                {"name": "file_path", "value": processValue(path)}
+            ];
+            recordApiCall("java.io.FileOutputStream.<init>", args);
             debugLog("java.io.FileOutputStream.<init>", {"path": path});
             return this.$init(path);
         };
         
-        FileOutputStream.write.overload('[B').implementation = function(bytes) {
-            recordApiCall("java.io.FileOutputStream.write");
-            debugLog("java.io.FileOutputStream.write", {"bytes": bytes.length});
-            return this.write(bytes);
+        FileOutputStream.write.overload('[B').implementation = function(b) {
+            var args = [
+                {"name": "buffer", "value": processValue(b)}
+            ];
+            recordApiCall("java.io.FileOutputStream.write", args);
+            debugLog("java.io.FileOutputStream.write", {"buffer_size": b.length});
+            return this.write(b);
+        };
+        
+        FileOutputStream.write.overload('[B', 'int', 'int').implementation = function(b, off, len) {
+            var args = [
+                {"name": "buffer", "value": processValue(b)},
+                {"name": "offset", "value": processValue(off)},
+                {"name": "length", "value": processValue(len)}
+            ];
+            recordApiCall("java.io.FileOutputStream.write", args);
+            debugLog("java.io.FileOutputStream.write", {"buffer_size": b.length, "offset": off, "length": len});
+            return this.write(b, off, len);
         };
         
         console.log("[+] FileOutputStream hooked");
