@@ -1,0 +1,9 @@
+// Hook {{CLASS_NAME}}
+try {
+    var {{VAR_NAME}} = Java.use('{{CLASS_NAME}}');
+    {{METHODS_HOOKS}}
+} catch(e) {
+    console.log('[ERROR] {{CLASS_NAME}} hook failed: ' + e);
+}
+
+

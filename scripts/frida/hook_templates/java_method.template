@@ -1,0 +1,16 @@
+try {
+        {{VAR_NAME}}.{{METHOD_NAME}}.overloads.forEach(function(overload) {
+            overload.implementation = function() {
+                var args = [];
+                for (var i = 0; i < arguments.length; i++) {
+                    args.push({name: 'arg' + i, value: processValue(arguments[i])});
+                }
+                var result = {{VAR_NAME}}.{{METHOD_NAME}}.apply(this, arguments);
+                recordApiCall('{{CLASS_NAME}}.{{METHOD_NAME}}', args);
+                return result;
+            };
+        });
+    } catch (e) {
+        console.log('[ERROR] Failed to hook {{CLASS_NAME}}.{{METHOD_NAME}}: ' + e.message);
+    }
+    
