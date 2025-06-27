@@ -17,7 +17,7 @@ class Metadata(FlexibleModel):
 class Argument(FlexibleModel):
     """Represents a single argument in an API call"""
     name: str
-    value: Any
+    value: Union[str, int, float, bool, None]
 
 
 class Call(FlexibleModel):
