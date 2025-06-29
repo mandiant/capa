@@ -49,6 +49,39 @@ class AbsoluteVirtualAddress(int, Address):
         return int.__hash__(self)
 
 
+class SuperblockAddress(Address):
+    """an address of a superblock in a dynamic execution trace"""
+
+    def __init__(self, addresses: list[Address]):
+        for address in addresses:
+            assert isinstance(address, AbsoluteVirtualAddress)
+            assert address >= 0
+        self.addresses: list[Address] = addresses
+
+    def __repr__(self):
+        return "superblock(" + " -> ".join([f"0x{address:x}" for address in self.addresses]) + ")"
+
+    def __hash__(self):
+        return hash(tuple(self.addresses))
+
+    def __eq__(self, other):
+        assert isinstance(other, SuperblockAddress)
+        return self.addresses == other.addresses
+
+    def __lt__(self, other):
+        assert isinstance(other, SuperblockAddress)
+        if not other.addresses or not self.addresses:
+            return False
+
+        if self.addresses[0] != other.addresses[0]:
+            return self.addresses[0] < other.addresses[0]
+        else:
+            return len(self.addresses) < len(other.addresses)
+
+    def __contains__(self, address: Address):
+        return address in self.addresses
+
+
 class ProcessAddress(Address):
     """an address of a process in a dynamic execution trace"""
 
