@@ -18,14 +18,14 @@ adb shell su -c "setenforce 0"
 adb shell su -c "/data/local/tmp/frida-server &"
 ```
 
-### Step 0: Get all APIs from rules, and then get all hooks through template
+### Step 0: Generate all hooks for known APIs with corresponding templates
 
 ```bash
 # This python script does everything in step 0, run it  
-python hook_builder.py test_rules hook_templates
+python hook_builder.py frida_apis/frida_apis.json hook_templates
 
-# Push this hook script into the virtual machine
-adb push extracted_apis/generated_api_hooks.js /data/local/tmp/frida_output/
+# Push this hook script into the emulator
+adb push frida_hooks/java_hooks.js /data/local/tmp/frida_output/
 ```
 
 ### Step 1: Capture API calls with Frida

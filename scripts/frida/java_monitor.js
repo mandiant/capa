@@ -18,7 +18,7 @@ var filePath = "/data/local/tmp/frida_output/api_calls.jsonl";
 // "/data/data/com.example.fridatestjavaapp/files/api_calls.json";
 // "/data/local/tmp/frida_output/frida_" + timestamp + ".json";
 
-var hooksPath = "/data/local/tmp/frida_output/generated_api_hooks.js"; 
+var javaHooksPath = "/data/local/tmp/frida_output/java_hooks.js"; 
 
 var outputFile = null;
 var recordId = 0;
@@ -72,7 +72,7 @@ function collectBasicInfo() {
 
 collectBasicInfo();
 
- var call_id = 0;
+var call_id = 0;
 
 function recordApiCall(apiName, argumentsList) {
     var apiCallRecord = {
@@ -106,14 +106,12 @@ function processValue(arg) {
     return arg.toString();
 }
 
-function loadGeneratedHooks() {
+function loadHookFile(hookPath, hookType) {
     try {
-        var hooksContent = File.readAllText(hooksPath);
+        var hooksContent = File.readAllText(hookPath);
         eval(hooksContent);
-        return true;
     } catch (e) {
-        console.log("[ERROR] Failed to load generated hooks: " + e);
-        return false;
+        console.log("[ERROR] " + hookType + " hooks not available: " + e.message);
     }
 }
 
@@ -139,10 +137,6 @@ Java.perform(function() {
         writeMetadata();
     }, 1000);
 
-    if (loadGeneratedHooks()) {
-        console.log("[+] All generated hooks loaded successfully!");
-    } else {
-        console.log("[ERROR] Failed to load generated hooks, monitor may not work properly");
-    }
+    loadHookFile(javaHooksPath, "Java");
 
 });
