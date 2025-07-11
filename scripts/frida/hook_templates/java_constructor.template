@@ -1,0 +1,19 @@
+try {
+    var {{VAR_NAME}} = Java.use('{{CLASS_NAME}}');
+    {{VAR_NAME}}.$init.overloads.forEach(function(overload) {
+        overload.implementation = function() {
+            var args = [];
+            for (var i = 0; i < arguments.length; i++) {
+                args.push({
+                    name: 'arg' + i, 
+                    value: processValue(arguments[i])
+                });
+            }
+            
+            recordApiCall('{{CLASS_NAME}}.<init>', args);
+            return this.$init.apply(this, arguments);
+        };
+    });
+} catch (e) {
+    console.log('[ERROR] Failed to hook {{CLASS_NAME}}.<init>: ' + e.message);
+}

@@ -1,1 +1,5 @@
 frida_reports/
+api_calls.jsonl
+test_rules/
+frida_hooks/
+frida_apis/

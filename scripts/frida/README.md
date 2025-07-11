@@ -18,11 +18,22 @@ adb shell su -c "setenforce 0"
 adb shell su -c "/data/local/tmp/frida-server &"
 ```
 
+### Step 0: Generate all hooks for known APIs with corresponding templates
+
+```bash
+# This python script does everything in step 0, run it  
+python hook_builder.py frida_apis/frida_apis.json hook_templates
+
+# Push this hook script into the emulator
+adb push frida_hooks/java_hooks.js /data/local/tmp/frida_output/
+```
+
 ### Step 1: Capture API calls with Frida
 
 ```bash
 # Attach Frida to the target app and log Java API calls
 frida -U -f com.example.app -l java_monitor.js
+frida -U -f com.scottyab.rootbeer.sample -l java_monitor.js
 ```
 
 **Notes:**
@@ -42,13 +53,13 @@ adb shell su -c "ls -la /data/local/tmp/frida_output/"
 adb shell su -c "cat /data/local/tmp/frida_output/api_calls.jsonl" > api_calls.jsonl
 
 # OR Method 2: Using adb pull
-adb pull /data/local/tmp/frida_output/api_calls.jsonl ./api_calls.jsonl
+adb pull /data/local/tmp/frida_output/api_calls.jsonl ./frida_reports/api_calls.jsonl
 ```
 
 ### Step 3: Analyze with capa
 ```bash
 # Using custom Frida rules (for development/testing)
-python capa/main.py -r scripts/frida/test_rules/ -d frida_reports/api_calls.jsonls
+python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_reports/api_calls.jsonl
 
 # Using this after integrated
 capa api_calls.jsonl
