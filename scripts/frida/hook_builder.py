@@ -98,10 +98,6 @@ def main(argv=None):
 
     logging.basicConfig(level=logging.INFO)
 
-    apis_file = Path(args.apis_file_path)
-    template_dir = Path(args.templates_dir)
-    output_dir = Path(args.output_dir)
-
     if not apis_file.exists():
         raise FileNotFoundError(f"APIs file not found: {apis_file}")
     
