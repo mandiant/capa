@@ -73,9 +73,9 @@ def main(argv=None):
     default_samples_dir = str(Path(__file__).resolve().parent / "frida_hooks")
     
     parser = argparse.ArgumentParser(description="Generate Frida hooks")
-    parser.add_argument("apis_file_path", type=str, help="Path to APIs JSON file")
-    parser.add_argument("templates_dir", type=str, help="Path to templates directory")
-    parser.add_argument("--output-dir", type=str, default=default_samples_dir, help="Output directory")
+    parser.add_argument("apis_file_path", type=Path, help="Path to APIs JSON file")
+    parser.add_argument("templates_dir", type=Path, help="Path to templates directory")
+    parser.add_argument("--output-dir", type=Path, default=default_samples_dir, help="Output directory")
     
     args = parser.parse_args(args=argv)
 
