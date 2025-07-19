@@ -11,7 +11,7 @@ try {
                 });
             }
             {% endif %}
-            recordApiCall('{{CLASS_NAME}}.<init>', args);
+            recordApiCall('{{CLASS_NAME}}.<init>', args, "java_api");
             return this.$init.apply(this, arguments);
         };
     });

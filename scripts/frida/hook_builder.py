@@ -54,13 +54,30 @@ def generate_java_hooks_file(java_apis, template_dir, output_file_path):
 
     print(f"Successfully generated Java hooks to {output_file_path}")
 
-def generate_jni_hooks_file(jni_apis, template_dir, output_file_path):
-    # TODO: generate_jni_hooks
-    pass
+def generate_native_hook(template, native_info):
+    var_name = native_info.library.replace('.', '_').replace('-', '_')
+    return template.render(
+        LIBRARY_NAME=native_info.library,
+        VAR_NAME=var_name,
+        FUNCTION_NAME=native_info.function,
+        capture_args=native_info.arguments,
+        argument_types=native_info.argument_types
+    )
 
 def generate_native_hooks_file(native_apis, template_dir, output_file_path):
-    # TODO: generate_native_hooks
-    pass
+    all_native_hooks = []
+    native_template = load_template(template_dir, "native_method.template")
+    
+    for i, native_info in enumerate(native_apis.methods):
+        hook = generate_native_hook(native_template, native_info)
+        all_native_hooks.append(hook)
+    
+    # Write to output file
+    with open(output_file_path, 'w') as f:
+        f.write("\n\n".join(all_native_hooks))
+    
+    print(f"Successfully generated Native hooks to {output_file_path}")
+
 
 def generate_complete_frida_script(template_dir, output_file_path):
     # TODO: Will implement after every hooks are finalized
@@ -100,15 +117,10 @@ def main(argv=None):
         java_output_file_path = output_dir / "java_hooks.js"
         generate_java_hooks_file(frida_apis.java, template_dir, java_output_file_path)
     
-    # JNI hooks
-    if frida_apis.jni and frida_apis.jni.methods:
-        jni_output = output_dir / "jni_hooks.js"
-        generate_java_hooks_file(frida_apis.jni, template_dir, jni_output)
-
     # Native hooks
     if frida_apis.native and frida_apis.native.methods:
         native_output = output_dir / "native_hooks.js"
-        generate_java_hooks_file(frida_apis.native, template_dir, native_output)
+        generate_native_hooks_file(frida_apis.native, template_dir, native_output)
     
     return 0
     

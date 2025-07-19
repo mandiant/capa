@@ -356,7 +356,7 @@ def get_extractor(
     
     elif backend == BACKEND_FRIDA:
         import capa.features.extractors.frida.extractor
-        return capa.features.extractors.frida.extractor.FridaExtractor.from_json_file(input_path)
+        return capa.features.extractors.frida.extractor.FridaExtractor.from_jsonl_file(input_path)
    
     else:
         raise ValueError("unexpected backend: " + backend)
@@ -432,7 +432,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
     elif input_format == FORMAT_FRIDA:
         import capa.features.extractors.frida.extractor
         
-        file_extractors.append(capa.features.extractors.frida.extractor.FridaExtractor.from_json_file(input_file))
+        file_extractors.append(capa.features.extractors.frida.extractor.FridaExtractor.from_jsonl_file(input_file))
 
     return file_extractors
 

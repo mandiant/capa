@@ -145,7 +145,7 @@ class FridaExtractor(DynamicFeatureExtractor):
         return "".join(parts)
     
     @classmethod
-    def from_json_file(cls, json_path: Path) -> "FridaExtractor":
-        """Entry point: Create an extractor from a JSON file""" 
-        report = FridaReport.from_json_file(json_path)
+    def from_jsonl_file(cls, jsonl_path: Path) -> "FridaExtractor":
+        """Entry point: Create an extractor from a JSONL file""" 
+        report = FridaReport.from_jsonl_file(jsonl_path)
         return cls(report)

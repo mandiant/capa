@@ -49,12 +49,12 @@ class FridaReport(FlexibleModel):
     processes: List[Process] = Field(default_factory=list)
     
     @classmethod
-    def from_json_file(cls, json_path) -> "FridaReport":
-        """Load from JSON Lines file created by log_converter.py"""
+    def from_jsonl_file(cls, jsonl_path) -> "FridaReport":
+        """Load from JSON Lines file"""
         metadata = None
         api_calls = []
 
-        with open(json_path, 'r') as f:
+        with open(jsonl_path, 'r') as f:
             content = f.read()
             for line in content.splitlines():
                 record = json.loads(line)
@@ -63,6 +63,9 @@ class FridaReport(FlexibleModel):
                     metadata = Metadata(**record["metadata"])
                 elif "api" in record and "java_api" in record["api"]:
                     call = Call(**record["api"]["java_api"])
+                    api_calls.append(call)
+                elif "api" in record and "native_api" in record["api"]:
+                    call = Call(**record["api"]["native_api"])
                     api_calls.append(call)
 
         process = Process(
