@@ -12,6 +12,7 @@ from capa.features.common import (
     ARCH_AARCH64,
     ARCH_AMD64,
     ARCH_I386,
+    ARCH_ARM,
     FORMAT_APK
 )
 from capa.features.insn import API, Number
