@@ -48,11 +48,11 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_FRIDA,
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_DRAKVUF,
-    FORMAT_FRIDA,
     FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
@@ -226,10 +226,10 @@ def get_format_from_report(sample: Path) -> str:
             # CAPE report that's missing the "CAPE" key,
             # which is not going to be much use, but its correct.
             return FORMAT_CAPE
-    elif sample.name.endswith(".jsonl"):  
+    elif sample.name.endswith(".jsonl"):
         # TODO: Find out a way to classify frida later.
         return FORMAT_FRIDA
-        
+
     return FORMAT_UNKNOWN
 
 
