@@ -52,13 +52,13 @@ from capa.loader import (
     BACKEND_VIV,
     BACKEND_CAPE,
     BACKEND_BINJA,
+    BACKEND_FRIDA,
     BACKEND_VMRAY,
     BACKEND_DOTNET,
     BACKEND_FREEZE,
     BACKEND_PEFILE,
     BACKEND_DRAKVUF,
     BACKEND_BINEXPORT2,
-    BACKEND_FRIDA,
 )
 from capa.helpers import (
     get_file_taste,
@@ -68,9 +68,9 @@ from capa.helpers import (
     log_unsupported_format_error,
     log_empty_sandbox_report_error,
     log_unsupported_cape_report_error,
+    log_unsupported_frida_report_error,
     log_unsupported_vmray_report_error,
     log_unsupported_drakvuf_report_error,
-    log_unsupported_frida_report_error,
 )
 from capa.exceptions import (
     InvalidArgument,
@@ -91,6 +91,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_FRIDA,
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
@@ -100,7 +101,6 @@ from capa.features.common import (
     DYNAMIC_FORMATS,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
-    FORMAT_FRIDA,
 )
 from capa.capabilities.common import (
     Capabilities,
@@ -593,7 +593,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
     elif input_format == FORMAT_VMRAY:
         return BACKEND_VMRAY
 
-    elif input_format == FORMAT_FRIDA: 
+    elif input_format == FORMAT_FRIDA:
         return BACKEND_FRIDA
 
     elif input_format == FORMAT_DOTNET:

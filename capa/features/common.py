@@ -486,7 +486,7 @@ class OS(Feature):
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
 FORMAT_DOTNET = "dotnet"
-FORMAT_APK = 'apk'
+FORMAT_APK = "apk"
 VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET, FORMAT_APK)
 # internal only, not to be used in rules
 FORMAT_AUTO = "auto"

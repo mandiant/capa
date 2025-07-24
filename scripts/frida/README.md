@@ -53,6 +53,7 @@ adb shell su -c "ls -la /data/local/tmp/frida_output/"
 adb shell su -c "cat /data/local/tmp/frida_output/api_calls.jsonl" > api_calls.jsonl
 
 # OR Method 2: Using adb pull
+adb root
 adb pull /data/local/tmp/frida_output/api_calls.jsonl ./frida_reports/api_calls.jsonl
 ```
 
