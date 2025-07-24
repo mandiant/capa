@@ -9,7 +9,7 @@ class JavaApi(BaseModel):
     package: str
     class_name: str = Field(alias="class")
     method: Optional[str] = None  # null only for constructors
-    arguments: bool = True  # Whether to capture and log method arguments
+    arguments: bool = False  # Whether to capture and log method arguments
     static: bool = False
     native: bool = False
     ctor: bool = False
@@ -45,7 +45,7 @@ VALID_NATIVE_TYPES = SUPPORTED_NATIVE_TYPES.union(UNSUPPORTED_NATIVE_TYPES)
 class NativeApi(BaseModel):
     library: str
     function: str
-    arguments: bool = True
+    arguments: bool = False
     argument_types: List[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
