@@ -4,14 +4,14 @@ try {
     Interceptor.attach({{FUNCTION_NAME}}_addr, {
         onEnter: function(args) {
             var arguments_list = [];
-            {% if capture_args %}
-            {% for arg_type in argument_types %}
+            {%- if capture_args %}
+            {%- for arg_type in argument_types %}
             arguments_list.push({
                 name: 'arg{{loop.index0}}',
                 value: parseNativeValue(args[{{loop.index0}}], '{{arg_type}}')
             });
-            {% endfor %}
-            {% endif %}
+            {%- endfor %}
+            {%- endif %}
             recordApiCall('{{LIBRARY_NAME}}.{{FUNCTION_NAME}}', arguments_list, "native_api");
         }
     });

@@ -10,8 +10,8 @@ var timestamp = Date.now();
 
 // "/frida_output" must be created on the device with write permissions,
 // "{{jsonl_filename}}" is set via the 'hook_builder.py' command-line arguments.
-var filePath = "/data/local/tmp/frida_output/{{jsonl_filename}}";
-// "/data/local/tmp/frida_output/frida_" + timestamp + ".json";
+var filePath = "/data/local/tmp/frida_outputs/{{jsonl_filename}}";
+// "/data/local/tmp/frida_outputs/frida_" + timestamp + ".json";
 
 var outputFile = null;
 var recordId = 0;

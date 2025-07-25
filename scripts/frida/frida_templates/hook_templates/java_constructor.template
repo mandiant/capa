@@ -3,14 +3,14 @@ try {
     {{VAR_NAME}}.$init.overloads.forEach(function(overload) {
         overload.implementation = function() {
             var args = [];
-            {% if capture_args %}
+            {%- if capture_args %}
             for (var i = 0; i < arguments.length; i++) {
                 args.push({
                     name: 'arg' + i, 
                     value: processValue(arguments[i])
                 });
             }
-            {% endif %}
+            {%- endif %}
             recordApiCall('{{CLASS_NAME}}.<init>', args, "java_api");
             return this.$init.apply(this, arguments);
         };

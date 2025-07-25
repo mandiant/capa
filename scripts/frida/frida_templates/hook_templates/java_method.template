@@ -3,19 +3,19 @@ try {
     {{VAR_NAME}}.{{METHOD_NAME}}.overloads.forEach(function(overload) {
         overload.implementation = function() {
             var args = [];
-            {% if capture_args %}
+            {%- if capture_args %}
             for (var i = 0; i < arguments.length; i++) {
                 args.push({
                     name: 'arg' + i, 
                     value: processValue(arguments[i])
                 });
             }
-            {% endif %}
-            {% if is_static %}
+            {%- endif %}
+            {%- if is_static %}
             var result = {{VAR_NAME}}.{{METHOD_NAME}}.apply({{VAR_NAME}}, arguments);
-            {% else %}
+            {%- else %}
             var result = this.{{METHOD_NAME}}.apply(this, arguments);
-            {% endif %}
+            {%- endif %}
             recordApiCall('{{CLASS_NAME}}.{{METHOD_NAME}}', args, "java_api");
             return result;
         };
