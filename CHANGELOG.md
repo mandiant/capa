@@ -7,9 +7,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
+- nursery/create-executable-heap moritz.raabe@mandiant.com
 -
 
 ### Bug Fixes
