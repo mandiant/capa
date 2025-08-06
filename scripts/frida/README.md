@@ -15,6 +15,25 @@ Example: RootBeer sample app from Google Play Store, or build from  Or [Rootbeer
 
 ## Complete Workflow
 
+### Step 0: Device Preparation
+
+ ```bash
+ # Create output directory with full permissions
+
+ adb shell su -c "mkdir -p /data/local/tmp/frida_output"
+
+ adb shell su -c "chmod -R 777 /data/local/tmp/frida_output"
+
+ # Disable SELinux enforcement (resets on reboot)
+
+ adb shell su -c "setenforce 0"
+
+ # Start Frida server on device
+
+ adb shell su -c "/data/local/tmp/frida-server &"
+
+ ```
+
 ### Step 1: Generate Frida Monitoring Script
 
 ```bash

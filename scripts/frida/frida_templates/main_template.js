@@ -8,7 +8,7 @@ console.log("[+] Capa Frida Java Monitor initializing...");
 // TODO: Should we use timestamp in filename for multiple runs? and let user specify output path via command line?
 var timestamp = Date.now(); 
 
-// "/frida_output" must be created on the device with write permissions,
+// "/frida_outputs" must be created on the device with write permissions,
 // "{{jsonl_filename}}" is set via the 'hook_builder.py' command-line arguments.
 var filePath = "/data/local/tmp/frida_outputs/{{jsonl_filename}}";
 // "/data/local/tmp/frida_outputs/frida_" + timestamp + ".json";
