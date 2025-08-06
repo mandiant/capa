@@ -11,7 +11,7 @@ This guide shows how to generate Frida hooks and analyze Android app API calls w
 [capa install page](https://github.com/mandiant/capa/blob/master/doc/installation.md)
 
 - **Target app installed on emulator**  
-Example: RootBeer sample app from Google Play Store, or build from  Or [Rootbeer Github](https://github.com/scottyab/rootbeer?tab=readme-ov-file) (Rootbeer GitHub version is newer)
+Example: RootBeer sample app from Google Play Store, or build from [Rootbeer Github](https://github.com/scottyab/rootbeer?tab=readme-ov-file) (Rootbeer GitHub version is newer)
 
 ## Complete Workflow
 
@@ -19,19 +19,14 @@ Example: RootBeer sample app from Google Play Store, or build from  Or [Rootbeer
 
  ```bash
  # Create output directory with full permissions
-
  adb shell su -c "mkdir -p /data/local/tmp/frida_output"
-
  adb shell su -c "chmod -R 777 /data/local/tmp/frida_output"
 
  # Disable SELinux enforcement (resets on reboot)
-
  adb shell su -c "setenforce 0"
 
  # Start Frida server on device
-
  adb shell su -c "/data/local/tmp/frida-server &"
-
  ```
 
 ### Step 1: Generate Frida Monitoring Script
