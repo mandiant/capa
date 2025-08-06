@@ -1,5 +1,8 @@
-frida_reports/
-api_calls.jsonl
-test_rules/
-frida_hooks/
-frida_apis/
+test_rules/*.yml
+frida_apis/*.json
+frida_outputs/*.jsonl
+frida_scripts/*.js
+
+# Sample
+!frida_apis/frida_apis.json
+!test_rules/show-case.yml

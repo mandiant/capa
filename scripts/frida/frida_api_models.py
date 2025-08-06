@@ -9,7 +9,7 @@ class JavaApi(BaseModel):
     package: str
     class_name: str = Field(alias="class")
     method: Optional[str] = None  # null only for constructors
-    arguments: bool = True  # Whether to capture and log method arguments
+    arguments: bool = False  # Whether to capture and log method arguments
     static: bool = False
     native: bool = False
     ctor: bool = False
@@ -33,26 +33,34 @@ class JavaApi(BaseModel):
         return self
 
 
+# Currently supported argument types for native function hooking
 SUPPORTED_NATIVE_TYPES = {"int", "uint", "bool", "char*", "const char*"}
+# Known argument types that we don't support yet
+# If you encounter a new type, please add it here to help us maintain the standard names
 UNSUPPORTED_NATIVE_TYPES = {"long", "ulong", "size_t", "float", "double", "void*", "pointer"}
+# All known argument types in standard names
 VALID_NATIVE_TYPES = SUPPORTED_NATIVE_TYPES.union(UNSUPPORTED_NATIVE_TYPES)
 
 
 class NativeApi(BaseModel):
     library: str
     function: str
-    arguments: bool = True
+    arguments: bool = False
     argument_types: List[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_argument_types(self):
-        print(
-            f"Reminder: supported types are {SUPPORTED_NATIVE_TYPES}. "
-            f"If the API argument you added uses one of these types, make sure it is spelled correctly."
-        )
+        invalid_types = []
         for arg_type in self.argument_types:
             if arg_type not in VALID_NATIVE_TYPES:
-                print(f"Reminder: {arg_type}. Please double-check for typos.")
+                invalid_types.append(arg_type)
+        if invalid_types:
+            raise ValueError(
+                f"Unknown argument types: {invalid_types}. "
+                f"Supported types: {SUPPORTED_NATIVE_TYPES}. "
+                f"Known but unsupported types: {UNSUPPORTED_NATIVE_TYPES}"
+            )
+
         return self
 
 
@@ -73,6 +81,11 @@ class FridaApiSpec(BaseModel):
     @classmethod
     def from_json_file(cls, json_path: Path) -> "FridaApiSpec":
         """Load and validate API configuration from JSON file"""
-        with open(json_path, "r") as f:
-            data = json.load(f)
-        return cls(**data)
+        try:
+            with open(json_path, "r") as f:
+                data = json.load(f)
+            return cls(**data)
+        except FileNotFoundError:
+            raise ValueError(f"API file not found: {json_path}")
+        except Exception as e:
+            raise ValueError(f"Error loading from {json_path}: {e}")

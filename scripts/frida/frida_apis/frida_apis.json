@@ -1,0 +1,110 @@
+{
+    "java": {
+        "methods": [
+            {
+                "package": "java.lang",
+                "class": "System",
+                "method": "getenv",
+                "arguments": true,
+                "static": true,
+                "native": false,
+                "ctor": false
+            },
+            {
+                "package": "java.io",
+                "class": "File", 
+                "method": null,
+                "arguments": true,
+                "static": false,
+                "native": false,
+                "ctor": true
+            },
+            {
+                "package": "java.io",
+                "class": "FileInputStream",
+                "method": null, 
+                "arguments": true,
+                "static": false,
+                "native": false,
+                "ctor": true
+            },
+            {
+                "package": "java.io",
+                "class": "FileOutputStream",
+                "method": null,
+                "arguments": true, 
+                "static": false,
+                "native": false,
+                "ctor": true
+            },
+            {
+                "package": "java.io",
+                "class": "File",
+                "method": "exists",
+                "arguments": true,
+                "static": false,
+                "native": false,
+                "ctor": false
+            },
+            {
+                "package": "java.lang",
+                "class": "Runtime",
+                "method": "exec",
+                "arguments": true,
+                "static": false,
+                "native": false,
+                "ctor": false
+            },
+            {
+                "package": "android.content.pm",
+                "class": "PackageManager",
+                "method": "getPackageInfo",
+                "arguments": true,
+                "static": false,
+                "native": false,
+                "ctor": false
+            },
+            {
+                "package": "android.os",
+                "class": "SystemProperties",
+                "method": "get",
+                "arguments": true,
+                "static": true,
+                "native": false,
+                "ctor": false
+            },
+            {
+                "package": "com.scottyab.rootbeer",
+                "class": "RootBeerNative",
+                "method": "checkForRoot",
+                "arguments": true,
+                "static": false,
+                "native": true,
+                "ctor": false
+            }
+        ]
+    },
+    "native": {
+        "methods": [
+            {
+                "library": "libc.so",
+                "function": "open",
+                "arguments": true,
+                "argument_types": ["char*", "int"]
+            },
+            
+            {
+                "library": "libc.so",
+                "function": "execve",
+                "arguments": true,
+                "argument_types": ["char*", "void*", "void*"]
+            },
+            {
+                "library": "libc.so",
+                "function": "stat",
+                "arguments": true,
+                "argument_types": ["char*", "void*"]
+            }
+        ]
+    }
+}

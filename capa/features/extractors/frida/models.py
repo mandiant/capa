@@ -66,12 +66,13 @@ class FridaReport(FlexibleModel):
 
                 if "metadata" in record:
                     metadata = Metadata(**record["metadata"])
-                elif "api" in record and "java_api" in record["api"]:
-                    call = Call(**record["api"]["java_api"])
-                    api_calls.append(call)
-                elif "api" in record and "native_api" in record["api"]:
-                    call = Call(**record["api"]["native_api"])
-                    api_calls.append(call)
+                elif "api" in record:
+                    if "java_api" in record["api"]:
+                        call = Call(**record["api"]["java_api"])
+                        api_calls.append(call)
+                    elif "native_api" in record["api"]:
+                        call = Call(**record["api"]["native_api"])
+                        api_calls.append(call)
 
         if metadata is None:
             raise ValueError("No metadata found in JSONL file")
