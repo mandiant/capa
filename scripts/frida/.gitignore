@@ -2,6 +2,7 @@ test_rules/*.yml
 frida_apis/*.json
 frida_outputs/*.jsonl
 frida_scripts/*.js
+.temp/
 
 # Sample
 !frida_apis/frida_apis.json

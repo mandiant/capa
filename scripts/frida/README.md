@@ -16,18 +16,17 @@ Example: RootBeer sample app from Google Play Store, or build from [Rootbeer Git
 ## Complete Workflow
 
 ### Step 0: Device Preparation
+```bash
+# Create output directory with full permissions
+adb shell su -c "mkdir -p /data/local/tmp/frida_output"
+adb shell su -c "chmod -R 777 /data/local/tmp/frida_output"
 
- ```bash
- # Create output directory with full permissions
- adb shell su -c "mkdir -p /data/local/tmp/frida_output"
- adb shell su -c "chmod -R 777 /data/local/tmp/frida_output"
+# Disable SELinux enforcement (resets on reboot)
+adb shell su -c "setenforce 0"
 
- # Disable SELinux enforcement (resets on reboot)
- adb shell su -c "setenforce 0"
-
- # Start Frida server on device
- adb shell su -c "/data/local/tmp/frida-server &"
- ```
+# Start Frida server on device
+adb shell su -c "/data/local/tmp/frida-server &"
+```
 
 ### Step 1: Generate Frida Monitoring Script
 
@@ -38,11 +37,17 @@ source ~/capa-env/bin/activate
 # Navigate to the frida dir
 cd scripts/frida/
 
+# Extract APK metadata and hashes from apk getting via adb in device
+python apk_meta_extractor.py --package com.app
+# Options:
+# python apk_meta_extractor.py --package com.app --apk /path/to/app.apk
+# --package: Android package name (required)
+# --apk: Local APK file path (optional, will use ADB to get from device if not provided) 
+
 # Generate monitoring script
 python hook_builder.py
-
-python hook_builder.py --apis frida_apis.json --script frida_monitor.js --output api_calls.jsonl
 # Options:
+# python hook_builder.py --apis frida_apis.json --script frida_monitor.js --output api_calls.jsonl
 # --apis: JSON filename containing APIs (default: frida_apis.json)
 # --script: Output script filename (default: frida_monitor.js)  
 # --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)

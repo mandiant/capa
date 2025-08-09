@@ -6,17 +6,13 @@
                 "class": "System",
                 "method": "getenv",
                 "arguments": true,
-                "static": true,
-                "native": false,
-                "ctor": false
+                "static": true
             },
             {
                 "package": "java.io",
                 "class": "File", 
                 "method": null,
                 "arguments": true,
-                "static": false,
-                "native": false,
                 "ctor": true
             },
             {
@@ -24,63 +20,46 @@
                 "class": "FileInputStream",
                 "method": null, 
                 "arguments": true,
-                "static": false,
-                "native": false,
                 "ctor": true
             },
             {
                 "package": "java.io",
                 "class": "FileOutputStream",
                 "method": null,
-                "arguments": true, 
-                "static": false,
-                "native": false,
+                "arguments": true,
                 "ctor": true
             },
             {
                 "package": "java.io",
                 "class": "File",
                 "method": "exists",
-                "arguments": true,
-                "static": false,
-                "native": false,
-                "ctor": false
+                "arguments": true
             },
             {
                 "package": "java.lang",
                 "class": "Runtime",
                 "method": "exec",
-                "arguments": true,
-                "static": false,
-                "native": false,
-                "ctor": false
+                "arguments": true
             },
             {
                 "package": "android.content.pm",
                 "class": "PackageManager",
                 "method": "getPackageInfo",
-                "arguments": true,
-                "static": false,
-                "native": false,
-                "ctor": false
+                "arguments": true
             },
             {
                 "package": "android.os",
                 "class": "SystemProperties",
                 "method": "get",
                 "arguments": true,
-                "static": true,
-                "native": false,
-                "ctor": false
+                "static": true
             },
             {
                 "package": "com.scottyab.rootbeer",
                 "class": "RootBeerNative",
                 "method": "checkForRoot",
                 "arguments": true,
-                "static": false,
-                "native": true,
-                "ctor": false
+                "native": true
             }
         ]
     },

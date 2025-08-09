@@ -8,11 +8,18 @@ class FlexibleModel(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class Hashes(BaseModel):
+    md5: str
+    sha1: str
+    sha256: str
+
+
 class Metadata(FlexibleModel):
     process_id: int
     package_name: Optional[str] = None
     arch: Optional[str] = None
     platform: Optional[str] = None
+    hashes: Optional[Hashes] = None
 
 
 class Argument(FlexibleModel):
@@ -52,6 +59,7 @@ class FridaReport(FlexibleModel):
     # TODO: Some more file-level information may go here
     package_name: str
     processes: List[Process] = Field(default_factory=list)
+    hashes: Optional[Hashes] = None
 
     @classmethod
     def from_jsonl_file(cls, jsonl_path) -> "FridaReport":
@@ -85,4 +93,8 @@ class FridaReport(FlexibleModel):
             calls=api_calls,
         )
 
-        return cls(package_name=metadata.package_name or "unknown", processes=[process])
+        report_hashes = None
+        if metadata.hashes:
+            report_hashes = metadata.hashes
+
+        return cls(package_name=metadata.package_name or "unknown", processes=[process], hashes=report_hashes)

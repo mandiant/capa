@@ -17,6 +17,13 @@ var outputFile = null;
 var recordId = 0;
 var allMetadata = {};
 
+// Using string template to avoid IDE syntax errors
+// hashesData contains double quotes in JSON format, so we use single quotes here
+var hashesData = '{{ hashes }}';
+var packageName = "{{ package_name }}";
+allMetadata.hashes = JSON.parse(hashesData);
+allMetadata.package_name = packageName;
+
 try {
     outputFile = new File(filePath, "w");
 } catch (e) {
@@ -137,8 +144,8 @@ Java.perform(function() {
         var currentApp = ActivityThread.currentApplication();
         
         if (currentApp && currentApp.getPackageName) {
-            allMetadata.package_name = currentApp.getPackageName().toString();
-            console.log("[+] Package name: " + allMetadata.package_name);
+            allMetadata.package_name_via_android = currentApp.getPackageName().toString();
+            console.log("[+] Package name: " + allMetadata.package_name_via_android);
         } else {
             console.log("[!] Could not get package name, using fallback");
             allMetadata.package_name = "unknown_package";
