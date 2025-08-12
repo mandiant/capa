@@ -7,12 +7,14 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (6)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
 - anti-analysis/packer/dxpack/packed-with-dxpack jakubjozwiak@google.com
 - anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
+- nursery/acquire-load-driver-privileges mehunhoff@google.com
+- nursery/communicate-using-ftp mehunhoff@google.com
 -
 
 ### Bug Fixes
