@@ -6,7 +6,7 @@
 console.log("[+] Capa Frida Java Monitor initializing...");
 
 // TODO: Should we use timestamp in filename for multiple runs? and let user specify output path via command line?
-var timestamp = Date.now(); 
+// var timestamp = Date.now(); 
 
 // "/frida_outputs" must be created on the device with write permissions,
 // "{{jsonl_filename}}" is set via the 'hook_builder.py' command-line arguments.
@@ -15,14 +15,20 @@ var filePath = "/data/local/tmp/frida_outputs/{{jsonl_filename}}";
 
 var outputFile = null;
 var recordId = 0;
-var allMetadata = {};
+var callId = 0;
 
 // Using string template to avoid IDE syntax errors
 // hashesData contains double quotes in JSON format, so we use single quotes here
 var hashesData = '{{ hashes }}';
 var packageName = "{{ package_name }}";
-allMetadata.hashes = JSON.parse(hashesData);
-allMetadata.package_name = packageName;
+
+var allMetadata = {
+    hashes: JSON.parse(hashesData),
+    package_name: packageName,
+    process_id: Process.id,
+    arch: Process.arch,
+    platform: Process.platform
+};
 
 try {
     outputFile = new File(filePath, "w");
@@ -39,7 +45,7 @@ function writeRecord(record) {
     return false;
 }
 
-function writeMetadata() {
+function recordMetadata() {
     var record = {
         "id": recordId++,
         "metadata": allMetadata
@@ -50,22 +56,11 @@ function writeMetadata() {
     }
 }
 
-function collectBasicInfo() {
-    allMetadata.process_id = Process.id;
-    allMetadata.arch = Process.arch;
-    allMetadata.platform = Process.platform;
-    console.log("[+] Basic info collected");
-}
-
-collectBasicInfo();
-
-var call_id = 0;
-
 function recordApiCall(apiName, argumentsList, apiType) {
     var apiCallRecord = {
         "process_id": Process.id,
         "thread_id": Process.getCurrentThreadId(),
-        "call_id": call_id++,
+        "call_id": callId++,
         "api_name": apiName,
         "arguments": argumentsList || []
     };
@@ -129,30 +124,13 @@ function parseNativeValue(arg, argType) {
     }
 }
 
+recordMetadata();
+
 // Generated Native hooks content
 {{native_hooks_content}}
 
 Java.perform(function() {
     console.log("[+] Capa Frida Java Monitor started");
-
-    // Debug found ActivityThread.currentApplication() available after 1 second, returns null otherwise
-    // but this doesn't guarantee metadata will be written as first line in JSON.
-    // Current approach can ensure each script reinjection maintains complete metadata without requiring device restart
-    setTimeout(function() {
-    
-        var ActivityThread = Java.use("android.app.ActivityThread");
-        var currentApp = ActivityThread.currentApplication();
-        
-        if (currentApp && currentApp.getPackageName) {
-            allMetadata.package_name_via_android = currentApp.getPackageName().toString();
-            console.log("[+] Package name: " + allMetadata.package_name_via_android);
-        } else {
-            console.log("[!] Could not get package name, using fallback");
-            allMetadata.package_name = "unknown_package";
-        }
-        
-        writeMetadata();
-    }, 1000);
 
     // Generated Java hooks content
     {{ java_hooks_content | indent(4) }} 
