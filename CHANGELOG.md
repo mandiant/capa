@@ -7,11 +7,12 @@
 
 ### Breaking Changes
 
-### New Rules (3)
+### New Rules (4)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
 - anti-analysis/packer/dxpack/packed-with-dxpack jakubjozwiak@google.com
+- anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
 -
 
 ### Bug Fixes
