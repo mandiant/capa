@@ -7,7 +7,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (8)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
@@ -15,6 +15,8 @@
 - anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
 - nursery/acquire-load-driver-privileges mehunhoff@google.com
 - nursery/communicate-using-ftp mehunhoff@google.com
+- linking/static/eclipse-paho-mqtt-c/linked-against-eclipse-paho-mqtt-c jakubjozwiak@google.com
+- linking/static/qmqtt/linked-against-qmqtt jakubjozwiak@google.com
 -
 
 ### Bug Fixes
