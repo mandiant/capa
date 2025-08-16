@@ -15,6 +15,6 @@ try {
             recordApiCall('{{LIBRARY_NAME}}.{{FUNCTION_NAME}}', arguments_list, "native_api");
         }
     });
-} catch (e) {
+} catch (e: any) {
     console.log('[ERROR] Failed to hook native function {{LIBRARY_NAME}}.{{FUNCTION_NAME}}: ' + e.message);
 }
