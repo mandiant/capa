@@ -1,7 +1,12 @@
+agent/
+node_modules/
+package-lock.json
+
 test_rules/*.yml
 frida_apis/*.json
 frida_outputs/*.jsonl
 frida_scripts/*.js
+frida_scripts/*.ts
 .temp/
 
 # Sample

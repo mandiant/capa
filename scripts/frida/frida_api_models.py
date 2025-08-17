@@ -37,7 +37,15 @@ class JavaApi(BaseModel):
 SUPPORTED_NATIVE_TYPES = {"int", "uint", "bool", "char*", "const char*"}
 # Known argument types that we don't support yet
 # If you encounter a new type, please add it here to help us maintain the standard names
-UNSUPPORTED_NATIVE_TYPES = {"long", "ulong", "size_t", "float", "double", "void*", "pointer"}
+UNSUPPORTED_NATIVE_TYPES = {
+    "long",
+    "ulong",
+    "size_t",
+    "float",
+    "double",
+    "void*",
+    "pointer",
+}
 # All known argument types in standard names
 VALID_NATIVE_TYPES = SUPPORTED_NATIVE_TYPES.union(UNSUPPORTED_NATIVE_TYPES)
 
