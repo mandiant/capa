@@ -28,12 +28,24 @@ adb shell su -c "setenforce 0"
 adb shell su -c "/data/local/tmp/frida-server &"
 ```
 
+### Automation all following steps
+
+```bash
+python main.py --package com.scottyab.rootbeer.sample 
+# Options:
+# python apk_meta_extractor.py --package com.app --apk /path/to/app.apk --apis frida_apis.json --script frida_monitor.ts --output api_calls.jsonl
+
+# --package: Android package name (required)
+# --apk: Local APK file path (optional, will use ADB to get from device if not provided) 
+
+# --apis: JSON filename containing APIs (default: frida_apis.json)
+# --script: Output script filename (default: frida_monitor.ts)  
+# --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)
+```
+
 ### Step 1: Generate Frida Monitoring Script
 
 ```bash
-# Activate your capa environment
-source ~/capa-env/bin/activate 
-
 # Navigate to the frida dir
 cd scripts/frida/
 
@@ -47,9 +59,9 @@ python apk_meta_extractor.py --package com.app
 # Generate monitoring script
 python hook_builder.py
 # Options:
-# python hook_builder.py --apis frida_apis.json --script frida_monitor.js --output api_calls.jsonl
+# python hook_builder.py --apis frida_apis.json --script frida_monitor.ts --output api_calls.jsonl
 # --apis: JSON filename containing APIs (default: frida_apis.json)
-# --script: Output script filename (default: frida_monitor.js)  
+# --script: Output script filename (default: frida_monitor.ts)  
 # --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)
 ```
 
@@ -57,10 +69,10 @@ python hook_builder.py
 
 ```bash
 # Launch Rootbeer app with Frida monitoring
-frida -U -f com.scottyab.rootbeer.sample -l frida_scripts/frida_monitor.js
+frida -U -f com.scottyab.rootbeer.sample -l frida_scripts/frida_monitor.ts
 
 # For other apps, use their package name:
-# frida -U -f com.example.app -l frida_scripts/frida_monitor.js
+# frida -U -f com.example.app -l frida_scripts/frida_monitor.ts
 
 # Let the app run and perform the behaviors you want to analyze
 # Type `exit` and Press `Ctrl+C` to stop monitoring
@@ -70,7 +82,7 @@ frida -U -f com.scottyab.rootbeer.sample -l frida_scripts/frida_monitor.js
 - File Permission Conflicts
 Root Cause: Android apps create files with their UID ownership. App A cannot overwrite files created by App B.
 - Solution 1: Delete this file before next analysis
-- Solution 2: Change to a new filename for {jsonl_filename} in frida_monitor.js, you can directly use --output command line:
+- Solution 2: Change to a new filename for {jsonl_filename} in frida_monitor.ts, you can directly use --output command line:
 var filePath = "/data/local/tmp/frida_outputs/{{jsonl_filename}}";
 
 ### Step 3: Retrieve Analysis Data
@@ -94,6 +106,9 @@ adb shell su -c "cat /data/local/tmp/frida_outputs/api_calls.jsonl" > api_calls.
 # Navigate back to capa root directory
 cd ../../
 
+# Activate your capa environment
+source ~/capa-env/bin/activate 
+
 # Using your custom Frida rules (for development/testing)
 python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_outputs/api_calls.jsonl
 
@@ -108,3 +123,15 @@ capa api_calls.jsonl
 - **/frida_apis/*.json**: Contains API JSON files
 - **/frida_templates/**: Jinja2 templates for script generation
 - **/frida_scripts/*.js**: Generated executable scripts (output)
+
+Put this here for now
+"""
+Automated Frida dynamic analysis workflow:
+1. Setup frida-compile environment
+2. Extract APK metadata and hashes
+3. Generate TypeScript monitoring script
+4. Inject imports for compilation
+5. Compile to JavaScript bundle
+6. Execute dynamic analysis
+7. Retrieve and analyze results
+"""
