@@ -226,6 +226,12 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
     def extract_basic_block_features(self, f, bb):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
+    def get_next_basic_blocks(self, bb):
+        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+
+    def get_basic_block_size(self, bb):
+        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+
     def get_instructions(self, f, bb):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
