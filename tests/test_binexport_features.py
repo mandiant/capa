@@ -430,7 +430,7 @@ def test_binexport_features_pe_x86(sample, scope, feature, expected):
     if isinstance(feature, capa.features.common.Characteristic) and "stack string" in cast(str, feature.value):
         pytest.skip("for now only testing basic features")
 
-    sample = sample.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
+    sample = sample.parent.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
     assert sample.exists()
     fixtures.do_test_feature_presence(fixtures.get_binexport_extractor, sample, scope, feature, expected)
 
@@ -443,6 +443,6 @@ def test_binexport_features_pe_x86(sample, scope, feature, expected):
 def test_binexport_feature_counts_ghidra(sample, scope, feature, expected):
     if "mimikatz.exe_" not in sample.name:
         pytest.skip("for now only testing mimikatz.exe_ Ghidra BinExport file")
-    sample = sample.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
+    sample = sample.parent.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
     assert sample.exists()
     fixtures.do_test_feature_count(fixtures.get_binexport_extractor, sample, scope, feature, expected)
