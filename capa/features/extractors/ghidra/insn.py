@@ -156,6 +156,13 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         #   .text:00401145 add esp, 0Ch
         return
 
+    if insn.getMnemonicString().startswith("XOR"):
+        if capa.features.extractors.ghidra.helpers.is_zxor(insn):
+            # for patern like:
+            #
+            #   xor eax, eax
+            yield Number(0), ih.address
+
     for i in range(insn.getNumOperands()):
         # Exceptions for LEA insn:
         # invalid operand encoding, considered numbers instead of offsets
