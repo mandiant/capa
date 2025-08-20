@@ -7,9 +7,18 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (10)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
+- nursery/create-executable-heap moritz.raabe@mandiant.com
+- anti-analysis/packer/dxpack/packed-with-dxpack jakubjozwiak@google.com
+- anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
+- nursery/acquire-load-driver-privileges mehunhoff@google.com
+- nursery/communicate-using-ftp mehunhoff@google.com
+- linking/static/eclipse-paho-mqtt-c/linked-against-eclipse-paho-mqtt-c jakubjozwiak@google.com
+- linking/static/qmqtt/linked-against-qmqtt jakubjozwiak@google.com
+- anti-analysis/anti-forensic/disable-powershell-transcription jakubjozwiak@google.com
+- host-interaction/powershell/bypass-powershell-constrained-language-mode-via-getsystemlockdownpolicy-patch jakubjozwiak@google.com
 -
 
 ### Bug Fixes
