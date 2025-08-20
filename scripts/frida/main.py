@@ -60,15 +60,23 @@ def prepare_device_output():
     time.sleep(1)  # wait adb daemon to restart
     print_success("Root access obtained")
 
-    result = subprocess.run(["adb", "shell", "ls", "/data/local/tmp/frida_outputs"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["adb", "shell", "ls", "/data/local/tmp/frida_outputs"],
+        capture_output=True,
+        text=True,
+    )
 
     if result.returncode != 0:
         subprocess.run(
-            ["adb", "shell", "su", "-c", "mkdir -p /data/local/tmp/frida_outputs"], capture_output=True, check=True
+            ["adb", "shell", "su", "-c", "mkdir -p /data/local/tmp/frida_outputs"],
+            capture_output=True,
+            check=True,
         )
 
     subprocess.run(
-        ["adb", "shell", "su", "-c", "chmod -R 777 /data/local/tmp/frida_outputs"], capture_output=True, check=True
+        ["adb", "shell", "su", "-c", "chmod -R 777 /data/local/tmp/frida_outputs"],
+        capture_output=True,
+        check=True,
     )
 
     subprocess.run(["adb", "shell", "su", "-c", "setenforce 0"], capture_output=True, check=True)
@@ -77,6 +85,23 @@ def prepare_device_output():
     print_success("Output directory ready")
 
     print_success("Device environment prepared")
+
+
+def install_apk_if_provided(apk_path: str):
+    """Install APK to the connected emulator if APK path is provided"""
+    apk_file = Path(apk_path)
+    if not apk_file.exists():
+        print(f"APK file not found: {apk_path}")
+        return False
+
+    subprocess.run(
+        ["adb", "install", "-r", str(apk_file)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    print_success(f"APK installed to device: {apk_file.name}")
+    return True
 
 
 def setup_agent_environment():
@@ -121,31 +146,38 @@ def prepare_for_frida_compiler(source_script: Path) -> Path:
     return prepared_file
 
 
-def compile_typescript_to_bundle(prepared_script: Path):
+def compile_typescript_to_bundle(prepared_script: Path) -> Path:
     """Compile TypeScript to executable JavaScript bundle using frida-compile"""
     base_dir = Path(__file__).parent
     agent_dir = base_dir / "agent"
+    bundle_file = agent_dir / "compiled_bundle.js"
 
     compiler = frida.Compiler()
     compiler.on("diagnostics", on_diagnostics)
 
-    bundle = compiler.build(str(prepared_script), project_root=str(agent_dir))
+    bundle_content = compiler.build(str(prepared_script), project_root=str(agent_dir))
 
-    print_success("Compiled TypeScript to JavaScript bundle")
+    with open(bundle_file, "w", encoding="utf-8") as f:
+        f.write(bundle_content)
 
-    return bundle
+    print_success(f"Compiled TypeScript to JavaScript bundle: {bundle_file}")
+
+    return bundle_file
 
 
-def run_frida_with_bundle(package_name: str, bundle: str) -> bool:
+def run_frida_with_bundle(package_name: str, bundle_file: Path):
     """Run Frida analysis using compiled agent"""
     session = None
     try:
+        with open(bundle_file, "r", encoding="utf-8") as f:
+            bundle_content = f.read()
+
         device = frida.get_usb_device()
         pid = device.spawn([package_name])
         session = device.attach(pid)
 
         # Load compiled JavaScript bundle as Frida script
-        script = session.create_script(bundle)
+        script = session.create_script(bundle_content)
 
         script.on("message", on_message)
         script.load()
@@ -213,6 +245,11 @@ def main():
         if not check_device_connection():
             return 1
 
+        # Next step: Install APK if provided
+        if args.apk:
+            if not install_apk_if_provided(args.apk):
+                return 1
+
         # Next Step: Prepare device environment
         prepare_device_output()
 
@@ -233,10 +270,10 @@ def main():
         prepared_script = prepare_for_frida_compiler(source_script)
 
         # Next Step: Compile TypeScript to JavaScript bundle
-        js_bundle = compile_typescript_to_bundle(prepared_script)
+        bundle_file = compile_typescript_to_bundle(prepared_script)
 
         # Next Step: Execute frida analysis with Python API
-        if not run_frida_with_bundle(args.package, js_bundle):
+        if not run_frida_with_bundle(args.package, bundle_file):
             return 1
 
         # Next Step: Retrieve and analyze results

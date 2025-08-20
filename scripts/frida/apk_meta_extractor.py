@@ -52,7 +52,11 @@ def calculate_hashes_via_adb(package_name):
     # Then pull APK to temporary local file and calculate hashes
     with tempfile.TemporaryDirectory() as temp_dir:
         local_apk_path = Path(temp_dir) / f"{package_name}.apk"
-        subprocess.run(["adb", "pull", device_apk_path, str(local_apk_path)], capture_output=True, check=True)
+        subprocess.run(
+            ["adb", "pull", device_apk_path, str(local_apk_path)],
+            capture_output=True,
+            check=True,
+        )
         return calculate_hashes(local_apk_path)
 
 
