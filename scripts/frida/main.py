@@ -24,6 +24,8 @@ def print_success(message):
 
 
 def check_device_connection():
+    """Verify: ADB and NPM, device connection, and root access"""
+    # Check prerequisites
     if not shutil.which("adb"):
         print("ADB not found. Install Android SDK platform-tools")
         return False
@@ -31,6 +33,7 @@ def check_device_connection():
         print("NPM not found. Install Nodejs npm")
         return False
 
+    # Verify device connection
     result = subprocess.run(["adb", "devices"], capture_output=True, text=True, check=True)
 
     lines = result.stdout.strip().split("\n")[1:]
@@ -51,11 +54,18 @@ def check_device_connection():
         print("Multiple devices found. Please keep only one device")
         return False
 
+    print_success("Connected to target device")
+
+    # Verify root access
+    subprocess.run(["adb", "root"], capture_output=True, check=True)
+    time.sleep(1)
     result = subprocess.run(["adb", "shell", "whoami"], capture_output=True, text=True)
 
     if result.stdout.strip() != "root":
         print(f"Device not rooted. Current user: {result.stdout.strip()}")
         return False
+
+    print_success("Root access obtained")
 
     print_success("Dependencies and device verified")
     return True
@@ -63,11 +73,6 @@ def check_device_connection():
 
 def prepare_device_output():
     """Make sure Android device for Frida analysis output with permission"""
-
-    subprocess.run(["adb", "root"], capture_output=True, check=True)
-    time.sleep(1)  # wait adb daemon to restart
-    print_success("Root access obtained")
-
     result = subprocess.run(
         ["adb", "shell", "ls", "/data/local/tmp/frida_outputs"],
         capture_output=True,
@@ -90,9 +95,7 @@ def prepare_device_output():
     subprocess.run(["adb", "shell", "setenforce 0"], capture_output=True, check=True)
     print_success("SELinux enforcement disabled")
 
-    print_success("Output directory ready")
-
-    print_success("Device environment prepared")
+    print_success("Device output directory ready")
 
 
 def install_apk_if_provided(apk_path: str):
