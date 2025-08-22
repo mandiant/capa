@@ -249,6 +249,12 @@ def main():
     parser.add_argument("--output", default="api_calls.jsonl", help="Output JSONL filename")
     args = parser.parse_args()
 
+    base_dir = Path(__file__).resolve().parent
+    scripts_dir = base_dir / "frida_scripts"
+    outputs_dir = base_dir / "frida_outputs"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+
     try:
         if not check_device_connection():
             return 1
