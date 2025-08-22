@@ -88,7 +88,7 @@ def generate_native_hooks(native_apis, templates_dir):
     return "\n\n".join(all_native_hooks)
 
 
-def build_frida_script(apis_file_path: Path, output_file_path: Path, jsonl_filename: str):
+def build_frida_script(api_file_path: Path, script_file_path: Path, jsonl_filename: str):
     """Main entry point for building Frida monitoring script"""
     base_dir = Path(__file__).resolve().parent
     hook_templates_dir = base_dir / "frida_templates" / "hook_templates"
@@ -100,7 +100,7 @@ def build_frida_script(apis_file_path: Path, output_file_path: Path, jsonl_filen
         raise ValueError(f"Main templates directory not found: {main_templates_dir}")
 
     # Load API specs
-    frida_apis = FridaApiSpec.from_json_file(apis_file_path)
+    frida_apis = FridaApiSpec.from_json_file(api_file_path)
 
     # Generate hooks
     java_content = generate_java_hooks(frida_apis.java, hook_templates_dir)
@@ -120,11 +120,11 @@ def build_frida_script(apis_file_path: Path, output_file_path: Path, jsonl_filen
         package_name=package_name,
     )
 
-    with open(output_file_path, "w") as f:
+    with open(script_file_path, "w") as f:
         f.write(main_script)
 
-    print(f"Generated Frida script to {output_file_path}")
-    return output_file_path
+    print(f"Generated Frida script to {script_file_path}")
+    return script_file_path
 
 
 def main(argv=None):
@@ -157,21 +157,24 @@ def main(argv=None):
 
     base_dir = Path(__file__).resolve().parent
     apis_dir = base_dir / "frida_apis"
-    apis_file_path = apis_dir / args.apis
+    scripts_dir = base_dir / "frida_scripts"
+    outputs_dir = base_dir / "frida_outputs"
 
-    output_scripts_dir = base_dir / "frida_scripts"
-    output_scripts_file_path = output_scripts_dir / args.script
-    output_scripts_dir.mkdir(parents=True, exist_ok=True)
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    outputs_dir.mkdir(parents=True, exist_ok=True)
 
-    if not apis_file_path.exists():
-        print(f"APIs file not found: {apis_file_path}")
+    api_file_path = apis_dir / args.apis
+    script_file_path = scripts_dir / args.script
+
+    if not api_file_path.exists():
+        print(f"APIs file not found: {api_file_path}")
         print("Available files:")
         for f in apis_dir.glob("*.json"):
             print(f"   - {f.name}")
         return 1
 
     try:
-        build_frida_script(apis_file_path, output_scripts_file_path, args.output)
+        build_frida_script(api_file_path, script_file_path, args.output)
         print("Hook generation completed successfully")
         return 0
     except Exception as e:

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import frida
 from hook_builder import build_frida_script
+from emulator_creator import create_frida_emulator
 from apk_meta_extractor import extract_apk_metadata
 
 
@@ -37,7 +38,14 @@ def check_device_connection():
 
     if not connected_devices:
         print("Found no devices. Make sure Android emulator is running")
-        return False
+        response = input("Auto-create an emulator for you? (y/n): ").lower()
+        if response == "y":
+            if not create_frida_emulator():
+                return False
+            return True
+        else:
+            print("Please start your Android device/emulator manually and try again.")
+            return False
 
     if len(connected_devices) > 1:
         print("Multiple devices found. Please keep only one device")
@@ -68,18 +76,18 @@ def prepare_device_output():
 
     if result.returncode != 0:
         subprocess.run(
-            ["adb", "shell", "su", "-c", "mkdir -p /data/local/tmp/frida_outputs"],
+            ["adb", "shell", "mkdir -p /data/local/tmp/frida_outputs"],
             capture_output=True,
             check=True,
         )
 
     subprocess.run(
-        ["adb", "shell", "su", "-c", "chmod -R 777 /data/local/tmp/frida_outputs"],
+        ["adb", "shell", "chmod -R 777 /data/local/tmp/frida_outputs"],
         capture_output=True,
         check=True,
     )
 
-    subprocess.run(["adb", "shell", "su", "-c", "setenforce 0"], capture_output=True, check=True)
+    subprocess.run(["adb", "shell", "setenforce 0"], capture_output=True, check=True)
     print_success("SELinux enforcement disabled")
 
     print_success("Output directory ready")
@@ -281,7 +289,9 @@ def main():
 
         print_success("Frida Analysis Completed!")
         print("Final step - Analyze with capa:")
-        print(f"cd ../../ && source ~/capa-env/bin/activate && python capa/main.py -d frida_outputs/{args.output}")
+        print(
+            f"cd ../../ && source ~/capa-env/bin/activate && python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_outputs/{args.output}"
+        )
 
         return 0
 
