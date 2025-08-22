@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import shutil
 import platform
 import tempfile
 import subprocess
@@ -85,15 +86,14 @@ def create_emulator(avd_arch):
             return avd_name
 
     print("Installing system image...")
-    result = subprocess.run(f'echo "y" | sdkmanager "{system_image}"', shell=True, capture_output=True, text=True)
+    result = subprocess.run(["sdkmanager", system_image], capture_output=True, text=True)
     if result.returncode != 0:
         print("Failed to install system image")
         return None
 
     print("Creating emulator...")
     result = subprocess.run(
-        f'echo "" | avdmanager create avd -n {avd_name} -k "{system_image}" -d "pixel_3" --force',
-        shell=True,
+        ["avdmanager", "create", "avd", "-n", avd_name, "-k", system_image, "-d", "pixel_4_xl"],
         capture_output=True,
         text=True,
     )
@@ -101,7 +101,7 @@ def create_emulator(avd_arch):
         print("Failed to create emulator")
         return None
 
-    print(f"android-28 '{avd_name}' emulator created ")
+    print(f"emulator '{avd_name}' created ")
     return avd_name
 
 
@@ -154,13 +154,16 @@ def download_frida_server(frida_arch):
         f"https://github.com/frida/frida/releases/download/{FRIDA_VERSION}/frida-server-{FRIDA_VERSION}-{frida_arch}.xz"
     )
 
-    try:
+    if shutil.which("curl"):
+        subprocess.run(["curl", "-L", "-o", str(archive_file), url], cwd=temp_dir, check=True)
+    elif shutil.which("wget"):
         subprocess.run(["wget", "-q", url], cwd=temp_dir, check=True)
-    except FileNotFoundError:
-        print(f"wget not found. Manual download to {extracted_file} required:")
-        print(f"- {url}")
+    else:
+        print("Neither curl nor wget found")
+        print(f"Manual download required: {url}")
         return None
 
+    # Extract .xz
     subprocess.run(["xz", "-d", str(archive_file)], check=True)
     return str(extracted_file)
 

@@ -245,6 +245,14 @@ DEP003 = [
     "typing_extensions" # TODO(s-ff): remove when Python 3.10 is deprecated, see #1699
 ]
 
+# dependencies imported but missing from definitions
+DEP001 = [
+    "frida_api_models",
+    "apk_meta_extractor", 
+    "hook_builder",
+    "emulator_creator",
+]
+
 [tool.deptry.package_module_name_map]
 PyGithub = "github"
 
