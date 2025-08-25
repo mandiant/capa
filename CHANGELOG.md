@@ -7,7 +7,7 @@
 
 ### Breaking Changes
 
-### New Rules (13)
+### New Rules (14)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
@@ -21,6 +21,7 @@
 - host-interaction/powershell/bypass-powershell-constrained-language-mode-via-getsystemlockdownpolicy-patch jakubjozwiak@google.com
 - linking/static/grpc/linked-against-grpc jakubjozwiak@google.com
 - linking/static/hp-socket/linked-against-hp-socket jakubjozwiak@google.com
+- load-code/execute-jscript-via-vsaengine-in-dotnet jakubjozwiak@google.com
 -
 
 ### Bug Fixes
