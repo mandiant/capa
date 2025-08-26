@@ -1,6 +1,7 @@
 import sys
 import time
 import shutil
+import logging
 import argparse
 import subprocess
 from pathlib import Path
@@ -10,109 +11,97 @@ from hook_builder import build_frida_script
 from emulator_creator import create_frida_emulator
 from apk_meta_extractor import extract_apk_metadata
 
+logger = logging.getLogger(__name__)
+
+
+def on_detached():
+    logger.debug("Frida session detached")
+
+
+def on_detached_with_reason(reason):
+    if reason == "application-requested":
+        logger.debug("Application terminated normally")
+    else:
+        logger.warning(f"Frida session detached: {reason}")
+
+
+def on_detached_with_varargs(*args):
+    logger.debug("on_detached_with_varargs:", args)
+
 
 def on_diagnostics(diag):
-    print("diag", diag)
+    logger.debug("diag", diag)
 
 
 def on_message(message, data):
-    print(message)
+    # TODO: Too many API call messages. Consider adding debug flag for full output.
+    # TODO: Other console.log calls could use `send` and `error` types for better control.
+    if message.get("type") == "send":
+        payload = message.get("payload", {})
+        logger.info(payload["message"])
 
 
-def print_success(message):
-    print(f"✓ {message}")
-
-
-def check_device_connection():
-    """Verify: ADB and NPM, device connection, and root access"""
-    # Check prerequisites
+def check_prerequisites():
     if not shutil.which("adb"):
-        print("ADB not found. Install Android SDK platform-tools")
-        return False
-    if not shutil.which("npm"):
-        print("NPM not found. Install Nodejs npm")
-        return False
+        raise FileNotFoundError("ADB not found. Install Android SDK platform-tools")
 
+    if not shutil.which("npm"):
+        raise FileNotFoundError("NPM not found. Install Nodejs npm")
+
+
+def has_connected_device():
     # Verify device connection
     result = subprocess.run(["adb", "devices"], capture_output=True, text=True, check=True)
 
     lines = result.stdout.strip().split("\n")[1:]
     connected_devices = [line for line in lines if line.strip() and "device" in line]
 
-    if not connected_devices:
-        print("Found no devices. Make sure Android emulator is running")
-        response = input("Auto-create an emulator for you? (y/n): ").lower()
-        if response == "y":
-            if not create_frida_emulator():
-                return False
-            return True
-        else:
-            print("Please start your Android device/emulator manually and try again.")
-            return False
-
     if len(connected_devices) > 1:
-        print("Multiple devices found. Please keep only one device")
+        raise ValueError("Multiple devices found. Please keep only one device")
+
+    if not connected_devices:
         return False
 
-    print_success("Connected to target device")
+    logger.info("Connected to target device")
+    return True
 
+
+def verify_root_access():
     # Verify root access
     subprocess.run(["adb", "root"], capture_output=True, check=True)
     time.sleep(1)
+
     result = subprocess.run(["adb", "shell", "whoami"], capture_output=True, text=True)
 
     if result.stdout.strip() != "root":
-        print(f"Device not rooted. Current user: {result.stdout.strip()}")
-        return False
+        raise PermissionError(f"Device not rooted. Current user: {result.stdout.strip()}")
 
-    print_success("Root access obtained")
-
-    print_success("Dependencies and device verified")
-    return True
+    logger.info("Root access obtained")
 
 
 def prepare_device_output():
     """Make sure Android device for Frida analysis output with permission"""
-    result = subprocess.run(
-        ["adb", "shell", "ls", "/data/local/tmp/frida_outputs"],
-        capture_output=True,
-        text=True,
-    )
+    result = subprocess.run(["adb", "shell", "ls", "/data/local/tmp/frida_outputs"], capture_output=True, text=True)
 
     if result.returncode != 0:
-        subprocess.run(
-            ["adb", "shell", "mkdir -p /data/local/tmp/frida_outputs"],
-            capture_output=True,
-            check=True,
-        )
+        subprocess.run(["adb", "shell", "mkdir -p /data/local/tmp/frida_outputs"], capture_output=True, check=True)
 
-    subprocess.run(
-        ["adb", "shell", "chmod -R 777 /data/local/tmp/frida_outputs"],
-        capture_output=True,
-        check=True,
-    )
+    subprocess.run(["adb", "shell", "chmod -R 777 /data/local/tmp/frida_outputs"], capture_output=True, check=True)
 
     subprocess.run(["adb", "shell", "setenforce 0"], capture_output=True, check=True)
-    print_success("SELinux enforcement disabled")
+    logger.debug("SELinux enforcement disabled")
 
-    print_success("Device output directory ready")
+    logger.info("Device output directory ready")
 
 
 def install_apk_if_provided(apk_path: str):
     """Install APK to the connected emulator if APK path is provided"""
     apk_file = Path(apk_path)
     if not apk_file.exists():
-        print(f"APK file not found: {apk_path}")
-        return False
+        raise FileNotFoundError(f"APK file not found: {apk_path}")
 
-    subprocess.run(
-        ["adb", "install", "-r", str(apk_file)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    print_success(f"APK installed to device: {apk_file.name}")
-    return True
+    subprocess.run(["adb", "install", "-r", str(apk_file)], capture_output=True, text=True, check=True)
+    logger.info(f"APK installed to device: {apk_file.name}")
 
 
 def setup_agent_environment():
@@ -120,20 +109,17 @@ def setup_agent_environment():
     base_dir = Path(__file__).parent
     agent_dir = base_dir / "agent"
 
-    if not agent_dir.exists():
-        agent_dir.mkdir(exist_ok=True)
-        subprocess.run(
-            ["frida-create", "-t", "agent"],
-            cwd=agent_dir,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+    try:
+        if not agent_dir.exists():
+            agent_dir.mkdir(exist_ok=True)
+            subprocess.run(["frida-create", "-t", "agent"], cwd=agent_dir, capture_output=True, text=True, check=True)
 
-        subprocess.run(["npm", "install"], cwd=agent_dir, check=True)
-        subprocess.run(["npm", "install", "frida-java-bridge"], cwd=agent_dir, check=True)
+            subprocess.run(["npm", "install"], cwd=agent_dir, check=True)
+            subprocess.run(["npm", "install", "frida-java-bridge"], cwd=agent_dir, check=True)
 
-    print_success("Agent environment ready for frida-compile")
+        logger.info("Agent environment ready for frida-compile")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Failed to setup agent environment: {e}") from e
 
 
 def prepare_for_frida_compiler(source_script: Path) -> Path:
@@ -153,7 +139,7 @@ def prepare_for_frida_compiler(source_script: Path) -> Path:
     # TODO: Could be created in /tmp folder, it is not neccesary to be shown
     prepared_file.write_text("".join(new_lines), encoding="utf-8")
 
-    print_success(f"Prepared file for compilation: {prepared_filename}")
+    logger.debug(f"Prepared file for compilation: {prepared_filename}")
     return prepared_file
 
 
@@ -163,17 +149,21 @@ def compile_typescript_to_bundle(prepared_script: Path) -> Path:
     agent_dir = base_dir / "agent"
     bundle_file = agent_dir / "compiled_bundle.js"
 
-    compiler = frida.Compiler()
-    compiler.on("diagnostics", on_diagnostics)
+    try:
+        compiler = frida.Compiler()
+        compiler.on("diagnostics", on_diagnostics)
 
-    bundle_content = compiler.build(str(prepared_script), project_root=str(agent_dir))
+        bundle_content = compiler.build(str(prepared_script), project_root=str(agent_dir))
 
-    with open(bundle_file, "w", encoding="utf-8") as f:
-        f.write(bundle_content)
+        with open(bundle_file, "w", encoding="utf-8") as f:
+            f.write(bundle_content)
 
-    print_success(f"Compiled TypeScript to JavaScript bundle: {bundle_file}")
+        logger.info(f"Compiled TypeScript to JavaScript bundle: {bundle_file}")
 
-    return bundle_file
+        return bundle_file
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to compile TypeScript: {e}") from e
 
 
 def run_frida_with_bundle(package_name: str, bundle_file: Path):
@@ -187,6 +177,10 @@ def run_frida_with_bundle(package_name: str, bundle_file: Path):
         pid = device.spawn([package_name])
         session = device.attach(pid)
 
+        session.on("detached", on_detached)
+        session.on("detached", on_detached_with_reason)
+        session.on("detached", on_detached_with_varargs)
+
         # Load compiled JavaScript bundle as Frida script
         script = session.create_script(bundle_content)
 
@@ -195,15 +189,17 @@ def run_frida_with_bundle(package_name: str, bundle_file: Path):
         device.resume(pid)
 
         time.sleep(1)
-        print("\nTo stop monitoring: Press Ctrl+D(Unix/Mac) or Ctrl+Z+Enter(Windows)\n")
+        logger.info("\nTo stop monitoring: Press Ctrl+D(Unix/Mac) or Ctrl+Z+Enter(Windows)\n")
 
         sys.stdin.read()
 
         return True
 
     except KeyboardInterrupt:
-        print("\nAutomated analysis interrupted by user")
+        logger.info("Automated analysis interrupted by user")
         return False
+    except Exception as e:
+        raise RuntimeError(f"Failed to run Frida analysis: {e}") from e
     finally:
         if session:
             session.detach()
@@ -218,15 +214,7 @@ def retrieve_results(output_file: str):
     device_output_file = f"/data/local/tmp/frida_outputs/{output_file}"
 
     subprocess.run(
-        [
-            "adb",
-            "pull",
-            device_output_file,
-            str(local_output_file),
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
+        ["adb", "pull", device_output_file, str(local_output_file)], capture_output=True, text=True, check=True
     )
 
     # And analyze results for debuging
@@ -237,7 +225,7 @@ def retrieve_results(output_file: str):
     native_calls = sum(1 for line in lines if '"native_api"' in line)
     metadata_records = sum(1 for line in lines if '"metadata"' in line)
 
-    print_success(
+    logger.info(
         f"Retrieved {len(lines)} records. Metadata: {metadata_records}, Java: {java_calls}, Native: {native_calls}"
     )
 
@@ -252,6 +240,8 @@ def main():
     parser.add_argument("--output", default="api_calls.jsonl", help="Output JSONL filename")
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.INFO)
+
     base_dir = Path(__file__).resolve().parent
     scripts_dir = base_dir / "frida_scripts"
     outputs_dir = base_dir / "frida_outputs"
@@ -259,13 +249,22 @@ def main():
     outputs_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        if not check_device_connection():
-            return 1
+        check_prerequisites()
+
+        if not has_connected_device():
+            logger.info("Found no devices. Make sure emulator is running")
+            response = input("Auto-create an emulator? (y/n): ")
+            if response == "y":
+                create_frida_emulator()
+            else:
+                logger.error("Please start your Android device/emulator manually")
+                return 1
+
+        verify_root_access()
 
         # Next step: Install APK if provided
         if args.apk:
-            if not install_apk_if_provided(args.apk):
-                return 1
+            install_apk_if_provided(args.apk)
 
         # Next Step: Prepare device environment
         prepare_device_output()
@@ -296,18 +295,24 @@ def main():
         # Next Step: Retrieve and analyze results
         retrieve_results(args.output)
 
-        print_success("Frida Analysis Completed!")
-        print("Final step - Analyze with capa:")
-        print(
+        logger.info("Frida Analysis Completed!")
+        logger.info("Final step - Analyze with capa:")
+        logger.info(
             f"cd ../../ && source ~/capa-env/bin/activate && python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_outputs/{args.output}"
         )
-
         return 0
 
+    except RuntimeError as e:
+        logger.error(f"Error: {e}")
+        return 1
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
         return 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        logger.debug("interrupted")
+        sys.exit(1)

@@ -1,18 +1,22 @@
+import sys
 import json
 import hashlib
+import logging
 import argparse
 import tempfile
 import subprocess
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 
 def load_apk_metadata():
     """Load APK meta information from saved file"""
-    base_dir = Path(__file__).resolve().parent
-    meta_file = base_dir / ".temp" / "apk_meta.json"
+    temp_dir = Path(tempfile.gettempdir()) / "capa_frida"
+    meta_file = temp_dir / "apk_meta.json"
 
     if not meta_file.exists():
-        raise ValueError(f"APK meta file not found: {meta_file}")
+        raise FileNotFoundError(f"APK meta file not found: {meta_file}")
 
     with open(meta_file, "r") as f:
         meta_data = json.load(f)
@@ -35,28 +39,25 @@ def calculate_hashes(apk_path):
 
 def calculate_hashes_via_adb(package_name):
     """Use ADB to get APK and calculate hashes"""
-    result = subprocess.run(
-        ["adb", "shell", "pm", "path", package_name],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
+    try:
+        result = subprocess.run(
+            ["adb", "shell", "pm", "path", package_name],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise ValueError(f"Package '{package_name}' not found on device.") from e
 
     # The 'package:' prefix is consistent across all Android versions
     # and is a standard part of the pm path command's output.
-    if not result.stdout or not result.stdout.startswith("package:"):
-        raise ValueError(f"Package {package_name} not found on device")
-
     device_apk_path = result.stdout.strip()[8:]
 
     # Then pull APK to temporary local file and calculate hashes
     with tempfile.TemporaryDirectory() as temp_dir:
         local_apk_path = Path(temp_dir) / f"{package_name}.apk"
-        subprocess.run(
-            ["adb", "pull", device_apk_path, str(local_apk_path)],
-            capture_output=True,
-            check=True,
-        )
+        subprocess.run(["adb", "pull", device_apk_path, str(local_apk_path)], capture_output=True, check=True)
+
         return calculate_hashes(local_apk_path)
 
 
@@ -67,11 +68,9 @@ def save_apk_metadata(package_name, hashes):
     if not hashes:
         raise ValueError("Hashes cannot be empty")
 
-    script_dir = Path(__file__).parent
-    # TODO: could be saved in /tmp.
-    temp_dir = script_dir / ".temp"
-
+    temp_dir = Path(tempfile.gettempdir()) / "capa_frida"
     temp_dir.mkdir(exist_ok=True)
+
     output_file = temp_dir / "apk_meta.json"
 
     apk_meta = {"package_name": package_name, "hashes": hashes}
@@ -79,7 +78,7 @@ def save_apk_metadata(package_name, hashes):
     with open(output_file, "w") as f:
         json.dump(apk_meta, f, indent=2)
 
-    print(f"APK meta saved to: {output_file}")
+    logger.info(f"APK meta saved to: {output_file}")
     return output_file
 
 
@@ -88,7 +87,7 @@ def extract_apk_metadata(package_name, apk_path=None):
     # Get hashes from either local file or device
     if apk_path:
         if not Path(apk_path).exists():
-            raise ValueError(f"APK file not found: {apk_path}")
+            raise FileNotFoundError(f"APK file not found: {apk_path}")
         hashes = calculate_hashes(apk_path)
     else:
         # From device via ADB
@@ -105,13 +104,15 @@ def main():
 
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.INFO)
+
     try:
         extract_apk_metadata(args.package, args.apk)
         return 0
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Error: {e}")
         return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -94,6 +94,6 @@ class FridaApiSpec(BaseModel):
                 data = json.load(f)
             return cls(**data)
         except FileNotFoundError:
-            raise ValueError(f"API file not found: {json_path}")
+            raise FileNotFoundError(f"API file not found: {json_path}")
         except Exception as e:
             raise ValueError(f"Error loading from {json_path}: {e}")

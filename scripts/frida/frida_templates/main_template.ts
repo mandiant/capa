@@ -75,7 +75,7 @@ function recordApiCall(apiName: string, argumentsList: any[], apiType: string) {
     (record as any).api[apiType] = apiCallRecord;
     
     if (writeRecord(record)) {
-        console.log("[+] " + apiType + " call written: " + apiName);
+        send({type: "record", message: "[+] " + apiType + " call written: " + apiName});
     }
 }
 
