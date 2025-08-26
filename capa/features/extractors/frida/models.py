@@ -1,5 +1,5 @@
 import json
-from typing import List, Union, Optional
+from typing import List, Union
 
 from pydantic import Field, BaseModel, ConfigDict
 
@@ -8,11 +8,18 @@ class FlexibleModel(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class Hashes(BaseModel):
+    md5: str
+    sha1: str
+    sha256: str
+
+
 class Metadata(FlexibleModel):
     process_id: int
-    package_name: Optional[str] = None
-    arch: Optional[str] = None
-    platform: Optional[str] = None
+    package_name: str
+    arch: str
+    platform: str
+    hashes: Hashes
 
 
 class Argument(FlexibleModel):
@@ -41,8 +48,8 @@ class Process(FlexibleModel):
     # ppid is omitted here as Android apps are usually single-process; it will be set to 0 in extractor.py
     pid: int
     package_name: str
-    arch: Optional[str] = None
-    platform: Optional[str] = None
+    arch: str
+    platform: str
     calls: List[Call] = Field(default_factory=list)
 
 
@@ -52,6 +59,7 @@ class FridaReport(FlexibleModel):
     # TODO: Some more file-level information may go here
     package_name: str
     processes: List[Process] = Field(default_factory=list)
+    hashes: Hashes
 
     @classmethod
     def from_jsonl_file(cls, jsonl_path) -> "FridaReport":
@@ -79,10 +87,10 @@ class FridaReport(FlexibleModel):
 
         process = Process(
             pid=metadata.process_id,
-            package_name=metadata.package_name or "unknown",
+            package_name=metadata.package_name,
             arch=metadata.arch,
             platform=metadata.platform,
             calls=api_calls,
         )
 
-        return cls(package_name=metadata.package_name or "unknown", processes=[process])
+        return cls(package_name=metadata.package_name, processes=[process], hashes=metadata.hashes)

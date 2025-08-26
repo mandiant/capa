@@ -34,10 +34,13 @@ class FridaExtractor(DynamicFeatureExtractor):
     """
 
     def __init__(self, report: FridaReport):
-        # TODO: From what I’ve found, Frida cannot access original APK file to compute hashes at runtime.
-        # we may need to require users to provide both the Frida-generated log file and original file to capa,
-        # like we do with other extractors e.g. BinExport, VMRay, etc..
-        super().__init__(hashes=SampleHashes(md5="", sha1="", sha256=""))
+        super().__init__(
+            hashes=SampleHashes(
+                md5=report.hashes.md5.lower(),
+                sha1=report.hashes.sha1.lower(),
+                sha256=report.hashes.sha256.lower(),
+            )
+        )
         self.report: FridaReport = report
 
     def get_base_address(self) -> Union[_NoAddress, None]:
