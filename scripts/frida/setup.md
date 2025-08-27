@@ -15,6 +15,7 @@ Create your own emulator manually:
 For example, using Android Studio:
 - Device: Pixel 4 XL
 - System: API 29, Google APIs
+Note: If you are on an Apple Silicon Mac, use the ARM64-v8a image; on Intel/AMD, use an x86_64 image.
  
 #### 2. Enable root access
 ```bash
@@ -27,7 +28,7 @@ adb shell whoami
 Note: Google APIs images allow root access by default. If you selected Google Play images, you'll need additional rooting tools like rootAVD.
 
 #### 3. Install frida-server
-Download appropriate frida-server from [Frida releases](https://github.com/frida/frida/releases), and install:
+Download appropriate frida-server(for the emulator’s CPU architecture) from [Frida releases](https://github.com/frida/frida/releases), and install:
 
 ```bash
 # Install to device

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import frida
 from hook_builder import build_frida_script
-from emulator_creator import create_frida_emulator
+from emulator_creator import create_frida_emulator, setup_android_sdk_path
 from apk_meta_extractor import extract_apk_metadata
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,10 @@ def on_message(message, data):
 
 def check_prerequisites():
     if not shutil.which("adb"):
-        raise FileNotFoundError("ADB not found. Install Android SDK platform-tools")
+        raise FileNotFoundError("ADB not found. Install Android SDK Platform-Tools and add to system Path")
+
+    if not shutil.which("aapt"):
+        raise FileNotFoundError("aapt not found. Install Android SDK Build-Tools and add to system Path")
 
     if not shutil.which("npm"):
         raise FileNotFoundError("NPM not found. Install Nodejs npm")
@@ -94,14 +97,13 @@ def prepare_device_output():
     logger.info("Device output directory ready")
 
 
-def install_apk_if_provided(apk_path: str):
+def install_apk_if_provided(apk_path: Path):
     """Install APK to the connected emulator if APK path is provided"""
-    apk_file = Path(apk_path)
-    if not apk_file.exists():
+    if not apk_path.exists():
         raise FileNotFoundError(f"APK file not found: {apk_path}")
 
-    subprocess.run(["adb", "install", "-r", str(apk_file)], capture_output=True, text=True, check=True)
-    logger.info(f"APK installed to device: {apk_file.name}")
+    subprocess.run(["adb", "install", "-r", str(apk_path)], capture_output=True, text=True, check=True)
+    logger.info(f"APK installed to device: {apk_path.name}")
 
 
 def setup_agent_environment():
@@ -233,8 +235,8 @@ def retrieve_results(output_file: str):
 def main():
     parser = argparse.ArgumentParser(description="Automated Frida analysis for Android applications")
 
-    parser.add_argument("--package", required=True, help="Android package name")
-    parser.add_argument("--apk", help="Local APK file path(optional)")
+    parser.add_argument("--package", default=None, help="Android package name")
+    parser.add_argument("--apk", default=None, type=Path, help="Local APK file path(optional)")
     parser.add_argument("--apis", default="frida_apis.json", help="API configuration file")
     parser.add_argument("--script", default="frida_monitor.ts", help="Output script filename")
     parser.add_argument("--output", default="api_calls.jsonl", help="Output JSONL filename")
@@ -249,6 +251,8 @@ def main():
     outputs_dir.mkdir(parents=True, exist_ok=True)
 
     try:
+        setup_android_sdk_path()
+
         check_prerequisites()
 
         if not has_connected_device():
@@ -272,8 +276,8 @@ def main():
         # Next Step: Setup frida-compile environment with agent (one-time)
         setup_agent_environment()
 
-        # Next step: Calculate APK hashes
-        extract_apk_metadata(args.package, args.apk)
+        # Next step: Calculate APK hashes and get package name
+        _, package_name = extract_apk_metadata(args.package, args.apk)
 
         base_dir = Path(__file__).parent
         source_script = base_dir / "frida_scripts" / args.script
@@ -289,7 +293,7 @@ def main():
         bundle_file = compile_typescript_to_bundle(prepared_script)
 
         # Next Step: Execute frida analysis with Python API
-        if not run_frida_with_bundle(args.package, bundle_file):
+        if not run_frida_with_bundle(package_name, bundle_file):
             return 1
 
         # Next Step: Retrieve and analyze results

@@ -9,9 +9,13 @@ Download from: https://developer.android.com/studio
 
 **Required SDK components for auto-emulator creation** 
 (install via Settings → Languages & Frameworks → Android SDK → SDK Tools):
-- Android SDK Command-line Tools
-- Android Emulator  
-- Android SDK Platform-Tools
+- Android SDK Command-line Tools (for sdkmanager & avdmanager)
+- Android Emulator (for emulator command)
+- Android SDK Platform-Tools (for adb)
+- Android SDK Build-Tools (for aapt)
+
+**Automatic mode users**: Just install Android Studio to default location. Our tool handles PATH temporarily during each execution.
+**Manual mode users**: Add Android SDK tools to your system PATH permanently
 
 **Default SDK locations:**
 - macOS: `~/Library/Android/sdk`
@@ -34,28 +38,38 @@ brew install node  # macOS
 
 ### (Optional) Create emulator and start frida-server
 We can auto-create an rooted emulator with frida-server for you.
-But you can manully setup your own emualtor/device.
+But you can manually setup your own emulator/device.
 For more details, see our [manual setup guide](setup.md) and
 [Frida Server + Rooted Emulator](https://docs.google.com/document/d/1WpPRcdtnPYdOn4n7Wl3aghbZUv2wmefiuaf2WDIR5Pw/edit?tab=t.0#heading=h.sqgvzr4xgg42)
 
 ## Usage
 ### Automated Analysis (Recommended)
-
 ```bash
 # Complete pipeline - creates emulator if needed
 # To start the AVDs auto-created, open your Android Studio
 # Tools → Device Manager → find 'frida-emulator' and start it"
 
-python main.py --package com.scottyab.rootbeer.sample 
+# Scenario 1: Package already on device
+python main.py --package com.example.app
 
-# python apk_meta_extractor.py --package com.app --apk /path/to/app.apk --apis frida_apis.json --script frida_monitor.ts --output api_calls.jsonl
-# Options:
-# --package: Android package name (required)
-# --apk: Local APK file path (optional, will use ADB to get from device if not provided) 
+# Scenario 2: Only APK file (auto install APK and extracts package name)
+python main.py --apk /path/to/app.apk
+
+# Required at least one of `--package com.example.app` or `--apk /path/to/app.apk`
+# --package: Android package name (e.g. com.example.app)
+# --apk: Local APK file path (Auto install APK and auto extracts package name)
+
+# Additional options:
 # --apis: JSON filename containing APIs (default: frida_apis.json)
 # --script: Output script filename (default: frida_monitor.ts)  
 # --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)
 ```
+The tool will:
+Auto-create emulator if no device connected
+Install APK to device automatically
+Extract package name from APK if only APK provided
+Generate and run Frida monitoring script
+Retrieve results for capa analysis
 
 ### Manual Steps (if you want)
 
@@ -71,29 +85,39 @@ adb shell su -c "setenforce 0"
 # Start Frida server on device
 adb shell su -c "/data/local/tmp/frida-server &"
 ```
-
-### Step 1: Generate Frida Monitoring Script
-
 ```bash
 # Navigate to the frida dir
 cd scripts/frida/
+```
 
-# Extract APK metadata and hashes from apk getting via adb in device
-python apk_meta_extractor.py --package com.app
-# Options:
-# python apk_meta_extractor.py --package com.app --apk /path/to/app.apk
-# --package: Android package name (required)
-# --apk: Local APK file path (optional, will use ADB to get from device if not provided) 
+### Step 1: Install APK
+```bash
+# If APK not already on device:
+adb install -r /path/to/app.apk
+```
 
+### Step 2: Extract APK Metadata 
+```bash
+# Extract APK metadata (package name + hashes) and save to temp file
+# Required: At least one of --package or --apk
+
+# Auto-extract package name
+python apk_meta_extractor.py --apk /path/to/app.apk
+# Get APK from device
+python apk_meta_extractor.py --package com.example.app          
+```
+
+### Step 3: Generate Frida Monitoring Script
+```bash
 # Generate monitoring script
 python hook_builder.py
 # Options:
-# python hook_builder.py --apis frida_apis.json --script frida_monitor.ts --output api_calls.jsonl
 # --apis: JSON filename containing APIs (default: frida_apis.json)
 # --script: Output script filename (default: frida_monitor.ts)  
 # --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)
 ```
-### Step 2(Optional): JavaScript bundle via frida-compile
+
+### Step 4(Optional): JavaScript bundle via frida-compile
 The generated TypeScript script could be compiled with frida-compile:
 automation part contain this, because Frida 17.x bridge...
 ```bash
@@ -111,7 +135,7 @@ import Java from "frida-java-bridge";
 frida-compile path_to_your_script -o agent/compiled_bundle.js
 ```
 
-### Step 3: Run Dynamic Analysis
+### Step 5: Run Dynamic Analysis
 
 ```bash
 # Launch Rootbeer app with Frida monitoring
@@ -135,7 +159,7 @@ Root Cause: Android apps create files with their UID ownership. App A cannot ove
 - Solution 2: Change to a new filename for {jsonl_filename} in frida_monitor.ts, you can directly use --output command line:
 var filePath = "/data/local/tmp/frida_outputs/{{jsonl_filename}}";
 
-### Step 4: Retrieve Analysis Data
+### Step 6: Retrieve Analysis Data
 
 ```bash
 # (Check if file exits)

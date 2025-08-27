@@ -34,7 +34,9 @@ def setup_android_sdk_path():
     - platform-tools: adb command
     - emulator: emulator command
     - cmdline-tools: sdkmanager & avdmanager
+    - build-tools: aapt
     """
+    # TODO: This part is quite complex. Would be nice if we can find a good tool to auto-setup PATH
     system = platform.system()
 
     if system == "Darwin":  # macOS
@@ -62,6 +64,17 @@ def setup_android_sdk_path():
             f"{android_home}/emulator",
             f"{android_home}/cmdline-tools/latest/bin",
         ]
+
+    # build-tools contains many version subfolders.
+    # Specific version will need user to find themselves via `ls $ANDROID_HOME/build-tools/*/aapt`
+    build_tools_base = f"{android_home}/build-tools" if system != "Windows" else f"{android_home}\\build-tools"
+    if os.path.exists(build_tools_base):
+        versions = [d for d in os.listdir(build_tools_base) if os.path.isdir(os.path.join(build_tools_base, d))]
+        if versions:
+            build_tools_path = (
+                f"{build_tools_base}/{versions[0]}" if system != "Windows" else f"{build_tools_base}\\{versions[0]}"
+            )
+            paths_to_add.append(build_tools_path)
 
     current_path = os.environ.get("PATH", "")
     for path in paths_to_add:
@@ -108,9 +121,7 @@ def create_emulator(avd_arch):
 def start_emulator(avd_name):
     """Start emulator and wait for boot"""
     logger.info("Starting emulator...")
-    subprocess.Popen(
-        ["emulator", "-avd", avd_name, "-writable-system"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    )
+    subprocess.Popen(["emulator", "-avd", avd_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     logger.info("Waiting for boot...")
     subprocess.run(["adb", "wait-for-device"], check=True)

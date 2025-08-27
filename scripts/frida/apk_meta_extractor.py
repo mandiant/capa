@@ -1,5 +1,7 @@
+import re
 import sys
 import json
+import shutil
 import hashlib
 import logging
 import argparse
@@ -24,6 +26,25 @@ def load_apk_metadata():
     return meta_data
 
 
+def extract_package_name_from_apk(apk_path: Path):
+    """Use aapt command to extract package name from given APK file"""
+    if not shutil.which("aapt"):
+        raise FileNotFoundError("aapt tool not found. Please install Android SDK build-tools.")
+
+    try:
+        result = subprocess.run(["aapt", "d", "badging", str(apk_path)], capture_output=True, text=True, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Failed to run aapt on APK: {e}")
+
+    for line in result.stdout.splitlines():
+        if line.startswith("package:"):
+            match = re.search(r"name='([^']+)'", line)
+            if match:
+                return match.group(1)
+
+    raise RuntimeError("Could not extract package name in APK file")
+
+
 def calculate_hashes(apk_path):
     """Calculate MD5, SHA1, SHA256 hashes for APK file"""
 
@@ -41,10 +62,7 @@ def calculate_hashes_via_adb(package_name):
     """Use ADB to get APK and calculate hashes"""
     try:
         result = subprocess.run(
-            ["adb", "shell", "pm", "path", package_name],
-            capture_output=True,
-            text=True,
-            check=True,
+            ["adb", "shell", "pm", "path", package_name], capture_output=True, text=True, check=True
         )
     except subprocess.CalledProcessError as e:
         raise ValueError(f"Package '{package_name}' not found on device.") from e
@@ -82,32 +100,43 @@ def save_apk_metadata(package_name, hashes):
     return output_file
 
 
-def extract_apk_metadata(package_name, apk_path=None):
+def extract_apk_metadata(package_name=None, apk_path: Path = None):
     """Entry point: Extract and save APK metadata, including hashes and package_name"""
-    # Get hashes from either local file or device
+    if not package_name and not apk_path:
+        raise ValueError("Must provide either package_name or apk_path")
+
     if apk_path:
-        if not Path(apk_path).exists():
+        if not apk_path.exists():
             raise FileNotFoundError(f"APK file not found: {apk_path}")
+
+        extracted_package = extract_package_name_from_apk(apk_path)
+        if package_name and extracted_package != package_name:
+            raise ValueError(f"Package name mismatch: provided '{package_name}', APK contains '{extracted_package}'")
+
+        package_name = extracted_package
+        logger.info(f"Extract APK package_name: {package_name}")
+
+        # Calculate hashes from local file
         hashes = calculate_hashes(apk_path)
     else:
-        # From device via ADB
+        # Calculate hashes from device APK file
         hashes = calculate_hashes_via_adb(package_name)
 
     metadata_file = save_apk_metadata(package_name, hashes)
-    return metadata_file
+    return metadata_file, package_name
 
 
 def main():
     parser = argparse.ArgumentParser(description="Extract APK meta including hashes")
-    parser.add_argument("--package", required=True, help="Android package name")
-    parser.add_argument("--apk", type=Path, help="Local APK file path (optional)")
+    parser.add_argument("--package", default=None, help="Android package name")
+    parser.add_argument("--apk", default=None, type=Path, help="Local APK file path (optional)")
 
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
 
     try:
-        extract_apk_metadata(args.package, args.apk)
+        metadata_file, package_name = extract_apk_metadata(args.package, args.apk)
         return 0
     except Exception as e:
         logger.error(f"Error: {e}")
