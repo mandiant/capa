@@ -1,125 +1,111 @@
-# Frida Dynamic Analysis
+# Frida Analysis for capa
 
-This guide shows how to generate Frida hooks and analyze Android app API calls with capa.
+This tool uses Frida to monitor Android applications and generates behavioral JSONL data that capa can analyze to detect malicious capabilities.
+
+Frida enables dynamic analysis by watching what API calls an Android app makes when it runs. This tool instruments Android apps with Frida, recording their API call information. The recorded data is formatted as JSONL for capa to analyze using behavioral detection rules.
 
 ## Prerequisites
 
-### 1. Download Android Studio
-Download from: https://developer.android.com/studio
+**Android Development Environment**
 
-**Required SDK components for auto-emulator creation** 
-(install via Settings → Languages & Frameworks → Android SDK → SDK Tools):
-- Android SDK Command-line Tools (for sdkmanager & avdmanager)
-- Android Emulator (for emulator command)
-- Android SDK Platform-Tools (for adb)
-- Android SDK Build-Tools (for aapt)
+Download Android Studio from [Android Studio Website](https://developer.android.com/studio).
 
-**Automatic mode users**: Just install Android Studio to default location. Our tool handles PATH temporarily during each execution.
-**Manual mode users**: Add Android SDK tools to your system PATH permanently
+Install these SDK components in Android Studio → Settings → Languages & Frameworks → Android SDK → SDK Tools: 
+`Android SDK Command-line Tools`, `Android Emulator`, `Android SDK Platform-Tools`, and `Android SDK Build-Tools`.
 
-**Default SDK locations:**
+Default SDK locations:
 - macOS: `~/Library/Android/sdk`
 - Linux: `~/Android/Sdk`
 - Windows: `~\AppData\Local\Android\Sdk`
 
-### 2. Install Dependencies
+**Dependencies**
+
+Install capa from [capa Github](https://github.com/mandiant/capa).
+
+Install required tools:
+
 ```bash
-# jinja2 pydantic could be added to requirements.txt later
-
 # Python packages
-pip install frida==17.2.15 frida-tools jinja2 pydantic
-pip install capa[frida]
+pip install frida==17.2.15 frida-tools jinja2
 
-# Node.js (for frida-compile)
-brew install node  # macOS
-# sudo apt install nodejs npm  # Linux
-# Download from nodejs.org for Windows
+# Install Node.js for npm 
+# macOS: `brew install node`
+# Linux: `sudo apt install nodejs npm`
+# Windows: Download from [nodejs.org](https://nodejs.org)
 ```
 
-### (Optional) Create emulator and start frida-server
-We can auto-create an rooted emulator with frida-server for you.
-But you can manually setup your own emulator/device.
-For more details, see our [manual setup guide](setup.md) and
-[Frida Server + Rooted Emulator](https://docs.google.com/document/d/1WpPRcdtnPYdOn4n7Wl3aghbZUv2wmefiuaf2WDIR5Pw/edit?tab=t.0#heading=h.sqgvzr4xgg42)
+## Quick start
 
-## Usage
-### Automated Analysis (Recommended)
+The tool creates an Android emulator automatically if you don't have one connected.
+
 ```bash
-# Complete pipeline - creates emulator if needed
-# To start the AVDs auto-created, open your Android Studio
-# Tools → Device Manager → find 'frida-emulator' and start it"
-
-# Scenario 1: Package already on device
+# Scenario 1: Analyze app already on device
 python main.py --package com.example.app
 
-# Scenario 2: Only APK file (auto install APK and extracts package name)
+# Scenario 2: Install APK and analyze
 python main.py --apk /path/to/app.apk
 
-# Required at least one of `--package com.example.app` or `--apk /path/to/app.apk`
-# --package: Android package name (e.g. com.example.app)
-# --apk: Local APK file path (Auto install APK and auto extracts package name)
-
-# Additional options:
+# Additional customized options:
 # --apis: JSON filename containing APIs (default: frida_apis.json)
 # --script: Output script filename (default: frida_monitor.ts)  
-# --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)
+# --output: JSONL output filename on device (default: api_calls.jsonl)
 ```
-The tool will:
-Auto-create emulator if no device connected
-Install APK to device automatically
-Extract package name from APK if only APK provided
-Generate and run Frida monitoring script
-Retrieve results for capa analysis
 
-### Manual Steps (if you want)
+Press Ctrl+D to stop Frida monitoring, then analyze with capa:
 
-### Step 0: Device Preparation
 ```bash
-# Create output directory with full permissions
-adb shell su -c "mkdir -p /data/local/tmp/frida_outputs"
-adb shell su -c "chmod -R 777 /data/local/tmp/frida_outputs"
-
-# Disable SELinux enforcement (resets on reboot)
-adb shell su -c "setenforce 0"
-
-# Start Frida server on device
-adb shell su -c "/data/local/tmp/frida-server &"
+capa frida_outputs/api_calls.jsonl
 ```
+
+## Manual workflow
+
+You can run individual steps manually for debugging or customization.
+
+**Device setup**
+
+The tool auto-creates a configured emulator (Pixel 4 XL, API 29, Google APIs) with frida-server 17.2.15, named 'frida-emulator'. Start it through Android Studio → Tools → Device Manager.
+
+For manual device setup, see [Device setup](setup.md).
+
 ```bash
-# Navigate to the frida dir
+# Install APK if needed
+adb install -r /path/to/app.apk
+
+# Navigate to frida directory
 cd scripts/frida/
 ```
 
-### Step 1: Install APK
-```bash
-# If APK not already on device:
-adb install -r /path/to/app.apk
-```
+**Step 1: Extract APK Metadata**
 
-### Step 2: Extract APK Metadata 
-```bash
-# Extract APK metadata (package name + hashes) and save to temp file
-# Required: At least one of --package or --apk
+Extract application metadata including cryptographic hashes and package information. This helps capa identify the sample and correlate findings.
 
-# Auto-extract package name
+```bash
+# Requires at least one of --package or --apk
+# Extract from device APK
+python apk_meta_extractor.py --package com.example.app
+# Or from local APK file
 python apk_meta_extractor.py --apk /path/to/app.apk
-# Get APK from device
-python apk_meta_extractor.py --package com.example.app          
 ```
 
-### Step 3: Generate Frida Monitoring Script
+**Step 2: Generate Frida Monitoring Script**
+
+Generate a customized monitoring script based on your API configuration:
+
 ```bash
-# Generate monitoring script
 python hook_builder.py
-# Options:
+
+# Additional customized options:
 # --apis: JSON filename containing APIs (default: frida_apis.json)
 # --script: Output script filename (default: frida_monitor.ts)  
-# --output: JSONL output filename in emulator that you wanna create after monitoring (default: api_calls.jsonl)
+# --output: JSONL output filename on device (default: api_calls.jsonl)
 ```
 
-### Step 4(Optional): JavaScript bundle via frida-compile
-The generated TypeScript script could be compiled with frida-compile:
-automation part contain this, because Frida 17.x bridge...
+The tool uses standardized API JSON files with templates in `/frida_templates/hook_templates` to generate hooks. The complete generated TypeScript script saves to `/frida_scripts`.
+
+**Step 3: JavaScript Bundle Compilation (Optional)**
+
+The generated TypeScript can be compiled with frida-compile for better compatibility:
+
 ```bash
 mkdir -p agent
 cd agent
@@ -128,49 +114,43 @@ npm install
 npm install frida-java-bridge
 cd ..
 
-# Prepare script for compilation (for example Java bridge import), add this to script: 
-import Java from "frida-java-bridge"; 
-
 # Compile TypeScript to JavaScript bundle
 frida-compile path_to_your_script -o agent/compiled_bundle.js
 ```
 
-### Step 5: Run Dynamic Analysis
+This step is included in the automation because Frida 17.x requires specific bridge imports when using the Python API, though the command line interface still works as before.
+
+**Step 4: Run Dynamic Analysis**
+
+Launch the application with Frida monitoring:
 
 ```bash
-# Launch Rootbeer app with Frida monitoring
-# With frida-compile step, use compiled bundle:
-frida -U -f com.scottyab.rootbeer.sample -l agent/compiled_bundle.js
+# Using compiled bundle (recommended)
+frida -U -f com.example.app -l agent/compiled_bundle.js
 
-# Otherwise, use:
-frida -U -f com.scottyab.rootbeer.sample -l frida_scripts/frida_monitor.ts
-
-# For other apps, use their package name:
-# frida -U -f com.example.app -l frida_scripts/frida_monitor.ts
-
-# Let the app run and perform the behaviors you want to analyze
-# Type `exit` and Press `Ctrl+C` to stop monitoring
+# Using TypeScript directly
+frida -U -f com.example.app -l frida_scripts/frida_monitor.ts
 ```
 
-**Notes:**
-- File Permission Conflicts
-Root Cause: Android apps create files with their UID ownership. App A cannot overwrite files created by App B.
-- Solution 1: Delete this file before next analysis
-- Solution 2: Change to a new filename for {jsonl_filename} in frida_monitor.ts, you can directly use --output command line:
-var filePath = "/data/local/tmp/frida_outputs/{{jsonl_filename}}";
+As the app runs, the script hooks API calls and records them in JSONL format with calling context and parameters.
+Let the app run and perform behaviors you want to analyze. Type `exit` then press Ctrl+C to stop monitoring.
 
-### Step 6: Retrieve Analysis Data
+**Step 5: Retrieve Analysis Output**
+
+Collect the recorded behavioral data to local:
 
 ```bash
-# (Check if file exits)
-adb shell su -c "ls -la /data/local/tmp/frida_outputs/"
+# (Check if output file exists)
+adb shell "ls -la /data/local/tmp/frida_outputs/"
 
-adb root
-# Using adb pull
+# Pull analysis data from device
 adb pull /data/local/tmp/frida_outputs/api_calls.jsonl ./frida_outputs/api_calls.jsonl
 ```
 
 ## Analyze with capa
+
+The JSONL file contains a chronological record of API calls behavior that capa can process with behavioral rules. Process with capa:
+
 ```bash
 # Navigate back to capa root directory
 cd ../../
@@ -185,25 +165,19 @@ python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_outputs/
 capa api_calls.jsonl
 ```
 
-### Folder Components
-- **main.py**: Complete automation pipeline
+## Known Issues
 
-**Directories:**
+**Note:** Some emulators (e.g., Magisk-rooted) uses `adb shell su -c "command"`, while others don't support the `-c` parameter. So modify commands accordingly, or use `adb shell CLI` instead.
+
+**Note:** If you encounter Frida errors `[ERROR] Failed to open file:`, this is usually a permission issue. There are two main situations:
+run `adb shell "setenforce 0"` to disable SELinux again, since in some  cases, it will be reset by system.
+And also happens because android apps create files with their own UID ownership, causing permission conflicts between different apps. To resolve this, either delete existing output file or use different filenames with the `--output` option.
+
+
+
+### Folder Components
 - **/frida_apis/*.json**: Contains API JSON files
 - **/frida_templates/**: Jinja2 templates for script generation
 - **/frida_scripts/*.ts**: Generated executable scripts (output)
 - **/agent/**: frida-compile environment and compiled bundles
-- **/frida_outputs/*.jsonl**: outputs that need capa to anlaysis
-
-
-!!!
-Put these here for now
-
-- **Rooted Android emulator with Frida server running**  
-[Frida Server + Rooted Emulator](https://docs.google.com/document/d/1WpPRcdtnPYdOn4n7Wl3aghbZUv2wmefiuaf2WDIR5Pw/edit?tab=t.0#heading=h.sqgvzr4xgg42)
-
-- **Python virtual environment with capa installed**  
-[capa install page](https://github.com/mandiant/capa/blob/master/doc/installation.md)
-
-- **Target app installed on emulator**  
-Example: RootBeer sample app from Google Play Store, or build from [Rootbeer Github](https://github.com/scottyab/rootbeer?tab=readme-ov-file) (Rootbeer GitHub version is newer)
+- **/frida_outputs/*.jsonl**: outputs for capa analysis
