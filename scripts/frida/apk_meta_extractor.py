@@ -7,6 +7,7 @@ import logging
 import argparse
 import tempfile
 import subprocess
+from typing import Optional
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -100,7 +101,7 @@ def save_apk_metadata(package_name, hashes):
     return output_file
 
 
-def extract_apk_metadata(package_name=None, apk_path: Path = None):
+def extract_apk_metadata(package_name=None, apk_path: Optional[Path] = None):
     """Entry point: Extract and save APK metadata, including hashes and package_name"""
     if not package_name and not apk_path:
         raise ValueError("Must provide either package_name or apk_path")

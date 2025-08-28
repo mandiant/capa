@@ -1,8 +1,7 @@
 # Frida Analysis for capa
+This tool uses Frida to monitor Android applications and generates behavioral JSONL data that capa can analyze to identify program capabilities.
 
-This tool uses Frida to monitor Android applications and generates behavioral JSONL data that capa can analyze to detect malicious capabilities.
-
-Frida enables dynamic analysis by watching what API calls an Android app makes when it runs. This tool instruments Android apps with Frida, recording their API call information. The recorded data is formatted as JSONL for capa to analyze using behavioral detection rules.
+Frida enables dynamic analysis by watching what API calls an Android app makes when it runs. This tool instruments Android apps with Frida, recording hooked API call information. The recorded data is formatted as JSONL for capa to analyze using its capability detection rules.
 
 ## Prerequisites
 
@@ -18,17 +17,17 @@ Default SDK locations:
 - Linux: `~/Android/Sdk`
 - Windows: `~\AppData\Local\Android\Sdk`
 
+**Analysis Tool**
+
+Download capa from [capa repo](https://github.com/mandiant/capa) to analyze the behavioral data output.
+
 **Dependencies**
 
-Install capa from [capa Github](https://github.com/mandiant/capa).
-
-Install required tools:
-
 ```bash
-# Python packages
+# Python dependencies needed
 pip install frida==17.2.15 frida-tools jinja2
 
-# Install Node.js for npm 
+# Install Node.js npm for frida-compile
 # macOS: `brew install node`
 # Linux: `sudo apt install nodejs npm`
 # Windows: Download from [nodejs.org](https://nodejs.org)
@@ -51,19 +50,15 @@ python main.py --apk /path/to/app.apk
 # --output: JSONL output filename on device (default: api_calls.jsonl)
 ```
 
-Press Ctrl+D to stop Frida monitoring, then analyze with capa:
-
-```bash
-capa frida_outputs/api_calls.jsonl
-```
+Press Ctrl+D to stop Frida monitoring, results are saved to `frida_outputs/` folder. Then you can run capa on the output files to analyze capabilities.
 
 **What the automation does:**
 Creates an configed emulator
 Extracts APK metadata and hashes
 Generates monitoring script from API specifications
-Executes Frida analysis with compiled script 
-Retrieves results for capa 
+Executes Frida analysis with compiled script
+Retrieves results for capa
 
-## Manual Workflow
+## Manual Workflow (if you want)
 
 For users who prefer step-by-step control, see [Manual Steps Guide](manual_steps.md).

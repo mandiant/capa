@@ -94,21 +94,9 @@ adb pull /data/local/tmp/frida_outputs/api_calls.jsonl ./frida_outputs/api_calls
 
 ## Analyze with capa
 
-The JSONL file contains a chronological record of API calls behavior that capa can process with behavioral rules. Process with capa:
+The JSONL file contains a chronological record of API calls that capa can analyze using capability detection rules. Output files are saved to `frida_outputs/`.
 
-```bash
-# Navigate back to capa root directory
-cd ../../
-
-# Activate your capa environment
-source ~/capa-env/bin/activate 
-
-# Using your custom Frida rules (for development/testing)
-python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_outputs/api_calls.jsonl
-
-# Using this after integrated
-capa api_calls.jsonl
-```
+Download and run capa to process the results.
 
 ## Known Issues
 
@@ -118,6 +106,7 @@ capa api_calls.jsonl
 run `adb shell "setenforce 0"` to disable SELinux again, since in some  cases, it will be reset by system.
 And also happens because android apps create files with their own UID ownership, causing permission conflicts between different apps. To resolve this, either delete existing output file or use different filenames with the `--output` option.
 
+**Note:** For quick start, we fixed the frida client and frida server version as 17.2.15. These two should always keep match if you change any of them.
 
 ## Folder Components
 - **/frida_apis/*.json**: Contains API JSON files

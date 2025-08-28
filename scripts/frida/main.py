@@ -152,7 +152,7 @@ def compile_typescript_to_bundle(prepared_script: Path) -> Path:
     bundle_file = agent_dir / "compiled_bundle.js"
 
     try:
-        compiler = frida.Compiler()
+        compiler = frida.Compiler()  # type: ignore
         compiler.on("diagnostics", on_diagnostics)
 
         bundle_content = compiler.build(str(prepared_script), project_root=str(agent_dir))
@@ -175,7 +175,7 @@ def run_frida_with_bundle(package_name: str, bundle_file: Path):
         with open(bundle_file, "r", encoding="utf-8") as f:
             bundle_content = f.read()
 
-        device = frida.get_usb_device()
+        device = frida.get_usb_device()  # type: ignore
         pid = device.spawn([package_name])
         session = device.attach(pid)
 
@@ -230,6 +230,8 @@ def retrieve_results(output_file: str):
     logger.info(
         f"Retrieved {len(lines)} records. Metadata: {metadata_records}, Java: {java_calls}, Native: {native_calls}"
     )
+
+    logger.info(f"Results saved to: {local_output_file}")
 
 
 def main():
@@ -300,10 +302,7 @@ def main():
         retrieve_results(args.output)
 
         logger.info("Frida Analysis Completed!")
-        logger.info("Final step - Analyze with capa:")
-        logger.info(
-            f"cd ../../ && source ~/capa-env/bin/activate && python capa/main.py -r scripts/frida/test_rules/ -d scripts/frida/frida_outputs/{args.output}"
-        )
+        logger.info("Final step: Run capa to analyze the output file.")
         return 0
 
     except RuntimeError as e:
