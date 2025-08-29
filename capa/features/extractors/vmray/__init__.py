@@ -96,14 +96,7 @@ class VMRayAnalysis:
                 % (self.submission_name, self.submission_type)
             )
 
-        if self.submission_static is not None:
-            if self.submission_static.pe is None and self.submission_static.elf is None:
-                # we only support static analysis for PE and ELF files for now
-                raise UnsupportedFormatError(
-                    "archive does not contain a supported file format (submission_name: %s, submission_type: %s)"
-                    % (self.submission_name, self.submission_type)
-                )
-        else:
+        if self.submission_static is None:
             # VMRay may not record static analysis for certain file types, e.g. MSI, but we'd still like to match dynamic
             # execution so we continue without and accept that the results may be incomplete
             logger.warning(

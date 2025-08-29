@@ -26,7 +26,7 @@ env:
 
 jobs:
   changelog_format:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -37,7 +37,7 @@ jobs:
         if [ $number != 1 ]; then exit 1; fi
 
   code_style:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -64,7 +64,7 @@ jobs:
       run: pre-commit run deptry --hook-stage manual
 
   rule_linter:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -88,16 +88,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2019, macos-13]
+        os: [ubuntu-22.04, windows-2022, macos-13]
         # across all operating systems
         python-version: ["3.10", "3.11"]
         include:
           # on Ubuntu run these as well
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04
             python-version: "3.10"
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04
             python-version: "3.11"
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04
             python-version: "3.12"
     steps:
     - name: Checkout capa with submodules
@@ -109,7 +109,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install pyyaml
-      if: matrix.os == 'ubuntu-24.04'
+      if: matrix.os == 'ubuntu-22.04'
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       run: |
@@ -126,7 +126,7 @@ jobs:
     name: Binary Ninja tests for ${{ matrix.python-version }}
     env:
       BN_SERIAL: ${{ secrets.BN_SERIAL }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [tests]
     strategy:
       fail-fast: false
@@ -168,7 +168,7 @@ jobs:
 
   ghidra-tests:
     name: Ghidra tests for ${{ matrix.python-version }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [tests]
     strategy:
       fail-fast: false
