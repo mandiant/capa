@@ -1,0 +1,10 @@
+agent/
+
+frida_outputs/
+frida_scripts/
+test_rules/*.yml
+frida_apis/*.json
+
+# Sample
+!frida_apis/frida_apis.json
+!test_rules/show-case.yml

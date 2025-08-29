@@ -1,0 +1,45 @@
+rule:
+  meta:
+    name: SHOWCASE - root detection
+    namespace: anti-analysis/anti-root
+    authors:
+      - blaire_xukun
+    description: just showing the workflow, testing all types of API
+    scopes:
+      static: unsupported
+      dynamic: process
+  features:
+    - and:
+      # Java instance method
+      - and:
+        - api: java.io.File.exists
+        - or:
+          - string: "/system/bin/su"
+          - string: "/system/xbin/su"
+          - substring: "/su"
+      
+      # Java static method
+      - and:
+        - api: java.lang.System.getenv
+      
+      # Native API with file access patterns
+      - and:
+        - api: libc.so.open
+        - or:
+          - substring: "/su"
+          - number: 524288
+      
+      # JNI method with comprehensive root detection
+      - and:
+        - api: com.scottyab.rootbeer.RootBeerNative.checkForRoot
+        - or:
+          - substring: "/data/local/su"
+          - substring: "/system/bin/su"
+          - substring: "/system/xbin/su"
+      
+      # Root tools detection
+      - and:
+        - api: java.io.File.<init>
+        - or:
+          - substring: magisk
+          - substring: busybox

@@ -167,6 +167,10 @@ scripts = [
     "sarif_om==1.0.4",
     "requests==2.32.3",
 ]
+frida = [
+    "frida>=16.1.4",
+    "jinja2>=3.1.0",
+]
 
 [tool.deptry]
 extend_exclude = [
@@ -239,6 +243,14 @@ DEP002 = [
 # dependencies imported but missing from definitions
 DEP003 = [
     "typing_extensions" # TODO(s-ff): remove when Python 3.10 is deprecated, see #1699
+]
+
+# dependencies imported but missing from definitions
+DEP001 = [
+    "frida_api_models",
+    "apk_meta_extractor", 
+    "hook_builder",
+    "emulator_creator",
 ]
 
 [tool.deptry.package_module_name_map]

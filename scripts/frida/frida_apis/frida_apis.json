@@ -1,0 +1,224 @@
+{
+    "java": {
+        "methods": [
+            {
+                "package": "javax.crypto.spec",
+                "class": "SecretKeySpec",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "javax.crypto",
+                "class": "Cipher",
+                "method": "update",
+                "arguments": true
+            },
+            {
+                "package": "javax.crypto",
+                "class": "Cipher",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "javax.crypto",
+                "class": "Cipher",
+                "method": "doFinal",
+                "arguments": true
+            },
+            {
+                "package": "javax.net.ssl",
+                "class": "TrustManagerFactory",
+                "method": "getTrustManagers",
+                "arguments": true
+            },
+            {
+                "package": "java.security",
+                "class": "MessageDigest",
+                "method": "digest",
+                "arguments": true
+            },
+            {
+                "package": "java.security",
+                "class": "MessageDigest",
+                "method": "update",
+                "arguments": true
+            },
+            {
+                "package": "android.util",
+                "class": "Base64",
+                "method": "encode",
+                "arguments": true,
+                "static": true
+            },
+            {
+                "package": "android.util",
+                "class": "Base64",
+                "method": "encodeToString",
+                "arguments": true,
+                "static": true
+            },
+            {
+                "package": "java.io",
+                "class": "FileOutputStream",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "java.io",
+                "class": "File",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "java.io",
+                "class": "File",
+                "method": "exists",
+                "arguments": true
+            },
+            {
+                "package": "java.lang",
+                "class": "ProcessBuilder",
+                "method": "start",
+                "arguments": true
+            },
+            {
+                "package": "java.net",
+                "class": "URI",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "android.net",
+                "class": "Uri$Builder",
+                "method": "build",
+                "arguments": true
+            },
+            {
+                "package": "java.net",
+                "class": "URL",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "java.net",
+                "class": "URLConnection",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "java.net",
+                "class": "InetSocketAddress",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "dalvik.system",
+                "class": "DexClassLoader",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "java.lang.reflect",
+                "class": "Method",
+                "method": "invoke",
+                "arguments": true
+            },
+            {
+                "package": "java.lang.reflect",
+                "class": "Proxy",
+                "method": "newProxyInstance",
+                "arguments": true,
+                "static": true
+            },
+            {
+                "package": "java.lang",
+                "class": "Runtime",
+                "method": "loadLibrary0",
+                "arguments": true
+            },
+            {
+                "package": "java.util",
+                "class": "Locale",
+                "method": "getLanguage",
+                "arguments": true
+            },
+            {
+                "package": "java.util",
+                "class": "Locale",
+                "method": "getCountry",
+                "arguments": true
+            },
+            {
+                "package": "android.telephony",
+                "class": "TelephonyManager",
+                "method": "getNetworkOperatorName",
+                "arguments": true
+            },
+            {
+                "package": "android.app",
+                "class": "ApplicationPackageManager",
+                "method": "getPackageInfo",
+                "arguments": true
+            },
+            {
+                "package": "android.content",
+                "class": "Intent",
+                "method": "setAction",
+                "arguments": true
+            },
+            {
+                "package": "android.hardware.display",
+                "class": "DisplayManager",
+                "method": "createVirtualDisplay",
+                "arguments": true
+            },
+            {
+                "package": "android.hardware.display",
+                "class": "DisplayManager",
+                "method": "getDisplay",
+                "arguments": true
+            },
+            {
+                "package": "android.app",
+                "class": "Presentation",
+                "method": "getDisplay",
+                "arguments": true
+            },
+            {
+                "package": "android.app",
+                "class": "Presentation",
+                "method": null,
+                "arguments": true,
+                "ctor": true
+            },
+            {
+                "package": "android.app",
+                "class": "PendingIntent",
+                "method": "getActivity",
+                "arguments": true,
+                "static": true
+            },
+            {
+                "package": "android.app",
+                "class": "PendingIntent",
+                "method": "send",
+                "arguments": true
+            },
+            {
+                "package": "android.content",
+                "class": "Intent",
+                "method": "setFlags",
+                "arguments": true
+            }
+        ]
+    }
+}

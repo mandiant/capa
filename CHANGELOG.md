@@ -3,6 +3,9 @@
 ## master (unreleased)
 
 ### New Features
+- add Frida dynamic analysis support for Android applications #2712 @xukunzh
+- add FridaExtractor for processing Android runtime behavioral data
+- add automated Android analysis workflow with emulator creation and script generation
 - ci: add support for arm64 binary releases
 
 ### Breaking Changes
