@@ -3,10 +3,72 @@
 ## master (unreleased)
 
 ### New Features
+- add Frida dynamic analysis support for Android applications #2712 @xukunzh
+- add FridaExtractor for processing Android runtime behavioral data
+- add automated Android analysis workflow with emulator creation and script generation
+- ci: add support for arm64 binary releases
 
 ### Breaking Changes
 
-### New Rules (21)
+### New Rules (13)
+
+- anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
+- nursery/create-executable-heap moritz.raabe@mandiant.com
+- anti-analysis/packer/dxpack/packed-with-dxpack jakubjozwiak@google.com
+- anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
+- nursery/acquire-load-driver-privileges mehunhoff@google.com
+- nursery/communicate-using-ftp mehunhoff@google.com
+- linking/static/eclipse-paho-mqtt-c/linked-against-eclipse-paho-mqtt-c jakubjozwiak@google.com
+- linking/static/qmqtt/linked-against-qmqtt jakubjozwiak@google.com
+- anti-analysis/anti-forensic/disable-powershell-transcription jakubjozwiak@google.com
+- host-interaction/powershell/bypass-powershell-constrained-language-mode-via-getsystemlockdownpolicy-patch jakubjozwiak@google.com
+- linking/static/grpc/linked-against-grpc jakubjozwiak@google.com
+- linking/static/hp-socket/linked-against-hp-socket jakubjozwiak@google.com
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+- ci: remove redundant "test_run" action from build workflow @mike-hunhoff #2692
+
+### Raw diffs
+- [capa v9.2.1...master](https://github.com/mandiant/capa/compare/v9.2.1...master)
+- [capa-rules v9.2.1...master](https://github.com/mandiant/capa-rules/compare/v9.2.1...master)
+
+## v9.2.1
+
+This point release fixes bugs including removing an unnecessary PyInstaller warning message and enabling the standalone binary to execute on systems running older versions of glibc.
+
+### Bug Fixes
+
+- ci: exclude pkg_resources from PyInstaller build @mike-hunhoff #2684
+- ci: downgrade Ubuntu version to accommodate older glibc versions @mike-hunhoff #2684
+
+### Development
+
+- ci: upgrade Windows version to avoid deprecation @mike-hunhoff #2684
+- ci: check if build runs without warnings or errors @mike-hunhoff #2684
+
+### Raw diffs
+- [capa v9.2.0...v9.2.1](https://github.com/mandiant/capa/compare/v9.2.0...v9.2.1)
+- [capa-rules v9.2.0...v9.2.1](https://github.com/mandiant/capa-rules/compare/v9.2.0...v9.2.1)
+
+## v9.2.0
+
+This release improves a few aspects of dynamic analysis, including relaxing our validation on fields across many CAPE versions and processing additional VMRay submission file types, for example.
+It also includes an updated rule pack containing new rules and rule fixes.
+
+### New Features
+- vmray: do not restrict analysis to PE and ELF files, e.g. docx @mike-hunhoff #2672
+
+### Breaking Changes
+
+### New Rules (22)
 
 - communication/socket/connect-socket moritz.raabe@mandiant.com joakim@intezer.com mrhafizfarhad@gmail.com
 - communication/socket/udp/connect-udp-socket mrhafizfarhad@gmail.com
@@ -28,22 +90,17 @@
 - exploitation/gadgets/load-ntoskrnl zdw@google.com
 - exploitation/gadgets/resolve-ntoskrnl-gadgets zdw@google.com
 - exploitation/spraying/make-suspicious-ntfscontrolfile-call zdw@google.com
--
+- anti-analysis/anti-forensic/unload-sysmon JakePeralta7
 
 ### Bug Fixes
 - cape: make some fields optional @williballenthin #2631 #2632
 - lint: add WARN for regex features that contain unescaped dot #2635
 - lint: add ERROR for incomplete registry control set regex #2643
-
-### capa Explorer Web
-
-### capa Explorer IDA Pro plugin
-
-### Development
+- binja: update unit test core version #2670
 
 ### Raw diffs
-- [capa v9.1.0...master](https://github.com/mandiant/capa/compare/v9.1.0...master)
-- [capa-rules v9.1.0...master](https://github.com/mandiant/capa-rules/compare/v9.1.0...master)
+- [capa v9.1.0...v9.2.0](https://github.com/mandiant/capa/compare/v9.1.0...v9.2.0)
+- [capa-rules v9.1.0...v9.2.0](https://github.com/mandiant/capa-rules/compare/v9.1.0...v9.2.0)
 
 ## v9.1.0
 

@@ -28,7 +28,7 @@ def generate_java_constructor_hook(template, method_info):
     )
 
 
-def generate_java_method_hook(template, method_info):
+def generate_java_instance_hook(template, method_info):
     return template.render(
         CLASS_NAME=f"{method_info.package}.{method_info.class_name}",
         VAR_NAME=method_info.class_name,
@@ -41,7 +41,7 @@ def generate_java_method_hook(template, method_info):
 
 def generate_java_hooks(java_apis, templates_dir):
     if not java_apis or not java_apis.methods:
-        print("No Java APIs to generate")
+        logger.info("No Java APIs to generate")
         return ""
 
     all_java_hooks = []
@@ -53,11 +53,11 @@ def generate_java_hooks(java_apis, templates_dir):
         if method_info.ctor:
             hook = generate_java_constructor_hook(ctor_template, method_info)
         else:
-            hook = generate_java_method_hook(method_template, method_info)
+            hook = generate_java_instance_hook(method_template, method_info)
 
         all_java_hooks.append(hook)
 
-    print(f"Successfully generated {len(java_apis.methods)} Java hooks")
+    logger.info(f"Successfully generated {len(java_apis.methods)} Java hooks")
     return "\n\n".join(all_java_hooks)
 
 
@@ -74,7 +74,7 @@ def generate_native_hook(template, native_info):
 
 def generate_native_hooks(native_apis, templates_dir):
     if not native_apis or not native_apis.methods:
-        print("No Native APIs to generate")
+        logger.info("No Native APIs to generate")
         return ""
 
     all_native_hooks = []
@@ -84,7 +84,7 @@ def generate_native_hooks(native_apis, templates_dir):
         hook = generate_native_hook(native_template, native_info)
         all_native_hooks.append(hook)
 
-    print(f"Successfully generated {len(native_apis.methods)} Native hooks")
+    logger.info(f"Successfully generated {len(native_apis.methods)} Native hooks")
     return "\n\n".join(all_native_hooks)
 
 
@@ -123,7 +123,7 @@ def build_frida_script(api_file_path: Path, script_file_path: Path, jsonl_filena
     with open(script_file_path, "w") as f:
         f.write(main_script)
 
-    print(f"Generated Frida script to {script_file_path}")
+    logger.info(f"Generated Frida script to {script_file_path}")
     return script_file_path
 
 
@@ -167,18 +167,18 @@ def main(argv=None):
     script_file_path = scripts_dir / args.script
 
     if not api_file_path.exists():
-        print(f"APIs file not found: {api_file_path}")
-        print("Available files:")
+        logger.error(f"APIs file not found: {api_file_path}")
+        logger.info("Available files:")
         for f in apis_dir.glob("*.json"):
-            print(f"   - {f.name}")
+            logger.info(f"   - {f.name}")
         return 1
 
     try:
         build_frida_script(api_file_path, script_file_path, args.output)
-        print("Hook generation completed successfully")
+        logger.info("Hook generation completed successfully")
         return 0
     except Exception as e:
-        print(f"error: {e}")
+        logger.error(f"error: {e}")
         return 1
 
 
