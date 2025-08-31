@@ -26,9 +26,13 @@
 
 ### Bug Fixes
 
+- IDA Pro: FLARE Capa Explorer has been fixed to work for IDA Pro 9.2 using PyQt6 @nicolaipre #2713 
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+
+- fixed bug where plugin did not open due to PyQt6 upgrade @nicolaipre #2713
 
 ### Development
 
