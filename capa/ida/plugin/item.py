@@ -24,6 +24,17 @@ import capa.ida.helpers
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
+# PyQT6 support with PyQt5 fallback
+if hasattr(QtCore.Qt, 'ItemFlag'):
+    # PyQt6 / PySide6
+    ItemFlag = QtCore.Qt.ItemFlag
+    TRISTATE = ItemFlag.ItemIsAutoTristate
+else:
+    # PyQt5
+    ItemFlag = QtCore.Qt
+    TRISTATE = ItemFlag.ItemIsTristate
+
+
 def info_to_name(display):
     """extract root value from display name
 
@@ -52,10 +63,10 @@ class CapaExplorerDataItem:
         self._can_check = can_check
 
         # default state for item
-        self.flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        self.flags = ItemFlag.ItemIsEnabled.value | ItemFlag.ItemIsSelectable.value
 
         if self._can_check:
-            self.flags = self.flags | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
+            self.flags = self.flags | ItemFlag.ItemIsUserCheckable.value | TRISTATE.value
 
         if self.pred:
             self.pred.appendChild(self)
@@ -66,9 +77,9 @@ class CapaExplorerDataItem:
         @param isEditable: True, can edit, False cannot edit
         """
         if isEditable:
-            self.flags |= QtCore.Qt.ItemIsEditable
+            self.flags |= ItemFlag.ItemIsEditable.value
         else:
-            self.flags &= ~QtCore.Qt.ItemIsEditable
+            self.flags &= ~ItemFlag.ItemIsEditable.value
 
     def setChecked(self, checked):
         """set item as checked
