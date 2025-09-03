@@ -197,6 +197,9 @@ def extract_stackstring(fh: FunctionHandle):
     except ILException:
         return
 
+    if mlil is None:
+        return
+
     for block in mlil.basic_blocks:
         if bb_contains_stackstring(func, block):
             yield Characteristic("stack string"), block.source_block.start
