@@ -7,7 +7,7 @@
 
 ### Breaking Changes
 
-### New Rules (16)
+### New Rules (19)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
@@ -24,6 +24,9 @@
 - load-code/execute-jscript-via-vsaengine-in-dotnet jakubjozwiak@google.com
 - linking/static/funchook/linked-against-funchook jakubjozwiak@google.com
 - linking/static/plthook/linked-against-plthook jakubjozwiak@google.com
+- host-interaction/network/enumerate-tcp-connections-via-wmi-com-api jakubjozwiak@google.com
+- host-interaction/network/routing-table/create-routing-table-entry jakubjozwiak@google.com
+- host-interaction/network/routing-table/get-routing-table michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
