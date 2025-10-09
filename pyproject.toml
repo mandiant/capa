@@ -74,7 +74,7 @@ dependencies = [
     # comments and context.
     "pyyaml>=6",
     "colorama>=0.4",
-    "ida-settings>=2.1.0,<3",  # v3 has breaking changes
+    "ida-settings>=3.1.0",
     "ruamel.yaml>=0.18",
     "pefile>=2023.2.7",
     "pyelftools>=0.31",
@@ -197,7 +197,8 @@ known_first_party = [
     "idc",
     "java",
     "netnode",
-    "PyQt5"
+    "PyQt5",
+    "PySide6"
 ]
 
 [tool.deptry.per_rule_ignores]

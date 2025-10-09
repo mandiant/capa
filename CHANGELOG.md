@@ -38,6 +38,8 @@
 
 ### capa Explorer IDA Pro plugin
 
+- ida plugin: add Qt compatibility layer for PyQt5 and PySide6 support @williballenthin #2707
+
 ### Development
 
 - ci: remove redundant "test_run" action from build workflow @mike-hunhoff #2692
