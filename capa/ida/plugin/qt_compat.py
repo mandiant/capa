@@ -63,9 +63,9 @@ def qt_get_item_flag_tristate():
             return Qt.ItemFlag.ItemIsAutoTristate
         else:
             raise AttributeError(
-                f"Cannot find ItemIsAutoTristate in PySide6. "
-                f"Your PySide6 version may be incompatible with capa. "
-                f"Available Qt attributes: {[attr for attr in dir(Qt) if 'Item' in attr]}"
+                "Cannot find ItemIsAutoTristate in PySide6. "
+                + "Your PySide6 version may be incompatible with capa. "
+                + f"Available Qt attributes: {[attr for attr in dir(Qt) if 'Item' in attr]}"
             )
     else:
         # Qt5: Use the original ItemIsTristate flag
