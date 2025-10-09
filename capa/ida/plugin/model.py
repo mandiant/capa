@@ -18,7 +18,6 @@ from collections import deque
 
 import idc
 import idaapi
-from PyQt5 import QtGui, QtCore
 
 import capa.rules
 import capa.ida.helpers
@@ -42,6 +41,7 @@ from capa.ida.plugin.item import (
     CapaExplorerInstructionViewItem,
 )
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.ida.plugin.qt_compat import QtGui, QtCore
 
 # default highlight color used in IDA window
 DEFAULT_HIGHLIGHT = 0xE6C700

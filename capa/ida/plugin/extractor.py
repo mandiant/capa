@@ -14,9 +14,9 @@
 
 
 import ida_kernwin
-from PyQt5 import QtCore
 
 from capa.ida.plugin.error import UserCancelledError
+from capa.ida.plugin.qt_compat import QtCore
 from capa.features.extractors.ida.extractor import IdaFeatureExtractor
 from capa.features.extractors.base_extractor import FunctionHandle
 

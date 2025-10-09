@@ -23,7 +23,6 @@ from pathlib import Path
 import idaapi
 import ida_kernwin
 import ida_settings
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
@@ -51,6 +50,7 @@ from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
 from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
+from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)
