@@ -18,9 +18,9 @@ from collections import Counter
 
 import idc
 import idaapi
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.rules
+from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 import capa.engine
 import capa.ida.helpers
 import capa.features.common

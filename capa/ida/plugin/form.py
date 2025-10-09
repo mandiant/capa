@@ -23,9 +23,9 @@ from pathlib import Path
 import idaapi
 import ida_kernwin
 import ida_settings
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
+from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 import capa.rules
 import capa.engine
 import capa.version

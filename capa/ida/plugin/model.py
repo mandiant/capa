@@ -18,9 +18,9 @@ from collections import deque
 
 import idc
 import idaapi
-from PyQt5 import QtGui, QtCore
 
 import capa.rules
+from capa.ida.plugin.qt_compat import QtGui, QtCore
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.common

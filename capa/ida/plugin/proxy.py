@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-
+from capa.ida.plugin.qt_compat import QtCore, Qt
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 

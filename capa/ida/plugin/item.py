@@ -18,9 +18,9 @@ from typing import Iterator, Optional
 
 import idc
 import idaapi
-from PyQt5 import QtCore
 
 import capa.ida.helpers
+from capa.ida.plugin.qt_compat import QtCore, qt_get_item_flag_tristate
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
@@ -55,7 +55,7 @@ class CapaExplorerDataItem:
         self.flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
         if self._can_check:
-            self.flags = self.flags | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
+            self.flags = self.flags | QtCore.Qt.ItemIsUserCheckable | qt_get_item_flag_tristate()
 
         if self.pred:
             self.pred.appendChild(self)
