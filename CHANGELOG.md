@@ -35,6 +35,8 @@
 
 ### capa Explorer IDA Pro plugin
 
+- add `ida-plugin.json` for inclusion in the IDA Pro plugin repository @williballenthin
+
 ### Development
 
 - ci: remove redundant "test_run" action from build workflow @mike-hunhoff #2692
