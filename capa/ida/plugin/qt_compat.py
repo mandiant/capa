@@ -22,13 +22,13 @@ API changes between Qt5 and Qt6.
 
 try:
     # IDA 9.2+ uses PySide6
-    from PySide6 import QtCore, QtGui, QtWidgets
+    from PySide6 import QtGui, QtCore, QtWidgets  # noqa: F401
 
     QT_LIBRARY = "PySide6"
 except ImportError:
     # Older IDA versions use PyQt5
     try:
-        from PyQt5 import QtCore, QtGui, QtWidgets
+        from PyQt5 import QtGui, QtCore, QtWidgets  # noqa: F401
 
         QT_LIBRARY = "PyQt5"
     except ImportError:

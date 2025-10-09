@@ -20,7 +20,6 @@ import idc
 import idaapi
 
 import capa.rules
-from capa.ida.plugin.qt_compat import QtGui, QtCore
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.common
@@ -42,6 +41,7 @@ from capa.ida.plugin.item import (
     CapaExplorerInstructionViewItem,
 )
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.ida.plugin.qt_compat import QtGui, QtCore
 
 # default highlight color used in IDA window
 DEFAULT_HIGHLIGHT = 0xE6C700

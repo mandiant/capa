@@ -20,7 +20,6 @@ import idc
 import idaapi
 
 import capa.rules
-from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 import capa.engine
 import capa.ida.helpers
 import capa.features.common
@@ -28,6 +27,7 @@ import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.features.address import AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
+from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 
 MAX_SECTION_SIZE = 750
 

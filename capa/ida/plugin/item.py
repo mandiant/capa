@@ -20,8 +20,8 @@ import idc
 import idaapi
 
 import capa.ida.helpers
-from capa.ida.plugin.qt_compat import QtCore, qt_get_item_flag_tristate
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.ida.plugin.qt_compat import QtCore, qt_get_item_flag_tristate
 
 
 def info_to_name(display):
