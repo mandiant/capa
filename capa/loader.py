@@ -43,7 +43,11 @@ import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import (
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+)
 from capa.features.common import (
     OS_AUTO,
     FORMAT_PE,

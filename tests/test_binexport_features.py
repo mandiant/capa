@@ -112,11 +112,36 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "xfail: not implemented yet",
         ),
         # insn/mnemonic
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("stp"), True),
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("adrp"), True),
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("bl"), True),
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("in"), False),
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.insn.Mnemonic("adrl"), False),
+        (
+            "687e79.ghidra.be2",
+            "function=0x107588",
+            capa.features.insn.Mnemonic("stp"),
+            True,
+        ),
+        (
+            "687e79.ghidra.be2",
+            "function=0x107588",
+            capa.features.insn.Mnemonic("adrp"),
+            True,
+        ),
+        (
+            "687e79.ghidra.be2",
+            "function=0x107588",
+            capa.features.insn.Mnemonic("bl"),
+            True,
+        ),
+        (
+            "687e79.ghidra.be2",
+            "function=0x107588",
+            capa.features.insn.Mnemonic("in"),
+            False,
+        ),
+        (
+            "687e79.ghidra.be2",
+            "function=0x107588",
+            capa.features.insn.Mnemonic("adrl"),
+            False,
+        ),
         # insn/number
         # 00114524 add x29,sp,#0x10
         (
@@ -170,7 +195,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.insn.OperandOffset(2, 0x20),
             False,
         ),
-        ("687e79.ghidra.be2", "function=0x105C88", capa.features.insn.Number(0xF000), True),
+        (
+            "687e79.ghidra.be2",
+            "function=0x105C88",
+            capa.features.insn.Number(0xF000),
+            True,
+        ),
         # insn/number: negative
         (
             "687e79.ghidra.be2",
@@ -256,8 +286,18 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ),
         # insn/api
         # not extracting dll name
-        ("687e79.ghidra.be2", "function=0x105c88", capa.features.insn.API("memset"), True),
-        ("687e79.ghidra.be2", "function=0x105c88", capa.features.insn.API("Nope"), False),
+        (
+            "687e79.ghidra.be2",
+            "function=0x105c88",
+            capa.features.insn.API("memset"),
+            True,
+        ),
+        (
+            "687e79.ghidra.be2",
+            "function=0x105c88",
+            capa.features.insn.API("Nope"),
+            False,
+        ),
         # insn/string
         (
             "687e79.ghidra.be2",
@@ -271,7 +311,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.common.String("AppDataService"),
             True,
         ),
-        ("687e79.ghidra.be2", "function=0x107588", capa.features.common.String("nope"), False),
+        (
+            "687e79.ghidra.be2",
+            "function=0x107588",
+            capa.features.common.String("nope"),
+            False,
+        ),
         (
             "687e79.ghidra.be2",
             "function=0x106d58",
@@ -342,14 +387,24 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             True,
         ),
         # insn/characteristic(indirect call)
-        ("d1e650.ghidra.be2", "function=0x118620", capa.features.common.Characteristic("indirect call"), True),
+        (
+            "d1e650.ghidra.be2",
+            "function=0x118620",
+            capa.features.common.Characteristic("indirect call"),
+            True,
+        ),
         (
             "d1e650.ghidra.be2",
             "function=0x118500",
             capa.features.common.Characteristic("indirect call"),
             False,
         ),
-        ("d1e650.ghidra.be2", "function=0x118620", capa.features.common.Characteristic("indirect call"), True),
+        (
+            "d1e650.ghidra.be2",
+            "function=0x118620",
+            capa.features.common.Characteristic("indirect call"),
+            True,
+        ),
         (
             "d1e650.ghidra.be2",
             "function=0x11451c",
@@ -394,7 +449,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.ghidra.be2", "file", Arch(ARCH_AMD64), False),
         ("687e79.ghidra.be2", "file", Arch(ARCH_AARCH64), True),
         ("687e79.ghidra.be2", "function=0x107588", Arch(ARCH_AARCH64), True),
-        ("687e79.ghidra.be2", "function=0x1075c0,bb=0x1076c0", Arch(ARCH_AARCH64), True),
+        (
+            "687e79.ghidra.be2",
+            "function=0x1075c0,bb=0x1076c0",
+            Arch(ARCH_AARCH64),
+            True,
+        ),
         ("687e79.ghidra.be2", "file", Format(FORMAT_ELF), True),
         ("687e79.ghidra.be2", "file", Format(FORMAT_PE), False),
         ("687e79.ghidra.be2", "function=0x107588", Format(FORMAT_ELF), True),

@@ -405,9 +405,11 @@ def main(argv=None):
                                     f"↓ {BinExport2.FlowGraph.Edge.Type.Name(edge.type)} basic block {hex(source_basic_block_address)}"
                                 )
 
-                            for instruction_index, instruction, instruction_address in idx.basic_block_instructions(
-                                basic_block
-                            ):
+                            for (
+                                instruction_index,
+                                instruction,
+                                instruction_address,
+                            ) in idx.basic_block_instructions(basic_block):
                                 mnemonic = be2.mnemonic[instruction.mnemonic_index]
 
                                 operands = []

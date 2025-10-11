@@ -156,11 +156,19 @@ def test_match_range_exact_zero():
 
     # feature is indexed, but no matches.
     # i don't think we should ever really have this case, but good to check anyways.
-    _, matches = match([r], {capa.features.insn.Number(100): {}, capa.features.insn.Mnemonic("mov"): {}}, 0x0)
+    _, matches = match(
+        [r],
+        {capa.features.insn.Number(100): {}, capa.features.insn.Mnemonic("mov"): {}},
+        0x0,
+    )
     assert "test rule" in matches
 
     # too many matches
-    _, matches = match([r], {capa.features.insn.Number(100): {1}, capa.features.insn.Mnemonic("mov"): {1}}, 0x0)
+    _, matches = match(
+        [r],
+        {capa.features.insn.Number(100): {1}, capa.features.insn.Mnemonic("mov"): {1}},
+        0x0,
+    )
     assert "test rule" not in matches
 
 
@@ -188,13 +196,28 @@ def test_match_range_with_zero():
     # ok
     _, matches = match([r], {capa.features.insn.Mnemonic("mov"): {}}, 0x0)
     assert "test rule" in matches
-    _, matches = match([r], {capa.features.insn.Number(100): {}, capa.features.insn.Mnemonic("mov"): {}}, 0x0)
+    _, matches = match(
+        [r],
+        {capa.features.insn.Number(100): {}, capa.features.insn.Mnemonic("mov"): {}},
+        0x0,
+    )
     assert "test rule" in matches
-    _, matches = match([r], {capa.features.insn.Number(100): {1}, capa.features.insn.Mnemonic("mov"): {1}}, 0x0)
+    _, matches = match(
+        [r],
+        {capa.features.insn.Number(100): {1}, capa.features.insn.Mnemonic("mov"): {1}},
+        0x0,
+    )
     assert "test rule" in matches
 
     # too many matches
-    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}, capa.features.insn.Mnemonic("mov"): {1, 2}}, 0x0)
+    _, matches = match(
+        [r],
+        {
+            capa.features.insn.Number(100): {1, 2},
+            capa.features.insn.Mnemonic("mov"): {1, 2},
+        },
+        0x0,
+    )
     assert "test rule" not in matches
 
 
@@ -613,7 +636,14 @@ def test_match_not():
     )
     r = capa.rules.Rule.from_yaml(rule)
 
-    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}, capa.features.insn.Mnemonic("mov"): {1, 2}}, 0x0)
+    _, matches = match(
+        [r],
+        {
+            capa.features.insn.Number(100): {1, 2},
+            capa.features.insn.Mnemonic("mov"): {1, 2},
+        },
+        0x0,
+    )
     assert "test rule" in matches
 
 

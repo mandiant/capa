@@ -34,7 +34,10 @@ import capa.features.address
 import capa.features.extractors.pefile
 import capa.features.extractors.base_extractor
 from capa.features.common import FORMAT_FREEZE, Feature
-from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 logger = logging.getLogger("show-unused-features")
 
@@ -52,14 +55,19 @@ def get_rules_feature_set(rules: capa.rules.RuleSet) -> set[Feature]:
 
 
 def get_file_features(
-    functions: tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.StaticFeatureExtractor
+    functions: tuple[FunctionHandle, ...],
+    extractor: capa.features.extractors.base_extractor.StaticFeatureExtractor,
 ) -> Counter[Feature]:
     feature_map: Counter[Feature] = Counter()
 
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
-            logger.debug("skipping library function %s (%s)", format_address(f.address), function_name)
+            logger.debug(
+                "skipping library function %s (%s)",
+                format_address(f.address),
+                function_name,
+            )
             continue
 
         for feature, _ in extractor.extract_function_features(f):
@@ -148,7 +156,12 @@ def main(argv=None):
         if input_format == FORMAT_FREEZE:
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
-            function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
+            function_handles = tuple(
+                filter(
+                    lambda fh: format_address(fh.address) == args.function,
+                    function_handles,
+                )
+            )
 
             if args.function not in [format_address(fh.address) for fh in function_handles]:
                 print(f"{args.function} not a function")

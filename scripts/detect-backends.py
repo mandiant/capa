@@ -22,8 +22,16 @@ import rich
 import rich.table
 
 import capa.main
-from capa.features.extractors.ida.idalib import find_idalib, load_idalib, is_idalib_installed
-from capa.features.extractors.binja.find_binja_api import find_binaryninja, load_binaryninja, is_binaryninja_installed
+from capa.features.extractors.ida.idalib import (
+    find_idalib,
+    load_idalib,
+    is_idalib_installed,
+)
+from capa.features.extractors.binja.find_binja_api import (
+    find_binaryninja,
+    load_binaryninja,
+    is_binaryninja_installed,
+)
 
 logger = logging.getLogger(__name__)
 

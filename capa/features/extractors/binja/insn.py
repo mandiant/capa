@@ -27,10 +27,28 @@ from binaryninja import (
 )
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
+from capa.features.insn import (
+    API,
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    Mnemonic,
+    OperandNumber,
+    OperandOffset,
+)
+from capa.features.common import (
+    MAX_BYTES_FEATURE_SIZE,
+    Bytes,
+    String,
+    Feature,
+    Characteristic,
+)
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs, get_llil_instr_at_addr
+from capa.features.extractors.binja.helpers import (
+    DisassemblyInstruction,
+    visit_llil_exprs,
+    get_llil_instr_at_addr,
+)
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -136,11 +154,20 @@ def extract_insn_number_features(
         if il.operation == LowLevelILOperation.LLIL_LOAD:
             return False
 
-        if il.operation not in [LowLevelILOperation.LLIL_CONST, LowLevelILOperation.LLIL_CONST_PTR]:
+        if il.operation not in [
+            LowLevelILOperation.LLIL_CONST,
+            LowLevelILOperation.LLIL_CONST_PTR,
+        ]:
             return True
 
         for op in parent.operands:
-            if isinstance(op, ILRegister) and op.name in ["esp", "ebp", "rsp", "rbp", "sp"]:
+            if isinstance(op, ILRegister) and op.name in [
+                "esp",
+                "ebp",
+                "rsp",
+                "rbp",
+                "sp",
+            ]:
                 return False
             elif isinstance(op, LowLevelILInstruction) and op.operation == LowLevelILOperation.LLIL_REG:
                 if op.src.name in ["esp", "ebp", "rsp", "rbp", "sp"]:
@@ -173,7 +200,10 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     candidate_addrs = set()
 
     llil = func.get_llil_at(ih.address)
-    if llil is None or llil.operation in [LowLevelILOperation.LLIL_CALL, LowLevelILOperation.LLIL_CALL_STACK_ADJUST]:
+    if llil is None or llil.operation in [
+        LowLevelILOperation.LLIL_CALL,
+        LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
+    ]:
         return
 
     for ref in bv.get_code_refs_from(ih.address):
@@ -187,7 +217,10 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
     # collect candidate address by enumerating all integers, https://github.com/Vector35/binaryninja-api/issues/3966
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
-        if il.operation in [LowLevelILOperation.LLIL_CONST, LowLevelILOperation.LLIL_CONST_PTR]:
+        if il.operation in [
+            LowLevelILOperation.LLIL_CONST,
+            LowLevelILOperation.LLIL_CONST_PTR,
+        ]:
             value = il.value.value
             if value > 0:
                 candidate_addrs.add(value)
@@ -232,7 +265,10 @@ def extract_insn_string_features(
 
     # collect candidate address by enumerating all integers, https://github.com/Vector35/binaryninja-api/issues/3966
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
-        if il.operation in [LowLevelILOperation.LLIL_CONST, LowLevelILOperation.LLIL_CONST_PTR]:
+        if il.operation in [
+            LowLevelILOperation.LLIL_CONST,
+            LowLevelILOperation.LLIL_CONST_PTR,
+        ]:
             value = il.value.value
             if value > 0:
                 candidate_addrs.add(value)
@@ -283,7 +319,13 @@ def extract_insn_offset_features(
             left = il.left
             right = il.right
             # Exclude offsets based on stack/franme pointers
-            if left.operation == LowLevelILOperation.LLIL_REG and left.src.name in ["esp", "ebp", "rsp", "rbp", "sp"]:
+            if left.operation == LowLevelILOperation.LLIL_REG and left.src.name in [
+                "esp",
+                "ebp",
+                "rsp",
+                "rbp",
+                "sp",
+            ]:
                 return True
 
             if right.operation != LowLevelILOperation.LLIL_CONST:
@@ -294,7 +336,10 @@ def extract_insn_offset_features(
             # [0, MAX_STRUCTURE_SIZE]. For example,
             # add eax, 0x10,
             # lea ebx, [eax + 1]
-            if parent.operation not in [LowLevelILOperation.LLIL_LOAD, LowLevelILOperation.LLIL_STORE]:
+            if parent.operation not in [
+                LowLevelILOperation.LLIL_LOAD,
+                LowLevelILOperation.LLIL_STORE,
+            ]:
                 if il.operation != LowLevelILOperation.LLIL_ADD or (not 0 < raw_value < MAX_STRUCTURE_SIZE):
                     return False
 
@@ -309,7 +354,10 @@ def extract_insn_offset_features(
             return False
 
         # An edge case: for code like `push dword [esi]`, we need to generate a feature for offset 0x0
-        elif il.operation in [LowLevelILOperation.LLIL_LOAD, LowLevelILOperation.LLIL_STORE]:
+        elif il.operation in [
+            LowLevelILOperation.LLIL_LOAD,
+            LowLevelILOperation.LLIL_STORE,
+        ]:
             if il.operands[0].operation == LowLevelILOperation.LLIL_REG:
                 results.append((Offset(0), ih.address))
                 results.append((OperandOffset(index, 0), ih.address))
@@ -550,12 +598,18 @@ def extract_function_indirect_call_characteristic_features(
     ]:
         return
 
-    if llil.dest.operation in [LowLevelILOperation.LLIL_CONST, LowLevelILOperation.LLIL_CONST_PTR]:
+    if llil.dest.operation in [
+        LowLevelILOperation.LLIL_CONST,
+        LowLevelILOperation.LLIL_CONST_PTR,
+    ]:
         return
 
     if llil.dest.operation == LowLevelILOperation.LLIL_LOAD:
         src = llil.dest.src
-        if src.operation in [LowLevelILOperation.LLIL_CONST, LowLevelILOperation.LLIL_CONST_PTR]:
+        if src.operation in [
+            LowLevelILOperation.LLIL_CONST,
+            LowLevelILOperation.LLIL_CONST_PTR,
+        ]:
             return
 
     yield Characteristic("indirect call"), ih.address

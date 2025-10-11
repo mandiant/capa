@@ -82,7 +82,10 @@ except ImportError:
     pass
 
 
-@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
+@pytest.mark.skipif(
+    binja_present is False,
+    reason="Skip binja tests if the binaryninja Python API is not installed",
+)
 def test_binja_hash_extraction():
     extractor = fixtures.get_binja_extractor(fixtures.get_data_path_by_name("mimikatz"))
     hashes = SampleHashes(

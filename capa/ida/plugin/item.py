@@ -158,7 +158,13 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
     fmt = "%s (%d matches)"
 
     def __init__(
-        self, parent: CapaExplorerDataItem, name: str, namespace: str, count: int, source: str, can_check=True
+        self,
+        parent: CapaExplorerDataItem,
+        name: str,
+        namespace: str,
+        count: int,
+        source: str,
+        can_check=True,
     ):
         display = self.fmt % (name, count) if count > 1 else name
         super().__init__(parent, [display, "", namespace], can_check)
@@ -220,7 +226,11 @@ class CapaExplorerInstructionItem(CapaExplorerBlockItem):
 
 class CapaExplorerDefaultItem(CapaExplorerDataItem):
     def __init__(
-        self, parent: CapaExplorerDataItem, display: str, details: str = "", location: Optional[Address] = None
+        self,
+        parent: CapaExplorerDataItem,
+        display: str,
+        details: str = "",
+        location: Optional[Address] = None,
     ):
         ea = None
         if location:
@@ -231,7 +241,11 @@ class CapaExplorerDefaultItem(CapaExplorerDataItem):
 
 class CapaExplorerFeatureItem(CapaExplorerDataItem):
     def __init__(
-        self, parent: CapaExplorerDataItem, display: str, location: Optional[Address] = None, details: str = ""
+        self,
+        parent: CapaExplorerDataItem,
+        display: str,
+        location: Optional[Address] = None,
+        details: str = "",
     ):
         if location:
             assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))

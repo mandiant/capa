@@ -41,10 +41,16 @@ def run_headless():
         help="path to rule file or directory",
     )
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="enable verbose result document (no effect with --json)",
     )
     parser.add_argument(
-        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
+        "-vv",
+        "--vverbose",
+        action="store_true",
+        help="enable very verbose result document (no effect with --json)",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
     parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
@@ -120,7 +126,10 @@ def run_ui():
         return capa.main.E_MISSING_RULES
 
     verbose = askChoice(  # type: ignore [name-defined] # noqa: F821
-        "capa output verbosity", "Choose capa output verbosity", ["default", "verbose", "vverbose"], "default"
+        "capa output verbosity",
+        "Choose capa output verbosity",
+        ["default", "verbose", "vverbose"],
+        "default",
     )
 
     rules_path: pathlib.Path = pathlib.Path(rules_dir)

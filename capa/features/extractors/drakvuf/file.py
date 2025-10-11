@@ -18,7 +18,12 @@ from typing import Iterator
 
 from capa.features.file import Import
 from capa.features.common import Feature
-from capa.features.address import Address, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    AbsoluteVirtualAddress,
+)
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.base_extractor import ProcessHandle
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport

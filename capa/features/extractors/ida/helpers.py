@@ -82,7 +82,10 @@ else:
 
 
 def get_functions(
-    start: Optional[int] = None, end: Optional[int] = None, skip_thunks: bool = False, skip_libs: bool = False
+    start: Optional[int] = None,
+    end: Optional[int] = None,
+    skip_thunks: bool = False,
+    skip_libs: bool = False,
 ) -> Iterator[FunctionHandle]:
     """get functions, range optional
 

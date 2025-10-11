@@ -340,12 +340,20 @@ DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 def get_sample_capabilities(ctx: Context, path: Path) -> set[str]:
     nice_path = path.resolve().absolute()
     if path in ctx.capabilities_by_sample:
-        logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
+        logger.debug(
+            "found cached results: %s: %d capabilities",
+            nice_path,
+            len(ctx.capabilities_by_sample[path]),
+        )
         return ctx.capabilities_by_sample[path]
 
     logger.debug("analyzing sample: %s", nice_path)
 
-    args = argparse.Namespace(input_file=nice_path, format=capa.main.FORMAT_AUTO, backend=capa.main.BACKEND_AUTO)
+    args = argparse.Namespace(
+        input_file=nice_path,
+        format=capa.main.FORMAT_AUTO,
+        backend=capa.main.BACKEND_AUTO,
+    )
     format_ = capa.main.get_input_format_from_cli(args)
     backend = capa.main.get_backend_from_cli(args, format_)
 

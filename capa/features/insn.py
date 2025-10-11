@@ -34,7 +34,12 @@ class API(Feature):
 
 class _AccessFeature(Feature, abc.ABC):
     # superclass: don't use directly
-    def __init__(self, value: str, access: Optional[str] = None, description: Optional[str] = None):
+    def __init__(
+        self,
+        value: str,
+        access: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
         super().__init__(value, description=description)
         if access is not None:
             if access not in VALID_FEATURE_ACCESS:

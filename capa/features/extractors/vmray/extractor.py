@@ -29,8 +29,16 @@ from capa.features.address import (
     DynamicCallAddress,
     AbsoluteVirtualAddress,
 )
-from capa.features.extractors.vmray import VMRayAnalysis, VMRayMonitorThread, VMRayMonitorProcess
-from capa.features.extractors.vmray.models import PARAM_TYPE_STR, ParamList, FunctionCall
+from capa.features.extractors.vmray import (
+    VMRayAnalysis,
+    VMRayMonitorThread,
+    VMRayMonitorProcess,
+)
+from capa.features.extractors.vmray.models import (
+    PARAM_TYPE_STR,
+    ParamList,
+    FunctionCall,
+)
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,

@@ -641,21 +641,35 @@ def build_statements(d, scopes: Scopes):
     key = list(d.keys())[0]
     description = pop_statement_description_entry(d[key])
     if key == "and":
-        return ceng.And(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.And(
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
     elif key == "or":
-        return ceng.Or(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.Or(
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
         return ceng.Not(build_statements(d[key][0], scopes), description=description)
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return ceng.Some(count, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.Some(
+            count,
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return ceng.Some(0, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.Some(
+            0,
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
 
     elif key == "process":
         if not is_subscope_compatible(scopes.dynamic, Scope.PROCESS):
@@ -665,7 +679,9 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.PROCESS, build_statements(d[key][0], Scopes(dynamic=Scope.PROCESS)), description=description
+            Scope.PROCESS,
+            build_statements(d[key][0], Scopes(dynamic=Scope.PROCESS)),
+            description=description,
         )
 
     elif key == "thread":
@@ -676,7 +692,9 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.THREAD, build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)), description=description
+            Scope.THREAD,
+            build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)),
+            description=description,
         )
 
     elif key == "span of calls":
@@ -700,7 +718,9 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.CALL, build_statements(d[key][0], Scopes(dynamic=Scope.CALL)), description=description
+            Scope.CALL,
+            build_statements(d[key][0], Scopes(dynamic=Scope.CALL)),
+            description=description,
         )
 
     elif key == "function":
@@ -711,7 +731,9 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.FUNCTION, build_statements(d[key][0], Scopes(static=Scope.FUNCTION)), description=description
+            Scope.FUNCTION,
+            build_statements(d[key][0], Scopes(static=Scope.FUNCTION)),
+            description=description,
         )
 
     elif key == "basic block":
@@ -722,7 +744,9 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.BASIC_BLOCK, build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK)), description=description
+            Scope.BASIC_BLOCK,
+            build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK)),
+            description=description,
         )
 
     elif key == "instruction":
@@ -1574,7 +1598,14 @@ class RuleSet:
             # Other numbers are assumed to be uncommon.
             return 7
 
-        elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)):
+        elif isinstance(
+            node,
+            (
+                capa.features.common.Substring,
+                capa.features.common.Regex,
+                capa.features.common.Bytes,
+            ),
+        ):
             # Scanning features (non-hashable), which we can't use for quick matching/filtering.
             return 0
 
@@ -1814,21 +1845,38 @@ class RuleSet:
             string_features = [
                 feature
                 for feature in features
-                if isinstance(feature, (capa.features.common.Substring, capa.features.common.Regex))
+                if isinstance(
+                    feature,
+                    (capa.features.common.Substring, capa.features.common.Regex),
+                )
             ]
             bytes_features = [feature for feature in features if isinstance(feature, capa.features.common.Bytes)]
             hashable_features = [
                 feature
                 for feature in features
                 if not isinstance(
-                    feature, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)
+                    feature,
+                    (
+                        capa.features.common.Substring,
+                        capa.features.common.Regex,
+                        capa.features.common.Bytes,
+                    ),
                 )
             ]
 
-            logger.debug("indexing: features: %d, score: %d, rule: %s", len(features), score, rule_name)
+            logger.debug(
+                "indexing: features: %d, score: %d, rule: %s",
+                len(features),
+                score,
+                rule_name,
+            )
             scores_by_rule[rule_name] = score
             for feature in features:
-                logger.debug("        : [%d] %s", RuleSet._score_feature(scores_by_rule, feature), feature)
+                logger.debug(
+                    "        : [%d] %s",
+                    RuleSet._score_feature(scores_by_rule, feature),
+                    feature,
+                )
 
             if string_features:
                 string_rules[rule_name] = cast(list[Feature], string_features)
@@ -1845,7 +1893,9 @@ class RuleSet:
             len([feature for feature, rules in rules_by_feature.items() if len(rules) > 3]),
         )
         logger.debug(
-            "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
+            "indexing: %d scanning string features, %d scanning bytes features",
+            len(string_rules),
+            len(bytes_rules),
         )
 
         return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
@@ -1907,13 +1957,23 @@ class RuleSet:
         for rule in rules:
             for k, v in rule.meta.items():
                 if isinstance(v, str) and tag in v:
-                    logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
+                    logger.debug(
+                        'using rule "%s" and dependencies, found tag in meta.%s: %s',
+                        rule.name,
+                        k,
+                        v,
+                    )
                     rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                     break
                 if isinstance(v, list):
                     for vv in v:
                         if tag in vv:
-                            logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, vv)
+                            logger.debug(
+                                'using rule "%s" and dependencies, found tag in meta.%s: %s',
+                                rule.name,
+                                k,
+                                vv,
+                            )
                             rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                             break
         return RuleSet(list(rules_filtered))

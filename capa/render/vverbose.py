@@ -55,7 +55,11 @@ def hanging_indent(s: str, indent: int) -> str:
 
 
 def render_locations(
-    console: Console, layout: rd.Layout, locations: Iterable[frz.Address], indent: int, use_short_format: bool = False
+    console: Console,
+    layout: rd.Layout,
+    locations: Iterable[frz.Address],
+    indent: int,
+    use_short_format: bool = False,
 ):
     """
     Render the given locations, such as virtual address or pid/tid/callid with process name.
@@ -117,7 +121,13 @@ def render_locations(
         raise RuntimeError("unreachable")
 
 
-def render_statement(console: Console, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int):
+def render_statement(
+    console: Console,
+    layout: rd.Layout,
+    match: rd.Match,
+    statement: rd.Statement,
+    indent: int,
+):
     console.write("  " * indent)
 
     if isinstance(statement, rd.SubscopeStatement):
@@ -191,7 +201,12 @@ def render_string_value(s: str) -> str:
 
 
 def render_feature(
-    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, feature: frzf.Feature, indent: int
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    feature: frzf.Feature,
+    indent: int,
 ):
     console.write("  " * indent)
 
@@ -220,7 +235,13 @@ def render_feature(
             value = render_string_value(value)
 
         elif isinstance(
-            feature, (frzf.NumberFeature, frzf.OffsetFeature, frzf.OperandNumberFeature, frzf.OperandOffsetFeature)
+            feature,
+            (
+                frzf.NumberFeature,
+                frzf.OffsetFeature,
+                frzf.OperandNumberFeature,
+                frzf.OperandOffsetFeature,
+            ),
         ):
             assert isinstance(value, int)
             value = capa.helpers.hex(value)
@@ -275,7 +296,14 @@ def render_feature(
             console.writeln()
 
 
-def render_node(console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, node: rd.Node, indent: int):
+def render_node(
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    node: rd.Node,
+    indent: int,
+):
     if isinstance(node, rd.StatementNode):
         render_statement(console, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
@@ -293,7 +321,12 @@ MODE_FAILURE = "failure"
 
 
 def render_match(
-    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, indent=0, mode=MODE_SUCCESS
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    indent=0,
+    mode=MODE_SUCCESS,
 ):
     child_mode = mode
     if mode == MODE_SUCCESS:
@@ -436,7 +469,10 @@ def render_rules(console: Console, doc: rd.ResultDocument):
 
         if rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov:
             rows.append(
-                ("maec/malware-category", rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov)
+                (
+                    "maec/malware-category",
+                    rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov,
+                )
             )
 
         rows.append(("author", ", ".join(rule.meta.authors)))
@@ -450,7 +486,12 @@ def render_rules(console: Console, doc: rd.ResultDocument):
             rows.append(("scope", rule.meta.scopes.dynamic.value))
 
         if rule.meta.attack:
-            rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
+            rows.append(
+                (
+                    "att&ck",
+                    ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack]),
+                )
+            )
 
         if rule.meta.mbc:
             rows.append(("mbc", ", ".join([rutils.format_parts_id(v) for v in rule.meta.mbc])))
@@ -503,9 +544,19 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                         console.write(v.render_thread(doc.meta.analysis.layout, location))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.SPAN_OF_CALLS:
                         calls = sorted(set(collect_span_of_calls_locations(match)))
-                        console.write(hanging_indent(v.render_span_of_calls(doc.meta.analysis.layout, calls), indent=1))
+                        console.write(
+                            hanging_indent(
+                                v.render_span_of_calls(doc.meta.analysis.layout, calls),
+                                indent=1,
+                            )
+                        )
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
-                        console.write(hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1))
+                        console.write(
+                            hanging_indent(
+                                v.render_call(doc.meta.analysis.layout, location),
+                                indent=1,
+                            )
+                        )
                     else:
                         capa.helpers.assert_never(rule.meta.scopes.dynamic)
 

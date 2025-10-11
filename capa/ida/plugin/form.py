@@ -49,7 +49,10 @@ from capa.ida.plugin.cache import CapaRuleGenFeatureCache
 from capa.ida.plugin.error import UserCancelledError
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
-from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
+from capa.ida.plugin.proxy import (
+    CapaExplorerRangeProxyModel,
+    CapaExplorerSearchProxyModel,
+)
 from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
 from capa.features.extractors.base_extractor import FunctionHandle
 
@@ -107,7 +110,9 @@ class QLineEditClicked(QtWidgets.QLineEdit):
         old = self.text()
         new = str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent(), "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+                self.parent(),
+                "Please select a capa rules directory",
+                settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
             )
         )
         if new:
@@ -131,7 +136,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.edit_rules_link = QtWidgets.QLabel()
         self.edit_analyze = QtWidgets.QComboBox()
         self.btn_delete_results = QtWidgets.QPushButton(
-            self.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop), "Delete cached capa results"
+            self.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop),
+            "Delete cached capa results",
         )
 
         self.edit_rules_link.setText(
@@ -652,7 +658,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                 f"Failed to load capa rules from {settings.user[CAPA_SETTINGS_RULE_PATH]}"
             )
 
-            logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
+            logger.error(
+                "Failed to load capa rules from %s (error: %s).",
+                settings.user[CAPA_SETTINGS_RULE_PATH],
+                e,
+            )
             logger.error(
                 "Make sure your file directory contains properly "  # noqa: G003 [logging statement uses +]
                 + "formatted capa rules. You can download and extract the official rules from %s. "
@@ -1028,9 +1038,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         all_function_features: FeatureSet = collections.defaultdict(set)
         try:
             if self.rulegen_current_function is not None:
-                _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
-                    ruleset, self.rulegen_current_function
-                )
+                (
+                    _,
+                    func_matches,
+                    bb_matches,
+                    insn_matches,
+                ) = self.rulegen_feature_cache.find_code_capabilities(ruleset, self.rulegen_current_function)
                 all_function_features.update(
                     self.rulegen_feature_cache.get_all_function_features(self.rulegen_current_function)
                 )
@@ -1209,9 +1222,12 @@ class CapaExplorerForm(idaapi.PluginForm):
             )
         ):
             try:
-                _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
-                    ruleset, self.rulegen_current_function
-                )
+                (
+                    _,
+                    func_matches,
+                    bb_matches,
+                    insn_matches,
+                ) = self.rulegen_feature_cache.find_code_capabilities(ruleset, self.rulegen_current_function)
             except Exception as e:
                 self.set_rulegen_status(f"Failed to create function rule matches from rule set ({e})")
                 return
@@ -1325,7 +1341,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         path = Path(path)
         if not path.parent.exists():
-            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            logger.warning(
+                "Failed to save file: parent directory '%s' does not exist.",
+                path.parent,
+            )
             return
 
         logger.info("Saving capa results to %s.", path)
@@ -1345,7 +1364,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         path = Path(rule_file_path)
         if not path.parent.exists():
-            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            logger.warning(
+                "Failed to save file: parent directory '%s' does not exist.",
+                path.parent,
+            )
             return
 
         logger.info("Saving rule to %s.", path)
@@ -1408,7 +1430,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+                self.parent,
+                "Please select a capa rules directory",
+                settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
             )
         )
 

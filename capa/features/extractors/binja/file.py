@@ -31,7 +31,12 @@ from capa.features.common import (
     Feature,
     Characteristic,
 )
-from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    FileOffsetAddress,
+    AbsoluteVirtualAddress,
+)
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
@@ -131,7 +136,10 @@ def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Addre
     """
     for sym_name in bv.symbols:
         for sym in bv.symbols[sym_name]:
-            if sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.FunctionSymbol]:
+            if sym.type not in [
+                SymbolType.LibraryFunctionSymbol,
+                SymbolType.FunctionSymbol,
+            ]:
                 continue
 
             name = sym.short_name

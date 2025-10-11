@@ -23,7 +23,13 @@ from dataclasses import dataclass
 
 import capa.features.address
 from capa.features.common import Feature
-from capa.features.address import Address, ThreadAddress, ProcessAddress, DynamicCallAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+    AbsoluteVirtualAddress,
+)
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
@@ -121,7 +127,9 @@ class StaticFeatureExtractor:
         self._sample_hashes = hashes
 
     @abc.abstractmethod
-    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
+    def get_base_address(
+        self,
+    ) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         """
         fetch the preferred load address at which the sample was analyzed.
 

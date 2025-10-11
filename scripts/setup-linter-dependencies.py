@@ -191,7 +191,11 @@ def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup linter dependencies.")
     parser.add_argument(
-        "--extractor", type=str, choices=["both", "mbc", "att&ck"], default="both", help="Extractor that will be run"
+        "--extractor",
+        type=str,
+        choices=["both", "mbc", "att&ck"],
+        default="both",
+        help="Extractor that will be run",
     )
     parser.add_argument(
         "--output",

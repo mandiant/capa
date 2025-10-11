@@ -20,8 +20,22 @@ from ghidra.program.model.block import SimpleBlockModel
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ghidra.helpers
-from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
+from capa.features.insn import (
+    API,
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    Mnemonic,
+    OperandNumber,
+    OperandOffset,
+)
+from capa.features.common import (
+    MAX_BYTES_FEATURE_SIZE,
+    Bytes,
+    String,
+    Feature,
+    Characteristic,
+)
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -55,7 +69,11 @@ def get_fakes(ctx: dict[str, Any]) -> dict[int, Any]:
 
 
 def check_for_api_call(
-    insn, externs: dict[int, Any], fakes: dict[int, Any], imports: dict[int, Any], imp_or_ex: bool
+    insn,
+    externs: dict[int, Any],
+    fakes: dict[int, Any],
+    imports: dict[int, Any],
+    imp_or_ex: bool,
 ) -> Iterator[Any]:
     """check instruction for API call
 
@@ -417,7 +435,8 @@ def extract_function_indirect_call_characteristic_features(
 
 
 def check_nzxor_security_cookie_delta(
-    fh: ghidra.program.database.function.FunctionDB, insn: ghidra.program.database.code.InstructionDB
+    fh: ghidra.program.database.function.FunctionDB,
+    insn: ghidra.program.database.code.InstructionDB,
 ):
     """
     Get the first and last blocks of the function

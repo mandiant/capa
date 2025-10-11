@@ -56,4 +56,8 @@ def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_loop,
+    extract_recursive_call,
+)

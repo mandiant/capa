@@ -138,7 +138,12 @@ def get_capa_results(args):
         #
         # if success, then status=ok, and results found in property "ok"
         # if error, then status=error, and human readable message in property "error"
-        return {"path": input_file, "status": "error", "error": str(e), "status_code": e.status_code}
+        return {
+            "path": input_file,
+            "status": "error",
+            "error": str(e),
+            "status_code": e.status_code,
+        }
     except Exception as e:
         return {
             "path": input_file,
@@ -161,9 +166,17 @@ def main(argv=None):
 
         parser = argparse.ArgumentParser(description="detect capabilities in programs.")
         capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os", "backend"})
-        parser.add_argument("input_directory", type=str, help="Path to directory of files to recursively analyze")
         parser.add_argument(
-            "-n", "--parallelism", type=int, default=multiprocessing.cpu_count(), help="parallelism factor"
+            "input_directory",
+            type=str,
+            help="Path to directory of files to recursively analyze",
+        )
+        parser.add_argument(
+            "-n",
+            "--parallelism",
+            type=int,
+            default=multiprocessing.cpu_count(),
+            help="parallelism factor",
         )
         parser.add_argument("--no-mp", action="store_true", help="disable subprocesses")
         args = parser.parse_args(args=argv)
@@ -205,7 +218,17 @@ def main(argv=None):
         results = {}
         for result in mapper(
             get_capa_results,
-            [(rules, args.signatures, args.format, args.backend, args.os, str(sample)) for sample in samples],
+            [
+                (
+                    rules,
+                    args.signatures,
+                    args.format,
+                    args.backend,
+                    args.os,
+                    str(sample),
+                )
+                for sample in samples
+            ],
             parallelism=args.parallelism,
         ):
             if result["status"] == "error":

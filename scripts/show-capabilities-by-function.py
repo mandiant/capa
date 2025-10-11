@@ -136,7 +136,8 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
     capa.main.install_common_args(
-        parser, wanted={"format", "os", "backend", "input_file", "signatures", "rules", "tag"}
+        parser,
+        wanted={"format", "os", "backend", "input_file", "signatures", "rules", "tag"},
     )
     args = parser.parse_args(args=argv)
 

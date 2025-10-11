@@ -90,8 +90,32 @@ class BinExport2(google.protobuf.message.Message):
             architecture_name: builtins.str | None = ...,
             timestamp: builtins.int | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["architecture_name", b"architecture_name", "executable_id", b"executable_id", "executable_name", b"executable_name", "timestamp", b"timestamp"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["architecture_name", b"architecture_name", "executable_id", b"executable_id", "executable_name", b"executable_name", "timestamp", b"timestamp"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "architecture_name",
+                b"architecture_name",
+                "executable_id",
+                b"executable_id",
+                "executable_name",
+                b"executable_name",
+                "timestamp",
+                b"timestamp",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "architecture_name",
+                b"architecture_name",
+                "executable_id",
+                b"executable_id",
+                "executable_name",
+                b"executable_name",
+                "timestamp",
+                b"timestamp",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class CallGraph(google.protobuf.message.Message):
@@ -105,7 +129,12 @@ class BinExport2(google.protobuf.message.Message):
                 ValueType = typing.NewType("ValueType", builtins.int)
                 V: typing_extensions.TypeAlias = ValueType
 
-            class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[BinExport2.CallGraph.Vertex._Type.ValueType], builtins.type):
+            class _TypeEnumTypeWrapper(
+                google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
+                    BinExport2.CallGraph.Vertex._Type.ValueType
+                ],
+                builtins.type,
+            ):
                 DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
                 NORMAL: BinExport2.CallGraph.Vertex._Type.ValueType  # 0
                 """Regular function with full disassembly."""
@@ -170,8 +199,40 @@ class BinExport2(google.protobuf.message.Message):
                 library_index: builtins.int | None = ...,
                 module_index: builtins.int | None = ...,
             ) -> None: ...
-            def HasField(self, field_name: typing_extensions.Literal["address", b"address", "demangled_name", b"demangled_name", "library_index", b"library_index", "mangled_name", b"mangled_name", "module_index", b"module_index", "type", b"type"]) -> builtins.bool: ...
-            def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "demangled_name", b"demangled_name", "library_index", b"library_index", "mangled_name", b"mangled_name", "module_index", b"module_index", "type", b"type"]) -> None: ...
+            def HasField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "address",
+                    b"address",
+                    "demangled_name",
+                    b"demangled_name",
+                    "library_index",
+                    b"library_index",
+                    "mangled_name",
+                    b"mangled_name",
+                    "module_index",
+                    b"module_index",
+                    "type",
+                    b"type",
+                ],
+            ) -> builtins.bool: ...
+            def ClearField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "address",
+                    b"address",
+                    "demangled_name",
+                    b"demangled_name",
+                    "library_index",
+                    b"library_index",
+                    "mangled_name",
+                    b"mangled_name",
+                    "module_index",
+                    b"module_index",
+                    "type",
+                    b"type",
+                ],
+            ) -> None: ...
 
         @typing_extensions.final
         class Edge(google.protobuf.message.Message):
@@ -188,28 +249,57 @@ class BinExport2(google.protobuf.message.Message):
                 source_vertex_index: builtins.int | None = ...,
                 target_vertex_index: builtins.int | None = ...,
             ) -> None: ...
-            def HasField(self, field_name: typing_extensions.Literal["source_vertex_index", b"source_vertex_index", "target_vertex_index", b"target_vertex_index"]) -> builtins.bool: ...
-            def ClearField(self, field_name: typing_extensions.Literal["source_vertex_index", b"source_vertex_index", "target_vertex_index", b"target_vertex_index"]) -> None: ...
+            def HasField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "source_vertex_index",
+                    b"source_vertex_index",
+                    "target_vertex_index",
+                    b"target_vertex_index",
+                ],
+            ) -> builtins.bool: ...
+            def ClearField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "source_vertex_index",
+                    b"source_vertex_index",
+                    "target_vertex_index",
+                    b"target_vertex_index",
+                ],
+            ) -> None: ...
 
         VERTEX_FIELD_NUMBER: builtins.int
         EDGE_FIELD_NUMBER: builtins.int
         @property
-        def vertex(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.CallGraph.Vertex]:
+        def vertex(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___BinExport2.CallGraph.Vertex
+        ]:
             """vertices == functions in the call graph.
             Important: Most downstream tooling (notably BinDiff), need these to be
                        sorted by `Vertex::address` (ascending). For C++, the
                        `BinExport2Writer` class enforces this invariant.
             """
         @property
-        def edge(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.CallGraph.Edge]:
+        def edge(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___BinExport2.CallGraph.Edge
+        ]:
             """edges == calls in the call graph."""
         def __init__(
             self,
             *,
-            vertex: collections.abc.Iterable[global___BinExport2.CallGraph.Vertex] | None = ...,
-            edge: collections.abc.Iterable[global___BinExport2.CallGraph.Edge] | None = ...,
+            vertex: collections.abc.Iterable[global___BinExport2.CallGraph.Vertex]
+            | None = ...,
+            edge: collections.abc.Iterable[global___BinExport2.CallGraph.Edge]
+            | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing_extensions.Literal["edge", b"edge", "vertex", b"vertex"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal["edge", b"edge", "vertex", b"vertex"],
+        ) -> None: ...
 
     @typing_extensions.final
     class Expression(google.protobuf.message.Message):
@@ -221,7 +311,12 @@ class BinExport2(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[BinExport2.Expression._Type.ValueType], builtins.type):
+        class _TypeEnumTypeWrapper(
+            google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
+                BinExport2.Expression._Type.ValueType
+            ],
+            builtins.type,
+        ):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             SYMBOL: BinExport2.Expression._Type.ValueType  # 1
             IMMEDIATE_INT: BinExport2.Expression._Type.ValueType  # 2
@@ -274,8 +369,36 @@ class BinExport2(google.protobuf.message.Message):
             parent_index: builtins.int | None = ...,
             is_relocation: builtins.bool | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["immediate", b"immediate", "is_relocation", b"is_relocation", "parent_index", b"parent_index", "symbol", b"symbol", "type", b"type"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["immediate", b"immediate", "is_relocation", b"is_relocation", "parent_index", b"parent_index", "symbol", b"symbol", "type", b"type"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "immediate",
+                b"immediate",
+                "is_relocation",
+                b"is_relocation",
+                "parent_index",
+                b"parent_index",
+                "symbol",
+                b"symbol",
+                "type",
+                b"type",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "immediate",
+                b"immediate",
+                "is_relocation",
+                b"is_relocation",
+                "parent_index",
+                b"parent_index",
+                "symbol",
+                b"symbol",
+                "type",
+                b"type",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Operand(google.protobuf.message.Message):
@@ -285,7 +408,11 @@ class BinExport2(google.protobuf.message.Message):
 
         EXPRESSION_INDEX_FIELD_NUMBER: builtins.int
         @property
-        def expression_index(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+        def expression_index(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+            builtins.int
+        ]:
             """Contains all expressions constituting this operand. All expressions
             should be linked into a single tree, i.e. there should only be one
             expression in this list with parent_index == NULL and all others should
@@ -299,7 +426,12 @@ class BinExport2(google.protobuf.message.Message):
             *,
             expression_index: collections.abc.Iterable[builtins.int] | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing_extensions.Literal["expression_index", b"expression_index"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "expression_index", b"expression_index"
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Mnemonic(google.protobuf.message.Message):
@@ -315,8 +447,12 @@ class BinExport2(google.protobuf.message.Message):
             *,
             name: builtins.str | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["name", b"name"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["name", b"name"]) -> None: ...
+        def HasField(
+            self, field_name: typing_extensions.Literal["name", b"name"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self, field_name: typing_extensions.Literal["name", b"name"]
+        ) -> None: ...
 
     @typing_extensions.final
     class Instruction(google.protobuf.message.Message):
@@ -335,7 +471,11 @@ class BinExport2(google.protobuf.message.Message):
         instruction's address.
         """
         @property
-        def call_target(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+        def call_target(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+            builtins.int
+        ]:
             """If this is a call instruction and call targets could be determined
             they'll be given here. Note that we may or may not have a flow graph for
             the target and thus cannot use an index into the flow graph table here.
@@ -347,7 +487,11 @@ class BinExport2(google.protobuf.message.Message):
         The default value is used for the most common mnemonic in the executable.
         """
         @property
-        def operand_index(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+        def operand_index(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+            builtins.int
+        ]:
             """Indices into the operand tree. On X86 this can be 0, 1 or 2 elements
             long, 3 elements with VEX/EVEX.
             Implicit: operand sequence
@@ -355,7 +499,11 @@ class BinExport2(google.protobuf.message.Message):
         raw_bytes: builtins.bytes
         """The unmodified input bytes corresponding to this instruction."""
         @property
-        def comment_index(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+        def comment_index(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+            builtins.int
+        ]:
             """Implicit: comment sequence"""
         def __init__(
             self,
@@ -367,8 +515,34 @@ class BinExport2(google.protobuf.message.Message):
             raw_bytes: builtins.bytes | None = ...,
             comment_index: collections.abc.Iterable[builtins.int] | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["address", b"address", "mnemonic_index", b"mnemonic_index", "raw_bytes", b"raw_bytes"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "call_target", b"call_target", "comment_index", b"comment_index", "mnemonic_index", b"mnemonic_index", "operand_index", b"operand_index", "raw_bytes", b"raw_bytes"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "address",
+                b"address",
+                "mnemonic_index",
+                b"mnemonic_index",
+                "raw_bytes",
+                b"raw_bytes",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "address",
+                b"address",
+                "call_target",
+                b"call_target",
+                "comment_index",
+                b"comment_index",
+                "mnemonic_index",
+                b"mnemonic_index",
+                "operand_index",
+                b"operand_index",
+                "raw_bytes",
+                b"raw_bytes",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class BasicBlock(google.protobuf.message.Message):
@@ -399,19 +573,41 @@ class BinExport2(google.protobuf.message.Message):
                 begin_index: builtins.int | None = ...,
                 end_index: builtins.int | None = ...,
             ) -> None: ...
-            def HasField(self, field_name: typing_extensions.Literal["begin_index", b"begin_index", "end_index", b"end_index"]) -> builtins.bool: ...
-            def ClearField(self, field_name: typing_extensions.Literal["begin_index", b"begin_index", "end_index", b"end_index"]) -> None: ...
+            def HasField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "begin_index", b"begin_index", "end_index", b"end_index"
+                ],
+            ) -> builtins.bool: ...
+            def ClearField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "begin_index", b"begin_index", "end_index", b"end_index"
+                ],
+            ) -> None: ...
 
         INSTRUCTION_INDEX_FIELD_NUMBER: builtins.int
         @property
-        def instruction_index(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.BasicBlock.IndexRange]:
+        def instruction_index(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___BinExport2.BasicBlock.IndexRange
+        ]:
             """Implicit: instruction sequence"""
         def __init__(
             self,
             *,
-            instruction_index: collections.abc.Iterable[global___BinExport2.BasicBlock.IndexRange] | None = ...,
+            instruction_index: collections.abc.Iterable[
+                global___BinExport2.BasicBlock.IndexRange
+            ]
+            | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing_extensions.Literal["instruction_index", b"instruction_index"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "instruction_index", b"instruction_index"
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class FlowGraph(google.protobuf.message.Message):
@@ -425,7 +621,12 @@ class BinExport2(google.protobuf.message.Message):
                 ValueType = typing.NewType("ValueType", builtins.int)
                 V: typing_extensions.TypeAlias = ValueType
 
-            class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[BinExport2.FlowGraph.Edge._Type.ValueType], builtins.type):
+            class _TypeEnumTypeWrapper(
+                google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
+                    BinExport2.FlowGraph.Edge._Type.ValueType
+                ],
+                builtins.type,
+            ):
                 DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
                 CONDITION_TRUE: BinExport2.FlowGraph.Edge._Type.ValueType  # 1
                 CONDITION_FALSE: BinExport2.FlowGraph.Edge._Type.ValueType  # 2
@@ -459,30 +660,78 @@ class BinExport2(google.protobuf.message.Message):
                 type: global___BinExport2.FlowGraph.Edge.Type.ValueType | None = ...,
                 is_back_edge: builtins.bool | None = ...,
             ) -> None: ...
-            def HasField(self, field_name: typing_extensions.Literal["is_back_edge", b"is_back_edge", "source_basic_block_index", b"source_basic_block_index", "target_basic_block_index", b"target_basic_block_index", "type", b"type"]) -> builtins.bool: ...
-            def ClearField(self, field_name: typing_extensions.Literal["is_back_edge", b"is_back_edge", "source_basic_block_index", b"source_basic_block_index", "target_basic_block_index", b"target_basic_block_index", "type", b"type"]) -> None: ...
+            def HasField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "is_back_edge",
+                    b"is_back_edge",
+                    "source_basic_block_index",
+                    b"source_basic_block_index",
+                    "target_basic_block_index",
+                    b"target_basic_block_index",
+                    "type",
+                    b"type",
+                ],
+            ) -> builtins.bool: ...
+            def ClearField(
+                self,
+                field_name: typing_extensions.Literal[
+                    "is_back_edge",
+                    b"is_back_edge",
+                    "source_basic_block_index",
+                    b"source_basic_block_index",
+                    "target_basic_block_index",
+                    b"target_basic_block_index",
+                    "type",
+                    b"type",
+                ],
+            ) -> None: ...
 
         BASIC_BLOCK_INDEX_FIELD_NUMBER: builtins.int
         ENTRY_BASIC_BLOCK_INDEX_FIELD_NUMBER: builtins.int
         EDGE_FIELD_NUMBER: builtins.int
         @property
-        def basic_block_index(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+        def basic_block_index(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+            builtins.int
+        ]:
             """Basic blocks are sorted by address."""
         entry_basic_block_index: builtins.int
         """The flow graph's entry point address is the first instruction of the
         entry_basic_block.
         """
         @property
-        def edge(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.FlowGraph.Edge]: ...
+        def edge(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___BinExport2.FlowGraph.Edge
+        ]: ...
         def __init__(
             self,
             *,
             basic_block_index: collections.abc.Iterable[builtins.int] | None = ...,
             entry_basic_block_index: builtins.int | None = ...,
-            edge: collections.abc.Iterable[global___BinExport2.FlowGraph.Edge] | None = ...,
+            edge: collections.abc.Iterable[global___BinExport2.FlowGraph.Edge]
+            | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["entry_basic_block_index", b"entry_basic_block_index"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["basic_block_index", b"basic_block_index", "edge", b"edge", "entry_basic_block_index", b"entry_basic_block_index"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "entry_basic_block_index", b"entry_basic_block_index"
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "basic_block_index",
+                b"basic_block_index",
+                "edge",
+                b"edge",
+                "entry_basic_block_index",
+                b"entry_basic_block_index",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Reference(google.protobuf.message.Message):
@@ -514,8 +763,32 @@ class BinExport2(google.protobuf.message.Message):
             operand_expression_index: builtins.int | None = ...,
             string_table_index: builtins.int | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["instruction_index", b"instruction_index", "instruction_operand_index", b"instruction_operand_index", "operand_expression_index", b"operand_expression_index", "string_table_index", b"string_table_index"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["instruction_index", b"instruction_index", "instruction_operand_index", b"instruction_operand_index", "operand_expression_index", b"operand_expression_index", "string_table_index", b"string_table_index"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "instruction_index",
+                b"instruction_index",
+                "instruction_operand_index",
+                b"instruction_operand_index",
+                "operand_expression_index",
+                b"operand_expression_index",
+                "string_table_index",
+                b"string_table_index",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "instruction_index",
+                b"instruction_index",
+                "instruction_operand_index",
+                b"instruction_operand_index",
+                "operand_expression_index",
+                b"operand_expression_index",
+                "string_table_index",
+                b"string_table_index",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class DataReference(google.protobuf.message.Message):
@@ -533,8 +806,18 @@ class BinExport2(google.protobuf.message.Message):
             instruction_index: builtins.int | None = ...,
             address: builtins.int | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["address", b"address", "instruction_index", b"instruction_index"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "instruction_index", b"instruction_index"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "address", b"address", "instruction_index", b"instruction_index"
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "address", b"address", "instruction_index", b"instruction_index"
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Comment(google.protobuf.message.Message):
@@ -544,7 +827,12 @@ class BinExport2(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[BinExport2.Comment._Type.ValueType], builtins.type):
+        class _TypeEnumTypeWrapper(
+            google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
+                BinExport2.Comment._Type.ValueType
+            ],
+            builtins.type,
+        ):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             DEFAULT: BinExport2.Comment._Type.ValueType  # 0
             """A regular instruction comment. Typically displayed next to the
@@ -630,8 +918,40 @@ class BinExport2(google.protobuf.message.Message):
             repeatable: builtins.bool | None = ...,
             type: global___BinExport2.Comment.Type.ValueType | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["instruction_index", b"instruction_index", "instruction_operand_index", b"instruction_operand_index", "operand_expression_index", b"operand_expression_index", "repeatable", b"repeatable", "string_table_index", b"string_table_index", "type", b"type"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["instruction_index", b"instruction_index", "instruction_operand_index", b"instruction_operand_index", "operand_expression_index", b"operand_expression_index", "repeatable", b"repeatable", "string_table_index", b"string_table_index", "type", b"type"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "instruction_index",
+                b"instruction_index",
+                "instruction_operand_index",
+                b"instruction_operand_index",
+                "operand_expression_index",
+                b"operand_expression_index",
+                "repeatable",
+                b"repeatable",
+                "string_table_index",
+                b"string_table_index",
+                "type",
+                b"type",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "instruction_index",
+                b"instruction_index",
+                "instruction_operand_index",
+                b"instruction_operand_index",
+                "operand_expression_index",
+                b"operand_expression_index",
+                "repeatable",
+                b"repeatable",
+                "string_table_index",
+                b"string_table_index",
+                "type",
+                b"type",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Section(google.protobuf.message.Message):
@@ -661,8 +981,36 @@ class BinExport2(google.protobuf.message.Message):
             flag_w: builtins.bool | None = ...,
             flag_x: builtins.bool | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["address", b"address", "flag_r", b"flag_r", "flag_w", b"flag_w", "flag_x", b"flag_x", "size", b"size"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "flag_r", b"flag_r", "flag_w", b"flag_w", "flag_x", b"flag_x", "size", b"size"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "address",
+                b"address",
+                "flag_r",
+                b"flag_r",
+                "flag_w",
+                b"flag_w",
+                "flag_x",
+                b"flag_x",
+                "size",
+                b"size",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "address",
+                b"address",
+                "flag_r",
+                b"flag_r",
+                "flag_w",
+                b"flag_w",
+                "flag_x",
+                b"flag_x",
+                "size",
+                b"size",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Library(google.protobuf.message.Message):
@@ -684,8 +1032,28 @@ class BinExport2(google.protobuf.message.Message):
             load_address: builtins.int | None = ...,
             name: builtins.str | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["is_static", b"is_static", "load_address", b"load_address", "name", b"name"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["is_static", b"is_static", "load_address", b"load_address", "name", b"name"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "is_static",
+                b"is_static",
+                "load_address",
+                b"load_address",
+                "name",
+                b"name",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "is_static",
+                b"is_static",
+                "load_address",
+                b"load_address",
+                "name",
+                b"name",
+            ],
+        ) -> None: ...
 
     @typing_extensions.final
     class Module(google.protobuf.message.Message):
@@ -699,8 +1067,12 @@ class BinExport2(google.protobuf.message.Message):
             *,
             name: builtins.str | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["name", b"name"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["name", b"name"]) -> None: ...
+        def HasField(
+            self, field_name: typing_extensions.Literal["name", b"name"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self, field_name: typing_extensions.Literal["name", b"name"]
+        ) -> None: ...
 
     META_INFORMATION_FIELD_NUMBER: builtins.int
     EXPRESSION_FIELD_NUMBER: builtins.int
@@ -722,63 +1094,174 @@ class BinExport2(google.protobuf.message.Message):
     @property
     def meta_information(self) -> global___BinExport2.Meta: ...
     @property
-    def expression(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Expression]: ...
+    def expression(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Expression
+    ]: ...
     @property
-    def operand(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Operand]: ...
+    def operand(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Operand
+    ]: ...
     @property
-    def mnemonic(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Mnemonic]: ...
+    def mnemonic(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Mnemonic
+    ]: ...
     @property
-    def instruction(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Instruction]: ...
+    def instruction(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Instruction
+    ]: ...
     @property
-    def basic_block(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.BasicBlock]: ...
+    def basic_block(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.BasicBlock
+    ]: ...
     @property
-    def flow_graph(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.FlowGraph]: ...
+    def flow_graph(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.FlowGraph
+    ]: ...
     @property
     def call_graph(self) -> global___BinExport2.CallGraph: ...
     @property
-    def string_table(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def string_table(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
-    def address_comment(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Reference]:
+    def address_comment(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Reference
+    ]:
         """No longer written. This is here so that BinDiff can work with older
         BinExport files.
         """
     @property
-    def comment(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Comment]:
+    def comment(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Comment
+    ]:
         """Rich comment index used for BinDiff's comment porting."""
     @property
-    def string_reference(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Reference]: ...
+    def string_reference(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Reference
+    ]: ...
     @property
-    def expression_substitution(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Reference]: ...
+    def expression_substitution(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Reference
+    ]: ...
     @property
-    def section(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Section]: ...
+    def section(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Section
+    ]: ...
     @property
-    def library(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Library]: ...
+    def library(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Library
+    ]: ...
     @property
-    def data_reference(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.DataReference]: ...
+    def data_reference(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.DataReference
+    ]: ...
     @property
-    def module(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BinExport2.Module]: ...
+    def module(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BinExport2.Module
+    ]: ...
     def __init__(
         self,
         *,
         meta_information: global___BinExport2.Meta | None = ...,
-        expression: collections.abc.Iterable[global___BinExport2.Expression] | None = ...,
+        expression: collections.abc.Iterable[global___BinExport2.Expression]
+        | None = ...,
         operand: collections.abc.Iterable[global___BinExport2.Operand] | None = ...,
         mnemonic: collections.abc.Iterable[global___BinExport2.Mnemonic] | None = ...,
-        instruction: collections.abc.Iterable[global___BinExport2.Instruction] | None = ...,
-        basic_block: collections.abc.Iterable[global___BinExport2.BasicBlock] | None = ...,
-        flow_graph: collections.abc.Iterable[global___BinExport2.FlowGraph] | None = ...,
+        instruction: collections.abc.Iterable[global___BinExport2.Instruction]
+        | None = ...,
+        basic_block: collections.abc.Iterable[global___BinExport2.BasicBlock]
+        | None = ...,
+        flow_graph: collections.abc.Iterable[global___BinExport2.FlowGraph]
+        | None = ...,
         call_graph: global___BinExport2.CallGraph | None = ...,
         string_table: collections.abc.Iterable[builtins.str] | None = ...,
-        address_comment: collections.abc.Iterable[global___BinExport2.Reference] | None = ...,
+        address_comment: collections.abc.Iterable[global___BinExport2.Reference]
+        | None = ...,
         comment: collections.abc.Iterable[global___BinExport2.Comment] | None = ...,
-        string_reference: collections.abc.Iterable[global___BinExport2.Reference] | None = ...,
-        expression_substitution: collections.abc.Iterable[global___BinExport2.Reference] | None = ...,
+        string_reference: collections.abc.Iterable[global___BinExport2.Reference]
+        | None = ...,
+        expression_substitution: collections.abc.Iterable[global___BinExport2.Reference]
+        | None = ...,
         section: collections.abc.Iterable[global___BinExport2.Section] | None = ...,
         library: collections.abc.Iterable[global___BinExport2.Library] | None = ...,
-        data_reference: collections.abc.Iterable[global___BinExport2.DataReference] | None = ...,
+        data_reference: collections.abc.Iterable[global___BinExport2.DataReference]
+        | None = ...,
         module: collections.abc.Iterable[global___BinExport2.Module] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["call_graph", b"call_graph", "meta_information", b"meta_information"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["address_comment", b"address_comment", "basic_block", b"basic_block", "call_graph", b"call_graph", "comment", b"comment", "data_reference", b"data_reference", "expression", b"expression", "expression_substitution", b"expression_substitution", "flow_graph", b"flow_graph", "instruction", b"instruction", "library", b"library", "meta_information", b"meta_information", "mnemonic", b"mnemonic", "module", b"module", "operand", b"operand", "section", b"section", "string_reference", b"string_reference", "string_table", b"string_table"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing_extensions.Literal[
+            "call_graph", b"call_graph", "meta_information", b"meta_information"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing_extensions.Literal[
+            "address_comment",
+            b"address_comment",
+            "basic_block",
+            b"basic_block",
+            "call_graph",
+            b"call_graph",
+            "comment",
+            b"comment",
+            "data_reference",
+            b"data_reference",
+            "expression",
+            b"expression",
+            "expression_substitution",
+            b"expression_substitution",
+            "flow_graph",
+            b"flow_graph",
+            "instruction",
+            b"instruction",
+            "library",
+            b"library",
+            "meta_information",
+            b"meta_information",
+            "mnemonic",
+            b"mnemonic",
+            "module",
+            b"module",
+            "operand",
+            b"operand",
+            "section",
+            b"section",
+            "string_reference",
+            b"string_reference",
+            "string_table",
+            b"string_table",
+        ],
+    ) -> None: ...
 
 global___BinExport2 = BinExport2

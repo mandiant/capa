@@ -17,7 +17,15 @@ from typing import Iterator
 
 from binaryninja import BinaryView
 
-from capa.features.common import OS, OS_MACOS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
+from capa.features.common import (
+    OS,
+    OS_MACOS,
+    ARCH_I386,
+    ARCH_AMD64,
+    OS_WINDOWS,
+    Arch,
+    Feature,
+)
 from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)

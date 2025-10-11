@@ -240,12 +240,22 @@ def install_common_args(parser, wanted=None):
     # common arguments that all scripts will have
     #
 
-    parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
+        "--version",
+        action="version",
+        version="%(prog)s {:s}".format(capa.version.__version__),
     )
     parser.add_argument(
-        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="enable verbose result document (no effect with --json)",
+    )
+    parser.add_argument(
+        "-vv",
+        "--vverbose",
+        action="store_true",
+        help="enable very verbose result document (no effect with --json)",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
     parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
@@ -858,7 +868,13 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     """
     sig_paths = get_signatures_from_cli(args, input_format, backend)
 
-    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in (
+        "0",
+        "no",
+        "NO",
+        "n",
+        None,
+    )
 
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
@@ -972,7 +988,9 @@ def main(argv: Optional[list[str]] = None):
     )
 
     parser = argparse.ArgumentParser(
-        description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=desc,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     install_common_args(
         parser,

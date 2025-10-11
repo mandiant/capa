@@ -18,7 +18,12 @@ from typing import Optional
 
 class DnType:
     def __init__(
-        self, token: int, class_: tuple[str, ...], namespace: str = "", member: str = "", access: Optional[str] = None
+        self,
+        token: int,
+        class_: tuple[str, ...],
+        namespace: str = "",
+        member: str = "",
+        access: Optional[str] = None,
     ):
         self.token: int = token
         self.access: Optional[str] = access

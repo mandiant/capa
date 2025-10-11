@@ -20,7 +20,11 @@ import capa.features.extractors.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
+)
 from capa.features.extractors.drakvuf.models import Call
 
 logger = logging.getLogger(__name__)

@@ -23,8 +23,20 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ghidra.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
-from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    Format,
+    String,
+    Feature,
+    Characteristic,
+)
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    FileOffsetAddress,
+    AbsoluteVirtualAddress,
+)
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 

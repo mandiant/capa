@@ -17,10 +17,21 @@ from typing import Iterator
 
 import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
-from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
+from capa.features.insn import (
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    OperandNumber,
+    OperandOffset,
+)
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
-from capa.features.extractors.binexport2 import BinExport2Index, FunctionContext, BasicBlockContext, InstructionContext
+from capa.features.extractors.binexport2 import (
+    BinExport2Index,
+    FunctionContext,
+    BasicBlockContext,
+    InstructionContext,
+)
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
     BinExport2InstructionPatternMatcher,
@@ -29,7 +40,9 @@ from capa.features.extractors.binexport2.helpers import (
     get_instruction_mnemonic,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOKIE_BYTES_DELTA
+from capa.features.extractors.binexport2.arch.intel.helpers import (
+    SECURITY_COOKIE_BYTES_DELTA,
+)
 
 logger = logging.getLogger(__name__)
 

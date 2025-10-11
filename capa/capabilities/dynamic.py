@@ -27,7 +27,12 @@ from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import _NoAddress
 from capa.capabilities.common import Capabilities, find_file_capabilities
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
+    DynamicFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +51,11 @@ class CallCapabilities:
 
 
 def find_call_capabilities(
-    ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
+    ruleset: RuleSet,
+    extractor: DynamicFeatureExtractor,
+    ph: ProcessHandle,
+    th: ThreadHandle,
+    ch: CallHandle,
 ) -> CallCapabilities:
     """
     find matches for the given rules for the given call.
@@ -161,7 +170,10 @@ class SpanOfCallsMatcher:
 
 
 def find_thread_capabilities(
-    ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle
+    ruleset: RuleSet,
+    extractor: DynamicFeatureExtractor,
+    ph: ProcessHandle,
+    th: ThreadHandle,
 ) -> ThreadCapabilities:
     """
     find matches for the given rules within the given thread,
@@ -266,7 +278,13 @@ def find_process_capabilities(
         len(process_features),
         len(process_matches),
     )
-    return ProcessCapabilities(process_matches, thread_matches, span_matches, call_matches, len(process_features))
+    return ProcessCapabilities(
+        process_matches,
+        thread_matches,
+        span_matches,
+        call_matches,
+        len(process_features),
+    )
 
 
 def find_dynamic_capabilities(
@@ -291,7 +309,8 @@ def find_dynamic_capabilities(
             process_capabilities = find_process_capabilities(ruleset, extractor, p)
             feature_counts.processes += (
                 rdoc.ProcessFeatureCount(
-                    address=frz.Address.from_capa(p.address), count=process_capabilities.feature_count
+                    address=frz.Address.from_capa(p.address),
+                    count=process_capabilities.feature_count,
                 ),
             )
 
@@ -310,7 +329,10 @@ def find_dynamic_capabilities(
     # mapping from feature (matched rule) to set of addresses at which it matched.
     process_and_lower_features: FeatureSet = collections.defaultdict(set)
     for rule_name, results in itertools.chain(
-        all_process_matches.items(), all_thread_matches.items(), all_span_matches.items(), all_call_matches.items()
+        all_process_matches.items(),
+        all_thread_matches.items(),
+        all_span_matches.items(),
+        all_call_matches.items(),
     ):
         locations = {p[0] for p in results}
         rule = ruleset[rule_name]

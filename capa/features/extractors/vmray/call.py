@@ -20,8 +20,18 @@ from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
 from capa.features.extractors.strings import is_printable_str
-from capa.features.extractors.vmray.models import PARAM_TYPE_INT, PARAM_TYPE_STR, Param, FunctionCall, hexint
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
+from capa.features.extractors.vmray.models import (
+    PARAM_TYPE_INT,
+    PARAM_TYPE_STR,
+    Param,
+    FunctionCall,
+    hexint,
+)
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
+)
 
 logger = logging.getLogger(__name__)
 

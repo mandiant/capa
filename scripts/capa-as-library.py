@@ -182,7 +182,13 @@ def capa_details(rules_path: Path, input_file: Path, output_format="dictionary")
 
     # extract features and find capabilities
     extractor = capa.loader.get_extractor(
-        input_file, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], should_save_workspace=False, disable_progress=True
+        input_file,
+        FORMAT_AUTO,
+        OS_AUTO,
+        capa.main.BACKEND_VIV,
+        [],
+        should_save_workspace=False,
+        disable_progress=True,
     )
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
@@ -217,7 +223,10 @@ if __name__ == "__main__":
     parser.add_argument("input_file", help="file to extract capabilities from")
     parser.add_argument("--rules", help="path to rules directory", default=RULES_PATH)
     parser.add_argument(
-        "--output", help="output format", choices=["dictionary", "json", "texttable"], default="dictionary"
+        "--output",
+        help="output format",
+        choices=["dictionary", "json", "texttable"],
+        default="dictionary",
     )
     args = parser.parse_args()
     if args.rules != RULES_PATH:

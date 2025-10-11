@@ -22,8 +22,23 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
+from capa.features.insn import (
+    API,
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    Mnemonic,
+    OperandNumber,
+    OperandOffset,
+)
+from capa.features.common import (
+    MAX_BYTES_FEATURE_SIZE,
+    THUNK_CHAIN_DEPTH_DELTA,
+    Bytes,
+    String,
+    Feature,
+    Characteristic,
+)
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -383,7 +398,12 @@ def extract_insn_nzxor_characteristic_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if insn.itype not in (idaapi.NN_xor, idaapi.NN_xorpd, idaapi.NN_xorps, idaapi.NN_pxor):
+    if insn.itype not in (
+        idaapi.NN_xor,
+        idaapi.NN_xorpd,
+        idaapi.NN_xorps,
+        idaapi.NN_pxor,
+    ):
         return
     if capa.features.extractors.ida.helpers.is_operand_equal(insn.Op1, insn.Op2):
         return
@@ -512,7 +532,11 @@ def extract_function_indirect_call_characteristic_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if idaapi.is_call_insn(insn) and idc.get_operand_type(insn.ea, 0) in (idc.o_reg, idc.o_phrase, idc.o_displ):
+    if idaapi.is_call_insn(insn) and idc.get_operand_type(insn.ea, 0) in (
+        idc.o_reg,
+        idc.o_phrase,
+        idc.o_displ,
+    ):
         yield Characteristic("indirect call"), ih.address
 
 

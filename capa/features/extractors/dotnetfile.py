@@ -217,7 +217,10 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
         assert self.pe.net.struct.MajorRuntimeVersion is not None
         assert self.pe.net.struct.MinorRuntimeVersion is not None
 
-        return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
+        return (
+            self.pe.net.struct.MajorRuntimeVersion,
+            self.pe.net.struct.MinorRuntimeVersion,
+        )
 
     def get_meta_version_string(self) -> str:
         assert self.pe.net is not None

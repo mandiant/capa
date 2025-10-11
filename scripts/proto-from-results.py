@@ -52,7 +52,11 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Convert a capa JSON result document into the protobuf format")
     capa.main.install_common_args(parser)
-    parser.add_argument("json", type=str, help="path to JSON result document file, produced by `capa --json`")
+    parser.add_argument(
+        "json",
+        type=str,
+        help="path to JSON result document file, produced by `capa --json`",
+    )
     args = parser.parse_args(args=argv)
 
     try:

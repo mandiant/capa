@@ -102,7 +102,10 @@ def extract_function_name(fh: FunctionHandle):
         return
 
     for sym in bv.get_symbols(func.start):
-        if sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.FunctionSymbol]:
+        if sym.type not in [
+            SymbolType.LibraryFunctionSymbol,
+            SymbolType.FunctionSymbol,
+        ]:
             continue
 
         name = sym.short_name
@@ -140,12 +143,18 @@ def get_stack_string_len(f: Function, il: MediumLevelILInstruction) -> int:
         return 0
 
     target = il.dest
-    if target.operation not in [MediumLevelILOperation.MLIL_CONST, MediumLevelILOperation.MLIL_CONST_PTR]:
+    if target.operation not in [
+        MediumLevelILOperation.MLIL_CONST,
+        MediumLevelILOperation.MLIL_CONST_PTR,
+    ]:
         return 0
 
     addr = target.value.value
     sym = bv.get_symbol_at(addr)
-    if not sym or sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.SymbolicFunctionSymbol]:
+    if not sym or sym.type not in [
+        SymbolType.LibraryFunctionSymbol,
+        SymbolType.SymbolicFunctionSymbol,
+    ]:
         return 0
 
     if sym.name not in ["__builtin_strncpy", "__builtin_strcpy", "__builtin_wcscpy"]:
@@ -155,7 +164,10 @@ def get_stack_string_len(f: Function, il: MediumLevelILInstruction) -> int:
         return 0
 
     dest = il.params[0]
-    if dest.operation in [MediumLevelILOperation.MLIL_ADDRESS_OF, MediumLevelILOperation.MLIL_VAR]:
+    if dest.operation in [
+        MediumLevelILOperation.MLIL_ADDRESS_OF,
+        MediumLevelILOperation.MLIL_VAR,
+    ]:
         var = dest.src
     else:
         return 0

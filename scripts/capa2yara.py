@@ -264,7 +264,10 @@ def convert_rule(rule, rulename, cround, depth):
             else:
                 # don't complain in the early rounds as there should be 3+ rounds (if all rules are converted)
                 if cround > min_rounds - 2:
-                    logger.info("needed sub-rule not converted (yet, maybe in next round): %r", match)
+                    logger.info(
+                        "needed sub-rule not converted (yet, maybe in next round): %r",
+                        match,
+                    )
                     return "BREAK", "needed sub-rule not converted"
                 else:
                     return "BREAK", "NOLOG"
@@ -282,7 +285,10 @@ def convert_rule(rule, rulename, cround, depth):
             logger.info("doing number: %r", number)
 
             if len(number) < 10:
-                logger.info("too short for byte search (until I figure out how to do it properly): %r", number)
+                logger.info(
+                    "too short for byte search (until I figure out how to do it properly): %r",
+                    number,
+                )
                 return "BREAK", "Number too short"
 
             # there's just one rule which contains 0xFFFFFFF but yara gives a warning if if used
@@ -412,7 +418,12 @@ def convert_rule(rule, rulename, cround, depth):
                     continue
                 else:
                     # this is "x or more". could be coded for strings TODO
-                    return "BREAK", "Some aka x or more (TODO)", rule_comment, incomplete
+                    return (
+                        "BREAK",
+                        "Some aka x or more (TODO)",
+                        rule_comment,
+                        incomplete,
+                    )
 
             if s_type == "And" or s_type == "Or" or s_type == "Not" and kid.name != "Some":
                 logger.info("doing bool with recursion: %r", kid)
@@ -422,9 +433,12 @@ def convert_rule(rule, rulename, cround, depth):
                 #
                 # here we go into RECURSION
                 #
-                yara_strings_sub, yara_condition_sub, rule_comment_sub, incomplete_sub = convert_rule(
-                    kid, rulename, cround, depth
-                )
+                (
+                    yara_strings_sub,
+                    yara_condition_sub,
+                    rule_comment_sub,
+                    incomplete_sub,
+                ) = convert_rule(kid, rulename, cround, depth)
 
                 logger.info("coming out of this recursion, depth: %d s_type: %s", depth, s_type)
 
@@ -438,7 +452,12 @@ def convert_rule(rule, rulename, cround, depth):
 
                     # luckily this is only a killer, if we're inside an 'And', inside 'Or' we're just missing some coverage
                     # only accept incomplete rules in rounds > 3 because the reason might be a reference to another rule not converted yet because of missing dependencies
-                    logger.info("rule.name,  depth,  cround: %s, %d, %d", rule.name, depth, cround)
+                    logger.info(
+                        "rule.name,  depth,  cround: %s, %d, %d",
+                        rule.name,
+                        depth,
+                        cround,
+                    )
                     if rule.name == "Or" and depth == 1 and cround > min_rounds - 1:
                         logger.info(
                             "Unknown feature, just ignore this branch and keep the rest bec we're in Or (1): %s - depth: %s",
@@ -531,7 +550,9 @@ def convert_rule(rule, rulename, cround, depth):
         yara_condition = "\n\t" + yara_condition_list[0]
 
     logger.info(
-        "# end of convert_rule() #strings: %d #conditions: %d", len(yara_strings_list), len(yara_condition_list)
+        "# end of convert_rule() #strings: %d #conditions: %d",
+        len(yara_strings_list),
+        len(yara_condition_list),
     )
     logger.info("strings: %s conditions: %s", yara_strings, yara_condition)
 
@@ -573,10 +594,18 @@ def convert_rules(rules, namespaces, cround, make_priv):
             continue
 
         if rule_name in converted_rules:
-            logger.info("skipping already converted rule capa: %s - yara rule: %s", rule.name, rule_name)
+            logger.info(
+                "skipping already converted rule capa: %s - yara rule: %s",
+                rule.name,
+                rule_name,
+            )
             continue
 
-        logger.info("-------------------------- DOING RULE CAPA: %s - yara rule: %s", rule.name, rule_name)
+        logger.info(
+            "-------------------------- DOING RULE CAPA: %s - yara rule: %s",
+            rule.name,
+            rule_name,
+        )
         if "capa/path" in rule.meta:
             url = get_rule_url(rule.meta["capa/path"])
         else:
@@ -650,7 +679,12 @@ def convert_rules(rules, namespaces, cround, make_priv):
 
                     for value in metas[meta]:
                         if meta_name == "hash":
-                            value = re.sub(r"^([0-9a-f]{20,64}):0x[0-9a-f]{1,10}$", r"\1", value, flags=re.IGNORECASE)
+                            value = re.sub(
+                                r"^([0-9a-f]{20,64}):0x[0-9a-f]{1,10}$",
+                                r"\1",
+                                value,
+                                flags=re.IGNORECASE,
+                            )
 
                             # examples in capa can contain the same hash several times with different offset, so check if it's already there:
                             # (keeping the offset might be interesting for some but breaks yara-ci for checking of the final rules
@@ -720,7 +754,13 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Capa to YARA rule converter")
     capa.main.install_common_args(parser, wanted={"tag"})
-    parser.add_argument("--private", "-p", action="store_true", help="Create private rules", default=False)
+    parser.add_argument(
+        "--private",
+        "-p",
+        action="store_true",
+        help="Create private rules",
+        default=False,
+    )
     parser.add_argument("rules", type=str, help="Path to rules directory")
     args = parser.parse_args(args=argv)
 

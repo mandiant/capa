@@ -23,19 +23,59 @@ import capa.features.common
 DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
     [
         ("93b2d1-vmray", "file", capa.features.common.String("api.%x%x.%s"), True),
-        ("93b2d1-vmray", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
+        (
+            "93b2d1-vmray",
+            "file",
+            capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"),
+            False,
+        ),
         # file/imports
         ("93b2d1-vmray", "file", capa.features.file.Import("GetAddrInfoW"), True),
         ("93b2d1-vmray", "file", capa.features.file.Import("GetAddrInfo"), True),
         # thread/api calls
-        ("93b2d1-vmray", "process=(2176:0),thread=2180", capa.features.insn.API("LoadLibraryExA"), True),
-        ("93b2d1-vmray", "process=(2176:0),thread=2180", capa.features.insn.API("LoadLibraryEx"), True),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("GetAddrInfoW"), True),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("GetAddrInfo"), True),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("DoesNotExist"), False),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2180",
+            capa.features.insn.API("LoadLibraryExA"),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2180",
+            capa.features.insn.API("LoadLibraryEx"),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420",
+            capa.features.insn.API("GetAddrInfoW"),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420",
+            capa.features.insn.API("GetAddrInfo"),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420",
+            capa.features.insn.API("DoesNotExist"),
+            False,
+        ),
         # call/api
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2361", capa.features.insn.API("GetAddrInfoW"), True),
-        ("eb1287-vmray", "process=(4968:0),thread=5992,call=10981", capa.features.insn.API("CreateMutexW"), True),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=2361",
+            capa.features.insn.API("GetAddrInfoW"),
+            True,
+        ),
+        (
+            "eb1287-vmray",
+            "process=(4968:0),thread=5992,call=10981",
+            capa.features.insn.API("CreateMutexW"),
+            True,
+        ),
         # call/string argument
         (
             "93b2d1-vmray",
@@ -70,8 +110,18 @@ DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
         ),
         # call/number argument
         # VirtualAlloc(4096, 4)
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2358", capa.features.insn.Number(4096), True),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2358", capa.features.insn.Number(4), True),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=2358",
+            capa.features.insn.Number(4096),
+            True,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=2358",
+            capa.features.insn.Number(4),
+            True,
+        ),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -83,12 +133,37 @@ DYNAMIC_VMRAY_FEATURE_COUNT_TESTS = sorted(
         # file/imports
         ("93b2d1-vmray", "file", capa.features.file.Import("GetAddrInfoW"), 1),
         # thread/api calls
-        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("free"), 1),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420", capa.features.insn.API("GetAddrInfoW"), 5),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420",
+            capa.features.insn.API("free"),
+            1,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420",
+            capa.features.insn.API("GetAddrInfoW"),
+            5,
+        ),
         # call/api
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2345", capa.features.insn.API("free"), 1),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2345", capa.features.insn.API("GetAddrInfoW"), 0),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2361", capa.features.insn.API("GetAddrInfoW"), 1),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=2345",
+            capa.features.insn.API("free"),
+            1,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=2345",
+            capa.features.insn.API("GetAddrInfoW"),
+            0,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=2361",
+            capa.features.insn.API("GetAddrInfoW"),
+            1,
+        ),
         # call/string argument
         (
             "93b2d1-vmray",
@@ -96,11 +171,31 @@ DYNAMIC_VMRAY_FEATURE_COUNT_TESTS = sorted(
             capa.features.common.String("raw.githubusercontent.com"),
             1,
         ),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10323", capa.features.common.String("non_existant"), 0),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=10323",
+            capa.features.common.String("non_existant"),
+            0,
+        ),
         # call/number argument
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(4096), 1),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(4), 1),
-        ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(404), 0),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=10315",
+            capa.features.insn.Number(4096),
+            1,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=10315",
+            capa.features.insn.Number(4),
+            1,
+        ),
+        (
+            "93b2d1-vmray",
+            "process=(2176:0),thread=2420,call=10315",
+            capa.features.insn.Number(404),
+            0,
+        ),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.

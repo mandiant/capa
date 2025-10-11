@@ -88,7 +88,11 @@ import capa.features.extractors.pefile
 from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature, is_global_feature
-from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    FunctionHandle,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 logger = logging.getLogger("capa.show-features")
 
@@ -152,7 +156,12 @@ def print_static_analysis(extractor: StaticFeatureExtractor, args):
         if args.format == "freeze":
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
-            function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
+            function_handles = tuple(
+                filter(
+                    lambda fh: format_address(fh.address) == args.function,
+                    function_handles,
+                )
+            )
 
             if args.function not in [format_address(fh.address) for fh in function_handles]:
                 print(f"{args.function} not a function")
@@ -176,7 +185,12 @@ def print_dynamic_analysis(extractor: DynamicFeatureExtractor, args):
     process_handles = tuple(extractor.get_processes())
 
     if args.process:
-        process_handles = tuple(filter(lambda ph: extractor.get_process_name(ph) == args.process, process_handles))
+        process_handles = tuple(
+            filter(
+                lambda ph: extractor.get_process_name(ph) == args.process,
+                process_handles,
+            )
+        )
         if args.process not in [extractor.get_process_name(ph) for ph in process_handles]:
             print(f"{args.process} not a process")
             return -1
@@ -188,7 +202,11 @@ def print_static_features(functions, extractor: StaticFeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
-            logger.debug("skipping library function %s (%s)", format_address(f.address), function_name)
+            logger.debug(
+                "skipping library function %s (%s)",
+                format_address(f.address),
+                function_name,
+            )
             continue
 
         print(f"func: {format_address(f.address)}")

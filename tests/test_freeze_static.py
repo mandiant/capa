@@ -28,7 +28,11 @@ import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.extractors.base_extractor
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, SampleHashes, FunctionHandle
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    SampleHashes,
+    FunctionHandle,
+)
 
 EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
@@ -39,28 +43,46 @@ EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     ),
     global_features=[],
     file_features=[
-        (AbsoluteVirtualAddress(0x402345), capa.features.common.Characteristic("embedded pe")),
+        (
+            AbsoluteVirtualAddress(0x402345),
+            capa.features.common.Characteristic("embedded pe"),
+        ),
     ],
     functions={
         AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.FunctionFeatures(
             features=[
-                (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("indirect call")),
+                (
+                    AbsoluteVirtualAddress(0x401000),
+                    capa.features.common.Characteristic("indirect call"),
+                ),
             ],
             basic_blocks={
                 AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.BasicBlockFeatures(
                     features=[
-                        (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("tight loop")),
+                        (
+                            AbsoluteVirtualAddress(0x401000),
+                            capa.features.common.Characteristic("tight loop"),
+                        ),
                     ],
                     instructions={
                         AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.InstructionFeatures(
                             features=[
-                                (AbsoluteVirtualAddress(0x401000), capa.features.insn.Mnemonic("xor")),
-                                (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("nzxor")),
+                                (
+                                    AbsoluteVirtualAddress(0x401000),
+                                    capa.features.insn.Mnemonic("xor"),
+                                ),
+                                (
+                                    AbsoluteVirtualAddress(0x401000),
+                                    capa.features.common.Characteristic("nzxor"),
+                                ),
                             ],
                         ),
                         AbsoluteVirtualAddress(0x401002): capa.features.extractors.null.InstructionFeatures(
                             features=[
-                                (AbsoluteVirtualAddress(0x401002), capa.features.insn.Mnemonic("mov")),
+                                (
+                                    AbsoluteVirtualAddress(0x401002),
+                                    capa.features.insn.Mnemonic("mov"),
+                                ),
                             ],
                         ),
                     },

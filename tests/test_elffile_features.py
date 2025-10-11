@@ -17,7 +17,10 @@ from pathlib import Path
 
 from elftools.elf.elffile import ELFFile
 
-from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
+from capa.features.extractors.elffile import (
+    extract_file_export_names,
+    extract_file_import_names,
+)
 
 CD = Path(__file__).resolve().parent
 SAMPLE_PATH = CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
@@ -59,7 +62,14 @@ def check_export_features(sample_path, expected_exports):
 
 
 def test_stripped_elffile_import_features():
-    expected_imports = ["__cxa_atexit", "__cxa_finalize", "__stack_chk_fail", "fclose", "fopen", "__android_log_print"]
+    expected_imports = [
+        "__cxa_atexit",
+        "__cxa_finalize",
+        "__stack_chk_fail",
+        "fclose",
+        "fopen",
+        "__android_log_print",
+    ]
     check_import_features(STRIPPED_SAMPLE_PATH, expected_imports)
 
 
