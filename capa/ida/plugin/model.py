@@ -24,7 +24,7 @@ import idaapi
 try:
     from PySide6 import QtGui, QtCore
     _QT6 = True
-except Exception:
+except ImportError:
     from PyQt5 import QtGui, QtCore  # type: ignore
     _QT6 = False
 
