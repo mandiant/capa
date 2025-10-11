@@ -81,7 +81,6 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
 
 def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, is_standalone: bool) -> bool:
-
     for rule in rules:
         if rule.name not in capabilities.matches:
             continue

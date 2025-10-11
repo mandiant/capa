@@ -21,9 +21,11 @@ import idaapi
 
 try:
     from PySide6 import QtCore
+
     _QT6 = True
 except ImportError:
     from PyQt5 import QtCore
+
     _QT6 = False
 
 import capa.ida.helpers
@@ -41,14 +43,15 @@ def ea_to_hex(ea):
     return f"{hex(ea)}"
 
 
-
 _HAS_ITEMFLAG = hasattr(QtCore.Qt, "ItemFlag")
+
 
 def _qt_flag(name: str):
     """Return a single flag enum across Qt5/Qt6."""
     if _HAS_ITEMFLAG:
         return getattr(QtCore.Qt.ItemFlag, name)
     return getattr(QtCore.Qt, name)
+
 
 def _qt_flags_or(*flags):
     """Build ItemFlags value across Qt5/Qt6."""

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-
 from typing import Optional
 from collections import deque
 
@@ -23,9 +22,11 @@ import idaapi
 # Qt compat: prefer PySide6 (IDA 9.2), fallback PyQt5
 try:
     from PySide6 import QtGui, QtCore
+
     _QT6 = True
 except ImportError:
     from PyQt5 import QtGui, QtCore  # type: ignore
+
     _QT6 = False
 
 import capa.rules
@@ -57,10 +58,12 @@ DEFAULT_HIGHLIGHT = 0xE6C700
 _HAS_ITEMFLAG = hasattr(QtCore.Qt, "ItemFlag")
 _HAS_MATCHFLAG = hasattr(QtCore.Qt, "MatchFlag")
 
+
 def _qt_noitemflags():
     if _HAS_ITEMFLAG:
         return QtCore.Qt.ItemFlags()
     return QtCore.Qt.NoItemFlags
+
 
 def _qt_matchflag(name: str):
     if _HAS_MATCHFLAG:
