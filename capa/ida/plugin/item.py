@@ -22,7 +22,7 @@ import idaapi
 try:
     from PySide6 import QtCore
     _QT6 = True
-except Exception:
+except ImportError:
     from PyQt5 import QtCore
     _QT6 = False
 
