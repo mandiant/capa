@@ -75,7 +75,10 @@ def get_rule_path():
         pytest.param("show-capabilities-by-function.py", [get_binary_file_path()]),
         pytest.param("show-features.py", [get_binary_file_path()]),
         pytest.param("show-features.py", ["-F", "0x407970", get_binary_file_path()]),
-        pytest.param("show-features.py", ["-P", "MicrosoftEdgeUpdate.exe", get_cape_report_file_path()]),
+        pytest.param(
+            "show-features.py",
+            ["-P", "MicrosoftEdgeUpdate.exe", get_cape_report_file_path()],
+        ),
         pytest.param("show-unused-features.py", [get_binary_file_path()]),
         pytest.param("capa-as-library.py", [get_binary_file_path()]),
         # not testing "minimize-vmray-results.py" as we don't currently upload full VMRay analysis archives

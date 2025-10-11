@@ -134,7 +134,12 @@ def get_operand_phrase_info(be2: BinExport2, operand: BinExport2.Operand) -> Opt
         assert expression6.type == BinExport2.Expression.IMMEDIATE_INT
 
         # Base + (Index * Scale) + Displacement
-        return OperandPhraseInfo(base=expression0, index=expression2, scale=expression4, displacement=expression6)
+        return OperandPhraseInfo(
+            base=expression0,
+            index=expression2,
+            scale=expression4,
+            displacement=expression6,
+        )
 
     else:
         raise NotImplementedError(len(expressions))

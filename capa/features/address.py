@@ -17,7 +17,8 @@ import abc
 
 class Address(abc.ABC):
     @abc.abstractmethod
-    def __eq__(self, other): ...
+    def __eq__(self, other):
+        ...
 
     @abc.abstractmethod
     def __lt__(self, other):
@@ -114,7 +115,10 @@ class DynamicCallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (other.thread, other.id)
+        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (
+            other.thread,
+            other.id,
+        )
 
     def __lt__(self, other):
         assert isinstance(other, DynamicCallAddress)

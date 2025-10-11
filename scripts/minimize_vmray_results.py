@@ -40,7 +40,11 @@ def main(argv=None):
         help="path to VMRay Analysis Archive downloaded from Dynamic Analysis Report page",
     )
     parser.add_argument(
-        "-p", "--password", type=str, default="infected", help="password used to unzip and zip protected archives"
+        "-p",
+        "--password",
+        type=str,
+        default="infected",
+        help="password used to unzip and zip protected archives",
     )
     args = parser.parse_args(args=argv)
 
@@ -57,7 +61,10 @@ def main(argv=None):
     with zipfile.ZipFile(new_zip_name, "w") as new_zip:
         new_zip.writestr("logs/summary_v2.json", sv2_json)
         new_zip.writestr("logs/flog.xml", flog_xml)
-        new_zip.writestr(f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}", sample_file_buf)
+        new_zip.writestr(
+            f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}",
+            sample_file_buf,
+        )
         new_zip.setpassword(args.password.encode("ascii"))
 
     # ensure capa loads the minimized archive

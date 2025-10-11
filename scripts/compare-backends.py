@@ -133,7 +133,10 @@ def collect(args):
 
         for backend in BACKENDS:
             if (backend, file.name) in {
-                ("binja", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_")
+                (
+                    "binja",
+                    "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_",
+                )
             }:
                 # this file takes 38GB+ and 20hrs+
                 # https://github.com/Vector35/binaryninja-api/issues/5951
@@ -261,8 +264,14 @@ def report(args):
                 style = "default"
             console.print(f"{q[i]: >6.1f}", style=style, end=" ")
         console.print()
-    console.print("                ^-- 10% of samples took less than this                  ^", style="grey37")
-    console.print("                    10% of samples took more than this -----------------+", style="grey37")
+    console.print(
+        "                ^-- 10% of samples took less than this                  ^",
+        style="grey37",
+    )
+    console.print(
+        "                    10% of samples took more than this -----------------+",
+        style="grey37",
+    )
 
     console.print()
     for backend in BACKENDS:
@@ -278,7 +287,8 @@ def report(args):
     for backend in BACKENDS:
         console.print(backend)
         for duration, path in sorted(
-            ((d["duration"], Path(d["path"]).name) for d in doc[backend].values()), reverse=True
+            ((d["duration"], Path(d["path"]).name) for d in doc[backend].values()),
+            reverse=True,
         )[:5]:
             console.print(f"  - {duration: >6.1f} {path}")
 

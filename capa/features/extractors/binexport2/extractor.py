@@ -125,7 +125,11 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         bbi: BasicBlockContext = bbh.inner
         basic_block: BinExport2.BasicBlock = self.be2.basic_block[bbi.basic_block_index]
-        for instruction_index, _, instruction_address in self.idx.basic_block_instructions(basic_block):
+        for (
+            instruction_index,
+            _,
+            instruction_address,
+        ) in self.idx.basic_block_instructions(basic_block):
             yield InsnHandle(
                 address=AbsoluteVirtualAddress(instruction_address),
                 inner=InstructionContext(instruction_index),

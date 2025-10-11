@@ -41,27 +41,37 @@ def extract_section_names(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Ad
         yield Section(name), AbsoluteVirtualAddress(addr)
 
 
-def extract_referenced_filenames(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
+def extract_referenced_filenames(
+    analysis: VMRayAnalysis,
+) -> Iterator[tuple[Feature, Address]]:
     for filename in analysis.sv2.filenames.values():
         yield String(filename.filename), NO_ADDRESS
 
 
-def extract_referenced_mutex_names(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
+def extract_referenced_mutex_names(
+    analysis: VMRayAnalysis,
+) -> Iterator[tuple[Feature, Address]]:
     for mutex in analysis.sv2.mutexes.values():
         yield String(mutex.name), NO_ADDRESS
 
 
-def extract_referenced_domain_names(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
+def extract_referenced_domain_names(
+    analysis: VMRayAnalysis,
+) -> Iterator[tuple[Feature, Address]]:
     for domain in analysis.sv2.domains.values():
         yield String(domain.domain), NO_ADDRESS
 
 
-def extract_referenced_ip_addresses(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
+def extract_referenced_ip_addresses(
+    analysis: VMRayAnalysis,
+) -> Iterator[tuple[Feature, Address]]:
     for ip_address in analysis.sv2.ip_addresses.values():
         yield String(ip_address.ip_address), NO_ADDRESS
 
 
-def extract_referenced_registry_key_names(analysis: VMRayAnalysis) -> Iterator[tuple[Feature, Address]]:
+def extract_referenced_registry_key_names(
+    analysis: VMRayAnalysis,
+) -> Iterator[tuple[Feature, Address]]:
     for registry_record in analysis.sv2.registry_records.values():
         yield String(registry_record.reg_key_name), NO_ADDRESS
 

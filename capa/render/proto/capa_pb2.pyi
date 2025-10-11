@@ -36,7 +36,10 @@ class _AddressType:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _AddressTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AddressType.ValueType], builtins.type):
+class _AddressTypeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AddressType.ValueType],
+    builtins.type,
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     ADDRESSTYPE_UNSPECIFIED: _AddressType.ValueType  # 0
     ADDRESSTYPE_ABSOLUTE: _AddressType.ValueType  # 1
@@ -67,7 +70,10 @@ class _Flavor:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _FlavorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Flavor.ValueType], builtins.type):
+class _FlavorEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Flavor.ValueType],
+    builtins.type,
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     FLAVOR_UNSPECIFIED: _Flavor.ValueType  # 0
     FLAVOR_STATIC: _Flavor.ValueType  # 1
@@ -84,7 +90,10 @@ class _Scope:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ScopeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Scope.ValueType], builtins.type):
+class _ScopeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Scope.ValueType],
+    builtins.type,
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     SCOPE_UNSPECIFIED: _Scope.ValueType  # 0
     SCOPE_FILE: _Scope.ValueType  # 1
@@ -126,9 +135,28 @@ class APIFeature(google.protobuf.message.Message):
         api: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "api", b"api", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "api",
+            b"api",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___APIFeature = APIFeature
 
@@ -163,9 +191,50 @@ class Address(google.protobuf.message.Message):
         ppid_pid_tid: global___Ppid_Pid_Tid | None = ...,
         ppid_pid_tid_id: global___Ppid_Pid_Tid_Id | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ppid_pid", b"ppid_pid", "ppid_pid_tid", b"ppid_pid_tid", "ppid_pid_tid_id", b"ppid_pid_tid_id", "token_offset", b"token_offset", "v", b"v", "value", b"value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ppid_pid", b"ppid_pid", "ppid_pid_tid", b"ppid_pid_tid", "ppid_pid_tid_id", b"ppid_pid_tid_id", "token_offset", b"token_offset", "type", b"type", "v", b"v", "value", b"value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["value", b"value"]) -> typing.Literal["v", "token_offset", "ppid_pid", "ppid_pid_tid", "ppid_pid_tid_id"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ppid_pid",
+            b"ppid_pid",
+            "ppid_pid_tid",
+            b"ppid_pid_tid",
+            "ppid_pid_tid_id",
+            b"ppid_pid_tid_id",
+            "token_offset",
+            b"token_offset",
+            "v",
+            b"v",
+            "value",
+            b"value",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ppid_pid",
+            b"ppid_pid",
+            "ppid_pid_tid",
+            b"ppid_pid_tid",
+            "ppid_pid_tid_id",
+            b"ppid_pid_tid_id",
+            "token_offset",
+            b"token_offset",
+            "type",
+            b"type",
+            "v",
+            b"v",
+            "value",
+            b"value",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["value", b"value"]
+    ) -> (
+        typing.Literal[
+            "v", "token_offset", "ppid_pid", "ppid_pid_tid", "ppid_pid_tid_id"
+        ]
+        | None
+    ): ...
 
 global___Address = Address
 
@@ -187,7 +256,11 @@ class Analysis(google.protobuf.message.Message):
     os: builtins.str
     extractor: builtins.str
     @property
-    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def rules(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
     def base_address(self) -> global___Address: ...
     @property
@@ -195,7 +268,11 @@ class Analysis(google.protobuf.message.Message):
     @property
     def feature_counts(self) -> global___FeatureCounts: ...
     @property
-    def library_functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
+    def library_functions(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___LibraryFunction
+    ]: ...
     def __init__(
         self,
         *,
@@ -207,10 +284,43 @@ class Analysis(google.protobuf.message.Message):
         base_address: global___Address | None = ...,
         layout: global___Layout | None = ...,
         feature_counts: global___FeatureCounts | None = ...,
-        library_functions: collections.abc.Iterable[global___LibraryFunction] | None = ...,
+        library_functions: collections.abc.Iterable[global___LibraryFunction]
+        | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["arch", b"arch", "base_address", b"base_address", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "library_functions", b"library_functions", "os", b"os", "rules", b"rules"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "base_address",
+            b"base_address",
+            "feature_counts",
+            b"feature_counts",
+            "layout",
+            b"layout",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "arch",
+            b"arch",
+            "base_address",
+            b"base_address",
+            "extractor",
+            b"extractor",
+            "feature_counts",
+            b"feature_counts",
+            "format",
+            b"format",
+            "layout",
+            b"layout",
+            "library_functions",
+            b"library_functions",
+            "os",
+            b"os",
+            "rules",
+            b"rules",
+        ],
+    ) -> None: ...
 
 global___Analysis = Analysis
 
@@ -231,9 +341,28 @@ class ArchFeature(google.protobuf.message.Message):
         arch: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "arch", b"arch", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "arch",
+            b"arch",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___ArchFeature = ArchFeature
 
@@ -251,7 +380,11 @@ class AttackSpec(google.protobuf.message.Message):
     subtechnique: builtins.str
     id: builtins.str
     @property
-    def parts(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def parts(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     def __init__(
         self,
         *,
@@ -261,7 +394,21 @@ class AttackSpec(google.protobuf.message.Message):
         subtechnique: builtins.str = ...,
         id: builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["id", b"id", "parts", b"parts", "subtechnique", b"subtechnique", "tactic", b"tactic", "technique", b"technique"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "id",
+            b"id",
+            "parts",
+            b"parts",
+            "subtechnique",
+            b"subtechnique",
+            "tactic",
+            b"tactic",
+            "technique",
+            b"technique",
+        ],
+    ) -> None: ...
 
 global___AttackSpec = AttackSpec
 
@@ -279,9 +426,26 @@ class BasicBlockFeature(google.protobuf.message.Message):
         type: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___BasicBlockFeature = BasicBlockFeature
 
@@ -297,7 +461,9 @@ class BasicBlockLayout(google.protobuf.message.Message):
         *,
         address: global___Address | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["address", b"address"]) -> None: ...
 
 global___BasicBlockLayout = BasicBlockLayout
@@ -319,9 +485,28 @@ class BytesFeature(google.protobuf.message.Message):
         bytes: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "bytes", b"bytes", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "bytes",
+            b"bytes",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___BytesFeature = BytesFeature
 
@@ -342,9 +527,28 @@ class CharacteristicFeature(google.protobuf.message.Message):
         characteristic: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "characteristic", b"characteristic", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "characteristic",
+            b"characteristic",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___CharacteristicFeature = CharacteristicFeature
 
@@ -366,9 +570,28 @@ class ClassFeature(google.protobuf.message.Message):
         class_: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "class_", b"class_", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "class_",
+            b"class_",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___ClassFeature = ClassFeature
 
@@ -386,9 +609,26 @@ class CompoundStatement(google.protobuf.message.Message):
         type: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___CompoundStatement = CompoundStatement
 
@@ -408,7 +648,11 @@ class DynamicAnalysis(google.protobuf.message.Message):
     os: builtins.str
     extractor: builtins.str
     @property
-    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def rules(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
     def layout(self) -> global___DynamicLayout: ...
     @property
@@ -424,8 +668,31 @@ class DynamicAnalysis(google.protobuf.message.Message):
         layout: global___DynamicLayout | None = ...,
         feature_counts: global___DynamicFeatureCounts | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["arch", b"arch", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "os", b"os", "rules", b"rules"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "feature_counts", b"feature_counts", "layout", b"layout"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "arch",
+            b"arch",
+            "extractor",
+            b"extractor",
+            "feature_counts",
+            b"feature_counts",
+            "format",
+            b"format",
+            "layout",
+            b"layout",
+            "os",
+            b"os",
+            "rules",
+            b"rules",
+        ],
+    ) -> None: ...
 
 global___DynamicAnalysis = DynamicAnalysis
 
@@ -437,14 +704,20 @@ class DynamicFeatureCounts(google.protobuf.message.Message):
     PROCESSES_FIELD_NUMBER: builtins.int
     file: builtins.int
     @property
-    def processes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ProcessFeatureCount]: ...
+    def processes(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___ProcessFeatureCount
+    ]: ...
     def __init__(
         self,
         *,
         file: builtins.int = ...,
         processes: collections.abc.Iterable[global___ProcessFeatureCount] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["file", b"file", "processes", b"processes"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["file", b"file", "processes", b"processes"]
+    ) -> None: ...
 
 global___DynamicFeatureCounts = DynamicFeatureCounts
 
@@ -454,13 +727,19 @@ class DynamicLayout(google.protobuf.message.Message):
 
     PROCESSES_FIELD_NUMBER: builtins.int
     @property
-    def processes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ProcessLayout]: ...
+    def processes(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___ProcessLayout
+    ]: ...
     def __init__(
         self,
         *,
         processes: collections.abc.Iterable[global___ProcessLayout] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["processes", b"processes"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["processes", b"processes"]
+    ) -> None: ...
 
 global___DynamicLayout = DynamicLayout
 
@@ -481,9 +760,28 @@ class ExportFeature(google.protobuf.message.Message):
         export: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "export", b"export", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "export",
+            b"export",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___ExportFeature = ExportFeature
 
@@ -495,14 +793,20 @@ class FeatureCounts(google.protobuf.message.Message):
     FUNCTIONS_FIELD_NUMBER: builtins.int
     file: builtins.int
     @property
-    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
+    def functions(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___FunctionFeatureCount
+    ]: ...
     def __init__(
         self,
         *,
         file: builtins.int = ...,
         functions: collections.abc.Iterable[global___FunctionFeatureCount] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["file", b"file", "functions", b"functions"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["file", b"file", "functions", b"functions"]
+    ) -> None: ...
 
 global___FeatureCounts = FeatureCounts
 
@@ -550,7 +854,6 @@ class FeatureNode(google.protobuf.message.Message):
     @property
     def import_(self) -> global___ImportFeature:
         """import is Python keyword"""
-
     @property
     def section(self) -> global___SectionFeature: ...
     @property
@@ -570,7 +873,6 @@ class FeatureNode(google.protobuf.message.Message):
     @property
     def property_(self) -> global___PropertyFeature:
         """property is a Python top-level decorator name"""
-
     @property
     def number(self) -> global___NumberFeature: ...
     @property
@@ -613,9 +915,144 @@ class FeatureNode(google.protobuf.message.Message):
         operand_offset: global___OperandOffsetFeature | None = ...,
         basic_block: global___BasicBlockFeature | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["feature", b"feature"]) -> typing.Literal["os", "arch", "format", "match", "characteristic", "export", "import_", "section", "function_name", "substring", "regex", "string", "class_", "namespace", "api", "property_", "number", "bytes", "offset", "mnemonic", "operand_number", "operand_offset", "basic_block"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "api",
+            b"api",
+            "arch",
+            b"arch",
+            "basic_block",
+            b"basic_block",
+            "bytes",
+            b"bytes",
+            "characteristic",
+            b"characteristic",
+            "class_",
+            b"class_",
+            "export",
+            b"export",
+            "feature",
+            b"feature",
+            "format",
+            b"format",
+            "function_name",
+            b"function_name",
+            "import_",
+            b"import_",
+            "match",
+            b"match",
+            "mnemonic",
+            b"mnemonic",
+            "namespace",
+            b"namespace",
+            "number",
+            b"number",
+            "offset",
+            b"offset",
+            "operand_number",
+            b"operand_number",
+            "operand_offset",
+            b"operand_offset",
+            "os",
+            b"os",
+            "property_",
+            b"property_",
+            "regex",
+            b"regex",
+            "section",
+            b"section",
+            "string",
+            b"string",
+            "substring",
+            b"substring",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "api",
+            b"api",
+            "arch",
+            b"arch",
+            "basic_block",
+            b"basic_block",
+            "bytes",
+            b"bytes",
+            "characteristic",
+            b"characteristic",
+            "class_",
+            b"class_",
+            "export",
+            b"export",
+            "feature",
+            b"feature",
+            "format",
+            b"format",
+            "function_name",
+            b"function_name",
+            "import_",
+            b"import_",
+            "match",
+            b"match",
+            "mnemonic",
+            b"mnemonic",
+            "namespace",
+            b"namespace",
+            "number",
+            b"number",
+            "offset",
+            b"offset",
+            "operand_number",
+            b"operand_number",
+            "operand_offset",
+            b"operand_offset",
+            "os",
+            b"os",
+            "property_",
+            b"property_",
+            "regex",
+            b"regex",
+            "section",
+            b"section",
+            "string",
+            b"string",
+            "substring",
+            b"substring",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["feature", b"feature"]
+    ) -> (
+        typing.Literal[
+            "os",
+            "arch",
+            "format",
+            "match",
+            "characteristic",
+            "export",
+            "import_",
+            "section",
+            "function_name",
+            "substring",
+            "regex",
+            "string",
+            "class_",
+            "namespace",
+            "api",
+            "property_",
+            "number",
+            "bytes",
+            "offset",
+            "mnemonic",
+            "operand_number",
+            "operand_offset",
+            "basic_block",
+        ]
+        | None
+    ): ...
 
 global___FeatureNode = FeatureNode
 
@@ -636,9 +1073,28 @@ class FormatFeature(google.protobuf.message.Message):
         format: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "format", b"format", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "format",
+            b"format",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___FormatFeature = FormatFeature
 
@@ -657,8 +1113,12 @@ class FunctionFeatureCount(google.protobuf.message.Message):
         address: global___Address | None = ...,
         count: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "count", b"count"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["address", b"address", "count", b"count"]
+    ) -> None: ...
 
 global___FunctionFeatureCount = FunctionFeatureCount
 
@@ -671,15 +1131,27 @@ class FunctionLayout(google.protobuf.message.Message):
     @property
     def address(self) -> global___Address: ...
     @property
-    def matched_basic_blocks(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BasicBlockLayout]: ...
+    def matched_basic_blocks(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___BasicBlockLayout
+    ]: ...
     def __init__(
         self,
         *,
         address: global___Address | None = ...,
-        matched_basic_blocks: collections.abc.Iterable[global___BasicBlockLayout] | None = ...,
+        matched_basic_blocks: collections.abc.Iterable[global___BasicBlockLayout]
+        | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "matched_basic_blocks", b"matched_basic_blocks"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "address", b"address", "matched_basic_blocks", b"matched_basic_blocks"
+        ],
+    ) -> None: ...
 
 global___FunctionLayout = FunctionLayout
 
@@ -700,9 +1172,28 @@ class FunctionNameFeature(google.protobuf.message.Message):
         function_name: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "function_name", b"function_name", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "function_name",
+            b"function_name",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___FunctionNameFeature = FunctionNameFeature
 
@@ -723,9 +1214,28 @@ class ImportFeature(google.protobuf.message.Message):
         import_: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "import_", b"import_", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "import_",
+            b"import_",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___ImportFeature = ImportFeature
 
@@ -735,13 +1245,19 @@ class Layout(google.protobuf.message.Message):
 
     FUNCTIONS_FIELD_NUMBER: builtins.int
     @property
-    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
+    def functions(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___FunctionLayout
+    ]: ...
     def __init__(
         self,
         *,
         functions: collections.abc.Iterable[global___FunctionLayout] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["functions", b"functions"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["functions", b"functions"]
+    ) -> None: ...
 
 global___Layout = Layout
 
@@ -760,8 +1276,12 @@ class LibraryFunction(google.protobuf.message.Message):
         address: global___Address | None = ...,
         name: builtins.str = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "name", b"name"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["address", b"address", "name", b"name"]
+    ) -> None: ...
 
 global___LibraryFunction = LibraryFunction
 
@@ -779,7 +1299,11 @@ class MBCSpec(google.protobuf.message.Message):
     method: builtins.str
     id: builtins.str
     @property
-    def parts(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def parts(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     def __init__(
         self,
         *,
@@ -789,7 +1313,21 @@ class MBCSpec(google.protobuf.message.Message):
         method: builtins.str = ...,
         id: builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["behavior", b"behavior", "id", b"id", "method", b"method", "objective", b"objective", "parts", b"parts"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "behavior",
+            b"behavior",
+            "id",
+            b"id",
+            "method",
+            b"method",
+            "objective",
+            b"objective",
+            "parts",
+            b"parts",
+        ],
+    ) -> None: ...
 
 global___MBCSpec = MBCSpec
 
@@ -816,7 +1354,21 @@ class MaecMetadata(google.protobuf.message.Message):
         malware_category: builtins.str = ...,
         malware_category_ov: builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["analysis_conclusion", b"analysis_conclusion", "analysis_conclusion_ov", b"analysis_conclusion_ov", "malware_category", b"malware_category", "malware_category_ov", b"malware_category_ov", "malware_family", b"malware_family"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "analysis_conclusion",
+            b"analysis_conclusion",
+            "analysis_conclusion_ov",
+            b"analysis_conclusion_ov",
+            "malware_category",
+            b"malware_category",
+            "malware_category_ov",
+            b"malware_category_ov",
+            "malware_family",
+            b"malware_family",
+        ],
+    ) -> None: ...
 
 global___MaecMetadata = MaecMetadata
 
@@ -839,8 +1391,12 @@ class Match(google.protobuf.message.Message):
             key: builtins.str = ...,
             value: global___Addresses | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
+        def HasField(
+            self, field_name: typing.Literal["value", b"value"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self, field_name: typing.Literal["key", b"key", "value", b"value"]
+        ) -> None: ...
 
     SUCCESS_FIELD_NUMBER: builtins.int
     STATEMENT_FIELD_NUMBER: builtins.int
@@ -854,11 +1410,23 @@ class Match(google.protobuf.message.Message):
     @property
     def feature(self) -> global___FeatureNode: ...
     @property
-    def children(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Match]: ...
+    def children(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___Match
+    ]: ...
     @property
-    def locations(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Address]: ...
+    def locations(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___Address
+    ]: ...
     @property
-    def captures(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___Addresses]: ...
+    def captures(
+        self,
+    ) -> google.protobuf.internal.containers.MessageMap[
+        builtins.str, global___Addresses
+    ]: ...
     def __init__(
         self,
         *,
@@ -867,11 +1435,37 @@ class Match(google.protobuf.message.Message):
         feature: global___FeatureNode | None = ...,
         children: collections.abc.Iterable[global___Match] | None = ...,
         locations: collections.abc.Iterable[global___Address] | None = ...,
-        captures: collections.abc.Mapping[builtins.str, global___Addresses] | None = ...,
+        captures: collections.abc.Mapping[builtins.str, global___Addresses]
+        | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["feature", b"feature", "node", b"node", "statement", b"statement"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["captures", b"captures", "children", b"children", "feature", b"feature", "locations", b"locations", "node", b"node", "statement", b"statement", "success", b"success"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["node", b"node"]) -> typing.Literal["statement", "feature"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "feature", b"feature", "node", b"node", "statement", b"statement"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "captures",
+            b"captures",
+            "children",
+            b"children",
+            "feature",
+            b"feature",
+            "locations",
+            b"locations",
+            "node",
+            b"node",
+            "statement",
+            b"statement",
+            "success",
+            b"success",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["node", b"node"]
+    ) -> typing.Literal["statement", "feature"] | None: ...
 
 global___Match = Match
 
@@ -892,9 +1486,28 @@ class MatchFeature(google.protobuf.message.Message):
         match: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "match", b"match", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "match",
+            b"match",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___MatchFeature = MatchFeature
 
@@ -915,7 +1528,11 @@ class Metadata(google.protobuf.message.Message):
     version: builtins.str
     flavor: global___Flavor.ValueType
     @property
-    def argv(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def argv(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
     def sample(self) -> global___Sample: ...
     @property
@@ -923,11 +1540,9 @@ class Metadata(google.protobuf.message.Message):
         """deprecated in v7.0.
         use analysis2 instead.
         """
-
     @property
     def static_analysis(self) -> global___StaticAnalysis:
         """use analysis2 instead of analysis (deprecated in v7.0)."""
-
     @property
     def dynamic_analysis(self) -> global___DynamicAnalysis: ...
     def __init__(
@@ -942,9 +1557,47 @@ class Metadata(google.protobuf.message.Message):
         static_analysis: global___StaticAnalysis | None = ...,
         dynamic_analysis: global___DynamicAnalysis | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["analysis", b"analysis", "analysis2", b"analysis2", "dynamic_analysis", b"dynamic_analysis", "sample", b"sample", "static_analysis", b"static_analysis"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["analysis", b"analysis", "analysis2", b"analysis2", "argv", b"argv", "dynamic_analysis", b"dynamic_analysis", "flavor", b"flavor", "sample", b"sample", "static_analysis", b"static_analysis", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["analysis2", b"analysis2"]) -> typing.Literal["static_analysis", "dynamic_analysis"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "analysis",
+            b"analysis",
+            "analysis2",
+            b"analysis2",
+            "dynamic_analysis",
+            b"dynamic_analysis",
+            "sample",
+            b"sample",
+            "static_analysis",
+            b"static_analysis",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "analysis",
+            b"analysis",
+            "analysis2",
+            b"analysis2",
+            "argv",
+            b"argv",
+            "dynamic_analysis",
+            b"dynamic_analysis",
+            "flavor",
+            b"flavor",
+            "sample",
+            b"sample",
+            "static_analysis",
+            b"static_analysis",
+            "timestamp",
+            b"timestamp",
+            "version",
+            b"version",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["analysis2", b"analysis2"]
+    ) -> typing.Literal["static_analysis", "dynamic_analysis"] | None: ...
 
 global___Metadata = Metadata
 
@@ -965,9 +1618,28 @@ class MnemonicFeature(google.protobuf.message.Message):
         mnemonic: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "mnemonic", b"mnemonic", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "mnemonic",
+            b"mnemonic",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___MnemonicFeature = MnemonicFeature
 
@@ -988,9 +1660,28 @@ class NamespaceFeature(google.protobuf.message.Message):
         namespace: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "namespace", b"namespace", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "namespace",
+            b"namespace",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___NamespaceFeature = NamespaceFeature
 
@@ -1006,7 +1697,6 @@ class NumberFeature(google.protobuf.message.Message):
     @property
     def number(self) -> global___Number:
         """this can be positive (range: u64), negative (range: i64), or a double."""
-
     def __init__(
         self,
         *,
@@ -1014,9 +1704,33 @@ class NumberFeature(google.protobuf.message.Message):
         number: global___Number | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "number", b"number"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "number", b"number", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "number",
+            b"number",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "number",
+            b"number",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___NumberFeature = NumberFeature
 
@@ -1037,9 +1751,28 @@ class OSFeature(google.protobuf.message.Message):
         os: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "os", b"os", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "os",
+            b"os",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___OSFeature = OSFeature
 
@@ -1055,7 +1788,6 @@ class OffsetFeature(google.protobuf.message.Message):
     @property
     def offset(self) -> global___Integer:
         """offset can be negative"""
-
     def __init__(
         self,
         *,
@@ -1063,9 +1795,33 @@ class OffsetFeature(google.protobuf.message.Message):
         offset: global___Integer | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "offset", b"offset"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "offset", b"offset", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "offset",
+            b"offset",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "offset",
+            b"offset",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___OffsetFeature = OffsetFeature
 
@@ -1083,7 +1839,6 @@ class OperandNumberFeature(google.protobuf.message.Message):
     @property
     def operand_number(self) -> global___Integer:
         """this can be positive (range: u64), negative (range: i64), or a double."""
-
     def __init__(
         self,
         *,
@@ -1092,9 +1847,35 @@ class OperandNumberFeature(google.protobuf.message.Message):
         operand_number: global___Integer | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "operand_number", b"operand_number"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "index", b"index", "operand_number", b"operand_number", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "operand_number",
+            b"operand_number",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "index",
+            b"index",
+            "operand_number",
+            b"operand_number",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___OperandNumberFeature = OperandNumberFeature
 
@@ -1119,9 +1900,35 @@ class OperandOffsetFeature(google.protobuf.message.Message):
         operand_offset: global___Integer | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "operand_offset", b"operand_offset"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "index", b"index", "operand_offset", b"operand_offset", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "operand_offset",
+            b"operand_offset",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "index",
+            b"index",
+            "operand_offset",
+            b"operand_offset",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___OperandOffsetFeature = OperandOffsetFeature
 
@@ -1140,8 +1947,12 @@ class ProcessFeatureCount(google.protobuf.message.Message):
         address: global___Address | None = ...,
         count: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "count", b"count"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["address", b"address", "count", b"count"]
+    ) -> None: ...
 
 global___ProcessFeatureCount = ProcessFeatureCount
 
@@ -1156,7 +1967,11 @@ class ProcessLayout(google.protobuf.message.Message):
     @property
     def address(self) -> global___Address: ...
     @property
-    def matched_threads(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ThreadLayout]: ...
+    def matched_threads(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___ThreadLayout
+    ]: ...
     def __init__(
         self,
         *,
@@ -1164,8 +1979,20 @@ class ProcessLayout(google.protobuf.message.Message):
         matched_threads: collections.abc.Iterable[global___ThreadLayout] | None = ...,
         name: builtins.str = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "matched_threads", b"matched_threads", "name", b"name"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "address",
+            b"address",
+            "matched_threads",
+            b"matched_threads",
+            "name",
+            b"name",
+        ],
+    ) -> None: ...
 
 global___ProcessLayout = ProcessLayout
 
@@ -1190,12 +2017,44 @@ class PropertyFeature(google.protobuf.message.Message):
         access: builtins.str | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description", "property_", b"property_", "type", b"type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_access",
+            b"_access",
+            "_description",
+            b"_description",
+            "access",
+            b"access",
+            "description",
+            b"description",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_access",
+            b"_access",
+            "_description",
+            b"_description",
+            "access",
+            b"access",
+            "description",
+            b"description",
+            "property_",
+            b"property_",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["_access", b"_access"]) -> typing.Literal["access"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_access", b"_access"]
+    ) -> typing.Literal["access"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___PropertyFeature = PropertyFeature
 
@@ -1215,7 +2074,6 @@ class RangeStatement(google.protobuf.message.Message):
     @property
     def child(self) -> global___FeatureNode:
         """reusing FeatureNode here to avoid duplication and list all features OSFeature, ArchFeature, ... again."""
-
     def __init__(
         self,
         *,
@@ -1225,9 +2083,37 @@ class RangeStatement(google.protobuf.message.Message):
         child: global___FeatureNode | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "child", b"child", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "child", b"child", "description", b"description", "max", b"max", "min", b"min", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "child",
+            b"child",
+            "description",
+            b"description",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "child",
+            b"child",
+            "description",
+            b"description",
+            "max",
+            b"max",
+            "min",
+            b"min",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___RangeStatement = RangeStatement
 
@@ -1248,9 +2134,28 @@ class RegexFeature(google.protobuf.message.Message):
         regex: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "regex", b"regex", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "regex",
+            b"regex",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___RegexFeature = RegexFeature
 
@@ -1273,23 +2178,35 @@ class ResultDocument(google.protobuf.message.Message):
             key: builtins.str = ...,
             value: global___RuleMatches | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
+        def HasField(
+            self, field_name: typing.Literal["value", b"value"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self, field_name: typing.Literal["key", b"key", "value", b"value"]
+        ) -> None: ...
 
     META_FIELD_NUMBER: builtins.int
     RULES_FIELD_NUMBER: builtins.int
     @property
     def meta(self) -> global___Metadata: ...
     @property
-    def rules(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___RuleMatches]: ...
+    def rules(
+        self,
+    ) -> google.protobuf.internal.containers.MessageMap[
+        builtins.str, global___RuleMatches
+    ]: ...
     def __init__(
         self,
         *,
         meta: global___Metadata | None = ...,
         rules: collections.abc.Mapping[builtins.str, global___RuleMatches] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["meta", b"meta"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["meta", b"meta", "rules", b"rules"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["meta", b"meta"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["meta", b"meta", "rules", b"rules"]
+    ) -> None: ...
 
 global___ResultDocument = ResultDocument
 
@@ -1304,7 +2221,11 @@ class RuleMatches(google.protobuf.message.Message):
     @property
     def meta(self) -> global___RuleMetadata: ...
     @property
-    def matches(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Pair_Address_Match]: ...
+    def matches(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___Pair_Address_Match
+    ]: ...
     def __init__(
         self,
         *,
@@ -1312,8 +2233,15 @@ class RuleMatches(google.protobuf.message.Message):
         source: builtins.str = ...,
         matches: collections.abc.Iterable[global___Pair_Address_Match] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["meta", b"meta"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["matches", b"matches", "meta", b"meta", "source", b"source"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["meta", b"meta"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "matches", b"matches", "meta", b"meta", "source", b"source"
+        ],
+    ) -> None: ...
 
 global___RuleMatches = RuleMatches
 
@@ -1344,21 +2272,40 @@ class RuleMetadata(google.protobuf.message.Message):
     lib: builtins.bool
     is_subscope_rule: builtins.bool
     @property
-    def authors(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def authors(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
-    def attack(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___AttackSpec]: ...
+    def attack(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___AttackSpec
+    ]: ...
     @property
-    def mbc(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___MBCSpec]: ...
+    def mbc(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___MBCSpec
+    ]: ...
     @property
-    def references(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def references(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
-    def examples(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def examples(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
     def maec(self) -> global___MaecMetadata: ...
     @property
     def scopes(self) -> global___Scopes:
         """use scopes over scope (deprecated in v7.0)."""
-
     def __init__(
         self,
         *,
@@ -1376,8 +2323,40 @@ class RuleMetadata(google.protobuf.message.Message):
         is_subscope_rule: builtins.bool = ...,
         scopes: global___Scopes | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["maec", b"maec", "scopes", b"scopes"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["attack", b"attack", "authors", b"authors", "description", b"description", "examples", b"examples", "is_subscope_rule", b"is_subscope_rule", "lib", b"lib", "maec", b"maec", "mbc", b"mbc", "name", b"name", "namespace", b"namespace", "references", b"references", "scope", b"scope", "scopes", b"scopes"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["maec", b"maec", "scopes", b"scopes"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "attack",
+            b"attack",
+            "authors",
+            b"authors",
+            "description",
+            b"description",
+            "examples",
+            b"examples",
+            "is_subscope_rule",
+            b"is_subscope_rule",
+            "lib",
+            b"lib",
+            "maec",
+            b"maec",
+            "mbc",
+            b"mbc",
+            "name",
+            b"name",
+            "namespace",
+            b"namespace",
+            "references",
+            b"references",
+            "scope",
+            b"scope",
+            "scopes",
+            b"scopes",
+        ],
+    ) -> None: ...
 
 global___RuleMetadata = RuleMetadata
 
@@ -1401,7 +2380,12 @@ class Sample(google.protobuf.message.Message):
         sha256: builtins.str = ...,
         path: builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["md5", b"md5", "path", b"path", "sha1", b"sha1", "sha256", b"sha256"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "md5", b"md5", "path", b"path", "sha1", b"sha1", "sha256", b"sha256"
+        ],
+    ) -> None: ...
 
 global___Sample = Sample
 
@@ -1419,12 +2403,40 @@ class Scopes(google.protobuf.message.Message):
         static: global___Scope.ValueType | None = ...,
         dynamic: global___Scope.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_dynamic", b"_dynamic", "_static", b"_static", "dynamic", b"dynamic", "static", b"static"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_dynamic", b"_dynamic", "_static", b"_static", "dynamic", b"dynamic", "static", b"static"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_dynamic",
+            b"_dynamic",
+            "_static",
+            b"_static",
+            "dynamic",
+            b"dynamic",
+            "static",
+            b"static",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_dynamic",
+            b"_dynamic",
+            "_static",
+            b"_static",
+            "dynamic",
+            b"dynamic",
+            "static",
+            b"static",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["_dynamic", b"_dynamic"]) -> typing.Literal["dynamic"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_dynamic", b"_dynamic"]
+    ) -> typing.Literal["dynamic"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["_static", b"_static"]) -> typing.Literal["static"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_static", b"_static"]
+    ) -> typing.Literal["static"] | None: ...
 
 global___Scopes = Scopes
 
@@ -1445,9 +2457,28 @@ class SectionFeature(google.protobuf.message.Message):
         section: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "section", b"section", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "section",
+            b"section",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___SectionFeature = SectionFeature
 
@@ -1468,9 +2499,28 @@ class SomeStatement(google.protobuf.message.Message):
         count: builtins.int = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "count", b"count", "description", b"description", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "count",
+            b"count",
+            "description",
+            b"description",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___SomeStatement = SomeStatement
 
@@ -1501,9 +2551,41 @@ class StatementNode(google.protobuf.message.Message):
         subscope: global___SubscopeStatement | None = ...,
         compound: global___CompoundStatement | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["compound", b"compound", "range", b"range", "some", b"some", "statement", b"statement", "subscope", b"subscope"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["compound", b"compound", "range", b"range", "some", b"some", "statement", b"statement", "subscope", b"subscope", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["statement", b"statement"]) -> typing.Literal["range", "some", "subscope", "compound"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "compound",
+            b"compound",
+            "range",
+            b"range",
+            "some",
+            b"some",
+            "statement",
+            b"statement",
+            "subscope",
+            b"subscope",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "compound",
+            b"compound",
+            "range",
+            b"range",
+            "some",
+            b"some",
+            "statement",
+            b"statement",
+            "subscope",
+            b"subscope",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["statement", b"statement"]
+    ) -> typing.Literal["range", "some", "subscope", "compound"] | None: ...
 
 global___StatementNode = StatementNode
 
@@ -1525,7 +2607,11 @@ class StaticAnalysis(google.protobuf.message.Message):
     os: builtins.str
     extractor: builtins.str
     @property
-    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    def rules(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+        builtins.str
+    ]: ...
     @property
     def base_address(self) -> global___Address: ...
     @property
@@ -1533,7 +2619,11 @@ class StaticAnalysis(google.protobuf.message.Message):
     @property
     def feature_counts(self) -> global___StaticFeatureCounts: ...
     @property
-    def library_functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
+    def library_functions(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___LibraryFunction
+    ]: ...
     def __init__(
         self,
         *,
@@ -1545,10 +2635,43 @@ class StaticAnalysis(google.protobuf.message.Message):
         base_address: global___Address | None = ...,
         layout: global___StaticLayout | None = ...,
         feature_counts: global___StaticFeatureCounts | None = ...,
-        library_functions: collections.abc.Iterable[global___LibraryFunction] | None = ...,
+        library_functions: collections.abc.Iterable[global___LibraryFunction]
+        | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["arch", b"arch", "base_address", b"base_address", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "library_functions", b"library_functions", "os", b"os", "rules", b"rules"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "base_address",
+            b"base_address",
+            "feature_counts",
+            b"feature_counts",
+            "layout",
+            b"layout",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "arch",
+            b"arch",
+            "base_address",
+            b"base_address",
+            "extractor",
+            b"extractor",
+            "feature_counts",
+            b"feature_counts",
+            "format",
+            b"format",
+            "layout",
+            b"layout",
+            "library_functions",
+            b"library_functions",
+            "os",
+            b"os",
+            "rules",
+            b"rules",
+        ],
+    ) -> None: ...
 
 global___StaticAnalysis = StaticAnalysis
 
@@ -1560,14 +2683,20 @@ class StaticFeatureCounts(google.protobuf.message.Message):
     FUNCTIONS_FIELD_NUMBER: builtins.int
     file: builtins.int
     @property
-    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
+    def functions(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___FunctionFeatureCount
+    ]: ...
     def __init__(
         self,
         *,
         file: builtins.int = ...,
         functions: collections.abc.Iterable[global___FunctionFeatureCount] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["file", b"file", "functions", b"functions"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["file", b"file", "functions", b"functions"]
+    ) -> None: ...
 
 global___StaticFeatureCounts = StaticFeatureCounts
 
@@ -1577,13 +2706,19 @@ class StaticLayout(google.protobuf.message.Message):
 
     FUNCTIONS_FIELD_NUMBER: builtins.int
     @property
-    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
+    def functions(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___FunctionLayout
+    ]: ...
     def __init__(
         self,
         *,
         functions: collections.abc.Iterable[global___FunctionLayout] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["functions", b"functions"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["functions", b"functions"]
+    ) -> None: ...
 
 global___StaticLayout = StaticLayout
 
@@ -1604,9 +2739,28 @@ class StringFeature(google.protobuf.message.Message):
         string: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "string", b"string", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "string",
+            b"string",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___StringFeature = StringFeature
 
@@ -1627,9 +2781,28 @@ class SubscopeStatement(google.protobuf.message.Message):
         scope: global___Scope.ValueType = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "scope", b"scope", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "scope",
+            b"scope",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___SubscopeStatement = SubscopeStatement
 
@@ -1650,9 +2823,28 @@ class SubstringFeature(google.protobuf.message.Message):
         substring: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_description", b"_description", "description", b"description", "substring", b"substring", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["_description", b"_description"]) -> typing.Literal["description"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_description", b"_description", "description", b"description"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_description",
+            b"_description",
+            "description",
+            b"description",
+            "substring",
+            b"substring",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_description", b"_description"]
+    ) -> typing.Literal["description"] | None: ...
 
 global___SubstringFeature = SubstringFeature
 
@@ -1671,8 +2863,12 @@ class CallLayout(google.protobuf.message.Message):
         address: global___Address | None = ...,
         name: builtins.str = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "name", b"name"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["address", b"address", "name", b"name"]
+    ) -> None: ...
 
 global___CallLayout = CallLayout
 
@@ -1685,15 +2881,26 @@ class ThreadLayout(google.protobuf.message.Message):
     @property
     def address(self) -> global___Address: ...
     @property
-    def matched_calls(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CallLayout]: ...
+    def matched_calls(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___CallLayout
+    ]: ...
     def __init__(
         self,
         *,
         address: global___Address | None = ...,
         matched_calls: collections.abc.Iterable[global___CallLayout] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "matched_calls", b"matched_calls"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "address", b"address", "matched_calls", b"matched_calls"
+        ],
+    ) -> None: ...
 
 global___ThreadLayout = ThreadLayout
 
@@ -1703,7 +2910,11 @@ class Addresses(google.protobuf.message.Message):
 
     ADDRESS_FIELD_NUMBER: builtins.int
     @property
-    def address(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Address]: ...
+    def address(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___Address
+    ]: ...
     def __init__(
         self,
         *,
@@ -1729,8 +2940,12 @@ class Pair_Address_Match(google.protobuf.message.Message):
         address: global___Address | None = ...,
         match: global___Match | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["address", b"address", "match", b"match"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["address", b"address", "match", b"match"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["address", b"address", "match", b"match"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["address", b"address", "match", b"match"]
+    ) -> None: ...
 
 global___Pair_Address_Match = Pair_Address_Match
 
@@ -1750,8 +2965,12 @@ class Token_Offset(google.protobuf.message.Message):
         token: global___Integer | None = ...,
         offset: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["token", b"token"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["offset", b"offset", "token", b"token"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["token", b"token"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["offset", b"offset", "token", b"token"]
+    ) -> None: ...
 
 global___Token_Offset = Token_Offset
 
@@ -1771,8 +2990,12 @@ class Ppid_Pid(google.protobuf.message.Message):
         ppid: global___Integer | None = ...,
         pid: global___Integer | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid"]
+    ) -> None: ...
 
 global___Ppid_Pid = Ppid_Pid
 
@@ -1796,8 +3019,12 @@ class Ppid_Pid_Tid(google.protobuf.message.Message):
         pid: global___Integer | None = ...,
         tid: global___Integer | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]
+    ) -> None: ...
 
 global___Ppid_Pid_Tid = Ppid_Pid_Tid
 
@@ -1825,8 +3052,18 @@ class Ppid_Pid_Tid_Id(google.protobuf.message.Message):
         tid: global___Integer | None = ...,
         id: global___Integer | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"
+        ],
+    ) -> None: ...
 
 global___Ppid_Pid_Tid_Id = Ppid_Pid_Tid_Id
 
@@ -1844,9 +3081,15 @@ class Integer(google.protobuf.message.Message):
         u: builtins.int = ...,
         i: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["i", b"i", "u", b"u", "value", b"value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["i", b"i", "u", b"u", "value", b"value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["value", b"value"]) -> typing.Literal["u", "i"] | None: ...
+    def HasField(
+        self, field_name: typing.Literal["i", b"i", "u", b"u", "value", b"value"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["i", b"i", "u", b"u", "value", b"value"]
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["value", b"value"]
+    ) -> typing.Literal["u", "i"] | None: ...
 
 global___Integer = Integer
 
@@ -1867,8 +3110,16 @@ class Number(google.protobuf.message.Message):
         i: builtins.int = ...,
         f: builtins.float = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["value", b"value"]) -> typing.Literal["u", "i", "f"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["value", b"value"]
+    ) -> typing.Literal["u", "i", "f"] | None: ...
 
 global___Number = Number

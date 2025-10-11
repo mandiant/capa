@@ -319,7 +319,11 @@ def log_unsupported_vmray_report_error(error: str):
 
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
-    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
+    logger.error(
+        " %s report is empty or only contains little useful data: %s",
+        sandbox_name,
+        error,
+    )
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
@@ -398,7 +402,10 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
     import capa.rules
     import capa.rules.cache
 
-    latest_rule_code_file = max([Path(capa.rules.__file__), Path(capa.rules.cache.__file__)], key=os.path.getmtime)
+    latest_rule_code_file = max(
+        [Path(capa.rules.__file__), Path(capa.rules.cache.__file__)],
+        key=os.path.getmtime,
+    )
     rule_code_timestamp = os.path.getmtime(latest_rule_code_file)
 
     if rule_code_timestamp > cache_timestamp:

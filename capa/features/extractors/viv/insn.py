@@ -26,12 +26,30 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
+from capa.features.insn import (
+    API,
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    Mnemonic,
+    OperandNumber,
+    OperandOffset,
+)
+from capa.features.common import (
+    MAX_BYTES_FEATURE_SIZE,
+    THUNK_CHAIN_DEPTH_DELTA,
+    Bytes,
+    String,
+    Feature,
+    Characteristic,
+)
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
-from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
+from capa.features.extractors.viv.indirect_calls import (
+    NotFoundError,
+    resolve_indirect_call,
+)
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
@@ -66,7 +84,11 @@ def get_imports(vw):
         return vw.metadata["imports"]
     else:
         imports = {
-            p[0]: (p[3].rpartition(".")[0], p[3].replace(".ord", ".#").rpartition(".")[2]) for p in vw.getImports()
+            p[0]: (
+                p[3].rpartition(".")[0],
+                p[3].replace(".ord", ".#").rpartition(".")[2],
+            )
+            for p in vw.getImports()
         }
         vw.metadata["imports"] = imports
         return imports
@@ -417,7 +439,13 @@ def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle)
         if insn.va + 5 == insn.opers[0].getOperValue(insn):
             yield Characteristic("call $+5"), ih.address
 
-    if isinstance(insn.opers[0], (envi.archs.i386.disasm.i386ImmMemOper, envi.archs.amd64.disasm.Amd64RipRelOper)):
+    if isinstance(
+        insn.opers[0],
+        (
+            envi.archs.i386.disasm.i386ImmMemOper,
+            envi.archs.amd64.disasm.Amd64RipRelOper,
+        ),
+    ):
         if insn.va + 5 == insn.opers[0].getOperAddr(insn):
             yield Characteristic("call $+5"), ih.address
 
@@ -595,7 +623,10 @@ def extract_op_number_features(
     f: viv_utils.Function = fh.inner
 
     # this is for both x32 and x64
-    if not isinstance(oper, (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper)):
+    if not isinstance(
+        oper,
+        (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper),
+    ):
         return
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
@@ -720,7 +751,10 @@ def extract_operand_features(f: FunctionHandle, bb, insn: InsnHandle) -> Iterato
 
 
 OPERAND_HANDLERS: list[
-    Callable[[FunctionHandle, BBHandle, InsnHandle, int, envi.Operand], Iterator[tuple[Feature, Address]]]
+    Callable[
+        [FunctionHandle, BBHandle, InsnHandle, int, envi.Operand],
+        Iterator[tuple[Feature, Address]],
+    ]
 ] = [
     extract_op_number_features,
     extract_op_offset_features,

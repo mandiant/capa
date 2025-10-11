@@ -53,7 +53,10 @@ def is_address_mapped(be2: BinExport2, address: int) -> bool:
     return any(section.address <= address < section.address + section.size for section in sections_with_perms)
 
 
-def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGraph.Vertex.Type.ValueType) -> bool:
+def is_vertex_type(
+    vertex: BinExport2.CallGraph.Vertex,
+    type_: BinExport2.CallGraph.Vertex.Type.ValueType,
+) -> bool:
     return vertex.HasField("type") and vertex.type == type_
 
 
@@ -601,12 +604,26 @@ class BinExport2InstructionPattern:
                             # intel 32: ebp, ebp, bp
                             # arm: sp
                             register_name = found_expression.symbol.lower()
-                            if register_name in ("rsp", "esp", "sp", "rbp", "ebp", "bp"):
+                            if register_name in (
+                                "rsp",
+                                "esp",
+                                "sp",
+                                "rbp",
+                                "ebp",
+                                "bp",
+                            ):
                                 return None
 
                         elif wanted_expression.endswith("(stack)"):
                             register_name = found_expression.symbol.lower()
-                            if register_name not in ("rsp", "esp", "sp", "rbp", "ebp", "bp"):
+                            if register_name not in (
+                                "rsp",
+                                "esp",
+                                "sp",
+                                "rbp",
+                                "ebp",
+                                "bp",
+                            ):
                                 return None
 
                         else:
@@ -666,7 +683,8 @@ class BinExport2InstructionPatternMatcher:
             [
                 BinExport2InstructionPattern.from_str(line)
                 for line in filter(
-                    lambda line: not line.startswith("#"), (line.strip() for line in patterns.split("\n"))
+                    lambda line: not line.startswith("#"),
+                    (line.strip() for line in patterns.split("\n")),
                 )
             ]
         )

@@ -47,7 +47,10 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
     ),
     global_features=[],
     file_features=[
-        (AbsoluteVirtualAddress(0x402345), capa.features.common.Characteristic("embedded pe")),
+        (
+            AbsoluteVirtualAddress(0x402345),
+            capa.features.common.Characteristic("embedded pe"),
+        ),
     ],
     processes={
         ProcessAddress(pid=1): capa.features.extractors.null.ProcessFeatures(
@@ -63,11 +66,17 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
                             name="CreateFile(12)",
                             features=[
                                 (
-                                    DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=1),
+                                    DynamicCallAddress(
+                                        thread=ThreadAddress(ProcessAddress(pid=1), tid=1),
+                                        id=1,
+                                    ),
                                     capa.features.insn.API("CreateFile"),
                                 ),
                                 (
-                                    DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=1),
+                                    DynamicCallAddress(
+                                        thread=ThreadAddress(ProcessAddress(pid=1), tid=1),
+                                        id=1,
+                                    ),
                                     capa.features.insn.Number(12),
                                 ),
                             ],
@@ -78,7 +87,10 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
                             name="WriteFile()",
                             features=[
                                 (
-                                    DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2),
+                                    DynamicCallAddress(
+                                        thread=ThreadAddress(ProcessAddress(pid=1), tid=1),
+                                        id=2,
+                                    ),
                                     capa.features.insn.API("WriteFile"),
                                 ),
                             ],

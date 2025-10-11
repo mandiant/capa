@@ -37,7 +37,11 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
             logger.debug("Symbol table '%s' has a sh_entsize of zero!", section.name)
             continue
 
-        logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
+        logger.debug(
+            "Symbol table '%s' contains %s entries:",
+            section.name,
+            section.num_symbols(),
+        )
 
         for symbol in section.iter_symbols():
             # The following conditions are based on the following article

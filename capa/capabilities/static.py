@@ -26,7 +26,12 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.capabilities.common import Capabilities, find_file_capabilities
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +43,11 @@ class InstructionCapabilities:
 
 
 def find_instruction_capabilities(
-    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+    ruleset: RuleSet,
+    extractor: StaticFeatureExtractor,
+    f: FunctionHandle,
+    bb: BBHandle,
+    insn: InsnHandle,
 ) -> InstructionCapabilities:
     """
     find matches for the given rules for the given instruction.
@@ -47,7 +56,8 @@ def find_instruction_capabilities(
     features: FeatureSet = collections.defaultdict(set)
 
     for feature, addr in itertools.chain(
-        extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
+        extractor.extract_insn_features(f, bb, insn),
+        extractor.extract_global_features(),
     ):
         features[feature].add(addr)
 
@@ -92,7 +102,8 @@ def find_basic_block_capabilities(
             insn_matches[rule_name].extend(res)
 
     for feature, va in itertools.chain(
-        extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()
+        extractor.extract_basic_block_features(f, bb),
+        extractor.extract_global_features(),
     ):
         features[feature].add(va)
 
@@ -169,7 +180,10 @@ def find_static_capabilities(
         console=capa.helpers.log_console, transient=True, disable=disable_progress
     ) as pbar:
         task = pbar.add_task(
-            "matching", total=n_funcs, unit="functions", postfix=f"skipped {n_libs} library functions, {percentage}%"
+            "matching",
+            total=n_funcs,
+            unit="functions",
+            postfix=f"skipped {n_libs} library functions, {percentage}%",
         )
         for f in functions:
             t0 = time.time()
@@ -188,7 +202,8 @@ def find_static_capabilities(
             code_capabilities = find_code_capabilities(ruleset, extractor, f)
             feature_counts.functions += (
                 rdoc.FunctionFeatureCount(
-                    address=frz.Address.from_capa(f.address), count=code_capabilities.feature_count
+                    address=frz.Address.from_capa(f.address),
+                    count=code_capabilities.feature_count,
                 ),
             )
             t1 = time.time()

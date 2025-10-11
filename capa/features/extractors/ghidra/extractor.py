@@ -71,7 +71,11 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
             fh: FunctionHandle = FunctionHandle(
                 address=AbsoluteVirtualAddress(fhandle.getEntryPoint().getOffset()),
                 inner=fhandle,
-                ctx={"imports_cache": self.imports, "externs_cache": self.externs, "fakes_cache": self.fakes},
+                ctx={
+                    "imports_cache": self.imports,
+                    "externs_cache": self.externs,
+                    "fakes_cache": self.fakes,
+                },
             )
             yield fh
 

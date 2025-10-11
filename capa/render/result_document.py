@@ -170,7 +170,8 @@ class CompoundStatementType:
     OPTIONAL = "optional"
 
 
-class StatementModel(FrozenModel): ...
+class StatementModel(FrozenModel):
+    ...
 
 
 class CompoundStatement(StatementModel):
@@ -285,7 +286,9 @@ def node_to_capa(
 
         elif isinstance(node.statement, SomeStatement):
             return capa.engine.Some(
-                description=node.statement.description, count=node.statement.count, children=children
+                description=node.statement.description,
+                count=node.statement.count,
+                children=children,
             )
 
         elif isinstance(node.statement, RangeStatement):
@@ -298,7 +301,9 @@ def node_to_capa(
 
         elif isinstance(node.statement, SubscopeStatement):
             return capa.engine.Subscope(
-                description=node.statement.description, scope=node.statement.scope, child=children[0]
+                description=node.statement.description,
+                scope=node.statement.scope,
+                child=children[0],
             )
 
         else:
@@ -348,7 +353,13 @@ class Match(FrozenModel):
             locations = list(map(frz.Address.from_capa, result.locations))
 
         captures = {}
-        if isinstance(result.statement, (capa.features.common._MatchedSubstring, capa.features.common._MatchedRegex)):
+        if isinstance(
+            result.statement,
+            (
+                capa.features.common._MatchedSubstring,
+                capa.features.common._MatchedRegex,
+            ),
+        ):
             captures = {
                 capture: list(map(frz.Address.from_capa, locs)) for capture, locs in result.statement.matches.items()
             }
@@ -393,7 +404,6 @@ class Match(FrozenModel):
                     )
 
                 for location in result.locations:
-
                     # keep this in sync with the copy below
                     if isinstance(location, DynamicCallAddress):
                         if location in rule_matches:
@@ -723,7 +733,10 @@ class ResultDocument(FrozenModel):
                 meta=RuleMetadata.from_capa(rule),
                 source=rule.definition,
                 matches=tuple(
-                    (frz.Address.from_capa(addr), Match.from_capa(rules, capabilities, match))
+                    (
+                        frz.Address.from_capa(addr),
+                        Match.from_capa(rules, capabilities, match),
+                    )
                     for addr, match in matches
                 ),
             )
@@ -733,9 +746,9 @@ class ResultDocument(FrozenModel):
     def to_capa(self) -> tuple[Metadata, "Capabilities"]:
         from capa.capabilities.common import Capabilities
 
-        matches: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
-            collections.defaultdict(list)
-        )
+        matches: dict[
+            str, list[tuple[capa.features.address.Address, capa.features.common.Result]]
+        ] = collections.defaultdict(list)
 
         # this doesn't quite work because we don't have the rule source for rules that aren't matched.
         rules_by_name = {
@@ -750,7 +763,9 @@ class ResultDocument(FrozenModel):
 
         if isinstance(self.meta.analysis, StaticAnalysis):
             capabilities = Capabilities(
-                matches, self.meta.analysis.feature_counts, self.meta.analysis.library_functions
+                matches,
+                self.meta.analysis.feature_counts,
+                self.meta.analysis.library_functions,
             )
         elif isinstance(self.meta.analysis, DynamicAnalysis):
             capabilities = Capabilities(matches, self.meta.analysis.feature_counts)

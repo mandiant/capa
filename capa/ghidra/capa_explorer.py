@@ -207,7 +207,11 @@ class CapaMatchData:
                                 if sub_func is not None:
                                     sub_func_addr = sub_func.getEntryPoint()
                                     # place function in capa namespace & create the subscope match label in Ghidra's global namespace
-                                    create_label(sub_func_addr, sub_func.getName(), capa_namespace)
+                                    create_label(
+                                        sub_func_addr,
+                                        sub_func.getName(),
+                                        capa_namespace,
+                                    )
                                     self.set_plate_comment(sub_func_addr)
                                     for sub_type, description in parse_node(node):
                                         self.set_pre_comment(sub_ghidra_addr, sub_type, description)

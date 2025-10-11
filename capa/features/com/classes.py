@@ -36,7 +36,10 @@ COM_CLASSES: dict[str, list[str]] = {
     "LocalMachineClasses": ["00000331-0000-0000-C000-000000000046"],
     "AllClasses": ["00000330-0000-0000-C000-000000000046"],
     "RemoteUnknownPSFactory": ["00000340-0000-0000-C000-000000000046"],
-    "InProcFreeMarshaler": ["0000033A-0000-0000-C000-000000000046", "0000001C-0000-0000-C000-000000000046"],
+    "InProcFreeMarshaler": [
+        "0000033A-0000-0000-C000-000000000046",
+        "0000001C-0000-0000-C000-000000000046",
+    ],
     "StdAsyncActManager": ["00000329-0000-0000-C000-000000000046"],
     "ComBinding": ["00000328-0000-0000-C000-000000000046"],
     "SynchronizeContainer": ["0000032D-0000-0000-C000-000000000046"],
@@ -1049,7 +1052,10 @@ COM_CLASSES: dict[str, list[str]] = {
     "MSVideoControlFilePlaybackDevice": ["37B0353C-A4C8-11D2-B634-00C04F79498E"],
     "MSVidWebDVD": ["011B3619-FE63-4814-8A84-15A194CE9CE3"],
     "MSVidWebDVDAdm": ["FA7C375B-66A7-4280-879D-FD459C84BB02"],
-    "MSVideoControlVideoRenderer": ["37B03543-A4C8-11D2-B634-00C04F79498E", "24DC3975-09BF-4231-8655-3EE71F43837D"],
+    "MSVideoControlVideoRenderer": [
+        "37B03543-A4C8-11D2-B634-00C04F79498E",
+        "24DC3975-09BF-4231-8655-3EE71F43837D",
+    ],
     "MSVideoControlAudioRenderer": ["37B03544-A4C8-11D2-B634-00C04F79498E"],
     "MSVideoControlStreamBufferEngineSink": [
         "4A5869CF-929D-4040-AE03-FCAFC5B9CD42",
@@ -3530,7 +3536,10 @@ COM_CLASSES: dict[str, list[str]] = {
     "WICIfdMetadataReader": ["8f914656-9d0a-4eb2-9019-0bf96d8a9ee6"],
     "WICIfdMetadataWriter": ["b1ebfc28-c9bd-47a2-8d33-b948769777a7"],
     "WICImagingCategories": ["fae3d380-fea4-4623-8c75-c6b61110b681"],
-    "WICImagingFactory": ["317d06e8-5f24-433d-bdf7-79ce68d8abc2", "cacaf262-9370-4615-a13b-9f5539da4c0a"],
+    "WICImagingFactory": [
+        "317d06e8-5f24-433d-bdf7-79ce68d8abc2",
+        "cacaf262-9370-4615-a13b-9f5539da4c0a",
+    ],
     "WICImagingFactory1": ["cacaf262-9370-4615-a13b-9f5539da4c0a"],
     "WICImagingFactory2": ["317d06e8-5f24-433d-bdf7-79ce68d8abc2"],
     "WICInteropMetadataReader": ["b5c8b898-0074-459f-b700-860d4651ea14"],
@@ -3552,7 +3561,10 @@ COM_CLASSES: dict[str, list[str]] = {
     "WICPngBkgdMetadataWriter": ["68e3f2fd-31ae-4441-bb6a-fd7047525f90"],
     "WICPngChrmMetadataReader": ["f90b5f36-367b-402a-9dd1-bc0fd59d8f62"],
     "WICPngChrmMetadataWriter": ["e23ce3eb-5608-4e83-bcef-27b1987e51d7"],
-    "WICPngDecoder": ["389ea17b-5078-4cde-b6ef-25c15175c751", "e018945b-aa86-4008-9bd4-6777a1e40c11"],
+    "WICPngDecoder": [
+        "389ea17b-5078-4cde-b6ef-25c15175c751",
+        "e018945b-aa86-4008-9bd4-6777a1e40c11",
+    ],
     "WICPngDecoder1": ["389ea17b-5078-4cde-b6ef-25c15175c751"],
     "WICPngDecoder2": ["e018945b-aa86-4008-9bd4-6777a1e40c11"],
     "WICPngEncoder": ["27949969-876a-41d7-9447-568f6a35a4dc"],

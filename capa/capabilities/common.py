@@ -22,8 +22,16 @@ from dataclasses import dataclass
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
-from capa.render.result_document import LibraryFunction, StaticFeatureCounts, DynamicFeatureCounts
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.render.result_document import (
+    LibraryFunction,
+    StaticFeatureCounts,
+    DynamicFeatureCounts,
+)
+from capa.features.extractors.base_extractor import (
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +89,6 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
 
 def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, is_standalone: bool) -> bool:
-
     for rule in rules:
         if rule.name not in capabilities.matches:
             continue

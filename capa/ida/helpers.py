@@ -109,7 +109,10 @@ def is_supported_ida_version():
     if version < 7.4 or version >= 10:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.", version)
+        logger.warning(
+            "Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.",
+            version,
+        )
         return False
     return True
 
@@ -283,7 +286,10 @@ def load_and_verify_cached_results() -> Optional[rdoc.ResultDocument]:
             if isinstance(location, AbsoluteVirtualAddress):
                 ea = int(location)
                 if not idaapi.is_mapped(ea):
-                    logger.error("cached address %s is not a valid location in this database", hex(ea))
+                    logger.error(
+                        "cached address %s is not a valid location in this database",
+                        hex(ea),
+                    )
                     return None
     return doc
 

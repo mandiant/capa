@@ -16,7 +16,13 @@ from typing import Union, TypeAlias
 from dataclasses import dataclass
 
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, DynamicCallAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+)
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,

@@ -22,7 +22,14 @@ import capa.features.extractors.drakvuf.thread
 import capa.features.extractors.drakvuf.global_
 import capa.features.extractors.drakvuf.process
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress, _NoAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    AbsoluteVirtualAddress,
+    _NoAddress,
+)
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,

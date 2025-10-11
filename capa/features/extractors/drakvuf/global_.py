@@ -16,7 +16,15 @@
 import logging
 from typing import Iterator
 
-from capa.features.common import OS, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Feature
+from capa.features.common import (
+    OS,
+    FORMAT_PE,
+    ARCH_AMD64,
+    OS_WINDOWS,
+    Arch,
+    Format,
+    Feature,
+)
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.drakvuf.models import DrakvufReport
 

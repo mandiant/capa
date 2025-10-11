@@ -19,7 +19,9 @@ from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 
 
-def index_calls(report: DrakvufReport) -> dict[ProcessAddress, dict[ThreadAddress, list[Call]]]:
+def index_calls(
+    report: DrakvufReport,
+) -> dict[ProcessAddress, dict[ThreadAddress, list[Call]]]:
     # this method organizes calls into processes and threads, and then sorts them based on
     # timestamp so that we can address individual calls per index (CallAddress requires call index)
     result: dict[ProcessAddress, dict[ThreadAddress, list[Call]]] = {}

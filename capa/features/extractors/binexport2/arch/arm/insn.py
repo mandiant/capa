@@ -16,7 +16,13 @@ import logging
 from typing import Iterator, Optional
 
 import capa.features.extractors.binexport2.helpers
-from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
+from capa.features.insn import (
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    OperandNumber,
+    OperandOffset,
+)
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
@@ -30,7 +36,9 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.arm.helpers import (
+    is_stack_register_expression,
+)
 
 logger = logging.getLogger(__name__)
 

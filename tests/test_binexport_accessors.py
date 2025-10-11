@@ -35,7 +35,9 @@ from capa.features.extractors.binexport2.helpers import (
 )
 from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.arm.helpers import (
+    is_stack_register_expression,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +207,9 @@ def test_get_instruction_operands_count():
             (
                 BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
                 BinExport2.Expression(
-                    type=BinExport2.Expression.IMMEDIATE_INT, symbol="PTR_helloWorldStr_002101b0", immediate=0x2101B0
+                    type=BinExport2.Expression.IMMEDIATE_INT,
+                    symbol="PTR_helloWorldStr_002101b0",
+                    immediate=0x2101B0,
                 ),
             ),
         ),
@@ -360,8 +364,20 @@ def test_is_stack_register_expression():
 def test_split_with_delimiters():
     assert tuple(split_with_delimiters("abc|def", ("|",))) == ("abc", "|", "def")
     assert tuple(split_with_delimiters("abc|def|", ("|",))) == ("abc", "|", "def", "|")
-    assert tuple(split_with_delimiters("abc||def", ("|",))) == ("abc", "|", "", "|", "def")
-    assert tuple(split_with_delimiters("abc|def-ghi", ("|", "-"))) == ("abc", "|", "def", "-", "ghi")
+    assert tuple(split_with_delimiters("abc||def", ("|",))) == (
+        "abc",
+        "|",
+        "",
+        "|",
+        "def",
+    )
+    assert tuple(split_with_delimiters("abc|def-ghi", ("|", "-"))) == (
+        "abc",
+        "|",
+        "def",
+        "-",
+        "ghi",
+    )
 
 
 def test_pattern_parsing():
@@ -487,7 +503,11 @@ def test_pattern_parsing():
     )
 
 
-def match_address(extractor: BinExport2FeatureExtractor, queries: BinExport2InstructionPatternMatcher, address: int):
+def match_address(
+    extractor: BinExport2FeatureExtractor,
+    queries: BinExport2InstructionPatternMatcher,
+    address: int,
+):
     instruction = extractor.idx.insn_by_address[address]
     mnemonic: str = get_instruction_mnemonic(extractor.be2, instruction)
 
@@ -500,7 +520,9 @@ def match_address(extractor: BinExport2FeatureExtractor, queries: BinExport2Inst
 
 
 def match_address_with_be2(
-    extractor: BinExport2FeatureExtractor, queries: BinExport2InstructionPatternMatcher, address: int
+    extractor: BinExport2FeatureExtractor,
+    queries: BinExport2InstructionPatternMatcher,
+    address: int,
 ):
     instruction_index = extractor.idx.insn_index_by_address[address]
     return queries.match_with_be2(extractor.be2, instruction_index)

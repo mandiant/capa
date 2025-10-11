@@ -65,7 +65,9 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
         cache: dict[str, Any] = {}
         for va in sorted(self.vw.getFunctions()):
             yield FunctionHandle(
-                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"cache": cache}
+                address=AbsoluteVirtualAddress(va),
+                inner=viv_utils.Function(self.vw, va),
+                ctx={"cache": cache},
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:

@@ -47,7 +47,10 @@ ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 def test_rule_ctor():
     r = capa.rules.Rule(
-        "test rule", capa.rules.Scopes(capa.rules.Scope.FUNCTION, capa.rules.Scope.FILE), Or([Number(1)]), {}
+        "test rule",
+        capa.rules.Scopes(capa.rules.Scope.FUNCTION, capa.rules.Scope.FILE),
+        Or([Number(1)]),
+        {},
     )
     assert bool(r.evaluate({Number(0): {ADDR1}})) is False
     assert bool(r.evaluate({Number(1): {ADDR2}})) is True
@@ -77,7 +80,19 @@ def test_rule_yaml():
     assert bool(r.evaluate({Number(0): {ADDR1}})) is False
     assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
     assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}})) is True
+    assert (
+        bool(
+            r.evaluate(
+                {
+                    Number(0): {ADDR1},
+                    Number(1): {ADDR1},
+                    Number(2): {ADDR1},
+                    Number(3): {ADDR1},
+                }
+            )
+        )
+        is True
+    )
 
 
 def test_rule_yaml_complex():
@@ -103,7 +118,19 @@ def test_rule_yaml_complex():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is True
+    assert (
+        bool(
+            r.evaluate(
+                {
+                    Number(5): {ADDR1},
+                    Number(6): {ADDR1},
+                    Number(7): {ADDR1},
+                    Number(8): {ADDR1},
+                }
+            )
+        )
+        is True
+    )
     assert bool(r.evaluate({Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is False
 
 
@@ -1534,9 +1561,11 @@ def test_property_access_symbol():
         bool(
             r.evaluate(
                 {
-                    Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {
-                        ADDR1
-                    }
+                    Property(
+                        "System.IO.FileInfo::Length",
+                        access=FeatureAccess.READ,
+                        description="some property",
+                    ): {ADDR1}
                 }
             )
         )
@@ -1565,7 +1594,10 @@ def test_translate_com_features():
     com_features = [
         capa.features.common.Bytes(b"{\xa1\x9e8xP\xdeL\xb6\xef%\xc1Qu\xc7Q", f"CLSID_{com_name} as bytes"),
         capa.features.common.StringFactory("389ea17b-5078-4cde-b6ef-25c15175c751", f"CLSID_{com_name} as GUID string"),
-        capa.features.common.Bytes(b"[\x94\x18\xe0\x86\xaa\x08@\x9b\xd4gw\xa1\xe4\x0c\x11", f"IID_{com_name} as bytes"),
+        capa.features.common.Bytes(
+            b"[\x94\x18\xe0\x86\xaa\x08@\x9b\xd4gw\xa1\xe4\x0c\x11",
+            f"IID_{com_name} as bytes",
+        ),
         capa.features.common.StringFactory("e018945b-aa86-4008-9bd4-6777a1e40c11", f"IID_{com_name} as GUID string"),
     ]
     assert set(com_features) == set(r.statement.get_children())

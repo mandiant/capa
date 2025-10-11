@@ -41,7 +41,10 @@ import fixtures
 import capa.main
 import capa.rules
 import capa.capabilities.dynamic
-from capa.features.extractors.base_extractor import ThreadFilter, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    ThreadFilter,
+    DynamicFeatureExtractor,
+)
 
 
 def filter_threads(extractor: DynamicFeatureExtractor, ppid: int, pid: int, tid: int) -> DynamicFeatureExtractor:

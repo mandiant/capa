@@ -20,7 +20,14 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall, xml_to_dict
+from capa.features.extractors.vmray.models import (
+    File,
+    Flog,
+    SummaryV2,
+    StaticData,
+    FunctionCall,
+    xml_to_dict,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -220,11 +227,18 @@ class VMRayAnalysis:
                 # data is equal
                 sv2p = self.monitor_processes[monitor_process.process_id]
                 if self.monitor_processes[monitor_process.process_id] != vmray_monitor_process:
-                    logger.debug("processes differ: %s (sv2) vs. %s (flog)", sv2p, vmray_monitor_process)
+                    logger.debug(
+                        "processes differ: %s (sv2) vs. %s (flog)",
+                        sv2p,
+                        vmray_monitor_process,
+                    )
 
                 # we need, at a minimum, for the process id and monitor id to match, otherwise there is likely a bug
                 # in the way that VMRay tracked one of the processes
-                assert (sv2p.pid, sv2p.monitor_id) == (vmray_monitor_process.pid, vmray_monitor_process.monitor_id)
+                assert (sv2p.pid, sv2p.monitor_id) == (
+                    vmray_monitor_process.pid,
+                    vmray_monitor_process.monitor_id,
+                )
 
     def _compute_monitor_threads(self):
         for monitor_thread in self.flog.analysis.monitor_threads:
@@ -232,7 +246,9 @@ class VMRayAnalysis:
             assert monitor_thread.thread_id not in self.monitor_threads
 
             self.monitor_threads[monitor_thread.thread_id] = VMRayMonitorThread(
-                monitor_thread.os_tid, monitor_thread.thread_id, monitor_thread.process_id
+                monitor_thread.os_tid,
+                monitor_thread.thread_id,
+                monitor_thread.process_id,
             )
 
             # we expect each monitor thread ID to be unique for its associated monitor process ID e.g. monitor

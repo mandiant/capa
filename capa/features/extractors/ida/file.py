@@ -27,8 +27,20 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
-from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    Format,
+    String,
+    Feature,
+    Characteristic,
+)
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    FileOffsetAddress,
+    AbsoluteVirtualAddress,
+)
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
@@ -64,7 +76,10 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
         if seg_max < (e_lfanew + 4):
             continue
 
-        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i))[0]
+        newoff = struct.unpack(
+            "<I",
+            capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i),
+        )[0]
 
         # assume XOR'd "PE" bytes exist within threshold
         if newoff > MAX_OFFSET_PE_AFTER_MZ:
