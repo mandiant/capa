@@ -59,7 +59,7 @@ _HAS_MATCHFLAG = hasattr(QtCore.Qt, "MatchFlag")
 
 def _qt_noitemflags():
     if _HAS_ITEMFLAG:
-        return QtCore.Qt.ItemFlags()  
+        return QtCore.Qt.ItemFlags()
     return QtCore.Qt.NoItemFlags
 
 def _qt_matchflag(name: str):
