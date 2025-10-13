@@ -250,7 +250,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             role == QtCore.Qt.CheckStateRole
             and model_index.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
         ):
-            is_checked = bool(value == QtCore.Qt.Checked)
+            is_checked = QtCore.Qt.Checked
             for child_index in self.iterateChildrenIndexFromRootIndex(model_index, ignore_root=False):
                 child_index.internalPointer().setChecked(is_checked)
                 self.reset_ida_highlighting(child_index.internalPointer(), is_checked)
