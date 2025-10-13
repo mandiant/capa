@@ -16,15 +16,17 @@
 from typing import Optional
 from collections import deque
 
-import idc
-import idaapi
-
 try:
     from PySide6 import QtGui, QtCore
+
     _QT6 = True
 except Exception:
     from PyQt5 import QtGui, QtCore  # type: ignore
+
     _QT6 = False
+
+import idc
+import idaapi
 
 import capa.rules
 import capa.ida.helpers
@@ -51,15 +53,16 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 
 DEFAULT_HIGHLIGHT = 0xE6C700
 
-# ---- Qt helpers
 
 _HAS_ITEMFLAG = hasattr(QtCore.Qt, "ItemFlag")
 _HAS_MATCHFLAG = hasattr(QtCore.Qt, "MatchFlag")
+
 
 def _qt_noitemflags():
     if _HAS_ITEMFLAG:
         return QtCore.Qt.ItemFlags()  # empty
     return QtCore.Qt.NoItemFlags
+
 
 def _qt_matchflag(name: str):
     if _HAS_MATCHFLAG:
@@ -122,7 +125,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS,
             CapaExplorerDataModel.COLUMN_INDEX_DETAILS,
         ):
-            font = QtGui.QFont("Courier", weight=QtGui.QFont.Medium)
+            font = QtGui.QFont("Courier", weight=QtGui.QFont.Weight.Medium)
             if column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
                 font.setBold(True)
             return font
@@ -165,7 +168,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return model_index.internalPointer().flags
 
     def headerData(self, section, orientation, role):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+        if orientation == QtCore.Qt.Orientation.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.root_node.data(section)
         return None
 
@@ -246,7 +249,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             role == QtCore.Qt.CheckStateRole
             and model_index.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
         ):
-            is_checked = bool(value == QtCore.Qt.Checked)
+            is_checked = value == QtCore.Qt.CheckState.Checked
             for child_index in self.iterateChildrenIndexFromRootIndex(model_index, ignore_root=False):
                 child_index.internalPointer().setChecked(is_checked)
                 self.reset_ida_highlighting(child_index.internalPointer(), is_checked)
@@ -410,6 +413,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             for location_, match in rule.matches:
                 location = location_.to_capa()
 
+                parent2: CapaExplorerDataItem
                 if capa.rules.Scope.FILE in rule.meta.scopes:
                     parent2 = parent
                 elif capa.rules.Scope.FUNCTION in rule.meta.scopes:
@@ -575,10 +579,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         match_recursive = _qt_matchflag("MatchRecursive")
         for model_index in self.match(
             root_index,
-            QtCore.Qt.DisplayRole,
+            QtCore.Qt.ItemDataRole.DisplayRole,
             old_name,
             hits=-1,
-            flags=match_recursive,
+            flags=QtCore.Qt.MatchFlags(match_recursive),
         ):
             if not isinstance(model_index.internalPointer(), CapaExplorerFunctionItem):
                 continue

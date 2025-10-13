@@ -324,10 +324,12 @@ class MemoryRegion:
         return self.address <= address < self.end
 
 
-class ReadMemoryError(ValueError): ...
+class ReadMemoryError(ValueError):
+    ...
 
 
-class AddressNotMappedError(ReadMemoryError): ...
+class AddressNotMappedError(ReadMemoryError):
+    ...
 
 
 @dataclass

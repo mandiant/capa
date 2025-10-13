@@ -15,15 +15,18 @@
 
 import codecs
 from typing import Iterator, Optional
-import idc
-import idaapi
 
 try:
     from PySide6 import QtCore
+
     _QT6 = True
 except Exception:
     from PyQt5 import QtCore  # type: ignore
+
     _QT6 = False
+
+import idc
+import idaapi
 
 import capa.ida.helpers
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
@@ -40,14 +43,15 @@ def ea_to_hex(ea):
     return f"{hex(ea)}"
 
 
-
 _HAS_ITEMFLAG = hasattr(QtCore.Qt, "ItemFlag")
+
 
 def _qt_flag(name: str):
     """Return a single flag enum across Qt5/Qt6."""
     if _HAS_ITEMFLAG:
         return getattr(QtCore.Qt.ItemFlag, name)
     return getattr(QtCore.Qt, name)
+
 
 def _qt_flags_or(*flags):
     """Build ItemFlags value across Qt5/Qt6."""
@@ -56,7 +60,6 @@ def _qt_flags_or(*flags):
         for fl in flags:
             f |= fl
         return f
-    # PyQt5: underlying are ints
     val = 0
     for fl in flags:
         val |= int(fl)
@@ -91,7 +94,7 @@ class CapaExplorerDataItem:
             self.flags &= ~_qt_flag("ItemIsEditable")
 
     def setChecked(self, checked: bool):
-        self._checked = bool(checked)
+        self._checked = checked
 
     def canCheck(self):
         return self._can_check
