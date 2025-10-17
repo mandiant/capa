@@ -941,9 +941,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box("verifying cached results")
 
                     try:
-                        results: Optional[capa.render.result_document.ResultDocument] = (
-                            capa.ida.helpers.load_and_verify_cached_results()
-                        )
+                        results: Optional[
+                            capa.render.result_document.ResultDocument
+                        ] = capa.ida.helpers.load_and_verify_cached_results()
                     except Exception as e:
                         capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results, reanalyzing program")
                         logger.exception("Failed to verify cached results (error: %s)", e)
