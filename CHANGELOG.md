@@ -31,7 +31,7 @@
 
 ### Bug Fixes
 
-- binja: fix a crash during feature extraction when the MLIL is unavaiable @xusheng6 #2714 
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
 
 ### capa Explorer Web
 
