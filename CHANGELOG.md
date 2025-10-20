@@ -31,6 +31,8 @@
 
 ### Bug Fixes
 
+- binja: fix a crash during feature extraction when the MLIL is unavaiable @xusheng6 #2714 
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
