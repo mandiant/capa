@@ -4,7 +4,7 @@
     "name": "capa",
     "entryPoint": "capa_explorer.py",
     "version": "9.2.1",
-    "idaVersions": ">=7.4,<9.2",
+    "idaVersions": ">=7.4",
     "description": "Identify capabilities in executable files using FLARE's capa framework",
     "license": "Apache-2.0",
     "categories": [
