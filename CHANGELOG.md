@@ -40,6 +40,7 @@
 ### Development
 
 - ci: remove redundant "test_run" action from build workflow @mike-hunhoff #2692
+- dev: add bumpmyversion to bump and sync versions across the project @mr-tz
 
 ### Raw diffs
 - [capa v9.2.1...master](https://github.com/mandiant/capa/compare/v9.2.1...master)
