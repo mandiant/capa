@@ -12,6 +12,11 @@ search = '"version": "{current_version}"'
 replace = '"version": "{new_version}"'
 
 [[tool.bumpversion.files]]
+filename = "capa/ida/plugin/ida-plugin.json"
+search = '"flare-capa=={current_version}"'
+replace = '"flare-capa=={new_version}"'
+
+[[tool.bumpversion.files]]
 filename = "CHANGELOG.md"
 search = "v{current_version}...master"
 replace = "{current_version}...{new_version}"
