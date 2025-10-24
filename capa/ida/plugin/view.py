@@ -18,7 +18,6 @@ from collections import Counter
 
 import idc
 import idaapi
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.rules
 import capa.engine
@@ -28,6 +27,7 @@ import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.features.address import AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
+from capa.ida.plugin.qt_compat import QtGui, QtCore, Signal, QAction, QtWidgets
 
 MAX_SECTION_SIZE = 750
 
@@ -147,7 +147,7 @@ def calc_item_depth(o):
 
 def build_action(o, display, data, slot):
     """ """
-    action = QtWidgets.QAction(display, o)
+    action = QAction(display, o)
 
     action.setData(data)
     action.triggered.connect(lambda checked: slot(action))
@@ -312,7 +312,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
 
 
 class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
-    updated = QtCore.pyqtSignal()
+    updated = Signal()
 
     def __init__(self, preview, parent=None):
         """ """
