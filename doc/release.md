@@ -7,6 +7,7 @@
 - [ ] Review changes
   - capa https://github.com/mandiant/capa/compare/\<last-release\>...master
   - capa-rules https://github.com/mandiant/capa-rules/compare/\<last-release>\...master
+- [ ] Run `$ bump-my-version bump {patch/minor/major} [--allow-dirty]` to update [capa/version.py](https://github.com/mandiant/capa/blob/master/capa/version.py) and other version files
 - [ ] Update [CHANGELOG.md](https://github.com/mandiant/capa/blob/master/CHANGELOG.md)
   - Do not forget to add a nice introduction thanking contributors
   - Remember that we need a major release if we introduce breaking changes
@@ -36,7 +37,6 @@
     - [capa <release>...master](https://github.com/mandiant/capa/compare/<release>...master)
     - [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/<release>...master)
     ```
-- [ ] Update [capa/version.py](https://github.com/mandiant/capa/blob/master/capa/version.py)
 - [ ] Create a PR with the updated [CHANGELOG.md](https://github.com/mandiant/capa/blob/master/CHANGELOG.md) and [capa/version.py](https://github.com/mandiant/capa/blob/master/capa/version.py). Copy this checklist in the PR description.
 - [ ] Update the [homepage](https://github.com/mandiant/capa/blob/master/web/public/index.html) (i.e. What's New section)
 - [ ] After PR review, merge the PR and [create the release in GH](https://github.com/mandiant/capa/releases/new) using text from the [CHANGELOG.md](https://github.com/mandiant/capa/blob/master/CHANGELOG.md).

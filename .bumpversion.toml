@@ -1,0 +1,17 @@
+[tool.bumpversion]
+current_version = "9.2.1"
+
+[[tool.bumpversion.files]]
+filename = "capa/version.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "capa/ida/plugin/ida-plugin.json"
+search = '"version": "{current_version}"'
+replace = '"version": "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "v{current_version}...master"
+replace = "{current_version}...{new_version}"
