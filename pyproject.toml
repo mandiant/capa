@@ -206,6 +206,7 @@ known_first_party = [
 DEP002 = [
     "black",
     "build",
+    "bump-my-version",
     "deptry",
     "flake8",
     "flake8-bugbear",
