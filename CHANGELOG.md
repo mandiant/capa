@@ -7,7 +7,7 @@
 
 ### Breaking Changes
 
-### New Rules (20)
+### New Rules (21)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
@@ -28,6 +28,7 @@
 - host-interaction/network/routing-table/create-routing-table-entry jakubjozwiak@google.com
 - host-interaction/network/routing-table/get-routing-table michael.hunhoff@mandiant.com
 - host-interaction/file-system/use-io_uring-io-interface-on-linux jakubjozwiak@google.com
+- collection/keylog/log-keystrokes-via-direct-input zeze-zeze
 -
 
 ### Bug Fixes
