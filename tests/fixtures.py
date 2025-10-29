@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import logging
 import contextlib
 import collections
 from pathlib import Path
@@ -21,6 +21,7 @@ from functools import lru_cache
 import pytest
 
 import capa.main
+import capa.helpers
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -53,6 +54,7 @@ from capa.features.extractors.base_extractor import (
 )
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
+logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
 DOTNET_DIR = CD / "data" / "dotnet"
 DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
@@ -198,6 +200,42 @@ def get_binja_extractor(path: Path):
     setattr(extractor, "path", path.as_posix())
 
     return extractor
+
+
+# we can't easily cache this because the extractor relies on global state (the opened database)
+# which also has to be closed elsewhere. so, the idalib tests will just take a little bit to run.
+def get_idalib_extractor(path: Path):
+    import capa.features.extractors.ida.idalib as idalib
+
+    if not idalib.has_idalib():
+        raise RuntimeError("cannot find IDA idalib module.")
+
+    if not idalib.load_idalib():
+        raise RuntimeError("failed to load IDA idalib module.")
+
+    import idapro
+    import ida_auto
+
+    import capa.features.extractors.ida.extractor
+
+    logger.debug("idalib: opening database...")
+
+    idapro.enable_console_messages(False)
+    # - 0 - Success (database not packed)
+    # - 1 - Success (database was packed)
+    # - 2 - User cancelled or 32-64 bit conversion failed
+    # - 4 - Database initialization failed
+    # - -1 - Generic errors (database already open, auto-analysis failed, etc.)
+    # - -2 - User cancelled operation
+    ret = idapro.open_database(str(path), run_auto_analysis=True)
+    if ret not in (0, 1):
+        raise RuntimeError("failed to analyze input file")
+
+    logger.debug("idalib: waiting for analysis...")
+    ida_auto.auto_wait()
+    logger.debug("idalib: opened database.")
+
+    return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
 
 @lru_cache(maxsize=1)

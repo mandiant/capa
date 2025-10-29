@@ -138,6 +138,7 @@ repos:
         -   "--ignore=tests/test_ghidra_features.py"
         -   "--ignore=tests/test_ida_features.py"
         -   "--ignore=tests/test_viv_features.py"
+        -   "--ignore=tests/test_idalib_features.py"
         -   "--ignore=tests/test_main.py"
         -   "--ignore=tests/test_scripts.py"
         always_run: true
