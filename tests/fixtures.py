@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import logging
 import contextlib
 import collections
@@ -201,6 +200,7 @@ def get_binja_extractor(path: Path):
     setattr(extractor, "path", path.as_posix())
 
     return extractor
+
 
 # we can't easily cache this because the extractor relies on global state (the opened database)
 # which also has to be closed elsewhere. so, the idalib tests will just take a little bit to run.

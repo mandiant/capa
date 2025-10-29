@@ -1,4 +1,3 @@
-
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +15,9 @@
 import logging
 
 import pytest
+import fixtures
 
 import capa.features.extractors.ida.idalib
-
-import fixtures
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +36,7 @@ def test_idalib_features(sample, scope, feature, expected):
     finally:
         logger.debug("closing database...")
         import idapro
+
         idapro.close_database(save=False)
         logger.debug("opened database.")
 
@@ -54,5 +53,6 @@ def test_idalib_feature_counts(sample, scope, feature, expected):
     finally:
         logger.debug("closing database...")
         import idapro
+
         idapro.close_database(save=False)
         logger.debug("closed database.")
