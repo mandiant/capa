@@ -1,0 +1,38 @@
+{
+  "IDAMetadataDescriptorVersion": 1,
+  "plugin": {
+    "name": "capa",
+    "entryPoint": "capa_explorer.py",
+    "version": "9.2.1",
+    "idaVersions": ">=7.4",
+    "description": "Identify capabilities in executable files using FLARE's capa framework",
+    "license": "Apache-2.0",
+    "categories": [
+      "malware-analysis",
+      "api-scripting-and-automation",
+      "ui-ux-and-visualization"
+    ],
+    "pythonDependencies": ["flare-capa==9.2.1"],
+    "urls": {
+      "repository": "https://github.com/mandiant/capa"
+    },
+    "authors": [
+      {"name": "Willi Ballenthin", "email": "wballenthin@hex-rays.com"},
+      {"name": "Moritz Raabe", "email": "moritzraabe@google.com"},
+      {"name": "Mike Hunhoff", "email": "mike.hunhoff@gmail.com"},
+      {"name": "Yacine Elhamer", "email": "elhamer.yacine@gmail.com"}
+    ],
+    "keywords": [
+      "capability-detection",
+      "malware-analysis",
+      "behavior-analysis",
+      "reverse-engineering",
+      "att&ck",
+      "rule-engine",
+      "feature-extraction",
+      "yara-like-rules",
+      "static-analysis",
+      "dynamic-analysis"
+    ]
+  }
+}
