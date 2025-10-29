@@ -104,7 +104,7 @@ dependencies = [
 
     "networkx>=3",
 
-    "dnfile>=0.15.0",
+    "dnfile>=0.17.0",
 ]
 dynamic = ["version"]
 
@@ -161,11 +161,13 @@ build = [
     "build==1.2.2"
 ]
 scripts = [
+    # can (optionally) be more lenient on dependencies here
+    # see comment on dependencies for more context
     "jschema_to_python==1.2.3",
-    "psutil==7.0.0",
+    "psutil==7.1.2",
     "stix2==3.0.1",
     "sarif_om==1.0.4",
-    "requests==2.32.3",
+    "requests>=2.32.4",
 ]
 
 [tool.deptry]
