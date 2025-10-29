@@ -40,6 +40,7 @@
 ### capa Explorer IDA Pro plugin
 
 - add `ida-plugin.json` for inclusion in the IDA Pro plugin repository @williballenthin
+- ida plugin: add Qt compatibility layer for PyQt5 and PySide6 support @williballenthin #2707
 
 ### Development
 

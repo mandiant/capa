@@ -122,6 +122,7 @@ scripts/perf/*.zip
 */.DS_Store
 Pipfile
 Pipfile.lock
+uv.lock
 /cache/
 .github/binja/binaryninja
 .github/binja/download_headless.py
