@@ -23,7 +23,7 @@ API changes between Qt5 and Qt6.
 try:
     # IDA 9.2+ uses PySide6
     from PySide6 import QtGui, QtCore, QtWidgets  # noqa: F401
-    from PySide6.QtGui import QAction  # Import QAction from QtGui
+    from PySide6.QtGui import QAction  # noqa: F401
 
     QT_LIBRARY = "PySide6"
     Signal = QtCore.Signal
@@ -31,7 +31,7 @@ except ImportError:
     # Older IDA versions use PyQt5
     try:
         from PyQt5 import QtGui, QtCore, QtWidgets  # noqa: F401
-        from PyQt5.QtWidgets import QAction  # Import QAction from QtWidgets
+        from PyQt5.QtWidgets import QAction  # noqa: F401
 
         QT_LIBRARY = "PyQt5"
         Signal = QtCore.pyqtSignal
