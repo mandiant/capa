@@ -315,3 +315,6 @@ If you use Ghidra, then you can use the [capa + Ghidra integration](/capa/ghidra
 
 ## capa testfiles
 The [capa-testfiles repository](https://github.com/mandiant/capa-testfiles) contains the data we use to test capa's code and rules
+
+## mailing list
+Subscribe to the FLARE mailing list for community announcements! Email "subscribe" to [flare-external@google.com](mailto:flare-external@google.com?subject=subscribe).
