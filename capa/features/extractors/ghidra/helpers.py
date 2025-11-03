@@ -306,3 +306,32 @@ def find_data_references_from_insn(insn, max_depth: int = 10):
                 break
 
         yield to_addr
+
+
+def addr_to_file_offset(addr: ghidra.program.model.address.Address) -> int:
+    """Map a Ghidra Address to a file offset using section information.
+
+    Assumes a modern Ghidra version where MemoryBlock provides
+    `getStartingOffset()` and `getStart()/getEnd()` are available.
+
+    Algorithm:
+      - iterate memory blocks, find the block containing `addr`
+      - compute section-relative offset = addr - block.start
+      - compute file offset = block.getStartingOffset() + section-relative offset
+      - if no block matches, fall back to subtracting program image base
+    """
+    prog = currentProgram()  # type: ignore[name-defined]
+    aoff = addr.getOffset()
+
+    for block in prog.getMemory().getBlocks():  # type: ignore[name-defined]
+        bstart = block.getStart().getOffset()
+        bend = block.getEnd().getOffset()
+        if bstart <= aoff <= bend:
+            sec_rel = aoff - bstart
+            file_base = block.getStartingOffset()
+            return int(file_base + sec_rel)
+
+    # if no block matched, fall back to image-base subtraction
+    base = prog.getImageBase().getOffset()
+    return int(aoff - base)
+
