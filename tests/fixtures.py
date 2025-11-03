@@ -932,20 +932,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), False),
         ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
         # insn/api: x64
-        (
-            "kernel32-64",
-            "function=0x180001010",
-            capa.features.insn.API("RtlVirtualUnwind"),
-            True,
-        ),
         ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
         # insn/api: x64 thunk
-        (
-            "kernel32-64",
-            "function=0x1800202B0",
-            capa.features.insn.API("RtlCaptureContext"),
-            True,
-        ),
         ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
         # insn/api: x64 nested thunk
         ("al-khaser x64", "function=0x14004B4F0", capa.features.insn.API("__vcrt_GetModuleHandle"), True),
