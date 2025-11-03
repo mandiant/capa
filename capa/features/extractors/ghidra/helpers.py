@@ -320,10 +320,10 @@ def addr_to_file_offset(addr: ghidra.program.model.address.Address) -> int:
       - compute file offset = block.getStartingOffset() + section-relative offset
       - if no block matches, fall back to subtracting program image base
     """
-    prog = currentProgram()  # type: ignore[name-defined # noqa: F821]
+    prog = currentProgram()  # type: ignore[name-defined] # noqa: F821 
     aoff = addr.getOffset()
 
-    for block in prog.getMemory().getBlocks():  # type: ignore[name-defined # noqa: F821]
+    for block in prog.getMemory().getBlocks():  # type: ignore[name-defined] # noqa: F821
         bstart = block.getStart().getOffset()
         bend = block.getEnd().getOffset()
         if bstart <= aoff <= bend:
@@ -331,7 +331,7 @@ def addr_to_file_offset(addr: ghidra.program.model.address.Address) -> int:
             file_base = block.getStartingOffset()
             return int(file_base + sec_rel)
 
-    # If we cannot map the VA to a file offset via memory blocks, raise.
-    # This enforces strict mapping so callers must handle missing mappings explicitly.
-    raise RuntimeError(f"unable to map virtual address to file offset: 0x{aoff:x}")
+    # if no block matched, fall back to image-base subtraction
+    base = prog.getImageBase().getOffset()
+    return int(aoff - base)
 
