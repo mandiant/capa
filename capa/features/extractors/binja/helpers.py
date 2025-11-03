@@ -95,8 +95,7 @@ def va_to_file_offset(bv: BinaryView, va: int) -> int:
 
         file_offset = segment.data_offset + (va - segment.start)
 
-    If no containing segment/section is found, fall back to returning the
-    given virtual address as an integer.
+    If no containing segment/section is found, this function raises a `RuntimeError`.
     """
     # prefer segments (they map ranges of the file view)
     for seg in bv.segments:
