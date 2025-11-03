@@ -32,8 +32,7 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
-from capa.features.extractors.binja.helpers import va_to_file_offset
+from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name, va_to_file_offset
 
 
 def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[tuple[Feature, Address]]:

@@ -95,7 +95,8 @@ def va_to_file_offset(bv: BinaryView, va: int) -> int:
 
         file_offset = segment.data_offset + (va - segment.start)
 
-    If no containing segment/section is found, this function raises a `RuntimeError`.
+    If no containing segment/section is found, fall back to returning the
+    given virtual address as an integer.
     """
     # prefer segments (they map ranges of the file view)
     for seg in bv.segments:
@@ -107,6 +108,5 @@ def va_to_file_offset(bv: BinaryView, va: int) -> int:
         if sec.start <= va < sec.start + sec.length:
             return int(sec.data_offset + (va - sec.start))
 
-    # If we cannot map the VA to a file offset via segments or sections, raise.
-    # This enforces strict mapping so callers must handle missing mappings explicitly.
-    raise RuntimeError(f"unable to map virtual address to file offset: 0x{va:x}")
+    # fallback
+    return int(va)
