@@ -22,16 +22,16 @@ API changes between Qt5 and Qt6.
 
 try:
     # IDA 9.2+ uses PySide6
-    from PySide6 import QtGui, QtCore, QtWidgets  # noqa: F401
-    from PySide6.QtGui import QAction  # noqa: F401
+    from PySide6 import QtGui, QtCore, QtWidgets
+    from PySide6.QtGui import QAction
 
     QT_LIBRARY = "PySide6"
     Signal = QtCore.Signal
 except ImportError:
     # Older IDA versions use PyQt5
     try:
-        from PyQt5 import QtGui, QtCore, QtWidgets  # noqa: F401
-        from PyQt5.QtWidgets import QAction  # noqa: F401
+        from PyQt5 import QtGui, QtCore, QtWidgets
+        from PyQt5.QtWidgets import QAction
 
         QT_LIBRARY = "PyQt5"
         Signal = QtCore.pyqtSignal
@@ -74,3 +74,6 @@ def qt_get_item_flag_tristate():
     else:
         # Qt5: Use the original ItemIsTristate flag
         return Qt.ItemIsTristate
+
+
+__all__ = ["qt_get_item_flag_tristate", "Signal", "QAction", "QtGui", "QtCore", "QtWidgets"]
