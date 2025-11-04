@@ -320,7 +320,7 @@ def addr_to_file_offset(addr: ghidra.program.model.address.Address) -> int:
       - compute file offset = block.getStartingOffset() + section-relative offset
       - if no block matches, fall back to subtracting program image base
     """
-    prog = currentProgram()  # type: ignore[name-defined] # noqa: F821 
+    prog = currentProgram()  # type: ignore[name-defined] # noqa: F821
     aoff = addr.getOffset()
 
     for block in prog.getMemory().getBlocks():  # type: ignore[name-defined] # noqa: F821
