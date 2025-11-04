@@ -334,4 +334,3 @@ def addr_to_file_offset(addr: ghidra.program.model.address.Address) -> int:
     # if no block matched, fall back to image-base subtraction
     base = prog.getImageBase().getOffset()
     return int(aoff - base)
-
