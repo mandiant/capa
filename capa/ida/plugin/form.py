@@ -54,7 +54,6 @@ from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)
-settings = ida_settings.IDASettings("capa")
 
 CAPA_SETTINGS_RULE_PATH = "rule_path"
 CAPA_SETTINGS_RULEGEN_AUTHOR = "rulegen_author"
@@ -77,6 +76,13 @@ AnalyzeOptionsText = {
     Options.ANALYZE_AUTO: "Analyze on plugin start (load cached results)",
     Options.ANALYZE_ASK: "Analyze on plugin start (ask before loading cached results)",
 }
+
+
+def get_setting(key: str, default=None):
+    try:
+        return ida_settings.get_current_plugin_setting(key)
+    except KeyError:
+        return default
 
 
 def write_file(path: Path, data):
@@ -107,7 +113,7 @@ class QLineEditClicked(QtWidgets.QLineEdit):
         old = self.text()
         new = str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent(), "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+                self.parent(), "Please select a capa rules directory", get_setting(CAPA_SETTINGS_RULE_PATH, "")
             )
         )
         if new:
@@ -125,8 +131,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.setMinimumWidth(500)
         self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
 
-        self.edit_rule_path = QLineEditClicked(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
-        self.edit_rule_author = QtWidgets.QLineEdit(settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, ""))
+        self.edit_rule_path = QLineEditClicked(get_setting(CAPA_SETTINGS_RULE_PATH, ""))
+        self.edit_rule_author = QtWidgets.QLineEdit(get_setting(CAPA_SETTINGS_RULEGEN_AUTHOR, ""))
         self.edit_rule_scope = QtWidgets.QComboBox()
         self.edit_rules_link = QtWidgets.QLabel()
         self.edit_analyze = QtWidgets.QComboBox()
@@ -141,11 +147,11 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
 
         scopes = ("file", "function", "basic block", "instruction")
         self.edit_rule_scope.addItems(scopes)
-        self.edit_rule_scope.setCurrentIndex(scopes.index(settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function")))
+        self.edit_rule_scope.setCurrentIndex(scopes.index(get_setting(CAPA_SETTINGS_RULEGEN_SCOPE, "function")))
 
         self.edit_analyze.addItems(AnalyzeOptionsText.values())
         # set the default analysis option here
-        self.edit_analyze.setCurrentIndex(settings.user.get(CAPA_SETTINGS_ANALYZE, Options.NO_ANALYSIS))
+        self.edit_analyze.setCurrentIndex(get_setting(CAPA_SETTINGS_ANALYZE, Options.NO_ANALYSIS))
 
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
@@ -235,7 +241,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.Show()
 
-        analyze = settings.user.get(CAPA_SETTINGS_ANALYZE)
+        analyze = get_setting(CAPA_SETTINGS_ANALYZE)
         if analyze != Options.NO_ANALYSIS or (option & Options.ANALYZE_AUTO) == Options.ANALYZE_AUTO:
             self.analyze_program(analyze=analyze)
 
@@ -581,7 +587,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def ensure_capa_settings_rule_path(self):
         try:
-            path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+            path: str = get_setting(CAPA_SETTINGS_RULE_PATH, "")
 
             # resolve rules directory - check self and settings first, then ask user
             # pathlib.Path considers "" equivalent to "." so we first check if rule path is an empty string
@@ -611,7 +617,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     logger.error("rule path %s does not exist or cannot be accessed", path)
                     return False
 
-                settings.user[CAPA_SETTINGS_RULE_PATH] = path
+                ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULE_PATH, path)
         except UserCancelledError:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(
@@ -635,7 +641,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not self.ensure_capa_settings_rule_path():
             return False
 
-        rule_path: Path = Path(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
+        rule_path: Path = Path(get_setting(CAPA_SETTINGS_RULE_PATH, ""))
         try:
 
             def on_load_rule(_, i, total):
@@ -649,10 +655,10 @@ class CapaExplorerForm(idaapi.PluginForm):
             return None
         except Exception as e:
             capa.ida.helpers.inform_user_ida_ui(
-                f"Failed to load capa rules from {settings.user[CAPA_SETTINGS_RULE_PATH]}"
+                f"Failed to load capa rules from {get_setting(CAPA_SETTINGS_RULE_PATH)}"
             )
 
-            logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
+            logger.error("Failed to load capa rules from %s (error: %s).", get_setting(CAPA_SETTINGS_RULE_PATH), e)
             logger.error(
                 "Make sure your file directory contains properly "  # noqa: G003 [logging statement uses +]
                 + "formatted capa rules. You can download and extract the official rules from %s. "
@@ -661,7 +667,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 CAPA_RULESET_DOC_URL,
             )
 
-            settings.user[CAPA_SETTINGS_RULE_PATH] = ""
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULE_PATH, "")
             return None
 
     def load_capa_results(self, new_analysis, from_cache):
@@ -701,7 +707,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box("verifying cached results")
 
                     count_source_rules = self.program_analysis_ruleset_cache.source_rule_count
-                    user_settings = settings.user[CAPA_SETTINGS_RULE_PATH]
+                    user_settings = get_setting(CAPA_SETTINGS_RULE_PATH)
                     view_status_rules: str = f"{user_settings} ({count_source_rules} rules)"
 
                     # warn user about potentially outdated rules, depending on the use-case this may be expected
@@ -775,7 +781,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("extracting features")
 
                 try:
-                    meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
+                    meta = capa.ida.helpers.collect_metadata([Path(get_setting(CAPA_SETTINGS_RULE_PATH))])
                     capabilities = capa.capabilities.common.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )
@@ -855,7 +861,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 except Exception as e:
                     logger.exception("Failed to save results to database (error: %s)", e)
                     return False
-                user_settings = settings.user[CAPA_SETTINGS_RULE_PATH]
+                user_settings = get_setting(CAPA_SETTINGS_RULE_PATH)
                 count_source_rules = self.program_analysis_ruleset_cache.source_rule_count
                 new_view_status = f"capa rules: {user_settings} ({count_source_rules} rules)"
         # regardless of new analysis, render results - e.g. we may only want to render results after checking
@@ -1076,13 +1082,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             # load preview and feature tree
             self.view_rulegen_preview.load_preview_meta(
                 self.rulegen_current_function.address if self.rulegen_current_function else None,
-                settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, "<insert_author>"),
-                settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function"),
+                get_setting(CAPA_SETTINGS_RULEGEN_AUTHOR, "<insert_author>"),
+                get_setting(CAPA_SETTINGS_RULEGEN_SCOPE, "function"),
             )
 
             self.view_rulegen_features.load_features(all_file_features, all_function_features)
 
-            self.set_view_status_label(f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]}")
+            self.set_view_status_label(f"capa rules: {get_setting(CAPA_SETTINGS_RULE_PATH)}")
         except Exception as e:
             logger.exception("Failed to render views (error: %s)", e)
             return False
@@ -1303,12 +1309,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ """
         dialog = CapaSettingsInputDialog("capa explorer settings", parent=self.parent)
         if dialog.exec_():
-            (
-                settings.user[CAPA_SETTINGS_RULE_PATH],
-                settings.user[CAPA_SETTINGS_RULEGEN_AUTHOR],
-                settings.user[CAPA_SETTINGS_RULEGEN_SCOPE],
-                settings.user[CAPA_SETTINGS_ANALYZE],
-            ) = dialog.get_values()
+            vals = dialog.get_values()
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULE_PATH, vals[0])
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULEGEN_AUTHOR, vals[1])
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULEGEN_SCOPE, vals[2])
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_ANALYZE, vals[3])
 
     def save_program_analysis(self):
         """ """
@@ -1408,7 +1413,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+                self.parent, "Please select a capa rules directory", get_setting(CAPA_SETTINGS_RULE_PATH, "")
             )
         )
 
@@ -1417,7 +1422,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         return QtWidgets.QFileDialog.getSaveFileName(
             None,
             "Please select a location to save capa rule file",
-            settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
+            get_setting(CAPA_SETTINGS_RULE_PATH, ""),
             "*.yml",
         )[0]
 

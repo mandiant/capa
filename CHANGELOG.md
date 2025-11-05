@@ -41,6 +41,7 @@
 
 - add `ida-plugin.json` for inclusion in the IDA Pro plugin repository @williballenthin
 - ida plugin: add Qt compatibility layer for PyQt5 and PySide6 support @williballenthin #2707
+- ida plugin: update ida-settings API @mr-tz #2736
 
 ### Development
 
