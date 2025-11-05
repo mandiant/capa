@@ -1309,11 +1309,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ """
         dialog = CapaSettingsInputDialog("capa explorer settings", parent=self.parent)
         if dialog.exec_():
-            vals = dialog.get_values()
-            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULE_PATH, vals[0])
-            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULEGEN_AUTHOR, vals[1])
-            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULEGEN_SCOPE, vals[2])
-            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_ANALYZE, vals[3])
+            rule_path, rule_author, rule_scope, analyze = dialog.get_values()
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULE_PATH, rule_path)
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULEGEN_AUTHOR, rule_author)
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_RULEGEN_SCOPE, rule_scope)
+            ida_settings.set_current_plugin_setting(CAPA_SETTINGS_ANALYZE, analyze)
 
     def save_program_analysis(self):
         """ """
