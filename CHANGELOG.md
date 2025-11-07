@@ -7,7 +7,7 @@
 
 ### Breaking Changes
 
-### New Rules (21)
+### New Rules (24)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
@@ -29,6 +29,9 @@
 - host-interaction/network/routing-table/get-routing-table michael.hunhoff@mandiant.com
 - host-interaction/file-system/use-io_uring-io-interface-on-linux jakubjozwiak@google.com
 - collection/keylog/log-keystrokes-via-direct-input zeze-zeze
+- nursery/compiled-from-fsharp mehunhoff@google.com
+- nursery/decrypt-data-using-aes-via-dotnet mehunhoff@google.com
+- nursery/get-dotnet-assembly-entry-point mehunhoff@google.com
 -
 
 ### Bug Fixes
