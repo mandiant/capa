@@ -160,6 +160,12 @@ def extract_insn_number_features(
         #   .text:00401145 add esp, 0Ch
         return
 
+    if capa.features.extractors.ida.helpers.is_zxor(insn):
+        # for pattern like:
+        #
+        #     xor eax, eax
+        yield Number(0), ih.address
+
     for i, op in enumerate(insn.ops):
         if op.type == idaapi.o_void:
             break
@@ -383,7 +389,7 @@ def extract_insn_nzxor_characteristic_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if insn.itype not in (idaapi.NN_xor, idaapi.NN_xorpd, idaapi.NN_xorps, idaapi.NN_pxor):
+    if not capa.features.extractors.ida.helpers.is_xor(insn):
         return
     if capa.features.extractors.ida.helpers.is_operand_equal(insn.Op1, insn.Op2):
         return

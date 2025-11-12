@@ -387,7 +387,7 @@ def extract_insn_nzxor_characteristic_features(
     bb: viv_utils.BasicBlock = bbhandle.inner
     f: viv_utils.Function = fh.inner
 
-    if insn.mnem not in ("xor", "xorpd", "xorps", "pxor"):
+    if not capa.features.extractors.viv.helpers.is_xor(insn):
         return
 
     if insn.opers[0] == insn.opers[1]:
@@ -593,6 +593,13 @@ def extract_op_number_features(
     """
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
+
+    if capa.features.extractors.viv.helpers.is_zxor(insn):
+        # for pattern like:
+        #
+        #     xor eax, eax
+        #
+        yield Number(0), ih.address
 
     # this is for both x32 and x64
     if not isinstance(oper, (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper)):
