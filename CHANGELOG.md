@@ -8,19 +8,49 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (24)
 
+- anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
+- nursery/create-executable-heap moritz.raabe@mandiant.com
+- anti-analysis/packer/dxpack/packed-with-dxpack jakubjozwiak@google.com
+- anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
+- nursery/acquire-load-driver-privileges mehunhoff@google.com
+- nursery/communicate-using-ftp mehunhoff@google.com
+- linking/static/eclipse-paho-mqtt-c/linked-against-eclipse-paho-mqtt-c jakubjozwiak@google.com
+- linking/static/qmqtt/linked-against-qmqtt jakubjozwiak@google.com
+- anti-analysis/anti-forensic/disable-powershell-transcription jakubjozwiak@google.com
+- host-interaction/powershell/bypass-powershell-constrained-language-mode-via-getsystemlockdownpolicy-patch jakubjozwiak@google.com
+- linking/static/grpc/linked-against-grpc jakubjozwiak@google.com
+- linking/static/hp-socket/linked-against-hp-socket jakubjozwiak@google.com
+- load-code/execute-jscript-via-vsaengine-in-dotnet jakubjozwiak@google.com
+- linking/static/funchook/linked-against-funchook jakubjozwiak@google.com
+- linking/static/plthook/linked-against-plthook jakubjozwiak@google.com
+- host-interaction/network/enumerate-tcp-connections-via-wmi-com-api jakubjozwiak@google.com
+- host-interaction/network/routing-table/create-routing-table-entry jakubjozwiak@google.com
+- host-interaction/network/routing-table/get-routing-table michael.hunhoff@mandiant.com
+- host-interaction/file-system/use-io_uring-io-interface-on-linux jakubjozwiak@google.com
+- collection/keylog/log-keystrokes-via-direct-input zeze-zeze
+- nursery/compiled-from-fsharp mehunhoff@google.com
+- nursery/decrypt-data-using-aes-via-dotnet mehunhoff@google.com
+- nursery/get-dotnet-assembly-entry-point mehunhoff@google.com
 -
 
 ### Bug Fixes
+
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
 
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
 
+- add `ida-plugin.json` for inclusion in the IDA Pro plugin repository @williballenthin
+- ida plugin: add Qt compatibility layer for PyQt5 and PySide6 support @williballenthin #2707
+- delay import to not load Qt* when running under idalib @mr-tz #2752
+
 ### Development
 
 - ci: remove redundant "test_run" action from build workflow @mike-hunhoff #2692
+- dev: add bumpmyversion to bump and sync versions across the project @mr-tz
 
 ### Raw diffs
 - [capa v9.2.1...master](https://github.com/mandiant/capa/compare/v9.2.1...master)

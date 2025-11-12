@@ -19,7 +19,6 @@ from binaryninja import (
     Function,
     BinaryView,
     SymbolType,
-    ILException,
     RegisterValueType,
     VariableSourceType,
     LowLevelILOperation,
@@ -192,9 +191,8 @@ def extract_stackstring(fh: FunctionHandle):
     if bv is None:
         return
 
-    try:
-        mlil = func.mlil
-    except ILException:
+    mlil = func.mlil
+    if mlil is None:
         return
 
     for block in mlil.basic_blocks:
