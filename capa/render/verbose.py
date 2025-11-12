@@ -51,6 +51,9 @@ def format_address(address: frz.Address) -> str:
     elif address.type == frz.AddressType.RELATIVE:
         assert isinstance(address.value, int)
         return f"base address+{capa.helpers.hex(address.value)}"
+    elif address.type == frz.AddressType.SUPERBLOCK:
+        assert isinstance(address.value, tuple)
+        return "Superblock(" + " -> ".join(["BB:" + capa.helpers.hex(a) for a in address.value]) + ")"
     elif address.type == frz.AddressType.FILE:
         assert isinstance(address.value, int)
         return f"file+{capa.helpers.hex(address.value)}"
