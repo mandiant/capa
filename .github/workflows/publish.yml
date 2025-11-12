@@ -35,7 +35,7 @@ jobs:
         with:
           path: dist/*
       - name: publish package
-        uses: pypa/gh-action-pypi-publish@f5622bde02b04381239da3573277701ceca8f6a0  # release/v1
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # release/v1.12.4
         with:
           skip-existing: true
           verbose: true

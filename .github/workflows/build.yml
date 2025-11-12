@@ -9,6 +9,7 @@ on:
       - '**.md'
   release:
     types: [edited, published]
+  workflow_dispatch: # manual trigger for testing
 
 permissions:
   contents: write
@@ -22,23 +23,37 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
             python_version: '3.10'
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04-arm
+            artifact_name: capa
+            asset_name: linux-arm64
+            python_version: '3.10'
+          - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux-py312
             python_version: '3.12'
-          - os: windows-2019
+          - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
             python_version: '3.10'
+          # Windows 11 ARM64 complains of conflicting package version
+          # Additionally, there is no ARM64 build of Python for Python 3.10 on Windows 11 ARM: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
+          #- os: windows-11-arm
+          #  artifact_name: capa.exe
+          #  asset_name: windows-arm64
+          #  python_version: '3.12'
           - os: macos-13
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
+            python_version: '3.10'
+          - os: macos-14
+            artifact_name: capa
+            asset_name: macos-arm64
             python_version: '3.10'
     steps:
       - name: Checkout capa
@@ -49,7 +64,7 @@ jobs:
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python_version }}
-      - if: matrix.os == 'ubuntu-24.04'
+      - if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-22.04-arm'
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
         run: python -m pip install --upgrade pip setuptools
@@ -59,6 +74,28 @@ jobs:
           pip install -e .[build]
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
+      - name: Does it run without warnings or errors?
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-2022" ]] || [[ "${{ matrix.os }}" == "windows-11-arm" ]]; then
+            EXECUTABLE=".\\dist\\capa"
+          else
+            EXECUTABLE="./dist/capa"
+          fi
+
+          output=$(${EXECUTABLE} --version 2>&1)
+          exit_code=$?
+
+          echo "${output}"
+          echo "${exit_code}"
+
+          if echo "${output}" | grep -iE 'error|warning'; then
+            exit 1
+          fi
+
+          if [[ "${exit_code}" -ne 0 ]]; then
+            exit 1
+          fi
       - name: Does it run (PE)?
         run: dist/capa -d "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - name: Does it run (Shellcode)?
@@ -74,34 +111,6 @@ jobs:
           name: ${{ matrix.asset_name }}
           path: dist/${{ matrix.artifact_name }}
 
-  test_run:
-    name: Test run on ${{ matrix.os }} / ${{ matrix.asset_name }}
-    runs-on: ${{ matrix.os }}
-    needs: [build]
-    strategy:
-      matrix:
-        include:
-          # OSs not already tested above
-          - os: ubuntu-24.04
-            artifact_name: capa
-            asset_name: linux
-          - os: ubuntu-24.04
-            artifact_name: capa
-            asset_name: linux-py312
-          - os: windows-2022
-            artifact_name: capa.exe
-            asset_name: windows
-    steps:
-      - name: Download ${{ matrix.asset_name }}
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4.1.2
-        with:
-          name: ${{ matrix.asset_name }}
-      - name: Set executable flag
-        if: matrix.os != 'windows-2022'
-        run: chmod +x ${{ matrix.artifact_name }}
-      - name: Run capa
-        run: ./${{ matrix.artifact_name }} -h
-
   zip_and_upload:
     # upload zipped binaries to Release page
     if: github.event_name == 'release'
@@ -113,11 +122,17 @@ jobs:
         include:
           - asset_name: linux
             artifact_name: capa
+          - asset_name: linux-arm64
+            artifact_name: capa
           - asset_name: linux-py312
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe
+          #- asset_name: windows-arm64
+          #  artifact_name: capa.exe
           - asset_name: macos
+            artifact_name: capa
+          - asset_name: macos-arm64
             artifact_name: capa
     steps:
       - name: Download ${{ matrix.asset_name }}

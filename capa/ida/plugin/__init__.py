@@ -17,7 +17,6 @@ import logging
 import idaapi
 import ida_kernwin
 
-from capa.ida.plugin.form import CapaExplorerForm
 from capa.ida.plugin.icon import ICON
 
 logger = logging.getLogger(__name__)
@@ -74,6 +73,9 @@ class CapaExplorerPlugin(idaapi.plugin_t):
           arg (int): bitflag. Setting LSB enables automatic analysis upon
           loading. The other bits are currently undefined. See `form.Options`.
         """
+        # delay import to not trigger load of Qt components when not running in idaq, i.e., in idalib
+        from capa.ida.plugin.form import CapaExplorerForm
+
         if not self.form:
             self.form = CapaExplorerForm(self.PLUGIN_NAME, arg)
         else:
