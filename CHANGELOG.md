@@ -3,6 +3,33 @@
 ## master (unreleased)
 
 ### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v9.3.0...master](https://github.com/mandiant/capa/compare/v9.3.0...master)
+- [capa-rules v9.3.0...master](https://github.com/mandiant/capa-rules/compare/v9.3.0...master)
+
+## v9.3.0
+
+capa v9.3.0 comes with over 20 new and/or impoved rules.
+For IDA users the capa explorer plugin is now available via the IDA Pro plugin repository and contains Qt compatibility layer for PyQt5 and PySide6 support.
+Additionally a Binary Ninja bug has been fixed. Released binaries now include ARM64 binaries (Linux and macOS).
+
+### New Features
+
 - ci: add support for arm64 binary releases
 
 ### Breaking Changes
@@ -32,7 +59,6 @@
 - nursery/compiled-from-fsharp mehunhoff@google.com
 - nursery/decrypt-data-using-aes-via-dotnet mehunhoff@google.com
 - nursery/get-dotnet-assembly-entry-point mehunhoff@google.com
--
 
 ### Bug Fixes
 
@@ -52,8 +78,8 @@
 - dev: add bumpmyversion to bump and sync versions across the project @mr-tz
 
 ### Raw diffs
-- [capa v9.2.1...master](https://github.com/mandiant/capa/compare/v9.2.1...master)
-- [capa-rules v9.2.1...master](https://github.com/mandiant/capa-rules/compare/v9.2.1...master)
+- [capa v9.2.1...9.3.0](https://github.com/mandiant/capa/compare/v9.2.1...9.3.0)
+- [capa-rules v9.2.1...9.3.0](https://github.com/mandiant/capa-rules/compare/v9.2.1...9.3.0)
 
 ## v9.2.1
 
