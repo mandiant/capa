@@ -23,7 +23,7 @@ networkx==3.4.2
 pefile==2024.8.26
 pip==25.3
 protobuf==6.31.1
-pyasn1==0.5.1
+pyasn1==0.6.1
 pyasn1-modules==0.4.2
 pycparser==2.22
 pydantic==2.12.4
