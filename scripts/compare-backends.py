@@ -107,7 +107,7 @@ def collect(args):
     for file in sorted(p for p in testfiles.glob("*")):
         # remove leftover analysis files
         # because IDA doesn't cleanup after itself, currently.
-        if file.suffix in (".til", ".id0", ".id1", ".id2", ".nam", ".viv"):
+        if file.suffix in (".til", ".id0", ".id1", ".id2", ".name", ".viv"):
             logger.debug("removing: %s", file)
             with contextlib.suppress(IOError):
                 file.unlink()

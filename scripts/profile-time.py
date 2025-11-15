@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Invoke capa multiple times and record profiling informations.
+Invoke capa multiple times and record profiling information.
 Use the --number and --repeat options to change the number of iterations.
 By default, the script will emit a markdown table with a label pulled from git.
 

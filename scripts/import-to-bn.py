@@ -91,7 +91,7 @@ def load_analysis(bv):
         binaryninja.log_error("sample mismatch")
         return -2
 
-    # Retreive base address
+    # Retrieve base address
     capa_base_address = 0
     if "analysis" in doc["meta"] and "base_address" in doc["meta"]["analysis"]:
         if doc["meta"]["analysis"]["base_address"]["type"] == "absolute":
@@ -115,7 +115,7 @@ def load_analysis(bv):
                 if "value" not in match.keys():
                     continue
                 va = match["value"]
-                # Substract va and CAPA base_address
+                # Subtract va and CAPA base_address
                 va = int(va) - capa_base_address
                 # Add binja base address
                 va = va + bv.start
