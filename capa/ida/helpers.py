@@ -54,7 +54,7 @@ NETNODE_RESULTS = "results"
 NETNODE_RULES_CACHE_ID = "rules-cache-id"
 
 
-# wrappers for IDA Pro (IDAPython) 7, 8 and 9 compability
+# wrappers for IDA Pro (IDAPython) 7, 8 and 9 compatibility
 version = float(idaapi.get_kernel_version())
 if version < 9.0:
 

@@ -96,7 +96,7 @@ def main() -> int:
         logger.error("Input data was not valid JSON, input should be a capa json output file.")
         return -1
     except json.JSONDecodeError:
-        # An exception has occured
+        # An exception has occurred
         logger.error("Input data was not valid JSON, input should be a capa json output file.")
         return -2
 
@@ -104,7 +104,7 @@ def main() -> int:
     # Create baseline sarif structure to be populated from json data
     sarif_structure: Optional[dict] = _sarif_boilerplate(json_data["meta"], json_data["rules"])
     if sarif_structure is None:
-        logger.error("An Error has occured creating default sarif structure.")
+        logger.error("An Error has occurred creating default sarif structure.")
         return -3
 
     _populate_artifact(sarif_structure, json_data["meta"])
@@ -196,7 +196,7 @@ def _sarif_boilerplate(data_meta: dict, data_rules: dict) -> Optional[dict]:
     try:
         sarif_outline = json.loads(to_json(sarif_log))
     except json.JSONDecodeError:
-        # An exception has occured
+        # An exception has occurred
         return None
 
     return sarif_outline
