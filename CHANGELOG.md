@@ -18,6 +18,8 @@
 
 ### Development
 
+- ci: bump binja min version @mike-hunhoff #2763
+
 ### Raw diffs
 - [capa v9.3.0...master](https://github.com/mandiant/capa/compare/v9.3.0...master)
 - [capa-rules v9.3.0...master](https://github.com/mandiant/capa-rules/compare/v9.3.0...master)
