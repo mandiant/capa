@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- add missing ida-netnode dependency to project.toml @mike-hunhoff #2765
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
