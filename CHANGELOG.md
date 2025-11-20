@@ -12,11 +12,23 @@
 
 ### Bug Fixes
 
-- add missing ida-netnode dependency to project.toml @mike-hunhoff #2765
-
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
+- [capa-rules v9.3.1...master](https://github.com/mandiant/capa-rules/compare/v9.3.1...master)
+
+## v9.3.1
+
+This patch release fixes a missing import for the capa explorer plugin for IDA Pro.
+
+### Bug Fixes
+
+- add missing ida-netnode dependency to project.toml @mike-hunhoff #2765
 
 ### Development
 

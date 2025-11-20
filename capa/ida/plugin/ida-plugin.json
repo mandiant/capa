@@ -3,7 +3,7 @@
   "plugin": {
     "name": "capa",
     "entryPoint": "capa_explorer.py",
-    "version": "9.3.0",
+    "version": "9.3.1",
     "idaVersions": ">=7.4",
     "description": "Identify capabilities in executable files using FLARE's capa framework",
     "license": "Apache-2.0",
@@ -12,7 +12,7 @@
       "api-scripting-and-automation",
       "ui-ux-and-visualization"
     ],
-    "pythonDependencies": ["flare-capa==9.3.0"],
+    "pythonDependencies": ["flare-capa==9.3.1"],
     "urls": {
       "repository": "https://github.com/mandiant/capa"
     },
