@@ -10,35 +10,35 @@ annotated-types==0.7.0
 colorama==0.4.6
 cxxfilt==0.3.0
 dncil==1.0.2
-dnfile==0.16.4
+dnfile==0.17.0
 funcy==2.0
-humanize==4.13.0
+humanize==4.14.0
 ida-netnode==3.0
-ida-settings==2.1.0
+ida-settings==3.2.2
 intervaltree==3.1.0
 markdown-it-py==4.0.0
 mdurl==0.1.2
 msgpack==1.0.8
 networkx==3.4.2
 pefile==2024.8.26
-pip==25.2
-protobuf==6.31.1
+pip==25.3
+protobuf==6.33.1
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
-pycparser==2.22
-pydantic==2.11.4
+pycparser==2.23
+pydantic==2.12.4
 # pydantic pins pydantic-core, 
 # but dependabot updates these separately (which is broken) and is annoying,
 # so we rely on pydantic to pull in the right version of pydantic-core.
 # pydantic-core==2.23.4
-xmltodict==0.14.2
+xmltodict==1.0.2
 pyelftools==0.32
 pygments==2.19.1
 python-flirt==0.9.2
 pyyaml==6.0.2
 rich==14.2.0
 ruamel-yaml==0.18.6
-ruamel-yaml-clib==0.2.8
+ruamel-yaml-clib==0.2.14
 setuptools==80.9.0
 six==1.17.0
 sortedcontainers==2.4.0

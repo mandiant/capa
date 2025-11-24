@@ -23,7 +23,6 @@ from pathlib import Path
 import idaapi
 import ida_kernwin
 import ida_settings
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
@@ -51,6 +50,7 @@ from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
 from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
+from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)
@@ -1358,7 +1358,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         @param state: checked state
         """
-        if state == QtCore.Qt.Checked:
+        if state:
             self.limit_results_to_function(idaapi.get_func(idaapi.get_screen_ea()))
         else:
             self.range_model_proxy.reset_address_range_filter()
@@ -1367,7 +1367,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def slot_checkbox_limit_features_by_ea(self, state):
         """ """
-        if state == QtCore.Qt.Checked:
+        if state:
             self.view_rulegen_features.filter_items_by_ea(idaapi.get_screen_ea())
         else:
             self.view_rulegen_features.show_all_items()

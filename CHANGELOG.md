@@ -3,12 +3,55 @@
 ## master (unreleased)
 
 ### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
+- [capa-rules v9.3.1...master](https://github.com/mandiant/capa-rules/compare/v9.3.1...master)
+
+## v9.3.1
+
+This patch release fixes a missing import for the capa explorer plugin for IDA Pro.
+
+### Bug Fixes
+
+- add missing ida-netnode dependency to project.toml @mike-hunhoff #2765
+
+### Development
+
+- ci: bump binja min version @mike-hunhoff #2763
+
+### Raw diffs
+- [capa v9.3.0...master](https://github.com/mandiant/capa/compare/v9.3.0...master)
+- [capa-rules v9.3.0...master](https://github.com/mandiant/capa-rules/compare/v9.3.0...master)
+
+## v9.3.0
+
+capa v9.3.0 comes with over 20 new and/or impoved rules.
+For IDA users the capa explorer plugin is now available via the IDA Pro plugin repository and contains Qt compatibility layer for PyQt5 and PySide6 support.
+Additionally a Binary Ninja bug has been fixed. Released binaries now include ARM64 binaries (Linux and macOS).
+
+### New Features
+
 - ci: add support for arm64 binary releases
 - tests: run tests against IDA via idalib @williballenthin #2742
 
 ### Breaking Changes
 
-### New Rules (21)
+### New Rules (24)
 
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
@@ -30,7 +73,9 @@
 - host-interaction/network/routing-table/get-routing-table michael.hunhoff@mandiant.com
 - host-interaction/file-system/use-io_uring-io-interface-on-linux jakubjozwiak@google.com
 - collection/keylog/log-keystrokes-via-direct-input zeze-zeze
--
+- nursery/compiled-from-fsharp mehunhoff@google.com
+- nursery/decrypt-data-using-aes-via-dotnet mehunhoff@google.com
+- nursery/get-dotnet-assembly-entry-point mehunhoff@google.com
 
 ### Bug Fixes
 
@@ -41,6 +86,8 @@
 ### capa Explorer IDA Pro plugin
 
 - add `ida-plugin.json` for inclusion in the IDA Pro plugin repository @williballenthin
+- ida plugin: add Qt compatibility layer for PyQt5 and PySide6 support @williballenthin #2707
+- delay import to not load Qt* when running under idalib @mr-tz #2752
 
 ### Development
 
@@ -48,8 +95,8 @@
 - dev: add bumpmyversion to bump and sync versions across the project @mr-tz
 
 ### Raw diffs
-- [capa v9.2.1...master](https://github.com/mandiant/capa/compare/v9.2.1...master)
-- [capa-rules v9.2.1...master](https://github.com/mandiant/capa-rules/compare/v9.2.1...master)
+- [capa v9.2.1...9.3.0](https://github.com/mandiant/capa/compare/v9.2.1...9.3.0)
+- [capa-rules v9.2.1...9.3.0](https://github.com/mandiant/capa-rules/compare/v9.2.1...9.3.0)
 
 ## v9.2.1
 

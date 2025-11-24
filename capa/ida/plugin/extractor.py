@@ -14,9 +14,9 @@
 
 
 import ida_kernwin
-from PyQt5 import QtCore
 
 from capa.ida.plugin.error import UserCancelledError
+from capa.ida.plugin.qt_compat import QtCore, Signal
 from capa.features.extractors.ida.extractor import IdaFeatureExtractor
 from capa.features.extractors.base_extractor import FunctionHandle
 
@@ -24,7 +24,7 @@ from capa.features.extractors.base_extractor import FunctionHandle
 class CapaExplorerProgressIndicator(QtCore.QObject):
     """implement progress signal, used during feature extraction"""
 
-    progress = QtCore.pyqtSignal(str)
+    progress = Signal(str)
 
     def update(self, text):
         """emit progress update
