@@ -275,7 +275,7 @@ SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
 
 class InvalidRule(ValueError):
     def __init__(self, msg):
-        super().__init__()
+        super().__init__(msg)
         self.msg = msg
 
     def __str__(self):
@@ -298,7 +298,7 @@ class InvalidRuleWithPath(InvalidRule):
 
 class InvalidRuleSet(ValueError):
     def __init__(self, msg):
-        super().__init__()
+        super().__init__(msg)
         self.msg = msg
 
     def __str__(self):
