@@ -2228,9 +2228,6 @@ def get_rules(
 
         try:
             rule = Rule.from_yaml(content.decode("utf-8"))
-        except yaml.YAMLError as e:
-            logger.error(f"Invalid YAML in rule {path}: {e}")
-            continue
         except InvalidRule:
             raise
         else:
