@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- nursery/run-as-nodejs-native-module mehunhoff@google.com
 -
 
 ### Bug Fixes
