@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- Fixed insecure deserialization vulnerability in YAML loading 0x1622 (#2770)
 
 ### capa Explorer Web
 
