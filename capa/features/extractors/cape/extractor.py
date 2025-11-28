@@ -21,9 +21,9 @@ import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
-from capa.exceptions import EmptyReportError, UnsupportedFormatError
+from capa.exceptions import EmptyReportError
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
 from capa.features.extractors.cape.models import Call, Static, Process, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
@@ -53,9 +53,14 @@ class CapeExtractor(DynamicFeatureExtractor):
         self.global_features = list(capa.features.extractors.cape.global_.extract_features(self.report))
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
+        if self.report.static is None:
+            return NO_ADDRESS
+
+        if self.report.static.pe is None:
+            # TODO: handle ELF
+            return NO_ADDRESS
+
         # value according to the PE header, the actual trace may use a different imagebase
-        assert self.report.static is not None
-        assert self.report.static.pe is not None
         return AbsoluteVirtualAddress(self.report.static.pe.imagebase)
 
     def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
@@ -120,8 +125,10 @@ class CapeExtractor(DynamicFeatureExtractor):
         parts.append(" -> ")
         if call.pretty_return:
             parts.append(call.pretty_return)
-        else:
+        elif call.return_:
             parts.append(hex(call.return_))
+        else:
+            parts.append("?")
 
         return "".join(parts)
 
@@ -132,24 +139,10 @@ class CapeExtractor(DynamicFeatureExtractor):
         if cr.info.version not in TESTED_VERSIONS:
             logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
-        # TODO(mr-tz): support more file types
-        # https://github.com/mandiant/capa/issues/1933
-        if "PE" not in cr.target.file.type:
-            logger.error(
-                "capa currently only supports PE target files, this target file's type is: '%s'.\nPlease report this at: https://github.com/mandiant/capa/issues/1933",
-                cr.target.file.type,
-            )
-
         # observed in 2.4-CAPE reports from capesandbox.com
         if cr.static is None and cr.target.file.pe is not None:
             cr.static = Static()
             cr.static.pe = cr.target.file.pe
-
-        if cr.static is None:
-            raise UnsupportedFormatError("CAPE report missing static analysis")
-
-        if cr.static.pe is None:
-            raise UnsupportedFormatError("CAPE report missing PE analysis")
 
         if len(cr.behavior.processes) == 0:
             raise EmptyReportError("CAPE did not capture any processes")
