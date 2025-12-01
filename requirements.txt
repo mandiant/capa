@@ -14,7 +14,7 @@ dnfile==0.17.0
 funcy==2.0
 humanize==4.14.0
 ida-netnode==3.0
-ida-settings==3.2.2
+ida-settings==3.3.0
 intervaltree==3.1.0
 markdown-it-py==4.0.0
 mdurl==0.1.2
