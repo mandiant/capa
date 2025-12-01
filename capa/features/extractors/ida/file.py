@@ -20,6 +20,7 @@ import idc
 import idaapi
 import idautils
 import ida_entry
+import ida_loader
 
 import capa.ida.helpers
 import capa.features.extractors.common
@@ -87,7 +88,8 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         for ea, _ in check_segment_for_pe(seg):
-            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+            off = ida_loader.get_fileregion_offset(ea)
+            yield Characteristic("embedded pe"), FileOffsetAddress(off)
 
 
 def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
@@ -161,10 +163,12 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
 
         # differing to common string extractor factor in segment offset here
         for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
-            yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
+            off = ida_loader.get_fileregion_offset(seg.start_ea + s.offset)
+            yield String(s.s), FileOffsetAddress(off)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff):
-            yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
+            off = ida_loader.get_fileregion_offset(seg.start_ea + s.offset)
+            yield String(s.s), FileOffsetAddress(off)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:

@@ -84,3 +84,29 @@ def get_llil_instr_at_addr(bv: BinaryView, addr: int) -> Optional[LowLevelILInst
     if arch.get_instruction_low_level_il(buffer, addr, llil) == 0:
         return None
     return llil[0]
+
+
+def va_to_file_offset(bv: BinaryView, va: int) -> int:
+    """Map a BinaryView virtual address to a file offset using segment/section data offsets.
+
+    Assumes a modern Binary Ninja API where Segment and Section objects expose
+    a `data_offset` attribute which is the file offset of the start of the
+    segment/section. The file offset is computed as:
+
+        file_offset = segment.data_offset + (va - segment.start)
+
+    If no containing segment/section is found, fall back to returning the
+    given virtual address as an integer.
+    """
+    # prefer segments (they map ranges of the file view)
+    for seg in bv.segments:
+        if seg.start <= va < seg.start + seg.length:
+            return int(seg.data_offset + (va - seg.start))
+
+    # otherwise check sections
+    for _, sec in bv.sections.items():
+        if sec.start <= va < sec.start + sec.length:
+            return int(sec.data_offset + (va - sec.start))
+
+    # fallback
+    return int(va)

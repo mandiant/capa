@@ -83,6 +83,7 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 ### Bug Fixes
 
 - binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
+- embedded pe: use FileOffset rather than AbsoluteVirtualAddress for IDA, Ghidra, and Binary Ninja @williballenthin #2745 
 
 ### capa Explorer Web
 
