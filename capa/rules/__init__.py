@@ -274,12 +274,8 @@ SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
 
 
 class InvalidRule(ValueError):
-    def __init__(self, msg):
-        super().__init__()
-        self.msg = msg
-
     def __str__(self):
-        return f"invalid rule: {self.msg}"
+        return f"invalid rule: {super().__str__()}"
 
     def __repr__(self):
         return str(self)
@@ -289,20 +285,15 @@ class InvalidRuleWithPath(InvalidRule):
     def __init__(self, path, msg):
         super().__init__(msg)
         self.path = path
-        self.msg = msg
         self.__cause__ = None
 
     def __str__(self):
-        return f"invalid rule: {self.path}: {self.msg}"
+        return f"invalid rule: {self.path}: {super(InvalidRule, self).__str__()}"
 
 
 class InvalidRuleSet(ValueError):
-    def __init__(self, msg):
-        super().__init__()
-        self.msg = msg
-
     def __str__(self):
-        return f"invalid rule set: {self.msg}"
+        return f"invalid rule set: {super().__str__()}"
 
     def __repr__(self):
         return str(self)
