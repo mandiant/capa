@@ -1093,15 +1093,15 @@ class Rule:
     @lru_cache()
     def _get_yaml_loader():
         try:
-            # prefer to use CLoader to be fast, see #306
+            # prefer to use CLoader to be fast, see #306 / CSafeLoader is the same as CLoader but with safe loading
             # on Linux, make sure you install libyaml-dev or similar
             # on Windows, get WHLs from pyyaml.org/pypi
-            logger.debug("using libyaml CLoader.")
-            return yaml.CLoader
+            logger.debug("using libyaml CSafeLoader.")
+            return yaml.CSafeLoader
         except Exception:
-            logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
+            logger.debug("unable to import libyaml CSafeLoader, falling back to Python yaml parser.")
             logger.debug("this will be slower to load rules.")
-            return yaml.Loader
+            return yaml.SafeLoader
 
     @staticmethod
     def _get_ruamel_yaml_parser():

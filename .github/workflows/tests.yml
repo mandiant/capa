@@ -42,10 +42,10 @@ jobs:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     # use latest available python to take advantage of best performance
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
@@ -70,10 +70,10 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install capa
       run: |
         pip install -r requirements.txt
@@ -88,13 +88,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15-intel, macos-14]
         # across all operating systems
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
         include:
           # on Ubuntu run these as well
-          - os: ubuntu-22.04
-            python-version: "3.10"
           - os: ubuntu-22.04
             python-version: "3.11"
           - os: ubuntu-22.04
@@ -131,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
     steps:
     - name: Checkout capa with submodules
       # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
@@ -173,7 +171,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
         java-version: ["17"]
         ghidra-version: ["11.0.1"]
         public-version: ["PUBLIC_20240130"] # for ghidra releases
