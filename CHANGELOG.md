@@ -6,9 +6,12 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (4)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
+- nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
+- nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_timer still@teamt5.org
+- nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
 -
 
 ### Bug Fixes
