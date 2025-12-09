@@ -4,6 +4,8 @@
 
 ### New Features
 
+- ghidra: support PyGhidra @mike-hunhoff #2788
+
 ### Breaking Changes
 
 ### New Rules (4)
