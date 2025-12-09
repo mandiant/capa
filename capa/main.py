@@ -394,6 +394,7 @@ class ShouldExitError(Exception):
     """raised when a main-related routine indicates the program should exit."""
 
     def __init__(self, status_code: int):
+        super().__init__(status_code)
         self.status_code = status_code
 
 
