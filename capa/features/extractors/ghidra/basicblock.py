@@ -142,4 +142,3 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Featur
     for bb_handler in BASIC_BLOCK_HANDLERS:
         for feature, addr in bb_handler(fh, bbh):
             yield feature, addr
-
