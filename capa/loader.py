@@ -79,6 +79,7 @@ BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
+BACKEND_GHIDRA = "ghidra"
 
 
 class CorruptFile(ValueError):
@@ -351,6 +352,43 @@ def get_extractor(
 
         return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
+    elif backend == BACKEND_GHIDRA:
+        import pyghidra
+
+        with console.status("analyzing program...", spinner="dots"):
+            if not pyghidra.started():
+                pyghidra.start()
+
+            import capa.ghidra.helpers
+
+            if not capa.ghidra.helpers.is_supported_ghidra_version():
+                raise RuntimeError("unsupported Ghidra version")
+
+            import tempfile
+
+            tmpdir = tempfile.TemporaryDirectory()
+
+            # PyGhidra's open_program returns a context manager.
+            # We manually enter it here and pass it to the extractor, which will exit it when done.
+            cm = pyghidra.open_program(str(input_path), project_location=tmpdir.name)
+            flat_api = cm.__enter__()
+            try:
+                from ghidra.util.task import TaskMonitor
+
+                monitor = TaskMonitor.DUMMY
+                program = flat_api.getCurrentProgram()
+
+                import capa.features.extractors.ghidra.context as ghidra_context
+
+                ghidra_context.set_context(program, flat_api, monitor)
+            except Exception:
+                cm.__exit__(None, None, None)
+                tmpdir.cleanup()
+                raise
+
+        import capa.features.extractors.ghidra.extractor
+
+        return capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(ctx_manager=cm, tmpdir=tmpdir)
     else:
         raise ValueError("unexpected backend: " + backend)
 

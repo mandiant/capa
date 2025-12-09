@@ -26,18 +26,22 @@ from capa.features.extractors.base_extractor import FunctionHandle
 
 def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""
-    f: ghidra.program.database.function.FunctionDB = fh.inner
+    f: "ghidra.program.database.function.FunctionDB" = fh.inner
     for ref in f.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
             yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
 
 
 def extract_function_loop(fh: FunctionHandle):
-    f: ghidra.program.database.function.FunctionDB = fh.inner
+    f: "ghidra.program.database.function.FunctionDB" = fh.inner
 
     edges = []
-    for block in SimpleBlockIterator(BasicBlockModel(currentProgram()), f.getBody(), monitor()):  # type: ignore [name-defined] # noqa: F821
-        dests = block.getDestinations(monitor())  # type: ignore [name-defined] # noqa: F821
+    for block in SimpleBlockIterator(
+        BasicBlockModel(capa.features.extractors.ghidra.helpers.get_current_program()),
+        f.getBody(),
+        capa.features.extractors.ghidra.helpers.get_monitor(),
+    ):
+        dests = block.getDestinations(capa.features.extractors.ghidra.helpers.get_monitor())
         s_addrs = block.getStartAddresses()
 
         while dests.hasNext():  # For loop throws Python TypeError
@@ -49,16 +53,17 @@ def extract_function_loop(fh: FunctionHandle):
 
 
 def extract_recursive_call(fh: FunctionHandle):
-    f: ghidra.program.database.function.FunctionDB = fh.inner
+    f: "ghidra.program.database.function.FunctionDB" = fh.inner
 
-    for func in f.getCalledFunctions(monitor()):  # type: ignore [name-defined] # noqa: F821
+    for func in f.getCalledFunctions(capa.features.extractors.ghidra.helpers.get_monitor()):
         if func.getEntryPoint().getOffset() == f.getEntryPoint().getOffset():
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
-    for func_handler in FUNCTION_HANDLERS:
-        for feature, addr in func_handler(fh):
+    """extract function features"""
+    for function_handler in FUNCTION_HANDLERS:
+        for feature, addr in function_handler(fh):
             yield feature, addr
 
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 from typing import Iterator
 
 import capa.features.extractors.ghidra.file
@@ -31,19 +32,21 @@ from capa.features.extractors.base_extractor import (
 
 
 class GhidraFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self):
+    def __init__(self, ctx_manager=None, tmpdir=None):
+        self.ctx_manager = ctx_manager
+        self.tmpdir = tmpdir
         import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         super().__init__(
             SampleHashes(
-                md5=capa.ghidra.helpers.get_file_md5(),
+                md5=ghidra_helpers.get_current_program().getExecutableMD5(),
                 # ghidra doesn't expose this hash.
                 # https://ghidra.re/ghidra_docs/api/ghidra/program/model/listing/Program.html
                 #
                 # the hashes are stored in the database, not computed on the fly,
                 # so it's probably not trivial to add SHA1.
                 sha1="",
-                sha256=capa.ghidra.helpers.get_file_sha256(),
+                sha256=ghidra_helpers.get_current_program().getExecutableSHA256(),
             )
         )
 
@@ -56,7 +59,17 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         self.fakes = ghidra_helpers.map_fake_import_addrs()
 
     def get_base_address(self):
-        return AbsoluteVirtualAddress(currentProgram().getImageBase().getOffset())  # type: ignore [name-defined] # noqa: F821
+        import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
+        return AbsoluteVirtualAddress(ghidra_helpers.get_current_program().getImageBase().getOffset())
+
+    def __del__(self):
+        if hasattr(self, "ctx_manager") and self.ctx_manager:
+            with contextlib.suppress(Exception):
+                self.ctx_manager.__exit__(None, None, None)
+        if hasattr(self, "tmpdir") and self.tmpdir:
+            with contextlib.suppress(Exception):
+                self.tmpdir.cleanup()
 
     def extract_global_features(self):
         yield from self.global_features
@@ -77,7 +90,9 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
-        func = getFunctionContaining(toAddr(addr))  # type: ignore [name-defined] # noqa: F821
+        import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
+        func = ghidra_helpers.get_flat_api().getFunctionContaining(ghidra_helpers.get_flat_api().toAddr(addr))
         return FunctionHandle(address=AbsoluteVirtualAddress(func.getEntryPoint().getOffset()), inner=func)
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
