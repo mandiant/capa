@@ -89,7 +89,7 @@ def get_function_symbols():
     yield from get_current_program().getFunctionManager().getFunctionsNoStubs(True)
 
 
-def get_function_blocks(fh):
+def get_function_blocks(fh: "capa.features.extractors.base_extractor.FunctionHandle") -> Iterator[BBHandle]:
     """
     yield the basic blocks of the function
     """
