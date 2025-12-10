@@ -173,8 +173,8 @@ jobs:
       matrix:
         python-version: ["3.10", "3.13"]
         java-version: ["21"]
-        ghidra-version: ["11.4"]
-        public-version: ["PUBLIC_20250620"] # for ghidra releases 
+        ghidra-version: ["12.0"]
+        public-version: ["PUBLIC_20251205"] # for ghidra releases 
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1

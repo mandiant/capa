@@ -90,11 +90,11 @@ def is_supported_ghidra_version():
     try:
         # version format example: "11.1.2" or "11.4"
         major, minor = map(int, version.split(".")[:2])
-        if major < 11 or (major == 11 and minor < 4):
+        if major < 12:
             logger.error("-" * 80)
             logger.error(" Ghidra version %s is not supported.", version)
             logger.error(" ")
-            logger.error(" capa requires Ghidra 11.4 or higher.")
+            logger.error(" capa requires Ghidra 12.0 or higher.")
             logger.error("-" * 80)
             return False
     except ValueError:

@@ -8,7 +8,7 @@
 
 ## Prerequisites
 
-- Ghidra >= 11.4 must be installed and available to PyGhidra (e.g. set `GHIDRA_INSTALL_DIR` environment variable)
+- Ghidra >= 12.0 must be installed and available to PyGhidra (e.g. set `GHIDRA_INSTALL_DIR` environment variable)
 
 ## Usage
 
