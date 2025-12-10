@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import weakref
 import contextlib
 from typing import Iterator
 
@@ -58,18 +59,16 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         self.externs = ghidra_helpers.get_file_externs()
         self.fakes = ghidra_helpers.map_fake_import_addrs()
 
+        # Register cleanup to run when the extractor is garbage collected or when the program exits.
+        # We use weakref.finalize instead of __del__ to avoid issues with reference cycles and
+        # to ensure deterministic cleanup on interpreter shutdown.
+        if self.ctx_manager or self.tmpdir:
+            weakref.finalize(self, cleanup, self.ctx_manager, self.tmpdir)
+
     def get_base_address(self):
         import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         return AbsoluteVirtualAddress(ghidra_helpers.get_current_program().getImageBase().getOffset())
-
-    def __del__(self):
-        if hasattr(self, "ctx_manager") and self.ctx_manager:
-            with contextlib.suppress(Exception):
-                self.ctx_manager.__exit__(None, None, None)
-        if hasattr(self, "tmpdir") and self.tmpdir:
-            with contextlib.suppress(Exception):
-                self.tmpdir.cleanup()
 
     def extract_global_features(self):
         yield from self.global_features
@@ -113,3 +112,12 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 
     def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):
         yield from capa.features.extractors.ghidra.insn.extract_features(fh, bbh, ih)
+
+
+def cleanup(ctx_manager, tmpdir):
+    if ctx_manager:
+        with contextlib.suppress(Exception):
+            ctx_manager.__exit__(None, None, None)
+    if tmpdir:
+        with contextlib.suppress(Exception):
+            tmpdir.cleanup()

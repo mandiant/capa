@@ -25,17 +25,3 @@ from fixtures import _692f_dotnetfile_extractor  # noqa: F401 [imported but unus
 from fixtures import _1c444_dotnetfile_extractor  # noqa: F401 [imported but unused]
 from fixtures import _039a6_dotnetfile_extractor  # noqa: F401 [imported but unused]
 from fixtures import _0953c_dotnetfile_extractor  # noqa: F401 [imported but unused]
-
-
-def pytest_sessionfinish(session, exitstatus):
-    try:
-        import pyghidra
-
-        if pyghidra.started():
-            import os
-
-            # If PyGhidra was started, we might need to force exit to prevent hangs
-            # due to non-daemon JVM threads.
-            os._exit(exitstatus)
-    except ImportError:
-        pass
