@@ -127,7 +127,7 @@ dev = [
     "pytest-sugar==1.1.1",
     "pytest-instafail==0.5.0",
     "flake8==7.3.0",
-    "flake8-bugbear==25.10.21",
+    "flake8-bugbear==25.11.29",
     "flake8-encodings==0.5.1",
     "flake8-comprehensions==3.17.0",
     "flake8-logging-format==0.9.0",
