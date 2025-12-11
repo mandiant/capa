@@ -235,7 +235,30 @@ def get_idalib_extractor(path: Path):
     ida_auto.auto_wait()
     logger.debug("idalib: opened database.")
 
-    return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    fixup_idalib(path, extractor)
+    return extractor
+
+
+def fixup_idalib(path: Path, extractor):
+    """
+    IDA fixups to overcome differences between backends
+    """
+    import idaapi
+    import ida_funcs
+
+    def remove_library_id_flag(fva):
+        f = idaapi.get_func(fva)
+        f.flags &= ~ida_funcs.FUNC_LIB
+        ida_funcs.update_func(f)
+
+    if "kernel32-64" in path.name:
+        # remove (correct) library function id, so we can test x64 thunk
+        remove_library_id_flag(0x1800202B0)
+
+    if "al-khaser_x64" in path.name:
+        # remove (correct) library function id, so we can test x64 nested thunk
+        remove_library_id_flag(0x14004B4F0)
 
 
 @lru_cache(maxsize=1)
@@ -1021,20 +1044,20 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("pma16-01", "file", OS(OS_WINDOWS), True),
         ("pma16-01", "file", OS(OS_LINUX), False),
         ("mimikatz", "file", OS(OS_WINDOWS), True),
-        ("pma16-01", "function=0x404356", OS(OS_WINDOWS), True),
-        ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("pma16-01", "function=0x401100", OS(OS_WINDOWS), True),
+        ("pma16-01", "function=0x401100,bb=0x401130", OS(OS_WINDOWS), True),
         ("mimikatz", "function=0x40105D", OS(OS_WINDOWS), True),
         ("pma16-01", "file", Arch(ARCH_I386), True),
         ("pma16-01", "file", Arch(ARCH_AMD64), False),
         ("mimikatz", "file", Arch(ARCH_I386), True),
-        ("pma16-01", "function=0x404356", Arch(ARCH_I386), True),
-        ("pma16-01", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
+        ("pma16-01", "function=0x401100", Arch(ARCH_I386), True),
+        ("pma16-01", "function=0x401100,bb=0x401130", Arch(ARCH_I386), True),
         ("mimikatz", "function=0x40105D", Arch(ARCH_I386), True),
         ("pma16-01", "file", Format(FORMAT_PE), True),
         ("pma16-01", "file", Format(FORMAT_ELF), False),
         ("mimikatz", "file", Format(FORMAT_PE), True),
         # format is also a global feature
-        ("pma16-01", "function=0x404356", Format(FORMAT_PE), True),
+        ("pma16-01", "function=0x401100", Format(FORMAT_PE), True),
         ("mimikatz", "function=0x456BB9", Format(FORMAT_PE), True),
         # elf support
         ("7351f.elf", "file", OS(OS_LINUX), True),
