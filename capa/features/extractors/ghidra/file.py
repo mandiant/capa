@@ -80,7 +80,7 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
         for i in range(256)
     ]
 
-    for block in currentProgram().getMemory().getBlocks():  # type: ignore [name-defined] # noqa: F821
+    for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
         if not all((block.isLoaded(), block.isInitialized(), "Headers" not in block.getName())):
             continue
 
@@ -93,9 +93,37 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
 
 def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
     """extract function exports"""
-    st = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
+    program = capa.features.extractors.ghidra.helpers.get_current_program()
+    st = program.getSymbolTable()
+
     for addr in st.getExternalEntryPointIterator():
-        yield Export(st.getPrimarySymbol(addr).getName()), AbsoluteVirtualAddress(addr.getOffset())
+        sym = st.getPrimarySymbol(addr)
+        name = sym.getName()
+
+        # Check for forwarded export
+        is_forwarded = False
+        refs = program.getReferenceManager().getReferencesFrom(addr)
+        for ref in refs:
+            if ref.getToAddress().isExternalAddress():
+                ext_sym = st.getPrimarySymbol(ref.getToAddress())
+                if ext_sym:
+                    ext_loc = program.getExternalManager().getExternalLocation(ext_sym)
+                    if ext_loc:
+                        # It is a forwarded export
+                        libname = ext_loc.getLibraryName()
+                        if libname.lower().endswith(".dll"):
+                            libname = libname[:-4]
+
+                        forwarded_name = f"{libname}.{ext_loc.getLabel()}"
+                        forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
+
+                        yield Export(forwarded_name), AbsoluteVirtualAddress(addr.getOffset())
+                        yield Characteristic("forwarded export"), AbsoluteVirtualAddress(addr.getOffset())
+                        is_forwarded = True
+                        break
+
+        if not is_forwarded:
+            yield Export(name), AbsoluteVirtualAddress(addr.getOffset())
 
 
 def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
@@ -110,7 +138,7 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
      - importname
     """
 
-    for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
+    for f in capa.features.extractors.ghidra.helpers.get_current_program().getFunctionManager().getExternalFunctions():
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
@@ -126,14 +154,14 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
 def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
     """extract section names"""
 
-    for block in currentProgram().getMemory().getBlocks():  # type: ignore [name-defined] # noqa: F821
+    for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
         yield Section(block.getName()), AbsoluteVirtualAddress(block.getStart().getOffset())
 
 
 def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
-    for block in currentProgram().getMemory().getBlocks():  # type: ignore [name-defined] # noqa: F821
+    for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
         if not block.isInitialized():
             continue
 
@@ -153,7 +181,8 @@ def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for sym in currentProgram().getSymbolTable().getAllSymbols(True):  # type: ignore [name-defined] # noqa: F821
+    for sym in capa.features.extractors.ghidra.helpers.get_current_program().getSymbolTable().getAllSymbols(True):
+
         # .isExternal() misses more than this config for the function symbols
         if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
@@ -170,7 +199,7 @@ def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
 
 
 def extract_file_format() -> Iterator[tuple[Feature, Address]]:
-    ef = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    ef = capa.features.extractors.ghidra.helpers.get_current_program().getExecutableFormat()
     if "PE" in ef:
         yield Format(FORMAT_PE), NO_ADDRESS
     elif "ELF" in ef:
