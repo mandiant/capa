@@ -46,8 +46,8 @@ jobs:
           #  artifact_name: capa.exe
           #  asset_name: windows-arm64
           #  python_version: '3.12'
-          - os: macos-13
-            # use older macOS for assumed better portability
+          - os: macos-15-intel
+            # macos-15-intel is the lowest native intel build
             artifact_name: capa
             asset_name: macos
             python_version: '3.10'

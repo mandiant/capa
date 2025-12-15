@@ -44,5 +44,5 @@ six==1.17.0
 sortedcontainers==2.4.0
 viv-utils==0.8.0
 vivisect==1.2.1
-msgspec==0.19.0
+msgspec==0.20.0
 bump-my-version==1.2.4

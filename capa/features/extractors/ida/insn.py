@@ -26,7 +26,6 @@ from capa.features.file import FunctionName
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.ida.function import extract_function_alternative_names
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain

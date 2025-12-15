@@ -19,7 +19,6 @@ import idautils
 
 import capa.features.extractors.ida.helpers
 from capa.features.file import FunctionName
-from capa.features.insn import API
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
