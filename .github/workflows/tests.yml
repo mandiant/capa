@@ -42,10 +42,10 @@ jobs:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     # use latest available python to take advantage of best performance
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
@@ -70,10 +70,10 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install capa
       run: |
         pip install -r requirements.txt
@@ -88,13 +88,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15-intel, macos-14]
         # across all operating systems
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
         include:
           # on Ubuntu run these as well
-          - os: ubuntu-22.04
-            python-version: "3.10"
           - os: ubuntu-22.04
             python-version: "3.11"
           - os: ubuntu-22.04
@@ -131,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
     steps:
     - name: Checkout capa with submodules
       # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
@@ -173,11 +171,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
-        java-version: ["17"]
-        ghidra-version: ["11.0.1"]
-        public-version: ["PUBLIC_20240130"] # for ghidra releases
-        ghidrathon-version: ["4.0.0"] 
+        python-version: ["3.10", "3.13"]
+        java-version: ["21"]
+        ghidra-version: ["12.0"]
+        public-version: ["PUBLIC_20251205"] # for ghidra releases
+        ghidra-sha256: ['af43e8cfb2fa4490cf6020c3a2bde25c159d83f45236a0542688a024e8fc1941']
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -196,26 +194,15 @@ jobs:
       run: |
         mkdir ./.github/ghidra
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
+        echo "${{ matrix.ghidra-sha256 }} ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip" | sha256sum -c -
         unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
-    - name: Install Ghidrathon
-      run : |
-        mkdir ./.github/ghidrathon
-        wget "https://github.com/mandiant/Ghidrathon/releases/download/v${{ matrix.ghidrathon-version }}/Ghidrathon-v${{ matrix.ghidrathon-version}}.zip" -O ./.github/ghidrathon/ghidrathon-v${{ matrix.ghidrathon-version }}.zip
-        unzip .github/ghidrathon/ghidrathon-v${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
-        python -m pip install -r .github/ghidrathon/requirements.txt
-        python .github/ghidrathon/ghidrathon_configure.py $(pwd)/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
-        unzip .github/ghidrathon/Ghidrathon-v${{ matrix.ghidrathon-version }}.zip -d .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/Ghidra/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
-    - name: Install capa
+    - name: Install capa with Ghidra extra
       run: |
-        pip install -r requirements.txt
-        pip install -e .[dev,scripts]
+        pip install -e .[dev,ghidra]
     - name: Run tests
-      run: | 
-        mkdir ./.github/ghidra/project
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/mimikatz.exe_ -ScriptPath ./tests/ -PostScript test_ghidra_features.py > ../output.log
-        cat ../output.log
-        exit_code=$(cat ../output.log | grep exit | awk '{print $NF}')
-        exit $exit_code
+      env:
+        GHIDRA_INSTALL_DIR: ${{ github.workspace }}/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
+      run: pytest -v tests/test_ghidra_features.py
  

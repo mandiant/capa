@@ -274,12 +274,8 @@ SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
 
 
 class InvalidRule(ValueError):
-    def __init__(self, msg):
-        super().__init__()
-        self.msg = msg
-
     def __str__(self):
-        return f"invalid rule: {self.msg}"
+        return f"invalid rule: {super().__str__()}"
 
     def __repr__(self):
         return str(self)
@@ -289,20 +285,15 @@ class InvalidRuleWithPath(InvalidRule):
     def __init__(self, path, msg):
         super().__init__(msg)
         self.path = path
-        self.msg = msg
         self.__cause__ = None
 
     def __str__(self):
-        return f"invalid rule: {self.path}: {self.msg}"
+        return f"invalid rule: {self.path}: {super(InvalidRule, self).__str__()}"
 
 
 class InvalidRuleSet(ValueError):
-    def __init__(self, msg):
-        super().__init__()
-        self.msg = msg
-
     def __str__(self):
-        return f"invalid rule set: {self.msg}"
+        return f"invalid rule set: {super().__str__()}"
 
     def __repr__(self):
         return str(self)
@@ -1102,15 +1093,15 @@ class Rule:
     @lru_cache()
     def _get_yaml_loader():
         try:
-            # prefer to use CLoader to be fast, see #306
+            # prefer to use CLoader to be fast, see #306 / CSafeLoader is the same as CLoader but with safe loading
             # on Linux, make sure you install libyaml-dev or similar
             # on Windows, get WHLs from pyyaml.org/pypi
-            logger.debug("using libyaml CLoader.")
-            return yaml.CLoader
+            logger.debug("using libyaml CSafeLoader.")
+            return yaml.CSafeLoader
         except Exception:
-            logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
+            logger.debug("unable to import libyaml CSafeLoader, falling back to Python yaml parser.")
             logger.debug("this will be slower to load rules.")
-            return yaml.Loader
+            return yaml.SafeLoader
 
     @staticmethod
     def _get_ruamel_yaml_parser():
