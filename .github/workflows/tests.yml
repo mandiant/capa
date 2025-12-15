@@ -42,10 +42,10 @@ jobs:
     - name: Checkout capa
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     # use latest available python to take advantage of best performance
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
@@ -70,10 +70,10 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install capa
       run: |
         pip install -r requirements.txt
@@ -88,13 +88,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15-intel, macos-14]
         # across all operating systems
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
         include:
           # on Ubuntu run these as well
-          - os: ubuntu-22.04
-            python-version: "3.10"
           - os: ubuntu-22.04
             python-version: "3.11"
           - os: ubuntu-22.04
@@ -131,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.13"]
     steps:
     - name: Checkout capa with submodules
       # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
@@ -173,11 +171,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
-        java-version: ["17"]
-        ghidra-version: ["11.0.1"]
-        public-version: ["PUBLIC_20240130"] # for ghidra releases
-        ghidrathon-version: ["4.0.0"] 
+        python-version: ["3.10", "3.13"]
+        java-version: ["21"]
+        ghidra-version: ["12.0"]
+        public-version: ["PUBLIC_20251205"] # for ghidra releases
+        ghidra-sha256: ['af43e8cfb2fa4490cf6020c3a2bde25c159d83f45236a0542688a024e8fc1941']
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -196,26 +194,66 @@ jobs:
       run: |
         mkdir ./.github/ghidra
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
+        echo "${{ matrix.ghidra-sha256 }} ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip" | sha256sum -c -
         unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
-    - name: Install Ghidrathon
-      run : |
-        mkdir ./.github/ghidrathon
-        wget "https://github.com/mandiant/Ghidrathon/releases/download/v${{ matrix.ghidrathon-version }}/Ghidrathon-v${{ matrix.ghidrathon-version}}.zip" -O ./.github/ghidrathon/ghidrathon-v${{ matrix.ghidrathon-version }}.zip
-        unzip .github/ghidrathon/ghidrathon-v${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
-        python -m pip install -r .github/ghidrathon/requirements.txt
-        python .github/ghidrathon/ghidrathon_configure.py $(pwd)/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
-        unzip .github/ghidrathon/Ghidrathon-v${{ matrix.ghidrathon-version }}.zip -d .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/Ghidra/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
+    - name: Install capa with Ghidra extra
+      run: |
+        pip install -e .[dev,ghidra]
+    - name: Run tests
+      env:
+        GHIDRA_INSTALL_DIR: ${{ github.workspace }}/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
+      run: pytest -v tests/test_ghidra_features.py
+ 
+  idalib-tests:
+    name: IDA ${{ matrix.ida.version }} tests for ${{ matrix.python-version }}
+    runs-on: ubuntu-22.04
+    needs: [tests]
+    env:
+      IDA_LICENSE_ID: ${{ secrets.IDA_LICENSE_ID }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+        ida:
+          - version: 9.0
+            slug: "release/9.0/ida-essential/ida-essential_90_x64linux.run"
+          - version: 9.1
+            slug: "release/9.1/ida-essential/ida-essential_91_x64linux.run"
+          - version: 9.2
+            slug: "release/9.2/ida-essential/ida-essential_92_x64linux.run"
+    steps:
+    - name: Checkout capa with submodules
+      # do only run if IDA_LICENSE_ID is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+    - name: Set up Python ${{ matrix.python-version }}
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
+      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup uv
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
+      uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+    - name: Install dependencies
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
+      run: sudo apt-get install -y libyaml-dev
     - name: Install capa
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
       run: |
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
+        pip install idapro
+    - name: Install IDA ${{ matrix.ida.version }}
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
+      run: |
+        uv run hcli --disable-updates ida install --download-id ${{ matrix.ida.slug }} --license-id ${{ secrets.IDA_LICENSE_ID }} --set-default --yes
+      env:
+        HCLI_API_KEY: ${{ secrets.HCLI_API_KEY }}
+        IDA_LICENSE_ID: ${{ secrets.IDA_LICENSE_ID }}
     - name: Run tests
-      run: | 
-        mkdir ./.github/ghidra/project
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/mimikatz.exe_ -ScriptPath ./tests/ -PostScript test_ghidra_features.py > ../output.log
-        cat ../output.log
-        exit_code=$(cat ../output.log | grep exit | awk '{print $NF}')
-        exit $exit_code
- 
+      if: ${{ env.IDA_LICENSE_ID != 0 }}
+      run: pytest -v tests/test_idalib_features.py  # explicitly refer to the idalib tests for performance. other tests run above.

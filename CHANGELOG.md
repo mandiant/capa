@@ -4,19 +4,30 @@
 
 ### New Features
 
+- ghidra: support PyGhidra @mike-hunhoff #2788
+
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (5)
 
+- nursery/run-as-nodejs-native-module mehunhoff@google.com
+- nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
+- nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_timer still@teamt5.org
+- nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
+- data-manipulation/encryption/hc-256/encrypt-data-using-hc-256 wballenthin@hex-rays.com
 -
 
 ### Bug Fixes
+- Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
+- loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
 
 ### Development
+
+- ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs
 - [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)

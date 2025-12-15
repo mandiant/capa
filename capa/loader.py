@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import os
 import logging
 import datetime
@@ -23,24 +22,13 @@ from pathlib import Path
 from rich.console import Console
 from typing_extensions import assert_never
 
-import capa.perf
 import capa.rules
-import capa.engine
-import capa.helpers
 import capa.version
-import capa.render.json
-import capa.rules.cache
-import capa.render.default
-import capa.render.verbose
 import capa.features.common
 import capa.features.freeze as frz
-import capa.render.vverbose
 import capa.features.extractors
-import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
-import capa.features.extractors.base_extractor
-import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
@@ -79,6 +67,7 @@ BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
+BACKEND_GHIDRA = "ghidra"
 
 
 class CorruptFile(ValueError):
@@ -178,8 +167,15 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     except Exception as e:
         # vivisect raises raw Exception instances, and we don't want
         # to do a subclass check via isinstance.
-        if type(e) is Exception and "Couldn't convert rva" in e.args[0]:
-            raise CorruptFile(e.args[0]) from e
+        if type(e) is Exception and e.args:
+            error_msg = str(e.args[0])
+
+            if "Couldn't convert rva" in error_msg:
+                raise CorruptFile(error_msg) from e
+            elif "Unsupported Architecture" in error_msg:
+                # Extract architecture number if available
+                arch_info = e.args[1] if len(e.args) > 1 else "unknown"
+                raise CorruptFile(f"Unsupported architecture: {arch_info}") from e
         raise
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
@@ -338,12 +334,24 @@ def get_extractor(
         import capa.features.extractors.ida.extractor
 
         logger.debug("idalib: opening database...")
-        # idalib writes to stdout (ugh), so we have to capture that
-        # so as not to screw up structured output.
-        with capa.helpers.stdout_redirector(io.BytesIO()):
-            with console.status("analyzing program...", spinner="dots"):
-                if idapro.open_database(str(input_path), run_auto_analysis=True):
-                    raise RuntimeError("failed to analyze input file")
+        idapro.enable_console_messages(False)
+        with console.status("analyzing program...", spinner="dots"):
+            # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
+            # which sometimes provides bad names, including overwriting names from debug info.
+            #
+            # use -R to load resources, which can help us embedded PE files.
+            #
+            # return values from open_database:
+            #   0 - Success
+            #   2 - User cancelled or 32-64 bit conversion failed
+            #   4 - Database initialization failed
+            #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
+            #   -2 - User cancelled operation
+            ret = idapro.open_database(
+                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+            )
+            if ret != 0:
+                raise RuntimeError("failed to analyze input file")
 
             logger.debug("idalib: waiting for analysis...")
             ida_auto.auto_wait()
@@ -351,6 +359,69 @@ def get_extractor(
 
         return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
+    elif backend == BACKEND_GHIDRA:
+        import pyghidra
+
+        with console.status("analyzing program...", spinner="dots"):
+            if not pyghidra.started():
+                pyghidra.start()
+
+            import capa.ghidra.helpers
+
+            if not capa.ghidra.helpers.is_supported_ghidra_version():
+                raise RuntimeError("unsupported Ghidra version")
+
+            import tempfile
+
+            tmpdir = tempfile.TemporaryDirectory()
+
+            project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
+            project = project_cm.__enter__()
+            try:
+                from ghidra.util.task import TaskMonitor
+
+                monitor = TaskMonitor.DUMMY
+
+                # Import file
+                loader = pyghidra.program_loader().project(project).source(str(input_path)).name(input_path.name)
+                with loader.load() as load_results:
+                    load_results.save(monitor)
+
+                # Open program
+                program, consumer = pyghidra.consume_program(project, "/" + input_path.name)
+
+                # Analyze
+                pyghidra.analyze(program, monitor)
+
+                from ghidra.program.flatapi import FlatProgramAPI
+
+                flat_api = FlatProgramAPI(program)
+
+                import capa.features.extractors.ghidra.context as ghidra_context
+
+                ghidra_context.set_context(program, flat_api, monitor)
+
+                # Wrapper to handle cleanup of program (consumer) and project
+                class GhidraContextWrapper:
+                    def __init__(self, project_cm, program, consumer):
+                        self.project_cm = project_cm
+                        self.program = program
+                        self.consumer = consumer
+
+                    def __exit__(self, exc_type, exc_val, exc_tb):
+                        self.program.release(self.consumer)
+                        self.project_cm.__exit__(exc_type, exc_val, exc_tb)
+
+                cm = GhidraContextWrapper(project_cm, program, consumer)
+
+            except Exception:
+                project_cm.__exit__(None, None, None)
+                tmpdir.cleanup()
+                raise
+
+        import capa.features.extractors.ghidra.extractor
+
+        return capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(ctx_manager=cm, tmpdir=tmpdir)
     else:
         raise ValueError("unexpected backend: " + backend)
 

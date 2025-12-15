@@ -439,21 +439,14 @@ def has_sib(oper: idaapi.op_t) -> bool:
     return oper.specflag1 == 1
 
 
+def find_alternative_names(cmt: str):
+    for line in cmt.split("\n"):
+        if line.startswith("Alternative name is '") and line.endswith("'"):
+            name = line[len("Alternative name is '") : -1]  # Extract name between quotes
+            yield name
+
+
 def get_function_alternative_names(fva: int):
     """Get all alternative names for an address."""
-
-    # Check indented comment
-    cmt = ida_bytes.get_cmt(fva, False)  # False = non-repeatable
-    if cmt:
-        for line in cmt.split("\n"):
-            if line.startswith("Alternative name is '") and line.endswith("'"):
-                name = line[len("Alternative name is '") : -1]  # Extract name between quotes
-                yield name
-
-    # Check function comment
-    func_cmt = ida_funcs.get_func_cmt(idaapi.get_func(fva), False)
-    if func_cmt:
-        for line in func_cmt.split("\n"):
-            if line.startswith("Alternative name is '") and line.endswith("'"):
-                name = line[len("Alternative name is '") : -1]
-                yield name
+    yield from find_alternative_names(ida_bytes.get_cmt(fva, False) or "")
+    yield from find_alternative_names(ida_funcs.get_func_cmt(idaapi.get_func(fva), False) or "")
