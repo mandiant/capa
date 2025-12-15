@@ -158,7 +158,7 @@ build = [
     # we want all developer environments to be consistent.
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
-    "pyinstaller==6.16.0",
+    "pyinstaller==6.17.0",
     "setuptools==80.9.0",
     "build==1.3.0"
 ]
