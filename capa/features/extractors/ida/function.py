@@ -52,6 +52,18 @@ def extract_recursive_call(fh: FunctionHandle):
         yield Characteristic("recursive call"), fh.address
 
 
+def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    ea = fh.inner.start_ea
+    name = idaapi.get_name(ea)
+    yield FunctionName(name), fh.address
+    if name.startswith("_"):
+        # some linkers may prefix linked routines with a `_` to avoid name collisions.
+        # extract features for both the mangled and un-mangled representations.
+        # e.g. `_fwrite` -> `fwrite`
+        # see: https://stackoverflow.com/a/2628384/87207
+        yield FunctionName(name[1:]), fh.address
+
+
 def extract_function_alternative_names(fh: FunctionHandle):
     """Get all alternative names for an address."""
 
@@ -69,5 +81,6 @@ FUNCTION_HANDLERS = (
     extract_function_calls_to,
     extract_function_loop,
     extract_recursive_call,
+    extract_function_name,
     extract_function_alternative_names,
 )
