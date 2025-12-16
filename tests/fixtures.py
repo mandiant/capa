@@ -20,8 +20,6 @@ from functools import lru_cache
 
 import pytest
 
-import capa.main
-import capa.helpers
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -221,13 +219,19 @@ def get_idalib_extractor(path: Path):
     logger.debug("idalib: opening database...")
 
     idapro.enable_console_messages(False)
-    # - 0 - Success (database not packed)
-    # - 1 - Success (database was packed)
-    # - 2 - User cancelled or 32-64 bit conversion failed
-    # - 4 - Database initialization failed
-    # - -1 - Generic errors (database already open, auto-analysis failed, etc.)
-    # - -2 - User cancelled operation
-    ret = idapro.open_database(str(path), run_auto_analysis=True)
+    # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
+    # which sometimes provides bad names, including overwriting names from debug info.
+    #
+    # return values from open_database:
+    #   0 - Success (database not packed)
+    #   1 - Success (database was packed)
+    #   2 - User cancelled or 32-64 bit conversion failed
+    #   4 - Database initialization failed
+    #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
+    #   -2 - User cancelled operation
+    ret = idapro.open_database(
+        str(path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+    )
     if ret not in (0, 1):
         raise RuntimeError("failed to analyze input file")
 
