@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import os
 import logging
 import datetime
@@ -23,24 +22,13 @@ from pathlib import Path
 from rich.console import Console
 from typing_extensions import assert_never
 
-import capa.perf
 import capa.rules
-import capa.engine
-import capa.helpers
 import capa.version
-import capa.render.json
-import capa.rules.cache
-import capa.render.default
-import capa.render.verbose
 import capa.features.common
 import capa.features.freeze as frz
-import capa.render.vverbose
 import capa.features.extractors
-import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
-import capa.features.extractors.base_extractor
-import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
@@ -346,12 +334,23 @@ def get_extractor(
         import capa.features.extractors.ida.extractor
 
         logger.debug("idalib: opening database...")
-        # idalib writes to stdout (ugh), so we have to capture that
-        # so as not to screw up structured output.
-        with capa.helpers.stdout_redirector(io.BytesIO()):
-            with console.status("analyzing program...", spinner="dots"):
-                if idapro.open_database(str(input_path), run_auto_analysis=True):
-                    raise RuntimeError("failed to analyze input file")
+        idapro.enable_console_messages(False)
+        with console.status("analyzing program...", spinner="dots"):
+            # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
+            # which sometimes provides bad names, including overwriting names from debug info.
+            #
+            # return values from open_database:
+            #   0 - Success (database not packed)
+            #   1 - Success (database was packed)
+            #   2 - User cancelled or 32-64 bit conversion failed
+            #   4 - Database initialization failed
+            #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
+            #   -2 - User cancelled operation
+            ret = idapro.open_database(
+                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+            )
+            if ret not in (0, 1):
+                raise RuntimeError("failed to analyze input file")
 
             logger.debug("idalib: waiting for analysis...")
             ida_auto.auto_wait()
