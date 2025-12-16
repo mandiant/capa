@@ -22,6 +22,11 @@ import capa.features.extractors.ida.idalib
 logger = logging.getLogger(__name__)
 
 idalib_present = capa.features.extractors.ida.idalib.has_idalib()
+if idalib_present:
+    try:
+        import idapro  # noqa: F401 [imported but unused]
+    except ImportError:
+        idalib_present = False
 
 
 @pytest.mark.skipif(idalib_present is False, reason="Skip idalib tests if the idalib Python API is not installed")
