@@ -19,6 +19,7 @@ from typing import Iterator
 import capa.features.extractors.ghidra.file
 import capa.features.extractors.ghidra.insn
 import capa.features.extractors.ghidra.global_
+import capa.features.extractors.ghidra.helpers as ghidra_helpers
 import capa.features.extractors.ghidra.function
 import capa.features.extractors.ghidra.basicblock
 from capa.features.common import Feature
@@ -36,7 +37,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, ctx_manager=None, tmpdir=None):
         self.ctx_manager = ctx_manager
         self.tmpdir = tmpdir
-        import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         super().__init__(
             SampleHashes(
@@ -66,8 +66,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
             weakref.finalize(self, cleanup, self.ctx_manager, self.tmpdir)
 
     def get_base_address(self):
-        import capa.features.extractors.ghidra.helpers as ghidra_helpers
-
         return AbsoluteVirtualAddress(ghidra_helpers.get_current_program().getImageBase().getOffset())
 
     def extract_global_features(self):
@@ -77,7 +75,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         yield from capa.features.extractors.ghidra.file.extract_features()
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-        import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         for fhandle in ghidra_helpers.get_function_symbols():
             fh: FunctionHandle = FunctionHandle(
@@ -89,7 +86,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
-        import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         func = ghidra_helpers.get_flat_api().getFunctionContaining(ghidra_helpers.get_flat_api().toAddr(addr))
         return FunctionHandle(address=AbsoluteVirtualAddress(func.getEntryPoint().getOffset()), inner=func)
@@ -98,7 +94,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         yield from capa.features.extractors.ghidra.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
-        import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         yield from ghidra_helpers.get_function_blocks(fh)
 
@@ -106,7 +101,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         yield from capa.features.extractors.ghidra.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
-        import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
         yield from ghidra_helpers.get_insn_in_range(bbh)
 

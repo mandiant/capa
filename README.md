@@ -291,9 +291,20 @@ It also uses your local changes to the .idb to extract better features, such as 
 ![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
 # Ghidra integration
-If you use Ghidra, then you can use the [capa + Ghidra integration](/capa/ghidra/) to run capa's analysis directly on your Ghidra database and render the results in Ghidra's user interface.
 
-<img src="https://github.com/mandiant/capa/assets/66766340/eeae33f4-99d4-42dc-a5e8-4c1b8c661492" width=300>
+![capa + Ghidra integration](https://github.com/mandiant/capa/blob/master/doc/img/ghidra_backend_logo.png)
+
+If you use Ghidra, then you can instruct capa to analyze your samples using Ghidra. capa creates a temporary Ghidra project and uses PyGhidra to import the sample, analyze it, and extract features. The temporary project is deleted after analysis.
+
+## Prerequisites
+
+- Ghidra >= 12.0 must be installed and available to PyGhidra
+
+## Usage
+
+```bash
+$ capa -b ghidra /path/to/sample
+```
 
 # blog posts
 - [Dynamic capa: Exploring Executable Run-Time Behavior with the CAPE Sandbox](https://www.mandiant.com/resources/blog/dynamic-capa-executable-behavior-cape-sandbox)
