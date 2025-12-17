@@ -207,7 +207,7 @@ jobs:
       run: pytest -v tests/test_ghidra_features.py
  
   idalib-tests:
-    name: IDA tests for ${{ matrix.python-version }}
+    name: IDA ${{ matrix.ida.version }} tests for ${{ matrix.python-version }}
     runs-on: ubuntu-22.04
     needs: [tests]
     env:
