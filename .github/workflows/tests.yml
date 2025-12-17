@@ -218,7 +218,7 @@ jobs:
         exit $exit_code
  
   idalib-tests:
-    name: IDA tests for ${{ matrix.python-version }}
+    name: IDA ${{ matrix.ida.version }} tests for ${{ matrix.python-version }}
     runs-on: ubuntu-22.04
     needs: [tests]
     env:
