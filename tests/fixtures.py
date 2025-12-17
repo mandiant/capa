@@ -219,6 +219,12 @@ def get_idalib_extractor(path: Path):
     logger.debug("idalib: opening database...")
 
     idapro.enable_console_messages(False)
+
+    # load resource if explicitly needed for test
+    load_resource = ""
+    if "Lab 12-04.exe_" in path.name:
+        load_resource = " -R"
+
     # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
     # which sometimes provides bad names, including overwriting names from debug info.
     #
@@ -230,7 +236,7 @@ def get_idalib_extractor(path: Path):
     #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
     #   -2 - User cancelled operation
     ret = idapro.open_database(
-        str(path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+        str(path), run_auto_analysis=True, args=f"-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0{load_resource}"
     )
     if ret not in (0, 1):
         raise RuntimeError("failed to analyze input file")
