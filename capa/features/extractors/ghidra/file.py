@@ -227,14 +227,3 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_format,
 )
-
-
-def main():
-    """ """
-    import pprint
-
-    pprint.pprint(list(extract_features()))  # noqa: T203
-
-
-if __name__ == "__main__":
-    main()

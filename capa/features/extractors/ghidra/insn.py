@@ -488,22 +488,3 @@ INSTRUCTION_HANDLERS = (
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
 )
-
-
-def main():
-    """ """
-    features = []
-    from capa.features.extractors.ghidra.extractor import GhidraFeatureExtractor
-
-    for fh in GhidraFeatureExtractor().get_functions():
-        for bb in capa.features.extractors.ghidra.helpers.get_function_blocks(fh):
-            for insn in capa.features.extractors.ghidra.helpers.get_insn_in_range(bb):
-                features.extend(list(extract_features(fh, bb, insn)))
-
-    import pprint
-
-    pprint.pprint(features)  # noqa: T203
-
-
-if __name__ == "__main__":
-    main()

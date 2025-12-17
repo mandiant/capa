@@ -68,18 +68,3 @@ def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
 
 
 FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
-
-
-def main():
-    """ """
-    features = []
-    for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
-        features.extend(list(extract_features(fhandle)))
-
-    import pprint
-
-    pprint.pprint(features)  # noqa: T203
-
-
-if __name__ == "__main__":
-    main()
