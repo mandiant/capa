@@ -40,6 +40,10 @@ def get_flat_api():
     return ghidra_context.get_context().flat_api
 
 
+def get_monitor():
+    return ghidra_context.get_context().monitor
+
+
 class GHIDRAIO:
     """
     An object that acts as a file-like object,
