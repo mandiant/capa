@@ -299,15 +299,6 @@ You can run and view capa results in the Ghidra UI using [capa explorer for Ghid
 <img src="https://github.com/mandiant/capa/assets/66766340/eeae33f4-99d4-42dc-a5e8-4c1b8c661492" width=300>
 
 You can also run capa from the command line using the [Ghidra backend](https://github.com/mandiant/capa/tree/master/capa/ghidra).
-## prerequisites
-
-- [Ghidra](https://github.com/NationalSecurityAgency/ghidra) >= 12.0 must be installed and available via the `GHIDRA_INSTALL_DIR` environment variable.
-
-## usage
-
-```bash
-$ capa -b ghidra /path/to/sample
-```
 
 # blog posts
 - [Riding Dragons: capa Harnesses Ghidra](https://www.mandiant.com/resources/blog/capa-harnesses-ghidra)
