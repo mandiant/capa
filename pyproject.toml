@@ -79,7 +79,6 @@ dependencies = [
     "ruamel.yaml>=0.18",
     "pefile>=2023.2.7",
     "pyelftools>=0.31",
-    "pyghidra>=3.0.0",
     "pydantic>=2",
     "rich>=13",
     "humanize>=4",
@@ -171,6 +170,9 @@ scripts = [
     "stix2==3.0.1",
     "sarif_om==1.0.4",
     "requests>=2.32.4",
+]
+ghidra = [
+    "pyghidra>=3.0.0",
 ]
 
 [tool.deptry]

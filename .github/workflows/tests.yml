@@ -196,9 +196,9 @@ jobs:
         unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
-    - name: Install capa
+    - name: Install capa with Ghidra extra
       run: |
-        pip install -e .[dev]
+        pip install -e .[dev,ghidra]
     - name: Run tests
       env:
         GHIDRA_INSTALL_DIR: ${{ github.workspace }}/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC

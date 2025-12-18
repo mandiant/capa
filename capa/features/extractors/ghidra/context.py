@@ -16,6 +16,14 @@ from typing import Optional
 
 
 class GhidraContext:
+    """
+    State holder for the Ghidra backend to avoid passing state to every function.
+
+    PyGhidra uses a context manager to set up the Ghidra environment (program, transaction, etc.).
+    We store the relevant objects here to allow easy access throughout the extractor
+    without needing to pass them as arguments to every feature extraction method.
+    """
+
     def __init__(self, program, flat_api, monitor):
         self.program = program
         self.flat_api = flat_api

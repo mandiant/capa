@@ -44,7 +44,7 @@ def extract_function_loop(fh: FunctionHandle):
         dests = block.getDestinations(capa.features.extractors.ghidra.helpers.get_monitor())
         s_addrs = block.getStartAddresses()
 
-        while dests.hasNext():  # For loop throws Python TypeError
+        while dests.hasNext():
             for addr in s_addrs:
                 edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
 
@@ -61,7 +61,6 @@ def extract_recursive_call(fh: FunctionHandle):
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
-    """extract function features"""
     for function_handler in FUNCTION_HANDLERS:
         for feature, addr in function_handler(fh):
             yield feature, addr
