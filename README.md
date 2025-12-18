@@ -292,8 +292,6 @@ It also uses your local changes to the .idb to extract better features, such as 
 
 # Ghidra integration
 
-![capa + Ghidra integration](https://github.com/mandiant/capa/blob/master/doc/img/ghidra_backend_logo.png)
-
 capa supports using Ghidra (via [PyGhidra](https://github.com/NationalSecurityAgency/ghidra/tree/master/Ghidra/Features/PyGhidra)) as a feature extraction backend. This allows you to run capa against binaries using Ghidra's analysis engine.
 
 You can run and view capa results in the Ghidra UI using [capa explorer for Ghidra](https://github.com/mandiant/capa/tree/master/capa/ghidra/plugin).
