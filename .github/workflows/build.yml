@@ -121,6 +121,7 @@ jobs:
         run: |
           mkdir ./.github/ghidra
           wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
+          echo "f43e8cfb2fa4490cf6020c3a2bde25c159d83f45236a0542688a024e8fc1941  ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip" | sha256sum -c -
           unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
       - name: Does it run (Ghidra)?
         if: matrix.os == 'ubuntu-22.04' && matrix.python_version == '3.10'
