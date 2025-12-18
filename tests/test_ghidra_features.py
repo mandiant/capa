@@ -26,10 +26,17 @@ ghidra_present = importlib.util.find_spec("pyghidra") is not None and "GHIDRA_IN
 @fixtures.parametrize(
     "sample,scope,feature,expected",
     [
-        t
+        (
+            pytest.param(
+                *t,
+                marks=pytest.mark.xfail(
+                    reason="specific to Vivisect and basic blocks do not align with Ghidra's analysis"
+                ),
+            )
+            if t[0] == "294b8d..." and t[2] == capa.features.common.String("\r\n\x00:ht")
+            else t
+        )
         for t in fixtures.FEATURE_PRESENCE_TESTS
-        # this test case is specific to Vivisect and its basic blocks do not align with Ghidra's analysis
-        if t[0] != "294b8d..." or t[2] != capa.features.common.String("\r\n\x00:ht")
     ],
     indirect=["sample", "scope"],
 )

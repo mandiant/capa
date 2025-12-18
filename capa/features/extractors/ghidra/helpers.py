@@ -62,6 +62,19 @@ def find_byte_sequence(addr: "ghidra.program.model.address.Address", seq: bytes)
     yield from eas
 
 
+def get_file_offset(addr: "ghidra.program.model.address.Address") -> int:
+    """get file offset for an address"""
+    block = get_current_program().getMemory().getBlock(addr)
+    if not block:
+        return -1
+
+    for info in block.getSourceInfos():
+        if info.contains(addr):
+            return info.getFileBytesOffset(addr)
+
+    return -1
+
+
 def get_bytes(addr: "ghidra.program.model.address.Address", length: int) -> bytes:
     """yield length bytes at addr
 

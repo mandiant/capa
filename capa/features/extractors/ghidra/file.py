@@ -86,7 +86,11 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
 
         for off, _ in find_embedded_pe(capa.features.extractors.ghidra.helpers.get_block_bytes(block), mz_xor):
             # add offset back to block start
-            ea: int = block.getStart().add(off).getOffset()
+            ea_addr = block.getStart().add(off)
+            ea = ea_addr.getOffset()
+            f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
+            if f_offset != -1:
+                ea = f_offset
 
             yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
