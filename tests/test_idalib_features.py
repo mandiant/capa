@@ -43,7 +43,7 @@ def test_idalib_features(sample, scope, feature, expected):
         import idapro
 
         idapro.close_database(save=False)
-        logger.debug("opened database.")
+        logger.debug("closed database.")
 
 
 @pytest.mark.skipif(idalib_present is False, reason="Skip idalib tests if the idalib Python API is not installed")
