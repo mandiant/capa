@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_os() -> Iterator[tuple[Feature, Address]]:
-    format_name: str = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    format_name: str = capa.features.extractors.ghidra.helpers.get_current_program().getExecutableFormat()
 
     if "PE" in format_name:
         yield OS(OS_WINDOWS), NO_ADDRESS
@@ -53,7 +53,7 @@ def extract_os() -> Iterator[tuple[Feature, Address]]:
 
 
 def extract_arch() -> Iterator[tuple[Feature, Address]]:
-    lang_id = currentProgram().getMetadata().get("Language ID")  # type: ignore [name-defined] # noqa: F821
+    lang_id = capa.features.extractors.ghidra.helpers.get_current_program().getMetadata().get("Language ID")
 
     if "x86" in lang_id and "64" in lang_id:
         yield Arch(ARCH_AMD64), NO_ADDRESS

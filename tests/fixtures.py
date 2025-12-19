@@ -227,13 +227,33 @@ def get_vmray_extractor(path):
     return VMRayExtractor.from_zipfile(path)
 
 
-@lru_cache(maxsize=1)
+GHIDRA_CACHE: dict[Path, tuple] = {}
+
+
 def get_ghidra_extractor(path: Path):
+    # we need to start PyGhidra before importing the extractor
+    # because the extractor imports Ghidra modules that are only available after PyGhidra is started
+    import pyghidra
+
+    if not pyghidra.started():
+        pyghidra.start()
+
+    import capa.features.extractors.ghidra.context
     import capa.features.extractors.ghidra.extractor
 
-    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
-    setattr(extractor, "path", path.as_posix())
+    if path in GHIDRA_CACHE:
+        extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
+        capa.features.extractors.ghidra.context.set_context(program, flat_api, monitor)
+        return extractor
 
+    # We use a larger cache size to avoid re-opening the same file multiple times
+    # which is very slow with Ghidra.
+    extractor = capa.loader.get_extractor(
+        path, FORMAT_AUTO, OS_AUTO, capa.loader.BACKEND_GHIDRA, [], disable_progress=True
+    )
+
+    ctx = capa.features.extractors.ghidra.context.get_context()
+    GHIDRA_CACHE[path] = (extractor, ctx.program, ctx.flat_api, ctx.monitor)
     return extractor
 
 
