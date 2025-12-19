@@ -79,6 +79,7 @@ BACKEND_VMRAY = "vmray"
 BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
+BACKEND_GHIDRA = "ghidra"
 
 
 class CorruptFile(ValueError):
@@ -351,6 +352,69 @@ def get_extractor(
 
         return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
+    elif backend == BACKEND_GHIDRA:
+        import pyghidra
+
+        with console.status("analyzing program...", spinner="dots"):
+            if not pyghidra.started():
+                pyghidra.start()
+
+            import capa.ghidra.helpers
+
+            if not capa.ghidra.helpers.is_supported_ghidra_version():
+                raise RuntimeError("unsupported Ghidra version")
+
+            import tempfile
+
+            tmpdir = tempfile.TemporaryDirectory()
+
+            project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
+            project = project_cm.__enter__()
+            try:
+                from ghidra.util.task import TaskMonitor
+
+                monitor = TaskMonitor.DUMMY
+
+                # Import file
+                loader = pyghidra.program_loader().project(project).source(str(input_path)).name(input_path.name)
+                with loader.load() as load_results:
+                    load_results.save(monitor)
+
+                # Open program
+                program, consumer = pyghidra.consume_program(project, "/" + input_path.name)
+
+                # Analyze
+                pyghidra.analyze(program, monitor)
+
+                from ghidra.program.flatapi import FlatProgramAPI
+
+                flat_api = FlatProgramAPI(program)
+
+                import capa.features.extractors.ghidra.context as ghidra_context
+
+                ghidra_context.set_context(program, flat_api, monitor)
+
+                # Wrapper to handle cleanup of program (consumer) and project
+                class GhidraContextWrapper:
+                    def __init__(self, project_cm, program, consumer):
+                        self.project_cm = project_cm
+                        self.program = program
+                        self.consumer = consumer
+
+                    def __exit__(self, exc_type, exc_val, exc_tb):
+                        self.program.release(self.consumer)
+                        self.project_cm.__exit__(exc_type, exc_val, exc_tb)
+
+                cm = GhidraContextWrapper(project_cm, program, consumer)
+
+            except Exception:
+                project_cm.__exit__(None, None, None)
+                tmpdir.cleanup()
+                raise
+
+        import capa.features.extractors.ghidra.extractor
+
+        return capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(ctx_manager=cm, tmpdir=tmpdir)
     else:
         raise ValueError("unexpected backend: " + backend)
 

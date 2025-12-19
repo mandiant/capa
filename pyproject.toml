@@ -171,6 +171,9 @@ scripts = [
     "sarif_om==1.0.4",
     "requests>=2.32.4",
 ]
+ghidra = [
+    "pyghidra>=3.0.0",
+]
 
 [tool.deptry]
 extend_exclude = [

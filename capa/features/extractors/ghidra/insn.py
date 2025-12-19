@@ -234,7 +234,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
         push    offset iid_004118d4_IShellLinkA ; riid
     """
     for addr in capa.features.extractors.ghidra.helpers.find_data_references_from_insn(ih.inner):
-        data = getDataAt(addr)  # type: ignore [name-defined] # noqa: F821
+        data = capa.features.extractors.ghidra.helpers.get_flat_api().getDataAt(addr)
         if data and not data.hasStringValue():
             extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(addr, MAX_BYTES_FEATURE_SIZE)
             if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
@@ -249,9 +249,9 @@ def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         push offset aAcr     ; "ACR  > "
     """
     for addr in capa.features.extractors.ghidra.helpers.find_data_references_from_insn(ih.inner):
-        data = getDataAt(addr)  # type: ignore [name-defined] # noqa: F821
+        data = capa.features.extractors.ghidra.helpers.get_flat_api().getDataAt(addr)
         if data and data.hasStringValue():
-            yield String(data.getValue()), ih.address
+            yield String(str(data.getValue())), ih.address
 
 
 def extract_insn_mnemonic_features(
@@ -361,8 +361,8 @@ def extract_insn_cross_section_cflow(
         if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, fakes, imports, externs):
             return
 
-    this_mem_block = getMemoryBlock(insn.getAddress())  # type: ignore [name-defined] # noqa: F821
-    ref_block = getMemoryBlock(ref)  # type: ignore [name-defined] # noqa: F821
+    this_mem_block = capa.features.extractors.ghidra.helpers.get_flat_api().getMemoryBlock(insn.getAddress())
+    ref_block = capa.features.extractors.ghidra.helpers.get_flat_api().getMemoryBlock(ref)
     if ref_block != this_mem_block:
         yield Characteristic("cross section flow"), ih.address
 
@@ -425,19 +425,19 @@ def check_nzxor_security_cookie_delta(
     Check if insn within last addr of last bb - delta
     """
 
-    model = SimpleBlockModel(currentProgram())  # type: ignore [name-defined] # noqa: F821
+    model = SimpleBlockModel(capa.features.extractors.ghidra.helpers.get_current_program())
     insn_addr = insn.getAddress()
     func_asv = fh.getBody()
 
     first_addr = func_asv.getMinAddress()
     if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA):
-        first_bb = model.getFirstCodeBlockContaining(first_addr, monitor())  # type: ignore [name-defined] # noqa: F821
+        first_bb = model.getFirstCodeBlockContaining(first_addr, capa.features.extractors.ghidra.helpers.get_monitor())
         if first_bb.contains(insn_addr):
             return True
 
     last_addr = func_asv.getMaxAddress()
     if insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1):
-        last_bb = model.getFirstCodeBlockContaining(last_addr, monitor())  # type: ignore [name-defined] # noqa: F821
+        last_bb = model.getFirstCodeBlockContaining(last_addr, capa.features.extractors.ghidra.helpers.get_monitor())
         if last_bb.contains(insn_addr):
             return True
 
@@ -488,22 +488,3 @@ INSTRUCTION_HANDLERS = (
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
 )
-
-
-def main():
-    """ """
-    features = []
-    from capa.features.extractors.ghidra.extractor import GhidraFeatureExtractor
-
-    for fh in GhidraFeatureExtractor().get_functions():
-        for bb in capa.features.extractors.ghidra.helpers.get_function_blocks(fh):
-            for insn in capa.features.extractors.ghidra.helpers.get_insn_in_range(bb):
-                features.extend(list(extract_features(fh, bb, insn)))
-
-    import pprint
-
-    pprint.pprint(features)  # noqa: T203
-
-
-if __name__ == "__main__":
-    main()
