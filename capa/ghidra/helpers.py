@@ -22,6 +22,7 @@ import capa.version
 import capa.features.common
 import capa.features.freeze
 import capa.render.result_document as rdoc
+import capa.features.extractors.ghidra.context as ghidra_context
 import capa.features.extractors.ghidra.helpers
 from capa.features.address import AbsoluteVirtualAddress
 
@@ -29,6 +30,18 @@ logger = logging.getLogger("capa")
 
 # file type as returned by Ghidra
 SUPPORTED_FILE_TYPES = ("Executable and Linking Format (ELF)", "Portable Executable (PE)", "Raw Binary")
+
+
+def get_current_program():
+    return ghidra_context.get_context().program
+
+
+def get_flat_api():
+    return ghidra_context.get_context().flat_api
+
+
+def get_monitor():
+    return ghidra_context.get_context().monitor
 
 
 class GHIDRAIO:
@@ -48,7 +61,12 @@ class GHIDRAIO:
         self.offset = offset
 
     def read(self, size):
-        logger.debug("reading 0x%x bytes at 0x%x (ea: 0x%x)", size, self.offset, currentProgram().getImageBase().add(self.offset).getOffset())  # type: ignore [name-defined] # noqa: F821
+        logger.debug(
+            "reading 0x%x bytes at 0x%x (ea: 0x%x)",
+            size,
+            self.offset,
+            get_current_program().getImageBase().add(self.offset).getOffset(),
+        )
 
         if size > len(self.bytes_) - self.offset:
             logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
@@ -60,7 +78,7 @@ class GHIDRAIO:
         return
 
     def get_bytes(self):
-        file_bytes = currentProgram().getMemory().getAllFileBytes()[0]  # type: ignore [name-defined] # noqa: F821
+        file_bytes = get_current_program().getMemory().getAllFileBytes()[0]
 
         # getOriginalByte() allows for raw file parsing on the Ghidra side
         # other functions will fail as Ghidra will think that it's reading uninitialized memory
@@ -70,21 +88,32 @@ class GHIDRAIO:
 
 
 def is_supported_ghidra_version():
-    version = float(getGhidraVersion()[:4])  # type: ignore [name-defined] # noqa: F821
-    if version < 10.2:
-        warning_msg = "capa does not support this Ghidra version"
-        logger.warning(warning_msg)
-        logger.warning("Your Ghidra version is: %s. Supported versions are: Ghidra >= 10.2", version)
+    import ghidra.framework
+
+    version = ghidra.framework.Application.getApplicationVersion()
+    try:
+        # version format example: "11.1.2" or "11.4"
+        major, minor = map(int, version.split(".")[:2])
+        if major < 12:
+            logger.error("-" * 80)
+            logger.error(" Ghidra version %s is not supported.", version)
+            logger.error(" ")
+            logger.error(" capa requires Ghidra 12.0 or higher.")
+            logger.error("-" * 80)
+            return False
+    except ValueError:
+        logger.warning("could not parse Ghidra version: %s", version)
         return False
+
     return True
 
 
 def is_running_headless():
-    return isRunningHeadless()  # type: ignore [name-defined] # noqa: F821
+    return True  # PyGhidra is always headless in this context
 
 
 def is_supported_file_type():
-    file_info = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    file_info = get_current_program().getExecutableFormat()
     if file_info not in SUPPORTED_FILE_TYPES:
         logger.error("-" * 80)
         logger.error(" Input file does not appear to be a supported file type.")
@@ -99,7 +128,7 @@ def is_supported_file_type():
 
 
 def is_supported_arch_type():
-    lang_id = str(currentProgram().getLanguageID()).lower()  # type: ignore [name-defined] # noqa: F821
+    lang_id = str(get_current_program().getLanguageID()).lower()
 
     if not all((lang_id.startswith("x86"), any(arch in lang_id for arch in ("32", "64")))):
         logger.error("-" * 80)
@@ -112,18 +141,18 @@ def is_supported_arch_type():
 
 
 def get_file_md5():
-    return currentProgram().getExecutableMD5()  # type: ignore [name-defined] # noqa: F821
+    return get_current_program().getExecutableMD5()
 
 
 def get_file_sha256():
-    return currentProgram().getExecutableSHA256()  # type: ignore [name-defined] # noqa: F821
+    return get_current_program().getExecutableSHA256()
 
 
 def collect_metadata(rules: list[Path]):
     md5 = get_file_md5()
     sha256 = get_file_sha256()
 
-    info = currentProgram().getLanguageID().toString()  # type: ignore [name-defined] # noqa: F821
+    info = get_current_program().getLanguageID().toString()
     if "x86" in info and "64" in info:
         arch = "x86_64"
     elif "x86" in info and "32" in info:
@@ -131,11 +160,11 @@ def collect_metadata(rules: list[Path]):
     else:
         arch = "unknown arch"
 
-    format_name: str = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    format_name: str = get_current_program().getExecutableFormat()
     if "PE" in format_name:
         os = "windows"
     elif "ELF" in format_name:
-        with contextlib.closing(capa.ghidra.helpers.GHIDRAIO()) as f:
+        with contextlib.closing(GHIDRAIO()) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
     else:
         os = "unknown os"
@@ -148,16 +177,18 @@ def collect_metadata(rules: list[Path]):
             md5=md5,
             sha1="",
             sha256=sha256,
-            path=currentProgram().getExecutablePath(),  # type: ignore [name-defined] # noqa: F821
+            path=get_current_program().getExecutablePath(),
         ),
         flavor=rdoc.Flavor.STATIC,
         analysis=rdoc.StaticAnalysis(
-            format=currentProgram().getExecutableFormat(),  # type: ignore [name-defined] # noqa: F821
+            format=get_current_program().getExecutableFormat(),
             arch=arch,
             os=os,
             extractor="ghidra",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
-            base_address=capa.features.freeze.Address.from_capa(AbsoluteVirtualAddress(currentProgram().getImageBase().getOffset())),  # type: ignore [name-defined] # noqa: F821
+            base_address=capa.features.freeze.Address.from_capa(
+                AbsoluteVirtualAddress(get_current_program().getImageBase().getOffset())
+            ),
             layout=rdoc.StaticLayout(
                 functions=(),
             ),

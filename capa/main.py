@@ -55,6 +55,7 @@ from capa.loader import (
     BACKEND_VMRAY,
     BACKEND_DOTNET,
     BACKEND_FREEZE,
+    BACKEND_GHIDRA,
     BACKEND_PEFILE,
     BACKEND_DRAKVUF,
     BACKEND_BINEXPORT2,
@@ -298,6 +299,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_BINJA, "Binary Ninja"),
             (BACKEND_DOTNET, ".NET"),
             (BACKEND_BINEXPORT2, "BinExport2"),
+            (BACKEND_GHIDRA, "Ghidra"),
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
             (BACKEND_DRAKVUF, "DRAKVUF"),
@@ -1105,13 +1107,25 @@ def ida_main():
 
 
 def ghidra_main():
+    from ghidra.program.flatapi import FlatProgramAPI
+
     import capa.rules
     import capa.ghidra.helpers
     import capa.render.default
+    import capa.features.extractors.ghidra.context
     import capa.features.extractors.ghidra.extractor
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
+
+    # These are provided by the Ghidra scripting environment
+    # but are not available when running standard python
+    # so we have to ignore the linting errors
+    program = currentProgram  # type: ignore [name-defined] # noqa: F821
+    monitor_ = monitor  # type: ignore [name-defined] # noqa: F821
+    flat_api = FlatProgramAPI(program)
+
+    capa.features.extractors.ghidra.context.set_context(program, flat_api, monitor_)
 
     logger.debug("-" * 80)
     logger.debug(" Using default embedded rules.")
