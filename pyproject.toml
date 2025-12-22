@@ -123,7 +123,7 @@ dev = [
     # These dependencies are not used in production environments
     # and should not conflict with other libraries/tooling.
     "pre-commit==4.5.0",
-    "pytest==8.0.0",
+    "pytest==9.0.2",
     "pytest-sugar==1.1.1",
     "pytest-instafail==0.5.0",
     "flake8==7.3.0",
