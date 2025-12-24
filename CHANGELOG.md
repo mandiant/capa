@@ -87,6 +87,7 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 
 ### Bug Fixes
 
+- loader: gracefully handle malformed ELF files with invalid relocations @kami922 #2794
 - binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
 
 ### capa Explorer Web

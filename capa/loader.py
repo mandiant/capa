@@ -20,6 +20,7 @@ import contextlib
 from typing import Optional
 from pathlib import Path
 
+import envi.exc
 from rich.console import Console
 from typing_extensions import assert_never
 
@@ -176,6 +177,9 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
             vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
         else:
             raise ValueError("unexpected format: " + input_format)
+    except envi.exc.SegmentationViolation as e:
+        # Malformed binary with invalid memory references (e.g., broken ELF relocations)
+        raise CorruptFile(f"Invalid memory access during binary parsing: {e}") from e
     except Exception as e:
         # vivisect raises raw Exception instances, and we don't want
         # to do a subclass check via isinstance.
