@@ -74,6 +74,7 @@ a = Analysis(
         # only be installed locally.
         "binaryninja",
         "ida",
+        "ghidra",
         # remove once https://github.com/mandiant/capa/issues/2681 has
         # been addressed by PyInstaller
         "pkg_resources",
