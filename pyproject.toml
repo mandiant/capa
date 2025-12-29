@@ -142,7 +142,7 @@ dev = [
     "isort==7.0.0",
     "mypy==1.19.1",
     "mypy-protobuf==4.0.0",
-    "PyGithub==2.6.0",
+    "PyGithub==2.8.1",
     "bump-my-version==1.2.4",
     # type stubs for mypy
     "types-backports==0.1.3",
