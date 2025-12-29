@@ -36,7 +36,7 @@
 
 ### Bug Fixes
 
-- loader: gracefully handle malformed ELF files with invalid relocations @kami922 #2794
+- loader: gracefully handle malformed ELF files with invalid relocations kamranulhaq2002@gmail.com #2799
 - binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
 
 ### capa Explorer Web
