@@ -550,6 +550,66 @@ def get_sample_md5_by_name(name):
         raise ValueError(f"unexpected sample fixture: {name}")
 
 
+def get_sample_short_name_by_md5(md5):
+    """reverse lookup: given an MD5 hash, return the sample's shortened name"""
+    if md5 == "5f66b82558ca92e54e77f216ef4c066c":
+        return "mimikatz"
+    elif md5 == "e80758cf485db142fca1ee03a34ead05":
+        return "kernel32"
+    elif md5 == "a8565440629ac87f6fef7d588fe3ff0f":
+        return "kernel32-64"
+    elif md5 == "56bed8249e7c2982a90e54e1e55391a2":
+        return "pma12-04"
+    elif md5 == "7faafc7e4a5c736ebfee6abbbc812d80":
+        return "pma16-01"
+    elif md5 == "290934c61de9176ad682ffdd65f0a669":
+        return "pma01-01"
+    elif md5 == "c8403fb05244e23a7931c766409b5e22":
+        return "pma21-01"
+    elif md5 == "db648cd247281954344f1d810c6fd590":
+        return "al-khaser x86"
+    elif md5 == "3cb21ae76ff3da4b7e02d77ff76e82be":
+        return "al-khaser x64"
+    elif md5 == "b7841b9d5dc1f511a93cc7576672ec0c":
+        return "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41"
+    elif md5 == "499c2a85f6e8142c3f48d4251c9c7cd6":
+        return "499c2a85f6e8142c3f48d4251c9c7cd6"
+    elif md5 == "9324d1a8ae37a36ae560c37448c9705a":
+        return "9324d1a8ae37a36ae560c37448c9705a"
+    elif md5 == "a198216798ca38f280dc413f8c57f2c2":
+        return "a198216798ca38f280dc413f8c57f2c2"
+    elif md5 == "a933a1a402775cfa94b6bee0963f4b46":
+        return "a933a1a402775cfa94b6bee0963f4b46"
+    elif md5 == "bfb9b5391a13d0afd787e87ab90f14f5":
+        return "bfb9b5391a13d0afd787e87ab90f14f5"
+    elif md5 == "c91887d861d9bd4a5872249b641bc9f9":
+        return "c91887d861d9bd4a5872249b641bc9f9"
+    elif md5 == "64d9f7d96b99467f36e22fada623c3bb":
+        return "64d9f7d96b99467f36e22fada623c3bb"
+    elif md5 == "82bf6347acf15e5d883715dc289d8a2b":
+        return "82bf6347acf15e5d883715dc289d8a2b"
+    elif md5 == "773290480d5445f11d3dc1b800728966":
+        return "773290480d5445f11d3dc1b800728966"
+    elif md5 == "56a6ffe6a02941028cc8235204eef31d":
+        return "3b13b6ba338bc08b0ddcd24515a99faf211da0e7296798162c5c4f9de8af9e2c"
+    elif md5 == "7351f8a40c5450557b24622417fc478d":
+        return "7351f8a40c5450557b24622417fc478d"
+    elif md5 == "79abd17391adc6251ecdc58d13d76baf":
+        return "79abd17391adc6251ecdc58d13d76baf"
+    elif md5 == "946a99f36a46d335dec080d9a4371940":
+        return "946a99f36a46d335dec080d9a4371940"
+    elif md5 == "b9f5bd514485fb06da39beff051b9fdc":
+        return "b9f5bd514485fb06da39beff051b9fdc"
+    elif md5 == "3db3e55b16a7b1b1afb970d5e77c5d98":
+        return "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc"
+    elif md5 == "2bf18d0403677378adad9001b1243211":
+        return "2bf18d0403677378adad9001b1243211"
+    elif md5 == "76fa734236daa023444dec26863401dc":
+        return "ea28761b7b6aa3b4111b8e0f17f83e40"
+    else:
+        raise ValueError(f"unexpected sample MD5: {md5}")
+
+
 def resolve_sample(sample):
     return get_data_path_by_name(sample)
 
