@@ -155,6 +155,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     """
 
     # lazy import enables us to not require viv if user wants another backend.
+    import envi.exc
     import viv_utils
     import viv_utils.flirt
 
@@ -176,6 +177,9 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
             vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
         else:
             raise ValueError("unexpected format: " + input_format)
+    except envi.exc.SegmentationViolation as e:
+        # Malformed binary with invalid memory references (e.g., broken ELF relocations)
+        raise CorruptFile(f"Invalid memory access during binary parsing: {e}") from e
     except Exception as e:
         # vivisect raises raw Exception instances, and we don't want
         # to do a subclass check via isinstance.
