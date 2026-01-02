@@ -1,0 +1,44 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import Optional
+
+
+class GhidraContext:
+    """
+    State holder for the Ghidra backend to avoid passing state to every function.
+
+    PyGhidra uses a context manager to set up the Ghidra environment (program, transaction, etc.).
+    We store the relevant objects here to allow easy access throughout the extractor
+    without needing to pass them as arguments to every feature extraction method.
+    """
+
+    def __init__(self, program, flat_api, monitor):
+        self.program = program
+        self.flat_api = flat_api
+        self.monitor = monitor
+
+
+_context: Optional[GhidraContext] = None
+
+
+def set_context(program, flat_api, monitor):
+    global _context
+    _context = GhidraContext(program, flat_api, monitor)
+
+
+def get_context() -> GhidraContext:
+    if _context is None:
+        raise RuntimeError("GhidraContext not initialized")
+    return _context
