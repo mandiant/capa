@@ -96,11 +96,7 @@ def is_runtime_ida():
 
 
 def is_runtime_ghidra():
-    try:
-        currentProgram  # type: ignore [name-defined] # noqa: F821
-    except NameError:
-        return False
-    return True
+    return importlib.util.find_spec("ghidra") is not None
 
 
 def assert_never(value) -> NoReturn:

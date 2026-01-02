@@ -83,7 +83,7 @@ def bb_contains_stackstring(bb: ghidra.program.model.block.CodeBlock) -> bool:
     true if basic block contains enough moves of constant bytes to the stack
     """
     count = 0
-    for insn in currentProgram().getListing().getInstructions(bb, True):  # type: ignore [name-defined] # noqa: F821
+    for insn in capa.features.extractors.ghidra.helpers.get_current_program().getListing().getInstructions(bb, True):
         if is_mov_imm_to_stack(insn):
             count += get_printable_len(insn.getScalar(1))
         if count > MIN_STACKSTRING_LEN:
@@ -96,7 +96,9 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     parse tight loops, true if last instruction in basic block branches to bb start
     """
     # Reverse Ordered, first InstructionDB
-    last_insn = currentProgram().getListing().getInstructions(bb, False).next()  # type: ignore [name-defined] # noqa: F821
+    last_insn = (
+        capa.features.extractors.ghidra.helpers.get_current_program().getListing().getInstructions(bb, False).next()
+    )
 
     if last_insn.getFlowType().isJump():
         return last_insn.getAddress(0) == bb.getMinAddress()
@@ -140,20 +142,3 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Featur
     for bb_handler in BASIC_BLOCK_HANDLERS:
         for feature, addr in bb_handler(fh, bbh):
             yield feature, addr
-
-
-def main():
-    features = []
-    from capa.features.extractors.ghidra.extractor import GhidraFeatureExtractor
-
-    for fh in GhidraFeatureExtractor().get_functions():
-        for bbh in capa.features.extractors.ghidra.helpers.get_function_blocks(fh):
-            features.extend(list(extract_features(fh, bbh)))
-
-    import pprint
-
-    pprint.pprint(features)  # noqa: T203
-
-
-if __name__ == "__main__":
-    main()

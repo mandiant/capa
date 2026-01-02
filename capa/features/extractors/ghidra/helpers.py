@@ -22,9 +22,22 @@ from ghidra.program.model.symbol import SourceType, SymbolType
 from ghidra.program.model.address import AddressSpace
 
 import capa.features.extractors.helpers
+import capa.features.extractors.ghidra.context as ghidra_context
 from capa.features.common import THUNK_CHAIN_DEPTH_DELTA
 from capa.features.address import AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle
+
+
+def get_current_program():
+    return ghidra_context.get_context().program
+
+
+def get_monitor():
+    return ghidra_context.get_context().monitor
+
+
+def get_flat_api():
+    return ghidra_context.get_context().flat_api
 
 
 def ints_to_bytes(bytez: list[int]) -> bytes:
@@ -36,7 +49,7 @@ def ints_to_bytes(bytez: list[int]) -> bytes:
     return bytes([b & 0xFF for b in bytez])
 
 
-def find_byte_sequence(addr: ghidra.program.model.address.Address, seq: bytes) -> Iterator[int]:
+def find_byte_sequence(addr: "ghidra.program.model.address.Address", seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
 
     args:
@@ -44,12 +57,25 @@ def find_byte_sequence(addr: ghidra.program.model.address.Address, seq: bytes) -
         seq: bytes to search e.g. b"\x01\x03"
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
-    eas = findBytes(addr, seqstr, java.lang.Integer.MAX_VALUE, 1)  # type: ignore [name-defined] # noqa: F821
+    eas = get_flat_api().findBytes(addr, seqstr, java.lang.Integer.MAX_VALUE, 1)
 
     yield from eas
 
 
-def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
+def get_file_offset(addr: "ghidra.program.model.address.Address") -> int:
+    """get file offset for an address"""
+    block = get_current_program().getMemory().getBlock(addr)
+    if not block:
+        return -1
+
+    for info in block.getSourceInfos():
+        if info.contains(addr):
+            return info.getFileBytesOffset(addr)
+
+    return -1
+
+
+def get_bytes(addr: "ghidra.program.model.address.Address", length: int) -> bytes:
     """yield length bytes at addr
 
     args:
@@ -57,12 +83,12 @@ def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
         length: length of bytes to pull
     """
     try:
-        return ints_to_bytes(getBytes(addr, length))  # type: ignore [name-defined] # noqa: F821
-    except RuntimeError:
+        return ints_to_bytes(get_flat_api().getBytes(addr, int(length)))
+    except Exception:
         return b""
 
 
-def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
+def get_block_bytes(block: "ghidra.program.model.mem.MemoryBlock") -> bytes:
     """yield all bytes in a given block
 
     args:
@@ -73,20 +99,21 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
 
 def get_function_symbols():
     """yield all non-external function symbols"""
-    yield from currentProgram().getFunctionManager().getFunctionsNoStubs(True)  # type: ignore [name-defined] # noqa: F821
+    yield from get_current_program().getFunctionManager().getFunctionsNoStubs(True)
 
 
-def get_function_blocks(fh: FunctionHandle) -> Iterator[BBHandle]:
-    """yield BBHandle for each bb in a given function"""
+def get_function_blocks(fh: "capa.features.extractors.base_extractor.FunctionHandle") -> Iterator[BBHandle]:
+    """
+    yield the basic blocks of the function
+    """
 
-    func: ghidra.program.database.function.FunctionDB = fh.inner
-    for bb in SimpleBlockIterator(BasicBlockModel(currentProgram()), func.getBody(), monitor()):  # type: ignore [name-defined] # noqa: F821
-        yield BBHandle(address=AbsoluteVirtualAddress(bb.getMinAddress().getOffset()), inner=bb)
+    for block in SimpleBlockIterator(BasicBlockModel(get_current_program()), fh.inner.getBody(), get_monitor()):
+        yield BBHandle(address=AbsoluteVirtualAddress(block.getMinAddress().getOffset()), inner=block)
 
 
 def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
     """yield InshHandle for each insn in a given basicblock"""
-    for insn in currentProgram().getListing().getInstructions(bbh.inner, True):  # type: ignore [name-defined] # noqa: F821
+    for insn in get_current_program().getListing().getInstructions(bbh.inner, True):
         yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
@@ -95,7 +122,7 @@ def get_file_imports() -> dict[int, list[str]]:
 
     import_dict: dict[int, list[str]] = {}
 
-    for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
+    for f in get_current_program().getFunctionManager().getExternalFunctions():
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
@@ -133,7 +160,7 @@ def get_file_externs() -> dict[int, list[str]]:
 
     extern_dict: dict[int, list[str]] = {}
 
-    for sym in currentProgram().getSymbolTable().getAllSymbols(True):  # type: ignore [name-defined] # noqa: F821
+    for sym in get_current_program().getSymbolTable().getAllSymbols(True):
         # .isExternal() misses more than this config for the function symbols
         if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
@@ -171,7 +198,7 @@ def map_fake_import_addrs() -> dict[int, list[int]]:
     """
     fake_dict: dict[int, list[int]] = {}
 
-    for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
+    for f in get_current_program().getFunctionManager().getExternalFunctions():
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 fake_dict.setdefault(f.getEntryPoint().getOffset(), []).append(r.getFromAddress().getOffset())
@@ -180,7 +207,7 @@ def map_fake_import_addrs() -> dict[int, list[int]]:
 
 
 def check_addr_for_api(
-    addr: ghidra.program.model.address.Address,
+    addr: "ghidra.program.model.address.Address",
     fakes: dict[int, list[int]],
     imports: dict[int, list[str]],
     externs: dict[int, list[str]],
@@ -202,18 +229,18 @@ def check_addr_for_api(
     return False
 
 
-def is_call_or_jmp(insn: ghidra.program.database.code.InstructionDB) -> bool:
+def is_call_or_jmp(insn: "ghidra.program.database.code.InstructionDB") -> bool:
     return any(mnem in insn.getMnemonicString() for mnem in ["CALL", "J"])  # JMP, JNE, JNZ, etc
 
 
-def is_sp_modified(insn: ghidra.program.database.code.InstructionDB) -> bool:
+def is_sp_modified(insn: "ghidra.program.database.code.InstructionDB") -> bool:
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
             return "SP" in insn.getRegister(i).getName() and insn.getOperandRefType(i).isWrite()
     return False
 
 
-def is_stack_referenced(insn: ghidra.program.database.code.InstructionDB) -> bool:
+def is_stack_referenced(insn: "ghidra.program.database.code.InstructionDB") -> bool:
     """generic catch-all for stack references"""
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
@@ -225,7 +252,7 @@ def is_stack_referenced(insn: ghidra.program.database.code.InstructionDB) -> boo
     return any(ref.isStackReference() for ref in insn.getReferencesFrom())
 
 
-def is_zxor(insn: ghidra.program.database.code.InstructionDB) -> bool:
+def is_zxor(insn: "ghidra.program.database.code.InstructionDB") -> bool:
     # assume XOR insn
     # XOR's against the same operand zero out
     ops = []
@@ -241,29 +268,29 @@ def is_zxor(insn: ghidra.program.database.code.InstructionDB) -> bool:
     return all(n == operands[0] for n in operands)
 
 
-def handle_thunk(addr: ghidra.program.model.address.Address):
+def handle_thunk(addr: "ghidra.program.model.address.Address"):
     """Follow thunk chains down to a reasonable depth"""
     ref = addr
     for _ in range(THUNK_CHAIN_DEPTH_DELTA):
-        thunk_jmp = getInstructionAt(ref)  # type: ignore [name-defined] # noqa: F821
+        thunk_jmp = get_flat_api().getInstructionAt(ref)
         if thunk_jmp and is_call_or_jmp(thunk_jmp):
             if OperandType.isAddress(thunk_jmp.getOperandType(0)):
                 ref = thunk_jmp.getAddress(0)
         else:
-            thunk_dat = getDataContaining(ref)  # type: ignore [name-defined] # noqa: F821
+            thunk_dat = get_flat_api().getDataContaining(ref)
             if thunk_dat and thunk_dat.isDefined() and thunk_dat.isPointer():
                 ref = thunk_dat.getValue()
                 break  # end of thunk chain reached
     return ref
 
 
-def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
+def dereference_ptr(insn: "ghidra.program.database.code.InstructionDB"):
     addr_code = OperandType.ADDRESS | OperandType.CODE
     to_deref = insn.getAddress(0)
-    dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
+    dat = get_flat_api().getDataContaining(to_deref)
 
     if insn.getOperandType(0) == addr_code:
-        thfunc = getFunctionContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
+        thfunc = get_flat_api().getFunctionContaining(to_deref)
         if thfunc and thfunc.isThunk():
             return handle_thunk(to_deref)
         else:
@@ -294,7 +321,7 @@ def find_data_references_from_insn(insn, max_depth: int = 10):
         to_addr = reference.getToAddress()
 
         for _ in range(max_depth - 1):
-            data = getDataAt(to_addr)  # type: ignore [name-defined] # noqa: F821
+            data = get_flat_api().getDataAt(to_addr)
             if data and data.isPointer():
                 ptr_value = data.getValue()
 
