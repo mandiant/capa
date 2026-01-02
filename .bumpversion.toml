@@ -1,5 +1,5 @@
 [tool.bumpversion]
-current_version = "9.2.1"
+current_version = "9.3.1"
 
 [[tool.bumpversion.files]]
 filename = "capa/version.py"
@@ -19,4 +19,9 @@ replace = '"flare-capa=={new_version}"'
 [[tool.bumpversion.files]]
 filename = "CHANGELOG.md"
 search = "v{current_version}...master"
-replace = "{current_version}...{new_version}"
+replace = "v{current_version}...{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "master (unreleased)"
+replace = "v{new_version}"
