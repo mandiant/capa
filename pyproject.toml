@@ -166,7 +166,7 @@ scripts = [
     # can (optionally) be more lenient on dependencies here
     # see comment on dependencies for more context
     "jschema_to_python==1.2.3",
-    "psutil==7.1.2",
+    "psutil==7.2.1",
     "stix2==3.0.1",
     "sarif_om==1.0.4",
     "requests>=2.32.4",
