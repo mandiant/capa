@@ -15,7 +15,7 @@ funcy==2.0
 humanize==4.15.0
 ida-netnode==3.0
 ida-settings==3.2.2
-intervaltree==3.1.0
+intervaltree==3.2.1
 markdown-it-py==4.0.0
 mdurl==0.1.2
 msgpack==1.0.8
@@ -38,7 +38,7 @@ pyghidra==3.0.0
 python-flirt==0.9.2
 pyyaml==6.0.2
 rich==14.2.0
-ruamel-yaml==0.18.6
+ruamel-yaml==0.19.1
 ruamel-yaml-clib==0.2.14
 setuptools==80.9.0
 six==1.17.0
