@@ -13,11 +13,14 @@
 # limitations under the License.
 
 import logging
+from pathlib import Path
 
 import pytest
 import fixtures
 
 import capa.features.extractors.ida.idalib
+from capa.features.file import FunctionName
+from capa.features.insn import API
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +28,12 @@ idalib_present = capa.features.extractors.ida.idalib.has_idalib()
 if idalib_present:
     try:
         import idapro  # noqa: F401 [imported but unused]
+        import ida_kernwin
+
+        kernel_version: str = ida_kernwin.get_kernel_version()
     except ImportError:
         idalib_present = False
+        kernel_version = "0.0"
 
 
 @pytest.mark.skipif(idalib_present is False, reason="Skip idalib tests if the idalib Python API is not installed")
@@ -35,7 +42,16 @@ if idalib_present:
     fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS,
     indirect=["sample", "scope"],
 )
-def test_idalib_features(sample, scope, feature, expected):
+def test_idalib_features(sample: Path, scope, feature, expected):
+    if kernel_version in {"9.0", "9.1"} and sample.name.startswith("2bf18d"):
+        if isinstance(feature, (API, FunctionName)) and feature.value == "__libc_connect":
+            # see discussion here: https://github.com/mandiant/capa/pull/2742#issuecomment-3674146335
+            #
+            # > i confirmed that there were changes in 9.2 related to the ELF loader handling names,
+            # > so I think its reasonable to conclude that 9.1 and older had a bug that
+            # > prevented this name from surfacing.
+            pytest.xfail(f"IDA {kernel_version} does not extract all ELF symbols")
+
     try:
         fixtures.do_test_feature_presence(fixtures.get_idalib_extractor, sample, scope, feature, expected)
     finally:
