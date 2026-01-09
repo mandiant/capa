@@ -179,8 +179,15 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     except Exception as e:
         # vivisect raises raw Exception instances, and we don't want
         # to do a subclass check via isinstance.
-        if type(e) is Exception and "Couldn't convert rva" in e.args[0]:
-            raise CorruptFile(e.args[0]) from e
+        if type(e) is Exception and e.args:
+            error_msg = str(e.args[0])
+
+            if "Couldn't convert rva" in error_msg:
+                raise CorruptFile(error_msg) from e
+            elif "Unsupported Architecture" in error_msg:
+                # Extract architecture number if available
+                arch_info = e.args[1] if len(e.args) > 1 else "unknown"
+                raise CorruptFile(f"Unsupported architecture: {arch_info}") from e
         raise
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])

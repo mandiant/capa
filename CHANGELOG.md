@@ -19,6 +19,7 @@
 
 ### Bug Fixes
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
+- loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 
 ### capa Explorer Web
 
