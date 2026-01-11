@@ -178,7 +178,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
         else:
             raise ValueError("unexpected format: " + input_format)
     except envi.exc.SegmentationViolation as e:
-        # Malformed binary with invalid memory references (e.g., broken ELF relocations)
+        # Handle malformed binaries with invalid memory references
         raise CorruptFile(f"Invalid memory access during binary parsing: {e}") from e
     except Exception as e:
         # vivisect raises raw Exception instances, and we don't want
