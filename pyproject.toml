@@ -134,7 +134,7 @@ dev = [
     "flake8-no-implicit-concat==0.3.5",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.1",
-    "flake8-simplify==0.22.0",
+    "flake8-simplify==0.30.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.14.7",
@@ -166,7 +166,7 @@ scripts = [
     # can (optionally) be more lenient on dependencies here
     # see comment on dependencies for more context
     "jschema_to_python==1.2.3",
-    "psutil==7.1.2",
+    "psutil==7.2.1",
     "stix2==3.0.1",
     "sarif_om==1.0.4",
     "requests>=2.32.4",
