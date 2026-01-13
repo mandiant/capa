@@ -229,8 +229,7 @@ def get_idalib_extractor(path: Path):
     # which sometimes provides bad names, including overwriting names from debug info.
     #
     # return values from open_database:
-    #   0 - Success (database not packed)
-    #   1 - Success (database was packed)
+    #   0 - Success
     #   2 - User cancelled or 32-64 bit conversion failed
     #   4 - Database initialization failed
     #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
@@ -238,7 +237,7 @@ def get_idalib_extractor(path: Path):
     ret = idapro.open_database(
         str(path), run_auto_analysis=True, args=f"-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0{load_resource}"
     )
-    if ret not in (0, 1):
+    if ret != 0:
         raise RuntimeError("failed to analyze input file")
 
     logger.debug("idalib: waiting for analysis...")
