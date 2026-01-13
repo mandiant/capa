@@ -54,6 +54,10 @@ def extract_recursive_call(fh: FunctionHandle):
 def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     ea = fh.inner.start_ea
     name = idaapi.get_name(ea)
+    if name.startswith("sub_"):
+        # skip default names, like "sub_401000"
+        return
+
     yield FunctionName(name), fh.address
     if name.startswith("_"):
         # some linkers may prefix linked routines with a `_` to avoid name collisions.
