@@ -16,7 +16,7 @@ import logging
 import contextlib
 from typing import Iterator
 
-import ida_loader
+from ida_domain import Database
 
 import capa.ida.helpers
 import capa.features.extractors.elf
@@ -26,8 +26,8 @@ from capa.features.address import NO_ADDRESS, Address
 logger = logging.getLogger(__name__)
 
 
-def extract_os() -> Iterator[tuple[Feature, Address]]:
-    format_name: str = ida_loader.get_file_type_name()
+def extract_os(db: Database) -> Iterator[tuple[Feature, Address]]:
+    format_name: str = db.format
 
     if "PE" in format_name:
         yield OS(OS_WINDOWS), NO_ADDRESS
@@ -53,13 +53,14 @@ def extract_os() -> Iterator[tuple[Feature, Address]]:
         return
 
 
-def extract_arch() -> Iterator[tuple[Feature, Address]]:
-    procname = capa.ida.helpers.get_processor_name()
-    if procname == "metapc" and capa.ida.helpers.is_64bit():
+def extract_arch(db: Database) -> Iterator[tuple[Feature, Address]]:
+    bitness = db.bitness
+    arch = db.architecture
+    if arch == "metapc" and bitness == 64:
         yield Arch(ARCH_AMD64), NO_ADDRESS
-    elif procname == "metapc" and capa.ida.helpers.is_32bit():
+    elif arch == "metapc" and bitness == 32:
         yield Arch(ARCH_I386), NO_ADDRESS
-    elif procname == "metapc":
+    elif arch == "metapc":
         logger.debug("unsupported architecture: non-32-bit nor non-64-bit intel")
         return
     else:
@@ -67,5 +68,5 @@ def extract_arch() -> Iterator[tuple[Feature, Address]]:
         #  1. handling a new architecture (e.g. aarch64)
         #
         # for (1), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported architecture: %s", procname)
+        logger.debug("unsupported architecture: %s", arch)
         return

@@ -15,7 +15,7 @@
 from typing import Iterator
 
 import idaapi
-import idautils
+from ida_domain import Database
 
 import capa.features.extractors.ida.helpers
 from capa.features.file import FunctionName
@@ -25,19 +25,20 @@ from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def extract_function_calls_to(fh: FunctionHandle):
+def extract_function_calls_to(db: Database, fh: FunctionHandle):
     """extract callers to a function"""
-    for ea in idautils.CodeRefsTo(fh.inner.start_ea, True):
+    for ea in db.xrefs.code_refs_to_ea(fh.inner.start_ea):
         yield Characteristic("calls to"), AbsoluteVirtualAddress(ea)
 
 
-def extract_function_loop(fh: FunctionHandle):
+def extract_function_loop(db: Database, fh: FunctionHandle):
     """extract loop indicators from a function"""
     f: idaapi.func_t = fh.inner
     edges = []
 
     # construct control flow graph
-    for bb in idaapi.FlowChart(f):
+    flowchart = db.functions.get_flowchart(f)
+    for bb in flowchart:
         for succ in bb.succs():
             edges.append((bb.start_ea, succ.start_ea))
 
@@ -45,16 +46,16 @@ def extract_function_loop(fh: FunctionHandle):
         yield Characteristic("loop"), fh.address
 
 
-def extract_recursive_call(fh: FunctionHandle):
+def extract_recursive_call(db: Database, fh: FunctionHandle):
     """extract recursive function call"""
-    if capa.features.extractors.ida.helpers.is_function_recursive(fh.inner):
+    if capa.features.extractors.ida.helpers.is_function_recursive(db, fh.inner):
         yield Characteristic("recursive call"), fh.address
 
 
-def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_function_name(db: Database, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     ea = fh.inner.start_ea
-    name = idaapi.get_name(ea)
-    if name.startswith("sub_"):
+    name = db.names.get_at(ea)
+    if not name or name.startswith("sub_"):
         # skip default names, like "sub_401000"
         return
 
@@ -67,16 +68,15 @@ def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address
         yield FunctionName(name[1:]), fh.address
 
 
-def extract_function_alternative_names(fh: FunctionHandle):
+def extract_function_alternative_names(db: Database, fh: FunctionHandle):
     """Get all alternative names for an address."""
-
-    for aname in capa.features.extractors.ida.helpers.get_function_alternative_names(fh.inner.start_ea):
+    for aname in capa.features.extractors.ida.helpers.get_function_alternative_names(db, fh.inner.start_ea):
         yield FunctionName(aname), fh.address
 
 
-def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_features(db: Database, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
-        for feature, addr in func_handler(fh):
+        for feature, addr in func_handler(db, fh):
             yield feature, addr
 
 
