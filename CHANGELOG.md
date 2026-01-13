@@ -58,6 +58,7 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 ### New Features
 
 - ci: add support for arm64 binary releases
+- tests: run tests against IDA via idalib @williballenthin #2742
 
 ### Breaking Changes
 

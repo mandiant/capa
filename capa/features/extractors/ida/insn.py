@@ -22,6 +22,7 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
+from capa.features.file import FunctionName
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -129,8 +130,8 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
         # not a function (start)
         return
 
-    if target_func.flags & idaapi.FUNC_LIB:
-        name = idaapi.get_name(target_func.start_ea)
+    name = idaapi.get_name(target_func.start_ea)
+    if target_func.flags & idaapi.FUNC_LIB or not name.startswith("sub_"):
         yield API(name), ih.address
         if name.startswith("_"):
             # some linkers may prefix linked routines with a `_` to avoid name collisions.
@@ -138,6 +139,10 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
             # e.g. `_fwrite` -> `fwrite`
             # see: https://stackoverflow.com/a/2628384/87207
             yield API(name[1:]), ih.address
+
+        for altname in capa.features.extractors.ida.helpers.get_function_alternative_names(target_func.start_ea):
+            yield FunctionName(altname), ih.address
+            yield API(altname), ih.address
 
 
 def extract_insn_number_features(
