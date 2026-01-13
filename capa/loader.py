@@ -339,6 +339,8 @@ def get_extractor(
             # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
             # which sometimes provides bad names, including overwriting names from debug info.
             #
+            # use -R to load resources, which can help us embedded PE files.
+            #
             # return values from open_database:
             #   0 - Success
             #   2 - User cancelled or 32-64 bit conversion failed
@@ -346,7 +348,7 @@ def get_extractor(
             #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
             #   -2 - User cancelled operation
             ret = idapro.open_database(
-                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
             )
             if ret != 0:
                 raise RuntimeError("failed to analyze input file")
