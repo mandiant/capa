@@ -160,7 +160,7 @@ build = [
     # and should not conflict with other libraries/tooling.
     "pyinstaller==6.17.0",
     "setuptools==80.9.0",
-    "build==1.3.0"
+    "build==1.4.0"
 ]
 scripts = [
     # can (optionally) be more lenient on dependencies here
