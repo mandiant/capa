@@ -20,6 +20,7 @@ import contextlib
 from typing import Optional
 from pathlib import Path
 
+import envi.exc
 from rich.console import Console
 from typing_extensions import assert_never
 
@@ -155,7 +156,6 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     """
 
     # lazy import enables us to not require viv if user wants another backend.
-    import envi.exc
     import viv_utils
     import viv_utils.flirt
 
