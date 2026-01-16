@@ -18,6 +18,7 @@ import idaapi
 import idautils
 
 import capa.features.extractors.ida.helpers
+from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
@@ -50,10 +51,39 @@ def extract_recursive_call(fh: FunctionHandle):
         yield Characteristic("recursive call"), fh.address
 
 
+def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    ea = fh.inner.start_ea
+    name = idaapi.get_name(ea)
+    if name.startswith("sub_"):
+        # skip default names, like "sub_401000"
+        return
+
+    yield FunctionName(name), fh.address
+    if name.startswith("_"):
+        # some linkers may prefix linked routines with a `_` to avoid name collisions.
+        # extract features for both the mangled and un-mangled representations.
+        # e.g. `_fwrite` -> `fwrite`
+        # see: https://stackoverflow.com/a/2628384/87207
+        yield FunctionName(name[1:]), fh.address
+
+
+def extract_function_alternative_names(fh: FunctionHandle):
+    """Get all alternative names for an address."""
+
+    for aname in capa.features.extractors.ida.helpers.get_function_alternative_names(fh.inner.start_ea):
+        yield FunctionName(aname), fh.address
+
+
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_loop,
+    extract_recursive_call,
+    extract_function_name,
+    extract_function_alternative_names,
+)

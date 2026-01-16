@@ -20,6 +20,7 @@ import idaapi
 import ida_nalt
 import idautils
 import ida_bytes
+import ida_funcs
 import ida_segment
 
 from capa.features.address import AbsoluteVirtualAddress
@@ -436,3 +437,16 @@ def is_basic_block_return(bb: idaapi.BasicBlock) -> bool:
 def has_sib(oper: idaapi.op_t) -> bool:
     # via: https://reverseengineering.stackexchange.com/a/14300
     return oper.specflag1 == 1
+
+
+def find_alternative_names(cmt: str):
+    for line in cmt.split("\n"):
+        if line.startswith("Alternative name is '") and line.endswith("'"):
+            name = line[len("Alternative name is '") : -1]  # Extract name between quotes
+            yield name
+
+
+def get_function_alternative_names(fva: int):
+    """Get all alternative names for an address."""
+    yield from find_alternative_names(ida_bytes.get_cmt(fva, False) or "")
+    yield from find_alternative_names(ida_funcs.get_func_cmt(idaapi.get_func(fva), False) or "")
