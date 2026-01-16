@@ -35,9 +35,9 @@
 -
 
 ### Bug Fixes
-- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
-- loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
+
 - loader: handle SegmentationViolation for malformed ELF files kamranulhaq2002@gmail.com #2799
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714
 
 ### capa Explorer Web
 
