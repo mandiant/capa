@@ -20,7 +20,7 @@
 ### Bug Fixes
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
-- loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
+- loader: handle SegmentationViolation for malformed ELF files kamranulhaq2002@gmail.com #2799
 
 ### capa Explorer Web
 
@@ -68,8 +68,8 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 - anti-analysis/anti-vm/vm-detection/detect-mouse-movement-via-activity-checks-on-windows tevajdr@gmail.com
 - nursery/create-executable-heap moritz.raabe@mandiant.com
 - anti-analysis/packer/dxpack/packed-with-dxpack jakubjozwiak@google.com
-- anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjozwiak@google.com
-- nursery/acquire-load-driver-privileges mehunhoff@google.com
+- anti-analysis/anti-av/patch-bitdefender-hooking-dll-function jakubjo- nursery/acquire-load-driver-privileges mehunhoff@google.com
+nhoff@google.com
 - nursery/communicate-using-ftp mehunhoff@google.com
 - linking/static/eclipse-paho-mqtt-c/linked-against-eclipse-paho-mqtt-c jakubjozwiak@google.com
 - linking/static/qmqtt/linked-against-qmqtt jakubjozwiak@google.com
@@ -91,7 +91,6 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 
 ### Bug Fixes
 
-- loader: gracefully handle malformed ELF files with invalid relocations kamranulhaq2002@gmail.com #2799
 - binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
 
 ### capa Explorer Web
