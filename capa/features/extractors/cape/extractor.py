@@ -35,7 +35,7 @@ from capa.features.extractors.base_extractor import (
 
 logger = logging.getLogger(__name__)
 
-TESTED_VERSIONS = {"2.2-CAPE", "2.4-CAPE"}
+TESTED_VERSIONS = {"2.2-CAPE", "2.4-CAPE", "2.5-CAPE"}
 
 
 class CapeExtractor(DynamicFeatureExtractor):
