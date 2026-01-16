@@ -242,7 +242,7 @@ def get_idalib_extractor(path: Path):
     ida_auto.auto_wait()
     logger.debug("idalib: opened database.")
 
-    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor.from_current_database()
     fixup_idalib(path, extractor)
     return extractor
 

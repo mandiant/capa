@@ -22,109 +22,86 @@ import idautils
 import ida_bytes
 import ida_funcs
 import ida_segment
+from ida_domain import Database
+from ida_domain.functions import FunctionFlags
 
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FunctionHandle
 
-IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)  # use one byte-per-character encoding
 
+def find_byte_sequence(db: Database, start: int, end: int, seq: bytes) -> Iterator[int]:
+    """yield all ea of a given byte sequence
 
-if hasattr(ida_bytes, "parse_binpat_str"):
-    # TODO (mr): use find_bytes
-    # https://github.com/mandiant/capa/issues/2339
-    def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
-        """yield all ea of a given byte sequence
-
-        args:
-            start: min virtual address
-            end: max virtual address
-            seq: bytes to search e.g. b"\x01\x03"
-        """
-        patterns = ida_bytes.compiled_binpat_vec_t()
-
-        seqstr = " ".join([f"{b:02x}" for b in seq])
-        err = ida_bytes.parse_binpat_str(patterns, 0, seqstr, 16, IDA_NALT_ENCODING)
-
-        if err:
-            return
-
-        while True:
-            ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
-            if isinstance(ea, int):
-                # "ea_t" in IDA 8.4, 8.3
-                pass
-            elif isinstance(ea, tuple):
-                # "drc_t" in IDA 9
-                ea = ea[0]
-            else:
-                raise NotImplementedError(f"bin_search returned unhandled type: {type(ea)}")
-            if ea == idaapi.BADADDR:
-                break
-            start = ea + 1
-            yield ea
-
-else:
-    # for IDA 7.5 and older; using deprecated find_binary instead of bin_search
-    def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
-        """yield all ea of a given byte sequence
-
-        args:
-            start: min virtual address
-            end: max virtual address
-            seq: bytes to search e.g. b"\x01\x03"
-        """
-        seqstr = " ".join([f"{b:02x}" for b in seq])
-        while True:
-            ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
-            if ea == idaapi.BADADDR:
-                break
-            start = ea + 1
-            yield ea
+    args:
+        db: IDA Domain Database handle
+        start: min virtual address
+        end: max virtual address
+        seq: bytes to search e.g. b"\x01\x03"
+    """
+    for match in db.bytes.find_binary_sequence(seq, start, end):
+        yield match
 
 
 def get_functions(
-    start: Optional[int] = None, end: Optional[int] = None, skip_thunks: bool = False, skip_libs: bool = False
+    db: Database,
+    start: Optional[int] = None,
+    end: Optional[int] = None,
+    skip_thunks: bool = False,
+    skip_libs: bool = False,
 ) -> Iterator[FunctionHandle]:
     """get functions, range optional
 
     args:
+        db: IDA Domain Database handle
         start: min virtual address
         end: max virtual address
+        skip_thunks: skip thunk functions
+        skip_libs: skip library functions
     """
-    for ea in idautils.Functions(start=start, end=end):
-        f = idaapi.get_func(ea)
-        if not (skip_thunks and (f.flags & idaapi.FUNC_THUNK) or skip_libs and (f.flags & idaapi.FUNC_LIB)):
-            yield FunctionHandle(address=AbsoluteVirtualAddress(ea), inner=f)
+    if start is not None and end is not None:
+        funcs = db.functions.get_between(start, end)
+    else:
+        funcs = db.functions.get_all()
+
+    for f in funcs:
+        flags = db.functions.get_flags(f)
+        if skip_thunks and (flags & FunctionFlags.THUNK):
+            continue
+        if skip_libs and (flags & FunctionFlags.LIB):
+            continue
+        yield FunctionHandle(address=AbsoluteVirtualAddress(f.start_ea), inner=f)
 
 
-def get_segments(skip_header_segments=False) -> Iterator[idaapi.segment_t]:
+def get_segments(db: Database, skip_header_segments: bool = False):
     """get list of segments (sections) in the binary image
 
     args:
+        db: IDA Domain Database handle
         skip_header_segments: IDA may load header segments - skip if set
     """
-    for n in range(idaapi.get_segm_qty()):
-        seg = idaapi.getnseg(n)
-        if seg and not (skip_header_segments and seg.is_header_segm()):
-            yield seg
+    for seg in db.segments.get_all():
+        if skip_header_segments and seg.is_header_segm():
+            continue
+        yield seg
 
 
-def get_segment_buffer(seg: idaapi.segment_t) -> bytes:
+def get_segment_buffer(db: Database, seg) -> bytes:
     """return bytes stored in a given segment
 
-    decrease buffer size until IDA is able to read bytes from the segment
+    args:
+        db: IDA Domain Database handle
+        seg: segment object
     """
-    buff = b""
     sz = seg.end_ea - seg.start_ea
 
+    # decrease buffer size until IDA is able to read bytes from the segment
     while sz > 0:
-        buff = idaapi.get_bytes(seg.start_ea, sz)
+        buff = db.bytes.get_bytes_at(seg.start_ea, sz)
         if buff:
-            break
+            return buff
         sz -= 0x1000
 
-    # IDA returns None if get_bytes fails, so convert for consistent return type
-    return buff if buff else b""
+    return b""
 
 
 def inspect_import(imports, library, ea, function, ordinal):
@@ -140,8 +117,14 @@ def inspect_import(imports, library, ea, function, ordinal):
     return True
 
 
-def get_file_imports() -> dict[int, tuple[str, str, int]]:
-    """get file imports"""
+def get_file_imports(db: Database) -> dict[int, tuple[str, str, int]]:
+    """get file imports
+
+    Note: import enumeration has no Domain API equivalent, using SDK fallback.
+
+    args:
+        db: IDA Domain Database handle (unused, kept for API consistency)
+    """
     imports: dict[int, tuple[str, str, int]] = {}
 
     for idx in range(idaapi.get_import_module_qty()):
@@ -163,28 +146,35 @@ def get_file_imports() -> dict[int, tuple[str, str, int]]:
     return imports
 
 
-def get_file_externs() -> dict[int, tuple[str, str, int]]:
+def get_file_externs(db: Database) -> dict[int, tuple[str, str, int]]:
+    """get extern functions
+
+    args:
+        db: IDA Domain Database handle
+    """
     externs = {}
 
-    for seg in get_segments(skip_header_segments=True):
+    for seg in get_segments(db, skip_header_segments=True):
         if seg.type != ida_segment.SEG_XTRN:
             continue
 
-        for ea in idautils.Functions(seg.start_ea, seg.end_ea):
-            externs[ea] = ("", idaapi.get_func_name(ea), -1)
+        for f in db.functions.get_between(seg.start_ea, seg.end_ea):
+            name = db.functions.get_name(f)
+            externs[f.start_ea] = ("", name, -1)
 
     return externs
 
 
-def get_instructions_in_range(start: int, end: int) -> Iterator[idaapi.insn_t]:
+def get_instructions_in_range(db: Database, start: int, end: int) -> Iterator[idaapi.insn_t]:
     """yield instructions in range
 
     args:
+        db: IDA Domain Database handle
         start: virtual address (inclusive)
         end: virtual address (exclusive)
     """
-    for head in idautils.Heads(start, end):
-        insn = idautils.DecodeInstruction(head)
+    for head in db.heads.get_between(start, end):
+        insn = db.instructions.get_at(head)
         if insn:
             yield insn
 
@@ -234,21 +224,38 @@ def basic_block_size(bb: idaapi.BasicBlock) -> int:
     return bb.end_ea - bb.start_ea
 
 
-def read_bytes_at(ea: int, count: int) -> bytes:
-    """ """
-    # check if byte has a value, see get_wide_byte doc
-    if not idc.is_loaded(ea):
+def read_bytes_at(db: Database, ea: int, count: int) -> bytes:
+    """read bytes at address
+
+    args:
+        db: IDA Domain Database handle
+        ea: effective address
+        count: number of bytes to read
+    """
+    if not db.bytes.is_value_initialized_at(ea):
         return b""
 
-    segm_end = idc.get_segm_end(ea)
-    if ea + count > segm_end:
-        return idc.get_bytes(ea, segm_end - ea)
+    seg = db.segments.get_at(ea)
+    if seg is None:
+        return b""
+
+    if ea + count > seg.end_ea:
+        return db.bytes.get_bytes_at(ea, seg.end_ea - ea) or b""
     else:
-        return idc.get_bytes(ea, count)
+        return db.bytes.get_bytes_at(ea, count) or b""
 
 
-def find_string_at(ea: int, min_: int = 4) -> str:
-    """check if ASCII string exists at a given virtual address"""
+def find_string_at(db: Database, ea: int, min_: int = 4) -> str:
+    """check if string exists at a given virtual address
+
+    Note: Uses SDK fallback as Domain API get_string_at only works for
+    addresses where IDA has already identified a string.
+
+    args:
+        db: IDA Domain Database handle (unused, kept for API consistency)
+        ea: effective address
+        min_: minimum string length
+    """
     found = idaapi.get_strlit_contents(ea, -1, idaapi.STRTYPE_C)
     if found and len(found) >= min_:
         try:
@@ -375,31 +382,51 @@ def mask_op_val(op: idaapi.op_t) -> int:
     return masks.get(op.dtype, op.value) & op.value
 
 
-def is_function_recursive(f: idaapi.func_t) -> bool:
-    """check if function is recursive"""
-    return any(f.contains(ref) for ref in idautils.CodeRefsTo(f.start_ea, True))
+def is_function_recursive(db: Database, f: idaapi.func_t) -> bool:
+    """check if function is recursive
+
+    args:
+        db: IDA Domain Database handle
+        f: function object
+    """
+    for ref in db.xrefs.code_refs_to_ea(f.start_ea):
+        if f.contains(ref):
+            return True
+    return False
 
 
-def is_basic_block_tight_loop(bb: idaapi.BasicBlock) -> bool:
+def is_basic_block_tight_loop(db: Database, bb: idaapi.BasicBlock) -> bool:
     """check basic block loops to self
+
+    args:
+        db: IDA Domain Database handle
+        bb: basic block object
 
     true if last instruction in basic block branches to basic block start
     """
-    bb_end = idc.prev_head(bb.end_ea)
+    bb_end = db.heads.get_previous(bb.end_ea)
+    if bb_end is None:
+        return False
     if bb.start_ea < bb_end:
-        for ref in idautils.CodeRefsFrom(bb_end, True):
+        for ref in db.xrefs.code_refs_from_ea(bb_end):
             if ref == bb.start_ea:
                 return True
     return False
 
 
-def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> int:
-    """search for data reference from instruction, return address of instruction if no reference exists"""
+def find_data_reference_from_insn(db: Database, insn: idaapi.insn_t, max_depth: int = 10) -> int:
+    """search for data reference from instruction, return address of instruction if no reference exists
+
+    args:
+        db: IDA Domain Database handle
+        insn: instruction object
+        max_depth: maximum depth to follow references
+    """
     depth = 0
     ea = insn.ea
 
     while True:
-        data_refs = list(idautils.DataRefsFrom(ea))
+        data_refs = list(db.xrefs.data_refs_from_ea(ea))
 
         if len(data_refs) != 1:
             # break if no refs or more than one ref (assume nested pointers only have one data reference)
@@ -409,7 +436,7 @@ def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> i
             # break if circular reference
             break
 
-        if not idaapi.is_mapped(data_refs[0]):
+        if not db.is_valid_ea(data_refs[0]):
             # break if address is not mapped
             break
 
@@ -423,10 +450,16 @@ def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> i
     return ea
 
 
-def get_function_blocks(f: idaapi.func_t) -> Iterator[idaapi.BasicBlock]:
-    """yield basic blocks contained in specified function"""
+def get_function_blocks(db: Database, f: idaapi.func_t) -> Iterator[idaapi.BasicBlock]:
+    """yield basic blocks contained in specified function
+
+    args:
+        db: IDA Domain Database handle
+        f: function object
+    """
     # leverage idaapi.FC_NOEXT flag to ignore useless external blocks referenced by the function
-    yield from idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT))
+    flowchart = db.functions.get_flowchart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT))
+    yield from flowchart
 
 
 def is_basic_block_return(bb: idaapi.BasicBlock) -> bool:
@@ -446,7 +479,17 @@ def find_alternative_names(cmt: str):
             yield name
 
 
-def get_function_alternative_names(fva: int):
-    """Get all alternative names for an address."""
-    yield from find_alternative_names(ida_bytes.get_cmt(fva, False) or "")
-    yield from find_alternative_names(ida_funcs.get_func_cmt(idaapi.get_func(fva), False) or "")
+def get_function_alternative_names(db: Database, fva: int):
+    """Get all alternative names for an address.
+
+    args:
+        db: IDA Domain Database handle
+        fva: function virtual address
+    """
+    cmt_info = db.comments.get_at(fva)
+    cmt = cmt_info.comment if cmt_info else ""
+    yield from find_alternative_names(cmt)
+    f = db.functions.get_at(fva)
+    if f:
+        func_cmt = db.functions.get_comment(f, False)
+        yield from find_alternative_names(func_cmt or "")

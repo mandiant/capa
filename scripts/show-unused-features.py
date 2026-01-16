@@ -175,7 +175,7 @@ def ida_main():
     function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)
     print(f"getting features for current function {hex(function)}")
 
-    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor.from_current_database()
     feature_map: Counter[Feature] = Counter()
 
     feature_map.update([feature for feature, _ in extractor.extract_file_features()])

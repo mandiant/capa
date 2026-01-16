@@ -18,6 +18,7 @@ import struct
 from typing import Iterator
 
 import idaapi
+from ida_domain import Database
 
 import capa.features.extractors.ida.helpers
 from capa.features.common import Feature, Characteristic
@@ -59,7 +60,7 @@ def get_printable_len(op: idaapi.op_t) -> int:
     return 0
 
 
-def is_mov_imm_to_stack(insn: idaapi.insn_t) -> bool:
+def is_mov_imm_to_stack(db: Database, insn: idaapi.insn_t) -> bool:
     """verify instruction moves immediate onto stack"""
     if insn.Op2.type != idaapi.o_imm:
         return False
@@ -67,42 +68,43 @@ def is_mov_imm_to_stack(insn: idaapi.insn_t) -> bool:
     if not helpers.is_op_stack_var(insn.ea, 0):
         return False
 
-    if not insn.get_canon_mnem().startswith("mov"):
+    mnem = db.instructions.get_mnemonic(insn)
+    if not mnem.startswith("mov"):
         return False
 
     return True
 
 
-def bb_contains_stackstring(f: idaapi.func_t, bb: idaapi.BasicBlock) -> bool:
+def bb_contains_stackstring(db: Database, f: idaapi.func_t, bb: idaapi.BasicBlock) -> bool:
     """check basic block for stackstring indicators
 
     true if basic block contains enough moves of constant bytes to the stack
     """
     count = 0
-    for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
-        if is_mov_imm_to_stack(insn):
+    for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(db, bb.start_ea, bb.end_ea):
+        if is_mov_imm_to_stack(db, insn):
             count += get_printable_len(insn.Op2)
         if count > MIN_STACKSTRING_LEN:
             return True
     return False
 
 
-def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_bb_stackstring(db: Database, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract stackstring indicators from basic block"""
-    if bb_contains_stackstring(fh.inner, bbh.inner):
+    if bb_contains_stackstring(db, fh.inner, bbh.inner):
         yield Characteristic("stack string"), bbh.address
 
 
-def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_bb_tight_loop(db: Database, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract tight loop indicators from a basic block"""
-    if capa.features.extractors.ida.helpers.is_basic_block_tight_loop(bbh.inner):
+    if capa.features.extractors.ida.helpers.is_basic_block_tight_loop(db, bbh.inner):
         yield Characteristic("tight loop"), bbh.address
 
 
-def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_features(db: Database, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract basic block features"""
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for feature, addr in bb_handler(fh, bbh):
+        for feature, addr in bb_handler(db, fh, bbh):
             yield feature, addr
     yield BasicBlock(), bbh.address
 

@@ -16,10 +16,9 @@
 import struct
 from typing import Iterator
 
-import idc
 import idaapi
-import idautils
-import ida_entry
+from ida_domain import Database
+from ida_domain.functions import FunctionFlags
 
 import capa.ida.helpers
 import capa.features.extractors.common
@@ -33,7 +32,7 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, Absolu
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
 
-def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
+def check_segment_for_pe(db: Database, seg) -> Iterator[tuple[int, int]]:
     """check segment for embedded PE
 
     adapted for IDA from:
@@ -51,8 +50,7 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
 
     todo = []
     for mzx, pex, i in mz_xor:
-        # find all segment offsets containing XOR'd "MZ" bytes
-        for off in capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx):
+        for off in capa.features.extractors.ida.helpers.find_byte_sequence(db, seg.start_ea, seg.end_ea, mzx):
             todo.append((off, mzx, pex, i))
 
     while len(todo):
@@ -64,9 +62,11 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
         if seg_max < (e_lfanew + 4):
             continue
 
-        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i))[0]
+        raw_bytes = db.bytes.get_bytes_at(e_lfanew, 4)
+        if not raw_bytes:
+            continue
+        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(raw_bytes, i))[0]
 
-        # assume XOR'd "PE" bytes exist within threshold
         if newoff > MAX_OFFSET_PE_AFTER_MZ:
             continue
 
@@ -74,35 +74,35 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
         if seg_max < (peoff + 2):
             continue
 
-        if idc.get_bytes(peoff, 2) == pex:
+        pe_bytes = db.bytes.get_bytes_at(peoff, 2)
+        if pe_bytes == pex:
             yield off, i
 
 
-def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
+def extract_file_embedded_pe(db: Database) -> Iterator[tuple[Feature, Address]]:
     """extract embedded PE features
 
     IDA must load resource sections for this to be complete
         - '-R' from console
         - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
-        for ea, _ in check_segment_for_pe(seg):
+    for seg in capa.features.extractors.ida.helpers.get_segments(db, skip_header_segments=True):
+        for ea, _ in check_segment_for_pe(db, seg):
             yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
-def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
+def extract_file_export_names(db: Database) -> Iterator[tuple[Feature, Address]]:
     """extract function exports"""
-    for _, ordinal, ea, name in idautils.Entries():
-        forwarded_name = ida_entry.get_entry_forwarder(ordinal)
-        if forwarded_name is None:
-            yield Export(name), AbsoluteVirtualAddress(ea)
+    for entry in db.entries.get_all():
+        if entry.has_forwarder():
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(entry.forwarder_name)
+            yield Export(forwarded_name), AbsoluteVirtualAddress(entry.address)
+            yield Characteristic("forwarded export"), AbsoluteVirtualAddress(entry.address)
         else:
-            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
-            yield Export(forwarded_name), AbsoluteVirtualAddress(ea)
-            yield Characteristic("forwarded export"), AbsoluteVirtualAddress(ea)
+            yield Export(entry.name), AbsoluteVirtualAddress(entry.address)
 
 
-def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
+def extract_file_import_names(db: Database) -> Iterator[tuple[Feature, Address]]:
     """extract function imports
 
     1. imports by ordinal:
@@ -113,7 +113,7 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
      - modulename.importname
      - importname
     """
-    for ea, info in capa.features.extractors.ida.helpers.get_file_imports().items():
+    for ea, info in capa.features.extractors.ida.helpers.get_file_imports(db).items():
         addr = AbsoluteVirtualAddress(ea)
         if info[1] and info[2]:
             # e.g. in mimikatz: ('cabinet', 'FCIAddFile', 11L)
@@ -134,30 +134,31 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
         for name in capa.features.extractors.helpers.generate_symbols(dll, symbol, include_dll=True):
             yield Import(name), addr
 
-    for ea, info in capa.features.extractors.ida.helpers.get_file_externs().items():
+    for ea, info in capa.features.extractors.ida.helpers.get_file_externs(db).items():
         yield Import(info[1]), AbsoluteVirtualAddress(ea)
 
 
-def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
+def extract_file_section_names(db: Database) -> Iterator[tuple[Feature, Address]]:
     """extract section names
 
     IDA must load resource sections for this to be complete
         - '-R' from console
         - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
-        yield Section(idaapi.get_segm_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
+    for seg in capa.features.extractors.ida.helpers.get_segments(db, skip_header_segments=True):
+        name = db.segments.get_name(seg)
+        yield Section(name), AbsoluteVirtualAddress(seg.start_ea)
 
 
-def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
+def extract_file_strings(db: Database) -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings
 
     IDA must load resource sections for this to be complete
         - '-R' from console
         - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments():
-        seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
+    for seg in capa.features.extractors.ida.helpers.get_segments(db):
+        seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(db, seg)
 
         # differing to common string extractor factor in segment offset here
         for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
@@ -167,41 +168,40 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
 
-def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
-    """
-    extract the names of statically-linked library functions.
-    """
-    for ea in idautils.Functions():
-        addr = AbsoluteVirtualAddress(ea)
-        if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
-            name = idaapi.get_name(ea)
-            yield FunctionName(name), addr
-            if name.startswith("_"):
-                # some linkers may prefix linked routines with a `_` to avoid name collisions.
-                # extract features for both the mangled and un-mangled representations.
-                # e.g. `_fwrite` -> `fwrite`
-                # see: https://stackoverflow.com/a/2628384/87207
-                yield FunctionName(name[1:]), addr
+def extract_file_function_names(db: Database) -> Iterator[tuple[Feature, Address]]:
+    """extract the names of statically-linked library functions."""
+    for f in db.functions.get_all():
+        flags = db.functions.get_flags(f)
+        if flags & FunctionFlags.LIB:
+            addr = AbsoluteVirtualAddress(f.start_ea)
+            name = db.names.get_at(f.start_ea)
+            if name:
+                yield FunctionName(name), addr
+                if name.startswith("_"):
+                    # some linkers may prefix linked routines with a `_` to avoid name collisions.
+                    # extract features for both the mangled and un-mangled representations.
+                    # e.g. `_fwrite` -> `fwrite`
+                    # see: https://stackoverflow.com/a/2628384/87207
+                    yield FunctionName(name[1:]), addr
 
 
-def extract_file_format() -> Iterator[tuple[Feature, Address]]:
-    filetype = capa.ida.helpers.get_filetype()
+def extract_file_format(db: Database) -> Iterator[tuple[Feature, Address]]:
+    format_name = db.format
 
-    if filetype in (idaapi.f_PE, idaapi.f_COFF):
+    if "PE" in format_name or "COFF" in format_name:
         yield Format(FORMAT_PE), NO_ADDRESS
-    elif filetype == idaapi.f_ELF:
+    elif "ELF" in format_name:
         yield Format(FORMAT_ELF), NO_ADDRESS
-    elif filetype == idaapi.f_BIN:
-        # no file type to return when processing a binary file, but we want to continue processing
+    elif "Binary" in format_name:
         return
     else:
-        raise NotImplementedError(f"unexpected file format: {filetype}")
+        raise NotImplementedError(f"unexpected file format: {format_name}")
 
 
-def extract_features() -> Iterator[tuple[Feature, Address]]:
+def extract_features(db: Database) -> Iterator[tuple[Feature, Address]]:
     """extract file features"""
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler():
+        for feature, addr in file_handler(db):
             yield feature, addr
 
 
