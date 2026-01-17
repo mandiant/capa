@@ -628,6 +628,8 @@ def compute_dynamic_layout(
 
     matched_calls: set[Address] = set()
 
+    matched_calls: set[Address] = set()
+
     def result_rec(result: capa.features.common.Result):
         for loc in result.locations:
             if isinstance(loc, capa.features.address.DynamicCallAddress):
