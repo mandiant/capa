@@ -4,6 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      pyasn1-updates:
+        patterns:
+          - "pyasn1"
+          - "pyasn1-modules"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
