@@ -18,7 +18,7 @@ ida-settings==3.2.2
 intervaltree==3.2.1
 markdown-it-py==4.0.0
 mdurl==0.1.2
-msgpack==1.0.8
+msgpack==1.1.2
 networkx==3.4.2
 pefile==2024.8.26
 pip==25.3
