@@ -10,6 +10,10 @@ updates:
           - "pyasn1"
           - "pyasn1-modules"
           - "vivisect"
+      msgpack-updates:
+        patterns:
+          - "msgpack"
+          - "vivisect"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
