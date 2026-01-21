@@ -1,0 +1,36 @@
+name: Auto-format with Black
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Black
+        # Pinned to match pyproject.toml
+        run: pip install black==25.12.0
+
+      - name: Run Black
+        # Enforce 120 char limit per CONTRIBUTING.md
+        run: black . --line-length 120
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-format with black"
+          branch: ${{ github.head_ref }}
