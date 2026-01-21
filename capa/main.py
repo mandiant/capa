@@ -1094,7 +1094,7 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
-    capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
+    capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor.from_current_database())
 
     meta.analysis.feature_counts = capabilities.feature_counts
     meta.analysis.library_functions = capabilities.library_functions

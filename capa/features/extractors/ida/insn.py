@@ -18,7 +18,8 @@ from typing import Any, Iterator, Optional
 import idc
 import ida_ua
 import idaapi
-import idautils
+from ida_domain import Database
+from ida_domain.functions import FunctionFlags
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
@@ -33,19 +34,19 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def get_imports(ctx: dict[str, Any]) -> dict[int, Any]:
+def get_imports(db: Database, ctx: dict[str, Any]) -> dict[int, Any]:
     if "imports_cache" not in ctx:
-        ctx["imports_cache"] = capa.features.extractors.ida.helpers.get_file_imports()
+        ctx["imports_cache"] = capa.features.extractors.ida.helpers.get_file_imports(db)
     return ctx["imports_cache"]
 
 
-def get_externs(ctx: dict[str, Any]) -> dict[int, Any]:
+def get_externs(db: Database, ctx: dict[str, Any]) -> dict[int, Any]:
     if "externs_cache" not in ctx:
-        ctx["externs_cache"] = capa.features.extractors.ida.helpers.get_file_externs()
+        ctx["externs_cache"] = capa.features.extractors.ida.helpers.get_file_externs(db)
     return ctx["externs_cache"]
 
 
-def check_for_api_call(insn: idaapi.insn_t, funcs: dict[int, Any]) -> Optional[tuple[str, str]]:
+def check_for_api_call(db: Database, insn: idaapi.insn_t, funcs: dict[int, Any]) -> Optional[tuple[str, str]]:
     """check instruction for API call"""
     info = None
     ref = insn.ea
@@ -53,27 +54,32 @@ def check_for_api_call(insn: idaapi.insn_t, funcs: dict[int, Any]) -> Optional[t
     # attempt to resolve API calls by following chained thunks to a reasonable depth
     for _ in range(THUNK_CHAIN_DEPTH_DELTA):
         # assume only one code/data ref when resolving "call" or "jmp"
-        try:
-            ref = tuple(idautils.CodeRefsFrom(ref, False))[0]
-        except IndexError:
-            try:
-                # thunks may be marked as data refs
-                ref = tuple(idautils.DataRefsFrom(ref))[0]
-            except IndexError:
+        code_refs = list(db.xrefs.code_refs_from_ea(ref, flow=False))
+        if code_refs:
+            ref = code_refs[0]
+        else:
+            # thunks may be marked as data refs
+            data_refs = list(db.xrefs.data_refs_from_ea(ref))
+            if data_refs:
+                ref = data_refs[0]
+            else:
                 break
 
         info = funcs.get(ref)
         if info:
             break
 
-        f = idaapi.get_func(ref)
-        if not f or not (f.flags & idaapi.FUNC_THUNK):
+        f = db.functions.get_at(ref)
+        if f is None:
+            break
+        flags = db.functions.get_flags(f)
+        if not (flags & FunctionFlags.THUNK):
             break
 
     return info
 
 
-def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_api_features(db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction API features
 
@@ -82,35 +88,30 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
     """
     insn: idaapi.insn_t = ih.inner
 
-    if insn.get_canon_mnem() not in ("call", "jmp"):
+    mnem = db.instructions.get_mnemonic(insn)
+    if mnem not in ("call", "jmp"):
         return
 
-    # check call to imported functions
-    api = check_for_api_call(insn, get_imports(fh.ctx))
+    api = check_for_api_call(db, insn, get_imports(db, fh.ctx))
     if api:
-        # tuple (<module>, <function>, <ordinal>)
         for name in capa.features.extractors.helpers.generate_symbols(api[0], api[1]):
             yield API(name), ih.address
-        # a call instruction should only call one function, stop if a call to an import is extracted
         return
 
-    # check call to extern functions
-    api = check_for_api_call(insn, get_externs(fh.ctx))
+    api = check_for_api_call(db, insn, get_externs(db, fh.ctx))
     if api:
-        # tuple (<module>, <function>, <ordinal>)
         yield API(api[1]), ih.address
-        # a call instruction should only call one function, stop if a call to an extern is extracted
         return
 
     # extract dynamically resolved APIs stored in renamed globals (renamed for example using `renimp.idc`)
     # examples: `CreateProcessA`, `HttpSendRequestA`
     if insn.Op1.type == ida_ua.o_mem:
         op_addr = insn.Op1.addr
-        op_name = idaapi.get_name(op_addr)
+        op_name = db.names.get_at(op_addr)
         # when renaming a global using an API name, IDA assigns it the function type
         # ensure we do not extract something wrong by checking that the address has a name and a type
         # we could check that the type is a function definition, but that complicates the code
-        if (not op_name.startswith("off_")) and idc.get_type(op_addr):
+        if op_name and (not op_name.startswith("off_")) and idc.get_type(op_addr):
             # Remove suffix used in repeated names, for example _0 in VirtualFree_0
             match = re.match(r"(.+)_\d+", op_name)
             if match:
@@ -119,19 +120,21 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
             for name in capa.features.extractors.helpers.generate_symbols("", op_name):
                 yield API(name), ih.address
 
-    # extract IDA/FLIRT recognized API functions
-    targets = tuple(idautils.CodeRefsFrom(insn.ea, False))
+    targets = list(db.xrefs.code_refs_from_ea(insn.ea, flow=False))
     if not targets:
         return
 
     target = targets[0]
-    target_func = idaapi.get_func(target)
+    target_func = db.functions.get_at(target)
     if not target_func or target_func.start_ea != target:
         # not a function (start)
         return
 
-    name = idaapi.get_name(target_func.start_ea)
-    if target_func.flags & idaapi.FUNC_LIB or not name.startswith("sub_"):
+    name = db.names.get_at(target_func.start_ea)
+    if not name:
+        return
+    flags = db.functions.get_flags(target_func)
+    if flags & FunctionFlags.LIB or not name.startswith("sub_"):
         yield API(name), ih.address
         if name.startswith("_"):
             # some linkers may prefix linked routines with a `_` to avoid name collisions.
@@ -140,13 +143,13 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
             # see: https://stackoverflow.com/a/2628384/87207
             yield API(name[1:]), ih.address
 
-        for altname in capa.features.extractors.ida.helpers.get_function_alternative_names(target_func.start_ea):
+        for altname in capa.features.extractors.ida.helpers.get_function_alternative_names(db, target_func.start_ea):
             yield FunctionName(altname), ih.address
             yield API(altname), ih.address
 
 
 def extract_insn_number_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction number features
@@ -155,7 +158,7 @@ def extract_insn_number_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if idaapi.is_ret_insn(insn):
+    if db.instructions.breaks_sequential_flow(insn):
         # skip things like:
         #   .text:0042250E retn 8
         return
@@ -183,7 +186,8 @@ def extract_insn_number_features(
         yield Number(const), ih.address
         yield OperandNumber(i, const), ih.address
 
-        if insn.itype == idaapi.NN_add and 0 < const < MAX_STRUCTURE_SIZE and op.type == idaapi.o_imm:
+        mnem = db.instructions.get_mnemonic(insn)
+        if mnem == "add" and 0 < const < MAX_STRUCTURE_SIZE and op.type == idaapi.o_imm:
             # for pattern like:
             #
             #     add eax, 0x10
@@ -193,7 +197,7 @@ def extract_insn_number_features(
             yield OperandOffset(i, const), ih.address
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_bytes_features(db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse referenced byte sequences
     example:
@@ -201,20 +205,20 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     """
     insn: idaapi.insn_t = ih.inner
 
-    if idaapi.is_call_insn(insn):
+    if db.instructions.is_call_instruction(insn):
         return
 
-    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(db, insn)
     if ref != insn.ea:
-        extracted_bytes = capa.features.extractors.ida.helpers.read_bytes_at(ref, MAX_BYTES_FEATURE_SIZE)
+        extracted_bytes = capa.features.extractors.ida.helpers.read_bytes_at(db, ref, MAX_BYTES_FEATURE_SIZE)
         if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
-            if not capa.features.extractors.ida.helpers.find_string_at(ref):
+            if not capa.features.extractors.ida.helpers.find_string_at(db, ref):
                 # don't extract byte features for obvious strings
                 yield Bytes(extracted_bytes), ih.address
 
 
 def extract_insn_string_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction string features
@@ -224,15 +228,15 @@ def extract_insn_string_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(db, insn)
     if ref != insn.ea:
-        found = capa.features.extractors.ida.helpers.find_string_at(ref)
+        found = capa.features.extractors.ida.helpers.find_string_at(db, ref)
         if found:
             yield String(found), ih.address
 
 
 def extract_insn_offset_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction structure offset features
@@ -256,7 +260,7 @@ def extract_insn_offset_features(
         if op_off is None:
             continue
 
-        if idaapi.is_mapped(op_off):
+        if db.is_valid_ea(op_off):
             # Ignore:
             #   mov esi, dword_1005B148[esi]
             continue
@@ -269,8 +273,9 @@ def extract_insn_offset_features(
         yield Offset(op_off), ih.address
         yield OperandOffset(i, op_off), ih.address
 
+        mnem = db.instructions.get_mnemonic(insn)
         if (
-            insn.itype == idaapi.NN_lea
+            mnem == "lea"
             and i == 1
             # o_displ is used for both:
             #   [eax+1]
@@ -305,7 +310,7 @@ def contains_stack_cookie_keywords(s: str) -> bool:
     return any(keyword in s for keyword in ("stack", "security"))
 
 
-def bb_stack_cookie_registers(bb: idaapi.BasicBlock) -> Iterator[int]:
+def bb_stack_cookie_registers(db: Database, bb: idaapi.BasicBlock) -> Iterator[int]:
     """scan basic block for stack cookie operations
 
     yield registers ids that may have been used for stack cookie operations
@@ -331,21 +336,22 @@ def bb_stack_cookie_registers(bb: idaapi.BasicBlock) -> Iterator[int]:
 
     TODO: this is expensive, but necessary?...
     """
-    for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
-        if contains_stack_cookie_keywords(idc.GetDisasm(insn.ea)):
+    for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(db, bb.start_ea, bb.end_ea):
+        disasm = db.instructions.get_disassembly(insn)
+        if contains_stack_cookie_keywords(disasm):
             for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
                 if capa.features.extractors.ida.helpers.is_op_write(insn, op):
                     # only include modified registers
                     yield op.reg
 
 
-def is_nzxor_stack_cookie_delta(f: idaapi.func_t, bb: idaapi.BasicBlock, insn: idaapi.insn_t) -> bool:
+def is_nzxor_stack_cookie_delta(db: Database, f: idaapi.func_t, bb: idaapi.BasicBlock, insn: idaapi.insn_t) -> bool:
     """check if nzxor exists within stack cookie delta"""
     # security cookie check should use SP or BP
     if not capa.features.extractors.ida.helpers.is_frame_register(insn.Op2.reg):
         return False
 
-    f_bbs = tuple(capa.features.extractors.ida.helpers.get_function_blocks(f))
+    f_bbs = tuple(capa.features.extractors.ida.helpers.get_function_blocks(db, f))
 
     # expect security cookie init in first basic block within first bytes (instructions)
     if capa.features.extractors.ida.helpers.is_basic_block_equal(bb, f_bbs[0]) and insn.ea < (
@@ -362,15 +368,17 @@ def is_nzxor_stack_cookie_delta(f: idaapi.func_t, bb: idaapi.BasicBlock, insn: i
     return False
 
 
-def is_nzxor_stack_cookie(f: idaapi.func_t, bb: idaapi.BasicBlock, insn: idaapi.insn_t) -> bool:
+def is_nzxor_stack_cookie(db: Database, f: idaapi.func_t, bb: idaapi.BasicBlock, insn: idaapi.insn_t) -> bool:
     """check if nzxor is related to stack cookie"""
-    if contains_stack_cookie_keywords(idaapi.get_cmt(insn.ea, False)):
+    cmt_info = db.comments.get_at(insn.ea)
+    cmt = cmt_info.comment if cmt_info else ""
+    if contains_stack_cookie_keywords(cmt):
         # Example:
         #   xor     ecx, ebp        ; StackCookie
         return True
-    if is_nzxor_stack_cookie_delta(f, bb, insn):
+    if is_nzxor_stack_cookie_delta(db, f, bb, insn):
         return True
-    stack_cookie_regs = tuple(bb_stack_cookie_registers(bb))
+    stack_cookie_regs = tuple(bb_stack_cookie_registers(db, bb))
     if any(op_reg in stack_cookie_regs for op_reg in (insn.Op1.reg, insn.Op2.reg)):
         # Example:
         #   mov     eax, ___security_cookie
@@ -380,7 +388,7 @@ def is_nzxor_stack_cookie(f: idaapi.func_t, bb: idaapi.BasicBlock, insn: idaapi.
 
 
 def extract_insn_nzxor_characteristic_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction non-zeroing XOR instruction
@@ -388,31 +396,33 @@ def extract_insn_nzxor_characteristic_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if insn.itype not in (idaapi.NN_xor, idaapi.NN_xorpd, idaapi.NN_xorps, idaapi.NN_pxor):
+    mnem = db.instructions.get_mnemonic(insn)
+    if mnem not in ("xor", "xorpd", "xorps", "pxor"):
         return
     if capa.features.extractors.ida.helpers.is_operand_equal(insn.Op1, insn.Op2):
         return
-    if is_nzxor_stack_cookie(fh.inner, bbh.inner, insn):
+    if is_nzxor_stack_cookie(db, fh.inner, bbh.inner, insn):
         return
     yield Characteristic("nzxor"), ih.address
 
 
 def extract_insn_mnemonic_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """parse instruction mnemonic features"""
-    yield Mnemonic(idc.print_insn_mnem(ih.inner.ea)), ih.address
+    mnem = db.instructions.get_mnemonic(ih.inner)
+    yield Mnemonic(mnem), ih.address
 
 
 def extract_insn_obfs_call_plus_5_characteristic_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
     insn: idaapi.insn_t = ih.inner
 
-    if not idaapi.is_call_insn(insn):
+    if not db.instructions.is_call_instruction(insn):
         return
 
     if insn.ea + 5 == idc.get_operand_value(insn.ea, 0):
@@ -420,7 +430,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(
 
 
 def extract_insn_peb_access_characteristic_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """parse instruction peb access
 
@@ -431,14 +441,15 @@ def extract_insn_peb_access_characteristic_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if insn.itype not in (idaapi.NN_push, idaapi.NN_mov):
+    mnem = db.instructions.get_mnemonic(insn)
+    if mnem not in ("push", "mov"):
         return
 
     if all(op.type != idaapi.o_mem for op in insn.ops):
         # try to optimize for only memory references
         return
 
-    disasm = idc.GetDisasm(insn.ea)
+    disasm = db.instructions.get_disassembly(insn)
 
     if " fs:30h" in disasm or " gs:60h" in disasm:
         # TODO(mike-hunhoff): use proper IDA API for fetching segment access
@@ -448,7 +459,7 @@ def extract_insn_peb_access_characteristic_features(
 
 
 def extract_insn_segment_access_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """parse instruction fs or gs access
 
@@ -461,7 +472,7 @@ def extract_insn_segment_access_features(
         # try to optimize for only memory references
         return
 
-    disasm = idc.GetDisasm(insn.ea)
+    disasm = db.instructions.get_disassembly(insn)
 
     if " fs:" in disasm:
         # TODO(mike-hunhoff): use proper IDA API for fetching segment access
@@ -477,37 +488,39 @@ def extract_insn_segment_access_features(
 
 
 def extract_insn_cross_section_cflow(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
     insn: idaapi.insn_t = ih.inner
 
-    for ref in idautils.CodeRefsFrom(insn.ea, False):
-        if ref in get_imports(fh.ctx):
+    for ref in db.xrefs.code_refs_from_ea(insn.ea, flow=False):
+        if ref in get_imports(db, fh.ctx):
             # ignore API calls
             continue
-        if not idaapi.getseg(ref):
+        ref_seg = db.segments.get_at(ref)
+        if ref_seg is None:
             # handle IDA API bug
             continue
-        if idaapi.getseg(ref) == idaapi.getseg(insn.ea):
+        insn_seg = db.segments.get_at(insn.ea)
+        if ref_seg == insn_seg:
             continue
         yield Characteristic("cross section flow"), ih.address
 
 
-def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_function_calls_from(db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
     """
     insn: idaapi.insn_t = ih.inner
 
-    if idaapi.is_call_insn(insn):
-        for ref in idautils.CodeRefsFrom(insn.ea, False):
+    if db.instructions.is_call_instruction(insn):
+        for ref in db.xrefs.code_refs_from_ea(insn.ea, flow=False):
             yield Characteristic("calls from"), AbsoluteVirtualAddress(ref)
 
 
 def extract_function_indirect_call_characteristic_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    db: Database, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[tuple[Feature, Address]]:
     """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
@@ -517,14 +530,14 @@ def extract_function_indirect_call_characteristic_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if idaapi.is_call_insn(insn) and idc.get_operand_type(insn.ea, 0) in (idc.o_reg, idc.o_phrase, idc.o_displ):
+    if db.instructions.is_call_instruction(insn) and idc.get_operand_type(insn.ea, 0) in (idc.o_reg, idc.o_phrase, idc.o_displ):
         yield Characteristic("indirect call"), ih.address
 
 
-def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_features(db: Database, f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
-        for feature, ea in inst_handler(f, bbh, insn):
+        for feature, ea in inst_handler(db, f, bbh, insn):
             yield feature, ea
 
 

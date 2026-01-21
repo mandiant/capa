@@ -14,6 +14,7 @@
 
 
 import ida_kernwin
+from ida_domain import Database
 
 from capa.ida.plugin.error import UserCancelledError
 from capa.ida.plugin.qt_compat import QtCore, Signal
@@ -43,7 +44,8 @@ class CapaExplorerFeatureExtractor(IdaFeatureExtractor):
     """
 
     def __init__(self):
-        super().__init__()
+        db = Database.open()
+        super().__init__(db)
         self.indicator = CapaExplorerProgressIndicator()
 
     def extract_function_features(self, fh: FunctionHandle):

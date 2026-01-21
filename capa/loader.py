@@ -357,7 +357,7 @@ def get_extractor(
             ida_auto.auto_wait()
             logger.debug("idalib: opened database.")
 
-        return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+        return capa.features.extractors.ida.extractor.IdaFeatureExtractor.from_current_database()
 
     elif backend == BACKEND_GHIDRA:
         import pyghidra

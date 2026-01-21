@@ -95,7 +95,7 @@ def get_ida_extractor(_path):
     # have to import this inline so pytest doesn't bail outside of IDA
     import capa.features.extractors.ida.extractor
 
-    return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    return capa.features.extractors.ida.extractor.IdaFeatureExtractor.from_current_database()
 
 
 def nocollect(f):
