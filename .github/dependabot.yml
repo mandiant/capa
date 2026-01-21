@@ -5,15 +5,12 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      pyasn1-updates:
+      vivisect: # You can name this whatever you like
         patterns:
+          - "vivisect"
           - "pyasn1"
           - "pyasn1-modules"
-          - "vivisect"
-      msgpack-updates:
-        patterns:
           - "msgpack"
-          - "vivisect"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
