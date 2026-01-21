@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # TELL THE ROBOT TO LOOK AT THE FORK, NOT THE MAIN REPO
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.head_ref }}
 
       - name: Set up Python
