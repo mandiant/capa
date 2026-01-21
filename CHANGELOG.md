@@ -30,6 +30,7 @@
 ### Development
 
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
+- ci: bump workflows to Python v3.14 @kami922 #2778
 
 ### Raw diffs
 - [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
