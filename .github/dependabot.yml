@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      vivisect: # You can name this whatever you like
+      vivisect:
         patterns:
           - "vivisect"
           - "pyasn1"
