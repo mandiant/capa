@@ -19,6 +19,7 @@ import capa.main
 import capa.features.file
 import capa.features.insn
 import capa.features.common
+import capa.features.extractors.vmray.call
 
 DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
     [
@@ -131,3 +132,10 @@ def test_vmray_processes():
     path = fixtures.get_data_path_by_name("2f8a79-vmray")
     vmre = fixtures.get_vmray_extractor(path)
     assert len(vmre.analysis.monitor_processes) == 9
+
+
+def test_vmray_hkey_whitelist():    
+    expected_params = {"hKey", "hKeyRoot", "hkResult", "samDesired"}
+    actual_params = capa.features.extractors.vmray.call.VOID_PTR_NUMBER_PARAMS
+    assert expected_params.issubset(actual_params), \
+        f"Missing expected params. Expected: {expected_params}, Got: {actual_params}"

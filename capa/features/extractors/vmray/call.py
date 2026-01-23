@@ -26,6 +26,16 @@ from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, Pr
 logger = logging.getLogger(__name__)
 
 
+VOID_PTR_NUMBER_PARAMS = frozenset(
+    {
+        "hKey",
+        "hKeyRoot",
+        "hkResult",
+        "samDesired",
+    }
+)
+
+
 def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[tuple[Feature, Address]]:
     if param.deref is not None:
         # pointer types contain a special "deref" member that stores the deref'd value
@@ -39,7 +49,18 @@ def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[tuple[Feat
                     # parsing the data up to here results in double-escaped backslashes, remove those here
                     yield String(param.deref.value.replace("\\\\", "\\")), ch.address
             else:
-                logger.debug("skipping deref param type %s", param.deref.type_)
+                if param.name in VOID_PTR_NUMBER_PARAMS:
+                    try:
+                        yield Number(hexint(param.deref.value)), ch.address
+                    except (ValueError, TypeError) as e:
+                        logger.debug(
+                            "failed to parse whitelisted void_ptr param %s value %s: %s",
+                            param.name,
+                            param.deref.value,
+                            e,
+                        )
+                else:
+                    logger.debug("skipping deref param type %s", param.deref.type_)
     elif param.value is not None:
         if param.type_ in PARAM_TYPE_INT:
             yield Number(hexint(param.value)), ch.address
