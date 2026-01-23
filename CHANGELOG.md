@@ -5,6 +5,7 @@
 ### New Features
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
+- vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @mike-hunhoff #2815
 
 ### Breaking Changes
 
