@@ -63,6 +63,13 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         for bb in f.basic_blocks:
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=bb)
 
+    def get_next_basic_blocks(self, bb) -> Iterator[AbsoluteVirtualAddress]:
+        for edge in bb.outgoing_edges:
+            yield AbsoluteVirtualAddress(edge.target.start)
+
+    def get_basic_block_size(self, bb: BBHandle) -> int:
+        return bb.inner.length
+
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.binja.basicblock.extract_features(fh, bbh)
 
