@@ -136,7 +136,6 @@ repos:
         -   "tests/"
         -   "--ignore=tests/test_binja_features.py"
         -   "--ignore=tests/test_ghidra_features.py"
-        -   "--ignore=tests/test_ida_features.py"
         -   "--ignore=tests/test_viv_features.py"
         -   "--ignore=tests/test_idalib_features.py"
         -   "--ignore=tests/test_main.py"
