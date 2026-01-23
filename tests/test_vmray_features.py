@@ -137,6 +137,4 @@ def test_vmray_processes():
 def test_vmray_hkey_whitelist():
     expected_params = {"hKey", "hKeyRoot", "hkResult", "samDesired"}
     actual_params = capa.features.extractors.vmray.call.VOID_PTR_NUMBER_PARAMS
-    assert (
-        actual_params == expected_params
-    ), f"Whitelist mismatch. Expected: {expected_params}, Got: {actual_params}"
+    assert actual_params == expected_params, f"Whitelist mismatch. Expected: {expected_params}, Got: {actual_params}"
