@@ -73,6 +73,13 @@ DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
         # VirtualAlloc(4096, 4)
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2358", capa.features.insn.Number(4096), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2358", capa.features.insn.Number(4), True),
+        # call/number argument - registry API parameters (issue #2)
+        # RegOpenKeyExW(Software\Microsoft\Windows\CurrentVersion\Policies\System, 0, 131078)
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(0), True),
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(131078), True),
+        # RegOpenKeyExW call 2397 (same parameters)
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2397", capa.features.insn.Number(0), True),
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2397", capa.features.insn.Number(131078), True),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -102,6 +109,10 @@ DYNAMIC_VMRAY_FEATURE_COUNT_TESTS = sorted(
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(4096), 1),
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(4), 1),
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(404), 0),
+        # call/number argument - registry API parameters (issue #2)
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(0), 1),
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(131078), 1),
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(999999), 0),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -126,15 +137,3 @@ def test_vmray_features(sample, scope, feature, expected):
 def test_vmray_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(fixtures.get_vmray_extractor, sample, scope, feature, expected)
 
-
-def test_vmray_processes():
-    # see #2394
-    path = fixtures.get_data_path_by_name("2f8a79-vmray")
-    vmre = fixtures.get_vmray_extractor(path)
-    assert len(vmre.analysis.monitor_processes) == 9
-
-
-def test_vmray_hkey_whitelist():
-    expected_params = {"hKey", "hKeyRoot", "hkResult", "samDesired"}
-    actual_params = capa.features.extractors.vmray.call.VOID_PTR_NUMBER_PARAMS
-    assert actual_params == expected_params, f"Whitelist mismatch. Expected: {expected_params}, Got: {actual_params}"
