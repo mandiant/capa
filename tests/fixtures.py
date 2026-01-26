@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import hashlib
 import logging
 import contextlib
 import collections
@@ -57,6 +58,63 @@ logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
 DOTNET_DIR = CD / "data" / "dotnet"
 DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
+
+
+def _build_sample_cache(samples_path: Path) -> dict[str, Path]:
+    """
+    Walk the samples directory and build lookup tables indexed by MD5, SHA256, and filename.
+
+    This eliminates the need for hardcoded file/hash mappings.
+    Similar to collect_samples() in scripts/lint.py.
+
+    Returns a dictionary mapping:
+    - MD5 hash (lower/upper) -> Path
+    - SHA256 hash (lower/upper) -> Path
+    - Filename -> Path
+    - Filename stem -> Path (for files with extensions)
+    """
+    cache: dict[str, Path] = {}
+
+    # Skip files that are build artifacts or database files
+    skip_extensions = {".viv", ".idb", ".i64", ".frz", ".fnames", ".bndb"}
+
+    for path in samples_path.rglob("*"):
+        if not path.is_file():
+            continue
+
+        if path.suffix in skip_extensions:
+            continue
+
+        try:
+            buf = path.read_bytes()
+        except OSError:
+            continue
+
+        sha256 = hashlib.sha256(buf).hexdigest()
+        md5 = hashlib.md5(buf).hexdigest()
+
+        cache[sha256.lower()] = path
+        cache[sha256.upper()] = path
+        cache[md5.lower()] = path
+        cache[md5.upper()] = path
+
+        # Index by first 8 characters of hashes as shortcuts
+        cache[sha256.lower()[:8]] = path
+        cache[md5.lower()[:8]] = path
+
+        cache[path.name] = path
+
+        if path.stem:
+            cache[path.stem] = path
+            stem_cleaned = path.stem.rstrip("_")
+            if stem_cleaned != path.stem:
+                cache[stem_cleaned] = path
+
+    return cache
+
+
+# Build the sample cache once at module import time
+_SAMPLE_CACHE = _build_sample_cache(CD / "data")
 
 
 @contextlib.contextmanager
@@ -636,6 +694,25 @@ def get_sample_md5_by_name(name):
         return "76fa734236daa023444dec26863401dc"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
+
+
+def get_sample_short_name_by_md5(md5: str):
+    """
+    Reverse lookup: given an MD5 hash, return the sample's shortened name.
+
+    Uses the dynamically-built sample cache instead of hardcoded mappings.
+    The cache is built once at module import time by walking the tests/data directory.
+
+    Raises:
+        ValueError: If no sample with the given MD5 is found
+    """
+    md5_lower = md5.lower()
+
+    if md5_lower in _SAMPLE_CACHE:
+        path = _SAMPLE_CACHE[md5_lower]
+        return path.stem
+
+    raise ValueError(f"unexpected sample MD5: {md5}")
 
 
 def resolve_sample(sample):
