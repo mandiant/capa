@@ -4,6 +4,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      vivisect:
+        patterns:
+          - "vivisect"
+          - "pyasn1"
+          - "pyasn1-modules"
+          - "msgpack"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
