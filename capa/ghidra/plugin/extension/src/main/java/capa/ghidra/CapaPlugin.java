@@ -48,3 +48,4 @@ public class CapaPlugin extends ProgramPlugin {
         tool.addAction(action);
     }
 }
+
