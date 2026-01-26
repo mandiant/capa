@@ -1229,6 +1229,7 @@ def main(argv=None):
 
     time0 = time.time()
 
+    args.enable_cache = False
     try:
         rules = capa.main.get_rules_from_cli(args)
     except capa.main.ShouldExitError as e:

@@ -25,7 +25,7 @@ pip==25.3
 protobuf==6.33.1
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
-pycparser==2.23
+pycparser==3.0
 pydantic==2.12.4
 # pydantic pins pydantic-core, 
 # but dependabot updates these separately (which is broken) and is annoying,
@@ -40,7 +40,7 @@ pyyaml==6.0.2
 rich==14.2.0
 ruamel-yaml==0.19.1
 ruamel-yaml-clib==0.2.14
-setuptools==80.9.0
+setuptools==80.10.1
 six==1.17.0
 sortedcontainers==2.4.0
 viv-utils==0.8.0
