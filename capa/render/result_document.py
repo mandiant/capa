@@ -167,7 +167,9 @@ class CompoundStatementType:
     AND = "and"
     OR = "or"
     NOT = "not"
+    NOT = "not"
     OPTIONAL = "optional"
+    SEQUENCE = "sequence"
 
 
 class StatementModel(FrozenModel): ...
@@ -213,7 +215,7 @@ class StatementNode(FrozenModel):
 
 
 def statement_from_capa(node: capa.engine.Statement) -> Statement:
-    if isinstance(node, (capa.engine.And, capa.engine.Or, capa.engine.Not)):
+    if isinstance(node, (capa.engine.And, capa.engine.Or, capa.engine.Not, capa.engine.Sequence)):
         return CompoundStatement(type=node.__class__.__name__.lower(), description=node.description)
 
     elif isinstance(node, capa.engine.Some):
@@ -279,6 +281,9 @@ def node_to_capa(
 
             elif node.statement.type == CompoundStatementType.OPTIONAL:
                 return capa.engine.Some(description=node.statement.description, count=0, children=children)
+
+            elif node.statement.type == CompoundStatementType.SEQUENCE:
+                return capa.engine.Sequence(description=node.statement.description, children=children)
 
             else:
                 assert_never(node.statement.type)
