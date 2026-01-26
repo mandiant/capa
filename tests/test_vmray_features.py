@@ -74,9 +74,11 @@ DYNAMIC_VMRAY_FEATURE_PRESENCE_TESTS = sorted(
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=2358", capa.features.insn.Number(4), True),
         # call/number argument - registry API parameters (issue #2)
         # RegOpenKeyExW(Software\Microsoft\Windows\CurrentVersion\Policies\System, 0, 131078)
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(2147483649), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(0), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(131078), True),
         # RegOpenKeyExW call 2397 (same parameters)
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2397", capa.features.insn.Number(2147483649), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2397", capa.features.insn.Number(0), True),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2397", capa.features.insn.Number(131078), True),
     ],
@@ -109,6 +111,7 @@ DYNAMIC_VMRAY_FEATURE_COUNT_TESTS = sorted(
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(4), 1),
         ("93b2d1-vmray", "process=(2176:0),thread=2420,call=10315", capa.features.insn.Number(404), 0),
         # call/number argument - registry API parameters (issue #2)
+        ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(2147483649), 1),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(0), 1),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(131078), 1),
         ("93b2d1-vmray", "process=(2176:0),thread=2204,call=2395", capa.features.insn.Number(999999), 0),

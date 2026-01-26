@@ -64,6 +64,16 @@ def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[tuple[Feat
     elif param.value is not None:
         if param.type_ in PARAM_TYPE_INT:
             yield Number(hexint(param.value)), ch.address
+        elif param.type_ == "void_ptr" and param.name in VOID_PTR_NUMBER_PARAMS:
+            try:
+                yield Number(hexint(param.value)), ch.address
+            except (ValueError, TypeError) as e:
+                logger.debug(
+                    "failed to parse whitelisted void_ptr param %s value %s: %s",
+                    param.name,
+                    param.value,
+                    e,
+                )
 
 
 def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[tuple[Feature, Address]]:
