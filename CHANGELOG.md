@@ -5,6 +5,7 @@
 ### New Features
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
+- result_document: add match_count field to expose rule prevalence information in structured outputs @Alessio-Falcini
 
 ### Breaking Changes
 

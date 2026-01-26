@@ -291,3 +291,21 @@ def test_rdoc_to_capa():
     meta, capabilites = rd.to_capa()
     assert isinstance(meta, rdoc.Metadata)
     assert isinstance(capabilites, Capabilities)
+
+
+def test_match_count_from_capa():
+    """
+    ResultDocument.from_capa should populate the convenience field `match_count`
+    with the number of matches for each rule.
+    """
+    # reuse a result document from disk (the same fixture used in other tests)
+    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    rd: rdoc.ResultDocument = rdoc.ResultDocument.from_file(path)
+
+    # regenerate a ResultDocument via to_capa/from_capa to exercise this code path
+    meta, capabilities = rd.to_capa()
+    regenerated = rdoc.ResultDocument.from_capa(meta, fixtures.sample_ruleset(), capabilities.matches)
+
+    for _, rule_matches in regenerated.rules.items():
+        assert rule_matches.match_count is not None
+        assert rule_matches.match_count == len(rule_matches.matches)

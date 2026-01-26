@@ -704,6 +704,12 @@ class RuleMatches(FrozenModel):
     meta: RuleMetadata
     source: str
     matches: tuple[tuple[frz.Address, Match], ...]
+    # number of matches for this rule within the analyzed sample.
+    # this is a convenience field to make the prevalence of a rule explicit
+    # in structured outputs (e.g. JSON) without requiring consumers to
+    # iterate the matches collection.
+    # may be missing (None) for older result documents that predate this field.
+    match_count: int | None = None
 
 
 class ResultDocument(FrozenModel):
@@ -719,13 +725,15 @@ class ResultDocument(FrozenModel):
             if rule.meta.get("capa/subscope-rule"):
                 continue
 
+            serialized_matches = tuple(
+                (frz.Address.from_capa(addr), Match.from_capa(rules, capabilities, match)) for addr, match in matches
+            )
+
             rule_matches[rule_name] = RuleMatches(
                 meta=RuleMetadata.from_capa(rule),
                 source=rule.definition,
-                matches=tuple(
-                    (frz.Address.from_capa(addr), Match.from_capa(rules, capabilities, match))
-                    for addr, match in matches
-                ),
+                matches=serialized_matches,
+                match_count=len(serialized_matches),
             )
 
         return ResultDocument(meta=meta, rules=rule_matches)
