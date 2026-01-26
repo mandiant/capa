@@ -8,7 +8,6 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.util.Msg;
 
 @PluginInfo(
     status = PluginStatus.STABLE,
@@ -19,7 +18,6 @@ import ghidra.util.Msg;
 )
 public class CapaPlugin extends ProgramPlugin {
 
-    private DockingAction action;
     private CapaProvider provider;
 
     public CapaPlugin(PluginTool tool) {
@@ -31,21 +29,14 @@ public class CapaPlugin extends ProgramPlugin {
 
     private void createActions() {
 
-        action = new DockingAction("Run capa analysis", getName()) {
+        DockingAction action =
+            new DockingAction("Run capa analysis", getName()) {
 
-            @Override
-            public void actionPerformed(ActionContext context) {
-
-                Msg.showInfo(
-                    this,
-                    null,
-                    "CapaPlugin",
-                    "Run capa analysis clicked"
-                );
-
-                provider.runCapa(currentProgram);
-            }
-        };
+                @Override
+                public void actionPerformed(ActionContext context) {
+                    provider.runCapa(currentProgram);
+                }
+            };
 
         action.setMenuBarData(
             new MenuData(new String[] {
