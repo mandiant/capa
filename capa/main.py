@@ -661,7 +661,9 @@ def get_rules_from_cli(args) -> RuleSet:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    enable_cache: bool = True
+    enable_cache: bool = getattr(args, "enable_cache", True)
+    # this allows calling functions to easily disable rule caching, e.g., used by the rule linter to avoid
+
     try:
         if capa.helpers.is_running_standalone() and args.is_default_rules:
             cache_dir = get_default_root() / "cache"
