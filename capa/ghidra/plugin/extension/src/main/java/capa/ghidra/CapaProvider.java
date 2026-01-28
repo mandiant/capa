@@ -3,24 +3,18 @@ package capa.ghidra;
 import docking.ComponentProvider;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JComponent;
 import java.awt.Font;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 public class CapaProvider extends ComponentProvider {
 
-    private final PluginTool tool;
     private final JTextArea output;
 
     public CapaProvider(PluginTool tool) {
         super(tool, "Capa Explorer", "CapaExplorer");
-        this.tool = tool;
 
         output = new JTextArea();
         output.setEditable(false);
@@ -35,32 +29,19 @@ public class CapaProvider extends ComponentProvider {
         return new JScrollPane(output);
     }
 
-    public void runCapa(Program program) {
+    public void showMessage(String message) {
+        output.append(message + "\n");
+    }
 
-        // Ensure panel is visible
-        tool.showComponentProvider(this, true);
+    public void clear() {
+        output.setText("");
+    }
 
-        if (program == null) {
-            output.setText("No program is currently open.\n");
-            return;
-        }
+    public void onProgramChanged(Program program) {
+        clear();
 
-        output.setText("Running capa...\n");
-
-        try {
-            String result = CapaPythonBridge.run(program);
-            output.append(result);
-        }
-        catch (Exception e) {
-            Msg.error(this, "Error running capa", e);
-
-            output.append("\nERROR:\n");
-
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-
-            output.append(sw.toString());
+        if (program != null) {
+            showMessage("Program loaded: " + program.getName());
         }
     }
 }
