@@ -8,13 +8,14 @@
 
 ### Breaking Changes
 
-### New Rules (5)
+### New Rules (6)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_timer still@teamt5.org
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
 - data-manipulation/encryption/hc-256/encrypt-data-using-hc-256 wballenthin@hex-rays.com
+- anti-analysis/anti-llm/terminate-anthropic-session-via-magic-strings wballenthin@hex-rays.com
 -
 
 ### Bug Fixes
