@@ -226,7 +226,7 @@ def test_fix262(pma16_01_extractor, capsys):
     assert capa.main.main([path, "-vv", "-t", "send HTTP request", "-q"]) == 0
 
     std = capsys.readouterr()
-    assert "HTTP/1.0" in std.out
+    assert "api: send" in std.out
     assert "www.practicalmalwareanalysis.com" not in std.out
 
 
