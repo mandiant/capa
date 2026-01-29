@@ -44,3 +44,7 @@ The extension passes the active Ghidra program directly to Python:
 
 ```python
 program = currentProgram
+
+print("Program name:", program.getName())
+print("Function count:", program.getFunctionManager().getFunctionCount())
+print("Language:", program.getLanguage().getLanguageID())
