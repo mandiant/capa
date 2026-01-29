@@ -20,3 +20,5 @@ closes #issue_number
 - [ ] No new tests needed
 <!-- Please help us keeping capa documentation up-to-date -->
 - [ ] No documentation update needed
+<!-- Please indicate if and how you have used AI to generate (parts of) your code submission. Include your prompt, model, tool, etc. -->
+- [ ] (Parts of) this code have been AI-generated and I'm including AI usage details in this description
