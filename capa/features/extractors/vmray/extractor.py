@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import logging
 from typing import Iterator
 from pathlib import Path
 
@@ -38,6 +38,8 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_formatted_params(params: ParamList) -> list[str]:
@@ -87,6 +89,16 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
     def get_processes(self) -> Iterator[ProcessHandle]:
         for monitor_process in self.analysis.monitor_processes.values():
+            # skip invalid/incomplete monitor process entries, see #2807
+            if monitor_process.pid == 0 or not monitor_process.filename:
+                logger.debug(
+                    "skipping incomplete process entry: pid=%d, filename=%s, monitor_id=%d",
+                    monitor_process.pid,
+                    monitor_process.filename,
+                    monitor_process.monitor_id,
+                )
+                continue
+
             address: ProcessAddress = ProcessAddress(pid=monitor_process.pid, ppid=monitor_process.ppid)
             yield ProcessHandle(address, inner=monitor_process)
 
