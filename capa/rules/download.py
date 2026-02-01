@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import io
-import sys
 import ssl
 import shutil
 import logging
