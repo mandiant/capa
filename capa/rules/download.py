@@ -68,42 +68,37 @@ def download_rules(url: str, dest: Path) -> Path:
     logger.info("downloading rules from %s", url)
     
     ctx = get_ssl_context()
-    
-    # Download to a temporary file
+    extract_root = dest.parent / ("tmp_" + dest.name)
+
     try:
         with urllib.request.urlopen(url, context=ctx) as response:
             with io.BytesIO(response.read()) as archive:
                  with zipfile.ZipFile(archive, "r") as zip_ref:
-                    # The zip file usually contains a top-level directory (e.g., capa-rules-master)
-                    # We want to extract it to a temporary location and then move the contents
-                    
-                    extract_root = dest.parent / ("tmp_" + dest.name)
-                    if extract_root.exists():
-                        shutil.rmtree(extract_root)
                     extract_root.mkdir(parents=True, exist_ok=True)
-                    
                     zip_ref.extractall(extract_root)
-                    
-                    # Find the actual rules directory inside the extracted content
-                    entries = list(extract_root.iterdir())
-                    if len(entries) == 1 and entries[0].is_dir():
-                        source = entries[0]
-                    else:
-                        source = extract_root
 
-                    if dest.exists():
-                        shutil.rmtree(dest)
-                    
-                    shutil.move(str(source), str(dest))
-                    
-                    # cleanup
-                    if extract_root.exists():
-                        shutil.rmtree(extract_root)
+        entries = list(extract_root.iterdir())
+        if len(entries) == 1 and entries[0].is_dir():
+            source = entries[0]
+        else:
+            source = extract_root
+
+        if dest.exists():
+            shutil.rmtree(dest)
+
+        shutil.move(str(source), str(dest))
+
     except urllib.error.URLError as e:
-        # Better error message for SSL issues
         if "CERTIFICATE_VERIFY_FAILED" in str(e):
-             logger.error("SSL Error: %s. Please ensure you have root certificates installed.", e)
+            logger.error(
+                "SSL Error: %s. Please ensure you have root certificates installed.",
+                e,
+            )
         raise
+
+    finally:
+        if extract_root.exists():
+            shutil.rmtree(extract_root)
 
     # Touch timestamp file
     (dest / ".download_timestamp").touch()
@@ -122,12 +117,14 @@ def ensure_rules(url: str = RULES_URL_DEFAULT) -> Path:
     try:
         download_rules(url, cache_dir)
     except Exception as e:
-        # if download fails but we have old rules, maybe we should just use them?
-        # For now, let's log error and try to use what we have if exists
         logger.error("failed to download rules: %s", e)
+
         if cache_dir.exists() and any(cache_dir.iterdir()):
-             logger.warning("using stale cached rules due to download failure")
-             return cache_dir
+            logger.warning(
+                "using stale cached rules due to download failure"
+            )
+            return cache_dir
+
         raise
-        
+            
     return cache_dir
