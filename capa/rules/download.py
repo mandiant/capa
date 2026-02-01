@@ -17,8 +17,8 @@ import ssl
 import shutil
 import logging
 import zipfile
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -37,7 +37,7 @@ def get_rules_cache_dir() -> Path:
 def is_cache_fresh(cache_dir: Path) -> bool:
     if not cache_dir.exists():
         return False
-    
+
     # Check if the directory is empty or looks incomplete
     if not any(cache_dir.iterdir()):
         return False
@@ -58,6 +58,7 @@ def is_cache_fresh(cache_dir: Path) -> bool:
 def get_ssl_context():
     try:
         import certifi
+
         return ssl.create_default_context(cafile=certifi.where())
     except ImportError:
         # Fallback to system default
@@ -66,14 +67,14 @@ def get_ssl_context():
 
 def download_rules(url: str, dest: Path) -> Path:
     logger.info("downloading rules from %s", url)
-    
+
     ctx = get_ssl_context()
     extract_root = dest.parent / ("tmp_" + dest.name)
 
     try:
         with urllib.request.urlopen(url, context=ctx) as response:
             with io.BytesIO(response.read()) as archive:
-                 with zipfile.ZipFile(archive, "r") as zip_ref:
+                with zipfile.ZipFile(archive, "r") as zip_ref:
                     extract_root.mkdir(parents=True, exist_ok=True)
                     zip_ref.extractall(extract_root)
 
@@ -102,17 +103,17 @@ def download_rules(url: str, dest: Path) -> Path:
 
     # Touch timestamp file
     (dest / ".download_timestamp").touch()
-    
+
     return dest
 
 
 def ensure_rules(url: str = RULES_URL_DEFAULT) -> Path:
     cache_dir = get_rules_cache_dir()
-    
+
     if is_cache_fresh(cache_dir):
         logger.debug("using cached rules from %s", cache_dir)
         return cache_dir
-    
+
     logger.info("cache is empty or stale, updating...")
     try:
         download_rules(url, cache_dir)
@@ -120,11 +121,9 @@ def ensure_rules(url: str = RULES_URL_DEFAULT) -> Path:
         logger.error("failed to download rules: %s", e)
 
         if cache_dir.exists() and any(cache_dir.iterdir()):
-            logger.warning(
-                "using stale cached rules due to download failure"
-            )
+            logger.warning("using stale cached rules due to download failure")
             return cache_dir
 
         raise
-            
+
     return cache_dir
