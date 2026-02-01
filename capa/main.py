@@ -46,6 +46,7 @@ import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
+import capa.rules.download
 from capa.rules import RuleSet
 from capa.loader import (
     BACKEND_IDA,
@@ -493,9 +494,15 @@ def handle_common_args(args):
                 # this pulls down just the source code - not the default rules.
                 # i'm not sure the default rules should even be written to the library directory,
                 # so in this case, we require the user to use -r to specify the rule directory.
-                logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
-                logger.error("provide your own rule set via the `-r` option.")
-                raise ShouldExitError(E_MISSING_RULES)
+                logger.warning("default embedded rules not found! (maybe you installed capa as a library?)")
+                logger.warning("fetching rule set from %s...", capa.rules.download.RULES_URL_DEFAULT)
+                try:
+                    default_rule_path = capa.rules.download.ensure_rules()
+                    logger.warning("successfully fetched rules to %s", default_rule_path)
+                except Exception as e:
+                    logger.error("failed to fetch rules: %s", e)
+                    logger.error("provide your own rule set via the `-r` option.")
+                    raise ShouldExitError(E_MISSING_RULES) from e
 
             rules_paths.append(default_rule_path)
             args.is_default_rules = True
