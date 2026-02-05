@@ -22,7 +22,9 @@
 ### Bug Fixes
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
+- loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
+- vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
 
 ### capa Explorer Web
 
