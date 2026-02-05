@@ -696,7 +696,7 @@ def get_sample_md5_by_name(name):
         raise ValueError(f"unexpected sample fixture: {name}")
 
 
-def get_sample_short_name_by_md5(md5: str):
+def get_sample_short_name_by_md5(md5: str) -> str:
     """
     Reverse lookup: given an MD5 hash, return the sample's shortened name.
 
