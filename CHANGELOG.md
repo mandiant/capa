@@ -5,21 +5,24 @@
 ### New Features
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
+- vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
 ### Breaking Changes
 
-### New Rules (5)
+### New Rules (6)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_timer still@teamt5.org
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
 - data-manipulation/encryption/hc-256/encrypt-data-using-hc-256 wballenthin@hex-rays.com
+- anti-analysis/anti-llm/terminate-anthropic-session-via-magic-strings wballenthin@hex-rays.com
 -
 
 ### Bug Fixes
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
+- lint: disable rule caching during linting @Maijin #2817
 
 ### capa Explorer Web
 
