@@ -92,16 +92,14 @@ class TestGetSampleShortNameByMd5:
             ("5f66b82558ca92e54e77f216ef4c066c", "mimikatz"),
             ("e80758cf485db142fca1ee03a34ead05", "kernel32"),
             ("a8565440629ac87f6fef7d588fe3ff0f", "kernel32-64"),
-            ("db648cd247281954344f1d810c6fd590", "al-khaser x86"),
-            ("3cb21ae76ff3da4b7e02d77ff76e82be", "al-khaser x64"),
+            ("db648cd247281954344f1d810c6fd590", "al-khaser_x86"),
+            ("3cb21ae76ff3da4b7e02d77ff76e82be", "al-khaser_x64"),
         ],
     )
     def test_reverse_lookup(self, md5, name):
         """Test reverse MD5 lookup returns correct sample name."""
         result = fixtures.get_sample_short_name_by_md5(md5)
-        # Verify lookup succeeds and returns a non-empty string
-        assert isinstance(result, str)
-        assert len(result) > 0
+        assert result == name
 
     def test_unknown_md5_raises_error(self):
         """Test that unknown MD5 hash raises ValueError."""
@@ -122,18 +120,12 @@ class TestGetSampleShortNameByMd5:
 class TestMd5NameLookupRoundtrip:
     """Tests for round-trip MD5/name lookups."""
 
-    @pytest.mark.parametrize("name", SIMPLE_SAMPLES)
+    @pytest.mark.parametrize("name", ["mimikatz", "kernel32", "kernel32-64"])
     def test_roundtrip_simple_samples(self, name):
-        """Test name->MD5->name roundtrip for simple samples."""
+        """Test name->MD5->name roundtrip for samples whose filename stem matches the lookup name."""
         md5 = fixtures.get_sample_md5_by_name(name)
         result_name = fixtures.get_sample_short_name_by_md5(md5)
-        # Verify the roundtrip succeeds and returns a valid result
-        # Note: Actual filenames may differ from friendly names:
-        # - "pma12-04" on disk is "Practical Malware Analysis Lab 12-04"
-        # - "al-khaser x86" on disk is "al-khaser_x86"
-        # We just verify the lookup succeeds without checking exact names
-        assert isinstance(result_name, str)
-        assert len(result_name) > 0
+        assert result_name == name
 
     @pytest.mark.parametrize("name", HASH_BASED_SAMPLES)
     def test_roundtrip_hash_samples(self, name):
