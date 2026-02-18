@@ -613,7 +613,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
 
-            for location in sorted(locations):
+            # use a key to avoid TypeError when mixing address types (e.g. AbsoluteVirtualAddress and _NoAddress)
+            # integer-based addresses sort by value; non-integer addresses (like _NoAddress) sort last
+            for location in sorted(locations, key=lambda loc: (0, int(loc)) if isinstance(loc, int) else (1, 0)):
                 self.render_capa_doc_feature(parent2, match, feature, location, doc)
 
         return parent2

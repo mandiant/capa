@@ -45,6 +45,7 @@
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
 
 ### capa Explorer IDA Pro plugin
+- ida-explorer: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
 
 ### Development
 
