@@ -27,6 +27,7 @@
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
 
 ### capa Explorer Web
+- webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
 
 ### capa Explorer IDA Pro plugin
 
