@@ -18,14 +18,18 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set release name
-      run: echo "RELEASE_NAME=capa-explorer-web-v${{ github.event.inputs.version }}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+      run: echo "RELEASE_NAME=capa-explorer-web-v${GITHUB_EVENT_INPUTS_VERSION}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+      env:
+        GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
 
     - name: Check if release already exists
       run: |
-        if ls web/explorer/releases/capa-explorer-web-v${{ github.event.inputs.version }}-* 1> /dev/null 2>&1; then
-          echo "::error:: A release with version ${{ github.event.inputs.version }} already exists"
+        if ls web/explorer/releases/capa-explorer-web-v${GITHUB_EVENT_INPUTS_VERSION}-* 1> /dev/null 2>&1; then
+          echo "::error:: A release with version ${GITHUB_EVENT_INPUTS_VERSION} already exists"
           exit 1
         fi
+      env:
+        GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
 
     - name: Set up Node.js
       uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
@@ -43,24 +47,24 @@ jobs:
       working-directory: web/explorer
 
     - name: Compress bundle
-      run: zip -r ${{ env.RELEASE_NAME }}.zip capa-explorer-web
+      run: zip -r ${RELEASE_NAME}.zip capa-explorer-web
       working-directory: web/explorer
 
     - name: Create releases directory
       run: mkdir -vp web/explorer/releases
 
     - name: Move release to releases folder
-      run: mv web/explorer/${{ env.RELEASE_NAME }}.zip web/explorer/releases
+      run: mv web/explorer/${RELEASE_NAME}.zip web/explorer/releases
 
     - name: Compute release SHA256 hash
       run: |
-        echo "RELEASE_SHA256=$(sha256sum web/explorer/releases/${{ env.RELEASE_NAME }}.zip | awk '{print $1}')" >> $GITHUB_ENV
+        echo "RELEASE_SHA256=$(sha256sum web/explorer/releases/${RELEASE_NAME}.zip | awk '{print $1}')" >> $GITHUB_ENV
 
     - name: Update CHANGELOG.md
       run: |
-        echo "## ${{ env.RELEASE_NAME }}" >> web/explorer/releases/CHANGELOG.md
+        echo "## ${RELEASE_NAME}" >> web/explorer/releases/CHANGELOG.md
         echo "- Release Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> web/explorer/releases/CHANGELOG.md
-        echo "- SHA256: ${{ env.RELEASE_SHA256 }}" >> web/explorer/releases/CHANGELOG.md
+        echo "- SHA256: ${RELEASE_SHA256}" >> web/explorer/releases/CHANGELOG.md
         echo "" >> web/explorer/releases/CHANGELOG.md
         cat web/explorer/releases/CHANGELOG.md
 
@@ -73,7 +77,7 @@ jobs:
       run: |
         git config --local user.email "capa-dev@mandiant.com"
         git config --local user.name "Capa Bot"
-        git add -f web/explorer/releases/${{ env.RELEASE_NAME }}.zip web/explorer/releases/CHANGELOG.md
+        git add -f web/explorer/releases/${RELEASE_NAME}.zip web/explorer/releases/CHANGELOG.md
         git add -u web/explorer/releases/
-        git commit -m ":robot: explorer web: add release ${{ env.RELEASE_NAME }}"
+        git commit -m ":robot: explorer web: add release ${RELEASE_NAME}"
         git push
