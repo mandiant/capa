@@ -19,8 +19,10 @@ jobs:
         # user information is needed to create annotated tags (with a message)
         git config user.email 'capa-dev@mandiant.com'
         git config user.name 'Capa Bot'
-        name=${{ github.event.release.tag_name }}
+        name=${GITHUB_EVENT_RELEASE_TAG_NAME}
         git tag $name -m "https://github.com/mandiant/capa/releases/$name"
+      env:
+        GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
     - name: Push tag to capa-rules
       uses: ad-m/github-push-action@master
       with:
