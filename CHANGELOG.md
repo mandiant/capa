@@ -29,6 +29,7 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+- ida-explorer: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
 
 ### Development
 
