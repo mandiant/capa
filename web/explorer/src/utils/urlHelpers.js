@@ -77,7 +77,8 @@ export function createATTACKHref(attack) {
  */
 export function createCapaRulesUrl(node) {
     if (!node || !node.data) return null;
-    return `https://mandiant.github.io/capa/rules/${encodeURIComponent(node.data.name)}/`;
+    const baseUrl = "https://mandiant.github.io/capa/rules/";
+    return `${baseUrl}${encodeURIComponent(node.data.name)}/`;
 }
 
 /**
