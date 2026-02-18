@@ -29,7 +29,7 @@ example::
                  0x10003797
 """
 
-from typing import cast
+from typing import Optional, cast
 
 from rich.text import Text
 from rich.table import Table
@@ -112,6 +112,15 @@ def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     raise ValueError("name not found for call", addr)
 
 
+def _get_call_name_safe(layout: rd.DynamicLayout, addr: frz.Address) -> Optional[str]:
+    """like _get_call_name, but returns None instead of raising ValueError when the call is not found in the layout."""
+    try:
+        return _get_call_name(layout, addr)
+    except ValueError:
+        # call not found in layout, e.g. due to thread ID reuse across sandbox processes
+        return None
+
+
 def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     process = addr.to_capa()
     assert isinstance(process, capa.features.address.ProcessAddress)
@@ -149,10 +158,8 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     pname = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
     prefix = f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}"
 
-    try:
-        cname = _get_call_name(layout, addr)
-    except ValueError:
-        # call not found in layout, e.g. due to thread ID reuse across sandbox processes
+    cname = _get_call_name_safe(layout, addr)
+    if cname is None:
         return prefix
 
     fname, _, rest = cname.partition("(")
@@ -172,10 +179,8 @@ def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     call = addr.to_capa()
     assert isinstance(call, capa.features.address.DynamicCallAddress)
 
-    try:
-        cname = _get_call_name(layout, addr)
-    except ValueError:
-        # call not found in layout, e.g. due to thread ID reuse across sandbox processes
+    cname = _get_call_name_safe(layout, addr)
+    if cname is None:
         return f"call:{call.id}"
 
     fname, _, rest = cname.partition("(")
