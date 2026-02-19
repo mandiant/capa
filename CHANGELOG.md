@@ -32,6 +32,7 @@
 
 ### Development
 
+- doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs
