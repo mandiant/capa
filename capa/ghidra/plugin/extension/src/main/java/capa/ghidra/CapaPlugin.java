@@ -2,18 +2,15 @@ package capa.ghidra;
 
 import java.io.PrintWriter;
 
+import javax.swing.SwingUtilities;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 
-import generic.jar.ResourceFile;
-
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.GhidraState;
-import ghidra.app.script.GhidraScriptProvider;
-import ghidra.app.script.GhidraScript;
+import ghidra.app.services.GhidraScriptService;
 
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
@@ -31,133 +28,226 @@ import ghidra.util.task.TaskLauncher;
     packageName = "Capa",
     category = PluginCategoryNames.ANALYSIS,
     shortDescription = "Run capa analysis",
-    description = "Capa explorer MVP for Ghidra"
+    description = "Integrates Mandiant capa capability detection with Ghidra"
 )
 public class CapaPlugin extends ProgramPlugin {
+
+    private CapaProvider provider;
 
     public CapaPlugin(PluginTool tool) {
         super(tool);
         createActions();
     }
 
+    @Override
+    protected void init() {
+        super.init();
+        provider = new CapaProvider(tool, getName());
+    }
+
     private void createActions() {
-        DockingAction action = new DockingAction("Run capa analysis", getName()) {
+
+        DockingAction runAction = new DockingAction("Run capa analysis", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                runCapaAnalysis();
+                runCapaAnalysis(false);
             }
         };
 
-        action.setMenuBarData(
-            new MenuData(new String[] { "Tools", "Run capa analysis" })
-        );
+        runAction.setMenuBarData(new MenuData(new String[] { "Tools", "Capa", "Run Analysis" }));
+        runAction.setDescription("Run capa capability analysis on the current program");
+        tool.addAction(runAction);
 
-        tool.addAction(action);
+        DockingAction forceRunAction = new DockingAction("Force Re-run capa analysis", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                runCapaAnalysis(true);
+            }
+        };
+
+        forceRunAction.setMenuBarData(new MenuData(new String[] { "Tools", "Capa", "Force Re-run Analysis" }));
+        forceRunAction.setDescription("Force re-run capa analysis (ignore cache)");
+        tool.addAction(forceRunAction);
     }
 
-    private void runCapaAnalysis() {
+    private void runCapaAnalysis(boolean forceRerun) {
+
         Program program = currentProgram;
 
         if (program == null) {
-            Msg.showInfo(this, null, "Capa", "No program is currently open.");
+            Msg.showInfo(this, null, "Capa Analysis", "No program is currently open.");
             return;
         }
 
-        CapaAnalysisTask task = new CapaAnalysisTask(program);
+        tool.showComponentProvider(provider, true);
+
+        boolean cacheExists = CapaCacheManager.cacheExists(program);
+
+        if (!forceRerun && cacheExists) {
+            int choice = askUserCachePreference();
+
+            if (choice == 0) {
+                loadCachedResults(program);
+                return;
+            } else if (choice == 1) {
+                forceRerun = true;
+            } else {
+                return;
+            }
+        }
+
+        CapaAnalysisTask task = new CapaAnalysisTask(program, forceRerun);
         TaskLauncher.launch(task);
     }
 
-    /**
-     * Background task that executes the capa Python script using PyGhidra.
-     * This ensures the already-analyzed Program object is passed to Python
-     * without reanalysis or subprocess execution.
-     */
-    private class CapaAnalysisTask extends Task {
-        private final Program program;
+    private int askUserCachePreference() {
 
-        public CapaAnalysisTask(Program program) {
+        int choice = docking.widgets.OptionDialog.showYesNoCancelDialog(
+            null,
+            "Capa Analysis",
+            "Cached results found for this program.\n\n" +
+            "Would you like to load the cached results or re-run the analysis?\n\n" +
+            "• Yes = Load Cached Results\n" +
+            "• No = Re-run Analysis\n" +
+            "• Cancel = Abort"
+        );
+
+        if (choice == docking.widgets.OptionDialog.YES_OPTION) return 0;
+        if (choice == docking.widgets.OptionDialog.NO_OPTION) return 1;
+        return 2;
+    }
+
+    private void loadCachedResults(Program program) {
+
+        provider.showLoading("Loading cached results...");
+        String json = CapaCacheManager.readCache(program);
+
+        if (json == null) {
+            provider.showError("Failed to read cache file.");
+            Msg.showError(this, null, "Cache Error", "Could not read cached results.");
+            return;
+        }
+
+        try {
+            CapaResults results = CapaResults.fromJson(json);
+            provider.displayResults(results);
+            Msg.showInfo(this, null, "Capa Analysis", "Loaded cached results from previous analysis.");
+        }
+        catch (Exception e) {
+            provider.showError("Failed to parse cached results: " + e.getMessage());
+            Msg.showError(this, null, "Cache Parse Error", "Could not parse cached results.", e);
+        }
+    }
+
+    private class CapaAnalysisTask extends Task {
+
+        private final Program program;
+        private final boolean forceRerun;
+
+        public CapaAnalysisTask(Program program, boolean forceRerun) {
             super("Running capa analysis", true, false, true);
             this.program = program;
+            this.forceRerun = forceRerun;
         }
 
         @Override
         public void run(TaskMonitor monitor) {
+
             try {
-                monitor.setMessage("Finding capa script...");
+                SwingUtilities.invokeLater(() -> provider.showLoading("Running capa analysis..."));
 
-                ResourceFile scriptFile = GhidraScriptUtil.findScriptByName("RunCapaMVP.py");
-
-                if (scriptFile == null) {
-                    Msg.showError(this, null, "Capa Error", 
-                        "RunCapaMVP.py not found in script paths.");
-                    return;
+                if (forceRerun) {
+                    monitor.setMessage("Clearing old cache...");
+                    CapaCacheManager.deleteCache(program);
                 }
-
-                GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptFile);
-                
-                if (provider == null) {
-                    Msg.showError(this, null, "Capa Error", 
-                        "No script provider found for Python scripts.");
-                    return;
-                }
-
-                monitor.setMessage("Creating script instance...");
-
-                PrintWriter writer = new PrintWriter(System.out, true);
-                GhidraScript script = provider.getScriptInstance(scriptFile, writer);
-
-                if (script == null) {
-                    Msg.showError(this, null, "Capa Error", 
-                        "Could not create script instance.");
-                    return;
-                }
-
-                monitor.setMessage("Preparing analysis state...");
-
-                GhidraState state = new GhidraState(
-                    tool,
-                    tool.getProject(),
-                    program,
-                    null,
-                    null,
-                    null
-                );
 
                 monitor.setMessage("Executing capa analysis via PyGhidra...");
+                boolean success = executeScriptViaService();
 
-                // Execute script with PyGhidra - passes Program object directly
-                // Note: execute() is deprecated in Ghidra 12.0+, but remains the 
-                // cleanest way to pass GhidraState to Python for this MVP.
-                // Future iterations can migrate to the newer API.
-                boolean success = executeScript(script, state, monitor, writer);
-
-                if (success) {
-                    Msg.showInfo(this, null, "Capa", 
-                        "Analysis complete. Check Ghidra console for results.");
+                if (!success) {
+                    showErrorInUI("Script execution failed. Check console for details.");
+                    return;
                 }
 
-            } catch (Exception e) {
-                Msg.showError(this, null, "Capa Execution Failed", 
-                    "Error running capa analysis: " + e.getMessage(), e);
+                monitor.setMessage("Waiting for analysis results...");
+                String json = waitForCache(program, monitor);
+
+                if (json == null) {
+                    showErrorInUI("Analysis finished but cache was not produced (timeout).");
+                    return;
+                }
+
+                CapaResults results = CapaResults.fromJson(json);
+
+                SwingUtilities.invokeLater(() -> provider.displayResults(results));
+
+                Msg.showInfo(this, null, "Capa Analysis",
+                        "Analysis complete. Results displayed in Capa Explorer window.");
+
+            }
+            catch (Exception e) {
+                showErrorInUI("Unexpected error: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
-        /**
-         * Execute the script via PyGhidra with the Program object.
-         * Uses deprecated execute() method for MVP - will be updated in future versions.
-         */
-        @SuppressWarnings("deprecation")
-        private boolean executeScript(GhidraScript script, GhidraState state, 
-                                     TaskMonitor monitor, PrintWriter writer) {
+        private boolean executeScriptViaService() {
             try {
-                script.execute(state, monitor, writer);
+                GhidraScriptService scriptService = tool.getService(GhidraScriptService.class);
+
+                if (scriptService == null) {
+                    Msg.showError(this, null, "Script Service Error",
+                            "GhidraScriptService not available.");
+                    return false;
+                }
+
+                String scriptName = "RunCapaMVP.py";
+                scriptService.runScript(scriptName, null);
                 return true;
+
             } catch (Exception e) {
-                Msg.showError(this, null, "Capa Execution Failed", 
-                    "Script execution error: " + e.getMessage(), e);
+                Msg.showError(this, null, "Script Execution Error",
+                        "Failed to execute capa script: " + e.getMessage(), e);
                 return false;
             }
+        }
+
+        /**
+         * ✅ NEW METHOD — waits until Python writes cache
+         */
+        private String waitForCache(Program program, TaskMonitor monitor) {
+
+            final int MAX_WAIT_MS = 30000;
+            final int POLL_INTERVAL_MS = 500;
+
+            long start = System.currentTimeMillis();
+
+            while (!monitor.isCancelled()) {
+
+                String json = CapaCacheManager.readCache(program);
+                if (json != null) {
+                    return json;
+                }
+
+                if (System.currentTimeMillis() - start > MAX_WAIT_MS) {
+                    return null;
+                }
+
+                try {
+                    Thread.sleep(POLL_INTERVAL_MS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        private void showErrorInUI(String errorMessage) {
+            SwingUtilities.invokeLater(() -> provider.showError(errorMessage));
+            Msg.showError(this, null, "Capa Analysis Failed", errorMessage);
         }
     }
 }

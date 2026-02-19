@@ -129,4 +129,6 @@ uv.lock
 .github/binja/BinaryNinja-headless.zip
 justfile
 data/
-.gradle
+.gradle.gradle/
+build/
+.DS_Store

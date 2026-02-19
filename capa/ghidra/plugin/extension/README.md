@@ -1,50 +1,45 @@
 # Capa Explorer – Ghidra Extension (MVP)
 
-This directory contains an experimental Ghidra extension that integrates
-[capa](https://github.com/mandiant/capa) directly into Ghidra as a native plugin.
+Experimental Ghidra extension that integrates  
+[capa](https://github.com/mandiant/capa) into Ghidra as a native plugin.
 
-The goal of this extension is to provide a workflow similar to the IDA Pro
-capa explorer plugin, while fully leveraging Ghidra’s analysis database.
+The goal is to run capa directly on Ghidra’s analysis database and display
+results inside the UI.
 
 ---
 
 ## Status
 
-Experimental / MVP
+**MVP / Experimental**
 
-This implementation is intentionally minimal and focuses on validating:
-
-- Ghidra extension packaging
-- Java <–-> Python integration using PyGhidra
-- Reuse of the existing Ghidra analysis database
-- Execution of capa from the Ghidra UI
-
-Full capa functionality (rules, feature extractors, result views) will be added
-incrementally after architectural review.
+The current implementation validates the integration architecture and workflow.  
+Full capa rule evaluation and richer UI will be added incrementally.
 
 ---
 
-## Key design principles
+## How it works
 
-### PyGhidra-based integration
-
-This extension uses PyGhidra as the execution bridge between Java and Python.
-
-- Python executes inside the Ghidra JVM
-- No external Python subprocesses are spawned
-- No binaries are reloaded or reanalyzed
-
-This ensures capa operates directly on the already-analyzed Program object.
+1. User runs **Tools → Capa → Run Analysis**
+2. The plugin invokes a Python script using **GhidraScriptService**
+3. The script runs inside **PyGhidra** (no subprocesses)
+4. Results are written to a **JSON cache file**
+5. The plugin loads the cache and displays results in the **Capa Explorer** panel
 
 ---
 
-### Reuse of existing Ghidra analysis
+## Key Design Decisions
 
-The extension passes the active Ghidra program directly to Python:
+- Uses **PyGhidra** for in-process Python execution  
+- Uses **GhidraScriptService** (non-deprecated API)  
+- Reuses the already-loaded `Program` (no reanalysis)  
+- Exchanges data via a **cache file** instead of stdout  
+- Results persist across Ghidra sessions  
 
-```python
-program = currentProgram
+---
 
-print("Program name:", program.getName())
-print("Function count:", program.getFunctionManager().getFunctionCount())
-print("Language:", program.getLanguage().getLanguageID())
+## Current Features
+
+- Run analysis from the Ghidra menu  
+- Optional cache reload vs re-run  
+- Background execution with progress  
+- Basic result viewer panel  

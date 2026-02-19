@@ -13,21 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Builds a Ghidra Extension for a given Ghidra installation.
-//
-// An absolute path to the Ghidra installation directory must be supplied either by setting the 
-// GHIDRA_INSTALL_DIR environment variable or Gradle project property:
-//
-//     > export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra> 
-//     > gradle
-//
-//         or
-//
-//     > gradle -PGHIDRA_INSTALL_DIR=<Absolute path to Ghidra>
-//
-// Gradle should be invoked from the directory of the project to build.  Please see the
-// application.gradle.version property in <GHIDRA_INSTALL_DIR>/Ghidra/application.properties
-// for the correction version of Gradle to use for the Ghidra installation you specify.
 
 //----------------------START "DO NOT MODIFY" SECTION------------------------------
 def ghidraInstallDir
@@ -50,17 +35,22 @@ task distributeExtension {
 }
 //----------------------END "DO NOT MODIFY" SECTION-------------------------------
 
-repositories {
-	// Declare dependency repositories here.  This is not needed if dependencies are manually 
-	// dropped into the lib/ directory.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html for more info.
-	// Ex: mavenCentral()
-}
-
-dependencies {
-	// Any external dependencies added here will automatically be copied to the lib/ directory when
-	// this extension is built.	
+// Include Python scripts in the built extension
+buildExtension {
+	// Include ghidra_scripts directory in the extension
+	from('ghidra_scripts') {
+		into 'ghidra_scripts'
+	}
+	
+	// Include data/python directory in the extension (if you have helper scripts there)
+	from('data/python') {
+		into 'data/python'
+	}
 }
 
 // Exclude additional files from the built extension
 // Ex: buildExtension.exclude '.idea/**'
+buildExtension.exclude '.git/**'
+buildExtension.exclude '.gradle/**'
+buildExtension.exclude 'build/**'
+buildExtension.exclude '.DS_Store'
