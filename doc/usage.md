@@ -2,6 +2,16 @@
 
 See `capa -h` for all supported arguments and usage examples.
 
+## Ways to consume capa output
+
+| Method | Output / interface | Typical use |
+|--------|--------------------|-------------|
+| **CLI** | Text (default, `-v`, `-vv`), JSON (`-j`), or other formats | Scripting, CI, one-off analysis |
+| **IDA Pro** | capa Explorer plugin inside IDA | Interactive analysis with jump-to-address |
+| **Ghidra** | capa Explorer plugin inside Ghidra | Interactive analysis with Ghidra integration |
+| **CAPE** | capa run on sandbox report (e.g. CAPE, VMRay) | Dynamic analysis of sandbox output |
+| **Web (capa Explorer)** | Web UI (upload JSON or load from URL) | Sharing results, viewing from VirusTotal or similar |
+
 ## tips and tricks
 
 ### only run selected rules
