@@ -17,6 +17,9 @@
 import { useToast } from "primevue/usetoast";
 import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
 
+const VT_REANALYZE_SUGGESTION =
+    " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+
 export function useRdocLoader() {
     const toast = useToast();
     const MIN_SUPPORTED_VERSION = "7.0.0";
@@ -54,6 +57,22 @@ export function useRdocLoader() {
         }
         if (isInvalidObject(rdoc.meta.analysis.layout)) {
             return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis.layout'." };
+        }
+        if (isInvalidObject(rdoc.meta.analysis.feature_counts)) {
+            return {
+                valid: false,
+                message: "Invalid result document: missing or invalid 'meta.analysis.feature_counts'."
+            };
+        }
+        const fc = rdoc.meta.analysis.feature_counts;
+        const hasFunctions = Array.isArray(fc.functions);
+        const hasProcesses = Array.isArray(fc.processes);
+        if (!hasFunctions && !hasProcesses) {
+            return {
+                valid: false,
+                message:
+                    "Invalid result document: 'meta.analysis.feature_counts' must contain 'functions' or 'processes' array."
+            };
         }
         if (isInvalidObject(rdoc.rules)) {
             return { valid: false, message: "Invalid result document: missing or invalid 'rules' field." };
@@ -111,8 +130,6 @@ export function useRdocLoader() {
      */
     const loadRdoc = async (source) => {
         const isUrl = typeof source === "string";
-        const VT_REANALYZE_SUGGESTION =
-            " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
 
         try {
             let data;
