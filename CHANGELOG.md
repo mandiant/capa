@@ -28,6 +28,8 @@
 
 ### capa Explorer Web
 
+- webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
+
 ### capa Explorer IDA Pro plugin
 
 ### Development
