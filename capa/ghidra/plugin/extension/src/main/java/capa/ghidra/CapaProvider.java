@@ -46,7 +46,7 @@ public class CapaProvider extends ComponentProvider {
      * Show error message.
      */
     public void showError(String errorMessage) {
-        statusLabel.setText("❌ Error");
+        statusLabel.setText("Error");
         outputArea.setText("ERROR: " + errorMessage);
     }
     
@@ -54,7 +54,7 @@ public class CapaProvider extends ComponentProvider {
      * Display analysis results.
      */
     public void displayResults(CapaResults results) {
-        statusLabel.setText("✅ Analysis Complete");
+        statusLabel.setText("Analysis Complete");
         
         StringBuilder output = new StringBuilder();
         output.append("=== Capa Analysis Results ===\n\n");

@@ -213,7 +213,7 @@ public class CapaPlugin extends ProgramPlugin {
         }
 
         /**
-         * ✅ NEW METHOD — waits until Python writes cache
+         * NEW METHOD — waits until Python writes cache
          */
         private String waitForCache(Program program, TaskMonitor monitor) {
 
