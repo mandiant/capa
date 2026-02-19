@@ -6,7 +6,7 @@
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
-
+- ghidra: experimental capa explorer extension (MVP) @vaishakh787
 ### Breaking Changes
 
 ### New Rules (6)
