@@ -2,6 +2,16 @@
 
 See `capa -h` for all supported arguments and usage examples.
 
+## Ways to consume capa output
+
+| Method | Output / interface | Typical use |
+|--------|--------------------|-------------|
+| **CLI** | Text (default, `-v`, `-vv`), JSON (`-j`), or other formats | Scripting, CI, one-off analysis |
+| **IDA Pro** | capa Explorer plugin inside IDA | Interactive analysis with jump-to-address |
+| **Ghidra** | capa Explorer plugin inside Ghidra | Interactive analysis with Ghidra integration |
+| **Dynamic (Sandbox)** | capa run on dynamic sandbox report (CAPE, VMRay, etc.) | Dynamic analysis of sandbox output |
+| **Web (capa Explorer)** | Web UI (upload JSON or load from URL) | Sharing results, viewing from VirusTotal or similar |
+
 ## Default vs verbose output
 
 By default, capa shows only *top-level* rule matches: capabilities that are not already implied by another displayed rule. For example, if a rule "persist via Run registry key" matches and it *contains* a match for "set registry value", the default output lists only "persist via Run registry key". This keeps the default output short while still reflecting all detected capabilities at the top level. Use **`-v`** to see all rule matches, including nested ones. Use **`-vv`** for an even more detailed view that shows how each rule matched.
