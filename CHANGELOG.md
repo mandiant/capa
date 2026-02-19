@@ -32,6 +32,7 @@
 
 ### Development
 
+- doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, CAPE, web) @devs6186 #2273
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs
