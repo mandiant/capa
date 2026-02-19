@@ -132,3 +132,7 @@ data/
 .gradle.gradle/
 build/
 .DS_Store
+.gradle/
+**/.gradle/
+.DS_Store
+**/.DS_Store
