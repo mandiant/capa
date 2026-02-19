@@ -38,22 +38,24 @@ export function useRdocLoader() {
      * @returns {{ valid: boolean, message?: string }} Validation result with an optional error message.
      */
     const validateRdocSchema = (rdoc) => {
-        if (!rdoc || typeof rdoc !== "object") {
+        const isInvalidObject = (v) => !v || typeof v !== "object" || Array.isArray(v);
+
+        if (isInvalidObject(rdoc)) {
             return { valid: false, message: "Invalid JSON: expected an object." };
         }
-        if (!rdoc.meta || typeof rdoc.meta !== "object") {
+        if (isInvalidObject(rdoc.meta)) {
             return { valid: false, message: "Invalid result document: missing or invalid 'meta' field." };
         }
         if (rdoc.meta.version === undefined) {
             return { valid: false, message: "Invalid result document: missing 'meta.version'." };
         }
-        if (!rdoc.meta.analysis || typeof rdoc.meta.analysis !== "object") {
+        if (isInvalidObject(rdoc.meta.analysis)) {
             return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis'." };
         }
-        if (!rdoc.meta.analysis.layout || typeof rdoc.meta.analysis.layout !== "object") {
+        if (isInvalidObject(rdoc.meta.analysis.layout)) {
             return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis.layout'." };
         }
-        if (!rdoc.rules || typeof rdoc.rules !== "object") {
+        if (isInvalidObject(rdoc.rules)) {
             return { valid: false, message: "Invalid result document: missing or invalid 'rules' field." };
         }
         return { valid: true };
@@ -109,6 +111,9 @@ export function useRdocLoader() {
      */
     const loadRdoc = async (source) => {
         const isUrl = typeof source === "string";
+        const VT_REANALYZE_SUGGESTION =
+            " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+
         try {
             let data;
 
@@ -125,7 +130,7 @@ export function useRdocLoader() {
             if (!validation.valid) {
                 let detail = validation.message;
                 if (isUrl) {
-                    detail += " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+                    detail += VT_REANALYZE_SUGGESTION;
                 }
                 showToast("error", "Invalid result document", detail);
                 return null;
@@ -139,7 +144,7 @@ export function useRdocLoader() {
             console.error("Error loading JSON:", error);
             let detail = error.message;
             if (isUrl && (error instanceof SyntaxError || error.message.includes("JSON"))) {
-                detail += " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+                detail += VT_REANALYZE_SUGGESTION;
             }
             showToast("error", "Failed to process the file", detail);
         }
