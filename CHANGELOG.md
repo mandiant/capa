@@ -44,6 +44,8 @@
 ### capa Explorer Web
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
 
+- webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
+
 ### capa Explorer IDA Pro plugin
 
 ### Development

@@ -33,6 +33,33 @@ export function useRdocLoader() {
     };
 
     /**
+     * Validates that the parsed object has the expected result document schema.
+     * @param {Object} rdoc - The parsed JSON data.
+     * @returns {{ valid: boolean, message?: string }} Validation result with an optional error message.
+     */
+    const validateRdocSchema = (rdoc) => {
+        if (!rdoc || typeof rdoc !== "object") {
+            return { valid: false, message: "Invalid JSON: expected an object." };
+        }
+        if (!rdoc.meta || typeof rdoc.meta !== "object") {
+            return { valid: false, message: "Invalid result document: missing or invalid 'meta' field." };
+        }
+        if (rdoc.meta.version === undefined) {
+            return { valid: false, message: "Invalid result document: missing 'meta.version'." };
+        }
+        if (!rdoc.meta.analysis || typeof rdoc.meta.analysis !== "object") {
+            return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis'." };
+        }
+        if (!rdoc.meta.analysis.layout || typeof rdoc.meta.analysis.layout !== "object") {
+            return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis.layout'." };
+        }
+        if (!rdoc.rules || typeof rdoc.rules !== "object") {
+            return { valid: false, message: "Invalid result document: missing or invalid 'rules' field." };
+        }
+        return { valid: true };
+    };
+
+    /**
      * Checks if the version of the loaded data is supported.
      * @param {Object} rdoc - The loaded JSON data containing version information.
      * @returns {boolean} True if the version is supported, false otherwise.
@@ -81,18 +108,27 @@ export function useRdocLoader() {
      * @returns {Promise<Object|null>} A promise that resolves to the processed RDOC data, or null if processing fails.
      */
     const loadRdoc = async (source) => {
+        const isUrl = typeof source === "string";
         try {
             let data;
 
-            if (typeof source === "string") {
-                // Load from URL
+            if (isUrl) {
                 const blob = await fetchFromUrl(source);
                 data = await processBlob(blob);
             } else if (source instanceof File) {
-                // Load from local
                 data = await processBlob(source);
             } else {
                 throw new Error("Invalid source type");
+            }
+
+            const validation = validateRdocSchema(data);
+            if (!validation.valid) {
+                let detail = validation.message;
+                if (isUrl) {
+                    detail += " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+                }
+                showToast("error", "Invalid result document", detail);
+                return null;
             }
 
             if (checkVersion(data)) {
@@ -101,7 +137,11 @@ export function useRdocLoader() {
             }
         } catch (error) {
             console.error("Error loading JSON:", error);
-            showToast("error", "Failed to process the file", error.message);
+            let detail = error.message;
+            if (isUrl && (error instanceof SyntaxError || error.message.includes("JSON"))) {
+                detail += " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+            }
+            showToast("error", "Failed to process the file", detail);
         }
         return null;
     };
