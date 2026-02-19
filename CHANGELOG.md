@@ -25,6 +25,7 @@
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
+- render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
 
 ### capa Explorer Web
 
