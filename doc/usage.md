@@ -2,6 +2,10 @@
 
 See `capa -h` for all supported arguments and usage examples.
 
+## Default vs verbose output
+
+By default, capa shows only *top-level* rule matches: capabilities that are not already implied by another displayed rule. For example, if a rule "persist via Run registry key" matches and it *contains* a match for "set registry value", the default output lists only "persist via Run registry key". Use **`-v`** or **`-vv`** to see nested matches (e.g. "set registry value") and finer-grained detail. This keeps the default output short while still reflecting all detected capabilities at the top level.
+
 ## tips and tricks
 
 ### only run selected rules

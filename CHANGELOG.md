@@ -32,6 +32,7 @@
 
 ### Development
 
+- doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs
