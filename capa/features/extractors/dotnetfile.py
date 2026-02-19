@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import struct
 import logging
 from typing import Iterator
 from pathlib import Path
@@ -184,8 +185,15 @@ GLOBAL_HANDLERS = (
 class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
-        self.path: Path = path
-        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.path = path
+        try:
+            self.pe = dnfile.dnPE(str(path))
+        except struct.error as e:
+            from capa.loader import CorruptFile
+
+            raise CorruptFile(
+                "Invalid or truncated .NET metadata; the file may be corrupted or not a valid .NET PE."
+            ) from e
 
     def get_base_address(self):
         return NO_ADDRESS

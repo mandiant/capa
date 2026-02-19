@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import struct
 from typing import Union, Iterator, Optional
 from pathlib import Path
 
@@ -83,7 +84,14 @@ class DnFileFeatureExtractorCache:
 
 class DnfileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        try:
+            self.pe = dnfile.dnPE(str(path))
+        except struct.error as e:
+            from capa.loader import CorruptFile
+
+            raise CorruptFile(
+                "Invalid or truncated .NET metadata; the file may be corrupted or not a valid .NET PE."
+            ) from e
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
