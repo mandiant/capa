@@ -20,6 +20,7 @@
 -
 
 ### Bug Fixes
+- render: handle missing call in layout gracefully to prevent ValueError during dynamic analysis rendering @devs6186 #2619
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
