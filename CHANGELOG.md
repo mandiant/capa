@@ -27,6 +27,7 @@
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
+- loader: handle struct.error from dnfile and show clear CorruptFile message @devs6186 #2442
 
 ### capa Explorer Web
 
