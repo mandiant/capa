@@ -159,9 +159,8 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     s.append(f"){rest}")
 
     newline = "\n"
-    return (
-        f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{rutils.mute(newline.join(s))}"
-    )
+    # Use default (non-dim) styling for API details so they remain readable in -vv output
+    return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{newline.join(s)}"
 
 
 def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
@@ -180,7 +179,8 @@ def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     s.append(f"){rest}")
 
     newline = "\n"
-    return f"call:{call.id}\n{rutils.mute(newline.join(s))}"
+    # Use default (non-dim) styling for API details so they remain readable in -vv output
+    return f"call:{call.id}\n{newline.join(s)}"
 
 
 def render_static_meta(console: Console, meta: rd.StaticMetadata):
