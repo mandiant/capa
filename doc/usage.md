@@ -7,10 +7,10 @@ See `capa -h` for all supported arguments and usage examples.
 | Method | Output / interface | Typical use |
 |--------|--------------------|-------------|
 | **CLI** | Text (default, `-v`, `-vv`), JSON (`-j`), or other formats | Scripting, CI, one-off analysis |
-| **IDA Pro** | capa Explorer plugin inside IDA | Interactive analysis with jump-to-address |
-| **Ghidra** | capa Explorer plugin inside Ghidra | Interactive analysis with Ghidra integration |
-| **Dynamic (Sandbox)** | capa run on dynamic sandbox report (CAPE, VMRay, etc.) | Dynamic analysis of sandbox output |
-| **Web (capa Explorer)** | Web UI (upload JSON or load from URL) | Sharing results, viewing from VirusTotal or similar |
+| [**IDA Pro**](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) | capa Explorer plugin inside IDA | Interactive analysis with jump-to-address |
+| [**Ghidra**](https://github.com/mandiant/capa/tree/master/capa/ghidra/plugin) | capa Explorer plugin inside Ghidra | Interactive analysis with Ghidra integration |
+| [**Dynamic (Sandbox)**](https://www.mandiant.com/resources/blog/dynamic-capa-executable-behavior-cape-sandbox) | capa run on dynamic sandbox report (CAPE, VMRay, etc.) | Dynamic analysis of sandbox output |
+| [**Web (capa Explorer)**](https://mandiant.github.io/capa/explorer/) | Web UI (upload JSON or load from URL) | Sharing results, viewing from VirusTotal or similar |
 
 ## Default vs verbose output
 
