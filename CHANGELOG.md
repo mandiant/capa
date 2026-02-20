@@ -20,7 +20,11 @@
 -
 
 ### Bug Fixes
+<<<<<<< fix/2577-elf-os-error-message
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
+=======
+- render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
+>>>>>>> master
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
@@ -33,6 +37,7 @@
 
 ### Development
 
+- doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs
