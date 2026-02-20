@@ -20,11 +20,8 @@
 -
 
 ### Bug Fixes
-<<<<<<< fix/2577-elf-os-error-message
-- main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
-=======
+- main: suggest --os flag in unsupported OS error message to help users override ELF OS detection
 - render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
->>>>>>> master
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
