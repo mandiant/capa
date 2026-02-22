@@ -35,14 +35,22 @@ from capa.features.extractors.vmray.models import (
     FunctionCall,
     MonitorProcess,
     MonitorThread,
+    Param,
+    Params,
 )
 
 FLOG_TXT_VERSION_HEADER = "# Flog Txt Version 1"
 
+# Matches name=value argument pairs inside an API call's parentheses.
+# value may be: "quoted string" (including escaped chars), 0xHEX, decimal, or other token.
+_PARAM_RE = re.compile(r'(\w+)=((?:"(?:[^"\\]|\\.)*")|(?:0x[0-9a-fA-F]+)|(?:\d+)|(?:[^,\s]+))')
+
 
 def _parse_hex_or_decimal(s: str) -> int:
     s = s.strip().strip('"')
-    if s.startswith("0x") or s.startswith("0X"):
+    if not s:
+        return 0
+    if s.lower().startswith("0x"):
         return int(s, 16)
     return int(s, 10)
 
@@ -64,6 +72,40 @@ def _parse_properties(block: str) -> dict[str, Any]:
         else:
             result[key] = value
     return result
+
+
+def _parse_args(args_str: str) -> Optional[Params]:
+    """
+    Parse an API call's argument string into a Params object.
+
+    Handles: name="quoted string", name=0xHEX, name=DECIMAL.
+    String values are modelled as void_ptr + str deref to match the XML extractor convention
+    so that String features are correctly yielded by the call feature extractor.
+    Numeric values use type unsigned_32bit so that Number features are yielded.
+    Symbolic constants (e.g. NULL, TRUE) are skipped; their numeric values are unknown without
+    header definitions.
+
+    Returns None if no parseable arguments are present.
+    """
+    if not args_str.strip():
+        return None
+    params: list[Param] = []
+    for m in _PARAM_RE.finditer(args_str):
+        name = m.group(1)
+        raw = m.group(2)
+        if raw.startswith('"'):
+            # String value — model as void_ptr with str deref (matches XML extractor convention)
+            str_val = raw[1:-1]
+            params.append(
+                Param.model_validate({"name": name, "type": "void_ptr", "deref": {"type": "str", "value": str_val}})
+            )
+        elif re.match(r"^0x[0-9a-fA-F]+$", raw) or raw.isdigit():
+            # Numeric value — model as integer so Number features are yielded
+            params.append(Param.model_validate({"name": name, "type": "unsigned_32bit", "value": raw}))
+        # else: symbolic constant (NULL, INVALID_HANDLE_VALUE, etc.) — skip; value not recoverable
+    if not params:
+        return None
+    return Params.model_validate({"param": params})
 
 
 def _parse_event(line: str) -> Optional[tuple[str, str, Optional[int]]]:
@@ -125,8 +167,8 @@ def _parse_process_block(block: str) -> Optional[tuple[MonitorProcess, list[Moni
     header_and_regions = parts[0]
     thread_blocks = [p.strip() for p in parts[1:] if p.strip()]
 
-    # First part: Process properties then Region: blocks
-    process_props = _parse_properties(header_and_regions.split("\nRegion:\n")[0])
+    # First part: Process properties then Region: blocks (use regex for robustness)
+    process_props = _parse_properties(re.split(r"\n\s*Region:\s*\n", header_and_regions)[0])
     process_id = process_props.get("id") or process_props.get("process_id")
     if process_id is None:
         return None
@@ -158,14 +200,18 @@ def _parse_process_block(block: str) -> Optional[tuple[MonitorProcess, list[Moni
             # Strip sys_ prefix for Linux kernel calls (match XML behavior)
             if api_name.startswith("sys_"):
                 api_name = api_name[4:]
+            # use model_validate because FunctionCall's "in" alias clashes with a Python keyword;
+            # passing params_in= via __init__ is silently dropped by Pydantic
             function_calls.append(
-                FunctionCall(
-                    fncall_id=fncall_id,
-                    process_id=mon_thread.process_id,
-                    thread_id=mon_thread.thread_id,
-                    name=api_name,
-                    params_in=None,  # flog.txt args could be parsed later into Param list
-                    params_out=None,
+                FunctionCall.model_validate(
+                    {
+                        "fncall_id": fncall_id,
+                        "process_id": mon_thread.process_id,
+                        "thread_id": mon_thread.thread_id,
+                        "name": api_name,
+                        "in": _parse_args(args_str),
+                        "out": None,
+                    }
                 )
             )
 

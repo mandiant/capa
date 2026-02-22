@@ -129,3 +129,42 @@ def test_vmray_extractor_from_flog_txt(tmp_path):
     assert len(threads) == 1
     calls = list(ext.get_calls(procs[0], threads[0]))
     assert len(calls) == 3
+
+
+def test_parse_flog_txt_args_parsed(tmp_path):
+    """API call arguments are parsed into Param objects for feature extraction."""
+    path = tmp_path / "flog.txt"
+    path.write_bytes(
+        b'# Flog Txt Version 1\n\n'
+        b'Process:\nid = "1"\nos_pid = "0x1000"\nparent_id = "0"\nos_parent_pid = "0"\n'
+        b'image_name = "sample"\nfilename = "x.exe"\ncmd_line = ""\nmonitor_reason = "a"\n\n'
+        b'Thread:\nid = "1"\nos_tid = "0x2000"\n'
+        b' [0001.000] CreateFile (lpFileName="test.exe", dwDesiredAccess=0x80000000) returned 0x4\n'
+        b' [0002.000] VirtualAlloc (lpAddress=0x0, dwSize=4096) returned 0x10000\n'
+        b' [0003.000] GetCurrentProcess () returned 0xffffffffffffffff\n'
+    )
+    flog = flog_txt.parse_flog_txt_path(path)
+    calls = flog.analysis.function_calls
+
+    # CreateFile: string param and numeric param
+    create_file = calls[0]
+    assert create_file.name == "CreateFile"
+    assert create_file.params_in is not None
+    params = {p.name: p for p in create_file.params_in.params}
+    assert "lpFileName" in params
+    assert params["lpFileName"].deref is not None
+    assert params["lpFileName"].deref.value == "test.exe"
+    assert "dwDesiredAccess" in params
+    assert params["dwDesiredAccess"].value == "0x80000000"
+
+    # VirtualAlloc: two numeric params
+    virtual_alloc = calls[1]
+    assert virtual_alloc.params_in is not None
+    va_params = {p.name: p for p in virtual_alloc.params_in.params}
+    assert va_params["lpAddress"].value == "0x0"
+    assert va_params["dwSize"].value == "4096"
+
+    # no-arg call: params_in should be None
+    get_proc = calls[2]
+    assert get_proc.name == "GetCurrentProcess"
+    assert get_proc.params_in is None
