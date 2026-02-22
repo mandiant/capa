@@ -231,6 +231,14 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC32
     elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
         format_ = FORMAT_SC64
+    elif sample.name.endswith("flog.txt"):
+        # VMRay free "Download Function Log" format (#2452)
+        try:
+            header = sample.read_bytes()[:512].decode("utf-8", errors="replace")
+            if "# Flog Txt Version 1" in header:
+                format_ = FORMAT_VMRAY
+        except (OSError, UnicodeDecodeError):
+            pass
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
     elif sample.name.endswith(EXTENSIONS_FREEZE):
@@ -307,9 +315,10 @@ def log_unsupported_vmray_report_error(error: str):
     logger.error(" Input file is not a valid VMRay analysis archive: %s", error)
     logger.error(" ")
     logger.error(
-        " capa only supports analyzing VMRay dynamic analysis archives containing summary_v2.json and flog.xml log files."
+        " capa supports analyzing VMRay dynamic analysis archives (containing summary_v2.json and flog.xml)"
     )
-    logger.error(" Please make sure you have downloaded a dynamic analysis archive from VMRay.")
+    logger.error(" or a standalone VMRay function log (flog.txt, via Threat Feed -> Full Report -> Download Function Log).")
+    logger.error(" Please make sure you have downloaded a supported VMRay report.")
     logger.error("-" * 80)
 
 

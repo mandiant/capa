@@ -236,6 +236,8 @@ def get_extractor(
     elif backend == BACKEND_VMRAY:
         import capa.features.extractors.vmray.extractor
 
+        if input_path.name.endswith("flog.txt"):
+            return capa.features.extractors.vmray.extractor.VMRayExtractor.from_flog_txt(input_path)
         return capa.features.extractors.vmray.extractor.VMRayExtractor.from_zipfile(input_path)
 
     elif backend == BACKEND_DOTNET:
@@ -491,7 +493,14 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
     elif input_format == FORMAT_VMRAY:
         import capa.features.extractors.vmray.extractor
 
-        file_extractors.append(capa.features.extractors.vmray.extractor.VMRayExtractor.from_zipfile(input_file))
+        if input_file.name.endswith("flog.txt"):
+            file_extractors.append(
+                capa.features.extractors.vmray.extractor.VMRayExtractor.from_flog_txt(input_file)
+            )
+        else:
+            file_extractors.append(
+                capa.features.extractors.vmray.extractor.VMRayExtractor.from_zipfile(input_file)
+            )
 
     elif input_format == FORMAT_BINEXPORT2:
         file_extractors = _get_binexport2_file_extractors(input_file)

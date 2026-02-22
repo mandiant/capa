@@ -20,13 +20,23 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.extractors.vmray.models import File, Flog, SummaryV2, StaticData, FunctionCall, xml_to_dict
+from capa.features.extractors.vmray.models import (
+    AnalysisMetadata,
+    File,
+    FileHashes,
+    Flog,
+    FunctionCall,
+    StaticData,
+    SummaryV2,
+    xml_to_dict,
+)
+from capa.features.extractors.vmray import flog_txt
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_ARCHIVE_PASSWORD = b"infected"
 
-SUPPORTED_FLOG_VERSIONS = ("2",)
+SUPPORTED_FLOG_VERSIONS = ("1", "2")  # "1" = flog.txt, "2" = flog.xml
 
 
 @dataclass
@@ -131,6 +141,49 @@ class VMRayAnalysis:
         self._compute_monitor_processes()
         self._compute_monitor_threads()
         self._compute_monitor_process_calls()
+
+    @classmethod
+    def from_flog_txt(cls, flog_txt_path: Path) -> "VMRayAnalysis":
+        """
+        Build VMRayAnalysis from a standalone flog.txt file (no ZIP).
+        Used when only the free "Download Function Log" from VMRay is available.
+        No submission file or static data; only API trace is available.
+        """
+        self = cls.__new__(cls)
+        self.zipfile = None
+        self.flog = flog_txt.parse_flog_txt_path(flog_txt_path)
+        if self.flog.analysis.log_version not in SUPPORTED_FLOG_VERSIONS:
+            raise UnsupportedFormatError(
+                "VMRay feature extractor does not support flog version %s" % self.flog.analysis.log_version
+            )
+        self.sv2 = SummaryV2(
+            analysis_metadata=AnalysisMetadata(
+                sample_type="unknown",
+                submission_filename=flog_txt_path.name,
+            ),
+        )
+        self.submission_type = "unknown"
+        self.submission_name = flog_txt_path.name
+        self.submission_meta = File(
+            hash_values=FileHashes(md5="0" * 32, sha1="0" * 40, sha256="0" * 64),
+            is_sample=True,
+            ref_static_data=None,
+        )
+        self.submission_sha256 = None
+        self.submission_static = None
+        self.submission_bytes = b""
+        self.submission_base_address = None
+        self.exports = {}
+        self.imports = {}
+        self.sections = {}
+        self.monitor_processes = {}
+        self.monitor_threads = {}
+        self.monitor_threads_by_monitor_process = defaultdict(list)
+        self.monitor_process_calls = defaultdict(lambda: defaultdict(list))
+        self._compute_monitor_processes()
+        self._compute_monitor_threads()
+        self._compute_monitor_process_calls()
+        return self
 
     def _find_sample_file(self):
         logger.debug("searching archive for submission")
