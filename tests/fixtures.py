@@ -60,6 +60,11 @@ DOTNET_DIR = CD / "data" / "dotnet"
 DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
 
 
+def _is_hash_name(stem: str) -> bool:
+    """Return True if the stem looks like a hex hash (MD5=32 chars, SHA256=64 chars)."""
+    return len(stem) in (32, 64) and all(c in "0123456789abcdefABCDEF" for c in stem)
+
+
 def _build_sample_cache(samples_path: Path) -> dict[str, Path]:
     """
     Walk the samples directory and build lookup tables indexed by MD5, SHA256, and filename.
@@ -93,10 +98,14 @@ def _build_sample_cache(samples_path: Path) -> dict[str, Path]:
         sha256 = hashlib.sha256(buf).hexdigest()
         md5 = hashlib.md5(buf).hexdigest()
 
-        cache[sha256.lower()] = path
-        cache[sha256.upper()] = path
-        cache[md5.lower()] = path
-        cache[md5.upper()] = path
+        # prefer friendly names over hash-named duplicates (same content, two filenames)
+        # this ensures filesystem traversal order doesn't affect the result
+        if sha256.lower() not in cache or _is_hash_name(cache[sha256.lower()].stem):
+            cache[sha256.lower()] = path
+            cache[sha256.upper()] = path
+        if md5.lower() not in cache or _is_hash_name(cache[md5.lower()].stem):
+            cache[md5.lower()] = path
+            cache[md5.upper()] = path
 
         # Index by first 8 characters of hashes as shortcuts
         cache[sha256.lower()[:8]] = path
