@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (18)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -17,6 +17,18 @@
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
 - data-manipulation/encryption/hc-256/encrypt-data-using-hc-256 wballenthin@hex-rays.com
 - anti-analysis/anti-llm/terminate-anthropic-session-via-magic-strings wballenthin@hex-rays.com
+- nursery/access-aws-credentials maximemorin@google.com
+- nursery/access-cloudflare-credentials maximemorin@google.com
+- nursery/access-docker-credentials maximemorin@google.com
+- nursery/access-gcp-credentials maximemorin@google.com
+- nursery/access-kubernetes-credentials maximemorin@google.com
+- nursery/enumerate-aws-cloudformation maximemorin@google.com
+- nursery/enumerate-aws-cloudtrail maximemorin@google.com
+- nursery/enumerate-aws-direct-connect maximemorin@google.com
+- nursery/enumerate-aws-ec2 maximemorin@google.com
+- nursery/enumerate-aws-iam maximemorin@google.com
+- nursery/enumerate-aws-s3 maximemorin@google.com
+- nursery/enumerate-aws-support-cases maximemorin@google.com
 -
 
 ### Bug Fixes
