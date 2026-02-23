@@ -1,0 +1,43 @@
+# Log Creation Date: 02.01.2025 12:00:00
+# Analyzer Version: 2024.4.1
+# Flog Txt Version 1
+
+Process:
+id = "1"
+os_pid = "0x1234"
+os_parent_pid = "0x1"
+parent_id = "0"
+image_name = "backdoor"
+filename = "/tmp/backdoor"
+cmd_line = "/tmp/backdoor"
+monitor_reason = "analysis_target"
+
+Region:
+id = "1"
+name = "stack"
+
+Thread:
+id = "1"
+os_tid = "0x1234"
+ [0001.000] sys_read (fd=0x3, buf=0x7ffe1234, count=0x1000) returned 0x100
+ [0001.001] sys_write (fd=0x1, buf=0x7ffe1234, count=0x6) returned 0x6
+ [0001.002] sys_open (pathname="/etc/passwd", flags=0x0, mode=0x0) returned 0x3
+ [0001.003] sys_connect (sockfd=0x4, addr=0x7ffe2000, addrlen=0x10) returned 0x0
+ [0001.004] sys_socket (domain=0x2, type=0x1, protocol=0x0) returned 0x4
+ [0001.005] sys_execve (filename="/bin/sh", argv=0x7ffe3000, envp=0x7ffe4000) returned 0x0
+ [0001.006] sys_fork () returned 0x2345
+ [0001.007] sys_getuid () returned 0x0
+ [0001.008] sys_setuid (uid=0x0) returned 0x0
+ [0001.009] sys_chmod (pathname="/tmp/backdoor", mode=0x1ed) returned 0x0
+ [0001.010] sys_unlink (pathname="/tmp/.hidden") returned 0x0
+ [0001.011] sys_time (tloc=0x0) returned 0x677f2000
+ [0001.012] sys_ptrace (request=0x0, pid=0x1, addr=0x0, data=0x0) returned 0x0
+ [0001.013] sys_prctl (option=0xf, arg2=0x0, arg3=0x0, arg4=0x0, arg5=0x0) returned 0x0
+ [0001.014] sys_mmap (addr=0x0, length=0x1000, prot=0x7, flags=0x22, fd=0xffffffff, offset=0x0) returned 0x7f0000
+ [0001.015] sys_mprotect (start=0x7f0000, len=0x1000, prot=0x5) returned 0x0
+ [0001.016] sys_munmap (addr=0x7f0000, length=0x1000) returned 0x0
+ [0001.017] sys_bind (sockfd=0x4, addr=0x7ffe2000, addrlen=0x10) returned 0x0
+ [0001.018] sys_listen (sockfd=0x4, backlog=0x5) returned 0x0
+ [0001.019] sys_accept (sockfd=0x4, addr=0x7ffe2010, addrlen=0x7ffe2020) returned 0x5
+ [0001.020] sys_sendto (sockfd=0x5, buf=0x7ffe5000, len=0x20, flags=0x0, dest_addr=0x0, addrlen=0x0) returned 0x20
+ [0001.021] sys_recvfrom (sockfd=0x5, buf=0x7ffe5000, len=0x1000, flags=0x0) returned 0x40

@@ -14,11 +14,19 @@
 
 """Tests for VMRay flog.txt parser (#2452)."""
 
+from pathlib import Path
+
 import pytest
 
+import capa.features.common
+import capa.features.insn
 from capa.exceptions import UnsupportedFormatError
 from capa.features.extractors.vmray import flog_txt
 from capa.features.extractors.vmray.extractor import VMRayExtractor
+
+# Fixture files live in tests/fixtures/vmray/flog_txt/ (committed to the main repo so they
+# are always present in CI without requiring the capa-testfiles submodule).
+FLOG_TXT_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "vmray" / "flog_txt"
 
 
 MINIMAL_FLOG_TXT = """
@@ -53,8 +61,8 @@ def test_parse_flog_txt_minimal(tmp_path):
     # Write as binary so newlines are exactly \n (avoids Windows \r\n)
     path = tmp_path / "flog.txt"
     path.write_bytes(
-        b'# Flog Txt Version 1\n\n'
-        b'Process:\n'
+        b"# Flog Txt Version 1\n\n"
+        b"Process:\n"
         b'id = "1"\n'
         b'os_pid = "0x118c"\n'
         b'image_name = "svchost.exe"\n'
@@ -63,10 +71,10 @@ def test_parse_flog_txt_minimal(tmp_path):
         b'parent_id = "0"\n'
         b'os_parent_pid = "0"\n'
         b'cmd_line = ""\n\n'
-        b'Thread:\n'
+        b"Thread:\n"
         b'id = "1"\n'
         b'os_tid = "0x117c"\n'
-        b' [0072.750] GetCurrentProcess () returned 0xffffffffffffffff\n'
+        b" [0072.750] GetCurrentProcess () returned 0xffffffffffffffff\n"
     )
     flog = flog_txt.parse_flog_txt_path(path)
     assert flog.analysis.log_version == "1"
@@ -84,7 +92,9 @@ def test_parse_flog_txt_minimal(tmp_path):
 
 
 def test_parse_flog_txt_rejects_wrong_header():
-    with pytest.raises(UnsupportedFormatError, match="does not appear to be a VMRay flog.txt"):
+    with pytest.raises(
+        UnsupportedFormatError, match="does not appear to be a VMRay flog.txt"
+    ):
         flog_txt.parse_flog_txt("not a flog\nProcess:\nid = 1\n")
 
 
@@ -92,7 +102,7 @@ def test_parse_flog_txt_sys_prefix_stripped(tmp_path):
     # Linux kernel calls start with sys_; parser should strip for consistency with XML
     path = tmp_path / "flog.txt"
     path.write_bytes(
-        b'# Flog Txt Version 1\n\n'
+        b"# Flog Txt Version 1\n\n"
         b'Process:\nid = "1"\nos_pid = "0x1000"\nparent_id = "0"\nos_parent_pid = "0"\n'
         b'image_name = "sample"\nfilename = "x"\ncmd_line = ""\nmonitor_reason = "a"\n\n'
         b'Thread:\nid = "1"\nos_tid = "0x2000"\n [0001.000] sys_time () returned 0x0\n'
@@ -104,7 +114,9 @@ def test_parse_flog_txt_sys_prefix_stripped(tmp_path):
 
 def test_vmray_analysis_from_flog_txt(tmp_path):
     path = tmp_path / "flog.txt"
-    path.write_bytes(MINIMAL_FLOG_TXT.encode("utf-8").replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
+    path.write_bytes(
+        MINIMAL_FLOG_TXT.encode("utf-8").replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    )
     from capa.features.extractors.vmray import VMRayAnalysis
 
     analysis = VMRayAnalysis.from_flog_txt(path)
@@ -120,7 +132,9 @@ def test_vmray_extractor_from_flog_txt(tmp_path):
     from capa.features.address import NO_ADDRESS
 
     path = tmp_path / "flog.txt"
-    path.write_bytes(MINIMAL_FLOG_TXT.encode("utf-8").replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
+    path.write_bytes(
+        MINIMAL_FLOG_TXT.encode("utf-8").replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    )
     ext = VMRayExtractor.from_flog_txt(path)
     assert ext.get_base_address() is NO_ADDRESS  # no base address from flog.txt
     procs = list(ext.get_processes())
@@ -135,13 +149,13 @@ def test_parse_flog_txt_args_parsed(tmp_path):
     """API call arguments are parsed into Param objects for feature extraction."""
     path = tmp_path / "flog.txt"
     path.write_bytes(
-        b'# Flog Txt Version 1\n\n'
+        b"# Flog Txt Version 1\n\n"
         b'Process:\nid = "1"\nos_pid = "0x1000"\nparent_id = "0"\nos_parent_pid = "0"\n'
         b'image_name = "sample"\nfilename = "x.exe"\ncmd_line = ""\nmonitor_reason = "a"\n\n'
         b'Thread:\nid = "1"\nos_tid = "0x2000"\n'
         b' [0001.000] CreateFile (lpFileName="test.exe", dwDesiredAccess=0x80000000) returned 0x4\n'
-        b' [0002.000] VirtualAlloc (lpAddress=0x0, dwSize=4096) returned 0x10000\n'
-        b' [0003.000] GetCurrentProcess () returned 0xffffffffffffffff\n'
+        b" [0002.000] VirtualAlloc (lpAddress=0x0, dwSize=4096) returned 0x10000\n"
+        b" [0003.000] GetCurrentProcess () returned 0xffffffffffffffff\n"
     )
     flog = flog_txt.parse_flog_txt_path(path)
     calls = flog.analysis.function_calls
@@ -168,3 +182,243 @@ def test_parse_flog_txt_args_parsed(tmp_path):
     get_proc = calls[2]
     assert get_proc.name == "GetCurrentProcess"
     assert get_proc.params_in is None
+
+
+# ---------------------------------------------------------------------------
+# Fixture-based feature-presence tests
+# ---------------------------------------------------------------------------
+# These tests load the realistic flog.txt fixtures from tests/fixtures/vmray/flog_txt/
+# and verify that the extractor yields the expected capa features.  They act as
+# regression tests for the parser — especially the string-argument parsing path,
+# which is brittle — and mirror the pattern used by test_vmray_features.py.
+
+
+def _collect_all_call_features(ext: VMRayExtractor) -> set:
+    """Collect every feature emitted at the call scope across all processes."""
+    features = set()
+    for ph in ext.get_processes():
+        for th in ext.get_threads(ph):
+            for ch in ext.get_calls(ph, th):
+                for feature, addr in ext.extract_call_features(ph, th, ch):
+                    features.add(feature)
+    return features
+
+
+def _collect_call_features_for_process(ext: VMRayExtractor, image_name: str) -> set:
+    """Collect call-scope features only for the process whose image_name matches."""
+    features = set()
+    for ph in ext.get_processes():
+        if ph.inner.image_name != image_name:
+            continue
+        for th in ext.get_threads(ph):
+            for ch in ext.get_calls(ph, th):
+                for feature, addr in ext.extract_call_features(ph, th, ch):
+                    features.add(feature)
+    return features
+
+
+# --- windows_apis.flog.txt ---------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def windows_apis_extractor():
+    path = FLOG_TXT_FIXTURES / "windows_apis.flog.txt"
+    return VMRayExtractor.from_flog_txt(path)
+
+
+def test_windows_flog_txt_process_count(windows_apis_extractor):
+    """Two processes are described in windows_apis.flog.txt."""
+    procs = list(windows_apis_extractor.get_processes())
+    assert len(procs) == 2
+
+
+def test_windows_flog_txt_api_features(windows_apis_extractor):
+    """Common Win32 API names are yielded as API features."""
+    features = _collect_all_call_features(windows_apis_extractor)
+    for api_name in (
+        "CreateFileW",
+        "RegOpenKeyExW",
+        "InternetOpenW",
+        "InternetConnectW",
+        "VirtualAlloc",
+        "CreateMutexW",
+        "LoadLibraryW",
+        "CreateProcessW",
+        "HttpOpenRequestW",
+        "WinHttpConnect",
+        "GetAddrInfoW",
+        "GetComputerNameW",
+    ):
+        assert (
+            capa.features.insn.API(api_name) in features
+        ), f"API({api_name!r}) not found"
+
+
+def test_windows_flog_txt_string_args(windows_apis_extractor):
+    """String arguments are extracted and backslash-escaping is correctly unwound."""
+    features = _collect_all_call_features(windows_apis_extractor)
+    for expected_string in (
+        # CreateFileW lpFileName (double-backslash in flog → single backslash in feature)
+        "C:\\Users\\test\\Documents\\config.ini",
+        # RegOpenKeyExW lpSubKey
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        # InternetOpenW lpszAgent
+        "Mozilla/5.0 (Windows NT 10.0)",
+        # InternetConnectW lpszServerName
+        "evil.example.com",
+        # CreateMutexW lpName
+        "Global\\MyMutex12345",
+        # LoadLibraryW lpLibFileName
+        "kernel32.dll",
+        # HttpOpenRequestW verb and path
+        "GET",
+        "/beacon",
+        # WinHttpConnect pswzServerName
+        "c2.example.org",
+        # WinHttpOpenRequest verb
+        "POST",
+        # GetComputerNameW result (child process)
+        "DESKTOP-TEST01",
+    ):
+        assert (
+            capa.features.common.String(expected_string) in features
+        ), f"String({expected_string!r}) not found"
+
+
+def test_windows_flog_txt_string_double_backslash_absent(windows_apis_extractor):
+    """Double-escaped backslashes (as they appear in the raw flog.txt) must NOT appear in features."""
+    features = _collect_all_call_features(windows_apis_extractor)
+    # The raw flog.txt content has C:\\Users\\...; the extractor must normalise to single backslash
+    assert (
+        capa.features.common.String("C:\\\\Users\\\\test\\\\Documents\\\\config.ini")
+        not in features
+    )
+
+
+def test_windows_flog_txt_number_args(windows_apis_extractor):
+    """Numeric arguments are extracted as Number features."""
+    features = _collect_all_call_features(windows_apis_extractor)
+    # VirtualAlloc dwSize
+    assert capa.features.insn.Number(4096) in features
+    # VirtualAlloc flAllocationType
+    assert capa.features.insn.Number(0x3000) in features
+    # VirtualAlloc flProtect
+    assert capa.features.insn.Number(0x40) in features
+    # CreateFileW dwDesiredAccess
+    assert capa.features.insn.Number(0x80000000) in features
+
+
+def test_windows_flog_txt_child_process(windows_apis_extractor):
+    """The spawned child process (cmd.exe) is present and has its own API calls."""
+    features = _collect_call_features_for_process(windows_apis_extractor, "cmd.exe")
+    assert capa.features.insn.API("NtQueryInformationProcess") in features
+    assert capa.features.insn.API("GetUserNameW") in features
+    # GetUserNameW lpBuffer string
+    assert capa.features.common.String("test") in features
+
+
+# --- linux_syscalls.flog.txt -------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def linux_syscalls_extractor():
+    path = FLOG_TXT_FIXTURES / "linux_syscalls.flog.txt"
+    return VMRayExtractor.from_flog_txt(path)
+
+
+def test_linux_flog_txt_sys_prefix_stripped(linux_syscalls_extractor):
+    """sys_ prefix is stripped from all Linux syscall names."""
+    features = _collect_all_call_features(linux_syscalls_extractor)
+    # Every syscall name should appear WITHOUT the sys_ prefix
+    for stripped_name in (
+        "read",
+        "write",
+        "open",
+        "connect",
+        "socket",
+        "execve",
+        "fork",
+        "getuid",
+        "setuid",
+        "chmod",
+        "unlink",
+        "time",
+        "ptrace",
+        "prctl",
+        "mmap",
+        "mprotect",
+        "munmap",
+        "bind",
+        "listen",
+        "accept",
+        "sendto",
+        "recvfrom",
+    ):
+        assert (
+            capa.features.insn.API(stripped_name) in features
+        ), f"API({stripped_name!r}) not found after stripping"
+
+
+def test_linux_flog_txt_sys_prefix_not_present(linux_syscalls_extractor):
+    """sys_-prefixed names must NOT appear in features (only the stripped form)."""
+    features = _collect_all_call_features(linux_syscalls_extractor)
+    assert capa.features.insn.API("sys_open") not in features
+    assert capa.features.insn.API("sys_execve") not in features
+
+
+def test_linux_flog_txt_string_args(linux_syscalls_extractor):
+    """String path arguments from Linux syscalls are extracted correctly."""
+    features = _collect_all_call_features(linux_syscalls_extractor)
+    assert capa.features.common.String("/etc/passwd") in features
+    assert capa.features.common.String("/bin/sh") in features
+    assert capa.features.common.String("/tmp/backdoor") in features
+    assert capa.features.common.String("/tmp/.hidden") in features
+
+
+# --- string_edge_cases.flog.txt -----------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def string_edge_cases_extractor():
+    path = FLOG_TXT_FIXTURES / "string_edge_cases.flog.txt"
+    return VMRayExtractor.from_flog_txt(path)
+
+
+def test_edge_case_paths_with_spaces(string_edge_cases_extractor):
+    """File paths containing spaces are parsed correctly."""
+    features = _collect_all_call_features(string_edge_cases_extractor)
+    assert (
+        capa.features.common.String("C:\\path with spaces\\file name.txt") in features
+    )
+
+
+def test_edge_case_unc_path(string_edge_cases_extractor):
+    """UNC paths (\\server\\share) are parsed correctly."""
+    features = _collect_all_call_features(string_edge_cases_extractor)
+    assert capa.features.common.String("\\\\server\\share\\document.docx") in features
+
+
+def test_edge_case_url_string(string_edge_cases_extractor):
+    """Full URL strings are preserved as-is."""
+    features = _collect_all_call_features(string_edge_cases_extractor)
+    assert capa.features.common.String("https://c2.example.com/payload.bin") in features
+
+
+def test_edge_case_registry_key(string_edge_cases_extractor):
+    """Registry key paths are normalised to single backslashes."""
+    features = _collect_all_call_features(string_edge_cases_extractor)
+    assert (
+        capa.features.common.String("Software\\Microsoft\\Windows NT\\CurrentVersion")
+        in features
+    )
+
+
+def test_edge_case_numeric_args(string_edge_cases_extractor):
+    """Numeric arguments from edge-case calls are extracted."""
+    features = _collect_all_call_features(string_edge_cases_extractor)
+    # send() len=256
+    assert capa.features.insn.Number(256) in features
+    # recv() len=4096
+    assert capa.features.insn.Number(4096) in features
+    # WriteProcessMemory nSize=4096
+    assert capa.features.insn.Number(4096) in features
