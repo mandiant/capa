@@ -9,6 +9,7 @@ See `capa -h` for all supported arguments and usage examples.
 | **CLI** | Text (default, `-v`, `-vv`), JSON (`-j`), or other formats | Scripting, CI, one-off analysis |
 | [**IDA Pro**](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) | capa Explorer plugin inside IDA | Interactive analysis with jump-to-address |
 | [**Ghidra**](https://github.com/mandiant/capa/tree/master/capa/ghidra/plugin) | capa Explorer plugin inside Ghidra | Interactive analysis with Ghidra integration |
+| [**Binary Ninja**](https://github.com/mandiant/capa/tree/master/capa/features/extractors/binja) | capa run using Binary Ninja as the analysis backend | Interactive analysis with Binary Ninja integration |
 | [**Dynamic (Sandbox)**](https://www.mandiant.com/resources/blog/dynamic-capa-executable-behavior-cape-sandbox) | capa run on dynamic sandbox report (CAPE, VMRay, etc.) | Dynamic analysis of sandbox output |
 | [**Web (capa Explorer)**](https://mandiant.github.io/capa/explorer/) | Web UI (upload JSON or load from URL) | Sharing results, viewing from VirusTotal or similar |
 
