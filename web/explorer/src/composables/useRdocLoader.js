@@ -65,13 +65,20 @@ export function useRdocLoader() {
             };
         }
         const fc = rdoc.meta.analysis.feature_counts;
-        const hasFunctions = Array.isArray(fc.functions);
-        const hasProcesses = Array.isArray(fc.processes);
-        if (!hasFunctions && !hasProcesses) {
+        // Allow file-scoped-only documents (no functions/processes arrays).
+        // If present, functions and processes must be arrays.
+        if (fc.functions !== undefined && !Array.isArray(fc.functions)) {
             return {
                 valid: false,
                 message:
-                    "Invalid result document: 'meta.analysis.feature_counts' must contain 'functions' or 'processes' array."
+                    "Invalid result document: 'meta.analysis.feature_counts.functions' must be an array when present."
+            };
+        }
+        if (fc.processes !== undefined && !Array.isArray(fc.processes)) {
+            return {
+                valid: false,
+                message:
+                    "Invalid result document: 'meta.analysis.feature_counts.processes' must be an array when present."
             };
         }
         if (isInvalidObject(rdoc.rules)) {
