@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (18)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -18,21 +18,40 @@
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
 - data-manipulation/encryption/hc-256/encrypt-data-using-hc-256 wballenthin@hex-rays.com
 - anti-analysis/anti-llm/terminate-anthropic-session-via-magic-strings wballenthin@hex-rays.com
+- nursery/access-aws-credentials maximemorin@google.com
+- nursery/access-cloudflare-credentials maximemorin@google.com
+- nursery/access-docker-credentials maximemorin@google.com
+- nursery/access-gcp-credentials maximemorin@google.com
+- nursery/access-kubernetes-credentials maximemorin@google.com
+- nursery/enumerate-aws-cloudformation maximemorin@google.com
+- nursery/enumerate-aws-cloudtrail maximemorin@google.com
+- nursery/enumerate-aws-direct-connect maximemorin@google.com
+- nursery/enumerate-aws-ec2 maximemorin@google.com
+- nursery/enumerate-aws-iam maximemorin@google.com
+- nursery/enumerate-aws-s3 maximemorin@google.com
+- nursery/enumerate-aws-support-cases maximemorin@google.com
 -
 
 ### Bug Fixes
+- main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
+- render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
+- render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
 
 ### capa Explorer Web
+- webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
 
 ### capa Explorer IDA Pro plugin
 
 ### Development
 
+- doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
+- doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
+- binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs

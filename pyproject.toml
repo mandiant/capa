@@ -146,7 +146,7 @@ dev = [
     "flake8-copyright==0.2.4",
     "ruff==0.15.0",
     "black==25.12.0",
-    "isort==7.0.0",
+    "isort==8.0.0",
     "mypy==1.19.1",
     "mypy-protobuf==5.0.0",
     "PyGithub==2.8.1",
