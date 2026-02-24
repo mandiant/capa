@@ -18,7 +18,7 @@ import { useToast } from "primevue/usetoast";
 import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
 
 const VT_REANALYZE_SUGGESTION =
-    " If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+    "If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
 
 export function useRdocLoader() {
     const toast = useToast();
