@@ -113,6 +113,11 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
+    - name: Cache vivisect workspaces
+      uses: actions/cache@v4
+      with:
+        path: tests/data/**/*.viv
+        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
