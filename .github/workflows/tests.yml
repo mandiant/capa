@@ -60,8 +60,31 @@ jobs:
       run: pre-commit run flake8 --hook-stage manual
     - name: Check types with mypy
       run: pre-commit run mypy --hook-stage manual
+    - name: Install GitHub CLI
+      run: |
+        sudo apt update
+        sudo apt install gh -y
     - name: Check imports against dependencies
-      run: pre-commit run deptry --hook-stage manual
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download v1.1.1 --repo google/addlicense --pattern "addlicense_*_Linux_x86_64.tar.gz"
+        tar -xzf addlicense_*_Linux_x86_64.tar.gz
+        chmod +x addlicense
+        sudo mv addlicense /usr/local/bin/
+        rm addlicense_*_Linux_x86_64.tar.gz
+    - name: Check license headers
+      run: |
+        addlicense -check \
+          -c "Google LLC" \
+          -ignore "**/*_pb2.py" \
+          -ignore "**/*_pb2.pyi" \
+          -ignore "**/__init__.py" \
+          -ignore "**/.*" \
+          -ignore "**/.*/**" . || {
+            echo "License headers missing or incorrect! Please run 'addlicense -c \"Google LLC\" .' locally and commit the changes."
+            exit 1
+          }
 
   rule_linter:
     runs-on: ubuntu-22.04
