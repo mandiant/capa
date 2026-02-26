@@ -54,9 +54,15 @@ class BasicBlockLayout(Model):
     address: frz.Address
 
 
+class SuperblockLayout(Model):
+    address: frz.Address
+    matched_basic_blocks: tuple[BasicBlockLayout, ...]
+
+
 class FunctionLayout(Model):
     address: frz.Address
     matched_basic_blocks: tuple[BasicBlockLayout, ...]
+    matched_superblocks: tuple[SuperblockLayout, ...]
 
 
 class CallLayout(Model):

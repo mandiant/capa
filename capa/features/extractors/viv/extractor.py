@@ -16,6 +16,7 @@ import logging
 from typing import Any, Iterator
 from pathlib import Path
 
+import envi
 import viv_utils
 import viv_utils.flirt
 
@@ -75,6 +76,14 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
         f: viv_utils.Function = fh.inner
         for bb in f.basic_blocks:
             yield BBHandle(address=AbsoluteVirtualAddress(bb.va), inner=bb)
+
+    def get_next_basic_blocks(self, bb: BBHandle) -> Iterator[AbsoluteVirtualAddress]:
+        for bva, bflags in bb.inner.instructions[-1].getBranches():
+            if bflags & envi.BR_COND:
+                yield AbsoluteVirtualAddress(bva)
+
+    def get_basic_block_size(self, bb: BBHandle) -> int:
+        return bb.inner.size
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.viv.basicblock.extract_features(fh, bbh)

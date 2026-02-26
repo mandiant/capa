@@ -240,6 +240,12 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
     def get_basic_blocks(self, f):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
+    def get_next_basic_blocks(self, bb):
+        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+
+    def get_basic_block_size(self, bb):
+        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+
     def extract_basic_block_features(self, f, bb):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 

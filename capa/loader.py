@@ -717,9 +717,13 @@ def compute_static_layout(rules: RuleSet, extractor: StaticFeatureExtractor, cap
             functions_by_bb[bb.address] = f.address
             bbs_by_function[f.address].append(bb.address)
 
+    matched_sbs = set()
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
+        if capa.rules.Scope.SUPERBLOCK in rule.scopes:
+            for addr, _ in matches:
+                matched_sbs.add(addr)
         if capa.rules.Scope.BASIC_BLOCK in rule.scopes:
             for addr, _ in matches:
                 assert addr in functions_by_bb
@@ -729,10 +733,20 @@ def compute_static_layout(rules: RuleSet, extractor: StaticFeatureExtractor, cap
         functions=tuple(
             rdoc.FunctionLayout(
                 address=frz.Address.from_capa(f),
+                matched_superblocks=tuple(
+                    rdoc.SuperblockLayout(
+                        address=frz.Address.from_capa(sb),
+                        matched_basic_blocks=tuple(
+                            rdoc.BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in bbs if bb in sb
+                        ),
+                    )
+                    for sb in matched_sbs
+                    if sb.addresses[0] in bbs  # this object is open to extension in the future,
+                    # such as with the function name, etc.
+                ),
                 matched_basic_blocks=tuple(
                     rdoc.BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in bbs if bb in matched_bbs
-                ),  # this object is open to extension in the future,
-                # such as with the function name, etc.
+                ),
             )
             for f, bbs in bbs_by_function.items()
             if len([bb for bb in bbs if bb in matched_bbs]) > 0

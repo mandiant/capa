@@ -77,6 +77,14 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         for bb in ida_helpers.get_function_blocks(fh.inner):
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start_ea), inner=bb)
 
+    def get_next_basic_blocks(self, bb: BBHandle):
+        # not implemented yet
+        return []
+
+    def get_basic_block_size(self, bb: BBHandle):
+        # not implemented yet
+        return 0
+
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.basicblock.extract_features(fh, bbh)
 
