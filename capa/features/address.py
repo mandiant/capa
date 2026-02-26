@@ -189,6 +189,11 @@ class _NoAddress(Address):
     def __lt__(self, other):
         return False
 
+    def __gt__(self, other):
+        # Mixed-type comparison: (real_address < NO_ADDRESS) invokes this so sort works.
+        # NoAddress sorts last.
+        return other is not self
+
     def __hash__(self):
         return hash(0)
 
