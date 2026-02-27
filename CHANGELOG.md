@@ -5,6 +5,8 @@
 ### New Features
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
+- vmray: support parsing flog.txt (Download Function Log) without full ZIP @devs6186 #2452
+- vmray: add flog.txt vs archive docs, fetch-vmray-flog.py helper, and fixture-based regression tests @devs6186 #2878
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
 ### Breaking Changes
