@@ -1565,6 +1565,12 @@ A huge thanks to everyone who submitted issues, provided feedback, and contribut
 - linter: summarize results at the end #571 @williballenthin
 - linter: check for `or` with always true child statement, e.g. `optional`, colors #348 @mr-tz
 
+### Enhancements
+
+- **enhancement**: Improve regex handling in capa2yara conversion.
+  - Added function to unescape regex patterns for YARA compatibility.
+  - Enhanced regex conversion logic to handle case-insensitive flags and improve performance.
+
 ### Breaking Changes
 
 - py3: drop Python 2 support #480 @Ana06
