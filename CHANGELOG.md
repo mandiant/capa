@@ -54,6 +54,7 @@
 
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
+- fixtures: add dynamic sample discovery and reverse MD5 lookup @kami922 #1743
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 - ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
