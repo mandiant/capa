@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (18)
+### New Rules (19)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -30,6 +30,7 @@
 - nursery/enumerate-aws-iam maximemorin@google.com
 - nursery/enumerate-aws-s3 maximemorin@google.com
 - nursery/enumerate-aws-support-cases maximemorin@google.com
+- persistence/registry/persist-via-shellserviceobjectdelayload-registry-key xpzhxhm@gmail.com
 -
 
 ### Bug Fixes
@@ -41,9 +42,12 @@
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
 - render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
+- address: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
 
 ### capa Explorer Web
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
+
+- webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
 
 ### capa Explorer IDA Pro plugin
 
@@ -53,6 +57,7 @@
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
+- ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
 
 ### Raw diffs
 - [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
