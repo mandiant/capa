@@ -74,9 +74,7 @@ class DnFileFeatureExtractorCache:
     def get_import(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
         return self.imports.get(token)
 
-    def get_native_import(
-        self, token: int
-    ) -> Optional[Union[DnType, DnUnmanagedMethod]]:
+    def get_native_import(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
         return self.native_imports.get(token)
 
     def get_method(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
@@ -96,21 +94,13 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope
-        self.token_cache: DnFileFeatureExtractorCache = DnFileFeatureExtractorCache(
-            self.pe
-        )
+        self.token_cache: DnFileFeatureExtractorCache = DnFileFeatureExtractorCache(self.pe)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: list[tuple[Feature, Address]] = []
-        self.global_features.extend(
-            capa.features.extractors.dotnetfile.extract_file_format()
-        )
-        self.global_features.extend(
-            capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe)
-        )
-        self.global_features.extend(
-            capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe)
-        )
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format())
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -181,9 +171,7 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
     def get_instructions(self, fh, bbh):
         for insn in bbh.inner.instructions:
             yield InsnHandle(
-                address=DNTokenOffsetAddress(
-                    bbh.address, insn.offset - (fh.inner.offset + fh.inner.header_size)
-                ),
+                address=DNTokenOffsetAddress(bbh.address, insn.offset - (fh.inner.offset + fh.inner.header_size)),
                 inner=insn,
             )
 
