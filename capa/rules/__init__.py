@@ -635,6 +635,8 @@ def build_statements(d, scopes: Scopes):
         return ceng.And(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
     elif key == "or":
         return ceng.Or(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+    elif key == "sequence":
+        return ceng.Sequence(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
@@ -1698,7 +1700,7 @@ class RuleSet:
                 # feature is found N times
                 return rec(rule_name, node.child)
 
-            elif isinstance(node, ceng.And):
+            elif isinstance(node, (ceng.And, ceng.Sequence)):
                 # When evaluating an AND block, all of the children need to match.
                 #
                 # So when we index rules, we want to pick the most uncommon feature(s)

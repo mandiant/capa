@@ -80,6 +80,28 @@ def test_rule_yaml():
     assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}})) is True
 
 
+def test_rule_yaml_sequence():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - sequence:
+                    - number: 1
+                    - number: 2
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    # 1 before 2 -> Match
+    assert bool(r.evaluate({Number(1): {ADDR1}, Number(2): {ADDR2}})) is True
+    # 2 before 1 -> No match
+    assert bool(r.evaluate({Number(1): {ADDR2}, Number(2): {ADDR1}})) is False
+
+
 def test_rule_yaml_complex():
     rule = textwrap.dedent(
         """
@@ -1653,3 +1675,70 @@ def test_circular_dependency():
     ]
     with pytest.raises(capa.rules.InvalidRule):
         list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
+
+
+def test_rule_yaml_sequence_with_subscope():
+    # This test mimics the dynamic analysis flow to verify Sequence with subscopes.
+    rule_yaml = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test sequence subscope
+                scopes:
+                    static: function
+                    dynamic: span of calls
+            features:
+                - sequence:
+                  - call:
+                    - number: 1
+                  - number: 2
+        """
+    )
+    # 1. Load rules (triggers subscope extraction)
+    rules = capa.rules.RuleSet([capa.rules.Rule.from_yaml(rule_yaml)])
+
+    # 2. Identify the extracted subscope rule (call scope) and the main rule (span of calls)
+    call_rules = rules.rules_by_scope[capa.rules.Scope.CALL]
+    span_rules = rules.rules_by_scope[capa.rules.Scope.SPAN_OF_CALLS]
+    assert len(call_rules) == 1
+    assert len(span_rules) == 1
+
+    main_rule = span_rules[0]
+    subscope_rule = call_rules[0]
+
+    # 3. Simulate features
+    # Call 1: Number(1) -> Matches subscope rule
+    # Call 2: Number(2) -> Matches second part of sequence
+
+    # Address setup
+    thread = capa.features.address.ThreadAddress(capa.features.address.ProcessAddress(1), 1)
+    call1_addr = capa.features.address.DynamicCallAddress(thread, 1)
+    call2_addr = capa.features.address.DynamicCallAddress(thread, 2)
+
+    features: capa.engine.FeatureSet = {Number(1): {call1_addr}, Number(2): {call2_addr}}
+
+    # 4. Match Call Scope Rules (Simulate find_call_capabilities)
+    # Match subscope rule against Call 1
+    # We need to filter features to just Call 1 for this rule?
+    # Actually, RuleSet.match takes features.
+
+    # Match at Call 1
+    _, matches1 = rules.match(capa.rules.Scope.CALL, features, call1_addr)
+    # Should match subscope rule
+    assert subscope_rule.name in matches1
+
+    # Index the match
+    capa.engine.index_rule_matches(features, subscope_rule, [call1_addr])
+
+    # 5. Match Span Scope Rules (Simulate find_span_capabilities)
+    # Now features contains MatchedRule(subscope_rule).
+    # Sequence should see:
+    # - call: matches subscope_rule at call1_addr
+    # - number: 2 at call2_addr
+    # call1_addr (id=1) < call2_addr (id=2). Sequence matches.
+
+    _, matches_span = rules.match(
+        capa.rules.Scope.SPAN_OF_CALLS, features, call1_addr
+    )  # addr doesn't matter much for span match logic itself, but passed to result
+
+    assert main_rule.name in matches_span
