@@ -27,7 +27,12 @@ import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
 import capa.features.extractors.dnfile.function
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    DNTokenAddress,
+    DNTokenOffsetAddress,
+)
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 from capa.features.extractors.base_extractor import (
     BBHandle,
@@ -39,6 +44,7 @@ from capa.features.extractors.base_extractor import (
 from capa.features.extractors.dnfile.helpers import (
     get_dotnet_types,
     get_dotnet_fields,
+    load_dotnet_image,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
@@ -83,7 +89,7 @@ class DnFileFeatureExtractorCache:
 
 class DnfileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.pe = load_dotnet_image(path)
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
@@ -112,7 +118,12 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
             fh: FunctionHandle = FunctionHandle(
                 address=DNTokenAddress(token),
                 inner=method,
-                ctx={"pe": self.pe, "calls_from": set(), "calls_to": set(), "cache": self.token_cache},
+                ctx={
+                    "pe": self.pe,
+                    "calls_from": set(),
+                    "calls_to": set(),
+                    "cache": self.token_cache,
+                },
             )
 
             # method tokens should be unique

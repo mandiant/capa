@@ -15,8 +15,10 @@
 
 from __future__ import annotations
 
+import struct
 import logging
 from typing import Union, Iterator, Optional
+from pathlib import Path
 
 import dnfile
 from dncil.cil.body import CilMethodBody
@@ -28,6 +30,16 @@ from capa.features.common import FeatureAccess
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 
 logger = logging.getLogger(__name__)
+
+
+def load_dotnet_image(path: Path) -> dnfile.dnPE:
+    """load a .NET PE file, raising CorruptFile on struct.error with the original error message."""
+    try:
+        return dnfile.dnPE(str(path))
+    except struct.error as e:
+        from capa.loader import CorruptFile
+
+        raise CorruptFile(f"Invalid or truncated .NET metadata: {e}") from e
 
 
 class DnfileMethodBodyReader(CilMethodBodyReaderBase):
@@ -151,7 +163,9 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
         )
 
 
-def get_dotnet_methoddef_property_accessors(pe: dnfile.dnPE) -> Iterator[tuple[int, str]]:
+def get_dotnet_methoddef_property_accessors(
+    pe: dnfile.dnPE,
+) -> Iterator[tuple[int, str]]:
     """get MethodDef methods used to access properties
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -226,7 +240,13 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
 
             typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
 
-            yield DnType(token, typedefname, namespace=typedefnamespace, member=method_name, access=access)
+            yield DnType(
+                token,
+                typedefname,
+                namespace=typedefnamespace,
+                member=method_name,
+                access=access,
+            )
 
 
 def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
@@ -259,7 +279,9 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             yield DnType(token, typedefname, namespace=typedefnamespace, member=field.row.Name)
 
 
-def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[tuple[int, CilMethodBody]]:
+def get_dotnet_managed_method_bodies(
+    pe: dnfile.dnPE,
+) -> Iterator[tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
     for rid, method_def in iter_dotnet_table(pe, dnfile.mdtable.MethodDef.number):
         assert isinstance(method_def, dnfile.mdtable.MethodDefRow)
@@ -338,7 +360,10 @@ def get_dotnet_table_row(pe: dnfile.dnPE, table_index: int, row_index: int) -> O
 
 
 def resolve_nested_typedef_name(
-    nested_class_table: dict, index: int, typedef: dnfile.mdtable.TypeDefRow, pe: dnfile.dnPE
+    nested_class_table: dict,
+    index: int,
+    typedef: dnfile.mdtable.TypeDefRow,
+    pe: dnfile.dnPE,
 ) -> tuple[str, tuple[str, ...]]:
     """Resolves all nested TypeDef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
 

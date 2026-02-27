@@ -41,6 +41,7 @@
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
 - render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
+- loader: handle struct.error from dnfile and show clear CorruptFile message @devs6186 #2442
 - address: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
 
 ### capa Explorer Web
