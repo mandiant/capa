@@ -28,24 +28,37 @@ logger = logging.getLogger(__name__)
 
 def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
-    get all the created processes for a sample
-    """
-    seen_processes = {}
-    for process in report.behavior.processes:
-        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
-        yield ProcessHandle(address=addr, inner=process)
+    get all the created processes for a sample.
 
-        # check for pid and ppid reuse
-        if addr not in seen_processes:
-            seen_processes[addr] = [process]
-        else:
-            logger.warning(
-                "pid and ppid reuse detected between process %s and process%s: %s",
-                process,
-                "es" if len(seen_processes[addr]) > 1 else "",
-                seen_processes[addr],
+    when the OS recycles a PID, multiple processes in the report may share the
+    same (ppid, pid) pair.  we detect this and assign sequential ids so that
+    each process receives a unique ProcessAddress.
+    """
+    # first pass: count how many times each (ppid, pid) pair appears
+    counts: dict[tuple[int, int], int] = {}
+    for process in report.behavior.processes:
+        key = (process.parent_id, process.process_id)
+        counts[key] = counts.get(key, 0) + 1
+
+    # second pass: yield handles with sequential ids for reused pairs
+    seq: dict[tuple[int, int], int] = {}
+    for process in report.behavior.processes:
+        key = (process.parent_id, process.process_id)
+        seq[key] = seq.get(key, 0) + 1
+
+        # only assign ids when reuse is detected; otherwise keep id=None
+        # for backward compatibility with existing addresses and freeze files
+        id_ = seq[key] if counts[key] > 1 else None
+        if id_ is not None:
+            logger.debug(
+                "pid reuse detected for ppid=%d, pid=%d: assigning id=%d",
+                process.parent_id,
+                process.process_id,
+                id_,
             )
-            seen_processes[addr].append(process)
+
+        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id, id=id_)
+        yield ProcessHandle(address=addr, inner=process)
 
 
 def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:

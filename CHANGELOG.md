@@ -33,6 +33,7 @@
 -
 
 ### Bug Fixes
+- address: add optional id field to ProcessAddress/ThreadAddress for unique tracking of recycled PID/TID lifecycles @devs6186 #2619
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
 - render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
