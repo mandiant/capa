@@ -30,6 +30,10 @@
 
 ### capa Explorer IDA Pro plugin
 
+### Performance
+
+- perf: eliminate O(n²) tuple growth and reduce per-match overhead @devs6186 #2890
+
 ### Development
 
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777

@@ -18,6 +18,7 @@ import os
 import re
 import copy
 import uuid
+import heapq
 import logging
 import binascii
 import collections
@@ -2094,12 +2095,20 @@ class RuleSet:
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
-                        # Merge new candidates into the remaining work list, re-sort topologically,
-                        # then rebuild the deque from the sorted result.
-                        remaining = list(candidate_rules_deque)
-                        remaining.extend([self.rules[rule_name] for rule_name in new_candidates])
-                        RuleSet._sort_rules_by_index(rule_index_by_rule_name, remaining)
-                        candidate_rules_deque = collections.deque(remaining)
+                        # The existing deque is already sorted topologically.
+                        # Sort only the new additions, then merge the two sorted sequences in O(k+m)
+                        # rather than re-sorting the entire collection in O((k+m) log(k+m)).
+                        new_rules = sorted(
+                            [self.rules[rule_name] for rule_name in new_candidates],
+                            key=lambda r: rule_index_by_rule_name[r.name],
+                        )
+                        candidate_rules_deque = collections.deque(
+                            heapq.merge(
+                                candidate_rules_deque,
+                                new_rules,
+                                key=lambda r: rule_index_by_rule_name[r.name],
+                            )
+                        )
 
         return (augmented_features, results)
 
