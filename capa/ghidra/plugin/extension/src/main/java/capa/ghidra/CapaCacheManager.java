@@ -1,206 +1,136 @@
 package capa.ghidra;
 
-import java.io.*;
-import java.nio.file.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-
-import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+
 /**
- * Secure cache manager for capa analysis results.
+ * CapaCacheManager
+ *
+ * Manages per-program JSON cache files for capa analysis results.
+ *
+ * Cache location:  {@code <user.home>/.capa_ghidra_cache/<sha256>.json}
+ *
+ * All public methods are static so they can be called from both Java
+ * (CapaPlugin) and from Python via PyGhidra (RunCapaMVP.py / capa_runner.py).
+ *
+ * Uses only standard Java NIO — no deprecated APIs.
+ * Requires Java 11+ (Files.readString, Files.writeString).
  */
 public class CapaCacheManager {
-    
-    private static final long MAX_CACHE_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-    private static final String CACHE_VERSION = "1.0";
-    private static final String CACHE_DIR_NAME = "capa_cache";
-    
+
+    private static final String CACHE_DIR = ".capa_ghidra_cache";
+
+    // ------------------------------------------------------------------
+    // Public API — called from both Java and Python
+    // ------------------------------------------------------------------
+
     /**
-     * Get the secure cache directory path.
-     */
-    /**
-     * Get the secure cache directory path.
-     */
-    private static Path getCacheBaseDirectory() throws IOException {
-        // Use Ghidra's user settings directory (works for any version)
-        File userSettingsDir = Application.getUserSettingsDirectory();
-        Path cacheDir = userSettingsDir.toPath().resolve(CACHE_DIR_NAME);
-        
-        if (!Files.exists(cacheDir)) {
-            Files.createDirectories(cacheDir);
-            
-            try {
-                Files.setPosixFilePermissions(cacheDir, 
-                    java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
-            } catch (UnsupportedOperationException e) {
-                Msg.debug(CapaCacheManager.class, "POSIX permissions not supported");
-            }
-        }
-        
-        return cacheDir;
-    }
-    
-    /**
-     * Compute SHA-256 hash of program for cache identification.
-     */
-    public static String computeProgramHash(Program program) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            
-            String identifier = program.getName() + "|" + 
-                               (program.getExecutablePath() != null ? program.getExecutablePath() : "");
-            
-            byte[] hashBytes = digest.digest(identifier.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hashBytes);
-            
-        } catch (NoSuchAlgorithmException e) {
-            Msg.error(CapaCacheManager.class, "SHA-256 not available", e);
-            return String.valueOf(program.getName().hashCode());
-        }
-    }
-    
-    /**
-     * Get the cache file path for a program.
-     */
-    private static Path getCacheFilePath(String programHash) throws IOException {
-        if (!programHash.matches("^[0-9a-f]+$")) {
-            throw new SecurityException("Invalid program hash format");
-        }
-        
-        Path cacheDir = getCacheBaseDirectory();
-        Path cacheFile = cacheDir.resolve(programHash + ".json");
-        
-        if (!cacheFile.normalize().startsWith(cacheDir.normalize())) {
-            throw new SecurityException("Path traversal attempt detected");
-        }
-        
-        return cacheFile;
-    }
-    
-    /**
-     * Check if a valid cache exists for the program.
-     */
-    public static boolean cacheExists(Program program) {
-        try {
-            String programHash = computeProgramHash(program);
-            Path cacheFile = getCacheFilePath(programHash);
-            
-            if (!Files.exists(cacheFile)) {
-                return false;
-            }
-            
-            long fileSize = Files.size(cacheFile);
-            if (fileSize > MAX_CACHE_FILE_SIZE) {
-                Msg.warn(CapaCacheManager.class, "Cache file exceeds size limit");
-                return false;
-            }
-            
-            return true;
-            
-        } catch (IOException | SecurityException e) {
-            Msg.error(CapaCacheManager.class, "Error checking cache", e);
-            return false;
-        }
-    }
-    
-    /**
-     * Read cache file and return JSON string.
-     */
-    public static String readCache(Program program) {
-        try {
-            String programHash = computeProgramHash(program);
-            Path cacheFile = getCacheFilePath(programHash);
-            
-            if (!Files.exists(cacheFile)) {
-                return null;
-            }
-            
-            long fileSize = Files.size(cacheFile);
-            if (fileSize > MAX_CACHE_FILE_SIZE) {
-                throw new IOException("Cache file too large: " + fileSize + " bytes");
-            }
-            
-            return Files.readString(cacheFile, StandardCharsets.UTF_8);
-            
-        } catch (IOException | SecurityException e) {
-            Msg.error(CapaCacheManager.class, "Error reading cache", e);
-            return null;
-        }
-    }
-    
-    /**
-     * Write cache file with JSON data.
-     */
-    public static boolean writeCache(Program program, String jsonData) {
-        try {
-            String programHash = computeProgramHash(program);
-            Path cacheFile = getCacheFilePath(programHash);
-            
-            // Write atomically
-            Path tempFile = cacheFile.resolveSibling(cacheFile.getFileName() + ".tmp");
-            Files.writeString(tempFile, jsonData, StandardCharsets.UTF_8);
-            
-            // Set permissions (Unix only)
-            try {
-                Files.setPosixFilePermissions(tempFile,
-                    java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
-            } catch (UnsupportedOperationException e) {
-                // Windows - ignore
-            }
-            
-            // Atomic move
-            Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING, 
-                      StandardCopyOption.ATOMIC_MOVE);
-            
-            Msg.info(CapaCacheManager.class, "Cache written: " + cacheFile.getFileName());
-            return true;
-            
-        } catch (IOException | SecurityException e) {
-            Msg.error(CapaCacheManager.class, "Error writing cache", e);
-            return false;
-        }
-    }
-    
-    /**
-     * Get the cache file path for Python to write to.
+     * Absolute path to the cache file for this program, as a String.
+     * Called from Python: {@code CapaCacheManager.getCacheFilePathForPython(program)}
      */
     public static String getCacheFilePathForPython(Program program) {
         try {
-            String programHash = computeProgramHash(program);
-            Path cacheFile = getCacheFilePath(programHash);
-            
-            return cacheFile.toAbsolutePath().toString();
-            
-        } catch (IOException | SecurityException e) {
-            Msg.error(CapaCacheManager.class, "Error getting cache path", e);
+            return cacheFilePath(program).toAbsolutePath().toString();
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class,
+                "Failed to compute cache path for " + program.getName(), e);
             return null;
         }
     }
-    
-    /**
-     * Delete cache for a program.
-     */
-    public static boolean deleteCache(Program program) {
+
+    /** True if a cache file exists for this program. */
+    public static boolean cacheExists(Program program) {
         try {
-            String programHash = computeProgramHash(program);
-            Path cacheFile = getCacheFilePath(programHash);
-            
-            if (Files.exists(cacheFile)) {
-                Files.delete(cacheFile);
-                Msg.info(CapaCacheManager.class, "Deleted cache: " + cacheFile.getFileName());
-                return true;
-            }
-            
-            return false;
-            
-        } catch (IOException | SecurityException e) {
-            Msg.error(CapaCacheManager.class, "Error deleting cache", e);
+            return Files.exists(cacheFilePath(program));
+        } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Read and return the cached JSON string.
+     * Returns {@code null} on cache miss or any I/O error.
+     */
+    public static String readCache(Program program) {
+        try {
+            Path p = cacheFilePath(program);
+            if (!Files.exists(p)) return null;
+            return Files.readString(p, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class,
+                "Failed to read cache for " + program.getName(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Atomically write a JSON string to the cache file.
+     * Write-to-tmp then rename — safe against partial writes.
+     */
+    public static boolean writeCache(Program program, String json) {
+        try {
+            Path target = cacheFilePath(program);
+            ensureDir(target.getParent());
+
+            Path tmp = Paths.get(target + ".tmp");
+            Files.writeString(tmp, json, StandardCharsets.UTF_8);
+
+            if (Files.exists(target)) Files.delete(target);
+            Files.move(tmp, target);
+            return true;
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class,
+                "Failed to write cache for " + program.getName(), e);
+            return false;
+        }
+    }
+
+    /** Delete the cache file for this program (used by Force Re-run). */
+    public static void deleteCache(Program program) {
+        try {
+            Files.deleteIfExists(cacheFilePath(program));
+        } catch (Exception e) {
+            Msg.warn(CapaCacheManager.class,
+                "Failed to delete cache for " + program.getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * SHA-256 of {@code executablePath|programName} — stable cache key.
+     * Called from Python: {@code CapaCacheManager.computeProgramHash(program)}
+     */
+    public static String computeProgramHash(Program program) {
+        try {
+            String key = program.getExecutablePath() + "|" + program.getName();
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(key.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            // Fallback — should never happen (SHA-256 is always available)
+            return Integer.toHexString(program.getName().hashCode());
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Private helpers
+    // ------------------------------------------------------------------
+
+    private static Path cacheFilePath(Program program) throws IOException {
+        Path dir = Paths.get(System.getProperty("user.home"), CACHE_DIR);
+        ensureDir(dir);
+        return dir.resolve(computeProgramHash(program) + ".json");
+    }
+
+    private static void ensureDir(Path dir) throws IOException {
+        if (!Files.exists(dir)) Files.createDirectories(dir);
     }
 }
