@@ -87,7 +87,7 @@ Download stable releases of the standalone capa binaries [here](https://github.c
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
-**Documentation:** [Usage and tips](doc/usage.md) · [Installation](doc/installation.md) · [Limitations](doc/limitations.md) · [FAQ](doc/faq.md)
+**Documentation:** [Usage and tips](doc/usage.md) · [Installation](doc/installation.md) · [Limitations](doc/limitations.md) · [FAQ](doc/faq.md) · [Profiling](doc/profiling.md)
 
 # capa Explorer Web
 The [capa Explorer Web](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
@@ -315,6 +315,7 @@ You can also run capa from the command line using the [Ghidra backend](https://g
 - [Installation](https://github.com/mandiant/capa/blob/master/doc/installation.md)
 - [Usage](https://github.com/mandiant/capa/blob/master/doc/usage.md)
 - [Limitations](https://github.com/mandiant/capa/blob/master/doc/limitations.md)
+- [Profiling](https://github.com/mandiant/capa/blob/master/doc/profiling.md)
 - [Contributing Guide](https://github.com/mandiant/capa/blob/master/.github/CONTRIBUTING.md)
 
 ## capa rules
