@@ -1447,6 +1447,13 @@ class RuleSet:
             scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
         }
 
+        # Pre-compute the topological index mapping for each scope.
+        # This avoids rebuilding the dict on every call to _match (which runs once per
+        # instruction/basic-block/function/file scope, i.e. potentially millions of times).
+        self._rule_index_by_scope: dict[Scope, dict[str, int]] = {
+            scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
+        }
+
     @property
     def file_rules(self):
         return self.rules_by_scope[Scope.FILE]
@@ -1876,11 +1883,13 @@ class RuleSet:
         """
         done = []
 
-        # use a queue of rules, because we'll be modifying the list (appending new items) as we go.
-        while rules:
-            rule = rules.pop(0)
+        # use a deque as a queue of rules because we'll be appending new items as we go.
+        # deque.popleft() is O(1); list.pop(0) is O(n), which makes the loop O(n²) overall.
+        rules_queue: collections.deque[Rule] = collections.deque(rules)
+        while rules_queue:
+            rule = rules_queue.popleft()
             for subscope_rule in rule.extract_subscope_rules():
-                rules.append(subscope_rule)
+                rules_queue.append(subscope_rule)
             done.append(rule)
 
         return done
@@ -1929,11 +1938,11 @@ class RuleSet:
         """
 
         feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
-        rules: list[Rule] = self.rules_by_scope[scope]
         # Topologic location of rule given its name.
         # That is, rules with a lower index should be evaluated first, since their dependencies
         # will be evaluated later.
-        rule_index_by_rule_name = {rule.name: i for i, rule in enumerate(rules)}
+        # Pre-computed in __init__ to avoid rebuilding on every _match call.
+        rule_index_by_rule_name = self._rule_index_by_scope[scope]
 
         # This algorithm is optimized to evaluate as few rules as possible,
         # because the less work we do, the faster capa can run.
@@ -2043,8 +2052,12 @@ class RuleSet:
         # actually been found.
         augmented_features = features
 
-        while candidate_rules:
-            rule = candidate_rules.pop(0)
+        # Use a deque so that consuming rules from the front is O(1) rather than O(n).
+        # list.pop(0) shifts every remaining element; deque.popleft() does not.
+        candidate_rules_deque: collections.deque[Rule] = collections.deque(candidate_rules)
+
+        while candidate_rules_deque:
+            rule = candidate_rules_deque.popleft()
             res = rule.evaluate(augmented_features, short_circuit=True)
             if res:
                 # we first matched the rule with short circuiting enabled.
@@ -2081,8 +2094,12 @@ class RuleSet:
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
-                        candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
-                        RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+                        # Merge new candidates into the remaining work list, re-sort topologically,
+                        # then rebuild the deque from the sorted result.
+                        remaining = list(candidate_rules_deque)
+                        remaining.extend([self.rules[rule_name] for rule_name in new_candidates])
+                        RuleSet._sort_rules_by_index(rule_index_by_rule_name, remaining)
+                        candidate_rules_deque = collections.deque(remaining)
 
         return (augmented_features, results)
 
