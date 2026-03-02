@@ -722,7 +722,14 @@ def compute_static_layout(rules: RuleSet, extractor: StaticFeatureExtractor, cap
         rule = rules[rule_name]
         if capa.rules.Scope.BASIC_BLOCK in rule.scopes:
             for addr, _ in matches:
-                assert addr in functions_by_bb
+                if addr not in functions_by_bb:
+                    # extractors may discover basic blocks during feature extraction
+                    # that are no longer present when re-enumerating basic blocks
+                    # during layout computation. for example, Binary Ninja may
+                    # recompute IL and shift basic block boundaries between the
+                    # two passes. see #2734.
+                    logger.warning("matched basic block 0x%x not found in any function during layout computation", addr)
+                    continue
                 matched_bbs.add(addr)
 
     layout = rdoc.StaticLayout(
