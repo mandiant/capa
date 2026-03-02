@@ -20,6 +20,7 @@
 -
 
 ### Bug Fixes
+- address: add optional id field to ProcessAddress/ThreadAddress for unique tracking of recycled PID/TID lifecycles @devs6186 #2619
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
