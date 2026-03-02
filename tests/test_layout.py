@@ -18,10 +18,9 @@ import capa.main
 import capa.rules
 import capa.loader
 import capa.features.common
-import capa.features.basicblock
 import capa.features.extractors.null
 from capa.features.address import AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, SampleHashes, FunctionHandle
+from capa.features.extractors.base_extractor import SampleHashes
 
 
 def test_compute_static_layout_with_missing_basic_block():
@@ -35,7 +34,7 @@ def test_compute_static_layout_with_missing_basic_block():
 
     See #2734.
     """
-    # Create an extractor with two basic blocks at 0x401000 and 0x401010
+    # Create an extractor with one basic block at 0x401000
     extractor = capa.features.extractors.null.NullStaticFeatureExtractor(
         base_address=AbsoluteVirtualAddress(0x401000),
         sample_hashes=SampleHashes(
