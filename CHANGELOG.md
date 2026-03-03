@@ -49,6 +49,7 @@
 - webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
 
 ### capa Explorer IDA Pro plugin
+- ida: enable Cancel button during file feature extraction by overriding `extract_file_features()` in `CapaExplorerFeatureExtractor`, adding per-feature cancel checks in `CapaRuleGenFeatureCache._find_file_features()`, and catching `UserCancelledError` in `load_capa_function_results()` @mohamedahmedsalah002
 
 ### Development
 
