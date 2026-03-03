@@ -19,10 +19,13 @@ import itertools
 import collections
 from typing import Union, Optional
 
+import ida_kernwin
+
 import capa.engine
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS, Address
+from capa.ida.plugin.error import UserCancelledError
 from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -85,6 +88,8 @@ class CapaRuleGenFeatureCache:
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
         for feature, addr in self.extractor.extract_file_features():
+            if ida_kernwin.user_cancelled():
+                raise UserCancelledError("user cancelled")
             if addr is not None:
                 self.file_node.features[feature].add(addr)
             else:
