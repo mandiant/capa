@@ -30,24 +30,16 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install black and isort
-        run: pip install black isort
+      - name: Install dependencies
+        run: |
+          pip install pre-commit
+          pip install -r requirements.txt
 
       - name: Run isort
-        run: |
-          isort \
-            --length-sort \
-            --profile black \
-            --line-length 120 \
-            --skip-glob "*_pb2.py" \
-            capa/ scripts/ tests/ web/rules/scripts/
+        run: pre-commit run isort --all-files
 
       - name: Run black
-        run: |
-          black \
-            --line-length 120 \
-            --extend-exclude ".*_pb2.py" \
-            capa/ scripts/ tests/ web/rules/scripts/
+        run: pre-commit run black --all-files
 
       - name: Check for changes
         id: changes
