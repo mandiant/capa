@@ -131,7 +131,11 @@ def find_binaryninja_path_via_lastrun() -> Optional[Path]:
 
     for lastrun in candidates:
         try:
-            return Path(lastrun.read_text(encoding="utf-8").strip())
+            path_str = lastrun.read_text(encoding="utf-8").strip()
+        if path_str:
+            path = Path(path_str)
+            if path.is_absolute() and not path_str.startswith("\\"):
+                return path
         except OSError:
             continue
 
