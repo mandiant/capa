@@ -32,8 +32,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pre-commit
           pip install -r requirements.txt
+          pip install -e .[dev,scripts]
 
       - name: Run isort
         run: pre-commit run isort --all-files
