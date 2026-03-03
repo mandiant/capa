@@ -46,6 +46,13 @@ class CapaExplorerFeatureExtractor(IdaFeatureExtractor):
         super().__init__()
         self.indicator = CapaExplorerProgressIndicator()
 
+    def extract_file_features(self):
+        import capa.features.extractors.ida.file as ida_file
+
+        for file_handler in ida_file.FILE_HANDLERS:
+            self.indicator.update(f"file feature handler: {file_handler.__name__}")
+            yield from file_handler()
+
     def extract_function_features(self, fh: FunctionHandle):
         self.indicator.update(f"function at {hex(fh.inner.start_ea)}")
         return super().extract_function_features(fh)
