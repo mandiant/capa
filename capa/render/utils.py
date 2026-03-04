@@ -99,14 +99,41 @@ class StringIO(io.StringIO):
 
 
 class Console(rich.console.Console):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._line_buffer: list[Union[str, Text, rich.console.RenderableType]] = []
+
     def writeln(self, *args, **kwargs) -> None:
-        """
-        prints the text with a new line at the end.
-        """
-        return self.print(*args, **kwargs)
+        if args:
+            self._line_buffer.append(args[0])
+        self._flush_line_buffer(**kwargs)
 
     def write(self, *args, **kwargs) -> None:
-        """
-        prints the text without a new line at the end.
-        """
-        return self.print(*args, **kwargs, end="")
+        if args:
+            self._line_buffer.append(args[0])
+
+    def _flush_line_buffer(self, **kwargs) -> None:
+        if not self._line_buffer:
+            self.print(**kwargs)
+            return
+
+        renderables_present = any(not isinstance(item, (str, Text)) for item in self._line_buffer)
+
+        if renderables_present:
+            for item in self._line_buffer:
+                if isinstance(item, (str, Text)):
+                    self.print(item, end="", **kwargs)
+                else:
+                    self.print(item, **kwargs)
+            self._line_buffer.clear()
+            self.print(**kwargs)
+            return
+
+        line = Text()
+        for item in self._line_buffer:
+            if isinstance(item, Text):
+                line.append_text(item)
+            else:
+                line.append(str(item))
+        self._line_buffer.clear()
+        self.print(line, **kwargs)
