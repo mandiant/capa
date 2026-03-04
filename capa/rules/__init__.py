@@ -18,7 +18,6 @@ import os
 import re
 import copy
 import uuid
-import heapq
 import logging
 import binascii
 import collections
@@ -1884,13 +1883,13 @@ class RuleSet:
         """
         done = []
 
-        # use a deque as a queue of rules because we'll be appending new items as we go.
-        # deque.popleft() is O(1); list.pop(0) is O(n), which makes the loop O(n²) overall.
-        rules_queue: collections.deque[Rule] = collections.deque(rules)
-        while rules_queue:
-            rule = rules_queue.popleft()
+        # use a list as a stack: append new items and pop() from the end, both O(1).
+        # order doesn't matter here since every rule in the queue is processed eventually.
+        rules_stack = list(rules)
+        while rules_stack:
+            rule = rules_stack.pop()
             for subscope_rule in rule.extract_subscope_rules():
-                rules_queue.append(subscope_rule)
+                rules_stack.append(subscope_rule)
             done.append(rule)
 
         return done
@@ -2039,7 +2038,9 @@ class RuleSet:
         candidate_rules = [self.rules[name] for name in candidate_rule_names]
 
         # Order rules topologically, so that rules with dependencies work correctly.
+        # Sort descending so pop() from the end yields the topologically-first rule in O(1).
         RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+        candidate_rules.reverse()
 
         #
         # The following is derived from ceng.match
@@ -2053,12 +2054,8 @@ class RuleSet:
         # actually been found.
         augmented_features = features
 
-        # Use a deque so that consuming rules from the front is O(1) rather than O(n).
-        # list.pop(0) shifts every remaining element; deque.popleft() does not.
-        candidate_rules_deque: collections.deque[Rule] = collections.deque(candidate_rules)
-
-        while candidate_rules_deque:
-            rule = candidate_rules_deque.popleft()
+        while candidate_rules:
+            rule = candidate_rules.pop()
             res = rule.evaluate(augmented_features, short_circuit=True)
             if res:
                 # we first matched the rule with short circuiting enabled.
@@ -2095,20 +2092,9 @@ class RuleSet:
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
-                        # The existing deque is already sorted topologically.
-                        # Sort only the new additions, then merge the two sorted sequences in O(k+m)
-                        # rather than re-sorting the entire collection in O((k+m) log(k+m)).
-                        new_rules = sorted(
-                            [self.rules[rule_name] for rule_name in new_candidates],
-                            key=lambda r: rule_index_by_rule_name[r.name],
-                        )
-                        candidate_rules_deque = collections.deque(
-                            heapq.merge(
-                                candidate_rules_deque,
-                                new_rules,
-                                key=lambda r: rule_index_by_rule_name[r.name],
-                            )
-                        )
+                        candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
+                        RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+                        candidate_rules.reverse()
 
         return (augmented_features, results)
 
