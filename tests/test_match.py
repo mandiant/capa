@@ -572,6 +572,19 @@ def test_match_regex_values_always_string():
     assert capa.features.common.MatchedRule("test rule") in features
 
 
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "/test\\.exe/",
+        "/hello/i",
+        "/foo\\\\bar/",
+    ],
+)
+def test_regex_get_value_str(pattern):
+    # Regex.get_value_str() must return the raw pattern without escaping, see #1909.
+    assert capa.features.common.Regex(pattern).get_value_str() == pattern
+
+
 @pytest.mark.xfail(reason="can't have top level NOT")
 def test_match_only_not():
     rule = textwrap.dedent(
