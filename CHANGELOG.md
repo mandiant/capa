@@ -4,6 +4,7 @@
 
 ### New Features
 
+- scripts: add rule-prevalence.py to report how often rules match across reference .frz files, helping reviewers spot FP-prone rules @kami #424
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
