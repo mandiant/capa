@@ -1447,6 +1447,13 @@ class RuleSet:
             scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
         }
 
+        # Pre-compute the topological index mapping for each scope.
+        # This avoids rebuilding the dict on every call to _match (which runs once per
+        # instruction/basic-block/function/file scope, i.e. potentially millions of times).
+        self._rule_index_by_scope: dict[Scope, dict[str, int]] = {
+            scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
+        }
+
     @property
     def file_rules(self):
         return self.rules_by_scope[Scope.FILE]
@@ -1876,11 +1883,13 @@ class RuleSet:
         """
         done = []
 
-        # use a queue of rules, because we'll be modifying the list (appending new items) as we go.
-        while rules:
-            rule = rules.pop(0)
+        # use a list as a stack: append new items and pop() from the end, both O(1).
+        # order doesn't matter here since every rule in the queue is processed eventually.
+        rules_stack = list(rules)
+        while rules_stack:
+            rule = rules_stack.pop()
             for subscope_rule in rule.extract_subscope_rules():
-                rules.append(subscope_rule)
+                rules_stack.append(subscope_rule)
             done.append(rule)
 
         return done
@@ -1929,11 +1938,11 @@ class RuleSet:
         """
 
         feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
-        rules: list[Rule] = self.rules_by_scope[scope]
         # Topologic location of rule given its name.
         # That is, rules with a lower index should be evaluated first, since their dependencies
         # will be evaluated later.
-        rule_index_by_rule_name = {rule.name: i for i, rule in enumerate(rules)}
+        # Pre-computed in __init__ to avoid rebuilding on every _match call.
+        rule_index_by_rule_name = self._rule_index_by_scope[scope]
 
         # This algorithm is optimized to evaluate as few rules as possible,
         # because the less work we do, the faster capa can run.
@@ -2029,7 +2038,9 @@ class RuleSet:
         candidate_rules = [self.rules[name] for name in candidate_rule_names]
 
         # Order rules topologically, so that rules with dependencies work correctly.
+        # Sort descending so pop() from the end yields the topologically-first rule in O(1).
         RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+        candidate_rules.reverse()
 
         #
         # The following is derived from ceng.match
@@ -2044,7 +2055,7 @@ class RuleSet:
         augmented_features = features
 
         while candidate_rules:
-            rule = candidate_rules.pop(0)
+            rule = candidate_rules.pop()
             res = rule.evaluate(augmented_features, short_circuit=True)
             if res:
                 # we first matched the rule with short circuiting enabled.
@@ -2083,6 +2094,7 @@ class RuleSet:
                         candidate_rule_names.update(new_candidates)
                         candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
                         RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+                        candidate_rules.reverse()
 
         return (augmented_features, results)
 
