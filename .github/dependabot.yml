@@ -12,5 +12,5 @@ updates:
           - "pyasn1-modules"
           - "msgpack"
     ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-patch"]
+      - dependency-name: "pyasn1"
+        versions: ">= 0.6.0"
