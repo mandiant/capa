@@ -1,136 +1,197 @@
 package capa.ghidra;
 
+import com.google.gson.*;
+import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 /**
- * CapaCacheManager
- *
- * Manages per-program JSON cache files for capa analysis results.
- *
- * Cache location:  {@code <user.home>/.capa_ghidra_cache/<sha256>.json}
- *
- * All public methods are static so they can be called from both Java
- * (CapaPlugin) and from Python via PyGhidra (RunCapaMVP.py / capa_runner.py).
- *
- * Uses only standard Java NIO — no deprecated APIs.
- * Requires Java 11+ (Files.readString, Files.writeString).
+ * CapaCacheManager handles:
+ *   1. Per-binary JSON result caching  (~/.ghidra/.../capa_cache/<sha256>.json)
+ *   2. Persistent config              (~/.ghidra/.../capa_cache/config.json)
+ *      - rules_directory: path to capa-rules repo root
  */
 public class CapaCacheManager {
 
-    private static final String CACHE_DIR = ".capa_ghidra_cache";
+    private static final long   MAX_CACHE_SIZE  = 100L * 1024 * 1024; // 100 MB
+    private static final String CACHE_DIR_NAME  = "capa_cache";
+    private static final String CONFIG_FILE     = "config.json";
+    private static final Gson   GSON            = new GsonBuilder().setPrettyPrinting().create();
 
-    // ------------------------------------------------------------------
-    // Public API — called from both Java and Python
-    // ------------------------------------------------------------------
+    // ------------------------------------------------------------------ //
+    //  Cache directory                                                     //
+    // ------------------------------------------------------------------ //
 
-    /**
-     * Absolute path to the cache file for this program, as a String.
-     * Called from Python: {@code CapaCacheManager.getCacheFilePathForPython(program)}
-     */
-    public static String getCacheFilePathForPython(Program program) {
-        try {
-            return cacheFilePath(program).toAbsolutePath().toString();
-        } catch (Exception e) {
-            Msg.error(CapaCacheManager.class,
-                "Failed to compute cache path for " + program.getName(), e);
-            return null;
+    private static Path getCacheDir() throws IOException {
+        File userDir = Application.getUserSettingsDirectory();
+        Path cacheDir = userDir.toPath().resolve(CACHE_DIR_NAME);
+        if (!Files.exists(cacheDir)) {
+            Files.createDirectories(cacheDir);
+            setPosixPerms(cacheDir, "rwx------");
         }
+        return cacheDir;
     }
 
-    /** True if a cache file exists for this program. */
-    public static boolean cacheExists(Program program) {
-        try {
-            return Files.exists(cacheFilePath(program));
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    // ------------------------------------------------------------------ //
+    //  Per-binary result cache                                             //
+    // ------------------------------------------------------------------ //
 
-    /**
-     * Read and return the cached JSON string.
-     * Returns {@code null} on cache miss or any I/O error.
-     */
-    public static String readCache(Program program) {
-        try {
-            Path p = cacheFilePath(program);
-            if (!Files.exists(p)) return null;
-            return Files.readString(p, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            Msg.error(CapaCacheManager.class,
-                "Failed to read cache for " + program.getName(), e);
-            return null;
-        }
-    }
-
-    /**
-     * Atomically write a JSON string to the cache file.
-     * Write-to-tmp then rename — safe against partial writes.
-     */
-    public static boolean writeCache(Program program, String json) {
-        try {
-            Path target = cacheFilePath(program);
-            ensureDir(target.getParent());
-
-            Path tmp = Paths.get(target + ".tmp");
-            Files.writeString(tmp, json, StandardCharsets.UTF_8);
-
-            if (Files.exists(target)) Files.delete(target);
-            Files.move(tmp, target);
-            return true;
-        } catch (Exception e) {
-            Msg.error(CapaCacheManager.class,
-                "Failed to write cache for " + program.getName(), e);
-            return false;
-        }
-    }
-
-    /** Delete the cache file for this program (used by Force Re-run). */
-    public static void deleteCache(Program program) {
-        try {
-            Files.deleteIfExists(cacheFilePath(program));
-        } catch (Exception e) {
-            Msg.warn(CapaCacheManager.class,
-                "Failed to delete cache for " + program.getName() + ": " + e.getMessage());
-        }
-    }
-
-    /**
-     * SHA-256 of {@code executablePath|programName} — stable cache key.
-     * Called from Python: {@code CapaCacheManager.computeProgramHash(program)}
-     */
     public static String computeProgramHash(Program program) {
         try {
-            String key = program.getExecutablePath() + "|" + program.getName();
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(key.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(hash.length * 2);
-            for (byte b : hash) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            // Fallback — should never happen (SHA-256 is always available)
-            return Integer.toHexString(program.getName().hashCode());
+            String id = program.getName() + "|" +
+                    (program.getExecutablePath() != null ? program.getExecutablePath() : "");
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(id.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            return String.valueOf(Math.abs(program.getName().hashCode()));
         }
     }
 
-    // ------------------------------------------------------------------
-    // Private helpers
-    // ------------------------------------------------------------------
-
-    private static Path cacheFilePath(Program program) throws IOException {
-        Path dir = Paths.get(System.getProperty("user.home"), CACHE_DIR);
-        ensureDir(dir);
-        return dir.resolve(computeProgramHash(program) + ".json");
+    private static Path getCacheFilePath(String hash) throws IOException {
+        if (!hash.matches("^[0-9a-f]+$")) throw new SecurityException("Invalid hash");
+        Path dir  = getCacheDir();
+        Path file = dir.resolve(hash + ".json");
+        if (!file.normalize().startsWith(dir.normalize()))
+            throw new SecurityException("Path traversal detected");
+        return file;
     }
 
-    private static void ensureDir(Path dir) throws IOException {
-        if (!Files.exists(dir)) Files.createDirectories(dir);
+    public static boolean cacheExists(Program program) {
+        try {
+            Path f = getCacheFilePath(computeProgramHash(program));
+            return Files.exists(f) && Files.size(f) <= MAX_CACHE_SIZE;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static String readCache(Program program) {
+        try {
+            Path f = getCacheFilePath(computeProgramHash(program));
+            if (!Files.exists(f) || Files.size(f) > MAX_CACHE_SIZE) return null;
+            return Files.readString(f, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class, "readCache failed", e);
+            return null;
+        }
+    }
+
+    public static boolean writeCache(Program program, String json) {
+        try {
+            Path file = getCacheFilePath(computeProgramHash(program));
+            Path tmp  = file.resolveSibling(file.getFileName() + ".tmp");
+            Files.writeString(tmp, json, StandardCharsets.UTF_8);
+            setPosixPerms(tmp, "rw-------");
+            Files.move(tmp, file,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+            return true;
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class, "writeCache failed", e);
+            return false;
+        }
+    }
+
+    public static boolean deleteCache(Program program) {
+        try {
+            Path f = getCacheFilePath(computeProgramHash(program));
+            return Files.deleteIfExists(f);
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class, "deleteCache failed", e);
+            return false;
+        }
+    }
+
+    /** Returns the cache file path as a string (for Python to write to). */
+    public static String getCacheFilePathForPython(Program program) {
+        try {
+            return getCacheFilePath(computeProgramHash(program)).toAbsolutePath().toString();
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class, "getCacheFilePathForPython failed", e);
+            return null;
+        }
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Config — rules directory                                            //
+    // ------------------------------------------------------------------ //
+
+    private static Path getConfigFilePath() throws IOException {
+        return getCacheDir().resolve(CONFIG_FILE);
+    }
+
+    private static JsonObject readConfig() {
+        try {
+            Path cfg = getConfigFilePath();
+            if (!Files.exists(cfg)) return new JsonObject();
+            String raw = Files.readString(cfg, StandardCharsets.UTF_8);
+            return JsonParser.parseString(raw).getAsJsonObject();
+        } catch (Exception e) {
+            return new JsonObject();
+        }
+    }
+
+    private static void writeConfig(JsonObject config) {
+        try {
+            Path cfg = getConfigFilePath();
+            Files.writeString(cfg, GSON.toJson(config), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Msg.error(CapaCacheManager.class, "writeConfig failed", e);
+        }
+    }
+
+    /** @return path to capa-rules root directory, or null if not configured. */
+    public static String readRulesDirectory() {
+        JsonObject cfg = readConfig();
+        // Support both key names for backwards compatibility
+        for (String key : new String[]{"rulesDirectory", "rules_directory"}) {
+            if (cfg.has(key) && !cfg.get(key).isJsonNull()) {
+                String val = cfg.get(key).getAsString().trim();
+                if (!val.isEmpty()) return val;
+            }
+        }
+        return null;
+    }
+
+    /** Persist the chosen rules directory and current output path for Python. */
+    public static void writeRulesDirectory(String path) {
+        JsonObject cfg = readConfig();
+        cfg.addProperty("rulesDirectory", path);
+        // Keep legacy key for any older code
+        cfg.addProperty("rules_directory", path);
+        writeConfig(cfg);
+    }
+
+    /**
+     * Write rulesDirectory + outputPath into config.json so RunCapaMVP.py
+     * can read both without recomputing the program hash in Python.
+     */
+    public static void writeAnalysisConfig(String rulesDir, String outputPath) {
+        JsonObject cfg = readConfig();
+        cfg.addProperty("rulesDirectory", rulesDir);
+        cfg.addProperty("rules_directory", rulesDir);
+        cfg.addProperty("outputPath", outputPath);
+        writeConfig(cfg);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Helpers                                                             //
+    // ------------------------------------------------------------------ //
+
+    private static void setPosixPerms(Path path, String perms) {
+        try {
+            Files.setPosixFilePermissions(path, PosixFilePermissions.fromString(perms));
+        } catch (UnsupportedOperationException | IOException ignored) {
+            // Windows — no-op
+        }
     }
 }
