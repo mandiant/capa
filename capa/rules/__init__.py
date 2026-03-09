@@ -2222,7 +2222,7 @@ def get_rules(
         try:
             rule = Rule.from_yaml(content.decode("utf-8"))
         except InvalidRule as e:
-            if str(e) == "empty or invalid YAML document":
+            if e.args and e.args[0] == "empty or invalid YAML document":
                 logger.warning("skipping %s: %s", path, e)
                 continue
             raise
