@@ -173,6 +173,14 @@ def test_invalid_rule_statement_descriptions():
         )
 
 
+def test_empty_yaml_raises_invalid_rule():
+    # empty or invalid YAML files raise InvalidRule with a clear message (issue #2900)
+    with pytest.raises(capa.rules.InvalidRule, match="empty or invalid YAML document"):
+        capa.rules.Rule.from_yaml("")
+    with pytest.raises(capa.rules.InvalidRule, match="empty or invalid YAML document"):
+        capa.rules.Rule.from_yaml("   \n  \n")
+
+
 def test_rule_yaml_not():
     rule = textwrap.dedent(
         """
