@@ -25,7 +25,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
-from capa.features.address import AbsoluteVirtualAddress, _NoAddress
+from capa.features.address import AbsoluteVirtualAddress, FileOffsetAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.qt_compat import QtGui, QtCore, Signal, QAction, QtWidgets
 
@@ -900,7 +900,13 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
     def slot_item_double_clicked(self, o, column):
         """ """
         if column == CapaExplorerRulegenFeatures.get_column_address_index() and o.text(column):
-            idc.jumpto(int(o.text(column), 0x10))
+            addr_text = o.text(column)
+            # only navigate for virtual addresses; file: offsets are displayed but not jumpable here
+            if not addr_text.startswith("file:"):
+                try:
+                    idc.jumpto(int(addr_text, 0x10))
+                except (ValueError, TypeError):
+                    pass
         elif o.capa_type == CapaExplorerRulegenFeatures.get_node_type_leaf():
             self.editor.update_features([o.data(0, 0x100)])
 
@@ -950,13 +956,18 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             # read ea from "Address" column
             o_ea = o.text(CapaExplorerRulegenFeatures.get_column_address_index())
 
-            if o_ea == "":
-                # ea may be empty, hide by default
+            if o_ea == "" or o_ea.startswith("file:"):
+                # ea may be empty or a file offset; hide when filtering by VA range
                 if not o.isHidden():
                     o.setHidden(True)
                 continue
 
-            o_ea = int(o_ea, 16)
+            try:
+                o_ea = int(o_ea, 16)
+            except (ValueError, TypeError):
+                if not o.isHidden():
+                    o.setHidden(True)
+                continue
 
             if max_ea is not None and min_ea <= o_ea <= max_ea:
                 show_item_and_parents(o)
@@ -1038,10 +1049,12 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
 
         def format_address(e):
+            # display addresses for both virtual (function/bb/insn) and file-offset (file scope) features (#1523)
             if isinstance(e, AbsoluteVirtualAddress):
                 return f"{hex(int(e))}"
-            else:
-                return ""
+            if isinstance(e, FileOffsetAddress):
+                return f"file:{hex(int(e))}"
+            return ""
 
         def format_feature(feature):
             """ """
