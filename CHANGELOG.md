@@ -29,6 +29,7 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+- ida: display file-scope feature addresses (`file:0x…`) in rule generator tree @devs6186 #1523
 
 ### Development
 
