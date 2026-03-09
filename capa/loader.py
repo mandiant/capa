@@ -160,10 +160,12 @@ def _is_probably_corrupt_pe(path: Path) -> bool:
 
     # Flag sections whose declared virtual size is wildly disproportionate
     # to the file size (e.g. 900MB section in a ~400KB sample).
-    max_reasonable = max(file_size * 128, 512 * 1024 * 1024)
+    _VSIZE_FILE_RATIO = 128
+    _MAX_REASONABLE_VSIZE = 512 * 1024 * 1024  # 512 MB
+    max_reasonable = max(file_size * _VSIZE_FILE_RATIO, _MAX_REASONABLE_VSIZE)
 
     for section in getattr(pe, "sections", []):
-        vsize = int(getattr(section, "Misc_VirtualSize", 0) or 0)
+        vsize = getattr(section, "Misc_VirtualSize", 0) or 0
         if vsize > max_reasonable:
             logger.debug(
                 "detected unrealistic PE section virtual size: 0x%x (file size: 0x%x), treating as corrupt",
@@ -198,7 +200,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
 
     logger.debug("generating vivisect workspace for: %s", path)
 
-    if input_format == FORMAT_PE and _is_probably_corrupt_pe(path):
+    if input_format in (FORMAT_PE, FORMAT_AUTO) and _is_probably_corrupt_pe(path):
         raise CorruptFile(
             "PE file appears to contain unrealistically large sections and is likely corrupt; "
             "skipping analysis to avoid excessive resource usage."
