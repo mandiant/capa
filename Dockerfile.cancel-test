@@ -1,0 +1,53 @@
+# Dockerfile.cancel-test
+#
+# Tests the file-feature cancellation fix for capa explorer (IDA Pro plugin).
+#
+# What this tests (no IDA Pro required):
+#   - Syntax validity of all three changed files
+#   - Part 1: CapaExplorerFeatureExtractor.extract_file_features() override
+#             calls indicator.update() once per FILE_HANDLER
+#   - Part 1: Cancellation between handlers stops extraction before next handler
+#   - Part 2: CapaRuleGenFeatureCache._find_file_features() raises
+#             UserCancelledError mid-loop when user cancels
+#   - Part 3: load_capa_function_results() returns False (not crash/error-log)
+#             when UserCancelledError is raised during cache construction
+#
+# What this cannot test (requires a live IDA Pro + license):
+#   - Actual IDA wait-box interaction
+#   - Full end-to-end analysis of a real binary
+#
+# Build & run:
+#   docker build -f Dockerfile.cancel-test -t capa-cancel-test .
+#   docker run --rm capa-cancel-test
+
+FROM python:3.12-slim
+
+WORKDIR /capa
+
+# system deps for any native extensions in capa's requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        gcc \
+        g++ \
+        libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# copy only what we need to keep the layer small
+COPY pyproject.toml requirements.txt ./
+COPY capa/ ./capa/
+COPY tests/ ./tests/
+COPY scripts/check_syntax.py ./scripts/check_syntax.py
+
+# install capa and test deps (no IDA extras)
+RUN pip install --no-cache-dir -e "." \
+    && pip install --no-cache-dir pytest
+
+# ---------------------------------------------------------------------------
+# Step 1: syntax check the three changed files
+# ---------------------------------------------------------------------------
+RUN python scripts/check_syntax.py
+
+# ---------------------------------------------------------------------------
+# Step 2: run the cancellation unit tests
+# ---------------------------------------------------------------------------
+CMD ["python", "-m", "pytest", "tests/test_cancel_file_features.py", "-v", "--tb=short"]
