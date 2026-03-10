@@ -19,7 +19,7 @@ import pytest
 import envi.exc
 
 from capa.loader import CorruptFile, get_workspace
-from capa.features.common import FORMAT_ELF
+from capa.features.common import FORMAT_PE, FORMAT_ELF
 
 
 def test_segmentation_violation_handling():
@@ -38,3 +38,23 @@ def test_segmentation_violation_handling():
 
         with pytest.raises(CorruptFile, match="Invalid memory access"):
             get_workspace(fake_path, FORMAT_ELF, [])
+
+
+def test_corrupt_pe_with_unrealistic_section_size_short_circuits():
+    """
+    Test that a PE with an unrealistically large section virtual size
+    is caught early and raises CorruptFile before vivisect is invoked.
+
+    See #1989.
+    """
+    fake_path = Path("/tmp/fake_corrupt.exe")
+
+    with (
+        patch("capa.loader._is_probably_corrupt_pe", return_value=True),
+        patch("viv_utils.getWorkspace") as mock_workspace,
+    ):
+        with pytest.raises(CorruptFile, match="unrealistically large sections"):
+            get_workspace(fake_path, FORMAT_PE, [])
+
+        # vivisect should never have been called
+        mock_workspace.assert_not_called()
