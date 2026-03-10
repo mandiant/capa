@@ -52,6 +52,10 @@
 
 ### capa Explorer IDA Pro plugin
 
+### Performance
+
+- perf: eliminate O(n²) tuple growth and reduce per-match overhead @devs6186 #2890
+
 ### Development
 
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
