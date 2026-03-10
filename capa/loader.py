@@ -202,8 +202,8 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
 
     if input_format in (FORMAT_PE, FORMAT_AUTO) and _is_probably_corrupt_pe(path):
         raise CorruptFile(
-            "PE file appears to contain unrealistically large sections and is likely corrupt; "
-            "skipping analysis to avoid excessive resource usage."
+            "PE file appears to contain unrealistically large sections and is likely corrupt"
+            + " - skipping analysis to avoid excessive resource usage."
         )
 
     try:
