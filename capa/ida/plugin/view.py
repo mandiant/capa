@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import re
+import contextlib
 from typing import Optional
 from collections import Counter
 
@@ -913,10 +914,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 except (ValueError, TypeError):
                     pass
             else:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     idc.jumpto(int(addr_text, 0x10))
-                except (ValueError, TypeError):
-                    pass
         elif o.capa_type == CapaExplorerRulegenFeatures.get_node_type_leaf():
             self.editor.update_features([o.data(0, 0x100)])
 
