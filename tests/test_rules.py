@@ -19,6 +19,7 @@ import pytest
 
 import capa.rules
 import capa.engine
+import capa.rules.cache
 import capa.features.common
 import capa.features.address
 from capa.engine import Or
@@ -171,6 +172,37 @@ def test_invalid_rule_statement_descriptions():
                 """
             )
         )
+
+
+def test_empty_yaml_raises_invalid_rule():
+    # empty or invalid YAML files raise InvalidRule with a clear message (issue #2900)
+    with pytest.raises(capa.rules.InvalidRule, match="empty or invalid YAML document"):
+        capa.rules.Rule.from_yaml("")
+    with pytest.raises(capa.rules.InvalidRule, match="empty or invalid YAML document"):
+        capa.rules.Rule.from_yaml("   \n  \n")
+
+
+def test_get_rules_skips_empty_yaml(tmp_path):
+    # get_rules should skip empty files with a warning instead of raising (issue #2900)
+    (tmp_path / "empty.yml").write_bytes(b"")
+    (tmp_path / "valid.yml").write_text(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - api: CreateFile
+            """
+        ),
+        encoding="utf-8",
+    )
+    # empty.yml is skipped with a warning; valid.yml is loaded normally
+    rules = capa.rules.get_rules([tmp_path], cache_dir=tmp_path, enable_cache=False)
+    assert len(rules) == 1
 
 
 def test_rule_yaml_not():

@@ -1143,6 +1143,8 @@ class Rule:
         else:
             # use pyyaml because it can be much faster than ruamel (pure python)
             doc = yaml.load(s, Loader=cls._get_yaml_loader())
+        if doc is None or not isinstance(doc, dict) or "rule" not in doc:
+            raise InvalidRule("empty or invalid YAML document")
         return cls.from_dict(doc, s)
 
     @classmethod
@@ -2231,7 +2233,10 @@ def get_rules(
 
         try:
             rule = Rule.from_yaml(content.decode("utf-8"))
-        except InvalidRule:
+        except InvalidRule as e:
+            if e.args and e.args[0] == "empty or invalid YAML document":
+                logger.warning("skipping %s: %s", path, e)
+                continue
             raise
         else:
             rule.meta["capa/path"] = path.as_posix()
