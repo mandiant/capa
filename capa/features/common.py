@@ -369,6 +369,12 @@ class Regex(String):
         else:
             return Result(False, _MatchedRegex(self, {}), [])
 
+    def get_value_str(self) -> str:
+        # return the raw regex pattern, not the escaped version from String.get_value_str().
+        # see #1909.
+        assert isinstance(self.value, str)
+        return self.value
+
     def __str__(self):
         assert isinstance(self.value, str)
         return f"regex(string =~ {self.value})"

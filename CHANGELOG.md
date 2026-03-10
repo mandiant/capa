@@ -40,6 +40,7 @@
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
+- features: fix Regex.get_value_str() returning escaped pattern instead of raw regex @EclipseAditya #1909
 - render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
 - loader: handle struct.error from dnfile and show clear CorruptFile message @devs6186 #2442
 - address: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
@@ -55,8 +56,10 @@
 
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
+- doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
+- ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
 
 ### Raw diffs
 - [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
