@@ -901,8 +901,18 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         """ """
         if column == CapaExplorerRulegenFeatures.get_column_address_index() and o.text(column):
             addr_text = o.text(column)
-            # only navigate for virtual addresses; file: offsets are displayed but not jumpable here
-            if not addr_text.startswith("file:"):
+            if addr_text.startswith("file:"):
+                # try to map file offset to a virtual address; works when the segment is mapped into the IDB
+                try:
+                    import ida_loader
+
+                    file_offset = int(addr_text[len("file:") :], 16)
+                    ea = ida_loader.get_fileregion_ea(file_offset)
+                    if ea != idc.BADADDR:
+                        idc.jumpto(ea)
+                except (ValueError, TypeError):
+                    pass
+            else:
                 try:
                     idc.jumpto(int(addr_text, 0x10))
                 except (ValueError, TypeError):
