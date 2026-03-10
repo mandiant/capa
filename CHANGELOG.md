@@ -41,13 +41,17 @@
 ### Bug Fixes
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
 - render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
+- rules: handle empty or invalid YAML documents gracefully in `Rule.from_yaml` and `get_rules` @devs6186 #2900
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
 - vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
+- features: fix Regex.get_value_str() returning escaped pattern instead of raw regex @EclipseAditya #1909
 - render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
+- loader: handle struct.error from dnfile and show clear CorruptFile message @devs6186 #2442
 - address: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
+- loader: skip PE files with unrealistically large section virtual sizes to prevent resource exhaustion @devs6186 #1989
 
 ### capa Explorer Web
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
@@ -55,6 +59,10 @@
 - webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
 
 ### capa Explorer IDA Pro plugin
+
+### Performance
+
+- perf: eliminate O(n²) tuple growth and reduce per-match overhead @devs6186 #2890
 
 ### Development
 
