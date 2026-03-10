@@ -25,7 +25,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
-from capa.features.address import AbsoluteVirtualAddress, FileOffsetAddress, _NoAddress
+from capa.features.address import FileOffsetAddress, AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.qt_compat import QtGui, QtCore, Signal, QAction, QtWidgets
 
