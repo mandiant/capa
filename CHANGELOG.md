@@ -1,4 +1,10 @@
-# Change Log
+## master (unreleased)
+
+### New Features
+
+- explorer: allow cancel during file feature extraction
+- ghidra: support PyGhidra @mike-hunhoff #2788
+- vmray: extract number features from whitelisted void_ptr parameters# Change Log
 
 ## master (unreleased)
 
