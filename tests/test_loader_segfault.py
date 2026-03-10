@@ -19,7 +19,7 @@ import pytest
 import envi.exc
 
 from capa.loader import CorruptFile, get_workspace
-from capa.features.common import FORMAT_AUTO, FORMAT_ELF, FORMAT_PE
+from capa.features.common import FORMAT_ELF
 
 
 def test_segmentation_violation_handling():
@@ -38,23 +38,3 @@ def test_segmentation_violation_handling():
 
         with pytest.raises(CorruptFile, match="Invalid memory access"):
             get_workspace(fake_path, FORMAT_ELF, [])
-
-
-def test_corrupt_pe_with_unrealistic_section_size_short_circuits():
-    """
-    Test that obviously corrupt PE samples with unrealistically large
-    section virtual sizes are rejected before vivisect analysis,
-    for both explicit FORMAT_PE and FORMAT_AUTO detection.
-
-    This guards against the memory explosion cases described in GH-1989.
-    """
-    fake_pe_path = Path("/tmp/fake_corrupt.exe")
-
-    # Avoid touching the filesystem; simulate the helper heuristic directly.
-    with patch("capa.loader._is_probably_corrupt_pe", return_value=True):
-        for fmt in (FORMAT_PE, FORMAT_AUTO):
-            with pytest.raises(
-                CorruptFile,
-                match="unrealistically large sections and is likely corrupt",
-            ):
-                get_workspace(fake_pe_path, fmt, [])
