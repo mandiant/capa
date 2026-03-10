@@ -38,7 +38,9 @@ jobs:
       - name: Run isort
         run: pre-commit run isort --all-files
 
-      - name: Run black
+      - name: Run black/continue
+        # black returns non-zero error code after formatting, which is what we expect
+        continue-on-error: true
         run: pre-commit run black --all-files
 
       - name: Check for changes
