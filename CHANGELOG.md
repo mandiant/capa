@@ -4,6 +4,7 @@
 
 ### New Features
 
+- extractors/rules: support `section` features at function scope across static backends (viv, ida, ghidra, binja, binexport2) @akshat4703
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
