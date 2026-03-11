@@ -30,33 +30,14 @@ def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
     get all the created processes for a sample.
 
-    when the OS recycles a PID, multiple processes in the report may share the
-    same (ppid, pid) pair.  we detect this and assign sequential ids so that
-    each process receives a unique ProcessAddress.
+    each process receives a sequential id to ensure unique ProcessAddress
+    values even when the OS recycles a PID.
     """
-    # first pass: count how many times each (ppid, pid) pair appears
-    counts: dict[tuple[int, int], int] = {}
-    for process in report.behavior.processes:
-        key = (process.parent_id, process.process_id)
-        counts[key] = counts.get(key, 0) + 1
-
-    # second pass: yield handles with sequential ids for reused pairs
     seq: dict[tuple[int, int], int] = {}
     for process in report.behavior.processes:
         key = (process.parent_id, process.process_id)
-        seq[key] = seq.get(key, 0) + 1
-
-        # only assign ids when reuse is detected; otherwise keep id=None
-        # for backward compatibility with existing addresses and freeze files
-        id_ = seq[key] if counts[key] > 1 else None
-        if id_ is not None:
-            logger.debug(
-                "pid reuse detected for ppid=%d, pid=%d: assigning id=%d",
-                process.parent_id,
-                process.process_id,
-                id_,
-            )
-
+        id_ = seq.get(key, 0)
+        seq[key] = id_ + 1
         addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id, id=id_)
         yield ProcessHandle(address=addr, inner=process)
 

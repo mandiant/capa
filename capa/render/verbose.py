@@ -125,9 +125,6 @@ def _format_thread_fields(thread: capa.features.address.ThreadAddress) -> str:
     s = f"pid:{thread.process.pid},tid:{thread.tid}"
     if thread.id is not None:
         s += f",id:{thread.id}"
-    elif thread.process.id is not None:
-        # show process id in thread context when thread has no own id
-        s += f",pid-id:{thread.process.id}"
     return s
 
 

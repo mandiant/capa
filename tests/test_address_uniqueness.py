@@ -26,7 +26,7 @@ from unittest.mock import MagicMock
 import capa.loader
 import capa.features.common
 import capa.features.freeze as frz
-from capa.features.address import ProcessAddress, ThreadAddress, DynamicCallAddress
+from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -34,7 +34,6 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
-
 
 # ---------------------------------------------------------------------------
 # ProcessAddress identity tests
@@ -58,18 +57,6 @@ class TestProcessAddressUniqueness:
         assert a == b
         assert hash(a) == hash(b)
 
-    def test_no_id_backward_compat(self):
-        a = ProcessAddress(pid=100, ppid=1)
-        b = ProcessAddress(pid=100, ppid=1)
-        assert a == b
-        assert hash(a) == hash(b)
-        assert a.id is None
-
-    def test_none_id_not_equal_to_int_id(self):
-        a = ProcessAddress(pid=100, ppid=1, id=None)
-        b = ProcessAddress(pid=100, ppid=1, id=1)
-        assert a != b
-
     def test_sorting_with_ids(self):
         addrs = [
             ProcessAddress(pid=100, ppid=1, id=3),
@@ -81,11 +68,6 @@ class TestProcessAddressUniqueness:
             ProcessAddress(pid=100, ppid=1, id=2),
             ProcessAddress(pid=100, ppid=1, id=3),
         ]
-
-    def test_none_id_sorts_before_int_id(self):
-        a = ProcessAddress(pid=100, ppid=1, id=None)
-        b = ProcessAddress(pid=100, ppid=1, id=1)
-        assert a < b
 
     def test_dict_key_uniqueness(self):
         a = ProcessAddress(pid=100, ppid=1, id=1)
@@ -106,11 +88,6 @@ class TestProcessAddressUniqueness:
         a = ProcessAddress(pid=100, ppid=1, id=5)
         assert "id: 5" in repr(a)
 
-    def test_repr_without_id(self):
-        a = ProcessAddress(pid=100, ppid=1)
-        # "id:" is a substring of "ppid:", so check for the standalone form
-        assert ", id: " not in repr(a)
-
 
 # ---------------------------------------------------------------------------
 # ThreadAddress identity tests
@@ -119,19 +96,19 @@ class TestProcessAddressUniqueness:
 
 class TestThreadAddressUniqueness:
     def test_same_tid_different_id_not_equal(self):
-        p = ProcessAddress(pid=100, ppid=1)
+        p = ProcessAddress(pid=100, ppid=1, id=0)
         a = ThreadAddress(p, tid=42, id=1)
         b = ThreadAddress(p, tid=42, id=2)
         assert a != b
 
     def test_same_tid_different_id_different_hash(self):
-        p = ProcessAddress(pid=100, ppid=1)
+        p = ProcessAddress(pid=100, ppid=1, id=0)
         a = ThreadAddress(p, tid=42, id=1)
         b = ThreadAddress(p, tid=42, id=2)
         assert hash(a) != hash(b)
 
     def test_same_tid_same_id_equal(self):
-        p = ProcessAddress(pid=100, ppid=1)
+        p = ProcessAddress(pid=100, ppid=1, id=0)
         a = ThreadAddress(p, tid=42, id=7)
         b = ThreadAddress(p, tid=42, id=7)
         assert a == b
@@ -141,20 +118,13 @@ class TestThreadAddressUniqueness:
         """threads in recycled processes (different process.id) should differ"""
         p1 = ProcessAddress(pid=100, ppid=1, id=1)
         p2 = ProcessAddress(pid=100, ppid=1, id=2)
-        t1 = ThreadAddress(p1, tid=42)
-        t2 = ThreadAddress(p2, tid=42)
+        t1 = ThreadAddress(p1, tid=42, id=0)
+        t2 = ThreadAddress(p2, tid=42, id=0)
         assert t1 != t2
         assert hash(t1) != hash(t2)
 
-    def test_no_id_backward_compat(self):
-        p = ProcessAddress(pid=100, ppid=1)
-        a = ThreadAddress(p, tid=42)
-        b = ThreadAddress(p, tid=42)
-        assert a == b
-        assert a.id is None
-
     def test_sorting_with_ids(self):
-        p = ProcessAddress(pid=100, ppid=1)
+        p = ProcessAddress(pid=100, ppid=1, id=0)
         addrs = [
             ThreadAddress(p, tid=42, id=3),
             ThreadAddress(p, tid=42, id=1),
@@ -167,14 +137,9 @@ class TestThreadAddressUniqueness:
         ]
 
     def test_repr_with_id(self):
-        p = ProcessAddress(pid=100, ppid=1)
+        p = ProcessAddress(pid=100, ppid=1, id=0)
         t = ThreadAddress(p, tid=42, id=7)
         assert "id: 7" in repr(t)
-
-    def test_repr_without_id(self):
-        p = ProcessAddress(pid=100, ppid=1)
-        t = ThreadAddress(p, tid=42)
-        assert ", id: " not in repr(t)
 
 
 # ---------------------------------------------------------------------------
@@ -205,29 +170,14 @@ class TestCallAddressWithUniqueThreads:
 
 
 class TestFreezeRoundtrip:
-    def test_process_address_without_id(self):
-        addr = ProcessAddress(pid=100, ppid=1)
-        frozen = frz.Address.from_capa(addr)
-        thawed = frozen.to_capa()
-        assert addr == thawed
-        assert thawed.id is None
-
-    def test_process_address_with_id(self):
+    def test_process_address_roundtrip(self):
         addr = ProcessAddress(pid=100, ppid=1, id=42)
         frozen = frz.Address.from_capa(addr)
         thawed = frozen.to_capa()
         assert addr == thawed
         assert thawed.id == 42
 
-    def test_thread_address_without_ids(self):
-        addr = ThreadAddress(ProcessAddress(pid=100, ppid=1), tid=5)
-        frozen = frz.Address.from_capa(addr)
-        thawed = frozen.to_capa()
-        assert addr == thawed
-        assert thawed.id is None
-        assert thawed.process.id is None
-
-    def test_thread_address_with_ids(self):
+    def test_thread_address_roundtrip(self):
         addr = ThreadAddress(ProcessAddress(pid=100, ppid=1, id=10), tid=5, id=20)
         frozen = frz.Address.from_capa(addr)
         thawed = frozen.to_capa()
@@ -235,23 +185,7 @@ class TestFreezeRoundtrip:
         assert thawed.process.id == 10
         assert thawed.id == 20
 
-    def test_thread_address_with_only_process_id(self):
-        addr = ThreadAddress(ProcessAddress(pid=100, ppid=1, id=10), tid=5)
-        frozen = frz.Address.from_capa(addr)
-        thawed = frozen.to_capa()
-        assert addr == thawed
-        assert thawed.process.id == 10
-        assert thawed.id is None
-
-    def test_call_address_without_ids(self):
-        addr = DynamicCallAddress(
-            ThreadAddress(ProcessAddress(pid=100, ppid=1), tid=5), id=99
-        )
-        frozen = frz.Address.from_capa(addr)
-        thawed = frozen.to_capa()
-        assert addr == thawed
-
-    def test_call_address_with_ids(self):
+    def test_call_address_roundtrip(self):
         addr = DynamicCallAddress(
             ThreadAddress(ProcessAddress(pid=100, ppid=1, id=10), tid=5, id=20),
             id=99,
@@ -262,35 +196,18 @@ class TestFreezeRoundtrip:
         assert thawed.thread.process.id == 10
         assert thawed.thread.id == 20
 
-    def test_backward_compat_old_process_tuple(self):
-        """simulate loading an old freeze file with 2-element process tuple"""
-        frozen = frz.Address(type=frz.AddressType.PROCESS, value=(1, 100))
-        addr = frozen.to_capa()
-        assert isinstance(addr, ProcessAddress)
-        assert addr.ppid == 1
-        assert addr.pid == 100
-        assert addr.id is None
+    def test_process_address_zero_id_roundtrip(self):
+        addr = ProcessAddress(pid=100, ppid=1, id=0)
+        frozen = frz.Address.from_capa(addr)
+        thawed = frozen.to_capa()
+        assert thawed.id == 0
 
-    def test_backward_compat_old_thread_tuple(self):
-        """simulate loading an old freeze file with 3-element thread tuple"""
-        frozen = frz.Address(type=frz.AddressType.THREAD, value=(1, 100, 42))
-        addr = frozen.to_capa()
-        assert isinstance(addr, ThreadAddress)
-        assert addr.process.ppid == 1
-        assert addr.process.pid == 100
-        assert addr.tid == 42
-        assert addr.id is None
-        assert addr.process.id is None
-
-    def test_backward_compat_old_call_tuple(self):
-        """simulate loading an old freeze file with 4-element call tuple"""
-        frozen = frz.Address(type=frz.AddressType.CALL, value=(1, 100, 42, 7))
-        addr = frozen.to_capa()
-        assert isinstance(addr, DynamicCallAddress)
-        assert addr.thread.process.ppid == 1
-        assert addr.thread.process.pid == 100
-        assert addr.thread.tid == 42
-        assert addr.id == 7
+    def test_thread_address_zero_ids_roundtrip(self):
+        addr = ThreadAddress(ProcessAddress(pid=100, ppid=1, id=0), tid=5, id=0)
+        frozen = frz.Address.from_capa(addr)
+        thawed = frozen.to_capa()
+        assert thawed.process.id == 0
+        assert thawed.id == 0
 
 
 # ---------------------------------------------------------------------------
@@ -360,9 +277,7 @@ class TestComputeDynamicLayoutRecycledTid:
                 else:
                     return "WriteFile(hFile)"
 
-        extractor = RecycledTidExtractor(
-            SampleHashes(md5="a" * 32, sha1="a" * 40, sha256="a" * 64)
-        )
+        extractor = RecycledTidExtractor(SampleHashes(md5="a" * 32, sha1="a" * 40, sha256="a" * 64))
 
         # Both calls matched by rules
         result_1 = capa.features.common.Result(
@@ -380,9 +295,7 @@ class TestComputeDynamicLayoutRecycledTid:
 
     def test_both_thread_instances_appear(self):
         extractor, capabilities = self._make_extractor()
-        layout = capa.loader.compute_dynamic_layout(
-            MagicMock(), extractor, capabilities
-        )
+        layout = capa.loader.compute_dynamic_layout(MagicMock(), extractor, capabilities)
 
         assert len(layout.processes) == 1
         proc = layout.processes[0]
@@ -392,9 +305,7 @@ class TestComputeDynamicLayoutRecycledTid:
 
     def test_each_thread_has_its_own_call(self):
         extractor, capabilities = self._make_extractor()
-        layout = capa.loader.compute_dynamic_layout(
-            MagicMock(), extractor, capabilities
-        )
+        layout = capa.loader.compute_dynamic_layout(MagicMock(), extractor, capabilities)
 
         proc = layout.processes[0]
         thread_names = set()
@@ -408,14 +319,10 @@ class TestComputeDynamicLayoutRecycledTid:
     def test_no_data_loss(self):
         """the original bug: second thread instance overwrites first's calls"""
         extractor, capabilities = self._make_extractor()
-        layout = capa.loader.compute_dynamic_layout(
-            MagicMock(), extractor, capabilities
-        )
+        layout = capa.loader.compute_dynamic_layout(MagicMock(), extractor, capabilities)
 
         # count total matched calls across all threads
-        total_calls = sum(
-            len(t.matched_calls) for t in layout.processes[0].matched_threads
-        )
+        total_calls = sum(len(t.matched_calls) for t in layout.processes[0].matched_threads)
         assert total_calls == 2
 
 
@@ -486,9 +393,7 @@ class TestComputeDynamicLayoutRecycledPid:
             def get_call_name(self, ph, th, ch):
                 return "NtCreateFile()" if ch is ch1 else "NtWriteFile()"
 
-        extractor = RecycledPidExtractor(
-            SampleHashes(md5="b" * 32, sha1="b" * 40, sha256="b" * 64)
-        )
+        extractor = RecycledPidExtractor(SampleHashes(md5="b" * 32, sha1="b" * 40, sha256="b" * 64))
 
         result_1 = capa.features.common.Result(
             success=True, statement=MagicMock(), children=[], locations={call_addr_1}
@@ -501,9 +406,7 @@ class TestComputeDynamicLayoutRecycledPid:
             "rule B": [(call_addr_2, result_2)],
         }
 
-        layout = capa.loader.compute_dynamic_layout(
-            MagicMock(), extractor, capabilities
-        )
+        layout = capa.loader.compute_dynamic_layout(MagicMock(), extractor, capabilities)
 
         # both process instances must appear
         assert len(layout.processes) == 2
