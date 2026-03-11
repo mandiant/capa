@@ -74,7 +74,7 @@ def extract_function_alternative_names(fh: FunctionHandle):
         yield FunctionName(aname), fh.address
 
 
-def extract_function_section_name(fh: FunctionHandle):
+def extract_function_section_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     seg = idaapi.getseg(fh.inner.start_ea)
     if not seg:
         return

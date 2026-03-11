@@ -108,7 +108,12 @@ def _compute_section_ranges(buf: bytes, base_address: int = 0) -> list[tuple[int
     elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
         elf = ELFFile(io.BytesIO(buf))
         for section in elf.iter_sections():
-            name = section.name if section.name else ("NULL" if section.is_null() else "")
+            if section.name:
+                name = section.name
+            elif section.is_null():
+                name = "NULL"
+            else:
+                name = ""
             size = int(section.header.sh_size)
             if size <= 0:
                 continue

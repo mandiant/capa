@@ -61,7 +61,7 @@ def extract_recursive_call(fh: FunctionHandle):
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
-def extract_function_section_name(fh: FunctionHandle):
+def extract_function_section_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     f: "ghidra.program.database.function.FunctionDB" = fh.inner
     program = capa.features.extractors.ghidra.helpers.get_current_program()
     block = program.getMemory().getBlock(f.getEntryPoint())

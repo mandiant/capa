@@ -114,7 +114,7 @@ def extract_function_name(fh: FunctionHandle):
             yield FunctionName(name[1:]), sym.address
 
 
-def extract_function_section_name(fh: FunctionHandle):
+def extract_function_section_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     func: Function = fh.inner
     bv: BinaryView = func.view
     if bv is None:
