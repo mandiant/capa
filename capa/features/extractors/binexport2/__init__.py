@@ -91,6 +91,35 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: 
     raise ValueError("cannot find sample, you may specify the path using the CAPA_SAMPLES_DIR environment variable")
 
 
+def _compute_section_ranges(buf: bytes, base_address: int = 0) -> list[tuple[int, int, str]]:
+    ranges: list[tuple[int, int, str]] = []
+
+    if buf.startswith(capa.features.extractors.common.MATCH_PE):
+        pe = PE(data=buf)
+        image_base = pe.OPTIONAL_HEADER.ImageBase
+        for section in pe.sections:
+            name = section.Name.partition(b"\x00")[0].decode("ascii", errors="ignore")
+            size = max(int(section.Misc_VirtualSize), int(section.SizeOfRawData))
+            if size <= 0:
+                continue
+            start = int(image_base + section.VirtualAddress)
+            ranges.append((start, start + size, name))
+
+    elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
+        elf = ELFFile(io.BytesIO(buf))
+        for section in elf.iter_sections():
+            name = section.name if section.name else ("NULL" if section.is_null() else "")
+            size = int(section.header.sh_size)
+            if size <= 0:
+                continue
+            start = int(section.header.sh_addr)
+            if base_address and start < base_address:
+                start += int(base_address)
+            ranges.append((start, start + size, name))
+
+    return ranges
+
+
 class BinExport2Index:
     def __init__(self, be2: BinExport2):
         self.be2: BinExport2 = be2
@@ -404,6 +433,7 @@ class AnalysisContext:
     idx: BinExport2Index
     analysis: BinExport2Analysis
     address_space: AddressSpace
+    section_ranges: list[tuple[int, int, str]]
 
 
 @dataclass

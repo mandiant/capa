@@ -18,7 +18,7 @@ import envi
 import viv_utils
 import vivisect.const
 
-from capa.features.file import FunctionName
+from capa.features.file import FunctionName, Section
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
@@ -95,6 +95,14 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[tuple[Feature, Ad
         yield Characteristic("loop"), fhandle.address
 
 
+def extract_function_section_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    f: viv_utils.Function = fh.inner
+    for va, size, segname, _ in f.vw.getSegments():
+        if va <= f.va < va + size:
+            yield Section(segname), fh.address
+            return
+
+
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given function.
@@ -114,4 +122,5 @@ FUNCTION_HANDLERS = (
     extract_function_symtab_names,
     extract_function_calls_to,
     extract_function_loop,
+    extract_function_section_name,
 )

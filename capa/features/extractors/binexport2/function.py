@@ -14,7 +14,7 @@
 
 from typing import Iterator
 
-from capa.features.file import FunctionName
+from capa.features.file import FunctionName, Section
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
@@ -70,10 +70,24 @@ def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address
         yield FunctionName(vertex.mangled_name), fh.address
 
 
+def extract_function_section_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    fhi: FunctionContext = fh.inner
+    address = int(fh.address)
+    for start, end, name in fhi.ctx.section_ranges:
+        if start <= address < end and name:
+            yield Section(name), fh.address
+            return
+
+
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_function_name)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_loop,
+    extract_function_name,
+    extract_function_section_name,
+)

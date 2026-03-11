@@ -19,6 +19,7 @@ from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
+from capa.features.file import Section
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
@@ -60,10 +61,25 @@ def extract_recursive_call(fh: FunctionHandle):
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
+def extract_function_section_name(fh: FunctionHandle):
+    f: "ghidra.program.database.function.FunctionDB" = fh.inner
+    program = capa.features.extractors.ghidra.helpers.get_current_program()
+    block = program.getMemory().getBlock(f.getEntryPoint())
+    if block:
+        name = block.getName()
+        if name:
+            yield Section(name), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
+
+
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for function_handler in FUNCTION_HANDLERS:
         for feature, addr in function_handler(fh):
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_loop,
+    extract_recursive_call,
+    extract_function_section_name,
+)

@@ -212,6 +212,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
     },
     Scope.FUNCTION: {
         capa.features.common.MatchedRule,
+        capa.features.file.Section,
         capa.features.basicblock.BasicBlock,
         capa.features.common.Characteristic("calls from"),
         capa.features.common.Characteristic("calls to"),

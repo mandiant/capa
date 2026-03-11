@@ -53,7 +53,14 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self.idx: BinExport2Index = BinExport2Index(self.be2)
         self.analysis: BinExport2Analysis = BinExport2Analysis(self.be2, self.idx, self.buf)
         address_space: AddressSpace = AddressSpace.from_buf(buf, self.analysis.base_address)
-        self.ctx: AnalysisContext = AnalysisContext(self.buf, self.be2, self.idx, self.analysis, address_space)
+        self.ctx: AnalysisContext = AnalysisContext(
+            self.buf,
+            self.be2,
+            self.idx,
+            self.analysis,
+            address_space,
+            capa.features.extractors.binexport2._compute_section_ranges(self.buf, self.analysis.base_address),
+        )
 
         self.global_features: list[tuple[Feature, Address]] = []
         self.global_features.extend(list(capa.features.extractors.common.extract_format(self.buf)))

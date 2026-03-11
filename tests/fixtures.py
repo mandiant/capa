@@ -871,6 +871,9 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "file", capa.features.file.Section(".nope"), False),
         # IDA doesn't extract unmapped sections by default
         # ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
+        # function/sections
+        ("mimikatz", "function=0x401000", capa.features.file.Section(".text"), True),
+        ("mimikatz", "function=0x401000", capa.features.file.Section(".nope"), False),
         # file/exports
         ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
         ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),

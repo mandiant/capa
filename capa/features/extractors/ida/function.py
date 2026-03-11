@@ -18,7 +18,7 @@ import idaapi
 import idautils
 
 import capa.features.extractors.ida.helpers
-from capa.features.file import FunctionName
+from capa.features.file import FunctionName, Section
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
@@ -74,6 +74,15 @@ def extract_function_alternative_names(fh: FunctionHandle):
         yield FunctionName(aname), fh.address
 
 
+def extract_function_section_name(fh: FunctionHandle):
+    seg = idaapi.getseg(fh.inner.start_ea)
+    if not seg:
+        return
+    segname = idaapi.get_segm_name(seg)
+    if segname:
+        yield Section(segname), fh.address
+
+
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
@@ -86,4 +95,5 @@ FUNCTION_HANDLERS = (
     extract_recursive_call,
     extract_function_name,
     extract_function_alternative_names,
+    extract_function_section_name,
 )

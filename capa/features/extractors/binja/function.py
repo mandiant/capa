@@ -27,7 +27,7 @@ from binaryninja import (
     MediumLevelILInstruction,
 )
 
-from capa.features.file import FunctionName
+from capa.features.file import FunctionName, Section
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
@@ -112,6 +112,19 @@ def extract_function_name(fh: FunctionHandle):
             # e.g. `_fwrite` -> `fwrite`
             # see: https://stackoverflow.com/a/2628384/87207
             yield FunctionName(name[1:]), sym.address
+
+
+def extract_function_section_name(fh: FunctionHandle):
+    func: Function = fh.inner
+    bv: BinaryView = func.view
+    if bv is None:
+        return
+    seen = set()
+    for section in bv.get_sections_at(func.start):
+        if section.name in seen:
+            continue
+        seen.add(section.name)
+        yield Section(section.name), fh.address
 
 
 def get_printable_len_ascii(s: bytes) -> int:
@@ -211,5 +224,6 @@ FUNCTION_HANDLERS = (
     extract_function_loop,
     extract_recursive_call,
     extract_function_name,
+    extract_function_section_name,
     extract_stackstring,
 )
