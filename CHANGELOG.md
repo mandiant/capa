@@ -66,6 +66,7 @@
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 - ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
+- tests: add tests and refactor API extraction and symbol generation helpers @pranavthakur0-0 #1899
 
 ### Raw diffs
 - [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
