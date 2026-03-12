@@ -246,6 +246,26 @@ class Range(Statement):
             return f"range({str(self.child)}, min={self.min}, max={self.max})"
 
 
+class CallChain(Statement):
+    """Match a sequence of features across caller -> callee function edges."""
+
+    def __init__(self, children, description=None):
+        super().__init__(description=description)
+        self.children = tuple(children)
+
+    def get_feature(self) -> capa.features.common.CallChain:
+        return capa.features.common.CallChain(self.children)
+
+    def evaluate(self, features: FeatureSet, short_circuit=True):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.call-chain"] += 1
+
+        feature = self.get_feature()
+        if feature in features:
+            return Result(True, self, [], locations=features[feature])
+        return Result(False, self, [], locations=None)
+
+
 class Subscope(Statement):
     """
     a subscope element is a placeholder in a rule - it should not be evaluated directly.

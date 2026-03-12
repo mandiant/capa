@@ -212,6 +212,9 @@ SUPPORTED_FEATURES: dict[str, set] = {
     },
     Scope.FUNCTION: {
         capa.features.common.MatchedRule,
+        capa.features.common.CallChain,
+        capa.features.file.Section,
+>>>>>>> Stashed changes
         capa.features.basicblock.BasicBlock,
         capa.features.common.Characteristic("calls from"),
         capa.features.common.Characteristic("calls to"),
@@ -446,6 +449,8 @@ def parse_feature(key: str):
         return capa.features.common.Namespace
     elif key == "property":
         return capa.features.insn.Property
+    elif key == "call-chain":
+        return capa.features.common.CallChain
     else:
         raise InvalidRule(f"unexpected statement: {key}")
 
@@ -800,6 +805,38 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule(f"unexpected range: {count}")
     elif key == "string" and not isinstance(d[key], str):
         raise InvalidRule(f"ambiguous string value {d[key]}, must be defined as explicit string")
+    elif key == "call-chain":
+        if scopes.static != Scope.FUNCTION:
+            raise InvalidRule("`call-chain` feature supported only for static `function` scope")
+
+        if not isinstance(d[key], list):
+            raise InvalidRule("`call-chain` must be a list")
+
+        if len(d[key]) < 2:
+            raise InvalidRule("`call-chain` must contain at least two features")
+
+        children: list[Feature] = []
+        for term in d[key]:
+            if not isinstance(term, dict) or len(term) != 1:
+                raise InvalidRule("`call-chain` entries must be single feature statements")
+
+            child_key = next(iter(term))
+            child_value = term[child_key]
+            ChildFeature = parse_feature(child_key)
+            value, child_description = parse_description(child_value, child_key)
+
+            if child_key == "api":
+                value = trim_dll_part(value)
+
+            try:
+                child = ChildFeature(value, description=child_description)
+            except ValueError as e:
+                raise InvalidRule(str(e)) from e
+
+            ensure_feature_valid_for_scopes(scopes, child)
+            children.append(child)
+
+        return ceng.CallChain(children, description=description)
 
     elif key.startswith("operand[") and key.endswith("].number"):
         index = key[len("operand[") : -len("].number")]
@@ -1591,6 +1628,7 @@ class RuleSet:
             # When possible, we want rules to be indexed by these features.
             #
             capa.features.common.String: 9,
+            capa.features.common.CallChain: 9,
             capa.features.insn.API: 8,
             capa.features.file.Export: 7,
             # "uncommon numbers": 7 (placeholder for logic above)
@@ -1702,6 +1740,10 @@ class RuleSet:
 
             elif isinstance(node, capa.features.common.Feature):
                 return (RuleSet._score_feature(scores_by_rule, node), {node})
+
+            elif isinstance(node, ceng.CallChain):
+                feature = node.get_feature()
+                return (RuleSet._score_feature(scores_by_rule, feature), {feature})
 
             elif isinstance(node, (ceng.Range)):
                 # feature is found N times

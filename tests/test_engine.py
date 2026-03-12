@@ -13,8 +13,9 @@
 # limitations under the License.
 
 import capa.features.address
-from capa.engine import Or, And, Not, Some, Range
-from capa.features.insn import Number
+from capa.engine import Or, And, Not, Some, Range, CallChain
+from capa.features.insn import API, Number
+from capa.features.common import CallChain as CallChainFeature
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
@@ -155,3 +156,11 @@ def test_eval_order():
 
     assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[1].statement == Number(2)
     assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[1].statement != Number(1)
+
+
+def test_call_chain():
+    chain = (API("CryptDecrypt"), API("connect"), API("CreateProcessA"))
+    feature = CallChainFeature(chain)
+
+    assert bool(CallChain(chain).evaluate({feature: {ADDR1}})) is True
+    assert bool(CallChain(chain).evaluate({})) is False

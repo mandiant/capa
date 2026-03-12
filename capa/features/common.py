@@ -131,7 +131,7 @@ class Feature(abc.ABC):  # noqa: B024
 
     def __init__(
         self,
-        value: Union[str, int, float, bytes],
+        value: Union[str, int, float, bytes, tuple[object, ...]],
         description: Optional[str] = None,
     ):
         """
@@ -160,10 +160,14 @@ class Feature(abc.ABC):  # noqa: B024
         # we should fix if this wasn't already a huge hack.
         import capa.features.freeze.features
 
-        return (
-            capa.features.freeze.features.feature_from_capa(self).model_dump_json()
-            < capa.features.freeze.features.feature_from_capa(other).model_dump_json()
-        )
+        try:
+            return (
+                capa.features.freeze.features.feature_from_capa(self).model_dump_json()
+                < capa.features.freeze.features.feature_from_capa(other).model_dump_json()
+            )
+        except NotImplementedError:
+            # fallback for features that don't have freeze support yet.
+            return str(self) < str(other)
 
     def get_name_str(self) -> str:
         """
@@ -210,6 +214,18 @@ class MatchedRule(Feature):
 class Characteristic(Feature):
     def __init__(self, value: str, description=None):
         super().__init__(value, description=description)
+
+
+class CallChain(Feature):
+    def __init__(self, value: tuple[Feature, ...], description=None):
+        super().__init__(value, description=description)
+
+    def get_name_str(self) -> str:
+        return "call-chain"
+
+    def get_value_str(self) -> str:
+        assert isinstance(self.value, tuple)
+        return " -> ".join(str(feature) for feature in self.value)
 
 
 class String(Feature):

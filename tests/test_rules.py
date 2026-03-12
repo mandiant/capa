@@ -108,6 +108,27 @@ def test_rule_yaml_complex():
     assert bool(r.evaluate({Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is False
 
 
+def test_rule_yaml_call_chain():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test call chain rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - call-chain:
+                    - api: CryptDecrypt
+                    - api: connect
+                    - api: CreateProcessA
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    assert isinstance(r.statement, capa.engine.CallChain)
+    assert r.statement.children == (API("CryptDecrypt"), API("connect"), API("CreateProcessA"))
+
+
 def test_rule_descriptions():
     rule = textwrap.dedent(
         """

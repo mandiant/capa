@@ -18,14 +18,18 @@ import logging
 import itertools
 import collections
 from dataclasses import dataclass
+from typing import Iterator
 
 import capa.perf
 import capa.helpers
+import capa.engine as ceng
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
+from capa.features.common import Feature
 from capa.capabilities.common import Capabilities, find_file_capabilities
+from capa.features.extractors import function as function_extractor
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -109,7 +113,7 @@ def find_basic_block_capabilities(
 
 @dataclass
 class CodeCapabilities:
-    function_matches: MatchResults
+    function_features: FeatureSet
     basic_block_matches: MatchResults
     instruction_matches: MatchResults
     feature_count: int
@@ -145,8 +149,18 @@ def find_code_capabilities(ruleset: RuleSet, extractor: StaticFeatureExtractor, 
     for feature, va in itertools.chain(extractor.extract_function_features(fh), extractor.extract_global_features()):
         function_features[feature].add(va)
 
-    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, fh.address)
-    return CodeCapabilities(function_matches, bb_matches, insn_matches, len(function_features))
+    return CodeCapabilities(function_features, bb_matches, insn_matches, len(function_features))
+
+
+def iter_call_chain_feature_sequences(statement) -> Iterator[tuple[Feature, ...]]:
+    if isinstance(statement, ceng.CallChain):
+        yield statement.children
+        return
+
+    if isinstance(statement, ceng.Statement):
+        for child in statement.get_children():
+            if isinstance(child, ceng.Statement):
+                yield from iter_call_chain_feature_sequences(child)
 
 
 def find_static_capabilities(
@@ -167,6 +181,8 @@ def find_static_capabilities(
     n_funcs: int = len(functions)
     n_libs: int = 0
     percentage: float = 0
+    analyzed_functions: list[FunctionHandle] = []
+    code_capabilities_by_function: dict = {}
 
     with capa.helpers.CapaProgressBar(
         console=capa.helpers.log_console, transient=True, disable=disable_progress
@@ -189,6 +205,8 @@ def find_static_capabilities(
                 continue
 
             code_capabilities = find_code_capabilities(ruleset, extractor, f)
+            analyzed_functions.append(f)
+            code_capabilities_by_function[f.address] = code_capabilities
             function_feature_counts.append(
                 rdoc.FunctionFeatureCount(
                     address=frz.Address.from_capa(f.address), count=code_capabilities.feature_count
@@ -198,7 +216,6 @@ def find_static_capabilities(
 
             match_count = 0
             for name, matches_ in itertools.chain(
-                code_capabilities.function_matches.items(),
                 code_capabilities.basic_block_matches.items(),
                 code_capabilities.instruction_matches.items(),
             ):
@@ -213,14 +230,29 @@ def find_static_capabilities(
                 t1 - t0,
             )
 
-            for rule_name, res in code_capabilities.function_matches.items():
-                all_function_matches[rule_name].extend(res)
             for rule_name, res in code_capabilities.basic_block_matches.items():
                 all_bb_matches[rule_name].extend(res)
             for rule_name, res in code_capabilities.instruction_matches.items():
                 all_insn_matches[rule_name].extend(res)
 
             pbar.advance(task)
+
+    function_features_by_address = {
+        function.address: code_capabilities_by_function[function.address].function_features for function in analyzed_functions
+    }
+    call_graph = function_extractor.build_function_call_graph(function_features_by_address)
+
+    function_call_chains: set[tuple[Feature, ...]] = set()
+    for rule in ruleset.function_rules:
+        function_call_chains.update(iter_call_chain_feature_sequences(rule.statement))
+
+    function_extractor.add_call_chain_features(function_features_by_address, call_graph, function_call_chains)
+
+    for function in analyzed_functions:
+        code_capabilities = code_capabilities_by_function[function.address]
+        _, function_matches = ruleset.match(Scope.FUNCTION, code_capabilities.function_features, function.address)
+        for rule_name, res in function_matches.items():
+            all_function_matches[rule_name].extend(res)
 
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
