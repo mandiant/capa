@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import logging
 import textwrap
 
 import pytest
@@ -79,6 +80,28 @@ def test_rule_yaml():
     assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
     assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}})) is True
     assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}})) is True
+
+
+def test_rule_duplicate_feature_warning(caplog):
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: create file
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - api: CreateFileA
+                    - api: CreateFileA
+        """
+    )
+
+    with caplog.at_level(logging.WARNING):
+        capa.rules.Rule.from_yaml(rule)
+
+    assert "duplicate feature 'api(CreateFileA)' in rule 'create file'" in caplog.text
 
 
 def test_rule_yaml_complex():
