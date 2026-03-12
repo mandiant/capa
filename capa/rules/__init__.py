@@ -588,6 +588,18 @@ def unique(sequence):
     return [x for x in sequence if not (x in seen or seen.add(x))]  # type: ignore [func-returns-value]
 
 
+def warn_on_duplicate_features_in_statement(rule_name: str, children: list[Statement | Feature]):
+    seen: set[Feature] = set()
+    for child in children:
+        if not isinstance(child, Feature):
+            continue
+
+        if child in seen:
+            logger.warning("duplicate feature '%s' in rule '%s'", child, rule_name)
+        else:
+            seen.add(child)
+
+
 STATIC_SCOPE_ORDER = [
     Scope.FILE,
     Scope.FUNCTION,
@@ -625,28 +637,36 @@ def is_subscope_compatible(scope: Scope | None, subscope: Scope) -> bool:
         raise ValueError("unexpected scope")
 
 
-def build_statements(d, scopes: Scopes):
+def build_statements(d, scopes: Scopes, rule_name: str):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
 
     key = list(d.keys())[0]
     description = pop_statement_description_entry(d[key])
     if key == "and":
-        return ceng.And(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        children = [build_statements(dd, scopes, rule_name) for dd in d[key]]
+        warn_on_duplicate_features_in_statement(rule_name, children)
+        return ceng.And(unique(children), description=description)
     elif key == "or":
-        return ceng.Or(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        children = [build_statements(dd, scopes, rule_name) for dd in d[key]]
+        warn_on_duplicate_features_in_statement(rule_name, children)
+        return ceng.Or(unique(children), description=description)
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
-        return ceng.Not(build_statements(d[key][0], scopes), description=description)
+        return ceng.Not(build_statements(d[key][0], scopes, rule_name), description=description)
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return ceng.Some(count, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        children = [build_statements(dd, scopes, rule_name) for dd in d[key]]
+        warn_on_duplicate_features_in_statement(rule_name, children)
+        return ceng.Some(count, unique(children), description=description)
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return ceng.Some(0, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        children = [build_statements(dd, scopes, rule_name) for dd in d[key]]
+        warn_on_duplicate_features_in_statement(rule_name, children)
+        return ceng.Some(0, unique(children), description=description)
 
     elif key == "process":
         if not is_subscope_compatible(scopes.dynamic, Scope.PROCESS):
@@ -656,7 +676,7 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.PROCESS, build_statements(d[key][0], Scopes(dynamic=Scope.PROCESS)), description=description
+            Scope.PROCESS, build_statements(d[key][0], Scopes(dynamic=Scope.PROCESS), rule_name), description=description
         )
 
     elif key == "thread":
@@ -667,7 +687,7 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.THREAD, build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)), description=description
+            Scope.THREAD, build_statements(d[key][0], Scopes(dynamic=Scope.THREAD), rule_name), description=description
         )
 
     elif key == "span of calls":
@@ -679,7 +699,7 @@ def build_statements(d, scopes: Scopes):
 
         return ceng.Subscope(
             Scope.SPAN_OF_CALLS,
-            build_statements(d[key][0], Scopes(dynamic=Scope.SPAN_OF_CALLS)),
+            build_statements(d[key][0], Scopes(dynamic=Scope.SPAN_OF_CALLS), rule_name),
             description=description,
         )
 
@@ -691,7 +711,7 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.CALL, build_statements(d[key][0], Scopes(dynamic=Scope.CALL)), description=description
+            Scope.CALL, build_statements(d[key][0], Scopes(dynamic=Scope.CALL), rule_name), description=description
         )
 
     elif key == "function":
@@ -702,7 +722,7 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.FUNCTION, build_statements(d[key][0], Scopes(static=Scope.FUNCTION)), description=description
+            Scope.FUNCTION, build_statements(d[key][0], Scopes(static=Scope.FUNCTION), rule_name), description=description
         )
 
     elif key == "basic block":
@@ -713,7 +733,9 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.BASIC_BLOCK, build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK)), description=description
+            Scope.BASIC_BLOCK,
+            build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK), rule_name),
+            description=description,
         )
 
     elif key == "instruction":
@@ -721,7 +743,7 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("`instruction` subscope supported only for `function` and `basic block` scope")
 
         if len(d[key]) == 1:
-            statements = build_statements(d[key][0], Scopes(static=Scope.INSTRUCTION))
+            statements = build_statements(d[key][0], Scopes(static=Scope.INSTRUCTION), rule_name)
         else:
             # for instruction subscopes, we support a shorthand in which the top level AND is implied.
             # the following are equivalent:
@@ -735,7 +757,9 @@ def build_statements(d, scopes: Scopes):
             #       - arch: i386
             #       - mnemonic: cmp
             #
-            statements = ceng.And(unique(build_statements(dd, Scopes(static=Scope.INSTRUCTION)) for dd in d[key]))
+            children = [build_statements(dd, Scopes(static=Scope.INSTRUCTION), rule_name) for dd in d[key]]
+            warn_on_duplicate_features_in_statement(rule_name, children)
+            statements = ceng.And(unique(children))
 
         return ceng.Subscope(Scope.INSTRUCTION, statements, description=description)
 
@@ -1087,7 +1111,7 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        return cls(name, scopes, build_statements(statements[0], scopes, name), meta, definition)
 
     @staticmethod
     @lru_cache()
