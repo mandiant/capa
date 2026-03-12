@@ -6,6 +6,8 @@
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
+- rules/static: add `call-chain` function-scope feature to match capability sequences across caller -> callee function paths
+- capabilities/static: build a program call graph and propagate resolved call-chain features before function-scope matching
 
 ### Breaking Changes
 
@@ -63,6 +65,7 @@
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
+- tests: add parser/engine/static integration coverage for `call-chain` rule evaluation
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 - ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
