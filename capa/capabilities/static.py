@@ -27,6 +27,7 @@ import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
+from capa.features.address import Address
 from capa.features.common import Feature
 from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors import function as function_extractor
@@ -182,7 +183,7 @@ def find_static_capabilities(
     n_libs: int = 0
     percentage: float = 0
     analyzed_functions: list[FunctionHandle] = []
-    code_capabilities_by_function: dict = {}
+    code_capabilities_by_function: dict[Address, CodeCapabilities] = {}
 
     with capa.helpers.CapaProgressBar(
         console=capa.helpers.log_console, transient=True, disable=disable_progress

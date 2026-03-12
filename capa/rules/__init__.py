@@ -214,7 +214,6 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.common.MatchedRule,
         capa.features.common.CallChain,
         capa.features.file.Section,
->>>>>>> Stashed changes
         capa.features.basicblock.BasicBlock,
         capa.features.common.Characteristic("calls from"),
         capa.features.common.Characteristic("calls to"),
