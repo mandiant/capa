@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (20)
+### New Rules (23)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -31,6 +31,9 @@
 - nursery/enumerate-aws-support-cases maximemorin@google.com
 - persistence/registry/persist-via-shellserviceobjectdelayload-registry-key xpzhxhm@gmail.com
 - nursery/get-http-response-date @cosmoworker
+- host-interaction/process/create/create-process-in-dotnet moritz.raabe@mandiant.com social.tarang@gmail.com
+- nursery/read-file-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/write-file-in-dotnet william.ballenthin@mandiant.com anushka.virgaonkar@mandiant.com
 -
 
 ### Bug Fixes
