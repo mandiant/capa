@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (19)
+### New Rules (20)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -30,6 +30,7 @@
 - nursery/enumerate-aws-s3 maximemorin@google.com
 - nursery/enumerate-aws-support-cases maximemorin@google.com
 - persistence/registry/persist-via-shellserviceobjectdelayload-registry-key xpzhxhm@gmail.com
+- nursery/get-http-response-date @cosmoworker
 -
 
 ### Bug Fixes
