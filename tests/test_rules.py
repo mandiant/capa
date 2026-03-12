@@ -176,8 +176,7 @@ def test_get_rules_skips_empty_yaml(tmp_path):
     # get_rules should skip empty files with a warning instead of raising (issue #2900)
     (tmp_path / "empty.yml").write_bytes(b"")
     (tmp_path / "valid.yml").write_text(
-        textwrap.dedent(
-            """
+        textwrap.dedent("""
             rule:
                 meta:
                     name: test rule
@@ -186,8 +185,7 @@ def test_get_rules_skips_empty_yaml(tmp_path):
                         dynamic: process
                 features:
                     - api: CreateFile
-            """
-        ),
+            """),
         encoding="utf-8",
     )
     # empty.yml is skipped with a warning; valid.yml is loaded normally
