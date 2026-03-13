@@ -17,10 +17,8 @@ import io
 import os
 import sys
 import time
-import signal
 import logging
 import argparse
-import threading
 import textwrap
 import contextlib
 from types import TracebackType
@@ -74,6 +72,7 @@ from capa.helpers import (
     log_unsupported_drakvuf_report_error,
 )
 from capa.exceptions import (
+    AnalysisTimeoutError,
     InvalidArgument,
     EmptyReportError,
     UnsupportedOSError,
@@ -142,10 +141,6 @@ E_INVALID_FEATURE_EXTRACTOR = 26
 logger = logging.getLogger("capa")
 
 
-class _AnalysisTimeoutError(RuntimeError):
-    pass
-
-
 class FilterConfig(TypedDict, total=False):
     processes: set[int]
     functions: set[int]
@@ -170,29 +165,6 @@ def _get_elf_total_analysis_timeout_seconds() -> int:
     except ValueError:
         logger.warning("invalid CAPA_ELF_TOTAL_ANALYSIS_TIMEOUT_SECONDS=%r, using default 120", value)
         return 120
-
-
-@contextlib.contextmanager
-def _timebox(seconds: int):
-    if (
-        seconds <= 0
-        or not hasattr(signal, "SIGALRM")
-        or threading.current_thread() is not threading.main_thread()
-    ):
-        yield
-        return
-
-    def _handle_timeout(signum, frame):
-        raise _AnalysisTimeoutError(f"analysis exceeded {seconds}s")
-
-    previous_handler = signal.getsignal(signal.SIGALRM)
-    signal.signal(signal.SIGALRM, _handle_timeout)
-    signal.setitimer(signal.ITIMER_REAL, float(seconds))
-    try:
-        yield
-    finally:
-        signal.setitimer(signal.ITIMER_REAL, 0.0)
-        signal.signal(signal.SIGALRM, previous_handler)
 
 
 def set_vivisect_log_level(level):
@@ -1080,10 +1052,11 @@ def main(argv: Optional[list[str]] = None):
         return e.status_code
 
     try:
-        timeout_s = _get_elf_total_analysis_timeout_seconds() if (input_format == FORMAT_ELF and backend == BACKEND_VIV) else 0
-        with _timebox(timeout_s):
+        is_elf_viv_analysis = input_format == FORMAT_ELF and backend == BACKEND_VIV
+        timeout_s = _get_elf_total_analysis_timeout_seconds() if is_elf_viv_analysis else 0
+        with capa.helpers.timebox(timeout_s):
             capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
-    except _AnalysisTimeoutError:
+    except AnalysisTimeoutError:
         logger.error(
             "analysis timed out after %ds while matching capabilities for ELF sample; refusing to hang indefinitely",
             timeout_s,

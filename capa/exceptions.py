@@ -43,3 +43,7 @@ class NonExistantFunctionError(ValueError):
 
 class NonExistantProcessError(ValueError):
     pass
+
+
+class AnalysisTimeoutError(RuntimeError):
+    pass

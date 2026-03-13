@@ -16,10 +16,12 @@ import io
 import os
 import sys
 import gzip
+import signal
 import ctypes
 import logging
 import tempfile
 import contextlib
+import threading
 import importlib.util
 from typing import BinaryIO, Iterator, NoReturn
 from pathlib import Path
@@ -42,7 +44,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from capa.exceptions import UnsupportedFormatError
+from capa.exceptions import AnalysisTimeoutError, UnsupportedFormatError
 from capa.features.common import (
     FORMAT_PE,
     FORMAT_CAPE,
@@ -74,6 +76,32 @@ logger = logging.getLogger("capa")
 
 # shared console used to redirect logging to stderr
 log_console: Console = Console(stderr=True)
+
+
+@contextlib.contextmanager
+def timebox(seconds: int):
+    """
+    Timebox a block using SIGALRM on platforms that support it.
+    """
+    if (
+        seconds <= 0
+        or not hasattr(signal, "SIGALRM")
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield
+        return
+
+    def _handle_timeout(signum, frame):
+        raise AnalysisTimeoutError(f"analysis exceeded {seconds}s")
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    signal.setitimer(signal.ITIMER_REAL, float(seconds))
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 def hex(n: int) -> str:

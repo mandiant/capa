@@ -17,10 +17,9 @@ from unittest.mock import patch
 
 import pytest
 import envi.exc
-import capa.loader
 
 from capa.loader import CorruptFile, get_workspace
-from capa.exceptions import UnsupportedArchError
+from capa.exceptions import AnalysisTimeoutError, UnsupportedArchError
 from capa.features.common import FORMAT_PE, FORMAT_ELF
 
 
@@ -156,7 +155,7 @@ def test_elf_analysis_timeout_maps_to_corrupt_file():
             return None
 
         def analyze(self):
-            raise capa.loader._AnalysisTimeoutError("analysis exceeded timeout")
+            raise AnalysisTimeoutError("analysis exceeded timeout")
 
     with patch("viv_utils.getWorkspace", return_value=FakeWorkspace()):
         with pytest.raises(CorruptFile, match="analysis timed out"):

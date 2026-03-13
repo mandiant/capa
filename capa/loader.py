@@ -16,8 +16,6 @@ import os
 import logging
 import datetime
 import contextlib
-import threading
-import signal
 from typing import Optional
 from pathlib import Path
 
@@ -25,6 +23,7 @@ from rich.console import Console
 from typing_extensions import assert_never
 
 import capa.rules
+import capa.helpers
 import capa.version
 import capa.features.common
 import capa.features.freeze as frz
@@ -33,7 +32,7 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import AnalysisTimeoutError, UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
 from capa.features.common import (
     OS_AUTO,
     FORMAT_PE,
@@ -74,10 +73,6 @@ BACKEND_GHIDRA = "ghidra"
 
 
 class CorruptFile(ValueError):
-    pass
-
-
-class _AnalysisTimeoutError(RuntimeError):
     pass
 
 
@@ -211,32 +206,6 @@ def _get_elf_max_functions() -> int:
 
 
 @contextlib.contextmanager
-def _timebox(seconds: int):
-    """
-    Timebox a block using SIGALRM on platforms that support it.
-    """
-    if (
-        seconds <= 0
-        or not hasattr(signal, "SIGALRM")
-        or threading.current_thread() is not threading.main_thread()
-    ):
-        yield
-        return
-
-    def _handle_timeout(signum, frame):
-        raise _AnalysisTimeoutError(f"analysis exceeded {seconds}s")
-
-    previous_handler = signal.getsignal(signal.SIGALRM)
-    signal.signal(signal.SIGALRM, _handle_timeout)
-    signal.setitimer(signal.ITIMER_REAL, float(seconds))
-    try:
-        yield
-    finally:
-        signal.setitimer(signal.ITIMER_REAL, 0.0)
-        signal.signal(signal.SIGALRM, previous_handler)
-
-
-@contextlib.contextmanager
 def _temporarily_disable_viv_elf_section_symbols():
     """
     Disable viv's ELF section-symbol parsing while loading a workspace.
@@ -290,12 +259,13 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
             + " - skipping analysis to avoid excessive resource usage."
         )
 
-    is_elf_input = False
     if input_format == FORMAT_ELF:
         is_elf_input = True
     elif input_format == FORMAT_AUTO:
         with path.open("rb") as f:
             is_elf_input = f.read(4).startswith(capa.features.extractors.common.MATCH_ELF)
+    else:
+        is_elf_input = False
 
     try:
         if input_format == FORMAT_AUTO:
@@ -357,9 +327,9 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
 
     try:
         timeout_s = _get_elf_analysis_timeout_seconds() if is_elf_input else 0
-        with _timebox(timeout_s):
+        with capa.helpers.timebox(timeout_s):
             vw.analyze()
-    except _AnalysisTimeoutError as e:
+    except AnalysisTimeoutError as e:
         raise CorruptFile(
             f"analysis timed out after {timeout_s}s while processing ELF sample; refusing to hang indefinitely"
         ) from e
