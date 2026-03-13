@@ -37,6 +37,7 @@
 -
 
 ### Bug Fixes
+- address: add id field to ProcessAddress/ThreadAddress to uniquely track recycled PID/TID lifecycles across all dynamic sandboxes @devs6186 #2619
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
 - render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
 - rules: handle empty or invalid YAML documents gracefully in `Rule.from_yaml` and `get_rules` @devs6186 #2900
