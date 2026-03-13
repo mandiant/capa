@@ -57,6 +57,7 @@
 - webui: fix global search to match feature types (match, regex, api, …) @devs6186 #2349
 
 ### capa Explorer IDA Pro plugin
+- ida: display file-scope feature addresses (`file:0x…`) in rule generator tree @devs6186 #1523
 
 ### Performance
 
