@@ -31,6 +31,7 @@ $ protoc.exe --python_out=. --mypy_out=. <path_to_proto> (e.g. capa/render/proto
 
 Alternatively, --pyi_out=. can be used to generate a Python Interface file that supports development
 """
+
 import datetime
 from typing import Any, Union
 

@@ -84,16 +84,14 @@ def extract_insn_number_features(
                 yield OperandOffset(i, value), ih.address
 
 
-OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     ldr|ldrb|ldrh|ldrsb|ldrsh|ldrex|ldrd|str|strb|strh|strex|strd reg, [reg(not-stack),  #int]                                 ; capture #int
     ldr|ldrb|ldrh|ldrsb|ldrsh|ldrex|ldrd|str|strb|strh|strex|strd reg, [reg(not-stack),  #int]!                                ; capture #int
     ldr|ldrb|ldrh|ldrsb|ldrsh|ldrex|ldrd|str|strb|strh|strex|strd reg, [reg(not-stack)],        #int                           ; capture #int
     ldp|ldpd|stp|stpd                                             reg, reg,                     [reg(not-stack), #int]         ; capture #int
     ldp|ldpd|stp|stpd                                             reg, reg,                     [reg(not-stack), #int]!        ; capture #int
     ldp|ldpd|stp|stpd                                             reg, reg,                     [reg(not-stack)],       #int   ; capture #int
-    """
-)
+    """)
 
 
 def extract_insn_offset_features(
@@ -117,12 +115,10 @@ def extract_insn_offset_features(
         yield OperandOffset(match.operand_index, value), ih.address
 
 
-NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     eor reg, reg, reg
     eor reg, reg, #int
-    """
-)
+    """)
 
 
 def extract_insn_nzxor_characteristic_features(
@@ -144,11 +140,9 @@ def extract_insn_nzxor_characteristic_features(
         yield Characteristic("nzxor"), ih.address
 
 
-INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     blx|bx|blr reg
-    """
-)
+    """)
 
 
 def extract_function_indirect_call_characteristic_features(

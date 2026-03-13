@@ -54,6 +54,7 @@ Example::
     0x44cb60: ?
     0x44cba0: __guard_icall_checks_enforced
 """
+
 import sys
 import logging
 import argparse

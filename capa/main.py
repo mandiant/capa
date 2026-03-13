@@ -945,8 +945,7 @@ def main(argv: Optional[list[str]] = None):
         argv = sys.argv[1:]
 
     desc = "The FLARE team's open-source tool to identify capabilities in executable files."
-    epilog = textwrap.dedent(
-        """
+    epilog = textwrap.dedent("""
         By default, capa uses a default set of embedded rules.
         You can see the rule set here:
           https://github.com/mandiant/capa-rules
@@ -973,8 +972,7 @@ def main(argv: Optional[list[str]] = None):
 
           filter rules by meta fields, e.g. rule name or namespace
             capa -t "create TCP socket" suspicious.exe
-         """
-    )
+         """)
 
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
