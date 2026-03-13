@@ -198,6 +198,31 @@ def test_match_range_with_zero():
     assert "test rule" not in matches
 
 
+def test_match_top_level_range_exact_zero():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - count(number(100)): 0
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    _, matches = match([r], {}, 0x0)
+    assert "test rule" in matches
+
+    _, matches = match([r], {capa.features.insn.Number(100): {}}, 0x0)
+    assert "test rule" in matches
+
+    _, matches = match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    assert "test rule" not in matches
+
+
 def test_match_adds_matched_rule_feature():
     """show that using `match` adds a feature for matched rules."""
     rule = textwrap.dedent(
@@ -585,7 +610,6 @@ def test_regex_get_value_str(pattern):
     assert capa.features.common.Regex(pattern).get_value_str() == pattern
 
 
-@pytest.mark.xfail(reason="can't have top level NOT")
 def test_match_only_not():
     rule = textwrap.dedent(
         """
@@ -630,7 +654,6 @@ def test_match_not():
     assert "test rule" in matches
 
 
-@pytest.mark.xfail(reason="can't have nested NOT")
 def test_match_not_not():
     rule = textwrap.dedent(
         """
