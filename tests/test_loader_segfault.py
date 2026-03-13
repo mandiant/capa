@@ -17,8 +17,10 @@ from unittest.mock import patch
 
 import pytest
 import envi.exc
+import capa.loader
 
 from capa.loader import CorruptFile, get_workspace
+from capa.exceptions import UnsupportedArchError
 from capa.features.common import FORMAT_PE, FORMAT_ELF
 
 
@@ -58,3 +60,104 @@ def test_corrupt_pe_with_unrealistic_section_size_short_circuits():
 
         # vivisect should never have been called
         mock_workspace.assert_not_called()
+
+
+def test_elf_workspace_temporarily_disables_section_symbol_parsing():
+    """
+    Test that loading ELF in viv temporarily disables section-symbol parsing
+    and restores the original parser after workspace creation.
+    """
+    import Elf
+
+    fake_path = Path("/tmp/fake.elf")
+    original = Elf.Elf._parseSectionSymbols
+    observed = {}
+    removed_modules = []
+
+    class FakeWorkspace:
+        metadata = {}
+
+        def delFuncAnalysisModule(self, _):
+            removed_modules.append(_)
+            return None
+
+        def analyze(self):
+            return None
+
+        def getFunctions(self):
+            return []
+
+    def fake_get_workspace(*args, **kwargs):
+        observed["during"] = Elf.Elf._parseSectionSymbols
+        return FakeWorkspace()
+
+    with patch("viv_utils.getWorkspace", side_effect=fake_get_workspace):
+        get_workspace(fake_path, FORMAT_ELF, [])
+
+    assert observed["during"] is not original
+    assert Elf.Elf._parseSectionSymbols is original
+    assert "vivisect.analysis.generic.symswitchcase" in removed_modules
+    assert "vivisect.analysis.elf.elfplt" in removed_modules
+    assert "vivisect.analysis.amd64.emulation" in removed_modules
+    assert "vivisect.analysis.generic.emucode" in removed_modules
+    assert "vivisect.analysis.generic.noret" in removed_modules
+
+
+def test_viv_module_not_found_maps_to_unsupported_arch():
+    """
+    Test that viv architecture-specific impapi import errors are converted
+    to UnsupportedArchError.
+    """
+    fake_path = Path("/tmp/fake.elf")
+
+    class FakeWorkspace:
+        metadata = {}
+
+        def delFuncAnalysisModule(self, _):
+            return None
+
+        def analyze(self):
+            raise ModuleNotFoundError(
+                "No module named 'vivisect.impapi.posix.a64'",
+                name="vivisect.impapi.posix.a64",
+            )
+
+    with patch("viv_utils.getWorkspace", return_value=FakeWorkspace()):
+        with pytest.raises(UnsupportedArchError):
+            get_workspace(fake_path, FORMAT_ELF, [])
+
+
+def test_viv_workspace_module_not_found_maps_to_unsupported_arch():
+    """
+    Test that impapi import failures during workspace creation are converted
+    to UnsupportedArchError.
+    """
+    fake_path = Path("/tmp/fake.elf")
+    err = ModuleNotFoundError(
+        "No module named 'vivisect.impapi.posix.a64'",
+        name="vivisect.impapi.posix.a64",
+    )
+
+    with patch("viv_utils.getWorkspace", side_effect=err):
+        with pytest.raises(UnsupportedArchError):
+            get_workspace(fake_path, FORMAT_ELF, [])
+
+
+def test_elf_analysis_timeout_maps_to_corrupt_file():
+    """
+    Test that ELF analysis timeout is converted to CorruptFile.
+    """
+    fake_path = Path("/tmp/fake.elf")
+
+    class FakeWorkspace:
+        metadata = {}
+
+        def delFuncAnalysisModule(self, _):
+            return None
+
+        def analyze(self):
+            raise capa.loader._AnalysisTimeoutError("analysis exceeded timeout")
+
+    with patch("viv_utils.getWorkspace", return_value=FakeWorkspace()):
+        with pytest.raises(CorruptFile, match="analysis timed out"):
+            get_workspace(fake_path, FORMAT_ELF, [])
