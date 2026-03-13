@@ -998,6 +998,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("performing one-time file analysis")
                 self.rulegen_feature_extractor = CapaExplorerFeatureExtractor()
                 self.rulegen_feature_cache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
+            except UserCancelledError:
+                logger.info("User cancelled analysis.")
+                return False
             except Exception as e:
                 logger.exception("Failed to initialize feature extractor (error: %s)", e)
                 return False
