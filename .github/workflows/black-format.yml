@@ -55,8 +55,8 @@ jobs:
       - name: Commit and push formatting changes
         if: steps.changes.outputs.has_changes == 'true'
         run: |
-          git config user.email 'capa-dev@mandiant.com'
-          git config user.name 'Capa Bot'
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           git add -A
           git commit -m "style: auto-format with black and isort"
           git push
