@@ -1052,24 +1052,6 @@ class Rule:
         capa.perf.counters["evaluate.feature.rule"] += 1
         return self.statement.evaluate(features, short_circuit=short_circuit)
 
-    @staticmethod
-    def _lint_logic_edge_cases(statement: Union[Statement, Feature], is_root: bool = True) -> None:
-        """
-        reject rule constructs known to be unsupported by the optimized matcher.
-        """
-        if isinstance(statement, ceng.Not):
-            if is_root:
-                raise InvalidRule("top level statement may not be a `not` statement")
-            if isinstance(statement.child, ceng.Not):
-                raise InvalidRule("nested `not` statements are not supported")
-
-        if is_root and isinstance(statement, ceng.Range) and statement.min == 0 and statement.max == 0:
-            raise InvalidRule("top level statement may not be `count(...): 0`")
-
-        if isinstance(statement, Statement):
-            for child in statement.get_children():
-                Rule._lint_logic_edge_cases(child, is_root=False)
-
     @classmethod
     def from_dict(cls, d: dict[str, Any], definition: str) -> "Rule":
         meta = d["rule"]["meta"]
@@ -1105,9 +1087,7 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        statement = build_statements(statements[0], scopes)
-        cls._lint_logic_edge_cases(statement)
-        return cls(name, scopes, statement, meta, definition)
+        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
 
     @staticmethod
     @lru_cache()
@@ -1670,6 +1650,9 @@ class RuleSet:
         # Mapping from rule name to list of Bytes features that have to match.
         # All these features will be evaluated whenever a Bytes feature is encountered.
         bytes_rules: dict[str, list[Feature]]
+        # Rules that cannot be safely handled by optimized candidate filtering.
+        # These are always evaluated via the unoptimized path.
+        fallback_rules: set[str]
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
@@ -1822,13 +1805,18 @@ class RuleSet:
         # Ideally we find a way to get rid of all of these, eventually.
         string_rules: dict[str, list[Feature]] = {}
         bytes_rules: dict[str, list[Feature]] = {}
+        fallback_rules: set[str] = set()
 
         for rule in rules:
             rule_name = rule.meta["name"]
 
             root = rule.statement
             item = rec(rule_name, root)
-            assert item is not None
+            if item is None:
+                logger.debug("indexing: no stable index feature for rule, will use fallback matcher: %s", rule_name)
+                scores_by_rule[rule_name] = 0
+                fallback_rules.add(rule_name)
+                continue
             score, features = item
 
             string_features = [
@@ -1867,8 +1855,9 @@ class RuleSet:
         logger.debug(
             "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
         )
+        logger.debug("indexing: %d rules evaluated via fallback matcher", len(fallback_rules))
 
-        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
+        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules, fallback_rules)
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> list[Rule]:
@@ -1996,7 +1985,7 @@ class RuleSet:
         # Find all the rules that could match the given feature set.
         # Ideally we want this set to be as small and focused as possible,
         # and we can tune it by tweaking `_index_rules_by_feature`.
-        candidate_rule_names: set[str] = set()
+        candidate_rule_names: set[str] = set(feature_index.fallback_rules)
         for feature in features:
             candidate_rule_names.update(feature_index.rules_by_feature.get(feature, ()))
 
@@ -2129,10 +2118,9 @@ class RuleSet:
         This wrapper around _match exists so that we can assert it matches precisely
         the same as `capa.engine.match`, just faster.
 
-        This matcher does not handle some edge cases, such as top level NOT statements,
-        top level counted features with zero occurrences (`count(mnemonic(mov)): 0`),
-        and nested NOT statements (`not: not: ...`).
-        These constructs are rejected during rule loading.
+        Some edge-case rule constructs cannot be safely optimized for candidate filtering.
+        In those cases, this matcher transparently falls back to unoptimized evaluation
+        for the affected rules.
 
         Args:
           paranoid: when true, demonstrate that the naive matcher agrees with this
