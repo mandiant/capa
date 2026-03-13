@@ -1052,6 +1052,24 @@ class Rule:
         capa.perf.counters["evaluate.feature.rule"] += 1
         return self.statement.evaluate(features, short_circuit=short_circuit)
 
+    @staticmethod
+    def _lint_logic_edge_cases(statement: Union[Statement, Feature], is_root: bool = True) -> None:
+        """
+        reject rule constructs known to be unsupported by the optimized matcher.
+        """
+        if isinstance(statement, ceng.Not):
+            if is_root:
+                raise InvalidRule("top level statement may not be a `not` statement")
+            if isinstance(statement.child, ceng.Not):
+                raise InvalidRule("nested `not` statements are not supported")
+
+        if is_root and isinstance(statement, ceng.Range) and statement.min == 0 and statement.max == 0:
+            raise InvalidRule("top level statement may not be `count(...): 0`")
+
+        if isinstance(statement, Statement):
+            for child in statement.get_children():
+                Rule._lint_logic_edge_cases(child, is_root=False)
+
     @classmethod
     def from_dict(cls, d: dict[str, Any], definition: str) -> "Rule":
         meta = d["rule"]["meta"]
@@ -1087,7 +1105,9 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        statement = build_statements(statements[0], scopes)
+        cls._lint_logic_edge_cases(statement)
+        return cls(name, scopes, statement, meta, definition)
 
     @staticmethod
     @lru_cache()
@@ -2109,13 +2129,10 @@ class RuleSet:
         This wrapper around _match exists so that we can assert it matches precisely
         the same as `capa.engine.match`, just faster.
 
-        This matcher does not handle some edge cases:
-          - top level NOT statements
-              - also top level counted features with zero occurances, like: `count(menmonic(mov)): 0`
-          - nested NOT statements (NOT: NOT: foo)
-
-        We should discourage/forbid these constructs from our rules and add lints for them.
-        TODO(williballenthin): add lints for logic edge cases
+        This matcher does not handle some edge cases, such as top level NOT statements,
+        top level counted features with zero occurrences (`count(mnemonic(mov)): 0`),
+        and nested NOT statements (`not: not: ...`).
+        These constructs are rejected during rule loading.
 
         Args:
           paranoid: when true, demonstrate that the naive matcher agrees with this
