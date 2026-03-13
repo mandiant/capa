@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (19)
+### New Rules (23)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -30,6 +30,10 @@
 - nursery/enumerate-aws-s3 maximemorin@google.com
 - nursery/enumerate-aws-support-cases maximemorin@google.com
 - persistence/registry/persist-via-shellserviceobjectdelayload-registry-key xpzhxhm@gmail.com
+- nursery/get-http-response-date @cosmoworker
+- host-interaction/process/create/create-process-in-dotnet moritz.raabe@mandiant.com social.tarang@gmail.com
+- nursery/read-file-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/write-file-in-dotnet william.ballenthin@mandiant.com anushka.virgaonkar@mandiant.com
 -
 
 ### Bug Fixes
@@ -49,8 +53,8 @@
 
 ### capa Explorer Web
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
-
 - webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
+- webui: fix global search to match feature types (match, regex, api, …) @devs6186 #2349
 
 ### capa Explorer IDA Pro plugin
 
