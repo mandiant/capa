@@ -176,7 +176,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
 
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper):
         try:
-            (_, target) = resolve_indirect_call(f.vw, insn.va, insn=insn)
+            _, target = resolve_indirect_call(f.vw, insn.va, insn=insn)
         except NotFoundError:
             # not able to resolve the indirect call, sorry
             return

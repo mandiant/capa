@@ -56,7 +56,7 @@ def get_previous_instructions(vw: VivWorkspace, va: int) -> list[int]:
         if ploc is not None:
             # from vivisect.const:
             # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
-            (pva, _, ptype, pinfo) = ploc
+            pva, _, ptype, pinfo = ploc
 
             if ptype == LOC_OP and not (pinfo & IF_NOFALL):
                 ret.append(pva)

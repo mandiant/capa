@@ -70,6 +70,7 @@ Example::
     insn: 0x10001027: mnemonic(shl)
     ...
 """
+
 import sys
 import logging
 import argparse
