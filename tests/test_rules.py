@@ -1407,3 +1407,57 @@ def test_circular_dependency():
     ]
     with pytest.raises(capa.rules.InvalidRule):
         list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
+
+
+def test_reject_top_level_not():
+    # A top-level `not:` statement cannot be indexed by the optimized matcher,
+    # so the rule loader must reject it with a clear error (issue #2920).
+    with pytest.raises(capa.rules.InvalidRule, match="top-level `not:`"):
+        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - not:
+                            - api: CreateFileA
+                """))
+
+
+def test_reject_nested_not_not():
+    # A `not: not:` construct is semantically equivalent to the plain feature,
+    # but the indexer cannot handle it.  The loader must reject it (issue #2920).
+    with pytest.raises(capa.rules.InvalidRule, match="not: not:"):
+        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - and:
+                            - api: CreateFileA
+                            - not:
+                                - not:
+                                    - api: DeleteFileA
+                """))
+
+
+def test_reject_top_level_count_zero():
+    # `count(...): 0` at the rule root behaves like a negation.
+    # The optimized indexer cannot derive a required feature from it,
+    # so the loader must reject it (issue #2920).
+    with pytest.raises(capa.rules.InvalidRule, match="count.*0"):
+        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - count(api(CreateFileA)): 0
+                """))
