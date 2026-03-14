@@ -155,6 +155,45 @@ def test_freeze_bytes_roundtrip():
     compare_extractors(EXTRACTOR, reanimated)
 
 
+def test_freeze_roundtrip_with_thread_features():
+    """Verify that thread-level features survive a freeze/thaw roundtrip.
+
+    Previously, dumps_dynamic passed basic_block=... instead of thread=...
+    when constructing ThreadFeature, which caused a ValidationError whenever
+    a thread had any features.
+    """
+    extractor = capa.features.extractors.null.NullDynamicFeatureExtractor(
+        base_address=AbsoluteVirtualAddress(0x401000),
+        sample_hashes=SampleHashes(
+            md5="6eb7ee7babf913d75df3f86c229df9e7",
+            sha1="2a082494519acd5130d5120fa48786df7275fdd7",
+            sha256="0c7d1a34eb9fd55bedbf37ba16e3d5dd8c1dd1d002479cc4af27ef0f82bb4792",
+        ),
+        global_features=[],
+        file_features=[],
+        processes={
+            ProcessAddress(pid=1): capa.features.extractors.null.ProcessFeatures(
+                name="explorer.exe",
+                features=[],
+                threads={
+                    ThreadAddress(ProcessAddress(pid=1), tid=1): capa.features.extractors.null.ThreadFeatures(
+                        features=[
+                            (
+                                ThreadAddress(ProcessAddress(pid=1), tid=1),
+                                capa.features.common.Characteristic("nzxor"),
+                            ),
+                        ],
+                        calls={},
+                    ),
+                },
+            ),
+        },
+    )
+
+    reanimated = capa.features.freeze.loads(capa.features.freeze.dumps(extractor))
+    compare_extractors(extractor, reanimated)
+
+
 def test_freeze_load_sample(tmpdir):
     o = tmpdir.mkdir("capa").join("test.frz")
 
