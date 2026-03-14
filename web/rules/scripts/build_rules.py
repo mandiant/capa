@@ -38,11 +38,10 @@ assert txt_file_path.exists(), "file-modification txt file must exist"
 assert output_directory.exists(), "output directory must exist"
 
 
-def render_rule(timestamps, path: Path) -> str:
+def render_rule(timestamps, path: Path, rules_directory: Path) -> str:
     rule_content = path.read_text(encoding="utf-8")
     rule = capa.rules.Rule.from_yaml(rule_content, use_ruamel=True)
 
-    filename = path.with_suffix("").name
     namespace = rule.meta.get("namespace", "")
     timestamp = timestamps[path.as_posix()]
 
@@ -57,7 +56,8 @@ def render_rule(timestamps, path: Path) -> str:
         ),
     )
 
-    gh_link = f"https://github.com/mandiant/capa-rules/tree/master/{namespace}/{filename}.yml"
+    rule_relative_path = path.relative_to(rules_directory).as_posix()
+    gh_link = f"https://github.com/mandiant/capa-rules/tree/master/{rule_relative_path}"
     vt_query = 'behavior_signature:"' + rule.name + '"'
     vt_fragment = urllib.parse.quote(urllib.parse.quote(vt_query))
     vt_link = f"https://www.virustotal.com/gui/search/{vt_fragment}/files"
@@ -143,7 +143,7 @@ for line in txt_file_path.read_text(encoding="utf-8").splitlines():
 for yaml_file in yaml_files:
     path = Path(yaml_file)
     rule_content = path.read_text(encoding="utf-8")
-    html_content = render_rule(timestamps, path)
+    html_content = render_rule(timestamps, path, input_directory)
     rule = capa.rules.Rule.from_yaml(path.read_text(encoding="utf-8"), use_ruamel=True)
 
     # like: rules/create file/index.html
