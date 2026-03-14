@@ -625,6 +625,31 @@ def is_subscope_compatible(scope: Scope | None, subscope: Scope) -> bool:
         raise ValueError("unexpected scope")
 
 
+def _check_nested_not_not(node: Union[ceng.Statement, "capa.features.common.Feature"]) -> None:
+    """
+    Raise InvalidRule if the statement tree contains a `not: not:` construct anywhere.
+
+    The optimized rule indexer skips features inside a Not block (returning None),
+    so a double-not would propagate None upward and break the indexer's invariants.
+    Rule authors should simplify `not: not: X` to just `X`.
+    """
+    if isinstance(node, ceng.Not):
+        if isinstance(node.child, ceng.Not):
+            raise InvalidRule(
+                "unsupported logic: nested `not: not:` construct detected. "
+                "Simplify `not: not: X` to just `X`."
+            )
+        _check_nested_not_not(node.child)
+    elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
+        for child in node.children:
+            _check_nested_not_not(child)
+    elif isinstance(node, ceng.Range):
+        _check_nested_not_not(node.child)
+    elif isinstance(node, ceng.Subscope):
+        _check_nested_not_not(node.child)
+    # leaf features have no children, nothing to recurse into
+
+
 def build_statements(d, scopes: Scopes):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
@@ -1087,7 +1112,26 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        top_level_statement = build_statements(statements[0], scopes)
+
+        # Reject logic constructs that are incompatible with the optimized rule matcher/indexer.
+        # The indexer cannot derive a required feature set from these patterns, so they would
+        # either crash with an assertion error or silently produce wrong results at match time.
+        #
+        # See: RuleSet._index_rules_by_feature and RuleSet.match docstring (issue #2920).
+        if isinstance(top_level_statement, ceng.Not):
+            raise InvalidRule(
+                "unsupported logic: top-level `not:` statement is not allowed. "
+                "The optimized matcher cannot index a rule whose root is a negation."
+            )
+        if isinstance(top_level_statement, ceng.Range) and top_level_statement.min == 0 and top_level_statement.max == 0:
+            raise InvalidRule(
+                "unsupported logic: top-level `count(...): 0` is not allowed. "
+                "A count-of-zero at the rule root behaves like a negation and cannot be indexed."
+            )
+        _check_nested_not_not(top_level_statement)
+
+        return cls(name, scopes, top_level_statement, meta, definition)
 
     @staticmethod
     @lru_cache()
