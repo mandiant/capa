@@ -22,6 +22,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# The idalib activation script shipped with IDA creates ida-config.json.
+IDALIB_ACTIVATION_SCRIPT = "python3 <ida-install-dir>/idalib/python/py-activate-idalib.py"
+
 
 def is_idalib_installed() -> bool:
     try:
@@ -31,39 +34,50 @@ def is_idalib_installed() -> bool:
 
 
 def get_idalib_user_config_path() -> Optional[Path]:
-    """Get the path to the user's config file based on platform following IDA's user directories."""
+    """Get the path to the user's ida-config.json based on platform following IDA's user directories."""
     # derived from `py-activate-idalib.py` from IDA v9.0 Beta 4
 
     if sys.platform == "win32":
         # On Windows, use the %APPDATA%\Hex-Rays\IDA Pro directory
-        config_dir = Path(os.getenv("APPDATA")) / "Hex-Rays" / "IDA Pro"
+        appdata = os.getenv("APPDATA", "")
+        config_dir = Path(appdata) / "Hex-Rays" / "IDA Pro"
     else:
         # On macOS and Linux, use ~/.idapro
         config_dir = Path.home() / ".idapro"
 
-    # Return the full path to the config file (now in JSON format)
     user_config_path = config_dir / "ida-config.json"
     if not user_config_path.exists():
         return None
     return user_config_path
 
 
-def find_idalib() -> Optional[Path]:
-    config_path = get_idalib_user_config_path()
-    if not config_path:
-        logger.error("IDA Pro user configuration does not exist, please make sure you've installed idalib properly.")
+def _get_install_dir_from_config(config_path: Path) -> Optional[Path]:
+    """Read the ida-install-dir from the idalib JSON config."""
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
+        logger.error("failed to read IDA Pro user configuration %s: %s", config_path, e)
         return None
 
-    config = json.loads(config_path.read_text(encoding="utf-8"))
-
     try:
-        ida_install_dir = Path(config["Paths"]["ida-install-dir"])
+        ida_install_dir = config["Paths"]["ida-install-dir"]
     except KeyError:
+        ida_install_dir = ""
+
+    if not ida_install_dir:
         logger.error(
-            "IDA Pro user configuration does not contain location of IDA Pro installation, please make sure you've installed idalib properly."
+            "%s does not contain a valid Paths.ida-install-dir entry. "  # noqa: G003 [logging statement uses +]
+            + "Re-run the idalib activation script to configure it: %s",
+            config_path,
+            IDALIB_ACTIVATION_SCRIPT,
         )
         return None
 
+    return Path(ida_install_dir)
+
+
+def _locate_idalib_in_install_dir(ida_install_dir: Path) -> Optional[Path]:
+    """Given an IDA installation directory, verify it contains idalib and return the Python path."""
     if not ida_install_dir.exists():
         return None
 
@@ -85,6 +99,38 @@ def find_idalib() -> Optional[Path]:
         return None
 
     if not (idalib_path / "idapro" / "__init__.py").is_file():
+        return None
+
+    return idalib_path
+
+
+def find_idalib() -> Optional[Path]:
+    config_path = get_idalib_user_config_path()
+    if not config_path:
+        if sys.platform == "win32":
+            config_location = "%APPDATA%\\Hex-Rays\\IDA Pro\\ida-config.json"
+        else:
+            config_location = "~/.idapro/ida-config.json"
+        logger.error(
+            "IDA Pro user configuration not found at %s. "  # noqa: G003 [logging statement uses +]
+            + "To set up idalib, run the activation script: %s",
+            config_location,
+            IDALIB_ACTIVATION_SCRIPT,
+        )
+        return None
+
+    ida_install_dir = _get_install_dir_from_config(config_path)
+    if not ida_install_dir:
+        return None
+
+    idalib_path = _locate_idalib_in_install_dir(ida_install_dir)
+    if not idalib_path:
+        logger.error(
+            "idalib not found in IDA installation at %s. "  # noqa: G003 [logging statement uses +]
+            + "Ensure idalib is set up by running: %s",
+            ida_install_dir,
+            IDALIB_ACTIVATION_SCRIPT,
+        )
         return None
 
     return idalib_path
