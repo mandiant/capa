@@ -32,6 +32,7 @@
 
 ### Development
 
+- rules: prune rules with incompatible OS/arch/format requirements before analysis to skip them across all scopes #2127
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs
