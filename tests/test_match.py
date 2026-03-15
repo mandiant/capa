@@ -816,3 +816,56 @@ def test_index_features_nested_unstable():
 
     assert not index.string_rules
     assert not index.bytes_rules
+
+
+def test_regex_pure_literal_ci_fast_path_detection():
+    """Verify that pure-literal case-insensitive Regex patterns are detected correctly."""
+    # Pure literal patterns: no metacharacters, /i flag
+    r1 = capa.features.common.Regex("/createfile/i")
+    assert r1._is_pure_literal_ci is True
+    assert r1._normalized_lower == "createfile"
+
+    r2 = capa.features.common.Regex("/useragent/i")
+    assert r2._is_pure_literal_ci is True
+    assert r2._normalized_lower == "useragent"
+
+    # Complex patterns: has metacharacters, should NOT be flagged
+    r3 = capa.features.common.Regex("/create.*file/i")
+    assert r3._is_pure_literal_ci is False
+
+    # Case-sensitive pattern: no /i flag
+    r4 = capa.features.common.Regex("/createfile/")
+    assert r4._is_pure_literal_ci is False
+
+
+def test_regex_ci_fast_path_correctness():
+    """Verify the fast path produces the same results as the full regex engine."""
+    rule_text = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test ci fast path
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /createfile/i
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule_text)
+    rr = capa.rules.RuleSet([r])
+
+    # Should match: exact case-insensitive match (fast path)
+    _, matches = rr.match(capa.rules.Scope.FUNCTION, {String("CreateFile"): {0x0}}, 0x0)
+    assert "test ci fast path" in matches
+
+    _, matches = rr.match(capa.rules.Scope.FUNCTION, {String("CREATEFILE"): {0x0}}, 0x0)
+    assert "test ci fast path" in matches
+
+    # Should match: substring match (regex fallback path)
+    _, matches = rr.match(capa.rules.Scope.FUNCTION, {String("CreateFileA"): {0x0}}, 0x0)
+    assert "test ci fast path" in matches
+
+    # Should not match
+    _, matches = rr.match(capa.rules.Scope.FUNCTION, {String("WriteFile"): {0x0}}, 0x0)
+    assert "test ci fast path" not in matches

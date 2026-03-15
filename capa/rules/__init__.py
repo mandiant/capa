@@ -1988,11 +1988,6 @@ class RuleSet:
         # We may want to try to pre-evaluate these strings, based on their presence in the file,
         # to reduce the number of evaluations we do here.
         # See: https://github.com/mandiant/capa/issues/2126
-        #
-        # We may also want to specialize case-insensitive strings, which would enable them to
-        # be indexed, and therefore skip the scanning here, improving performance.
-        # This strategy is described here:
-        # https://github.com/mandiant/capa/issues/2129
         if feature_index.string_rules:
             # This is a FeatureSet that contains only String features.
             # Since we'll only be evaluating String/Regex features below, we don't care about
@@ -2009,10 +2004,30 @@ class RuleSet:
                     string_features[feature] = locations
 
             if string_features:
+                # Pre-compute the set of lowercased string values once per scope evaluation.
+                # This enables an O(1) fast path for pure-literal case-insensitive patterns:
+                # instead of invoking the regex engine for every candidate string, we check
+                # whether the lowercased pattern value is already present in the feature set.
+                # When found, the pattern is guaranteed to match and we skip the regex call.
+                # When not found, we still fall back to the full regex scan to handle substring
+                # matches such as /createfile/i matching "CreateFileA".
+                # See: https://github.com/mandiant/capa/issues/2129
+                lowercased_strings: frozenset[str] = frozenset(
+                    feature.value.lower() for feature in string_features if isinstance(feature.value, str)
+                )
                 for rule_name, wanted_strings in feature_index.string_rules.items():
                     for wanted_string in wanted_strings:
+                        # Fast path: pure-literal /i patterns can be resolved via O(1) lookup.
+                        if (
+                            isinstance(wanted_string, capa.features.common.Regex)
+                            and wanted_string._is_pure_literal_ci
+                            and wanted_string._normalized_lower in lowercased_strings
+                        ):
+                            candidate_rule_names.add(rule_name)
+                            break
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)
+                            break
 
         # Like with String/Regex features above, we have to scan for Bytes to find candidate rules.
         #
