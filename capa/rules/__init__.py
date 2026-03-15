@@ -1909,6 +1909,94 @@ class RuleSet:
                             break
         return RuleSet(list(rules_filtered))
 
+    def filter_rules_by_meta_features(self, features: FeatureSet) -> "RuleSet":
+        """
+        Return a new RuleSet with rules removed whose global-feature requirements
+        cannot be satisfied by the binary under analysis.
+
+        Global features — OS, architecture, and format — are determined once at the
+        start of analysis from the binary's headers.  Any rule that requires, for
+        example, ``os: windows`` while we are analyzing a Linux ELF can never match
+        and is safe to discard before the per-function matching loop begins.
+
+        The filtering is conservative: a rule is only removed when its global-feature
+        constraints are *provably* unsatisfiable.  Rules with no global-feature
+        constraints, or with ``os: any``-style wildcards, are always kept.
+
+        Rules that are kept as transitive dependencies of other kept rules are also
+        retained, so the returned RuleSet always satisfies internal dependency
+        invariants.
+
+        Args:
+            features: the global FeatureSet for the binary (typically the output of
+                ``extractor.extract_global_features()``).
+
+        Returns:
+            A new :class:`RuleSet` with incompatible rules removed, or *self* if
+            no rules were pruned.
+        """
+        global_features: FeatureSet = {
+            feature: locations
+            for feature, locations in features.items()
+            if capa.features.common.is_global_feature(feature)
+        }
+
+        if not global_features:
+            return self
+
+        def can_match(node) -> bool:
+            """
+            Return True if *node* might be satisfiable given the known global features.
+            Returns False only when provably unsatisfiable.
+            """
+            if isinstance(node, capa.features.common.Feature):
+                if capa.features.common.is_global_feature(node):
+                    return bool(node.evaluate(global_features))
+                return True
+
+            if isinstance(node, ceng.Not):
+                return True
+
+            if isinstance(node, ceng.And):
+                return all(can_match(child) for child in node.children)
+
+            if isinstance(node, (ceng.Or, ceng.Some)):
+                if isinstance(node, ceng.Some) and node.count == 0:
+                    return True
+                return any(can_match(child) for child in node.children)
+
+            if isinstance(node, ceng.Range):
+                if node.min == 0:
+                    return True
+                return can_match(node.child)
+
+            return True
+
+        compatible_rule_names = {rule.name for rule in self.rules.values() if can_match(rule.statement)}
+
+        if len(compatible_rule_names) == len(self.rules):
+            return self
+
+        # Collect the surviving rules plus all of their transitive dependencies
+        # to ensure RuleSet dependency invariants are maintained.
+        all_rules = list(self.rules.values())
+        rules_to_keep: set[str] = set()
+        for rule_name in compatible_rule_names:
+            rules_to_keep.update(r.name for r in get_rules_and_dependencies(all_rules, rule_name))
+
+        pruned_count = len(self.rules) - len(rules_to_keep)
+        if pruned_count == 0:
+            return self
+
+        logger.debug(
+            "pruned %d rules incompatible with global features (%s)",
+            pruned_count,
+            ", ".join(f"{f.name}: {f.value}" for f in global_features),
+        )
+
+        surviving_rules = [self.rules[name] for name in rules_to_keep]
+        return RuleSet(surviving_rules)
+
     # this routine is unstable and may change before the next major release.
     @staticmethod
     def _sort_rules_by_index(rule_index_by_rule_name: dict[str, int], rules: list[Rule]):

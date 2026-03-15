@@ -159,6 +159,16 @@ def find_static_capabilities(
     feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
     library_functions: tuple[rdoc.LibraryFunction, ...] = ()
 
+    # Prune rules that cannot match this binary's global features (OS, arch, format)
+    # once, before the per-function matching loop.  This eliminates rules that could
+    # never match — e.g. Windows-specific rules when analysing a Linux ELF — from all
+    # per-function, per-basic-block, and per-instruction evaluations.
+    # See: https://github.com/mandiant/capa/issues/2127
+    global_features: FeatureSet = collections.defaultdict(set)
+    for feature, addr in extractor.extract_global_features():
+        global_features[feature].add(addr)
+    ruleset = ruleset.filter_rules_by_meta_features(global_features)
+
     assert isinstance(extractor, StaticFeatureExtractor)
     functions: list[FunctionHandle] = list(extractor.get_functions())
     n_funcs: int = len(functions)

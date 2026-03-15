@@ -21,7 +21,7 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule
+from capa.features.common import OS, OS_ANY, OS_LINUX, OS_WINDOWS, String, MatchedRule
 
 
 def match(rules, features, va, scope=Scope.FUNCTION):
@@ -887,3 +887,75 @@ def test_index_features_nested_unstable():
 
     assert not index.string_rules
     assert not index.bytes_rules
+
+
+def test_filter_rules_by_meta_features_prunes_incompatible_os():
+    """Rules requiring a different OS than the binary's are removed from the RuleSet."""
+    windows_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: windows only rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: windows
+                    - api: CreateFile
+        """
+    )
+    linux_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: linux only rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: linux
+                    - api: open
+        """
+    )
+    rr = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(windows_rule),
+            capa.rules.Rule.from_yaml(linux_rule),
+        ]
+    )
+    assert len(rr.rules) == 2
+
+    # When analyzing a Linux binary, windows-only rules are pruned
+    linux_features = {OS(OS_LINUX): {0x0}}
+    filtered = rr.filter_rules_by_meta_features(linux_features)
+    assert "linux only rule" in filtered.rules
+    assert "windows only rule" not in filtered.rules
+
+    # When analyzing a Windows binary, linux-only rules are pruned
+    windows_features = {OS(OS_WINDOWS): {0x0}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "windows only rule" in filtered.rules
+    assert "linux only rule" not in filtered.rules
+
+
+def test_filter_rules_by_meta_features_keeps_any_os():
+    """Rules with os: any or no OS requirement are kept regardless of binary OS."""
+    any_os_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: cross-platform rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - api: malloc
+        """
+    )
+    rr = capa.rules.RuleSet([capa.rules.Rule.from_yaml(any_os_rule)])
+
+    windows_features = {OS(OS_WINDOWS): {0x0}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "cross-platform rule" in filtered.rules
