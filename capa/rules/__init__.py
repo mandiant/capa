@@ -18,6 +18,7 @@ import os
 import re
 import copy
 import uuid
+import struct
 import logging
 import binascii
 import collections
@@ -56,11 +57,11 @@ from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
 
-# Fixed prefix lengths used to index extracted bytes features for fast pattern matching.
-# A bytes pattern of length L is looked up in the bucket with the largest size <= L.
-# This enables O(1) candidate selection instead of O(n) linear scan.
+# Fixed prefix size used to pre-filter extracted bytes features.
+# This narrows candidate selection from all extracted bytes to those
+# sharing a common 4-byte prefix while keeping the implementation simple.
 # See: https://github.com/mandiant/capa/issues/2128
-_BYTES_BUCKET_SIZES = (4, 8, 16, 32, 64, 128, 256)
+_BYTES_PREFIX_SIZE = 4
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
@@ -2029,20 +2030,14 @@ class RuleSet:
 
             if bytes_features:
                 # Build a prefix-indexed lookup for faster bytes pattern matching.
-                # For each extracted bytes feature, register it at every bucket size
-                # whose length fits within the feature's byte length.  A bytes pattern
-                # of length L is then looked up in the largest bucket <= L, reducing
-                # the candidate set from all extracted bytes down to those that share
-                # the same fixed-length prefix.
+                # For patterns of length >= _BYTES_PREFIX_SIZE, we only compare
+                # against extracted bytes that share the same fixed-length prefix.
                 # See: https://github.com/mandiant/capa/issues/2128
-                bytes_prefix_index: dict[int, dict[bytes, list[tuple[bytes, set[Address]]]]] = {
-                    bucket: collections.defaultdict(list) for bucket in _BYTES_BUCKET_SIZES
-                }
-                for feature, locations in bytes_features.items():
+                bytes_prefix_index: dict[int, list[bytes]] = collections.defaultdict(list)
+                for feature in bytes_features:
                     assert isinstance(feature.value, bytes)
-                    for bucket in _BYTES_BUCKET_SIZES:
-                        if len(feature.value) >= bucket:
-                            bytes_prefix_index[bucket][feature.value[:bucket]].append((feature.value, locations))
+                    if len(feature.value) >= _BYTES_PREFIX_SIZE:
+                        bytes_prefix_index[struct.unpack_from(">I", feature.value)[0]].append(feature.value)
 
                 for rule_name, wanted_bytess in feature_index.bytes_rules.items():
                     for wanted_bytes in wanted_bytess:
@@ -2050,22 +2045,16 @@ class RuleSet:
                         pattern = wanted_bytes.value
                         pattern_len = len(pattern)
 
-                        # Find the largest bucket size that fits within the pattern length.
-                        bucket = max(
-                            (s for s in _BYTES_BUCKET_SIZES if s <= pattern_len),
-                            default=None,
-                        )
-
-                        if bucket is None:
-                            # Pattern shorter than smallest bucket; fall back to linear scan.
+                        if pattern_len < _BYTES_PREFIX_SIZE:
+                            # Pattern shorter than prefix; fall back to linear scan.
                             if wanted_bytes.evaluate(bytes_features):
                                 candidate_rule_names.add(rule_name)
                             continue
 
                         # O(1) prefix lookup: only compare bytes features whose first
-                        # `bucket` bytes match the pattern's first `bucket` bytes.
-                        prefix = pattern[:bucket]
-                        for value, _ in bytes_prefix_index[bucket].get(prefix, ()):
+                        # `_BYTES_PREFIX_SIZE` bytes match the pattern prefix.
+                        prefix = struct.unpack_from(">I", pattern)[0]
+                        for value in bytes_prefix_index.get(prefix, ()):
                             if value.startswith(pattern):
                                 candidate_rule_names.add(rule_name)
                                 break
