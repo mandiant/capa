@@ -2,8 +2,12 @@ from dataclasses import dataclass
 
 from tree_sitter import Language
 from tree_sitter.binding import Query
+import tree_sitter_c_sharp
+import tree_sitter_embedded_template
+import tree_sitter_html
+import tree_sitter_javascript
+import tree_sitter_python
 
-import capa.features.extractors.ts.build
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML
 
 
@@ -51,14 +55,12 @@ def deserialize(language: str, binding: dict) -> dict:
     return deserialized_binding
 
 
-capa.features.extractors.ts.build.TSBuilder()
-
 TS_LANGUAGES: dict[str, Language] = {
-    LANG_CS: Language(capa.features.extractors.ts.build.build_dir, LANG_CS),
-    LANG_PY: Language(capa.features.extractors.ts.build.build_dir, LANG_PY),
-    LANG_TEM: Language(capa.features.extractors.ts.build.build_dir, LANG_TEM),
-    LANG_HTML: Language(capa.features.extractors.ts.build.build_dir, LANG_HTML),
-    LANG_JS: Language(capa.features.extractors.ts.build.build_dir, LANG_JS),
+    LANG_CS: Language(tree_sitter_c_sharp.language()),
+    LANG_PY: Language(tree_sitter_python.language()),
+    LANG_TEM: Language(tree_sitter_embedded_template.language()),
+    LANG_HTML: Language(tree_sitter_html.language()),
+    LANG_JS: Language(tree_sitter_javascript.language()),
 }
 
 BINDINGS: dict[str, QueryBinding] = {
