@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from fixtures import get_fixture_files
+from tests.fixtures import get_fixture_files
 
 
 def test_no_orphaned_file_entries():

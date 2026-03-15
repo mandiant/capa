@@ -18,8 +18,9 @@ import importlib.resources
 from typing import Dict, List, Tuple, Union, Callable, Iterator, Optional
 from dataclasses import dataclass
 
-import capa.features.extractors.ts.signatures
 from tree_sitter import Node
+
+import capa.features.extractors.ts.signatures
 from capa.features.extractors.script import LANG_CS, LANG_PY
 
 

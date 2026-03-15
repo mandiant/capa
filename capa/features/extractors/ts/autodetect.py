@@ -16,8 +16,8 @@ from typing import Optional
 from pathlib import Path
 
 from tree_sitter import Node, Tree, Query, Parser, Language, QueryCursor
-from capa.features.extractors.script import EXT_CS, EXT_PY, LANG_CS, LANG_PY, EXT_ASPX, EXT_HTML, LANG_TEM, LANG_HTML
 
+from capa.features.extractors.script import EXT_CS, EXT_PY, LANG_CS, LANG_PY, EXT_ASPX, EXT_HTML, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import TS_LANGUAGES
 
 

@@ -15,9 +15,9 @@
 import logging
 
 import pytest
-import fixtures
 
 import capa.main
+from tests import fixtures
 
 logger = logging.getLogger(__file__)
 

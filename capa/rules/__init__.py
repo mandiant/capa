@@ -31,7 +31,7 @@ try:
 except ImportError:
     # need to type ignore this due to mypy bug here (duplicate name):
     # https://github.com/python/mypy/issues/1153
-    from backports.functools_lru_cache import lru_cache  # type: ignore
+    from functools import lru_cache
 
 from typing import Any, Union, Callable, Iterator, Optional, cast
 from dataclasses import asdict, dataclass
@@ -1092,7 +1092,7 @@ class Rule:
         return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def _get_yaml_loader():
         try:
             # prefer to use CLoader to be fast, see #306 / CSafeLoader is the same as CLoader but with safe loading

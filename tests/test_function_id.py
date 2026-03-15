@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import fixtures
-
 import capa.features.insn
+from tests import fixtures
 
 
 def test_function_id_simple_match(pma16_01_extractor):

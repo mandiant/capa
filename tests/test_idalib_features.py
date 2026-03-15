@@ -14,8 +14,8 @@
 import logging
 
 import pytest
-import fixtures
 
+from tests import fixtures
 from capa.features.file import FunctionName
 from capa.features.insn import API
 from capa.features.common import Characteristic

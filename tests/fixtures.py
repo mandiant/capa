@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+import json
 import logging
 import contextlib
 import collections
-from typing import Tuple, Union, Iterator
+from typing import Any, Tuple, Union, Iterator, cast
 from pathlib import Path
 from functools import lru_cache
+from dataclasses import field, dataclass
 
 import pytest
 
@@ -57,12 +60,207 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
+FEATURE_FIXTURE_DIR = CD / "fixtures" / "features"
 DOTNET_DIR = CD / "data" / "dotnet"
 SOURCE_DIR = CD / "data" / "source"
 ASPX_DIR = SOURCE_DIR / "aspx"
 CS_DIR = SOURCE_DIR / "cs"
 PY_DIR = SOURCE_DIR / "py"
 DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
+
+
+@dataclass(frozen=True)
+class BackendFeaturePolicy:
+    name: str
+    include_tags: set[str]
+    exclude_tags: set[str] = field(default_factory=set)
+
+
+@dataclass(frozen=True)
+class FeatureFixture:
+    manifest_path: Path
+    file_key: str
+    sample_path: Path
+    tags: frozenset[str]
+    location: str
+    statement: Any
+    expected: bool = True
+    marks: tuple[dict[str, Any], ...] = ()
+
+
+def get_fixture_files() -> list[tuple[Path, dict[str, Any]]]:
+    return [
+        (manifest_path, json.loads(manifest_path.read_text(encoding="utf-8")))
+        for manifest_path in sorted(FEATURE_FIXTURE_DIR.glob("*.json"))
+    ]
+
+
+def _parse_manifest_feature(text: str):
+    text = text.strip()
+    feature, separator, value = text.partition(": ")
+    if not separator:
+        if text == "basic block":
+            return capa.features.basicblock.BasicBlock()
+        raise ValueError(f"unsupported feature syntax: {text}")
+
+    value = value.strip()
+    if feature == "api":
+        return capa.features.insn.API(value)
+    if feature == "arch":
+        return capa.features.common.Arch(value)
+    if feature == "bytes":
+        return capa.features.common.Bytes(bytes.fromhex(value.replace(" ", "")))
+    if feature == "characteristic":
+        return capa.features.common.Characteristic(value)
+    if feature == "class":
+        return capa.features.common.Class(value)
+    if feature == "export":
+        return capa.features.file.Export(value)
+    if feature == "format":
+        return capa.features.common.Format(value)
+    if feature == "function-name":
+        return capa.features.file.FunctionName(value)
+    if feature == "import":
+        return capa.features.file.Import(value)
+    if feature == "match":
+        return capa.features.common.MatchedRule(value)
+    if feature == "mnemonic":
+        return capa.features.insn.Mnemonic(value)
+    if feature == "namespace":
+        return capa.features.common.Namespace(value)
+    if feature == "number":
+        return capa.features.insn.Number(int(value, 0))
+    if feature == "offset":
+        return capa.features.insn.Offset(int(value, 0))
+    if feature == "os":
+        return capa.features.common.OS(value)
+    if feature == "section":
+        return capa.features.file.Section(value)
+    if feature == "string":
+        return capa.features.common.String(value)
+    if feature == "substring":
+        return capa.features.common.Substring(value)
+    raise ValueError(f"unsupported feature type: {feature}")
+
+
+def _parse_feature_location(location: str):
+    if location == "file":
+        return ("file", None, None, None)
+
+    if m := re.fullmatch(r"function=0x([0-9A-Fa-f]+)(?:,bb=0x([0-9A-Fa-f]+))?(?:,insn=0x([0-9A-Fa-f]+))?", location):
+        return (
+            "static",
+            int(m.group(1), 16),
+            int(m.group(2), 16) if m.group(2) else None,
+            int(m.group(3), 16) if m.group(3) else None,
+        )
+
+    if m := re.fullmatch(r"process=\((\d+):(\d+)\)(?:,thread=(\d+))?(?:,call=(\d+))?", location):
+        process = capa.features.address.ProcessAddress(pid=int(m.group(2)), ppid=int(m.group(1)))
+        thread = capa.features.address.ThreadAddress(process=process, tid=int(m.group(3))) if m.group(3) else None
+        call = (
+            capa.features.address.DynamicCallAddress(thread=thread, id=int(m.group(4)))
+            if m.group(4) and thread
+            else None
+        )
+        return ("dynamic", process, thread, call)
+
+    raise ValueError(f"unsupported feature location: {location}")
+
+
+def _load_backend_feature_fixtures() -> list[FeatureFixture]:
+    fixtures: list[FeatureFixture] = []
+    for manifest_path, data in get_fixture_files():
+        file_entries = cast(list[dict[str, Any]], data.get("files", []))
+        feature_entries = cast(list[dict[str, Any]], data.get("features", []))
+        for file_entry in file_entries:
+            sample_path = CD / file_entry["path"]
+            tags = frozenset(file_entry.get("tags", []))
+            for feature_entry in feature_entries:
+                if feature_entry["file"] != file_entry["key"]:
+                    continue
+                fixtures.append(
+                    FeatureFixture(
+                        manifest_path=manifest_path,
+                        file_key=file_entry["key"],
+                        sample_path=sample_path,
+                        tags=tags,
+                        location=feature_entry["location"],
+                        statement=_parse_manifest_feature(feature_entry["feature"]),
+                        expected=feature_entry.get("expected", True),
+                        marks=tuple(feature_entry.get("marks", ())),
+                    )
+                )
+    return fixtures
+
+
+BACKEND_FEATURE_FIXTURES = _load_backend_feature_fixtures()
+
+
+def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
+    selected = [
+        pytest.param(
+            feature_fixture,
+            marks=[
+                pytest.mark.xfail(reason=mark["reason"])
+                for mark in feature_fixture.marks
+                if mark.get("backend") == policy.name and mark.get("mark") == "xfail"
+            ],
+        )
+        for feature_fixture in BACKEND_FEATURE_FIXTURES
+        if policy.include_tags.issubset(feature_fixture.tags) and feature_fixture.tags.isdisjoint(policy.exclude_tags)
+    ]
+    return pytest.mark.parametrize("feature_fixture", selected)
+
+
+def _collect_features(extractor, feature_fixture: FeatureFixture):
+    scope, first, second, third = _parse_feature_location(feature_fixture.location)
+    if scope == "file":
+        return list(extractor.extract_file_features())
+
+    if scope == "static":
+        for function_handle in extractor.get_functions():
+            if function_handle.address != first:
+                continue
+            if second is None:
+                return list(extractor.extract_function_features(function_handle))
+            for basic_block_handle in extractor.get_basic_blocks(function_handle):
+                if basic_block_handle.address != second:
+                    continue
+                if third is None:
+                    return list(extractor.extract_basic_block_features(function_handle, basic_block_handle))
+                for instruction_handle in extractor.get_instructions(function_handle, basic_block_handle):
+                    if instruction_handle.address == third:
+                        return list(
+                            extractor.extract_insn_features(function_handle, basic_block_handle, instruction_handle)
+                        )
+        return []
+
+    for process_handle in extractor.get_processes():
+        if process_handle.address != first:
+            continue
+        if second is None:
+            return list(extractor.extract_process_features(process_handle))
+        for thread_handle in extractor.get_threads(process_handle):
+            if thread_handle.address != second:
+                continue
+            if third is None:
+                return list(extractor.extract_thread_features(process_handle, thread_handle))
+            for call_handle in extractor.get_calls(process_handle, thread_handle):
+                if call_handle.address == third:
+                    return list(extractor.extract_call_features(process_handle, thread_handle, call_handle))
+        return []
+
+    return []
+
+
+def run_feature_fixture(extractor, feature_fixture: FeatureFixture):
+    extracted = _collect_features(extractor, feature_fixture)
+    matched = any(feature == feature_fixture.statement for feature, _ in extracted)
+    if feature_fixture.expected:
+        assert matched, f"expected {feature_fixture.statement!r} at {feature_fixture.location}"
+    else:
+        assert not matched, f"unexpected {feature_fixture.statement!r} at {feature_fixture.location}"
 
 
 @contextlib.contextmanager
@@ -212,10 +410,13 @@ def get_binja_extractor(path: Path):
 def get_idalib_extractor(path: Path):
     import capa.features.extractors.ida.idalib as idalib
 
-    if not idalib.has_idalib():
+    has_idalib = getattr(idalib, "has_idalib", None)
+    load_idalib = getattr(idalib, "load_idalib", None)
+
+    if has_idalib is None or not has_idalib():
         raise RuntimeError("cannot find IDA idalib module.")
 
-    if not idalib.load_idalib():
+    if load_idalib is None or not load_idalib():
         raise RuntimeError("failed to load IDA idalib module.")
 
     import idapro

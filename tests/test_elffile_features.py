@@ -15,9 +15,9 @@
 import io
 from pathlib import Path
 
-import fixtures
 from elftools.elf.elffile import ELFFile
 
+from tests import fixtures
 from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
 
 SAMPLE_PATH = fixtures.CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
