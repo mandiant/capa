@@ -21,9 +21,9 @@ import subprocess
 from pathlib import Path
 
 import pytest
-import fixtures
 
 import capa.rules
+from tests import fixtures
 
 logger = logging.getLogger(__name__)
 

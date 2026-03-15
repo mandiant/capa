@@ -16,7 +16,6 @@ import copy
 import textwrap
 
 import pytest
-import fixtures
 
 import capa.rules
 import capa.engine as ceng
@@ -26,6 +25,7 @@ import capa.features.common
 import capa.features.basicblock
 import capa.render.result_document as rdoc
 import capa.features.freeze.features as frzf
+from tests import fixtures
 from capa.capabilities.common import Capabilities
 
 

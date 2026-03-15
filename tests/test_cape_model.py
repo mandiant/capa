@@ -16,8 +16,8 @@ import gzip
 from typing import Type
 
 import pytest
-import fixtures
 
+from tests import fixtures
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.cape.models import Call, CapeReport

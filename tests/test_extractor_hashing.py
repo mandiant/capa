@@ -16,8 +16,8 @@
 import logging
 
 import pytest
-import fixtures
 
+from tests import fixtures
 from capa.features.extractors.base_extractor import SampleHashes
 
 logger = logging.getLogger(__name__)

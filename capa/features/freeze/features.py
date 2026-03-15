@@ -35,6 +35,9 @@ class FeatureModel(BaseModel):
         elif isinstance(self, FormatFeature):
             return capa.features.common.Format(self.format, description=self.description)
 
+        elif isinstance(self, ScriptLanguageFeature):
+            return capa.features.common.ScriptLanguage(self.language, description=self.description)
+
         elif isinstance(self, MatchFeature):
             return capa.features.common.MatchedRule(self.match, description=self.description)
 

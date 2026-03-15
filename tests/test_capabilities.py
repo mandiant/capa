@@ -14,12 +14,11 @@
 
 import textwrap
 
-import fixtures
-
 import capa.rules
 import capa.features.common
 import capa.capabilities.common
 import capa.features.extractors.null
+from tests import fixtures
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, FunctionFilter
 

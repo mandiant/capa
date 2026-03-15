@@ -122,7 +122,7 @@ def test_index_features_and_unstable():
     assert capa.features.insn.API("CreateFileW") in index.rules_by_feature
 
     assert not index.string_rules
-    assert not index.bytes_prefix_index
+    assert not index.bytes_rules
 
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
@@ -150,7 +150,7 @@ def test_index_features_or_unstable():
     assert capa.features.insn.Mnemonic("mov") in index.rules_by_feature
 
     assert not index.string_rules
-    assert not index.bytes_prefix_index
+    assert not index.bytes_rules
 
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
@@ -181,7 +181,7 @@ def test_index_features_nested_unstable():
     assert capa.features.insn.Mnemonic("mov") not in index.rules_by_feature
 
     assert not index.string_rules
-    assert not index.bytes_prefix_index
+    assert not index.bytes_rules
 
 
 def test_bytes_prefix_index_correctness():

@@ -86,14 +86,6 @@ def deserialize(language: str, binding: dict) -> dict:
     return result
 
 
-TS_LANGUAGES: dict[str, Language] = {
-    LANG_CS: Language(tree_sitter_c_sharp.language()),
-    LANG_PY: Language(tree_sitter_python.language()),
-    LANG_TEM: Language(tree_sitter_embedded_template.language()),
-    LANG_HTML: Language(tree_sitter_html.language()),
-    LANG_JS: Language(tree_sitter_javascript.language()),
-}
-
 BINDINGS: dict[str, QueryBinding] = {
     LANG_CS: ScriptQueryBinding(
         TS_LANGUAGES[LANG_CS],
