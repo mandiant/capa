@@ -17,7 +17,7 @@ import contextlib
 import collections
 from pathlib import Path
 from functools import lru_cache
-
+from typing import Tuple, Union, Iterator
 import pytest
 
 import capa.loader
@@ -43,6 +43,7 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
+from capa.features.extractors.script import LANG_CS, LANG_PY
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -56,6 +57,10 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
 DOTNET_DIR = CD / "data" / "dotnet"
+SOURCE_DIR = CD / "data" / "source"
+ASPX_DIR = SOURCE_DIR / "aspx"
+CS_DIR = SOURCE_DIR / "cs"
+PY_DIR = SOURCE_DIR / "py"
 DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
 
 
@@ -336,6 +341,26 @@ def get_binexport_extractor(path):
     buf = path.read_bytes()
 
     return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+def get_ts_extractor_engine(language, buf):
+    import capa.features.extractors.ts.engine
+
+    return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, buf)
+
+
+@lru_cache(maxsize=1)
+def get_ts_template_engine(path):
+    import capa.features.extractors.ts.engine
+
+    with open(path, "rb") as f:
+        buf = f.read()
+    return capa.features.extractors.ts.engine.TreeSitterTemplateEngine(buf)
+
+
+@lru_cache(maxsize=1)
+def get_ts_extractor(path):
+    import capa.features.extractors.ts.extractor
+
+    return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path)
 
 
 def extract_global_features(extractor):
@@ -576,6 +601,35 @@ def get_data_path_by_name(name) -> Path:
         raise ValueError(f"unexpected sample fixture: {name}")
 
 
+ASPX_DATA_PATH_BY_NAME = {
+    "aspx_4f6fa6": ASPX_DIR / "4f6fa6a45017397c7e1c9cd5a17235ccb1ff0f5087dfa6b7384552bf507e7fe1.aspx_",
+    "aspx_5f959f": ASPX_DIR / "5f959f480a66a33d37d9a0ef6c8f7d0059625ca2a8ae9236b49b194733622655.aspx_",
+    "aspx_10162f": ASPX_DIR / "10162feb5f063ea09c6a3d275f31abf0fe8a9e4e36fded0053b1f8e054da8161.aspx_",
+    "aspx_2b71dd": ASPX_DIR / "2b71dd245520d9eb5f1e4c633fee61c7d83687591d9f64f9390c26dc95057c3c.aspx_",
+    "aspx_f2bf20": ASPX_DIR / "f2bf20e7bb482d27da8f19aa0f8bd4927746a65300929b99166867074a38a4b4.aspx_",
+    "aspx_f39dc0": ASPX_DIR / "f39dc0dfd43477d65c1380a7cff89296ad72bfa7fc3afcfd8e294f195632030e.aspx_",
+    "aspx_ea2a01": ASPX_DIR / "ea2a01cae57c00df01bff6bb8a72585fdc0abb7a26a869dc1a0131bdff50b400.aspx_",
+    "aspx_6f3261": ASPX_DIR / "6f3261eaaabf369bd928d179641b73ffd768184dfd4e00124da462a3075d4239.aspx_",
+    "aspx_1f8f40": ASPX_DIR / "1f8f4054932ed1d5d055e9a92aa1e2abba49af3370506674cb1b2c70146ae81a.aspx_",
+    "aspx_2e8c7e": ASPX_DIR / "2e8c7eacd739ca3f3dc4112b41a024157035096b8d0c26ba79d8b893136391bc.aspx_",
+    "aspx_03bb5c": ASPX_DIR / "03bb5cab46b406bb8613ca6e32991ab3e10b5cd759d5c7813191e9e62868ea73.aspx_",
+    "aspx_606dbf": ASPX_DIR / "606dbfebdc7751ecb6cb9a845853ae1905afd4b8a2cb54e1e4a98c932e268712.aspx_",
+    "aspx_f397cb": ASPX_DIR / "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.aspx_",
+    "aspx_b4bb14": ASPX_DIR / "b4bb14aeb692f7afc107ee89f86d096f1cd8f9761b6c50788f626a9dccc8b077.aspx_",
+    "aspx_54433d": ASPX_DIR / "54433dd57414773098a6d3292d262f91a6812855dfcbf8d421695608d1fad638.aspx_",
+    "aspx_a35878": ASPX_DIR / "a35878e74425cd97ad98e3ec4b2583867bb536f4275d821cd8b82bc19380ba1a.aspx_",
+    "aspx_a5c893": ASPX_DIR / "a5c8934836f5b36bba3a722eab691a9f1f926c138fefe5bae07e9074e7c49ae3.aspx_",
+    "aspx_15eed4": ASPX_DIR / "15eed42e4904205b2ef2ff285ff1ce6c8138296c12cf075a2562c69a5fafd1cb.aspx_",
+    "aspx_b75f16": ASPX_DIR / "b75f163ca9b9240bf4b37ad92bc7556b40a17e27c2b8ed5c8991385fe07d17d0.aspx_",
+    "aspx_d460ca": ASPX_DIR / "d460cae7d34c51059ef57c5aadb3de099469efbac5fffcf76d0528a511192a28.aspx_",
+}
+
+PY_DATA_PATH_BY_NAME = {
+    "py_7f9cd1": PY_DIR / "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_",
+    "py_ca0df6": PY_DIR / "ca0df6cccf2a15ce8f781d81959cf230aead64e6297a3283b21457dc74938c89.py_",
+}
+
+
 def get_sample_md5_by_name(name):
     """used by IDA tests to ensure the correct IDB is loaded"""
     if name == "mimikatz":
@@ -666,6 +720,22 @@ def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHa
         if ch.address.id == cid:
             return ch
     raise ValueError("call not found")
+def resolve_sample_ts(sample):
+    if sample.startswith("cs_"):
+        return get_data_path_by_name(sample)
+    if sample.startswith("py_"):
+        return PY_DATA_PATH_BY_NAME[sample]
+    if sample.startswith("aspx_"):
+        try:
+            return ASPX_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
+    raise ValueError(f"unexpected sample fixture: {sample}")
+
+
+@pytest.fixture
+def sample_ts(request):
+    return resolve_sample_ts(request.param)
 
 
 def get_function(extractor, fva: int) -> FunctionHandle:
@@ -677,6 +747,19 @@ def get_function(extractor, fva: int) -> FunctionHandle:
         if addr == fva:
             return fh
     raise ValueError("function not found")
+
+
+def get_function_ts(extractor, fid: Union[Tuple[int], str]) -> Iterator[FunctionHandle]:
+    for fh in extractor.get_functions():
+        if isinstance(fid, tuple):
+            addr = (fh.address.start_byte, fh.address.end_byte)
+        elif isinstance(fid, str):
+            addr = fh.inner.name
+        else:
+            raise ValueError("invalid fva format")
+
+        if addr == fid:
+            yield fh
 
 
 def get_function_by_token(extractor, token: int) -> FunctionHandle:
@@ -839,6 +922,53 @@ def resolve_scope(scope):
 @pytest.fixture
 def scope(request):
     return resolve_scope(request.param)
+
+
+def get_function_id_ts(scope):
+    fid = scope.partition("=")[2]
+    if fid[0] == "(" and fid[-1] == ")":
+        fid = tuple(int(x, 16) if x.lstrip().startswith("0x") else int(x) for x in fid[1:-1].split(","))
+    return fid
+
+
+def resolve_scope_ts(scope):
+    if scope == "global":
+        inner_fn = lambda extractor: extract_global_features(extractor)
+    elif scope == "file":
+
+        def inner_fn(extractor):
+            features = extract_file_features(extractor)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+    elif scope.startswith("function"):
+        # like `function=(0xbeef, 0xdead) or function=(123, 456) or function=foo_bar`
+        def inner_fn(extractor):
+            fid = get_function_id_ts(scope)
+            fhs = list(get_function_ts(extractor, fid))
+            if not fhs:
+                raise ValueError("function not found")
+            features = collections.defaultdict(set)
+            for fh in fhs:
+                for k, vs in extract_function_features(extractor, fh).items():
+                    # print(f"{k}:{vs}")
+                    features[k].update(vs)
+            for k, vs in extract_file_features(extractor).items():
+                features[k].update(vs)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+    else:
+        raise ValueError("unexpected scope fixture")
+    inner_fn.__name__ = scope
+    return inner_fn
+
+
+@pytest.fixture
+def scope_ts(request):
+    return resolve_scope_ts(request.param)
 
 
 def make_test_id(values):
@@ -1727,3 +1857,117 @@ def dynamic_a0000a6_rd():
     return get_result_doc(
         CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     )
+def cs_138cdc_extractor_engine():
+    with open(get_data_path_by_name("cs_138cdc"), "rb") as f:
+        buf = f.read()
+    return get_ts_extractor_engine(LANG_CS, buf)
+
+
+@pytest.fixture
+def aspx_4f6fa6_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_4f6fa6"])
+
+
+@pytest.fixture
+def aspx_5f959f_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_5f959f"])
+
+
+@pytest.fixture
+def aspx_10162f_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_10162f"])
+
+
+@pytest.fixture
+def aspx_2b71dd_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_2b71dd"])
+
+
+@pytest.fixture
+def aspx_f2bf20_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f2bf20"])
+
+
+@pytest.fixture
+def aspx_f39dc0_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f39dc0"])
+
+
+@pytest.fixture
+def aspx_ea2a01_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_ea2a01"])
+
+
+@pytest.fixture
+def aspx_6f3261_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_6f3261"])
+
+
+@pytest.fixture
+def aspx_1f8f40_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_1f8f40"])
+
+
+@pytest.fixture
+def aspx_2e8c7e_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_2e8c7e"])
+
+
+@pytest.fixture
+def aspx_03bb5c_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_03bb5c"])
+
+
+@pytest.fixture
+def aspx_606dbf_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_606dbf"])
+
+
+@pytest.fixture
+def aspx_f397cb_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f397cb"])
+
+
+@pytest.fixture
+def aspx_b4bb14_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_b4bb14"])
+
+
+@pytest.fixture
+def aspx_54433d_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_54433d"])
+
+
+@pytest.fixture
+def aspx_a35878_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_a35878"])
+
+
+@pytest.fixture
+def aspx_a5c893_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_a5c893"])
+
+
+@pytest.fixture
+def aspx_15eed4_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_15eed4"])
+
+
+@pytest.fixture
+def aspx_b75f16_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_b75f16"])
+
+
+@pytest.fixture
+def aspx_d460ca_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_d460ca"])
+
+
+@pytest.fixture
+def py_7f9cd1_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_7f9cd1"])
+
+
+@pytest.fixture
+def py_ca0df6_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_ca0df6"])

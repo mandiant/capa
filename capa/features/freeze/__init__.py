@@ -54,6 +54,7 @@ class AddressType(str, Enum):
     ABSOLUTE = "absolute"
     RELATIVE = "relative"
     FILE = "file"
+    FILE_RANGE = "file range"
     DN_TOKEN = "dn token"
     DN_TOKEN_OFFSET = "dn token offset"
     PROCESS = "process"
@@ -83,6 +84,9 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.FileOffsetAddress):
             return cls(type=AddressType.FILE, value=int(a))
+
+        elif isinstance(a, capa.features.address.FileOffsetRangeAddress):
+            return cls(type=AddressType.FILE_RANGE, value=(a.start_byte, a.end_byte))
 
         elif isinstance(a, capa.features.address.DNTokenAddress):
             return cls(type=AddressType.DN_TOKEN, value=int(a))
@@ -123,6 +127,10 @@ class Address(HashableModel):
         elif self.type is AddressType.FILE:
             assert isinstance(self.value, int)
             return capa.features.address.FileOffsetAddress(self.value)
+
+        elif self.type is AddressType.FILE_RANGE:
+            start_byte, end_byte = self.value
+            return capa.features.address.FileOffsetRangeAddress(start_byte, end_byte)
 
         elif self.type is AddressType.DN_TOKEN:
             assert isinstance(self.value, int)

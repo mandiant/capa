@@ -99,6 +99,7 @@ from capa.features.common import (
     DYNAMIC_FORMATS,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
+    FORMAT_SCRIPT,
 )
 from capa.capabilities.common import (
     Capabilities,
