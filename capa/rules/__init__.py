@@ -2004,27 +2004,27 @@ class RuleSet:
                     string_features[feature] = locations
 
             if string_features:
-                # Pre-compute the set of lowercased string values once per scope evaluation.
-                # This enables an O(1) fast path for pure-literal case-insensitive patterns:
-                # instead of invoking the regex engine for every candidate string, we check
-                # whether the lowercased pattern value is already present in the feature set.
-                # When found, the pattern is guaranteed to match and we skip the regex call.
-                # When not found, we still fall back to the full regex scan to handle substring
-                # matches such as /createfile/i matching "CreateFileA".
-                # See: https://github.com/mandiant/capa/issues/2129
-                lowercased_strings: frozenset[str] = frozenset(
-                    feature.value.lower() for feature in string_features if isinstance(feature.value, str)
-                )
+                # Build this lazily, only when we encounter a pure-literal `/i` regex.
+                # This preserves fast-path wins while avoiding avoidable overhead in
+                # workloads where such regexes are uncommon.
+                lowercased_strings: frozenset[str] | None = None
                 for rule_name, wanted_strings in feature_index.string_rules.items():
                     for wanted_string in wanted_strings:
                         # Fast path: pure-literal /i patterns can be resolved via O(1) lookup.
-                        if (
-                            isinstance(wanted_string, capa.features.common.Regex)
-                            and wanted_string._is_pure_literal_ci
-                            and wanted_string._normalized_lower in lowercased_strings
-                        ):
-                            candidate_rule_names.add(rule_name)
-                            break
+                        if isinstance(wanted_string, capa.features.common.Regex) and wanted_string._is_pure_literal_ci:
+                            if lowercased_strings is None:
+                                lowercased_strings = frozenset(
+                                    feature.value.lower()
+                                    for feature in string_features
+                                    if isinstance(feature.value, str)
+                                )
+
+                            if wanted_string._normalized_lower in lowercased_strings:
+                                candidate_rule_names.add(rule_name)
+                                break
+
+                        # When the fast path is not sufficient, keep the existing
+                        # regex behavior to preserve substring semantics.
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)
                             break
