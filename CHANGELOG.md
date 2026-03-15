@@ -68,6 +68,7 @@
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
+- rules: skip regex engine for pure-literal case-insensitive patterns via O(1) lowercased-string lookup #2129
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 - ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
 
