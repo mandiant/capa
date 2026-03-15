@@ -19,6 +19,7 @@ from collections import Counter
 
 import idc
 import idaapi
+import ida_loader
 
 import capa.rules
 import capa.engine
@@ -905,8 +906,6 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             if addr_text.startswith("file:"):
                 # try to map file offset to a virtual address; works when the segment is mapped into the IDB
                 try:
-                    import ida_loader
-
                     file_offset = int(addr_text[len("file:") :], 16)
                     ea = ida_loader.get_fileregion_ea(file_offset)
                     if ea != idc.BADADDR:
