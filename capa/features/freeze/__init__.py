@@ -116,6 +116,10 @@ class Address(HashableModel):
             assert isinstance(self.value, int)
             return capa.features.address.FileOffsetAddress(self.value)
 
+        elif self.type is AddressType.FILE_RANGE:
+            start_byte, end_byte = self.value
+            return capa.features.address.FileOffsetRangeAddress(start_byte, end_byte)
+
         elif self.type is AddressType.DN_TOKEN:
             assert isinstance(self.value, int)
             return capa.features.address.DNTokenAddress(self.value)
