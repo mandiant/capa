@@ -3,9 +3,9 @@ from __future__ import annotations
 import contextlib
 
 import rich.padding
-from rich.text import Text
-from rich.markup import escape
 from rich.console import Console
+from rich.markup import escape
+from rich.text import Text
 
 from mapa.model import MapaReport
 
@@ -25,12 +25,16 @@ class Renderer:
 
     @staticmethod
     def markup(s: str, **kwargs) -> Text:
-        escaped_args = {k: (escape(v) if isinstance(v, str) else v) for k, v in kwargs.items()}
+        escaped_args = {
+            k: (escape(v) if isinstance(v, str) else v) for k, v in kwargs.items()
+        }
         return Text.from_markup(s.format(**escaped_args))
 
     def print(self, renderable, **kwargs):
         if not kwargs:
-            return self.console.print(rich.padding.Padding(renderable, (0, 0, 0, self.indent * 2)))
+            return self.console.print(
+                rich.padding.Padding(renderable, (0, 0, 0, self.indent * 2))
+            )
         assert isinstance(renderable, str)
         return self.print(self.markup(renderable, **kwargs))
 
@@ -64,7 +68,9 @@ def _visible_tags(tags: tuple[str, ...]) -> list[str]:
 
 def _render_string_line(o: Renderer, value: str, tags: list[str]) -> Text:
     left = Text.from_markup(
-        'string:   [decoration]"[/]{string}[decoration]"[/]'.format(string=escape(value))
+        'string:   [decoration]"[/]{string}[decoration]"[/]'.format(
+            string=escape(value)
+        )
     )
     right = Text(" ".join(tags), style="dim")
 
@@ -88,6 +94,33 @@ def _render_string_line(o: Renderer, value: str, tags: list[str]) -> Text:
     return combined
 
 
+def _get_primary_source_path(func) -> str | None:
+    if not func.assemblage_records:
+        return None
+    source_path = func.assemblage_records[0].source_path
+    if not source_path:
+        return None
+    return source_path
+
+
+def _render_source_path_separator(o: Renderer, source_path: str) -> Text:
+    label = f"[ {source_path} ]"
+    available = max(0, o.console.size.width - (o.indent * 2))
+    if available <= len(label) + 2:
+        return Text(label, style="decoration")
+
+    rule_len = available - len(label) - 2
+    left_len = rule_len // 2
+    right_len = rule_len - left_len
+
+    rendered = Text("-" * left_len, style="decoration")
+    rendered.append(" ")
+    rendered.append(label, style="decoration")
+    rendered.append(" ")
+    rendered.append("-" * right_len, style="decoration")
+    return rendered
+
+
 def render_report(report: MapaReport, console: Console) -> None:
     o = Renderer(console)
 
@@ -104,27 +137,21 @@ def render_report(report: MapaReport, console: Console) -> None:
     with o.section("libraries"):
         for lib in report.libraries:
             static = " (static)" if lib.is_static else ""
-            addr = f" at {hex(lib.load_address)}" if lib.load_address is not None else ""
+            addr = (
+                f" at {hex(lib.load_address)}" if lib.load_address is not None else ""
+            )
             o.writeln(f"- {lib.name:<12s}{static}{addr}")
         if not report.libraries:
             o.writeln("(none)")
 
-    func_address_to_order: dict[int, int] = {}
-    for i, func in enumerate(report.functions):
-        func_address_to_order[func.address] = i
-
     with o.section("functions"):
-        last_address: int | None = None
+        last_source_path: str | None = None
         for func in report.functions:
-            if last_address is not None:
-                try:
-                    last_path = report.assemblage_locations[last_address].path
-                    path = report.assemblage_locations[func.address].path
-                    if last_path != path:
-                        o.print(o.markup("[blue]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[/] [title]file[/] {path}\n", path=path))
-                except KeyError:
-                    pass
-            last_address = func.address
+            source_path = _get_primary_source_path(func)
+            if source_path is not None:
+                if last_source_path is not None and source_path != last_source_path:
+                    o.print(_render_source_path_separator(o, source_path))
+                last_source_path = source_path
 
             if func.is_thunk:
                 with o.section(
@@ -134,6 +161,9 @@ def render_report(report: MapaReport, console: Console) -> None:
                         function_address=hex(func.address),
                     )
                 ):
+                    for record in func.assemblage_records:
+                        o.writeln(f"assemblage name: {record.name}")
+                        o.writeln(f"assemblage file: {record.source_path}")
                     continue
 
             with o.section(
@@ -143,9 +173,9 @@ def render_report(report: MapaReport, console: Console) -> None:
                     function_address=hex(func.address),
                 )
             ):
-                if func.is_thunk:
-                    o.writeln("")
-                    continue
+                for record in func.assemblage_records:
+                    o.writeln(f"assemblage name: {record.name}")
+                    o.writeln(f"assemblage file: {record.source_path}")
 
                 for caller in func.callers:
                     o.print(

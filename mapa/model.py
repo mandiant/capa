@@ -1,35 +1,43 @@
 from __future__ import annotations
 
-import json
-from typing import Any
-from dataclasses import field, dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 
 
-@dataclass
-class AssemblageLocation:
+@dataclass(frozen=True)
+class AssemblageRecord:
+    sha256: str
     name: str
-    file: str
-    prototype: str
-    rva: int
+    start_rva: int
+    end_rva: int
+    address: int
+    end_address: int
+    source_file: str
 
     @property
-    def path(self) -> str:
-        if not self.file.endswith(")"):
-            return self.file
-        return self.file.rpartition(" (")[0]
+    def source_path(self) -> str:
+        if not self.source_file.endswith(")"):
+            return self.source_file
+        head, separator, _ = self.source_file.rpartition(" (")
+        if separator:
+            return head
+        return self.source_file
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> AssemblageLocation:
+    def from_csv_row(
+        cls, row: Mapping[str, str], base_address: int
+    ) -> AssemblageRecord:
+        start_rva = int(row["start"], 0)
+        end_rva = int(row["end"], 0)
         return cls(
-            name=data["name"],
-            file=data["file"],
-            prototype=data["prototype"],
-            rva=data["function_start"],
+            sha256=row["hash"].strip().lower(),
+            name=row["name"].strip(),
+            start_rva=start_rva,
+            end_rva=end_rva,
+            address=base_address + start_rva,
+            end_address=base_address + end_rva,
+            source_file=row["source_file"].strip(),
         )
-
-    @classmethod
-    def from_json(cls, doc: str) -> AssemblageLocation:
-        return cls.from_dict(json.loads(doc))
 
 
 @dataclass
@@ -72,6 +80,7 @@ class MapaFunction:
     apis: list[MapaCall] = field(default_factory=list)
     strings: list[MapaString] = field(default_factory=list)
     capa_matches: list[str] = field(default_factory=list)
+    assemblage_records: list[AssemblageRecord] = field(default_factory=list)
 
 
 @dataclass
@@ -105,4 +114,3 @@ class MapaReport:
     sections: list[MapaSection] = field(default_factory=list)
     libraries: list[MapaLibrary] = field(default_factory=list)
     functions: list[MapaFunction] = field(default_factory=list)
-    assemblage_locations: dict[int, AssemblageLocation] = field(default_factory=dict)

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any
 
 from ida_domain.database import Database
 from ida_domain.flowchart import FlowChartFlags
 from ida_domain.functions import FunctionFlags
 
 from mapa.model import (
+    AssemblageRecord,
     MapaCall,
     MapaCaller,
     MapaFunction,
@@ -18,7 +18,11 @@ from mapa.model import (
     MapaSection,
     MapaString,
 )
-from mapa.strings import MAX_STRING_READ, extract_ascii_from_buf, extract_utf16le_from_buf
+from mapa.strings import (
+    MAX_STRING_READ,
+    extract_ascii_from_buf,
+    extract_utf16le_from_buf,
+)
 from mapa.string_tags.tagger import StringTagger, load_default_tagger
 
 logger = logging.getLogger(__name__)
@@ -162,7 +166,9 @@ def _find_string_at(db: Database, ea: int) -> str | None:
     return extract_utf16le_from_buf(buf)
 
 
-def _find_data_reference_string(db: Database, insn_ea: int, max_depth: int = 10) -> str | None:
+def _find_data_reference_string(
+    db: Database, insn_ea: int, max_depth: int = 10
+) -> str | None:
     """Follow single data-reference chains from an instruction to find a string."""
     current = insn_ea
     for _ in range(max_depth):
@@ -187,14 +193,14 @@ def collect_report(
     md5: str = "",
     sha256: str = "",
     matches_by_function: dict[int, set[str]] | None = None,
-    assemblage_locations: dict[int, Any] | None = None,
+    assemblage_records_by_address: dict[int, list[AssemblageRecord]] | None = None,
     tagger: StringTagger | None = None,
 ) -> MapaReport:
     """Collect a complete MAPA report from an open IDA database."""
     if matches_by_function is None:
         matches_by_function = {}
-    if assemblage_locations is None:
-        assemblage_locations = {}
+    if assemblage_records_by_address is None:
+        assemblage_records_by_address = {}
     if tagger is None:
         tagger = load_default_tagger()
 
@@ -204,7 +210,7 @@ def collect_report(
     import_index = _build_import_index(db)
     extern_addrs = _build_extern_index(db)
 
-    all_functions: list[tuple[int, Any, bool, bool]] = []
+    all_functions: list[tuple[int, object, bool, bool]] = []
     for func in db.functions:
         ea = int(func.start_ea)
         flags = db.functions.get_flags(func)
@@ -232,7 +238,9 @@ def collect_report(
         if is_thunk or ea in import_index or ea in extern_addrs:
             continue
 
-        fc = db.functions.get_flowchart(func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS)
+        fc = db.functions.get_flowchart(
+            func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS
+        )
         if fc is None:
             continue
 
@@ -248,13 +256,17 @@ def collect_report(
                     # also check for jumps to imports (thunk pattern)
                     mnem = db.instructions.get_mnemonic(insn)
                     if mnem and mnem.lower().startswith("jmp"):
-                        call_targets = list(db.xrefs.code_refs_from_ea(int(insn.ea), flow=False))
+                        call_targets = list(
+                            db.xrefs.code_refs_from_ea(int(insn.ea), flow=False)
+                        )
                     else:
                         continue
                 else:
                     call_targets = list(db.xrefs.calls_from_ea(int(insn.ea)))
                     if not call_targets:
-                        call_targets = list(db.xrefs.code_refs_from_ea(int(insn.ea), flow=False))
+                        call_targets = list(
+                            db.xrefs.code_refs_from_ea(int(insn.ea), flow=False)
+                        )
 
                 for target_ea in call_targets:
                     target_ea = int(target_ea)
@@ -267,7 +279,10 @@ def collect_report(
                         continue
                     seen_callees.add(resolved_target)
 
-                    is_api = resolved_target in import_index or resolved_target in extern_addrs
+                    is_api = (
+                        resolved_target in import_index
+                        or resolved_target in extern_addrs
+                    )
                     callees.append((resolved_target, is_api))
 
                     if resolved_target not in resolved_callers:
@@ -282,8 +297,6 @@ def collect_report(
             continue
 
         name = db.functions.get_name(func) or f"sub_{ea:x}"
-        if ea in assemblage_locations and assemblage_locations[ea].name:
-            name = assemblage_locations[ea].name
 
         order = func_address_to_order[ea]
 
@@ -292,13 +305,16 @@ def collect_report(
             name=name,
             is_thunk=is_thunk,
             is_library=is_lib,
+            assemblage_records=list(assemblage_records_by_address.get(ea, [])),
         )
 
         if is_thunk:
             mapa_functions.append(mf)
             continue
 
-        fc = db.functions.get_flowchart(func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS)
+        fc = db.functions.get_flowchart(
+            func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS
+        )
         if fc is not None:
             num_blocks = 0
             num_edges = 0
@@ -328,15 +344,19 @@ def collect_report(
             delta = caller_order - order
             direction = "↑" if delta < 0 else "↓"
             caller_func = db.functions.get_at(caller_ea)
-            caller_name = db.functions.get_name(caller_func) if caller_func else f"sub_{caller_ea:x}"
-            if caller_ea in assemblage_locations and assemblage_locations[caller_ea].name:
-                caller_name = assemblage_locations[caller_ea].name
-            mf.callers.append(MapaCaller(
-                name=caller_name or f"sub_{caller_ea:x}",
-                address=caller_ea,
-                delta=delta,
-                direction=direction,
-            ))
+            caller_name = (
+                db.functions.get_name(caller_func)
+                if caller_func
+                else f"sub_{caller_ea:x}"
+            )
+            mf.callers.append(
+                MapaCaller(
+                    name=caller_name or f"sub_{caller_ea:x}",
+                    address=caller_ea,
+                    delta=delta,
+                    direction=direction,
+                )
+            )
 
         for target_ea, is_api in resolved_callees.get(ea, []):
             if is_api:
@@ -345,13 +365,19 @@ def collect_report(
                     api_name = f"{module_name}!{func_name}"
                 else:
                     target_func = db.functions.get_at(target_ea)
-                    api_name = db.functions.get_name(target_func) if target_func else f"sub_{target_ea:x}"
+                    api_name = (
+                        db.functions.get_name(target_func)
+                        if target_func
+                        else f"sub_{target_ea:x}"
+                    )
                     api_name = api_name or f"sub_{target_ea:x}"
-                mf.apis.append(MapaCall(
-                    name=api_name,
-                    address=target_ea,
-                    is_api=True,
-                ))
+                mf.apis.append(
+                    MapaCall(
+                        name=api_name,
+                        address=target_ea,
+                        is_api=True,
+                    )
+                )
             else:
                 if target_ea not in func_address_to_order:
                     continue
@@ -359,20 +385,26 @@ def collect_report(
                 delta = target_order - order
                 direction = "↑" if delta < 0 else "↓"
                 target_func = db.functions.get_at(target_ea)
-                target_name = db.functions.get_name(target_func) if target_func else f"sub_{target_ea:x}"
-                if target_ea in assemblage_locations and assemblage_locations[target_ea].name:
-                    target_name = assemblage_locations[target_ea].name
-                mf.calls.append(MapaCall(
-                    name=target_name or f"sub_{target_ea:x}",
-                    address=target_ea,
-                    is_api=False,
-                    delta=delta,
-                    direction=direction,
-                ))
+                target_name = (
+                    db.functions.get_name(target_func)
+                    if target_func
+                    else f"sub_{target_ea:x}"
+                )
+                mf.calls.append(
+                    MapaCall(
+                        name=target_name or f"sub_{target_ea:x}",
+                        address=target_ea,
+                        is_api=False,
+                        delta=delta,
+                        direction=direction,
+                    )
+                )
 
         if fc is not None:
             seen_strings: dict[str, MapaString] = {}
-            fc2 = db.functions.get_flowchart(func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS)
+            fc2 = db.functions.get_flowchart(
+                func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS
+            )
             if fc2 is not None:
                 for block in fc2:
                     insns = block.get_instructions()
@@ -388,9 +420,15 @@ def collect_report(
                             continue
                         if display in seen_strings:
                             existing = seen_strings[display]
-                            merged_tags = sorted(set(existing.tags) | set(tag_result.tags))
+                            merged_tags = sorted(
+                                set(existing.tags) | set(tag_result.tags)
+                            )
                             seen_match_keys = {m.sort_key for m in existing.tag_matches}
-                            unique_new = tuple(m for m in tag_result.matches if m.sort_key not in seen_match_keys)
+                            unique_new = tuple(
+                                m
+                                for m in tag_result.matches
+                                if m.sort_key not in seen_match_keys
+                            )
                             existing.tags = tuple(merged_tags)
                             existing.tag_matches = existing.tag_matches + unique_new
                         else:
@@ -411,5 +449,4 @@ def collect_report(
         sections=sections,
         libraries=libraries,
         functions=mapa_functions,
-        assemblage_locations=assemblage_locations,
     )

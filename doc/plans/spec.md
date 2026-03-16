@@ -1,11 +1,11 @@
 # MAPA specification
 
-MAPA renders a structured text report of a binary's function map: metadata, sections, import libraries, and a per-function breakdown of callers, callees, API calls, strings, CFG stats, and capa rule matches.
+MAPA renders a structured text report of a binary's function map: metadata, sections, import libraries, and a per-function breakdown of callers, callees, API calls, strings, CFG stats, capa rule matches, and optional Assemblage ground truth.
 
 ## Invocation
 
 ```
-python scripts/mapa.py <input_file> [--capa <capa.json>] [--assemblage <locations.jsonl>] [--verbose] [--quiet]
+python scripts/mapa.py <input_file> [--capa <capa.json>] [--assemblage <functions.csv>] [--verbose] [--quiet]
 ```
 
 `input_file` accepts raw binaries (PE, ELF), existing IDA databases (`.i64`, `.idb`), or any file IDA can analyze. For raw files, MAPA automatically creates and caches an analyzed IDA database under the XDG cache root (`$XDG_CACHE_HOME/mandiant/mapa/` or `~/.cache/mandiant/mapa/`) keyed by the file's SHA-256 hash.
@@ -18,15 +18,18 @@ IDALib only. All analysis uses `ida-domain` as the primary query API. The Lancel
 
 The report renders these sections in order:
 
-1. **meta** — file name, SHA-256, architecture, timestamp
-2. **sections** — memory segments with address, permissions (rwx), and size
-3. **libraries** — import modules
-4. **functions** — per-function detail in address order
+1. meta — file name, SHA-256, architecture, timestamp
+2. sections — memory segments with address, permissions (rwx), and size
+3. libraries — import modules
+4. functions — per-function detail in address order
 
 ### Functions section
 
 Each function renders as either `thunk <name> @ <address>` or `function <name> @ <address>` followed by:
 
+- source-file separator — a horizontal rule inserted before a function when its primary Assemblage source path differs from the last seen non-empty source path
+- `assemblage name:` — source function name from Assemblage, when available
+- `assemblage file:` — source file path from Assemblage, when available
 - `xref:` — callers with direction arrow and function-order delta
 - `B/E/I:` — basic blocks / CFG edges / instructions (total bytes)
 - `capa:` — matched capa rule names
@@ -34,9 +37,23 @@ Each function renders as either `thunk <name> @ <address>` or `function <name> @
 - `api:` — import/external/library callees
 - `string:` — referenced strings (deduplicated, whitespace-trimmed), with optional right-aligned database tags
 
-Thunk functions show only the header, no body.
+Thunk functions show only the header plus any Assemblage lines.
 
-When Assemblage data is provided, adjacent functions are grouped by source file path, and function names are overridden with Assemblage names.
+### Assemblage overlay
+
+When `--assemblage` is provided, MAPA reads a CSV file and requires these columns: `hash`, `name`, `start`, `end`, and `source_file`.
+
+Assemblage matching works like this:
+
+- MAPA resolves the sample SHA-256 from the input file or the opened IDA database.
+- MAPA keeps only CSV rows whose `hash` matches that SHA-256, case-insensitively.
+- MAPA treats `start` and `end` as RVAs and adds the IDA database base address to map them to function VAs.
+- MAPA does not rename functions, callers, or callees from Assemblage data. The displayed function header stays IDA-derived.
+- MAPA strips the trailing provenance suffix from `source_file` before rendering, for example `C:\src\foo.c (MD5: ...)` renders as `C:\src\foo.c`.
+- Exact duplicate CSV rows are deduplicated. If multiple distinct Assemblage rows map to the same function address, MAPA renders all of them in CSV order.
+- For source-file separators, MAPA uses the first Assemblage record's normalized `source_file` path as the function's primary source path.
+- Missing Assemblage data does not start or end a source-file run. It does not trigger a separator and does not reset the last seen non-empty source path.
+- When a later function has a different primary source path from the last seen non-empty source path, MAPA inserts a separator immediately before that function.
 
 ## Deliberate interface changes from the Lancelot/BinExport2 version
 
@@ -44,10 +61,11 @@ When Assemblage data is provided, adjacent functions are grouped by source file 
 
 ## Decisions
 
-- **2026-03-16**: Lumina disabled during database creation via `IdaCommandOptions(plugin_options="lumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0")`, matching capa's `loader.py`. The `plugin_options` field maps to IDA's `-O` switch; embedding `-O` in the value for the second option works because `build_args()` concatenates it verbatim. Resource loading enabled via `load_resources=True` (maps to `-R`).
-- **2026-03-16**: Cache directory is `$XDG_CACHE_HOME/mandiant/mapa/` (or `~/.cache/mandiant/mapa/`). Separate from idals cache.
-- **2026-03-16**: `meta.ts` is `datetime.now(UTC).isoformat()` — no longer sourced from BinExport2.
-- **2026-03-16**: Thunk chain depth limit is 5 (matches capa's `THUNK_CHAIN_DEPTH_DELTA`).
-- **2026-03-16**: CFG stats use `FlowChartFlags.NOEXT | FlowChartFlags.PREDS` to match capa's block enumeration semantics.
-- **2026-03-16**: String extraction follows single data-reference chains up to depth 10, matching capa's `find_data_reference_from_insn`.
-- **2026-03-16**: String rows may carry right-aligned database tags derived from vendored Quantum Strand string databases. Tags include `#<library>` (e.g. `#zlib`, `#openssl`), `#msvc`, `#capa`, `#winapi`, `#common`, and `#code-junk`. Visible tag policy: `#common` is hidden when a more-specific tag is present; `#code-junk` is always shown. Tags are matched against the raw (untrimmed) string value. The underlying model preserves all match metadata even when the renderer suppresses a visible tag.
+- 2026-03-16: Lumina disabled during database creation via `IdaCommandOptions(plugin_options="lumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0")`, matching capa's `loader.py`. The `plugin_options` field maps to IDA's `-O` switch; embedding `-O` in the value for the second option works because `build_args()` concatenates it verbatim. Resource loading enabled via `load_resources=True` (maps to `-R`).
+- 2026-03-16: Cache directory is `$XDG_CACHE_HOME/mandiant/mapa/` (or `~/.cache/mandiant/mapa/`). Separate from idals cache.
+- 2026-03-16: `meta.ts` is `datetime.now(UTC).isoformat()` — no longer sourced from BinExport2.
+- 2026-03-16: Thunk chain depth limit is 5 (matches capa's `THUNK_CHAIN_DEPTH_DELTA`).
+- 2026-03-16: CFG stats use `FlowChartFlags.NOEXT | FlowChartFlags.PREDS` to match capa's block enumeration semantics.
+- 2026-03-16: String extraction follows single data-reference chains up to depth 10, matching capa's `find_data_reference_from_insn`.
+- 2026-03-16: String rows may carry right-aligned database tags derived from vendored Quantum Strand string databases. Tags include `#<library>` (e.g. `#zlib`, `#openssl`), `#msvc`, `#capa`, `#winapi`, `#common`, and `#code-junk`. Visible tag policy: `#common` is hidden when a more-specific tag is present; `#code-junk` is always shown. Tags are matched against the raw (untrimmed) string value. The underlying model preserves all match metadata even when the renderer suppresses a visible tag.
+- 2026-03-16: Assemblage input is a CSV keyed by sample SHA-256. MAPA matches rows by `hash`, converts `start`/`end` RVAs to VAs using the database base address, annotates functions with `assemblage name:` and `assemblage file:` lines, and does not override IDA-derived function names.

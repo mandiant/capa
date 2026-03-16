@@ -70,7 +70,8 @@ Inside `functions`, it currently:
 - iterates functions in address order
 - prints `thunk ...` for thunk functions
 - prints `function ...` for normal functions
-- groups adjacent functions by Assemblage source path when available
+- inserts source-file separators when the primary Assemblage source path changes, ignoring gaps with missing Assemblage data
+- annotates functions with Assemblage source name and file when available
 - forwards callers through thunk targets so callers of a thunk appear on the real target
 - prints `B/E/I` as basic blocks / CFG edges / instructions plus total instruction bytes
 - prints capa rule names attached to the function
@@ -189,7 +190,7 @@ Use backend-neutral dataclasses for the report model:
 - `MapaFunction`
 - `MapaCall`
 - `MapaString`
-- `AssemblageLocation`
+- `AssemblageRecord`
 
 The collector should have one primary data-access layer: `ida-domain` for functions, flowcharts, instructions, strings, names, segments, xrefs, and database lifecycle. Existing capa helpers remain useful as semantic references and regression oracles.
 
@@ -222,7 +223,7 @@ That gives the next implementer a clear target: no Lancelot, no default hybrid b
 | call targets | `insn.extract_function_calls_from()` | Reproduce the same behavior with domain xrefs and compare against this helper during validation. |
 | API calls | `insn.extract_insn_api_features()` | Match the import/extern/thunk resolution semantics exposed by this function. |
 | string refs | `helpers.find_data_reference_from_insn()`, `find_string_at()` | Match the same single-ref-chain behavior and max depth `10`. |
-| function names | `function.extract_function_name()`, alternative-name helpers | Use normal name, demangled name, alternative names, Assemblage overlay. |
+| function names | `function.extract_function_name()`, alternative-name helpers | Use normal name, demangled name, alternative names, and render Assemblage annotations separately without renaming the IDA function. |
 | B/E/I stats | `helpers.get_function_blocks()` | Match `PREDS | NOEXT` semantics; use domain flowchart if possible. |
 | function ordering | current `scripts/mapa.py` | Keep address order for deltas and rendering stability. |
 
@@ -266,7 +267,7 @@ Before touching the collector logic, split `scripts/mapa.py` into:
 - CLI
 - collector
 - renderer
-- input-overlay parsing for capa JSON and Assemblage JSONL
+- input-overlay parsing for capa JSON and Assemblage CSV
 
 Keep the renderer stable. The collector should return value objects only.
 
@@ -385,13 +386,12 @@ Reference implementation:
 ### 11. Reuse capa's name and alternative-name semantics
 
 For the function display name, use this order:
-- Assemblage override if present
 - demangled name
 - IDA function name
 - alternative names from comments if they help and the main name is poor
 - final fallback such as `sub_{ea:x}`
 
-Do not mutate the database just to apply Assemblage names.
+Render Assemblage source name and source file as annotations beneath the function header. Do not mutate the database just to apply Assemblage data.
 
 Reference points:
 - `function.extract_function_name()`
@@ -458,7 +458,7 @@ Verify specifically:
 - libraries/imports section contents
 - string extraction
 - B/E/I counts
-- Assemblage path grouping
+- Assemblage annotations and source-file separators
 - capa attachment
 
 Document every known delta. The likely ones are:
