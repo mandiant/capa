@@ -1934,9 +1934,57 @@ class RuleSet:
         return any(RuleSet._statement_uses_global_features(child) for child in node.get_children())
 
     def _clone_with_rule_subset(self, rule_names: set[str]) -> "RuleSet":
+        """
+        Return a shallow-then-filtered clone of this RuleSet restricted to ``rule_names``.
+
+        All derived data structures are filtered so the hot ``_match`` path needs no runtime
+        guards to skip pruned rules.  The cost — O(total index entries across all scopes) — is
+        paid once at analysis start rather than on every per-function / per-instruction call.
+        """
         clone = copy.copy(self)
+
         clone.rules = {name: self.rules[name] for name in self.rules if name in rule_names}
         clone._rules_with_global_features = self._rules_with_global_features & rule_names
+        clone._dependencies_by_rule_name = {
+            name: deps for name, deps in self._dependencies_by_rule_name.items() if name in rule_names
+        }
+
+        # Filter per-scope rule lists (preserves topological order; used by paranoid mode).
+        clone.rules_by_scope = {
+            scope: [rule for rule in scope_rules if rule.name in rule_names]
+            for scope, scope_rules in self.rules_by_scope.items()
+        }
+
+        # Filter topological index: gaps in index values are fine because the values are only
+        # used as sort keys, and the relative order of surviving rules is already correct.
+        clone._rule_index_by_scope = {
+            scope: {name: idx for name, idx in rule_index.items() if name in rule_names}
+            for scope, rule_index in self._rule_index_by_scope.items()
+        }
+
+        # Filter namespace index (values are lists of Rule objects, not strings).
+        clone.rules_by_namespace = {
+            namespace: [rule for rule in ns_rules if rule.name in rule_names]
+            for namespace, ns_rules in self.rules_by_namespace.items()
+        }
+        # Drop namespaces that became empty after pruning.
+        clone.rules_by_namespace = {ns: rules for ns, rules in clone.rules_by_namespace.items() if rules}
+
+        # Filter feature indexes: remove pruned rule names from every set in rules_by_feature,
+        # and drop string/bytes scan entries for pruned rules.
+        clone._feature_indexes_by_scopes = {}
+        for scope, feature_index in self._feature_indexes_by_scopes.items():
+            new_rules_by_feature: dict[Feature, set[str]] = {}
+            for feature, rule_set in feature_index.rules_by_feature.items():
+                filtered_set = rule_set & rule_names
+                if filtered_set:
+                    new_rules_by_feature[feature] = filtered_set
+            clone._feature_indexes_by_scopes[scope] = RuleSet._RuleFeatureIndex(
+                new_rules_by_feature,
+                {name: feats for name, feats in feature_index.string_rules.items() if name in rule_names},
+                {name: feats for name, feats in feature_index.bytes_rules.items() if name in rule_names},
+            )
+
         return clone
 
     def filter_rules_by_meta_features(self, features: FeatureSet) -> "RuleSet":
@@ -2168,8 +2216,6 @@ class RuleSet:
                         if wanted_bytes.evaluate(bytes_features):
                             candidate_rule_names.add(rule_name)
 
-        candidate_rule_names.intersection_update(self.rules)
-
         # No rules can possibly match, so quickly return.
         if not candidate_rule_names:
             return (features, {})
@@ -2232,9 +2278,7 @@ class RuleSet:
 
                     if new_candidates:
                         new_candidates = [
-                            rule_name
-                            for rule_name in new_candidates
-                            if rule_name in self.rules and rule_name not in candidate_rule_names
+                            rule_name for rule_name in new_candidates if rule_name not in candidate_rule_names
                         ]
                         candidate_rule_names.update(new_candidates)
                         candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
@@ -2267,7 +2311,7 @@ class RuleSet:
         features, matches = self._match(scope, features, addr)
 
         if paranoid:
-            rules: list[Rule] = [rule for rule in self.rules_by_scope[scope] if rule.name in self.rules]
+            rules: list[Rule] = self.rules_by_scope[scope]
             paranoid_features, paranoid_matches = capa.engine.match(rules, features, addr)
 
             if features != paranoid_features:
