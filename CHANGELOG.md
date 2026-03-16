@@ -50,6 +50,7 @@
 - loader: handle struct.error from dnfile and show clear CorruptFile message @devs6186 #2442
 - address: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
 - loader: skip PE files with unrealistically large section virtual sizes to prevent resource exhaustion @devs6186 #1989
+- rules: reject unsupported top-level `not`, nested `not`, and top-level `count(...): 0` constructs during rule parsing @blenbot #2920
 
 ### capa Explorer Web
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
