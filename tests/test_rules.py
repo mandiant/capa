@@ -1378,6 +1378,65 @@ def test_invalid_com_features():
                 """))
 
 
+def test_invalid_top_level_not_rule():
+    with pytest.raises(capa.rules.InvalidRule, match="top level not statements are not supported"):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - not:
+                            - number: 99
+                """
+            )
+        )
+
+
+def test_invalid_nested_not_rule():
+    with pytest.raises(capa.rules.InvalidRule, match="nested not statements are not supported"):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - and:
+                            - mnemonic: mov
+                            - not:
+                                - not:
+                                    - number: 100
+                """
+            )
+        )
+
+
+def test_invalid_top_level_count_zero_rule():
+    with pytest.raises(capa.rules.InvalidRule, match="top level count with zero occurrences is not supported"):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - count(mnemonic(mov)): 0
+                """
+            )
+        )
+
+
 def test_circular_dependency():
     rules = [
         capa.rules.Rule.from_yaml(textwrap.dedent("""

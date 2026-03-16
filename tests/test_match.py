@@ -521,7 +521,6 @@ def test_regex_get_value_str(pattern):
     assert capa.features.common.Regex(pattern).get_value_str() == pattern
 
 
-@pytest.mark.xfail(reason="can't have top level NOT")
 def test_match_only_not():
     rule = textwrap.dedent("""
         rule:
@@ -535,10 +534,8 @@ def test_match_only_not():
                 - not:
                     - number: 99
         """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert "test rule" in matches
+    with pytest.raises(capa.rules.InvalidRule, match="top level not statements are not supported"):
+        capa.rules.Rule.from_yaml(rule)
 
 
 def test_match_not():
@@ -562,7 +559,6 @@ def test_match_not():
     assert "test rule" in matches
 
 
-@pytest.mark.xfail(reason="can't have nested NOT")
 def test_match_not_not():
     rule = textwrap.dedent("""
         rule:
@@ -576,7 +572,8 @@ def test_match_not_not():
                 - not:
                     - not:
                         - number: 100
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)

@@ -877,6 +877,27 @@ def build_statements(d, scopes: Scopes):
         return feature
 
 
+def validate_statement_logic(statement, *, is_root=True, inside_not=False):
+    if not isinstance(statement, ceng.Statement):
+        return
+
+    if is_root and isinstance(statement, ceng.Range) and statement.min == 0 and statement.max == 0:
+        raise InvalidRule("top level count with zero occurrences is not supported")
+
+    if isinstance(statement, ceng.Not):
+        if is_root:
+            raise InvalidRule("top level not statements are not supported")
+
+        if inside_not:
+            raise InvalidRule("nested not statements are not supported")
+
+        validate_statement_logic(statement.child, is_root=False, inside_not=True)
+        return
+
+    for child in statement.get_children():
+        validate_statement_logic(child, is_root=False, inside_not=inside_not)
+
+
 def first(s: list[Any]) -> Any:
     return s[0]
 
@@ -1087,7 +1108,10 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        statement = build_statements(statements[0], scopes)
+        validate_statement_logic(statement)
+
+        return cls(name, scopes, statement, meta, definition)
 
     @staticmethod
     @lru_cache()
@@ -2114,9 +2138,8 @@ class RuleSet:
               - also top level counted features with zero occurances, like: `count(menmonic(mov)): 0`
           - nested NOT statements (NOT: NOT: foo)
 
-        We should discourage/forbid these constructs from our rules and add lints for them.
-        TODO(williballenthin): add lints for logic edge cases
-
+        We forbid these constructs from our rules.
+        
         Args:
           paranoid: when true, demonstrate that the naive matcher agrees with this
            optimized matcher (much slower! around 10x slower).
