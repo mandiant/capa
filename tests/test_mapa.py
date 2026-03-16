@@ -419,6 +419,15 @@ class TestHtmlMapRenderer:
                 MapaFunction(
                     address=0x1000,
                     name="entry",
+                    calls=[
+                        MapaCall(
+                            name="worker",
+                            address=0x2000,
+                            is_api=False,
+                            delta=1,
+                            direction="↓",
+                        )
+                    ],
                     strings=[MapaString(value="CreateFileW", address=0x3000, tags=("#common", "#winapi"))],
                     assemblage_records=[
                         TestHtmlMapRenderer._make_assemblage_record(
@@ -429,6 +438,23 @@ class TestHtmlMapRenderer:
                 MapaFunction(
                     address=0x2000,
                     name="worker",
+                    callers=[
+                        MapaCaller(
+                            name="entry",
+                            address=0x1000,
+                            delta=-1,
+                            direction="↑",
+                        )
+                    ],
+                    calls=[
+                        MapaCall(
+                            name="helper",
+                            address=0x3000,
+                            is_api=False,
+                            delta=1,
+                            direction="↓",
+                        )
+                    ],
                     apis=[MapaCall(name="kernel32.dll!CreateFileW", address=0x5000, is_api=True)],
                     strings=[MapaString(value="inflate", address=0x2000, tags=("#zlib",))],
                     capa_matches=["write file"],
@@ -441,6 +467,14 @@ class TestHtmlMapRenderer:
                 MapaFunction(
                     address=0x3000,
                     name="helper",
+                    callers=[
+                        MapaCaller(
+                            name="worker",
+                            address=0x2000,
+                            delta=-1,
+                            direction="↑",
+                        )
+                    ],
                     strings=[MapaString(value="normal", address=0x4000, tags=("#common",))],
                     assemblage_records=[
                         TestHtmlMapRenderer._make_assemblage_record(
@@ -529,7 +563,7 @@ class TestHtmlMapRenderer:
         html = render_html_map(self._make_report())
         assert '#zlib <span class="control-count">(2)</span>' in html
         assert '#common <span class="control-count">(1)</span>' in html
-        assert 'border = tag · fill = string · yellow halo = source query · dim = matches none' in html
+        assert 'fill = neighborhood heat · outline = seed · dim = outside neighborhood' in html
 
     def test_html_map_orders_tags_by_function_count_then_name(self):
         html = render_html_map(self._make_report())
@@ -558,23 +592,27 @@ class TestHtmlMapRenderer:
         assert 'data-string-tags="#common"' in html
         assert 'class="string-tags">#winapi</span>' in html
 
-    def test_html_map_exposes_source_query_input_and_prefix_logic(self):
+    def test_html_map_exposes_neighborhood_controls_and_call_graph_data(self):
         html = render_html_map(self._make_report())
-        assert 'id="source-query"' in html
-        assert 'type="text"' in html
-        assert 'spellcheck="false"' in html
-        assert 'src/core/a.c' in html
-        assert '"sourceGroups":{"src/core/a.c":[0,1],"src/core/b.c":[2]}' in html
-        assert 'startsWith(activeSourceQuery)' in html
-        assert "sourceQueryInput.addEventListener('input'" in html
-        assert 'yellow halo = source query' in html
+        assert 'id="direction-controls"' in html
+        assert 'data-direction="callers"' in html
+        assert 'data-direction="callees"' in html
+        assert 'data-direction="both"' in html
+        assert 'id="depth-controls"' in html
+        assert 'data-depth="1"' in html
+        assert 'data-depth="3"' in html
+        assert '"callersByIndex":[[],[0],[1]]' in html
+        assert '"calleesByIndex":[[1],[2],[]]' in html
 
-    def test_html_map_function_boxes_include_source_path_attribute(self):
+    def test_html_map_function_boxes_support_neighborhood_hover_and_lock(self):
         html = render_html_map(self._make_report())
         assert 'data-function-index="0"' in html
-        assert 'data-source-path="src/core/a.c"' in html
-        assert 'data-function-index="2"' in html
-        assert 'data-source-path="src/core/b.c"' in html
+        assert 'let hoveredFunction=null;' in html
+        assert 'let lockedFunction=null;' in html
+        assert 'const getDecayScore=(distance)=>0.5**distance;' in html
+        assert "lines.join('\\n')" in html
+        assert 'function-box.is-seed' in html
+        assert "box.addEventListener('click'" in html
 
     def test_html_map_preserves_duplicate_values_at_distinct_addresses(self):
         html = render_html_map(self._make_report())
