@@ -211,7 +211,7 @@ def collect_report(
     assemblage_records_by_address: dict[int, list[AssemblageRecord]] | None = None,
     tagger: StringTagger | None = None,
 ) -> MapaReport:
-    """Collect a complete MAPA report from an open IDA database."""
+    """Collect a complete mapa report from an open IDA database."""
     if matches_by_function is None:
         matches_by_function = {}
     if assemblage_records_by_address is None:

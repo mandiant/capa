@@ -89,9 +89,9 @@ To use capa as a library or integrate with another tool, see [doc/installation.m
 
 **Documentation:** [Usage and tips](doc/usage.md) · [Installation](doc/installation.md) · [Limitations](doc/limitations.md) · [FAQ](doc/faq.md)
 
-# MAPA html map
+# mapa html map
 
-MAPA can render a standalone HTML overview of functions, string tags, and referenced strings.
+mapa can render a standalone HTML overview of functions, string tags, and referenced strings.
 
 ```bash
 python -m mapa binaries/01/16/mpbindump.exe --output html-map > report.html

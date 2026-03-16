@@ -91,7 +91,7 @@ def render_html_map(report: MapaReport) -> str:
         '<html lang="en">',
         "<head>",
         '<meta charset="utf-8">',
-        f"<title>{escape(report.meta.name)} - MAPA html map</title>",
+        f"<title>{escape(report.meta.name)} - mapa html map</title>",
         "<style>",
         "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}",
         "html,body{height:100%}",

@@ -1,4 +1,4 @@
-# MAPA html-map demo
+# mapa html-map demo
 
 *2026-03-16T17:05:38Z by Showboat 0.6.1*
 <!-- showboat-id: 1cf46a16-c3d7-459d-8593-c23080cb12f6 -->

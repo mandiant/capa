@@ -1,4 +1,4 @@
-# MAPA design
+# mapa design
 
 ## Architecture
 
@@ -30,7 +30,7 @@ Modeled on `idals.py` from idawilli:
 
 ## Assemblage loading
 
-Assemblage loading is deferred until after MAPA opens the IDA database, because the effective sample SHA-256 may come from either the raw input file or the database metadata.
+Assemblage loading is deferred until after mapa opens the IDA database, because the effective sample SHA-256 may come from either the raw input file or the database metadata.
 
 `mapa.assemblage.load_assemblage_records()`:
 

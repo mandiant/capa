@@ -22,7 +22,7 @@ logger = logging.getLogger("mapa")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="MAPA: binary function map")
+    parser = argparse.ArgumentParser(description="mapa: binary function map")
     parser.add_argument(
         "input_file", type=Path, help="path to input file (binary, .i64, or .idb)"
     )
@@ -81,13 +81,8 @@ def open_html_report(
 def _load_capa_matches(
     capa_path: Path,
     thunk_targets: dict[int, int],
-    get_containing_function: object,
 ) -> dict[int, set[str]]:
-    """Load capa JSON and map matches to function addresses.
-
-    get_containing_function should be a callable(address) -> int|None
-    that returns the function start address for a given address.
-    """
+    """Load capa JSON and map matches to function addresses."""
     doc = json.loads(capa_path.read_text())
 
     functions_by_basic_block: dict[int, int] = {}
@@ -209,7 +204,6 @@ def main(argv: list[str] | None = None) -> int:
             matches_by_function = _load_capa_matches(
                 args.capa,
                 thunk_targets,
-                lambda addr: None,
             )
 
         t0 = time.time()

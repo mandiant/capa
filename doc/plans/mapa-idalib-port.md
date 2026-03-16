@@ -1,4 +1,4 @@
-# MAPA IDA/IDALib port plan
+# mapa IDA/IDALib port plan
 
 Goal: preserve the current `scripts/mapa.py` report while replacing the Lancelot/BinExport2 backend with IDALib. Use the `ida-domain` API for normal analysis where it cleanly maps to the needed data. Reuse the existing capa IDA backend as the semantic reference for imports, thunks, string resolution, function naming, and database bootstrap.
 
@@ -55,7 +55,7 @@ This is especially important for:
 - alternative function names from comments
 - known IDA version caveats
 
-## Current MAPA output that must remain stable
+## Current mapa output that must remain stable
 
 The current script renders these sections, in this order:
 - `meta`
@@ -85,14 +85,14 @@ That output contract should stay stable unless a deliberate change is accepted a
 
 There are three reusable assets.
 
-The first is a proven `ida-domain` database-resolution and session-opening path in `../idawilli/idals/idals.py`. That code already does the part MAPA needs most: accept either a raw sample or an existing `.i64` / `.idb`, hash raw inputs, cache analyzed databases by SHA-256, and guard concurrent access.
+The first is a proven `ida-domain` database-resolution and session-opening path in `../idawilli/idals/idals.py`. That code already does the part mapa needs most: accept either a raw sample or an existing `.i64` / `.idb`, hash raw inputs, cache analyzed databases by SHA-256, and guard concurrent access.
 
 The second is capa's proven IDALib bootstrap path:
 - `capa/features/extractors/ida/idalib.py`
 - `capa/loader.py`
 - `tests/fixtures.py`
 
-The third is capa's proven semantic definition of the data MAPA cares about:
+The third is capa's proven semantic definition of the data mapa cares about:
 - function enumeration: `capa/features/extractors/ida/extractor.py`
 - segments, imports, externs: `capa/features/extractors/ida/file.py`, `helpers.py`
 - callers and function names: `capa/features/extractors/ida/function.py`
@@ -112,27 +112,27 @@ The practical split is simple. Use `idals.py` as the model for database resoluti
 
 2. Capa explicitly disables Lumina during IDALib analysis.
    - Reason documented in `capa/loader.py`: Lumina can inject bad names or overwrite debug-info names.
-   - MAPA should do the same unless there is a deliberate decision to trust Lumina.
+   - mapa should do the same unless there is a deliberate decision to trust Lumina.
 
 3. Capa requests resource loading with `-R`.
    - This matters for some file-scope extraction.
    - `tests/test_idalib_features.py` notes that IDA 9.0 had resource-loading limitations under IDALib.
 
-4. The existing `IdaFeatureExtractor.get_functions()` is not a direct drop-in for MAPA.
+4. The existing `IdaFeatureExtractor.get_functions()` is not a direct drop-in for mapa.
    - It calls `helpers.get_functions(skip_thunks=True, skip_libs=True)`.
-   - MAPA must render thunk functions, so MAPA needs its own full function inventory.
+   - mapa must render thunk functions, so mapa needs its own full function inventory.
 
-5. Capa already encodes the thunk semantics MAPA needs.
+5. Capa already encodes the thunk semantics mapa needs.
    - `THUNK_CHAIN_DEPTH_DELTA` is defined in `capa/features/common.py` as `5`.
    - `capa/features/extractors/ida/insn.py:check_for_api_call()` follows code refs, then data refs, through thunk chains to resolve imports/externs.
    - `capa/features/extractors/binexport2/__init__.py:BinExport2Analysis._compute_thunks()` shows the intended "single-target thunk chain" rule: only resolve through chains with exactly one callee per thunk hop.
 
-6. Capa already encodes MAPA-relevant string semantics.
+6. Capa already encodes mapa-relevant string semantics.
    - `helpers.find_data_reference_from_insn(insn, max_depth=10)` follows single data-reference chains.
    - `helpers.find_string_at(ea)` looks for C strings and works around an IDA Unicode-decoding quirk.
    - `insn.extract_insn_string_features()` and `extract_insn_bytes_features()` use that behavior.
 
-7. Capa already has the import and extern logic MAPA needs.
+7. Capa already has the import and extern logic mapa needs.
    - `helpers.get_file_imports()` enumerates import modules and normalizes names.
    - `helpers.get_file_externs()` enumerates functions from `SEG_XTRN` segments.
    - `file.extract_file_import_names()` shows how capa treats name-vs-ordinal imports.
@@ -141,18 +141,18 @@ The practical split is simple. Use `idals.py` as the model for database resoluti
    - `helpers.get_function_alternative_names()` parses comments that look like `Alternative name is 'foo'`.
    - `function.extract_function_alternative_names()` exposes them as `FunctionName` features.
 
-9. Capa already has the CFG behavior MAPA should match.
+9. Capa already has the CFG behavior mapa should match.
    - `helpers.get_function_blocks()` uses `idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT))`.
    - The `NOEXT` part matters: it avoids useless external blocks contaminating B/E/I counts.
 
 10. The test suite documents real version caveats.
     - IDA 9.0 and 9.1 had some ELF symbol issues.
     - IDA 9.0 under IDALib had resource-loading limitations.
-    - MAPA validation should account for those when comparing outputs.
+    - mapa validation should account for those when comparing outputs.
 
 ## Database resolution and caching pattern to copy from idals
 
-`../idawilli/idals/idals.py` is the best starting point for the "raw file or existing database" problem. It already solves the user-visible behavior MAPA needs.
+`../idawilli/idals/idals.py` is the best starting point for the "raw file or existing database" problem. It already solves the user-visible behavior mapa needs.
 
 Its pattern is:
 - if the input suffix is `.i64` or `.idb`, use that database directly
@@ -165,14 +165,14 @@ Its pattern is:
 - on a cache miss, analyze the raw sample with `Database.open(..., IdaCommandOptions(auto_analysis=True, new_database=True, output_database=..., load_resources=True), save_on_close=True)`
 - after the cached database exists, open it read-only with `open_database_session(..., auto_analysis=False)` and `save_on_close=False`
 
-MAPA should adopt that pattern with only minor changes:
+mapa should adopt that pattern with only minor changes:
 - use the same SHA-256-keyed cache strategy
 - keep the same locking protocol
-- put the cache in a MAPA-specific directory, or intentionally share the idals directory if reuse is desired
+- put the cache in a mapa-specific directory, or intentionally share the idals directory if reuse is desired
 - expose the cache location as a small helper or constant so it can be documented and tested
 - reuse the computed SHA-256 for the `meta` section instead of hashing the sample twice
 
-There is one deliberate integration check to make here. `idals.py` uses `ida-domain`'s `Database.open(...)`, while capa's bootstrap path uses `idapro.open_database(...)` and disables Lumina explicitly. For MAPA, prefer the `idals.py` open-and-cache pattern because it already handles the database lifecycle correctly. Then verify whether the `ida-domain` open path offers an equivalent way to suppress Lumina. If it does, use it. If it does not, decide whether that matters for MAPA output or whether database creation should fall back to capa's `idapro.open_database(...)` path while cached-session opens keep the `idals.py` pattern.
+There is one deliberate integration check to make here. `idals.py` uses `ida-domain`'s `Database.open(...)`, while capa's bootstrap path uses `idapro.open_database(...)` and disables Lumina explicitly. For mapa, prefer the `idals.py` open-and-cache pattern because it already handles the database lifecycle correctly. Then verify whether the `ida-domain` open path offers an equivalent way to suppress Lumina. If it does, use it. If it does not, decide whether that matters for mapa output or whether database creation should fall back to capa's `idapro.open_database(...)` path while cached-session opens keep the `idals.py` pattern.
 
 ## Recommended architecture
 
@@ -205,11 +205,11 @@ Concretely:
 
 That gives the next implementer a clear target: no Lancelot, no default hybrid backend, and no legacy helper dependency unless a concrete gap forces it.
 
-## Concrete mapping from MAPA fields to capa/backend logic
+## Concrete mapping from mapa fields to capa/backend logic
 
-| MAPA field/behavior | First source to consult | Recommended implementation |
+| mapa field/behavior | First source to consult | Recommended implementation |
 |---|---|---|
-| IDALib discovery | `capa/features/extractors/ida/idalib.py` | Reuse `has_idalib()` / `load_idalib()` logic if MAPA needs to bootstrap `idapro` availability itself. |
+| IDALib discovery | `capa/features/extractors/ida/idalib.py` | Reuse `has_idalib()` / `load_idalib()` logic if mapa needs to bootstrap `idapro` availability itself. |
 | resolve/open DB | `../idawilli/idals/idals.py` | Use `resolve_database()` and `open_database_session()` as the primary pattern. |
 | cache key and cache DB path | `../idawilli/idals/idals.py` | Hash raw inputs once and key cached databases by SHA-256. |
 | Lumina suppression policy | `capa/loader.py`, `tests/fixtures.py` | Carry forward capa's disable-Lumina behavior if the chosen open path supports it. |
@@ -218,7 +218,7 @@ That gives the next implementer a clear target: no Lancelot, no default hybrid b
 | sections | `helpers.get_segments()`, `file.extract_file_section_names()` | Use `db.segments`; match capa's header-segment filtering rules if needed. |
 | import modules/functions | `helpers.get_file_imports()` | Implement with `ida-domain` if the needed import data is exposed cleanly; otherwise use this helper as the semantic reference for normalization. |
 | externs | `helpers.get_file_externs()` | Match this behavior with `ida-domain` if possible; if not, document the missing API and then fall back deliberately. |
-| function inventory | `extractor.py`, `helpers.get_functions()` | Do not use extractor's default function list because it skips thunks/libs. Build a MAPA-specific inventory with `ida-domain`. |
+| function inventory | `extractor.py`, `helpers.get_functions()` | Do not use extractor's default function list because it skips thunks/libs. Build a mapa-specific inventory with `ida-domain`. |
 | callers | `function.extract_function_calls_to()` | Reproduce the same behavior with domain xrefs and compare against this helper during validation. |
 | call targets | `insn.extract_function_calls_from()` | Reproduce the same behavior with domain xrefs and compare against this helper during validation. |
 | API calls | `insn.extract_insn_api_features()` | Match the import/extern/thunk resolution semantics exposed by this function. |
@@ -229,7 +229,7 @@ That gives the next implementer a clear target: no Lancelot, no default hybrid b
 
 ## Step-by-step implementation plan
 
-### 1. Freeze the current MAPA output
+### 1. Freeze the current mapa output
 
 Before editing code, save golden outputs from the current `scripts/mapa.py` for:
 - a sample with normal internal calls and imports
@@ -257,7 +257,7 @@ Base these directly on `../idawilli/idals/idals.py`.
 - default to `save_on_close=False`
 - optionally run `ida_auto.auto_wait()` when `auto_analysis=True`
 
-This should become MAPA's primary database lifecycle.
+This should become mapa's primary database lifecycle.
 
 Then add one capa-derived check on top: if the chosen open path can suppress Lumina, do so. If the `ida-domain` path cannot, verify whether that difference affects naming enough to justify a fallback to capa's `idapro.open_database(...)` path during cache creation.
 
@@ -271,7 +271,7 @@ Before touching the collector logic, split `scripts/mapa.py` into:
 
 Keep the renderer stable. The collector should return value objects only.
 
-### 4. Build a MAPA-specific function inventory
+### 4. Build a mapa-specific function inventory
 
 Do not use `IdaFeatureExtractor.get_functions()` as-is, because it skips thunks and library functions.
 
@@ -321,7 +321,7 @@ This helper must drive:
 
 ### 7. Use capa features as references, not as the collector
 
-Do not build MAPA by instantiating `IdaFeatureExtractor()` and aggregating capa features into the final report. That would create a hidden second backend and blur the migration target.
+Do not build mapa by instantiating `IdaFeatureExtractor()` and aggregating capa features into the final report. That would create a hidden second backend and blur the migration target.
 
 Instead, query IDA directly through `ida-domain` and use the capa feature-extraction code as a reference when the intended semantics are unclear. The implementer should compare specific results against:
 - `Characteristic("calls to")`
@@ -373,7 +373,7 @@ Start from capa's behavior:
 - if the final target is a string, emit it
 - otherwise it may be bytes, not a string
 
-For MAPA specifically:
+For mapa specifically:
 - only render strings, not raw bytes
 - deduplicate by rendered string value, matching the current script
 - trim trailing whitespace the same way the current script does
@@ -438,10 +438,10 @@ Pure tests should cover:
 - string de-duplication and trimming
 - final rendering from a prebuilt `MapaReport`
 
-Integration tests should reuse the same lifecycle MAPA will use in production:
+Integration tests should reuse the same lifecycle mapa will use in production:
 - resolve the input to an existing or cached database
 - open it through the guarded session helper
-- collect the MAPA report
+- collect the mapa report
 - compare key functions and sections against golden outputs
 
 Use `tests/test_idalib_features.py` as the reference for version-specific skips and expectations, and use `../idawilli/idals/idals.py` as the reference for database resolution and guarded open/close behavior.
@@ -470,11 +470,11 @@ Document every known delta. The likely ones are:
 ## Minimal implementation checklist
 
 A good order of work is:
-1. freeze current MAPA outputs
+1. freeze current mapa outputs
 2. add backend-neutral report dataclasses
 3. add `resolve_database()` and `open_database_session()` helpers modeled on `idals.py`
 4. implement the XDG cache path and quiet-by-default cache creation behavior
-5. build a full MAPA function inventory that includes thunks
+5. build a full mapa function inventory that includes thunks
 6. port sections and metadata
 7. implement import/extern classification to match capa semantics
 8. implement the thunk resolver using capa's existing semantics
@@ -493,7 +493,7 @@ Record these in `spec.md` or `design.md` during implementation so the behavior s
 
 - accepted inputs: raw binary and existing IDA databases
 - cached databases live under the XDG cache root in `mandiant/mapa/`
-- MAPA may create and persist cached IDA databases automatically
+- mapa may create and persist cached IDA databases automatically
 - cache creation stays quiet in normal mode and only surfaces in verbose/debug logging
 - Lumina stays disabled for now
 - `meta.ts` becomes `datetime.now()`

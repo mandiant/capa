@@ -19,7 +19,7 @@ Upstream commit: `73eb1541e896c065fc694ba7b01067f56871631b`
 
 ## Code
 
-The loader, tagger, and model code in this package are MAPA-local rewrites
+The loader, tagger, and model code in this package are mapa-local rewrites
 inspired by upstream modules `floss/qs/db/oss.py`, `expert.py`, `gp.py`,
 `winapi.py`, and the tagging logic in `floss/qs/main.py`. No upstream code
 was copied verbatim.
