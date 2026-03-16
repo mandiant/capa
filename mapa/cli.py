@@ -5,8 +5,11 @@ import json
 import logging
 import sys
 import time
+import webbrowser
 from collections import defaultdict
 from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import Callable
 
 from rich.console import Console
 from rich.logging import RichHandler
@@ -16,6 +19,63 @@ from mapa.assemblage import load_assemblage_records
 from mapa.model import AssemblageRecord
 
 logger = logging.getLogger("mapa")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="MAPA: binary function map")
+    parser.add_argument(
+        "input_file", type=Path, help="path to input file (binary, .i64, or .idb)"
+    )
+    parser.add_argument("--capa", type=Path, help="path to capa JSON results file")
+    parser.add_argument("--assemblage", type=Path, help="path to Assemblage CSV file")
+    parser.add_argument(
+        "--output",
+        choices=("text", "html-map"),
+        default="text",
+        help="output format",
+    )
+    parser.add_argument(
+        "--open",
+        action="store_true",
+        help="when used with --output html-map, write to a temp file and open it in a browser",
+    )
+    parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
+    parser.add_argument(
+        "--quiet", action="store_true", help="disable all output but errors"
+    )
+    return parser
+
+
+def validate_output_options(output: str, open_report: bool) -> None:
+    if open_report and output != "html-map":
+        raise ValueError("--open requires --output html-map")
+
+
+def write_temp_html_report(content: str, directory: Path | None = None) -> Path:
+    temp_dir = None if directory is None else str(directory)
+    with NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        suffix=".html",
+        prefix="mapa-",
+        delete=False,
+        dir=temp_dir,
+    ) as handle:
+        handle.write(content)
+        return Path(handle.name)
+
+
+def open_html_report(
+    content: str,
+    opener: Callable[[str], bool] | None = None,
+    directory: Path | None = None,
+) -> Path:
+    report_path = write_temp_html_report(content, directory=directory)
+    browser_opener = webbrowser.open if opener is None else opener
+    opened = browser_opener(report_path.as_uri())
+    if not opened:
+        raise RuntimeError(f"failed to open browser for {report_path}")
+    return report_path
 
 
 def _load_capa_matches(
@@ -67,17 +127,12 @@ def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description="MAPA: binary function map")
-    parser.add_argument(
-        "input_file", type=Path, help="path to input file (binary, .i64, or .idb)"
-    )
-    parser.add_argument("--capa", type=Path, help="path to capa JSON results file")
-    parser.add_argument("--assemblage", type=Path, help="path to Assemblage CSV file")
-    parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
-    parser.add_argument(
-        "--quiet", action="store_true", help="disable all output but errors"
-    )
+    parser = build_parser()
     args = parser.parse_args(args=argv)
+    try:
+        validate_output_options(args.output, args.open)
+    except ValueError as error:
+        parser.error(str(error))
 
     stderr_console = Console(stderr=True)
     logging.basicConfig(
@@ -93,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     from mapa.collector import collect_report
+    from mapa.html_renderer import render_html_map
     from mapa.ida_db import open_database_session, resolve_database
     from mapa.renderer import render_report
 
@@ -167,7 +223,15 @@ def main(argv: list[str] | None = None) -> int:
         logger.debug("perf: collect_report: %0.2fs", time.time() - t0)
 
     t0 = time.time()
-    render_report(report, console)
+    if args.output == "html-map":
+        html = render_html_map(report)
+        if args.open:
+            report_path = open_html_report(html)
+            logger.info("opened html map: %s", report_path)
+        else:
+            sys.stdout.write(html)
+    else:
+        render_report(report, console)
     logger.debug("perf: render_report: %0.2fs", time.time() - t0)
 
     return 0

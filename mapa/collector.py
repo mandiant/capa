@@ -14,6 +14,7 @@ from mapa.model import (
     MapaFunction,
     MapaLibrary,
     MapaMeta,
+    MapaProgramString,
     MapaReport,
     MapaSection,
     MapaString,
@@ -168,7 +169,7 @@ def _find_string_at(db: Database, ea: int) -> str | None:
 
 def _find_data_reference_string(
     db: Database, insn_ea: int, max_depth: int = 10
-) -> str | None:
+) -> tuple[int, str] | None:
     """Follow single data-reference chains from an instruction to find a string."""
     current = insn_ea
     for _ in range(max_depth):
@@ -183,9 +184,23 @@ def _find_data_reference_string(
             break
         result = _find_string_at(db, target)
         if result is not None:
-            return result
+            return target, result
         current = target
     return None
+
+
+def _merge_string_metadata(
+    tags: tuple[str, ...],
+    tag_matches: tuple,
+    new_tags: tuple[str, ...],
+    new_tag_matches: tuple,
+) -> tuple[tuple[str, ...], tuple]:
+    merged_tags = tuple(sorted(set(tags) | set(new_tags)))
+    seen_match_keys = {match.sort_key for match in tag_matches}
+    unique_new = tuple(
+        match for match in new_tag_matches if match.sort_key not in seen_match_keys
+    )
+    return merged_tags, tag_matches + unique_new
 
 
 def collect_report(
@@ -292,6 +307,7 @@ def collect_report(
         resolved_callees[ea] = callees
 
     mapa_functions: list[MapaFunction] = []
+    program_strings_by_address: dict[int, MapaProgramString] = {}
     for ea, func, is_thunk, is_lib in all_functions:
         if ea in import_index or ea in extern_addrs:
             continue
@@ -411,35 +427,55 @@ def collect_report(
                     if insns is None:
                         continue
                     for insn in insns:
-                        raw = _find_data_reference_string(db, int(insn.ea))
-                        if raw is None:
+                        string_result = _find_data_reference_string(db, int(insn.ea))
+                        if string_result is None:
                             continue
+                        string_ea, raw = string_result
                         tag_result = tagger.tag_string(raw)
                         display = raw.rstrip()
                         if not display:
                             continue
                         if display in seen_strings:
                             existing = seen_strings[display]
-                            merged_tags = sorted(
-                                set(existing.tags) | set(tag_result.tags)
+                            existing.tags, existing.tag_matches = _merge_string_metadata(
+                                existing.tags,
+                                existing.tag_matches,
+                                tag_result.tags,
+                                tag_result.matches,
                             )
-                            seen_match_keys = {m.sort_key for m in existing.tag_matches}
-                            unique_new = tuple(
-                                m
-                                for m in tag_result.matches
-                                if m.sort_key not in seen_match_keys
-                            )
-                            existing.tags = tuple(merged_tags)
-                            existing.tag_matches = existing.tag_matches + unique_new
+                            existing.address = min(existing.address, string_ea)
                         else:
                             ms = MapaString(
                                 value=display,
-                                address=int(insn.ea),
-                                tags=tag_result.tags,
+                                address=string_ea,
+                                tags=tuple(sorted(set(tag_result.tags))),
                                 tag_matches=tag_result.matches,
                             )
                             seen_strings[display] = ms
                             mf.strings.append(ms)
+
+                        if string_ea in program_strings_by_address:
+                            existing_program_string = program_strings_by_address[string_ea]
+                            existing_program_string.tags, existing_program_string.tag_matches = _merge_string_metadata(
+                                existing_program_string.tags,
+                                existing_program_string.tag_matches,
+                                tag_result.tags,
+                                tag_result.matches,
+                            )
+                            existing_program_string.function_addresses = tuple(
+                                sorted(
+                                    set(existing_program_string.function_addresses)
+                                    | {ea}
+                                )
+                            )
+                        else:
+                            program_strings_by_address[string_ea] = MapaProgramString(
+                                value=display,
+                                address=string_ea,
+                                tags=tuple(sorted(set(tag_result.tags))),
+                                tag_matches=tag_result.matches,
+                                function_addresses=(ea,),
+                            )
 
         mf.capa_matches = sorted(matches_by_function.get(ea, set()))
         mapa_functions.append(mf)
@@ -449,4 +485,8 @@ def collect_report(
         sections=sections,
         libraries=libraries,
         functions=mapa_functions,
+        program_strings=sorted(
+            program_strings_by_address.values(),
+            key=lambda string: string.address,
+        ),
     )

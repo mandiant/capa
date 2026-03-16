@@ -1,11 +1,11 @@
 # MAPA specification
 
-MAPA renders a structured text report of a binary's function map: metadata, sections, import libraries, and a per-function breakdown of callers, callees, API calls, strings, CFG stats, capa rule matches, and optional Assemblage ground truth.
+MAPA renders either a structured text report or a self-contained HTML map of a binary's function map: metadata, sections, import libraries, and a per-function breakdown of callers, callees, API calls, strings, CFG stats, capa rule matches, and optional Assemblage ground truth.
 
 ## Invocation
 
 ```
-python scripts/mapa.py <input_file> [--capa <capa.json>] [--assemblage <functions.csv>] [--verbose] [--quiet]
+python scripts/mapa.py <input_file> [--capa <capa.json>] [--assemblage <functions.csv>] [--output {text,html-map}] [--open] [--verbose] [--quiet]
 ```
 
 `input_file` accepts raw binaries (PE, ELF), existing IDA databases (`.i64`, `.idb`), or any file IDA can analyze. For raw files, MAPA automatically creates and caches an analyzed IDA database under the XDG cache root (`$XDG_CACHE_HOME/mandiant/mapa/` or `~/.cache/mandiant/mapa/`) keyed by the file's SHA-256 hash.
@@ -14,9 +14,25 @@ python scripts/mapa.py <input_file> [--capa <capa.json>] [--assemblage <function
 
 IDALib only. All analysis uses `ida-domain` as the primary query API. The Lancelot/BinExport2 backend has been removed.
 
+## Output modes
+
+`text` is the default. It renders the existing structured terminal report to stdout.
+
+`html-map` renders a single standalone HTML document to stdout. The page inlines all HTML, CSS, JavaScript, and data. It has a compact metadata summary and tag control strip at the top, then a split view below. The left pane contains the function grid and the right pane contains the program-string list.
+
+The two panes scroll independently. A draggable vertical divider lets the user resize the panes horizontally. Function squares stay in function-address order and still use the naive left-to-right wrapping layout, but they now wrap within the current width of the left pane rather than the full page width.
+
+Function squares are fixed small blocks laid out left-to-right and wrapped responsively within the left pane. Hovering a tag highlights matching functions by border color and dims non-matches. Clicking a tag locks or unlocks that tag selection. Hovering a string row highlights matching functions by fill color and dims non-matches. Clicking a string row locks or unlocks that string selection. When both a tag and a string are active, a function stays emphasized if it matches either one.
+
+The tag strip is sorted by descending distinct-function count, then tag name, and each control shows that count. The page also shows a small legend describing border, fill, and dim states. The string list shows each string's virtual address explicitly, preserves duplicate display values at different addresses, and shows visible tags right-aligned in each row. Function hover shows a tooltip containing the same single-function MAPA summary content as text mode. Top-level tag controls use only string tags. Capa rule names are not included there.
+
+`--open` is only valid with `--output html-map`. In that mode, MAPA writes the HTML to a temporary `.html` file, opens the user's local web browser on the corresponding `file://` URL, and does not write the HTML document to stdout.
+
+The visible-tag policy is the same in both modes: hide `#common` when a more-specific tag is present, but keep it visible when it is the only tag.
+
 ## Report sections
 
-The report renders these sections in order:
+The text report renders these sections in order:
 
 1. meta — file name, SHA-256, architecture, timestamp
 2. sections — memory segments with address, permissions (rwx), and size
@@ -69,3 +85,6 @@ Assemblage matching works like this:
 - 2026-03-16: String extraction follows single data-reference chains up to depth 10, matching capa's `find_data_reference_from_insn`.
 - 2026-03-16: String rows may carry right-aligned database tags derived from vendored Quantum Strand string databases. Tags include `#<library>` (e.g. `#zlib`, `#openssl`), `#msvc`, `#capa`, `#winapi`, `#common`, and `#code-junk`. Visible tag policy: `#common` is hidden when a more-specific tag is present; `#code-junk` is always shown. Tags are matched against the raw (untrimmed) string value. The underlying model preserves all match metadata even when the renderer suppresses a visible tag.
 - 2026-03-16: Assemblage input is a CSV keyed by sample SHA-256. MAPA matches rows by `hash`, converts `start`/`end` RVAs to VAs using the database base address, annotates functions with `assemblage name:` and `assemblage file:` lines, and does not override IDA-derived function names.
+- 2026-03-16: `--output html-map` uses only string tags in the top control strip, sorts them by descending distinct-function count then name, shows those counts in the controls, applies union semantics when both a tag and string selection are active, and lists program strings by string VA with explicit addresses.
+- 2026-03-16: `--output html-map` uses a split view with independently scrolling function and string panes, a draggable vertical divider, and right-aligned visible tags in each string row.
+- 2026-03-16: `--open` is valid only with `--output html-map`. It writes the HTML report to a temporary `.html` file and opens the local browser on that file instead of writing the HTML to stdout.

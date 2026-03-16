@@ -89,6 +89,31 @@ To use capa as a library or integrate with another tool, see [doc/installation.m
 
 **Documentation:** [Usage and tips](doc/usage.md) · [Installation](doc/installation.md) · [Limitations](doc/limitations.md) · [FAQ](doc/faq.md)
 
+# MAPA html map
+
+MAPA can render a standalone HTML overview of functions, string tags, and referenced strings.
+
+```bash
+python -m mapa binaries/01/16/mpbindump.exe --output html-map > report.html
+```
+
+On the `mpbindump.exe` sample, the generated report contains:
+
+```text
+doctype <!doctype html>
+functions 1406
+tags 12
+strings 81
+```
+
+Use `--open` to write the report to a temporary file and open it in your browser.
+
+```bash
+python -m mapa binaries/01/16/mpbindump.exe --output html-map --open
+```
+
+The executable proof for this example is in `doc/demos/mapa-html-map.md`.
+
 # capa Explorer Web
 The [capa Explorer Web](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
 

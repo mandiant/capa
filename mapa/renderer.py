@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.text import Text
 
-from mapa.model import MapaReport
+from mapa.model import MapaFunction, MapaReport, MapaString
 
 
 class Renderer:
@@ -121,6 +121,73 @@ def _render_source_path_separator(o: Renderer, source_path: str) -> Text:
     return rendered
 
 
+def _format_function_heading(func: MapaFunction) -> str:
+    kind = "thunk" if func.is_thunk else "function"
+    return f"{kind} {func.name} @ {hex(func.address)}"
+
+
+def _iter_function_rows(func: MapaFunction):
+    for record in func.assemblage_records:
+        yield "assemblage", record
+
+    if func.is_thunk:
+        return
+
+    for caller in func.callers:
+        yield "caller", caller
+
+    yield "metrics", None
+
+    for match in func.capa_matches:
+        yield "capa", match
+
+    for call in func.calls:
+        yield "call", call
+
+    for api in func.apis:
+        yield "api", api
+
+    for string in func.strings:
+        yield "string", string
+
+
+def _render_plain_string_line(string: MapaString) -> str:
+    visible_tags = _visible_tags(string.tags)
+    line = f'string:   "{string.value}"'
+    if visible_tags:
+        line += f" {' '.join(visible_tags)}"
+    return line
+
+
+def render_function_summary_text(func: MapaFunction) -> str:
+    lines = [_format_function_heading(func)]
+    for kind, value in _iter_function_rows(func):
+        if kind == "assemblage":
+            lines.append(f"assemblage name: {value.name}")
+            lines.append(f"assemblage file: {value.source_path}")
+        elif kind == "caller":
+            lines.append(
+                f"xref:    {value.direction} {value.name} ({value.delta:+})"
+            )
+        elif kind == "metrics":
+            lines.append(
+                f"B/E/I:     {func.num_basic_blocks} / {func.num_edges} / {func.num_instructions} ({func.total_instruction_bytes} bytes)"
+            )
+        elif kind == "capa":
+            lines.append(f"capa:      {value}")
+        elif kind == "call":
+            lines.append(
+                f"calls:   {value.direction} {value.name} ({value.delta:+})"
+            )
+        elif kind == "api":
+            lines.append(f"api:       {value.name}")
+        elif kind == "string":
+            lines.append(_render_plain_string_line(value))
+        else:
+            raise ValueError(f"unexpected function row kind: {kind}")
+    return "\n".join(lines)
+
+
 def render_report(report: MapaReport, console: Console) -> None:
     o = Renderer(console)
 
@@ -153,67 +220,54 @@ def render_report(report: MapaReport, console: Console) -> None:
                     o.print(_render_source_path_separator(o, source_path))
                 last_source_path = source_path
 
-            if func.is_thunk:
-                with o.section(
-                    o.markup(
-                        "thunk [default]{function_name}[/] [decoration]@ {function_address}[/]",
-                        function_name=func.name,
-                        function_address=hex(func.address),
-                    )
-                ):
-                    for record in func.assemblage_records:
-                        o.writeln(f"assemblage name: {record.name}")
-                        o.writeln(f"assemblage file: {record.source_path}")
-                    continue
-
             with o.section(
                 o.markup(
-                    "function [default]{function_name}[/] [decoration]@ {function_address}[/]",
+                    "{function_kind} [default]{function_name}[/] [decoration]@ {function_address}[/]",
+                    function_kind="thunk" if func.is_thunk else "function",
                     function_name=func.name,
                     function_address=hex(func.address),
                 )
             ):
-                for record in func.assemblage_records:
-                    o.writeln(f"assemblage name: {record.name}")
-                    o.writeln(f"assemblage file: {record.source_path}")
-
-                for caller in func.callers:
-                    o.print(
-                        "xref:    [decoration]{direction}[/] {name} [decoration]({delta:+})[/]",
-                        direction=caller.direction,
-                        name=caller.name,
-                        delta=caller.delta,
-                    )
-
-                o.writeln(
-                    f"B/E/I:     {func.num_basic_blocks} / {func.num_edges} / {func.num_instructions} ({func.total_instruction_bytes} bytes)"
-                )
-
-                for match in func.capa_matches:
-                    o.writeln(f"capa:      {match}")
-
-                for call in func.calls:
-                    o.print(
-                        "calls:   [decoration]{direction}[/] {name} [decoration]({delta:+})[/]",
-                        direction=call.direction,
-                        name=call.name,
-                        delta=call.delta,
-                    )
-
-                for api in func.apis:
-                    o.print(
-                        "api:       {name}",
-                        name=api.name,
-                    )
-
-                for s in func.strings:
-                    visible_tags = _visible_tags(s.tags)
-                    if visible_tags:
-                        o.print(_render_string_line(o, s.value, visible_tags))
-                    else:
+                for kind, value in _iter_function_rows(func):
+                    if kind == "assemblage":
+                        o.writeln(f"assemblage name: {value.name}")
+                        o.writeln(f"assemblage file: {value.source_path}")
+                    elif kind == "caller":
                         o.print(
-                            'string:   [decoration]"[/]{string}[decoration]"[/]',
-                            string=s.value,
+                            "xref:    [decoration]{direction}[/] {name} [decoration]({delta:+})[/]",
+                            direction=value.direction,
+                            name=value.name,
+                            delta=value.delta,
                         )
+                    elif kind == "metrics":
+                        o.writeln(
+                            f"B/E/I:     {func.num_basic_blocks} / {func.num_edges} / {func.num_instructions} ({func.total_instruction_bytes} bytes)"
+                        )
+                    elif kind == "capa":
+                        o.writeln(f"capa:      {value}")
+                    elif kind == "call":
+                        o.print(
+                            "calls:   [decoration]{direction}[/] {name} [decoration]({delta:+})[/]",
+                            direction=value.direction,
+                            name=value.name,
+                            delta=value.delta,
+                        )
+                    elif kind == "api":
+                        o.print(
+                            "api:       {name}",
+                            name=value.name,
+                        )
+                    elif kind == "string":
+                        visible_tags = _visible_tags(value.tags)
+                        if visible_tags:
+                            o.print(_render_string_line(o, value.value, visible_tags))
+                        else:
+                            o.print(
+                                'string:   [decoration]"[/]{string}[decoration]"[/]',
+                                string=value.value,
+                            )
+                    else:
+                        raise ValueError(f"unexpected function row kind: {kind}")
 
-                o.print("")
+                if not func.is_thunk:
+                    o.print("")

@@ -2,18 +2,21 @@
 
 ## Architecture
 
-Five layers, each in its own module under the `mapa/` package:
+Seven layers, each in its own module under the `mapa/` package:
 
 | Module | Responsibility |
 |---|---|
-| `mapa/model.py` | Backend-neutral dataclasses: `MapaReport`, `MapaMeta`, `MapaSection`, `MapaLibrary`, `MapaFunction`, `MapaCall`, `MapaCaller`, `MapaString`, `AssemblageRecord` |
+| `mapa/model.py` | Backend-neutral dataclasses: `MapaReport`, `MapaMeta`, `MapaSection`, `MapaLibrary`, `MapaFunction`, `MapaCall`, `MapaCaller`, `MapaString`, `MapaProgramString`, `AssemblageRecord` |
 | `mapa/assemblage.py` | Assemblage CSV loading, column validation, SHA-256 filtering, RVA-to-VA conversion, exact-row deduplication |
 | `mapa/ida_db.py` | IDA database lifecycle: `resolve_database()`, `open_database_session()`, SHA-256 caching, flock-based concurrency guard |
 | `mapa/collector.py` | Populates `MapaReport` from an open `ida_domain.Database`. All IDA queries live here. |
-| `mapa/renderer.py` | Rich-based text rendering from `MapaReport`. No IDA dependency. |
-| `mapa/cli.py` | Argument parsing, capa/assemblage loading, orchestration |
+| `mapa/renderer.py` | Rich-based text rendering and plain single-function summary formatting from `MapaReport`. No IDA dependency. |
+| `mapa/html_renderer.py` | Self-contained `html-map` rendering from `MapaReport`. No IDA dependency. |
+| `mapa/cli.py` | Argument parsing, capa/assemblage loading, output-mode selection, `--open` temp-file/browser handling, orchestration |
 
 `scripts/mapa.py` is a thin entry point that delegates to `mapa.cli.main()`.
+
+The CLI validates output-mode combinations before analysis. For `--output html-map --open`, it renders the HTML once, writes it to a temporary `.html` file via `NamedTemporaryFile(delete=False)`, and opens the browser with `webbrowser.open(file://...)`.
 
 ## Database lifecycle
 
@@ -49,7 +52,12 @@ The collector builds several indexes before the main function loop:
 - thunk_targets: `dict[int, int]` via `_resolve_thunk_target()` — follows code refs then data refs, max depth 5, single-target chains only
 - resolved_callers/callees: built by walking all non-thunk function flowcharts, resolving call targets through thunk chains, classifying as internal vs API
 
-String extraction follows single data-reference chains from each instruction up to depth 10, checking `db.strings.get_at()` at each hop.
+String extraction follows single data-reference chains from each instruction up to depth 10. The collector returns both the discovered string VA and the raw string value for each hit.
+
+The collector stores string data in two shapes:
+
+- `MapaFunction.strings` for the text report and tooltip summaries. These stay function-local and deduplicate by trimmed display value.
+- `MapaReport.program_strings` for `html-map`. These are keyed by string VA, preserve duplicate display values at different addresses, merge tags across repeated references, and track the set of referencing function addresses.
 
 Assemblage data is attached per function during collection. `MapaFunction.assemblage_records` carries zero or more `AssemblageRecord` values for the function start address. The collector does not use Assemblage to rename functions, callers, or callees.
 
@@ -70,9 +78,13 @@ No legacy `ida_*` module calls are used. All queries go through `ida-domain`.
 
 ## Rendering
 
-The renderer prints functions in address order. For each function, it prints the IDA-derived header first and then any Assemblage annotations as `assemblage name:` and `assemblage file:` lines. When multiple distinct Assemblage rows map to one function start address, the renderer prints all of them in order.
+`mapa/renderer.py` prints the text report in function address order. For each function, it prints the IDA-derived header first and then any Assemblage annotations as `assemblage name:` and `assemblage file:` lines. When multiple distinct Assemblage rows map to one function start address, the renderer prints all of them in order.
 
-For source-file separators, the renderer uses the first Assemblage record's normalized source path as the function's primary source path. It tracks the last seen non-empty primary path across the function list. Missing Assemblage data does not trigger a separator and does not reset that state. When a later function introduces a different primary path, the renderer prints a muted horizontal rule with `[ <path> ]` immediately before that function.
+The text renderer also exposes a plain single-function summary formatter used by `html-map` tooltips. The row order matches text mode: Assemblage lines, xrefs, CFG stats, capa matches, internal calls, APIs, and strings.
+
+For source-file separators, the text renderer uses the first Assemblage record's normalized source path as the function's primary source path. It tracks the last seen non-empty primary path across the function list. Missing Assemblage data does not trigger a separator and does not reset that state. When a later function introduces a different primary path, the renderer prints a muted horizontal rule with `[ <path> ]` immediately before that function.
+
+`mapa/html_renderer.py` renders a single self-contained HTML document. It emits a split view: a left function pane and a right string pane, both with independent scrolling. The panes are separated by a draggable vertical divider implemented with a small inline pointer-event handler. The renderer emits one square per function in address order, one program-string row per string VA in address order, tag controls with visible function counts, a small legend for border/fill/dim semantics, right-aligned visible tags in each string row, inline JSON data for tag/string memberships, a single floating tooltip, and a small inline script that handles hover and click locking.
 
 ## String tagging
 
@@ -85,4 +97,4 @@ The `mapa/string_tags/` package has three modules:
 
 The collector tags raw strings before `rstrip()` trimming. When two raw strings collapse to the same display value, their tags and match metadata are merged. `MapaString` carries `tags: tuple[str, ...]` and `tag_matches: tuple[StringTagMatch, ...]`.
 
-The renderer uses a Rich `Text`-based helper to right-align the visible tag column on `string:` rows. The visible tag policy suppresses `#common` when a more-specific tag is also present.
+The text renderer uses a Rich `Text`-based helper to right-align the visible tag column on `string:` rows. The HTML renderer reuses the same visible-tag policy, builds its top tag controls from those visible tags only, shows the distinct-function count for each visible tag, and renders the visible tags right-aligned in each program-string row. The visible tag policy suppresses `#common` when a more-specific tag is also present.

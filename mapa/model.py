@@ -49,6 +49,15 @@ class MapaString:
 
 
 @dataclass
+class MapaProgramString:
+    value: str
+    address: int
+    tags: tuple[str, ...] = ()
+    tag_matches: tuple = ()
+    function_addresses: tuple[int, ...] = ()
+
+
+@dataclass
 class MapaCall:
     name: str
     address: int
@@ -114,3 +123,4 @@ class MapaReport:
     sections: list[MapaSection] = field(default_factory=list)
     libraries: list[MapaLibrary] = field(default_factory=list)
     functions: list[MapaFunction] = field(default_factory=list)
+    program_strings: list[MapaProgramString] = field(default_factory=list)

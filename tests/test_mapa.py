@@ -2,10 +2,18 @@ from __future__ import annotations
 
 from io import StringIO
 
+import pytest
 from rich.console import Console
 from rich.theme import Theme
 
 from mapa.assemblage import load_assemblage_records
+from mapa.cli import (
+    build_parser,
+    open_html_report,
+    validate_output_options,
+    write_temp_html_report,
+)
+from mapa.html_renderer import render_html_map
 from mapa.model import (
     AssemblageRecord,
     MapaCall,
@@ -13,6 +21,7 @@ from mapa.model import (
     MapaFunction,
     MapaLibrary,
     MapaMeta,
+    MapaProgramString,
     MapaReport,
     MapaSection,
     MapaString,
@@ -385,3 +394,174 @@ class TestStringDedup:
     def test_string_rstrip(self):
         s = "hello   \n\t"
         assert s.rstrip() == "hello"
+
+
+class TestHtmlMapRenderer:
+    @staticmethod
+    def _make_report() -> MapaReport:
+        return MapaReport(
+            meta=MapaMeta(name="sample.exe", sha256="abc123", arch="x86_64"),
+            functions=[
+                MapaFunction(
+                    address=0x1000,
+                    name="entry",
+                    strings=[MapaString(value="CreateFileW", address=0x3000, tags=("#common", "#winapi"))],
+                ),
+                MapaFunction(
+                    address=0x2000,
+                    name="worker",
+                    apis=[MapaCall(name="kernel32.dll!CreateFileW", address=0x5000, is_api=True)],
+                    strings=[MapaString(value="inflate", address=0x2000, tags=("#zlib",))],
+                    capa_matches=["write file"],
+                ),
+                MapaFunction(
+                    address=0x3000,
+                    name="helper",
+                    strings=[MapaString(value="normal", address=0x4000, tags=("#common",))],
+                ),
+            ],
+            program_strings=[
+                MapaProgramString(
+                    value="inflate",
+                    address=0x4000,
+                    tags=("#zlib",),
+                    function_addresses=(0x2000,),
+                ),
+                MapaProgramString(
+                    value="CreateFileW",
+                    address=0x3000,
+                    tags=("#common", "#winapi"),
+                    function_addresses=(0x1000,),
+                ),
+                MapaProgramString(
+                    value="normal",
+                    address=0x5000,
+                    tags=("#common",),
+                    function_addresses=(0x3000,),
+                ),
+                MapaProgramString(
+                    value="inflate",
+                    address=0x6000,
+                    tags=("#zlib",),
+                    function_addresses=(0x1000, 0x2000),
+                ),
+            ],
+        )
+
+    def test_cli_parser_accepts_html_map_output(self):
+        parser = build_parser()
+        args = parser.parse_args(["sample.exe", "--output", "html-map"])
+        assert args.output == "html-map"
+
+    def test_open_requires_html_map_output(self):
+        with pytest.raises(ValueError, match="--open requires --output html-map"):
+            validate_output_options("text", True)
+
+    def test_write_temp_html_report(self, tmp_path):
+        report_path = write_temp_html_report("<html>ok</html>", directory=tmp_path)
+        assert report_path.parent == tmp_path
+        assert report_path.read_text(encoding="utf-8") == "<html>ok</html>"
+
+    def test_open_html_report_writes_temp_file_and_uses_opener(self, tmp_path):
+        opened: list[str] = []
+
+        def open_url(url: str) -> bool:
+            opened.append(url)
+            return True
+
+        report_path = open_html_report(
+            "<html>ok</html>",
+            opener=open_url,
+            directory=tmp_path,
+        )
+        assert report_path.parent == tmp_path
+        assert report_path.read_text(encoding="utf-8") == "<html>ok</html>"
+        assert opened == [report_path.as_uri()]
+
+    def test_html_map_is_self_contained(self):
+        html = render_html_map(self._make_report())
+        assert "<style>" in html
+        assert "<script" in html
+        assert "function-grid" in html
+        assert 'class="split-view"' in html
+        assert 'role="separator"' in html
+        assert "<link " not in html
+        assert "<script src=" not in html
+
+    def test_html_map_uses_split_panes_and_resizer(self):
+        html = render_html_map(self._make_report())
+        assert 'id="functions-pane"' in html
+        assert 'id="strings-pane"' in html
+        assert 'id="splitter"' in html
+        assert "setPointerCapture" in html
+        assert "pointerdown" in html
+
+    def test_html_map_shows_tag_counts_and_legend(self):
+        html = render_html_map(self._make_report())
+        assert '#zlib <span class="control-count">(2)</span>' in html
+        assert '#common <span class="control-count">(1)</span>' in html
+        assert 'border = tag · fill = string · dim = matches neither' in html
+
+    def test_html_map_orders_tags_by_function_count_then_name(self):
+        html = render_html_map(self._make_report())
+        zlib = html.index('data-tag="#zlib"')
+        common = html.index('data-tag="#common"')
+        winapi = html.index('data-tag="#winapi"')
+        assert zlib < common < winapi
+
+    def test_html_map_orders_program_strings_by_address_and_shows_addresses(self):
+        html = render_html_map(self._make_report())
+        first = html.index('data-string-address="0x3000"')
+        second = html.index('data-string-address="0x4000"')
+        third = html.index('data-string-address="0x5000"')
+        fourth = html.index('data-string-address="0x6000"')
+        assert first < second < third < fourth
+        assert '0x3000' in html
+        assert '0x6000' in html
+
+    def test_html_map_string_rows_show_visible_tags(self):
+        html = render_html_map(self._make_report())
+        assert 'data-string-address="0x3000"' in html
+        assert 'data-string-tags="#winapi"' in html
+        assert 'data-string-address="0x4000"' in html
+        assert 'data-string-tags="#zlib"' in html
+        assert 'data-string-address="0x5000"' in html
+        assert 'data-string-tags="#common"' in html
+        assert 'class="string-tags">#winapi</span>' in html
+
+    def test_html_map_preserves_duplicate_values_at_distinct_addresses(self):
+        html = render_html_map(self._make_report())
+        assert html.count('data-string-value="inflate"') == 2
+
+    def test_html_map_tooltip_contains_function_summary_text(self):
+        html = render_html_map(self._make_report())
+        assert "function worker @ 0x2000" in html
+        assert "api:       kernel32.dll!CreateFileW" in html
+        assert 'string:   \\\"inflate\\\" #zlib' in html
+        assert "capa:      write file" in html
+
+    def test_html_map_visible_tag_policy_matches_text_renderer(self):
+        html = render_html_map(self._make_report())
+        assert 'data-tag="#winapi"' in html
+        assert 'data-tag="#common"' in html
+        common_control = html.index('data-tag="#common"')
+        createfile_row = html.index('data-string-address="0x3000"')
+        normal_row = html.index('data-string-address="0x5000"')
+        assert common_control < createfile_row < normal_row
+
+    def test_html_map_hides_common_control_when_only_hidden_common_exists(self):
+        report = MapaReport(
+            meta=MapaMeta(name="sample.exe", sha256="abc123"),
+            functions=[MapaFunction(address=0x1000, name="entry")],
+            program_strings=[
+                MapaProgramString(
+                    value="CreateFileW",
+                    address=0x3000,
+                    tags=("#common", "#winapi"),
+                    function_addresses=(0x1000,),
+                )
+            ],
+        )
+        html = render_html_map(report)
+        assert 'data-tag="#winapi"' in html
+        assert 'data-tag="#common"' not in html
