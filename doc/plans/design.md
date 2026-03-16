@@ -50,3 +50,16 @@ Primary queries used:
 - `FunctionFlags.THUNK`, `FunctionFlags.LIB` — function classification
 
 No legacy `ida_*` module calls are used. All queries go through `ida-domain`.
+
+## String tagging
+
+Vendored Quantum Strand string databases live under `mapa/string_tags/data/` in five families: OSS/CRT libraries (gzipped JSONL), expert rules (plain JSONL), Windows API names (gzipped text), global prevalence (gzipped JSONL + binary hash files), and junk-code strings (gzipped JSONL).
+
+The `mapa/string_tags/` package has three modules:
+- `model.py` — `StringTagMatch` and `StringTagResult` dataclasses
+- `loaders.py` — file-format readers using `msgspec`, `gzip`, `hashlib`, and `importlib.resources`
+- `tagger.py` — `StringTagger` class with `tag_string(raw) -> StringTagResult`, plus `load_default_tagger()` which lazily loads and caches all databases process-wide
+
+The collector tags raw strings before `rstrip()` trimming. When two raw strings collapse to the same display value, their tags and match metadata are merged. `MapaString` carries `tags: tuple[str, ...]` and `tag_matches: tuple[StringTagMatch, ...]`.
+
+The renderer uses a Rich `Text`-based helper to right-align the visible tag column on `string:` rows. The visible tag policy suppresses `#common` when a more-specific tag is also present.

@@ -32,7 +32,7 @@ Each function renders as either `thunk <name> @ <address>` or `function <name> @
 - `capa:` — matched capa rule names
 - `calls:` — internal non-library callees with direction and delta
 - `api:` — import/external/library callees
-- `string:` — referenced strings (deduplicated, whitespace-trimmed)
+- `string:` — referenced strings (deduplicated, whitespace-trimmed), with optional right-aligned database tags
 
 Thunk functions show only the header, no body.
 
@@ -50,3 +50,4 @@ When Assemblage data is provided, adjacent functions are grouped by source file 
 - **2026-03-16**: Thunk chain depth limit is 5 (matches capa's `THUNK_CHAIN_DEPTH_DELTA`).
 - **2026-03-16**: CFG stats use `FlowChartFlags.NOEXT | FlowChartFlags.PREDS` to match capa's block enumeration semantics.
 - **2026-03-16**: String extraction follows single data-reference chains up to depth 10, matching capa's `find_data_reference_from_insn`.
+- **2026-03-16**: String rows may carry right-aligned database tags derived from vendored Quantum Strand string databases. Tags include `#<library>` (e.g. `#zlib`, `#openssl`), `#msvc`, `#capa`, `#winapi`, `#common`, and `#code-junk`. Visible tag policy: `#common` is hidden when a more-specific tag is present; `#code-junk` is always shown. Tags are matched against the raw (untrimmed) string value. The underlying model preserves all match metadata even when the renderer suppresses a visible tag.

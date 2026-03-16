@@ -36,6 +36,8 @@ class AssemblageLocation:
 class MapaString:
     value: str
     address: int
+    tags: tuple[str, ...] = ()
+    tag_matches: tuple = ()
 
 
 @dataclass

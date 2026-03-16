@@ -19,6 +19,7 @@ from mapa.model import (
     MapaString,
 )
 from mapa.strings import MAX_STRING_READ, extract_ascii_from_buf, extract_utf16le_from_buf
+from mapa.string_tags.tagger import StringTagger, load_default_tagger
 
 logger = logging.getLogger(__name__)
 
@@ -187,12 +188,15 @@ def collect_report(
     sha256: str = "",
     matches_by_function: dict[int, set[str]] | None = None,
     assemblage_locations: dict[int, Any] | None = None,
+    tagger: StringTagger | None = None,
 ) -> MapaReport:
     """Collect a complete MAPA report from an open IDA database."""
     if matches_by_function is None:
         matches_by_function = {}
     if assemblage_locations is None:
         assemblage_locations = {}
+    if tagger is None:
+        tagger = load_default_tagger()
 
     meta = _collect_meta(db, md5, sha256)
     sections = _collect_sections(db)
@@ -367,7 +371,7 @@ def collect_report(
                 ))
 
         if fc is not None:
-            seen_strings: set[str] = set()
+            seen_strings: dict[str, MapaString] = {}
             fc2 = db.functions.get_flowchart(func, flags=FlowChartFlags.NOEXT | FlowChartFlags.PREDS)
             if fc2 is not None:
                 for block in fc2:
@@ -375,12 +379,29 @@ def collect_report(
                     if insns is None:
                         continue
                     for insn in insns:
-                        s = _find_data_reference_string(db, int(insn.ea))
-                        if s is not None:
-                            stripped = s.rstrip()
-                            if stripped and stripped not in seen_strings:
-                                seen_strings.add(stripped)
-                                mf.strings.append(MapaString(value=stripped, address=int(insn.ea)))
+                        raw = _find_data_reference_string(db, int(insn.ea))
+                        if raw is None:
+                            continue
+                        tag_result = tagger.tag_string(raw)
+                        display = raw.rstrip()
+                        if not display:
+                            continue
+                        if display in seen_strings:
+                            existing = seen_strings[display]
+                            merged_tags = sorted(set(existing.tags) | set(tag_result.tags))
+                            seen_match_keys = {m.sort_key for m in existing.tag_matches}
+                            unique_new = tuple(m for m in tag_result.matches if m.sort_key not in seen_match_keys)
+                            existing.tags = tuple(merged_tags)
+                            existing.tag_matches = existing.tag_matches + unique_new
+                        else:
+                            ms = MapaString(
+                                value=display,
+                                address=int(insn.ea),
+                                tags=tag_result.tags,
+                                tag_matches=tag_result.matches,
+                            )
+                            seen_strings[display] = ms
+                            mf.strings.append(ms)
 
         mf.capa_matches = sorted(matches_by_function.get(ea, set()))
         mapa_functions.append(mf)

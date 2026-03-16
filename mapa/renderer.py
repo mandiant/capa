@@ -51,6 +51,43 @@ class Renderer:
             yield
 
 
+def _visible_tags(tags: tuple[str, ...]) -> list[str]:
+    tag_set = set(tags)
+    has_specific = any(t != "#common" for t in tag_set)
+    result = []
+    for t in tags:
+        if t == "#common" and has_specific:
+            continue
+        result.append(t)
+    return result
+
+
+def _render_string_line(o: Renderer, value: str, tags: list[str]) -> Text:
+    left = Text.from_markup(
+        'string:   [decoration]"[/]{string}[decoration]"[/]'.format(string=escape(value))
+    )
+    right = Text(" ".join(tags), style="dim")
+
+    available = o.console.size.width - (o.indent * 2)
+    min_gap = 1
+    right_len = right.cell_len
+    max_left = available - right_len - min_gap
+    if max_left < 12:
+        combined = left.copy()
+        combined.append(" ")
+        combined.append(right)
+        return combined
+
+    if left.cell_len > max_left:
+        left.truncate(max_left - 1, overflow="ellipsis")
+
+    padding = available - left.cell_len - right_len
+    combined = left.copy()
+    combined.append(" " * padding)
+    combined.append(right)
+    return combined
+
+
 def render_report(report: MapaReport, console: Console) -> None:
     o = Renderer(console)
 
@@ -140,9 +177,13 @@ def render_report(report: MapaReport, console: Console) -> None:
                     )
 
                 for s in func.strings:
-                    o.print(
-                        'string:   [decoration]"[/]{string}[decoration]"[/]',
-                        string=s.value,
-                    )
+                    visible_tags = _visible_tags(s.tags)
+                    if visible_tags:
+                        o.print(_render_string_line(o, s.value, visible_tags))
+                    else:
+                        o.print(
+                            'string:   [decoration]"[/]{string}[decoration]"[/]',
+                            string=s.value,
+                        )
 
                 o.print("")
