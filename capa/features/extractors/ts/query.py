@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 
-from tree_sitter import Language
-from tree_sitter.binding import Query
-import tree_sitter_c_sharp
-import tree_sitter_embedded_template
 import tree_sitter_html
-import tree_sitter_javascript
 import tree_sitter_python
+import tree_sitter_c_sharp
+import tree_sitter_javascript
+import tree_sitter_embedded_template
+from tree_sitter import Query, Language
 
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML
 

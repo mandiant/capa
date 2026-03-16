@@ -178,9 +178,9 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
                 return LANG_CS
             try:
                 return capa.features.extractors.ts.autodetect.get_template_language_ts(self.get_byte_range(node))
-            except:
+            except ValueError:
                 continue
-        raise ValueError(f"failed to identify the template language")
+        raise ValueError("failed to identify the template language")
 
     def get_imported_namespaces(self) -> Iterator[BaseNamespace]:
         for node in self.get_code_sections():

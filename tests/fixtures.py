@@ -15,9 +15,10 @@
 import logging
 import contextlib
 import collections
+from typing import Tuple, Union, Iterator
 from pathlib import Path
 from functools import lru_cache
-from typing import Tuple, Union, Iterator
+
 import pytest
 
 import capa.loader
@@ -341,6 +342,9 @@ def get_binexport_extractor(path):
     buf = path.read_bytes()
 
     return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
+
+@lru_cache(maxsize=1)
 def get_ts_extractor_engine(language, buf):
     import capa.features.extractors.ts.engine
 
@@ -720,6 +724,8 @@ def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHa
         if ch.address.id == cid:
             return ch
     raise ValueError("call not found")
+
+
 def resolve_sample_ts(sample):
     if sample.startswith("cs_"):
         return get_data_path_by_name(sample)
@@ -933,7 +939,10 @@ def get_function_id_ts(scope):
 
 def resolve_scope_ts(scope):
     if scope == "global":
-        inner_fn = lambda extractor: extract_global_features(extractor)
+
+        def inner_fn(extractor):
+            return extract_global_features(extractor)
+
     elif scope == "file":
 
         def inner_fn(extractor):
@@ -1857,6 +1866,9 @@ def dynamic_a0000a6_rd():
     return get_result_doc(
         CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     )
+
+
+@pytest.fixture
 def cs_138cdc_extractor_engine():
     with open(get_data_path_by_name("cs_138cdc"), "rb") as f:
         buf = f.read()

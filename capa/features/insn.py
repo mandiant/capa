@@ -58,11 +58,6 @@ class Property(_AccessFeature):
         super().__init__(value, access=access, description=description)
 
 
-class Property(Feature):
-    def __init__(self, name: str, description=None):
-        super().__init__(name, description=description)
-
-
 class Number(Feature):
     def __init__(self, value: Union[int, float], description=None):
         """

@@ -51,11 +51,11 @@ from capa.features.common import (
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_SCRIPT,
     FORMAT_DRAKVUF,
     FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
-    FORMAT_SCRIPT,
     Format,
 )
 from capa.features.extractors.script import EXT_CS, EXT_ASPX, EXT_HTML

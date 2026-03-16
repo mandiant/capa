@@ -1,8 +1,7 @@
 from typing import List, Tuple
 
 import pytest
-import fixtures
-from fixtures import *
+from fixtures import parametrize, get_ts_extractor, do_test_feature_presence
 from tree_sitter import Node, Tree
 
 from capa.features.insn import API, Number, Property
@@ -288,7 +287,7 @@ def do_test_ts_template_engine_get_template_namespaces(
     assert len(list(engine.get_imported_namespaces())) == len(expected)
     for namespace, expected_namespace in zip(list(engine.get_imported_namespaces()), expected):
         assert isinstance(namespace.node, Node)
-        assert engine.is_aspx_import_directive(namespace.node) == True
+        assert engine.is_aspx_import_directive(namespace.node)
         aspx_namespace = engine.get_aspx_namespace(namespace.node)
         assert aspx_namespace is not None and aspx_namespace.name == expected_namespace
         assert namespace.name == expected_namespace
@@ -1200,4 +1199,4 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
     "sample_ts, scope_ts, feature, expected", FEATURE_PRESENCE_TESTS_SCRIPTS, indirect=["sample_ts", "scope_ts"]
 )
 def test_ts_extractor(sample_ts, scope_ts, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_ts_extractor, sample_ts, scope_ts, feature, expected)
+    do_test_feature_presence(get_ts_extractor, sample_ts, scope_ts, feature, expected)

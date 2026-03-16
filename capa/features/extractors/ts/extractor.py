@@ -13,10 +13,16 @@ from capa.features.extractors.script import LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.tools import BaseNamespace
 from capa.features.extractors.ts.engine import TreeSitterHTMLEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
 from capa.features.extractors.ts.function import PSEUDO_MAIN, TSFunctionInner
-from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    Feature,
+    BBHandle,
+    InsnHandle,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 
-class TreeSitterFeatureExtractor(FeatureExtractor):
+class TreeSitterFeatureExtractor(StaticFeatureExtractor):
     engines: List[TreeSitterExtractorEngine]
     template_engine: TreeSitterTemplateEngine
     language: str

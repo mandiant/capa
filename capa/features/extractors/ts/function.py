@@ -1,4 +1,3 @@
-import itertools
 from typing import Tuple, Iterator
 from dataclasses import dataclass
 

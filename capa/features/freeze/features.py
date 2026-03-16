@@ -328,12 +328,6 @@ class PropertyFeature(FeatureModel):
     description: Optional[str] = None
 
 
-class PropertyFeature(FeatureModel):
-    type: str = "property"
-    property: str
-    description: Optional[str]
-
-
 class NumberFeature(FeatureModel):
     type: Literal["number"] = "number"
     number: Union[int, float]
@@ -377,6 +371,7 @@ Feature = Annotated[
         OSFeature,
         ArchFeature,
         FormatFeature,
+        ScriptLanguageFeature,
         MatchFeature,
         CharacteristicFeature,
         ExportFeature,
