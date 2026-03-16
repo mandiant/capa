@@ -99,7 +99,12 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
 
     elif addr.type is AddressType.PROCESS:
         assert isinstance(addr.value, tuple)
-        ppid, pid = addr.value
+        if len(addr.value) == 2:
+            ppid, pid = addr.value
+        elif len(addr.value) == 3:
+            ppid, pid, _process_id = addr.value
+        else:
+            raise ValueError(f"invalid process address tuple shape: {addr.value!r}")
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         return capa_pb2.Address(
@@ -112,7 +117,12 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
 
     elif addr.type is AddressType.THREAD:
         assert isinstance(addr.value, tuple)
-        ppid, pid, tid = addr.value
+        if len(addr.value) == 3:
+            ppid, pid, tid = addr.value
+        elif len(addr.value) == 5:
+            ppid, pid, tid, _process_id, _thread_id = addr.value
+        else:
+            raise ValueError(f"invalid thread address tuple shape: {addr.value!r}")
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         assert isinstance(tid, int)
@@ -127,7 +137,12 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
 
     elif addr.type is AddressType.CALL:
         assert isinstance(addr.value, tuple)
-        ppid, pid, tid, id_ = addr.value
+        if len(addr.value) == 4:
+            ppid, pid, tid, id_ = addr.value
+        elif len(addr.value) == 6:
+            ppid, pid, tid, id_, _process_id, _thread_id = addr.value
+        else:
+            raise ValueError(f"invalid call address tuple shape: {addr.value!r}")
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         assert isinstance(tid, int)

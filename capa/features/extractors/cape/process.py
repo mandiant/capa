@@ -31,8 +31,16 @@ def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     process: Process = ph.inner
     threads: list[int] = process.threads
 
-    for thread in threads:
-        address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
+    counts: dict[int, int] = {}
+    for tid in threads:
+        counts[tid] = counts.get(tid, 0) + 1
+
+    seq: dict[int, int] = {}
+    for tid in threads:
+        seq[tid] = seq.get(tid, 0) + 1
+        thread_id = seq[tid] - 1 if counts[tid] > 1 else None
+
+        address: ThreadAddress = ThreadAddress(process=ph.address, tid=tid, id=thread_id)
         yield ThreadHandle(address=address, inner={})
 
 

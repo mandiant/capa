@@ -30,22 +30,32 @@ def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
     get all the created processes for a sample
     """
-    seen_processes = {}
+    counts: dict[tuple[int, int], int] = {}
     for process in report.behavior.processes:
-        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
+        key = (process.parent_id, process.process_id)
+        counts[key] = counts.get(key, 0) + 1
+
+    seen_processes: dict[tuple[int, int], list] = {}
+    seq: dict[tuple[int, int], int] = {}
+    for process in report.behavior.processes:
+        key = (process.parent_id, process.process_id)
+        seq[key] = seq.get(key, 0) + 1
+        process_id = seq[key] - 1 if counts[key] > 1 else None
+
+        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id, id=process_id)
         yield ProcessHandle(address=addr, inner=process)
 
         # check for pid and ppid reuse
-        if addr not in seen_processes:
-            seen_processes[addr] = [process]
+        if key not in seen_processes:
+            seen_processes[key] = [process]
         else:
             logger.warning(
                 "pid and ppid reuse detected between process %s and process%s: %s",
                 process,
-                "es" if len(seen_processes[addr]) > 1 else "",
-                seen_processes[addr],
+                "es" if len(seen_processes[key]) > 1 else "",
+                seen_processes[key],
             )
-            seen_processes[addr].append(process)
+            seen_processes[key].append(process)
 
 
 def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:

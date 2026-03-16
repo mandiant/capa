@@ -99,7 +99,11 @@ class VMRayExtractor(DynamicFeatureExtractor):
                 )
                 continue
 
-            address: ProcessAddress = ProcessAddress(pid=monitor_process.pid, ppid=monitor_process.ppid)
+            address: ProcessAddress = ProcessAddress(
+                pid=monitor_process.pid,
+                ppid=monitor_process.ppid,
+                id=monitor_process.monitor_id,
+            )
             yield ProcessHandle(address, inner=monitor_process)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
@@ -114,7 +118,11 @@ class VMRayExtractor(DynamicFeatureExtractor):
         for monitor_thread_id in self.analysis.monitor_threads_by_monitor_process[ph.inner.monitor_id]:
             monitor_thread: VMRayMonitorThread = self.analysis.monitor_threads[monitor_thread_id]
 
-            address: ThreadAddress = ThreadAddress(process=ph.address, tid=monitor_thread.tid)
+            address: ThreadAddress = ThreadAddress(
+                process=ph.address,
+                tid=monitor_thread.tid,
+                id=monitor_thread.monitor_id,
+            )
             yield ThreadHandle(address=address, inner=monitor_thread)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:

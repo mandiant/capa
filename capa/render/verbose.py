@@ -65,21 +65,50 @@ def format_address(address: frz.Address) -> str:
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
     elif address.type == frz.AddressType.PROCESS:
         assert isinstance(address.value, tuple)
-        ppid, pid = address.value
+        if len(address.value) == 2:
+            ppid, pid = address.value
+            assert isinstance(ppid, int)
+            assert isinstance(pid, int)
+            return f"process{{pid:{pid}}}"
+        ppid, pid, process_id = address.value
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
+        assert isinstance(process_id, int)
+        if process_id >= 0:
+            return f"process{{pid:{pid},id:{process_id}}}"
         return f"process{{pid:{pid}}}"
     elif address.type == frz.AddressType.THREAD:
         assert isinstance(address.value, tuple)
-        ppid, pid, tid = address.value
+        if len(address.value) == 3:
+            ppid, pid, tid = address.value
+            assert isinstance(ppid, int)
+            assert isinstance(pid, int)
+            assert isinstance(tid, int)
+            return f"process{{pid:{pid},tid:{tid}}}"
+        ppid, pid, tid, process_id, thread_id = address.value
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         assert isinstance(tid, int)
-        return f"process{{pid:{pid},tid:{tid}}}"
+        assert isinstance(process_id, int)
+        assert isinstance(thread_id, int)
+        s = f"process{{pid:{pid},tid:{tid}"
+        if process_id >= 0:
+            s += f",pid_id:{process_id}"
+        if thread_id >= 0:
+            s += f",id:{thread_id}"
+        return s + "}"
     elif address.type == frz.AddressType.CALL:
         assert isinstance(address.value, tuple)
-        ppid, pid, tid, id_ = address.value
-        return f"process{{pid:{pid},tid:{tid},call:{id_}}}"
+        if len(address.value) == 4:
+            ppid, pid, tid, id_ = address.value
+            return f"process{{pid:{pid},tid:{tid},call:{id_}}}"
+        ppid, pid, tid, id_, process_id, thread_id = address.value
+        s = f"process{{pid:{pid},tid:{tid}"
+        if process_id >= 0:
+            s += f",pid_id:{process_id}"
+        if thread_id >= 0:
+            s += f",id:{thread_id}"
+        return s + f",call:{id_}}}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
@@ -116,14 +145,20 @@ def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     process = addr.to_capa()
     assert isinstance(process, capa.features.address.ProcessAddress)
     name = _get_process_name(layout, addr)
-    return f"{name}{{pid:{process.pid}}}"
+    s = f"{name}{{pid:{process.pid}"
+    if process.id is not None:
+        s += f",id:{process.id}"
+    return s + "}"
 
 
 def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     thread = addr.to_capa()
     assert isinstance(thread, capa.features.address.ThreadAddress)
     name = _get_process_name(layout, frz.Address.from_capa(thread.process))
-    return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
+    s = f"{name}{{pid:{thread.process.pid},tid:{thread.tid}"
+    if thread.id is not None:
+        s += f",id:{thread.id}"
+    return s + "}"
 
 
 def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> str:
@@ -134,12 +169,16 @@ def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> 
     call = calls[0]
 
     pname = _get_process_name(layout, frz.Address.from_capa(calls[0].thread.process))
+    thread = call.thread
+    thread_s = f"pid:{thread.process.pid},tid:{thread.tid}"
+    if thread.id is not None:
+        thread_s += f",id:{thread.id}"
     call_ids = [str(call.id) for call in calls]
     if len(call_ids) == 1:
         call_id = call_ids[0]
-        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call_id}}}"
+        return f"{pname}{{{thread_s},call:{call_id}}}"
     else:
-        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},calls:{{{','.join(call_ids)}}}}}"
+        return f"{pname}{{{thread_s},calls:{{{','.join(call_ids)}}}}}"
 
 
 def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
@@ -160,7 +199,10 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
 
     newline = "\n"
     # Use default (non-dim) styling for API details so they remain readable in -vv output
-    return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{newline.join(s)}"
+    thread_s = f"pid:{call.thread.process.pid},tid:{call.thread.tid}"
+    if call.thread.id is not None:
+        thread_s += f",id:{call.thread.id}"
+    return f"{pname}{{{thread_s},call:{call.id}}}\n{newline.join(s)}"
 
 
 def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:

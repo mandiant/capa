@@ -91,13 +91,40 @@ class Address(HashableModel):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
 
         elif isinstance(a, capa.features.address.ProcessAddress):
-            return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
+            if a.id is None:
+                return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
+            return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid, a.id))
 
         elif isinstance(a, capa.features.address.ThreadAddress):
-            return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
+            if a.process.id is None and a.id is None:
+                return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
+            return cls(
+                type=AddressType.THREAD,
+                value=(
+                    a.process.ppid,
+                    a.process.pid,
+                    a.tid,
+                    a.process.id if a.process.id is not None else -1,
+                    a.id if a.id is not None else -1,
+                ),
+            )
 
         elif isinstance(a, capa.features.address.DynamicCallAddress):
-            return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
+            if a.thread.process.id is None and a.thread.id is None:
+                return cls(
+                    type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id)
+                )
+            return cls(
+                type=AddressType.CALL,
+                value=(
+                    a.thread.process.ppid,
+                    a.thread.process.pid,
+                    a.thread.tid,
+                    a.id,
+                    a.thread.process.id if a.thread.process.id is not None else -1,
+                    a.thread.id if a.thread.id is not None else -1,
+                ),
+            )
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
@@ -137,30 +164,73 @@ class Address(HashableModel):
 
         elif self.type is AddressType.PROCESS:
             assert isinstance(self.value, tuple)
-            ppid, pid = self.value
-            assert isinstance(ppid, int)
-            assert isinstance(pid, int)
-            return capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
+            if len(self.value) == 2:
+                ppid, pid = self.value
+                assert isinstance(ppid, int)
+                assert isinstance(pid, int)
+                return capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
+            elif len(self.value) == 3:
+                ppid, pid, process_id = self.value
+                assert isinstance(ppid, int)
+                assert isinstance(pid, int)
+                assert isinstance(process_id, int)
+                return capa.features.address.ProcessAddress(
+                    ppid=ppid, pid=pid, id=process_id if process_id >= 0 else None
+                )
+            else:
+                raise ValueError(f"invalid process address tuple shape: {self.value!r}")
 
         elif self.type is AddressType.THREAD:
             assert isinstance(self.value, tuple)
-            ppid, pid, tid = self.value
-            assert isinstance(ppid, int)
-            assert isinstance(pid, int)
-            assert isinstance(tid, int)
-            return capa.features.address.ThreadAddress(
-                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
-            )
+            if len(self.value) == 3:
+                ppid, pid, tid = self.value
+                assert isinstance(ppid, int)
+                assert isinstance(pid, int)
+                assert isinstance(tid, int)
+                return capa.features.address.ThreadAddress(
+                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                )
+            elif len(self.value) == 5:
+                ppid, pid, tid, process_id, thread_id = self.value
+                assert isinstance(ppid, int)
+                assert isinstance(pid, int)
+                assert isinstance(tid, int)
+                assert isinstance(process_id, int)
+                assert isinstance(thread_id, int)
+                return capa.features.address.ThreadAddress(
+                    process=capa.features.address.ProcessAddress(
+                        ppid=ppid, pid=pid, id=process_id if process_id >= 0 else None
+                    ),
+                    tid=tid,
+                    id=thread_id if thread_id >= 0 else None,
+                )
+            else:
+                raise ValueError(f"invalid thread address tuple shape: {self.value!r}")
 
         elif self.type is AddressType.CALL:
             assert isinstance(self.value, tuple)
-            ppid, pid, tid, id_ = self.value
-            return capa.features.address.DynamicCallAddress(
-                thread=capa.features.address.ThreadAddress(
-                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
-                ),
-                id=id_,
-            )
+            if len(self.value) == 4:
+                ppid, pid, tid, id_ = self.value
+                return capa.features.address.DynamicCallAddress(
+                    thread=capa.features.address.ThreadAddress(
+                        process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                    ),
+                    id=id_,
+                )
+            elif len(self.value) == 6:
+                ppid, pid, tid, id_, process_id, thread_id = self.value
+                return capa.features.address.DynamicCallAddress(
+                    thread=capa.features.address.ThreadAddress(
+                        process=capa.features.address.ProcessAddress(
+                            ppid=ppid, pid=pid, id=process_id if process_id >= 0 else None
+                        ),
+                        tid=tid,
+                        id=thread_id if thread_id >= 0 else None,
+                    ),
+                    id=id_,
+                )
+            else:
+                raise ValueError(f"invalid call address tuple shape: {self.value!r}")
 
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS

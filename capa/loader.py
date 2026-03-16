@@ -712,14 +712,14 @@ def compute_dynamic_layout(
         threads_by_process[p.address] = []
 
         for t in extractor.get_threads(p):
-            calls_by_thread[t.address] = []
+            calls_by_thread.setdefault(t.address, [])
 
             for c in extractor.get_calls(p, t):
                 if c.address in matched_calls:
                     names_by_call[c.address] = extractor.get_call_name(p, t, c)
                     calls_by_thread[t.address].append(c.address)
 
-            if calls_by_thread[t.address]:
+            if calls_by_thread[t.address] and t.address not in matched_threads:
                 matched_threads.add(t.address)
                 threads_by_process[p.address].append(t.address)
 

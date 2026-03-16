@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import abc
+from typing import Optional
 
 
 class Address(abc.ABC):
@@ -52,51 +53,59 @@ class AbsoluteVirtualAddress(int, Address):
 class ProcessAddress(Address):
     """an address of a process in a dynamic execution trace"""
 
-    def __init__(self, pid: int, ppid: int = 0):
+    def __init__(self, pid: int, ppid: int = 0, id: Optional[int] = None):
         assert ppid >= 0
         assert pid > 0
         self.ppid = ppid
         self.pid = pid
+        self.id = id
 
     def __repr__(self):
-        return "process(%s%s)" % (
+        s = "process(%s%s%s)" % (
             f"ppid: {self.ppid}, " if self.ppid > 0 else "",
             f"pid: {self.pid}",
+            f", id: {self.id}" if self.id is not None else "",
         )
+        return s
 
     def __hash__(self):
-        return hash((self.ppid, self.pid))
+        return hash((self.ppid, self.pid, self.id))
 
     def __eq__(self, other):
         assert isinstance(other, ProcessAddress)
-        return (self.ppid, self.pid) == (other.ppid, other.pid)
+        return (self.ppid, self.pid, self.id) == (other.ppid, other.pid, other.id)
 
     def __lt__(self, other):
         assert isinstance(other, ProcessAddress)
-        return (self.ppid, self.pid) < (other.ppid, other.pid)
+        self_id = self.id if self.id is not None else -1
+        other_id = other.id if other.id is not None else -1
+        return (self.ppid, self.pid, self_id) < (other.ppid, other.pid, other_id)
 
 
 class ThreadAddress(Address):
     """addresses a thread in a dynamic execution trace"""
 
-    def __init__(self, process: ProcessAddress, tid: int):
+    def __init__(self, process: ProcessAddress, tid: int, id: Optional[int] = None):
         assert tid >= 0
         self.process = process
         self.tid = tid
+        self.id = id
 
     def __repr__(self):
-        return f"{self.process}, thread(tid: {self.tid})"
+        return f"{self.process}, thread(tid: {self.tid}{f', id: {self.id}' if self.id is not None else ''})"
 
     def __hash__(self):
-        return hash((self.process, self.tid))
+        return hash((self.process, self.tid, self.id))
 
     def __eq__(self, other):
         assert isinstance(other, ThreadAddress)
-        return (self.process, self.tid) == (other.process, other.tid)
+        return (self.process, self.tid, self.id) == (other.process, other.tid, other.id)
 
     def __lt__(self, other):
         assert isinstance(other, ThreadAddress)
-        return (self.process, self.tid) < (other.process, other.tid)
+        self_id = self.id if self.id is not None else -1
+        other_id = other.id if other.id is not None else -1
+        return (self.process, self.tid, self_id) < (other.process, other.tid, other_id)
 
 
 class DynamicCallAddress(Address):
