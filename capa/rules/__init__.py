@@ -1440,6 +1440,12 @@ class RuleSet:
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
         self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
+        self._dependencies_by_rule_name = {
+            rule.name: set(rule.get_dependencies(self.rules_by_namespace)) for rule in rules
+        }
+        self._rules_with_global_features = {
+            rule.name for rule in rules if self._statement_uses_global_features(rule.statement)
+        }
 
         # these structures are unstable and may change before the next major release.
         scores_by_rule: dict[str, int] = {}
@@ -1909,6 +1915,19 @@ class RuleSet:
                             break
         return RuleSet(list(rules_filtered))
 
+    @staticmethod
+    def _statement_uses_global_features(node: Union[Feature, Statement]) -> bool:
+        if isinstance(node, capa.features.common.Feature):
+            return capa.features.common.is_global_feature(node)
+
+        return any(RuleSet._statement_uses_global_features(child) for child in node.get_children())
+
+    def _clone_with_rule_subset(self, rule_names: set[str]) -> "RuleSet":
+        clone = copy.copy(self)
+        clone.rules = {name: self.rules[name] for name in self.rules if name in rule_names}
+        clone._rules_with_global_features = self._rules_with_global_features & rule_names
+        return clone
+
     def filter_rules_by_meta_features(self, features: FeatureSet) -> "RuleSet":
         """
         Return a new RuleSet with rules removed whose global-feature requirements
@@ -1944,6 +1963,16 @@ class RuleSet:
         if not global_features:
             return self
 
+        rules_with_global_features = getattr(self, "_rules_with_global_features", None)
+        if rules_with_global_features is None:
+            rules_with_global_features = {
+                rule.name for rule in self.rules.values() if self._statement_uses_global_features(rule.statement)
+            }
+            self._rules_with_global_features = rules_with_global_features
+
+        if not rules_with_global_features:
+            return self
+
         def can_match(node) -> bool:
             """
             Return True if *node* might be satisfiable given the known global features.
@@ -1960,10 +1989,13 @@ class RuleSet:
             if isinstance(node, ceng.And):
                 return all(can_match(child) for child in node.children)
 
-            if isinstance(node, (ceng.Or, ceng.Some)):
-                if isinstance(node, ceng.Some) and node.count == 0:
-                    return True
+            if isinstance(node, ceng.Or):
                 return any(can_match(child) for child in node.children)
+
+            if isinstance(node, ceng.Some):
+                if node.count == 0:
+                    return True
+                return sum(1 for child in node.children if can_match(child)) >= node.count
 
             if isinstance(node, ceng.Range):
                 if node.min == 0:
@@ -1972,17 +2004,34 @@ class RuleSet:
 
             return True
 
-        compatible_rule_names = {rule.name for rule in self.rules.values() if can_match(rule.statement)}
+        compatible_rule_names = set(self.rules) - rules_with_global_features
+        compatible_rule_names.update(
+            rule_name for rule_name in rules_with_global_features if can_match(self.rules[rule_name].statement)
+        )
 
         if len(compatible_rule_names) == len(self.rules):
             return self
 
         # Collect the surviving rules plus all of their transitive dependencies
         # to ensure RuleSet dependency invariants are maintained.
-        all_rules = list(self.rules.values())
-        rules_to_keep: set[str] = set()
-        for rule_name in compatible_rule_names:
-            rules_to_keep.update(r.name for r in get_rules_and_dependencies(all_rules, rule_name))
+        dependencies_by_rule_name = getattr(self, "_dependencies_by_rule_name", None)
+        if dependencies_by_rule_name is None:
+            dependencies_by_rule_name = {
+                rule.name: set(rule.get_dependencies(self.rules_by_namespace)) for rule in self.rules.values()
+            }
+            self._dependencies_by_rule_name = dependencies_by_rule_name
+
+        rules_to_keep: set[str] = set(compatible_rule_names)
+        stack: list[str] = list(compatible_rule_names)
+        while stack:
+            rule_name = stack.pop()
+            for dependency_name in dependencies_by_rule_name.get(rule_name, ()):
+                if dependency_name not in self.rules:
+                    continue
+                if dependency_name in rules_to_keep:
+                    continue
+                rules_to_keep.add(dependency_name)
+                stack.append(dependency_name)
 
         pruned_count = len(self.rules) - len(rules_to_keep)
         if pruned_count == 0:
@@ -1991,11 +2040,10 @@ class RuleSet:
         logger.debug(
             "pruned %d rules incompatible with global features (%s)",
             pruned_count,
-            ", ".join(f"{f.name}: {f.value}" for f in global_features),
+            ", ".join(f"{f.name}: {f.value!r}" for f in global_features),
         )
 
-        surviving_rules = [self.rules[name] for name in rules_to_keep]
-        return RuleSet(surviving_rules)
+        return self._clone_with_rule_subset(rules_to_keep)
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
@@ -2109,6 +2157,8 @@ class RuleSet:
                         if wanted_bytes.evaluate(bytes_features):
                             candidate_rule_names.add(rule_name)
 
+        candidate_rule_names.intersection_update(self.rules)
+
         # No rules can possibly match, so quickly return.
         if not candidate_rule_names:
             return (features, {})
@@ -2168,6 +2218,11 @@ class RuleSet:
                         new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
 
                     if new_candidates:
+                        new_candidates = [
+                            rule_name
+                            for rule_name in new_candidates
+                            if rule_name in self.rules and rule_name not in candidate_rule_names
+                        ]
                         candidate_rule_names.update(new_candidates)
                         candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
                         RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
@@ -2198,7 +2253,7 @@ class RuleSet:
         features, matches = self._match(scope, features, addr)
 
         if paranoid:
-            rules: list[Rule] = self.rules_by_scope[scope]
+            rules: list[Rule] = [rule for rule in self.rules_by_scope[scope] if rule.name in self.rules]
             paranoid_features, paranoid_matches = capa.engine.match(rules, features, addr)
 
             if features != paranoid_features:
