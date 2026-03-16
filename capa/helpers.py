@@ -217,8 +217,6 @@ def get_format_from_report(sample: Path) -> str:
             # which is not going to be much use, but its correct.
             return FORMAT_CAPE
 
-    return FORMAT_UNKNOWN
-
 
 def get_format_from_extension(sample: Path) -> str:
     format_ = FORMAT_UNKNOWN

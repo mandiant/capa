@@ -123,6 +123,9 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
         assert isinstance(f.value, str)
         return FormatFeature(format=f.value, description=f.description)
 
+    elif isinstance(f, capa.features.common.ScriptLanguage):
+        return ScriptLanguageFeature(language=str(f.value), description=f.description)
+
     elif isinstance(f, capa.features.common.MatchedRule):
         assert isinstance(f.value, str)
         return MatchFeature(match=f.value, description=f.description)
@@ -229,6 +232,12 @@ class ArchFeature(FeatureModel):
 class FormatFeature(FeatureModel):
     type: Literal["format"] = "format"
     format: str
+    description: Optional[str] = None
+
+
+class ScriptLanguageFeature(FeatureModel):
+    type: Literal["script language"] = "script language"
+    language: str
     description: Optional[str] = None
 
 

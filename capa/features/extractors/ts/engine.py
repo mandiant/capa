@@ -16,10 +16,10 @@ import re
 from typing import List, Tuple, Iterator, Optional
 
 from tree_sitter import Node, Tree, Parser, QueryCursor
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 
 import capa.features.extractors.ts.autodetect
 from capa.features.address import FileOffsetRangeAddress
+from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import (
     BINDINGS,
     QueryBinding,

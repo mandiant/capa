@@ -20,7 +20,6 @@ from pathlib import Path
 from functools import lru_cache
 
 import pytest
-from capa.features.extractors.script import LANG_CS, LANG_PY
 
 import capa.loader
 import capa.features.file
@@ -45,6 +44,7 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
+from capa.features.extractors.script import LANG_CS, LANG_PY
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -1876,7 +1876,7 @@ def dynamic_a0000a6_rd():
 
 @pytest.fixture
 def cs_138cdc_extractor_engine():
-    with Path(CS_DATA_PATH_BY_NAME["cs_138cdc"]).open("rb") as f:
+    with Path(get_data_path_by_name("cs_138cdc")).open("rb") as f:
         buf = f.read()
     return get_ts_extractor_engine(LANG_CS, buf)
 
