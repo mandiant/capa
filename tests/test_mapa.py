@@ -398,6 +398,20 @@ class TestStringDedup:
 
 class TestHtmlMapRenderer:
     @staticmethod
+    def _make_assemblage_record(
+        name: str, source_file: str, address: int
+    ) -> AssemblageRecord:
+        return AssemblageRecord(
+            sha256="abc123",
+            name=name,
+            start_rva=address,
+            end_rva=address + 0x10,
+            address=address,
+            end_address=address + 0x10,
+            source_file=source_file,
+        )
+
+    @staticmethod
     def _make_report() -> MapaReport:
         return MapaReport(
             meta=MapaMeta(name="sample.exe", sha256="abc123", arch="x86_64"),
@@ -406,6 +420,11 @@ class TestHtmlMapRenderer:
                     address=0x1000,
                     name="entry",
                     strings=[MapaString(value="CreateFileW", address=0x3000, tags=("#common", "#winapi"))],
+                    assemblage_records=[
+                        TestHtmlMapRenderer._make_assemblage_record(
+                            "entry_src", "src/core/a.c (MD5: 11)", 0x1000
+                        )
+                    ],
                 ),
                 MapaFunction(
                     address=0x2000,
@@ -413,11 +432,21 @@ class TestHtmlMapRenderer:
                     apis=[MapaCall(name="kernel32.dll!CreateFileW", address=0x5000, is_api=True)],
                     strings=[MapaString(value="inflate", address=0x2000, tags=("#zlib",))],
                     capa_matches=["write file"],
+                    assemblage_records=[
+                        TestHtmlMapRenderer._make_assemblage_record(
+                            "worker_src", "src/core/a.c (MD5: 22)", 0x2000
+                        )
+                    ],
                 ),
                 MapaFunction(
                     address=0x3000,
                     name="helper",
                     strings=[MapaString(value="normal", address=0x4000, tags=("#common",))],
+                    assemblage_records=[
+                        TestHtmlMapRenderer._make_assemblage_record(
+                            "helper_src", "src/core/b.c (MD5: 33)", 0x3000
+                        )
+                    ],
                 ),
             ],
             program_strings=[
@@ -500,7 +529,7 @@ class TestHtmlMapRenderer:
         html = render_html_map(self._make_report())
         assert '#zlib <span class="control-count">(2)</span>' in html
         assert '#common <span class="control-count">(1)</span>' in html
-        assert 'border = tag · fill = string · dim = matches neither' in html
+        assert 'border = tag · fill = string · yellow halo = source query · dim = matches none' in html
 
     def test_html_map_orders_tags_by_function_count_then_name(self):
         html = render_html_map(self._make_report())
@@ -529,6 +558,24 @@ class TestHtmlMapRenderer:
         assert 'data-string-tags="#common"' in html
         assert 'class="string-tags">#winapi</span>' in html
 
+    def test_html_map_exposes_source_query_input_and_prefix_logic(self):
+        html = render_html_map(self._make_report())
+        assert 'id="source-query"' in html
+        assert 'type="text"' in html
+        assert 'spellcheck="false"' in html
+        assert 'src/core/a.c' in html
+        assert '"sourceGroups":{"src/core/a.c":[0,1],"src/core/b.c":[2]}' in html
+        assert 'startsWith(activeSourceQuery)' in html
+        assert "sourceQueryInput.addEventListener('input'" in html
+        assert 'yellow halo = source query' in html
+
+    def test_html_map_function_boxes_include_source_path_attribute(self):
+        html = render_html_map(self._make_report())
+        assert 'data-function-index="0"' in html
+        assert 'data-source-path="src/core/a.c"' in html
+        assert 'data-function-index="2"' in html
+        assert 'data-source-path="src/core/b.c"' in html
+
     def test_html_map_preserves_duplicate_values_at_distinct_addresses(self):
         html = render_html_map(self._make_report())
         assert html.count('data-string-value="inflate"') == 2
@@ -536,6 +583,7 @@ class TestHtmlMapRenderer:
     def test_html_map_tooltip_contains_function_summary_text(self):
         html = render_html_map(self._make_report())
         assert "function worker @ 0x2000" in html
+        assert "assemblage file: src/core/a.c" in html
         assert "api:       kernel32.dll!CreateFileW" in html
         assert 'string:   \\\"inflate\\\" #zlib' in html
         assert "capa:      write file" in html

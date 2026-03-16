@@ -39,14 +39,21 @@ def _collect_tag_entries(report: MapaReport) -> list[tuple[str, list[int]]]:
     )
 
 
+def _get_primary_source_path(report_function) -> str | None:
+    if not report_function.assemblage_records:
+        return None
+    source_path = report_function.assemblage_records[0].source_path
+    if not source_path:
+        return None
+    return source_path
+
+
 def _render_string_row(program_string: MapaProgramString, index: int) -> str:
     visible_tags = _visible_tags(program_string.tags)
     tag_text = " ".join(visible_tags)
     tag_span = ""
     if tag_text:
-        tag_span = (
-            f'<span class="string-tags">{escape(tag_text)}</span>'
-        )
+        tag_span = f'<span class="string-tags">{escape(tag_text)}</span>'
 
     return (
         f'<button type="button" class="string-row" data-string-index="{index}" '
@@ -67,10 +74,22 @@ def render_html_map(report: MapaReport) -> str:
     }
     program_strings = sorted(report.program_strings, key=lambda string: string.address)
 
+    functions = []
+    source_groups: dict[str, list[int]] = {}
+    for index, function in enumerate(report.functions):
+        source_path = _get_primary_source_path(function)
+        functions.append(
+            {
+                "summary": render_function_summary_text(function),
+                "sourcePath": source_path,
+            }
+        )
+        if source_path is not None:
+            source_groups.setdefault(source_path, []).append(index)
+
     data = {
-        "functions": [
-            render_function_summary_text(function) for function in report.functions
-        ],
+        "functions": functions,
+        "sourceGroups": source_groups,
         "tags": {tag: function_indices for tag, function_indices in tag_entries},
         "strings": [
             {
@@ -95,7 +114,7 @@ def render_html_map(report: MapaReport) -> str:
         "<style>",
         "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}",
         "html,body{height:100%}",
-        ":root{--bg:#fff;--fg:#111;--muted:#666;--line:#cfcfcf;--fill:#d9d9d9;--tag:#2563eb;--string:#93c5fd;--square:10px}",
+        ":root{--bg:#fff;--fg:#111;--muted:#666;--line:#cfcfcf;--fill:#d9d9d9;--tag:#2563eb;--string:#93c5fd;--source:#facc15;--square:10px}",
         "body{height:100vh;overflow:hidden;background:var(--bg);color:var(--fg);font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:16px}",
         "body.is-resizing{cursor:col-resize}",
         "body.is-resizing *{user-select:none}",
@@ -106,6 +125,7 @@ def render_html_map(report: MapaReport) -> str:
         ".control{border:1px solid var(--line);background:transparent;color:inherit;padding:2px 6px;font:inherit;cursor:pointer}",
         ".control.is-active{border-color:var(--tag);color:var(--tag)}",
         ".control-count{color:var(--muted)}",
+        ".source-query{width:100%;min-height:1.4em;border:0;outline:none;background:transparent;color:inherit;font:inherit;appearance:none}",
         ".split-view{flex:1;min-height:0;display:flex;align-items:stretch}",
         ".pane{min-height:0;display:flex;flex-direction:column;overflow:auto;border:1px solid var(--line);background:var(--bg)}",
         ".pane-functions{flex:0 0 50%;min-width:18rem}",
@@ -116,7 +136,9 @@ def render_html_map(report: MapaReport) -> str:
         ".splitter::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line);transform:translateX(-50%)}",
         ".splitter::after{content:'';position:absolute;top:50%;left:50%;width:3px;height:40px;border-left:1px solid var(--line);border-right:1px solid var(--line);transform:translate(-50%,-50%)}",
         ".function-grid{display:flex;flex-wrap:wrap;gap:1px;align-content:flex-start}",
-        ".function-box{width:var(--square);height:var(--square);border:1px solid var(--line);background:var(--fill)}",
+        ".function-box{position:relative;z-index:0;width:var(--square);height:var(--square);border:1px solid var(--line);background:var(--fill)}",
+        ".function-box::before{content:'';position:absolute;inset:-1px;background:var(--source);opacity:0;pointer-events:none}",
+        ".function-box.is-source::before{opacity:.45}",
         ".function-box.is-tag{border-color:var(--tag)}",
         ".function-box.is-string{background:var(--string)}",
         ".function-box.is-dim{opacity:.5}",
@@ -155,7 +177,8 @@ def render_html_map(report: MapaReport) -> str:
     parts.extend(
         [
             "</div>",
-            '<div class="legend">border = tag · fill = string · dim = matches neither</div>',
+            '<div class="legend">border = tag · fill = string · yellow halo = source query · dim = matches none</div>',
+            '<input type="text" id="source-query" class="source-query" aria-label="source path prefix" spellcheck="false" autocomplete="off">',
             "</section>",
             '<div class="split-view" id="split-view">',
             '<section class="pane pane-functions" id="functions-pane">',
@@ -166,10 +189,12 @@ def render_html_map(report: MapaReport) -> str:
     )
 
     for index, function in enumerate(report.functions):
+        source_path = _get_primary_source_path(function) or ""
         parts.append(
             (
                 f'<div class="function-box" data-function-index="{index}" '
                 f'data-function-address="{escape(hex(function.address), quote=True)}" '
+                f'data-source-path="{escape(source_path, quote=True)}" '
                 f'aria-label="{escape(function.name, quote=True)}"></div>'
             )
         )
@@ -207,26 +232,56 @@ def render_html_map(report: MapaReport) -> str:
             "const functionBoxes=[...document.querySelectorAll('.function-box')];",
             "const tagControls=[...document.querySelectorAll('.tag-control')];",
             "const stringRows=[...document.querySelectorAll('.string-row')];",
+            "const sourceQueryInput=document.getElementById('source-query');",
             "const tooltip=document.getElementById('tooltip');",
             "let hoveredTag=null;",
             "let lockedTag=null;",
             "let hoveredString=null;",
             "let lockedString=null;",
+            "let hoveredSource=null;",
+            "let lockedSource=null;",
             "let activePointerId=null;",
             "const getActiveTag=()=>lockedTag??hoveredTag;",
             "const getActiveString=()=>lockedString??hoveredString;",
+            "const getSourceQuery=()=>sourceQueryInput.value;",
+            "const getActiveSourceQuery=()=>{",
+            "  const sourceQuery=getSourceQuery();",
+            "  if(sourceQuery!==''){return sourceQuery;}",
+            "  return hoveredSource;",
+            "};",
+            "const getSourceMatchMode=(activeSourceQuery)=>{",
+            "  if(activeSourceQuery===null){return null;}",
+            "  if(getSourceQuery()===''){return 'exact';}",
+            "  if(lockedSource!==null && activeSourceQuery===lockedSource){return 'exact';}",
+            "  return 'prefix';",
+            "};",
+            "const getSourceMatches=(activeSourceQuery,sourceMatchMode)=>{",
+            "  if(activeSourceQuery===null){return new Set();}",
+            "  if(sourceMatchMode==='exact'){return new Set(data.sourceGroups[activeSourceQuery]||[]);}",
+            "  return new Set(data.functions.flatMap((functionData,index)=>functionData.sourcePath!==null && functionData.sourcePath.startsWith(activeSourceQuery)?[index]:[]));",
+            "};",
+            "const updateSourceQueryTitle=(activeSourceQuery,sourceMatches,sourceMatchMode)=>{",
+            "  if(activeSourceQuery===null){sourceQueryInput.title='';return;}",
+            "  const count=sourceMatches.size;",
+            "  sourceQueryInput.title=`${sourceMatchMode} source query · ${count} function${count===1?'':'s'}`;",
+            "};",
             "const updateView=()=>{",
             "  const activeTag=getActiveTag();",
             "  const activeString=getActiveString();",
+            "  const activeSourceQuery=getActiveSourceQuery();",
+            "  const sourceMatchMode=getSourceMatchMode(activeSourceQuery);",
             "  const tagMatches=new Set(activeTag?data.tags[activeTag]||[]:[]);",
             "  const stringMatches=new Set(activeString===null?[]:data.strings[activeString].functionIndices);",
-            "  const hasActive=activeTag!==null||activeString!==null;",
+            "  const sourceMatches=getSourceMatches(activeSourceQuery,sourceMatchMode);",
+            "  const hasActive=activeTag!==null||activeString!==null||activeSourceQuery!==null;",
             "  functionBoxes.forEach((box,index)=>{",
             "    const isTag=tagMatches.has(index);",
             "    const isString=stringMatches.has(index);",
+            "    const isSource=sourceMatches.has(index);",
             "    box.classList.toggle('is-tag',isTag);",
             "    box.classList.toggle('is-string',isString);",
-            "    box.classList.toggle('is-dim',hasActive && !(isTag || isString));",
+            "    box.classList.toggle('is-source',isSource);",
+            "    box.classList.toggle('is-dim',hasActive && !(isTag || isString || isSource));",
             "  });",
             "  tagControls.forEach((control)=>{",
             "    control.classList.toggle('is-active',control.dataset.tag===activeTag);",
@@ -234,6 +289,7 @@ def render_html_map(report: MapaReport) -> str:
             "  stringRows.forEach((row)=>{",
             "    row.classList.toggle('is-active',Number(row.dataset.stringIndex)===activeString);",
             "  });",
+            "  updateSourceQueryTitle(activeSourceQuery,sourceMatches,sourceMatchMode);",
             "};",
             "const placeTooltip=(event)=>{",
             "  const offset=12;",
@@ -268,12 +324,33 @@ def render_html_map(report: MapaReport) -> str:
             "};",
             "functionBoxes.forEach((box,index)=>{",
             "  box.addEventListener('mouseenter',(event)=>{",
-            "    tooltip.textContent=data.functions[index];",
+            "    tooltip.textContent=data.functions[index].summary;",
             "    tooltip.classList.add('is-visible');",
+            "    if(getSourceQuery()===''){hoveredSource=data.functions[index].sourcePath;updateView();}",
             "    placeTooltip(event);",
             "  });",
             "  box.addEventListener('mousemove',placeTooltip);",
-            "  box.addEventListener('mouseleave',()=>{tooltip.classList.remove('is-visible');});",
+            "  box.addEventListener('mouseleave',()=>{",
+            "    tooltip.classList.remove('is-visible');",
+            "    if(getSourceQuery()===''){hoveredSource=null;updateView();}",
+            "  });",
+            "  box.addEventListener('click',()=>{",
+            "    const sourcePath=data.functions[index].sourcePath;",
+            "    if(sourcePath===null){return;}",
+            "    if(lockedSource===sourcePath && getSourceQuery()===sourcePath){",
+            "      lockedSource=null;",
+            "      hoveredSource=null;",
+            "      sourceQueryInput.value='';",
+            "      updateView();",
+            "      return;",
+            "    }",
+            "    lockedSource=sourcePath;",
+            "    hoveredSource=null;",
+            "    sourceQueryInput.value=sourcePath;",
+            "    sourceQueryInput.focus();",
+            "    sourceQueryInput.setSelectionRange(sourcePath.length,sourcePath.length);",
+            "    updateView();",
+            "  });",
             "});",
             "tagControls.forEach((control)=>{",
             "  control.addEventListener('mouseenter',()=>{if(lockedTag===null){hoveredTag=control.dataset.tag;updateView();}});",
@@ -284,6 +361,15 @@ def render_html_map(report: MapaReport) -> str:
             "  row.addEventListener('mouseenter',()=>{if(lockedString===null){hoveredString=Number(row.dataset.stringIndex);updateView();}});",
             "  row.addEventListener('mouseleave',()=>{if(lockedString===null){hoveredString=null;updateView();}});",
             "  row.addEventListener('click',()=>{const index=Number(row.dataset.stringIndex);lockedString=lockedString===index?null:index;hoveredString=null;updateView();});",
+            "});",
+            "sourceQueryInput.addEventListener('focus',()=>{hoveredSource=null;updateView();});",
+            "sourceQueryInput.addEventListener('input',()=>{if(getSourceQuery()===''){lockedSource=null;}updateView();});",
+            "sourceQueryInput.addEventListener('keydown',(event)=>{",
+            "  if(event.key!=='Escape'){return;}",
+            "  lockedSource=null;",
+            "  hoveredSource=null;",
+            "  sourceQueryInput.value='';",
+            "  updateView();",
             "});",
             "splitter.addEventListener('pointerdown',(event)=>{",
             "  activePointerId=event.pointerId;",
