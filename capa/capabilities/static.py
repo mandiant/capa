@@ -156,8 +156,11 @@ def find_static_capabilities(
     all_bb_matches: MatchResults = collections.defaultdict(list)
     all_insn_matches: MatchResults = collections.defaultdict(list)
 
-    feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
-    library_functions: tuple[rdoc.LibraryFunction, ...] = ()
+    # Accumulate into lists to avoid O(n²) tuple concatenation.
+    # Tuples are immutable, so `t += (x,)` copies the entire tuple each time.
+    # For binaries with thousands of functions this becomes quadratic in memory work.
+    function_feature_counts: list[rdoc.FunctionFeatureCount] = []
+    library_functions_list: list[rdoc.LibraryFunction] = []
 
     # Prune rules that cannot match this binary's global features (OS, arch, format)
     # once, before the per-function matching loop.  This eliminates rules that could
@@ -186,20 +189,20 @@ def find_static_capabilities(
             if extractor.is_library_function(f.address):
                 function_name = extractor.get_function_name(f.address)
                 logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
-                library_functions += (
-                    rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name),
+                library_functions_list.append(
+                    rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name)
                 )
-                n_libs = len(library_functions)
+                n_libs = len(library_functions_list)
                 percentage = round(100 * (n_libs / n_funcs))
                 pbar.update(task, postfix=f"skipped {n_libs} library functions, {percentage}%")
                 pbar.advance(task)
                 continue
 
             code_capabilities = find_code_capabilities(ruleset, extractor, f)
-            feature_counts.functions += (
+            function_feature_counts.append(
                 rdoc.FunctionFeatureCount(
                     address=frz.Address.from_capa(f.address), count=code_capabilities.feature_count
-                ),
+                )
             )
             t1 = time.time()
 
@@ -240,7 +243,11 @@ def find_static_capabilities(
         capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
     all_file_capabilities = find_file_capabilities(ruleset, extractor, function_and_lower_features)
-    feature_counts.file = all_file_capabilities.feature_count
+
+    feature_counts = rdoc.StaticFeatureCounts(
+        file=all_file_capabilities.feature_count,
+        functions=tuple(function_feature_counts),
+    )
 
     matches: MatchResults = dict(
         itertools.chain(
@@ -254,4 +261,4 @@ def find_static_capabilities(
         )
     )
 
-    return Capabilities(matches, feature_counts, library_functions)
+    return Capabilities(matches, feature_counts, tuple(library_functions_list))

@@ -113,6 +113,11 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
+    - name: Cache vivisect workspaces
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: tests/data/**/*.viv
+        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
@@ -155,7 +160,7 @@ jobs:
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
-        python ./.github/binja/download_headless.py --serial ${{ env.BN_SERIAL }} --output .github/binja/BinaryNinja-headless.zip
+        python ./.github/binja/download_headless.py --serial ${BN_SERIAL} --output .github/binja/BinaryNinja-headless.zip
         unzip .github/binja/BinaryNinja-headless.zip -d .github/binja/
         python .github/binja/binaryninja/scripts/install_api.py --install-on-root --silent
     - name: Run tests

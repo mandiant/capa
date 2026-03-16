@@ -16,6 +16,7 @@
 """
 Extract files relevant to capa analysis from VMRay Analysis Archive and create a new ZIP file.
 """
+
 import sys
 import logging
 import zipfile

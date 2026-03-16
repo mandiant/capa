@@ -2,6 +2,21 @@
 
 See `capa -h` for all supported arguments and usage examples.
 
+## Ways to consume capa output
+
+| Method | Output / interface | Typical use |
+|--------|--------------------|-------------|
+| **CLI** | Text (default, `-v`, `-vv`), JSON (`-j`), or other formats | Scripting, CI, one-off analysis |
+| [**IDA Pro**](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) | capa Explorer plugin inside IDA | Interactive analysis with jump-to-address |
+| [**Ghidra**](https://github.com/mandiant/capa/tree/master/capa/ghidra/plugin) | capa Explorer plugin inside Ghidra | Interactive analysis with Ghidra integration |
+| [**Binary Ninja**](https://github.com/mandiant/capa/tree/master/capa/features/extractors/binja) | capa run using Binary Ninja as the analysis backend | Interactive analysis with Binary Ninja integration |
+| [**Dynamic (Sandbox)**](https://www.mandiant.com/resources/blog/dynamic-capa-executable-behavior-cape-sandbox) | capa run on dynamic sandbox report (CAPE, VMRay, etc.) | Dynamic analysis of sandbox output |
+| [**Web (capa Explorer)**](https://mandiant.github.io/capa/explorer/) | Web UI (upload JSON or load from URL) | Sharing results, viewing from VirusTotal or similar |
+
+## Default vs verbose output
+
+By default, capa shows only *top-level* rule matches: capabilities that are not already implied by another displayed rule. For example, if a rule "persist via Run registry key" matches and it *contains* a match for "set registry value", the default output lists only "persist via Run registry key". This keeps the default output short while still reflecting all detected capabilities at the top level. Use **`-v`** to see all rule matches, including nested ones. Use **`-vv`** for an even more detailed view that shows how each rule matched.
+
 ## tips and tricks
 
 ### only run selected rules
@@ -11,7 +26,7 @@ For example, `capa -t william.ballenthin@mandiant.com` runs rules that reference
 
 ### only analyze selected functions
 Use the `--restrict-to-functions` option to extract capabilities from only a selected set of functions. This is useful for analyzing 
-large functions and figuring out their capabilities and their address of occurance; for example: PEB access, RC4 encryption, etc.
+large functions and figuring out their capabilities and their address of occurrence; for example: PEB access, RC4 encryption, etc.
 
 To use this, you can copy the virtual addresses from your favorite disassembler and pass them to capa as follows:
 `capa sample.exe --restrict-to-functions 0x4019C0,0x401CD0`. If you add the `-v` option then capa will extract the interesting parts of a function for you.

@@ -17,6 +17,7 @@ import io
 from typing import Union, Iterator, Optional
 
 import rich.console
+from rich.markup import escape
 from rich.progress import Text
 
 import capa.render.result_document as rd
@@ -24,21 +25,21 @@ import capa.render.result_document as rd
 
 def bold(s: str) -> Text:
     """draw attention to the given string"""
-    return Text.from_markup(f"[cyan]{s}")
+    return Text.from_markup(f"[cyan]{escape(s)}")
 
 
 def bold2(s: str) -> Text:
     """draw attention to the given string, within a `bold` section"""
-    return Text.from_markup(f"[green]{s}")
+    return Text.from_markup(f"[green]{escape(s)}")
 
 
 def mute(s: str) -> Text:
     """draw attention away from the given string"""
-    return Text.from_markup(f"[dim]{s}")
+    return Text.from_markup(f"[dim]{escape(s)}")
 
 
 def warn(s: str) -> Text:
-    return Text.from_markup(f"[yellow]{s}")
+    return Text.from_markup(f"[yellow]{escape(s)}")
 
 
 def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
