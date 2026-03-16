@@ -368,6 +368,7 @@ Feature = Annotated[
         OSFeature,
         ArchFeature,
         FormatFeature,
+        ScriptLanguageFeature,
         MatchFeature,
         CharacteristicFeature,
         ExportFeature,
