@@ -129,7 +129,12 @@ class Address(HashableModel):
             return capa.features.address.FileOffsetAddress(self.value)
 
         elif self.type is AddressType.FILE_RANGE:
-            start_byte, end_byte = self.value
+            if isinstance(self.value, (tuple, list)) and len(self.value) >= 2:
+                start_byte, end_byte = self.value[:2]
+            elif isinstance(self.value, int):
+                start_byte = end_byte = self.value
+            else:
+                start_byte = end_byte = 0
             return capa.features.address.FileOffsetRangeAddress(start_byte, end_byte)
 
         elif self.type is AddressType.DN_TOKEN:

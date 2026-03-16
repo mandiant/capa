@@ -1,4 +1,19 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import List, Tuple, Union, Iterator
+from pathlib import Path
 
 import capa.features.extractors.script
 import capa.features.extractors.ts.file
@@ -17,6 +32,7 @@ from capa.features.extractors.base_extractor import (
     Feature,
     BBHandle,
     InsnHandle,
+    SampleHashes,
     FunctionHandle,
     StaticFeatureExtractor,
 )
@@ -26,12 +42,15 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
     engines: List[TreeSitterExtractorEngine]
     template_engine: TreeSitterTemplateEngine
     language: str
-    path: str
+    path: Path
 
-    def __init__(self, path: str):
-        super().__init__()
+    def __init__(self, path: Path):
+        super().__init__(
+            # Tree-Sitter currently does not yield hash information about the sample in its output
+            hashes=SampleHashes(md5="", sha1="", sha256="")
+        )
         self.path = path
-        with open(self.path, "rb") as f:
+        with self.path.open("rb") as f:
             buf = f.read()
 
         try:
@@ -60,8 +79,10 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
         return engines
 
     def extract_code_from_html(
-        self, buf: bytes, namespaces: set[BaseNamespace] = set()
+        self, buf: bytes, namespaces: set[BaseNamespace] | None = None
     ) -> List[TreeSitterExtractorEngine]:
+        if namespaces is None:
+            namespaces = set()
         return list(TreeSitterHTMLEngine(buf, namespaces).get_parsed_code_sections())
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
@@ -93,7 +114,8 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
         for engine in self.engines:
             yield self.get_pseudo_main_function(engine)
             for node in engine.get_function_definitions():
-                name = engine.get_str(engine.get_function_definition_name(node))
+                name_node = engine.get_function_definition_name(node)
+                name = engine.get_str(name_node) if name_node is not None else ""
                 yield FunctionHandle(engine.get_address(node), TSFunctionInner(node, name, engine))
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

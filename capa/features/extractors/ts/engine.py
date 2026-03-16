@@ -1,7 +1,21 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
 from typing import List, Tuple, Iterator, Optional
 
-from tree_sitter import Node, Tree, Parser
+from tree_sitter import Node, Tree, Parser, QueryCursor
 
 import capa.features.extractors.ts.autodetect
 from capa.features.address import FileOffsetRangeAddress
@@ -29,8 +43,7 @@ class TreeSitterBaseEngine:
         self.tree = self.parse()
 
     def parse(self) -> Tree:
-        parser = Parser()
-        parser.set_language(self.query.language)
+        parser = Parser(self.query.language)
         return parser.parse(self.buf)
 
     def get_byte_range(self, node: Node) -> bytes:
@@ -57,11 +70,15 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         language: str,
         buf: bytes,
         buf_offset: int = 0,
-        additional_namespaces: set[BaseNamespace] = set(),
+        additional_namespaces: set[BaseNamespace] | None = None,
     ):
         super().__init__(language, buf)
         self.buf_offset = buf_offset
         self.language_toolkit = LANGUAGE_TOOLKITS[language]
+
+        if additional_namespaces is None:
+            additional_namespaces = set()
+
         self.namespaces = set(self.get_processed_namespaces())
         self.namespaces = self.namespaces.union(additional_namespaces)
 
@@ -69,12 +86,14 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         return FileOffsetRangeAddress(self.buf_offset + node.start_byte, self.buf_offset + node.end_byte)
 
     def get_new_object_names(self, node: Node) -> Iterator[Node]:
-        for obj_node, _ in self.query.new_object_name.captures(node):
-            yield obj_node
+        cursor = QueryCursor(self.query.new_object_name)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_property_names(self, node: Node) -> Iterator[Node]:
-        for pt_node, _ in self.query.property_name.captures(node):
-            yield pt_node
+        cursor = QueryCursor(self.query.property_name)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_processed_property_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured property name nodes and their associated proper names (see process_property
@@ -86,23 +105,28 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
     def get_function_definitions(self, node: Optional[Node] = None) -> Iterator[Node]:
         node = self.tree.root_node if node is None else node
-        for fd_node, _ in self.query.function_definition.captures(node):
-            yield fd_node
+        cursor = QueryCursor(self.query.function_definition)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
-    def get_function_definition_name(self, node: Node) -> Node:
+    def get_function_definition_name(self, node: Node) -> Node | None:
         return node.child_by_field_name(self.query.function_definition_field_name)
 
     def get_function_definition_names(self, node: Node) -> Iterator[Node]:
         for fd_node in self.get_function_definitions(node):
-            yield self.get_function_definition_name(fd_node)
+            name_node = self.get_function_definition_name(fd_node)
+            if name_node is not None:
+                yield name_node
 
     def get_function_call_names(self, node: Node) -> Iterator[Node]:
-        for fcn_node, _ in self.query.function_call_name.captures(node):
-            yield fcn_node
+        cursor = QueryCursor(self.query.function_call_name)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_imported_constants(self, node: Node) -> Iterator[Node]:
-        for ic_node, _ in self.query.imported_constant_name.captures(node):
-            yield ic_node
+        cursor = QueryCursor(self.query.imported_constant_name)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_processed_imported_constants(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured imported constant nodes and their associated proper names (see process_imported_constant
@@ -113,29 +137,35 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
                 yield ic_node, ic_name
 
     def get_string_literals(self, node: Node) -> Iterator[Node]:
-        for str_node, _ in self.query.string_literal.captures(node):
-            yield str_node
+        cursor = QueryCursor(self.query.string_literal)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_integer_literals(self, node: Node) -> Iterator[Node]:
-        for int_node, _ in self.query.integer_literal.captures(node):
-            yield int_node
+        cursor = QueryCursor(self.query.integer_literal)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_namespaces(self, node: Optional[Node] = None) -> List[Tuple[Node, str]]:
-        return self.query.namespace.captures(self.tree.root_node if node is None else node)
+        cursor = QueryCursor(self.query.namespace)
+        captures = cursor.captures(self.tree.root_node if node is None else node)
+        return [(ns_node, query_name) for query_name, nodes in captures.items() for ns_node in nodes]
 
     def get_processed_namespaces(self, node: Optional[Node] = None) -> Iterator[BaseNamespace]:
         for ns_node, query_name in self.get_namespaces(node):
-            for namespace in self.language_toolkit.process_namespace(ns_node, query_name, self.get_str):
-                yield namespace
+            yield from self.language_toolkit.process_namespace(ns_node, query_name, self.get_str)
 
     def get_global_statements(self) -> Iterator[Node]:
-        for node, _ in self.query.global_statement.captures(self.tree.root_node):
-            yield node
+        cursor = QueryCursor(self.query.global_statement)
+        for nodes in cursor.captures(self.tree.root_node).values():
+            yield from nodes
 
     def get_direct_method_call(self, node: Node) -> Optional[Node]:
-        captures = self.query.direct_method_call.captures(node)
-        if captures:
-            return captures[0][0]
+        cursor = QueryCursor(self.query.direct_method_call)
+        captures = cursor.captures(node)
+        for nodes in captures.values():
+            if nodes:
+                return nodes[0]
         return None
 
 
@@ -152,12 +182,14 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         self.namespaces = set(self.get_namespaces())
 
     def get_code_sections(self) -> Iterator[Node]:
-        for node, _ in self.query.code.captures(self.tree.root_node):
-            yield node
+        cursor = QueryCursor(self.query.code)
+        for nodes in cursor.captures(self.tree.root_node).values():
+            yield from nodes
 
     def get_parsed_code_sections(self) -> Iterator[TreeSitterExtractorEngine]:
         for node in self.get_code_sections():
-            # TODO: support JS
+            # TODO(EdoardoAllegrini): support JS
+            # https://github.com/mandiant/capa/issues/1092
             if self.embedded_language == LANG_CS:
                 yield TreeSitterExtractorEngine(
                     self.embedded_language,
@@ -169,8 +201,9 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
                 raise ValueError(f"parsing of {self.embedded_language} is not supported")
 
     def get_content_sections(self) -> Iterator[Node]:
-        for node, _ in self.query.content.captures(self.tree.root_node):
-            yield node
+        cursor = QueryCursor(self.query.content)
+        for nodes in cursor.captures(self.tree.root_node).values():
+            yield from nodes
 
     def identify_language(self) -> str:
         for node in self.get_code_sections():
@@ -224,17 +257,19 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
     query: HTMLQueryBinding
     namespaces: set[BaseNamespace]
 
-    def __init__(self, buf: bytes, namespaces: set[BaseNamespace] = set()):
+    def __init__(self, buf: bytes, namespaces: set[BaseNamespace] | None = None):
         super().__init__(LANG_HTML, buf)
-        self.namespaces = namespaces
+        self.namespaces = namespaces if namespaces is not None else set()
 
     def get_scripts(self) -> Iterator[Node]:
-        for node, _ in self.query.script_element.captures(self.tree.root_node):
-            yield node
+        cursor = QueryCursor(self.query.script_element)
+        for nodes in cursor.captures(self.tree.root_node).values():
+            yield from nodes
 
     def get_attributes(self, node: Node) -> Iterator[Node]:
-        for att_node, _ in self.query.attribute.captures(node):
-            yield att_node
+        cursor = QueryCursor(self.query.attribute)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_identified_scripts(self) -> Iterator[Tuple[Node, str]]:
         for node in self.get_scripts():
@@ -242,12 +277,14 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
                 yield content_node, self.identify_language(node)
 
     def get_script_contents(self, node: Node) -> Iterator[Node]:
-        for sc_node, _ in self.query.script_content.captures(node):
-            yield sc_node
+        cursor = QueryCursor(self.query.script_content)
+        for nodes in cursor.captures(node).values():
+            yield from nodes
 
     def get_parsed_code_sections(self) -> Iterator[TreeSitterExtractorEngine]:
         for node, language in self.get_identified_scripts():
-            # TODO: support JS
+            # TODO(EdoardoAllegrini): support JS
+            # # https://github.com/mandiant/capa/issues/1092
             if language == LANG_CS:
                 yield TreeSitterExtractorEngine(language, self.get_byte_range(node), node.start_byte, self.namespaces)
 

@@ -127,7 +127,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
         return FormatFeature(format=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.ScriptLanguage):
-        return ScriptLanguageFeature(language=f.value, description=f.description)
+        return ScriptLanguageFeature(language=str(f.value), description=f.description)
 
     elif isinstance(f, capa.features.common.MatchedRule):
         assert isinstance(f.value, str)
@@ -239,9 +239,9 @@ class FormatFeature(FeatureModel):
 
 
 class ScriptLanguageFeature(FeatureModel):
-    type: str = "script language"
+    type: Literal["script language"] = "script language"
     language: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class MatchFeature(FeatureModel):

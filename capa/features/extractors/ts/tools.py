@@ -1,3 +1,17 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import abc
 import json
 import importlib.resources
@@ -15,7 +29,7 @@ class BaseNamespace(abc.ABC):
     """Abstract class for internal representation of the namespace concept, including aliases."""
 
     name: str
-    node: Node = None
+    node: Node | None = None
     alias: str = ""
 
     def __hash__(self):
@@ -162,9 +176,13 @@ class LanguageToolkit:
         return string.strip(self.string_delimiters)
 
     def is_method_call(self, node: Node) -> bool:
+        if node.parent is None:
+            return False
         return node.parent.type == self.method_call_query_type
 
     def is_recursive_property(self, node: Node) -> bool:
+        if node.parent is None:
+            return False
         return node.parent.type == self.property_query_type
 
     @abc.abstractmethod
@@ -210,7 +228,7 @@ class PythonToolkit(LanguageToolkit):
         (("0o, 0O"), 8),
         (("0x", "0X"), 16),
     ]
-    integer_suffixes: Tuple[str, ...] = tuple()
+    integer_suffixes: Tuple[str, ...] = ()
 
     def create_namespace(self, name: str) -> BaseNamespace:
         return PythonImport(name)
@@ -222,8 +240,8 @@ class PythonToolkit(LanguageToolkit):
         return PythonImport(self.get_import_name(get_str(node), module_name), node)
 
     def process_aliased_import(self, node: Node, get_str: Callable, module_name: Optional[str] = None) -> BaseNamespace:
-        name = self.get_import_name(get_str(node.get_child_by_field_name("name")), module_name)
-        alias = get_str(node.get_child_by_field_name("alias"))
+        name = self.get_import_name(get_str(node.child_by_field_name("name")), module_name)
+        alias = get_str(node.child_by_field_name("alias"))
         return PythonImport(name, node, alias)
 
     def process_imports(

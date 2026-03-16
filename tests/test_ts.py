@@ -1,3 +1,17 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import List, Tuple
 
 import pytest
@@ -93,7 +107,10 @@ def do_test_ts_extractor_engine_get_function_definitions(
         assert isinstance(node, Node)
         do_test_ts_base_engine_get_str(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
-        do_test_ts_base_engine_get_str(engine, engine.get_function_definition_name(node), expected_name_range)
+
+        name_node = engine.get_function_definition_name(node)
+        assert name_node is not None, "Expected a valid name node, but got None"
+        do_test_ts_base_engine_get_str(engine, name_node, expected_name_range)
 
     assert len(list(engine.get_function_definition_names(root_node))) == len(expected)
     for node, (_, expected_name_range) in zip(engine.get_function_definition_names(root_node), expected):
@@ -153,7 +170,7 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
     assert len(list(engine.get_processed_property_names(root_node))) == len(expected)
-    for (node, name), expected_name in zip(engine.get_processed_property_names(root_node), expected):
+    for (node, _name), _expected_name in zip(engine.get_processed_property_names(root_node), expected):
         assert isinstance(node, Node)
         do_test_ts_base_engine_get_address(engine, node)
 

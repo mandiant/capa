@@ -355,7 +355,7 @@ def get_ts_extractor_engine(language, buf):
 def get_ts_template_engine(path):
     import capa.features.extractors.ts.engine
 
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         buf = f.read()
     return capa.features.extractors.ts.engine.TreeSitterTemplateEngine(buf)
 
@@ -1870,7 +1870,7 @@ def dynamic_a0000a6_rd():
 
 @pytest.fixture
 def cs_138cdc_extractor_engine():
-    with open(get_data_path_by_name("cs_138cdc"), "rb") as f:
+    with Path(get_data_path_by_name("cs_138cdc")).open("rb") as f:
         buf = f.read()
     return get_ts_extractor_engine(LANG_CS, buf)
 
