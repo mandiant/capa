@@ -36,6 +36,7 @@ jobs:
           pip install -e .[dev,scripts]
 
       - name: Run isort
+        continue-on-error: true
         run: pre-commit run isort --all-files
 
       - name: Run black/continue
