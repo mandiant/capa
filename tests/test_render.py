@@ -29,6 +29,7 @@ import capa.features.address
 import capa.features.basicblock
 import capa.render.result_document
 import capa.render.result_document as rd
+import capa.render.default
 import capa.features.freeze.features
 from capa.render.utils import Console
 
