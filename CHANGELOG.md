@@ -4,6 +4,8 @@
 
 ### New Features
 
+- main: add GitHub, documentation, and issue reporting links to CLI help text @Xavrir #1686
+- main: add verbosity hint to CLI help epilog @Xavrir #1686
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 

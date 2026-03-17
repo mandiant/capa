@@ -972,6 +972,12 @@ def main(argv: Optional[list[str]] = None):
 
           filter rules by meta fields, e.g. rule name or namespace
             capa -t "create TCP socket" suspicious.exe
+
+        Use -v/--verbose and -vv/--vverbose for increasingly detailed output.
+
+        GitHub:        https://github.com/mandiant/capa
+        Documentation: https://github.com/mandiant/capa/tree/master/doc
+        Report issues: https://github.com/mandiant/capa/issues
          """)
 
     parser = argparse.ArgumentParser(
