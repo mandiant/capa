@@ -1407,3 +1407,62 @@ def test_circular_dependency():
     ]
     with pytest.raises(capa.rules.InvalidRule):
         list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
+
+
+def test_invalid_top_level_not_statement():
+    with pytest.raises(capa.rules.InvalidRule, match="top level statement may not be a `not` statement"):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - not:
+                            - number: 1
+                """
+            )
+        )
+
+
+def test_invalid_nested_not_statement():
+    with pytest.raises(capa.rules.InvalidRule, match="nested `not` statements are not supported"):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - and:
+                            - mnemonic: mov
+                            - not:
+                                - not:
+                                    - number: 1
+                """
+            )
+        )
+
+
+def test_invalid_top_level_count_zero_statement():
+    with pytest.raises(capa.rules.InvalidRule, match="top level statement may not be `count\\(...\\): 0`"):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - count(number(100)): 0
+                """
+            )
+        )
