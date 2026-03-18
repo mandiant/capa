@@ -108,9 +108,7 @@ def test_null_feature_extractor():
 
     rules = capa.rules.RuleSet(
         [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+            capa.rules.Rule.from_yaml(textwrap.dedent("""
                     rule:
                         meta:
                             name: create file
@@ -120,9 +118,7 @@ def test_null_feature_extractor():
                         features:
                             - and:
                                 - api: CreateFile
-                    """
-                )
-            ),
+                    """)),
         ]
     )
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)

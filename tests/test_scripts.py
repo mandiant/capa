@@ -142,8 +142,7 @@ def test_proto_conversion(tmp_path):
 
 
 def test_detect_duplicate_features(tmpdir):
-    TEST_RULE_0 = textwrap.dedent(
-        """
+    TEST_RULE_0 = textwrap.dedent("""
         rule:
             meta:
                 name: Test Rule 0
@@ -155,12 +154,10 @@ def test_detect_duplicate_features(tmpdir):
                 - number: 1
                 - not:
                   - string: process
-        """
-    )
+        """)
 
     TEST_RULESET = {
-        "rule_1": textwrap.dedent(
-            """
+        "rule_1": textwrap.dedent("""
                 rule:
                     meta:
                         name: Test Rule 1
@@ -179,10 +176,8 @@ def test_detect_duplicate_features(tmpdir):
                             - count(mnemonic(xor)): 5
                           - not:
                             - os: linux
-            """
-        ),
-        "rule_2": textwrap.dedent(
-            """
+            """),
+        "rule_2": textwrap.dedent("""
                 rule:
                     meta:
                         name: Test Rule 2
@@ -196,10 +191,8 @@ def test_detect_duplicate_features(tmpdir):
                           - and:
                             - api: CreateFile
                             - mnemonic: xor
-            """
-        ),
-        "rule_3": textwrap.dedent(
-            """
+            """),
+        "rule_3": textwrap.dedent("""
                 rule:
                     meta:
                         name: Test Rule 3
@@ -214,8 +207,7 @@ def test_detect_duplicate_features(tmpdir):
                           - and:
                             - api: bind
                             - number: 2
-            """
-        ),
+            """),
     }
 
     """

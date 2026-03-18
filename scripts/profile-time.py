@@ -43,6 +43,7 @@ example:
 
       ^^^ --label or git hash
 """
+
 import sys
 import timeit
 import logging
