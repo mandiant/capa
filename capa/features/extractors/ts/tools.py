@@ -50,7 +50,7 @@ class PythonImport(BaseNamespace):
         """import subprocess ; subprocess.Popen => subprocess.Popen
         from threading import Timer (threading.Timer) => Timer
         """
-        toolkit = LANGUAGE_TOOLKITS[LANG_CS]
+        toolkit = LANGUAGE_TOOLKITS[LANG_PY]
         qualified_names = toolkit.split_name(self.name)
         if len(qualified_names) < 2:
             return name
@@ -224,8 +224,8 @@ class PythonToolkit(LanguageToolkit):
     property_query_type: str = "attribute"
     string_delimiters: str = "\"'"
     integer_prefixes: List[Tuple[Union[str, Tuple[str, ...]], int]] = [
-        (("0b, 0B"), 2),
-        (("0o, 0O"), 8),
+        (("0b", "0B"), 2),
+        (("0o", "0O"), 8),
         (("0x", "0X"), 16),
     ]
     integer_suffixes: Tuple[str, ...] = ()

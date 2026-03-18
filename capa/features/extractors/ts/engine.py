@@ -29,6 +29,11 @@ from capa.features.extractors.ts.query import (
 )
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS, BaseNamespace, CSharpNamespace, LanguageToolkit
 
+_RE_CSHARP_PAGE = re.compile(r'@ .*Page Language\s*=\s*"C#".*'.encode(), re.IGNORECASE)
+_RE_ASPX_IMPORT_DIRECTIVE = re.compile(r"@\s*Import Namespace=".encode(), re.IGNORECASE)
+_RE_ASPX_NAMESPACE = re.compile(r'@\s*Import namespace="(.*?)"'.encode(), re.IGNORECASE)
+_RE_RUNAT_SERVER = re.compile(r'runat\s*=\s*"server"'.encode())
+
 
 class TreeSitterBaseEngine:
     buf: bytes
@@ -227,29 +232,13 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         yield from self.get_imported_namespaces()
 
     def is_c_sharp(self, node: Node) -> bool:
-        return bool(
-            re.match(
-                r'@ .*Page Language\s*=\s*"C#".*'.encode(),
-                self.get_byte_range(node),
-                re.IGNORECASE,
-            )
-        )
+        return bool(_RE_CSHARP_PAGE.match(self.get_byte_range(node)))
 
     def is_aspx_import_directive(self, node: Node) -> bool:
-        return bool(
-            re.match(
-                r"@\s*Import Namespace=".encode(),
-                self.get_byte_range(node),
-                re.IGNORECASE,
-            )
-        )
+        return bool(_RE_ASPX_IMPORT_DIRECTIVE.match(self.get_byte_range(node)))
 
     def get_aspx_namespace(self, node: Node) -> Optional[BaseNamespace]:
-        match = re.search(
-            r'@\s*Import namespace="(.*?)"'.encode(),
-            self.get_byte_range(node),
-            re.IGNORECASE,
-        )
+        match = _RE_ASPX_NAMESPACE.search(self.get_byte_range(node))
         return CSharpNamespace(match.group(1).decode("utf-8"), node) if match is not None else None
 
 
@@ -295,4 +284,4 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
         return LANG_JS
 
     def is_server_side_c_sharp(self, node: Node) -> bool:
-        return bool(re.findall(r'runat\s*=\s*"server"'.encode(), self.get_byte_range(node)))
+        return bool(_RE_RUNAT_SERVER.search(self.get_byte_range(node)))
