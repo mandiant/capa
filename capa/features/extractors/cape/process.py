@@ -16,10 +16,10 @@
 import logging
 from typing import Iterator
 
-from capa.features.common import String, Feature
 from capa.features.address import Address, ThreadAddress
+from capa.features.common import Feature, String
+from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle
 from capa.features.extractors.cape.models import Process
-from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,12 @@ def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
         counts[tid] = counts.get(tid, 0) + 1
 
     seq: dict[int, int] = {}
+    warned_tids: set[int] = set()
     for tid in threads:
+        if counts[tid] > 1 and tid not in warned_tids:
+            logger.warning("tid reuse detected for tid %d in process %s", tid, ph.address)
+            warned_tids.add(tid)
+
         seq[tid] = seq.get(tid, 0) + 1
         thread_id = seq[tid] - 1 if counts[tid] > 1 else None
 

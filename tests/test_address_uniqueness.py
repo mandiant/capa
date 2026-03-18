@@ -15,17 +15,17 @@
 from typing import cast
 from unittest.mock import Mock
 
-from capa.engine import MatchResults
-import capa.loader
 import capa.features.common
 import capa.features.freeze as frz
-from capa.features.address import Address, ThreadAddress, ProcessAddress, DynamicCallAddress
+import capa.loader
+from capa.engine import MatchResults
+from capa.features.address import Address, DynamicCallAddress, ProcessAddress, ThreadAddress
 from capa.features.extractors.base_extractor import (
     CallHandle,
+    DynamicFeatureExtractor,
+    ProcessHandle,
     SampleHashes,
     ThreadHandle,
-    ProcessHandle,
-    DynamicFeatureExtractor,
 )
 
 
@@ -69,7 +69,8 @@ def test_freeze_roundtrip_thread_with_ids():
 
 def test_freeze_roundtrip_call_with_ids():
     addr = DynamicCallAddress(
-        thread=ThreadAddress(process=ProcessAddress(pid=1000, ppid=10, id=5), tid=42, id=9), id=77
+        thread=ThreadAddress(process=ProcessAddress(pid=1000, ppid=10, id=5), tid=42, id=9),
+        id=77,
     )
     frozen = frz.Address.from_capa(addr)
     thawed = frozen.to_capa()

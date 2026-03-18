@@ -12,48 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import logging
-import datetime
 import contextlib
-from typing import Optional
+import datetime
+import logging
+import os
 from pathlib import Path
+from typing import Optional
 
 from rich.console import Console
 from typing_extensions import assert_never
 
+import capa.features.common
+import capa.features.extractors
+import capa.features.extractors.common
+import capa.features.freeze as frz
+import capa.render.result_document as rdoc
 import capa.rules
 import capa.version
-import capa.features.common
-import capa.features.freeze as frz
-import capa.features.extractors
-import capa.render.result_document as rdoc
-import capa.features.extractors.common
-from capa.rules import RuleSet
+from capa.capabilities.common import Capabilities
 from capa.engine import MatchResults
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import UnsupportedArchError, UnsupportedFormatError, UnsupportedOSError
+from capa.features.address import Address
 from capa.features.common import (
-    OS_AUTO,
-    FORMAT_PE,
-    FORMAT_ELF,
     FORMAT_AUTO,
+    FORMAT_BINEXPORT2,
+    FORMAT_BINJA_DB,
     FORMAT_CAPE,
+    FORMAT_DOTNET,
+    FORMAT_DRAKVUF,
+    FORMAT_ELF,
+    FORMAT_PE,
     FORMAT_SC32,
     FORMAT_SC64,
     FORMAT_VMRAY,
-    FORMAT_DOTNET,
-    FORMAT_DRAKVUF,
-    FORMAT_BINJA_DB,
-    FORMAT_BINEXPORT2,
+    OS_AUTO,
 )
-from capa.features.address import Address
-from capa.capabilities.common import Capabilities
 from capa.features.extractors.base_extractor import (
-    SampleHashes,
-    FeatureExtractor,
-    StaticFeatureExtractor,
     DynamicFeatureExtractor,
+    FeatureExtractor,
+    SampleHashes,
+    StaticFeatureExtractor,
 )
+from capa.rules import RuleSet
 
 logger = logging.getLogger(__name__)
 
@@ -388,8 +388,8 @@ def get_extractor(
         if not idalib.load_idalib():
             raise RuntimeError("failed to load IDA idalib module.")
 
-        import idapro
         import ida_auto
+        import idapro
 
         import capa.features.extractors.ida.extractor
 
@@ -408,7 +408,9 @@ def get_extractor(
             #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
             #   -2 - User cancelled operation
             ret = idapro.open_database(
-                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+                str(input_path),
+                run_auto_analysis=True,
+                args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
             )
             if ret != 0:
                 raise RuntimeError("failed to analyze input file")
@@ -521,8 +523,8 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_DOTNET:
-        import capa.features.extractors.pefile
         import capa.features.extractors.dotnetfile
+        import capa.features.extractors.pefile
 
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
         file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input_file))
@@ -539,8 +541,8 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     elif input_format == FORMAT_DRAKVUF:
-        import capa.helpers
         import capa.features.extractors.drakvuf.extractor
+        import capa.helpers
 
         report = capa.helpers.load_jsonl_from_path(input_file)
         file_extractors.append(capa.features.extractors.drakvuf.extractor.DrakvufExtractor.from_report(report))

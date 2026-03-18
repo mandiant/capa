@@ -31,17 +31,17 @@ example::
 
 from typing import cast
 
-from rich.text import Text
 from rich.table import Table
+from rich.text import Text
 
-import capa.rules
-import capa.helpers
-import capa.render.utils as rutils
 import capa.features.freeze as frz
+import capa.helpers
 import capa.render.result_document as rd
-from capa.rules import RuleSet
+import capa.render.utils as rutils
+import capa.rules
 from capa.engine import MatchResults
 from capa.render.utils import Console
+from capa.rules import RuleSet
 
 
 def format_address(address: frz.Address) -> str:
@@ -395,7 +395,10 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                     lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
                 elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                     lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
-                elif rule.meta.scopes.dynamic in (capa.rules.Scope.CALL, capa.rules.Scope.SPAN_OF_CALLS):
+                elif rule.meta.scopes.dynamic in (
+                    capa.rules.Scope.CALL,
+                    capa.rules.Scope.SPAN_OF_CALLS,
+                ):
                     # because we're only in verbose mode, we won't show the full call details (name, args, retval)
                     # we'll only show the details of the thread in which the calls are found.
                     # so select the thread locations and render those.

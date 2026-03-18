@@ -13,31 +13,31 @@
 # limitations under the License.
 
 import logging
-from typing import Iterator
 from pathlib import Path
+from typing import Iterator
 
-import capa.helpers
 import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import Feature
+import capa.helpers
 from capa.features.address import (
     NO_ADDRESS,
-    Address,
-    ThreadAddress,
-    ProcessAddress,
-    DynamicCallAddress,
     AbsoluteVirtualAddress,
+    Address,
+    DynamicCallAddress,
+    ProcessAddress,
+    ThreadAddress,
 )
-from capa.features.extractors.vmray import VMRayAnalysis, VMRayMonitorThread, VMRayMonitorProcess
-from capa.features.extractors.vmray.models import PARAM_TYPE_STR, ParamList, FunctionCall
+from capa.features.common import Feature
 from capa.features.extractors.base_extractor import (
     CallHandle,
+    DynamicFeatureExtractor,
+    ProcessHandle,
     SampleHashes,
     ThreadHandle,
-    ProcessHandle,
-    DynamicFeatureExtractor,
 )
+from capa.features.extractors.vmray import VMRayAnalysis, VMRayMonitorProcess, VMRayMonitorThread
+from capa.features.extractors.vmray.models import PARAM_TYPE_STR, FunctionCall, ParamList
 
 logger = logging.getLogger(__name__)
 

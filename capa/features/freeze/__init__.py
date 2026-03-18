@@ -17,29 +17,29 @@ capa freeze file format: `| capa0000 | + zlib(utf-8(json(...)))`
 """
 
 import json
-import zlib
 import logging
+import zlib
 from enum import Enum
-from typing import Union, Literal, TypeAlias
+from typing import Literal, TypeAlias, Union
 
-from pydantic import Field, BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-import capa.helpers
-import capa.version
-import capa.features.file
-import capa.features.insn
-import capa.features.common
 import capa.features.address
 import capa.features.basicblock
+import capa.features.common
 import capa.features.extractors.null as null
-from capa.helpers import assert_never
-from capa.features.freeze.features import Feature, feature_from_capa
+import capa.features.file
+import capa.features.insn
+import capa.helpers
+import capa.version
 from capa.features.extractors.base_extractor import (
-    SampleHashes,
-    FeatureExtractor,
-    StaticFeatureExtractor,
     DynamicFeatureExtractor,
+    FeatureExtractor,
+    SampleHashes,
+    StaticFeatureExtractor,
 )
+from capa.features.freeze.features import Feature, feature_from_capa
+from capa.helpers import assert_never
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,10 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.ThreadAddress):
             if a.process.id is None and a.id is None:
-                return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
+                return cls(
+                    type=AddressType.THREAD,
+                    value=(a.process.ppid, a.process.pid, a.tid),
+                )
             return cls(
                 type=AddressType.THREAD,
                 value=(
@@ -112,7 +115,13 @@ class Address(HashableModel):
         elif isinstance(a, capa.features.address.DynamicCallAddress):
             if a.thread.process.id is None and a.thread.id is None:
                 return cls(
-                    type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id)
+                    type=AddressType.CALL,
+                    value=(
+                        a.thread.process.ppid,
+                        a.thread.process.pid,
+                        a.thread.tid,
+                        a.id,
+                    ),
                 )
             return cls(
                 type=AddressType.CALL,
@@ -188,7 +197,8 @@ class Address(HashableModel):
                 assert isinstance(pid, int)
                 assert isinstance(tid, int)
                 return capa.features.address.ThreadAddress(
-                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid),
+                    tid=tid,
                 )
             elif len(self.value) == 5:
                 ppid, pid, tid, process_id, thread_id = self.value
@@ -213,7 +223,8 @@ class Address(HashableModel):
                 ppid, pid, tid, id_ = self.value
                 return capa.features.address.DynamicCallAddress(
                     thread=capa.features.address.ThreadAddress(
-                        process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                        process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid),
+                        tid=tid,
                     ),
                     id=id_,
                 )
@@ -222,7 +233,9 @@ class Address(HashableModel):
                 return capa.features.address.DynamicCallAddress(
                     thread=capa.features.address.ThreadAddress(
                         process=capa.features.address.ProcessAddress(
-                            ppid=ppid, pid=pid, id=process_id if process_id >= 0 else None
+                            ppid=ppid,
+                            pid=pid,
+                            id=process_id if process_id >= 0 else None,
                         ),
                         tid=tid,
                         id=thread_id if thread_id >= 0 else None,
@@ -751,8 +764,8 @@ def load(buf: bytes):
 
 
 def main(argv=None):
-    import sys
     import argparse
+    import sys
     from pathlib import Path
 
     import capa.main
