@@ -19,6 +19,7 @@ import fixtures
 
 import capa.features.common
 
+# Ensure Ghidra environment is actually available before running
 ghidra_present = importlib.util.find_spec("pyghidra") is not None and "GHIDRA_INSTALL_DIR" in os.environ
 
 
