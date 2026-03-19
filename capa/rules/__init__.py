@@ -1655,10 +1655,11 @@ class RuleSet:
         # All these features will be evaluated whenever a String feature is encountered.
         string_rules: dict[str, list[Feature]]
         # Mapping from rule name to list of Bytes features that have to match.
-        # All these features will be evaluated whenever a Bytes feature is encountered.
+        # Retained for logging and the emptiness check; candidate selection uses bytes_prefix_index.
         bytes_rules: dict[str, list[Feature]]
-        # Mapping from 4-byte big-endian prefix (as int) to list of (rule_name, pattern) pairs.
-        # Built once at index time; key -1 holds rules with patterns shorter than _BYTES_PREFIX_SIZE.
+        # Mapping from 4-byte prefix (as big-endian uint32) to list of (rule_name, pattern) pairs.
+        # Built once at index time so _match() can bucket-lookup instead of scanning all bytes rules.
+        # Key -1 holds rules whose patterns are shorter than _BYTES_PREFIX_SIZE (linear fallback).
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]]
 
     # this routine is unstable and may change before the next major release.
@@ -2035,8 +2036,12 @@ class RuleSet:
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)
 
-        # Like with String/Regex features above, we have to scan for Bytes to find candidate rules.
-        if feature_index.bytes_rules:
+        # Like with String/Regex features above, Bytes features cannot be matched via hash lookup.
+        # To avoid a linear scan of every bytes rule against every extracted bytes feature,
+        # we bucket rule patterns by their first 4 bytes and only compare patterns whose prefix
+        # matches the extracted value. Patterns shorter than 4 bytes fall back to a linear scan.
+        # See: https://github.com/mandiant/capa/issues/2128
+        if feature_index.bytes_prefix_index:
             bytes_features: FeatureSet = {}
             for feature, locations in features.items():
                 if isinstance(feature, capa.features.common.Bytes):
