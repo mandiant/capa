@@ -25,8 +25,7 @@ from capa.features.common import Arch, Substring
 
 
 def test_optimizer_order():
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -44,8 +43,7 @@ def test_optimizer_order():
                     - or:
                       - number: 1
                       - offset: 4
-        """
-    )
+        """)
     r = capa.rules.Rule.from_yaml(rule)
 
     # before optimization

@@ -46,6 +46,7 @@ Example:
     2022-01-24 22:35:39,839 [INFO] Starting extraction...
     2022-01-24 22:35:42,632 [INFO] Writing results to linter-data.json
 """
+
 import json
 import logging
 import argparse
