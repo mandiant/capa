@@ -887,3 +887,132 @@ def test_index_features_nested_unstable():
 
     assert not index.string_rules
     assert not index.bytes_rules
+
+
+def test_bytes_prefix_index_correctness_unstable():
+    rule_text = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test bytes prefix index
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule_text)
+
+    # 16 NOP bytes - exact match
+    _, matches = match([r], {capa.features.common.Bytes(b"\x90" * 16): {0x0}}, 0x0)
+    assert "test bytes prefix index" in matches
+
+    # 32 NOP bytes - startswith match
+    _, matches = match([r], {capa.features.common.Bytes(b"\x90" * 32): {0x0}}, 0x0)
+    assert "test bytes prefix index" in matches
+
+    # Different bytes should not match
+    _, matches = match([r], {capa.features.common.Bytes(b"\x00" * 16): {0x0}}, 0x0)
+    assert "test bytes prefix index" not in matches
+
+    # Bytes shorter than pattern should not match
+    _, matches = match([r], {capa.features.common.Bytes(b"\x90" * 8): {0x0}}, 0x0)
+    assert "test bytes prefix index" not in matches
+
+
+def test_bytes_prefix_index_collision_unstable():
+    rule_text = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test bytes prefix collision
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: 41 42 43 44 45 46 47 48
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule_text)
+
+    features = {
+        capa.features.common.Bytes(b"ABCD1234"): {0x0},
+        capa.features.common.Bytes(b"ABCDEFGHzz"): {0x1},
+    }
+    _, matches = match([r], features, 0x0)
+    assert "test bytes prefix collision" in matches
+
+
+def test_bytes_prefix_index_short_pattern_fallback_unstable():
+    rule_text = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test bytes short prefix fallback
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: 41 42 43
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule_text)
+
+    _, matches = match([r], {capa.features.common.Bytes(b"ABCDEF"): {0x0}}, 0x0)
+    assert "test bytes short prefix fallback" in matches
+
+    _, matches = match([r], {capa.features.common.Bytes(b"XABCDEF"): {0x0}}, 0x0)
+    assert "test bytes short prefix fallback" not in matches
+
+
+def test_bytes_prefix_index_mixed_short_and_long_patterns_unstable():
+    """A rule with both a short (<4B) and a long (>=4B) bytes pattern exercises both code paths."""
+    short_rule_text = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test short pattern rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: AA BB
+        """
+    )
+    long_rule_text = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test long pattern rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: CC DD EE FF 11 22 33 44
+        """
+    )
+    short_rule = capa.rules.Rule.from_yaml(short_rule_text)
+    long_rule = capa.rules.Rule.from_yaml(long_rule_text)
+
+    # Both rules match their respective extracted values.
+    features = {
+        capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0},
+        capa.features.common.Bytes(b"\xcc\xdd\xee\xff\x11\x22\x33\x44\x55"): {0x1},
+    }
+    _, matches = match([short_rule, long_rule], features, 0x0)
+    assert "test short pattern rule" in matches
+    assert "test long pattern rule" in matches
+
+    # Only the short rule matches when the long pattern is absent.
+    _, matches = match([short_rule, long_rule], {capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0}}, 0x0)
+    assert "test short pattern rule" in matches
+    assert "test long pattern rule" not in matches
+
+    # Only the long rule matches when the short pattern is absent.
+    features_long_only = {
+        capa.features.common.Bytes(b"\xcc\xdd\xee\xff\x11\x22\x33\x44"): {0x0},
+    }
+    _, matches = match([short_rule, long_rule], features_long_only, 0x0)
+    assert "test short pattern rule" not in matches
+    assert "test long pattern rule" in matches

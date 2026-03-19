@@ -52,6 +52,7 @@
 
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
+- rules: pre-filter bytes rule candidates by shared 4-byte prefixes to reduce hot-path bytes scanning @devs6186 #2128
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 
 ### Raw diffs

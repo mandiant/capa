@@ -18,6 +18,7 @@ import zlib
 import pickle
 import hashlib
 import logging
+import dataclasses
 from typing import Optional
 from pathlib import Path
 from dataclasses import dataclass
@@ -164,8 +165,19 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional
         # delete the cache that seems to be invalid.
         path.unlink()
         return None
-    else:
-        return cache.ruleset
+
+    # Ensure loaded indexes have all fields declared by current dataclass definitions.
+    # This catches stale dev caches when _RuleFeatureIndex shape evolves.
+    try:
+        for feature_index in cache.ruleset._feature_indexes_by_scopes.values():
+            for field in dataclasses.fields(feature_index):
+                getattr(feature_index, field.name)
+    except (AttributeError, TypeError):
+        logger.debug("rule set cache has incompatible structure (stale dev build): %s", path)
+        path.unlink()
+        return None
+
+    return cache.ruleset
 
 
 def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:

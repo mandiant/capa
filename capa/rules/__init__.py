@@ -18,6 +18,7 @@ import os
 import re
 import copy
 import uuid
+import struct
 import logging
 import binascii
 import collections
@@ -55,6 +56,12 @@ from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
+
+# Fixed prefix size used to pre-filter extracted bytes features.
+# This narrows candidate selection from all extracted bytes to those
+# sharing a common 4-byte prefix while keeping the implementation simple.
+# See: https://github.com/mandiant/capa/issues/2128
+_BYTES_PREFIX_SIZE = 4
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
@@ -1440,6 +1447,9 @@ class RuleSet:
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
         self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
+        self._rule_indexes_by_scopes = {
+            scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
+        }
 
         # these structures are unstable and may change before the next major release.
         scores_by_rule: dict[str, int] = {}
@@ -1639,8 +1649,14 @@ class RuleSet:
         # All these features will be evaluated whenever a String feature is encountered.
         string_rules: dict[str, list[Feature]]
         # Mapping from rule name to list of Bytes features that have to match.
-        # All these features will be evaluated whenever a Bytes feature is encountered.
+        # Retained for logging and existing tests; candidate selection uses the prefix structures below.
         bytes_rules: dict[str, list[Feature]]
+        # Mapping from 4-byte prefix (as big-endian uint32) to list of (rule_name, pattern) pairs.
+        # Built once at index time so _match() can bucket-lookup instead of scanning all bytes rules.
+        bytes_prefix_rules: dict[int, list[tuple[str, bytes]]]
+        # Rules whose patterns are shorter than _BYTES_PREFIX_SIZE bytes.
+        # These cannot be bucketed by prefix and require a linear scan fallback.
+        bytes_short_rules: list[tuple[str, bytes]]
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
@@ -1793,6 +1809,8 @@ class RuleSet:
         # Ideally we find a way to get rid of all of these, eventually.
         string_rules: dict[str, list[Feature]] = {}
         bytes_rules: dict[str, list[Feature]] = {}
+        bytes_prefix_rules: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
+        bytes_short_rules: list[tuple[str, bytes]] = []
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1826,6 +1844,14 @@ class RuleSet:
 
             if bytes_features:
                 bytes_rules[rule_name] = cast(list[Feature], bytes_features)
+                for bytes_feature in bytes_features:
+                    assert isinstance(bytes_feature.value, bytes)
+                    pattern = bytes_feature.value
+                    if len(pattern) >= _BYTES_PREFIX_SIZE:
+                        prefix = struct.unpack_from(">I", pattern)[0]
+                        bytes_prefix_rules[prefix].append((rule_name, pattern))
+                    else:
+                        bytes_short_rules.append((rule_name, pattern))
 
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
@@ -1839,7 +1865,9 @@ class RuleSet:
             "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
         )
 
-        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
+        return RuleSet._RuleFeatureIndex(
+            rules_by_feature, string_rules, bytes_rules, dict(bytes_prefix_rules), bytes_short_rules
+        )
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> list[Rule]:
@@ -1929,11 +1957,10 @@ class RuleSet:
         """
 
         feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
-        rules: list[Rule] = self.rules_by_scope[scope]
         # Topologic location of rule given its name.
         # That is, rules with a lower index should be evaluated first, since their dependencies
         # will be evaluated later.
-        rule_index_by_rule_name = {rule.name: i for i, rule in enumerate(rules)}
+        rule_index_by_rule_name = self._rule_indexes_by_scopes[scope]
 
         # This algorithm is optimized to evaluate as few rules as possible,
         # because the less work we do, the faster capa can run.
@@ -2003,23 +2030,33 @@ class RuleSet:
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)
 
-        # Like with String/Regex features above, we have to scan for Bytes to find candidate rules.
-        #
-        # We may want to index bytes when they have a common length, like 16 or 32.
-        # This would help us avoid the scanning here, which would improve performance.
-        # The strategy is described here:
-        # https://github.com/mandiant/capa/issues/2128
-        if feature_index.bytes_rules:
-            bytes_features: FeatureSet = {}
-            for feature, locations in features.items():
+        # Like with String/Regex features above, Bytes features cannot be matched via hash lookup.
+        # To avoid a linear scan of every bytes rule against every extracted bytes feature,
+        # we bucket rule patterns by their first 4 bytes and only compare patterns whose prefix
+        # matches the extracted value. Patterns shorter than 4 bytes fall back to a linear scan.
+        # See: https://github.com/mandiant/capa/issues/2128
+        if feature_index.bytes_prefix_rules or feature_index.bytes_short_rules:
+            bytes_values: list[bytes] = []
+            has_short_rules = bool(feature_index.bytes_short_rules)
+            for feature in features:
                 if isinstance(feature, capa.features.common.Bytes):
-                    bytes_features[feature] = locations
+                    assert isinstance(feature.value, bytes)
+                    value = feature.value
+                    if has_short_rules:
+                        bytes_values.append(value)
+                    if len(value) >= _BYTES_PREFIX_SIZE:
+                        prefix = struct.unpack_from(">I", value)[0]
+                        for rule_name, pattern in feature_index.bytes_prefix_rules.get(prefix, ()):
+                            if value.startswith(pattern):
+                                candidate_rule_names.add(rule_name)
 
-            if bytes_features:
-                for rule_name, wanted_bytess in feature_index.bytes_rules.items():
-                    for wanted_bytes in wanted_bytess:
-                        if wanted_bytes.evaluate(bytes_features):
+            if has_short_rules and bytes_values:
+                # Short patterns do not have a fixed-length prefix bucket and require a linear scan.
+                for rule_name, pattern in feature_index.bytes_short_rules:
+                    for value in bytes_values:
+                        if value.startswith(pattern):
                             candidate_rule_names.add(rule_name)
+                            break
 
         # No rules can possibly match, so quickly return.
         if not candidate_rule_names:
