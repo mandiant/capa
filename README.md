@@ -326,3 +326,5 @@ The [capa-testfiles repository](https://github.com/mandiant/capa-testfiles) cont
 
 ## mailing list
 Subscribe to the FLARE mailing list for community announcements! Email "subscribe" to [flare-external@google.com](mailto:flare-external@google.com?subject=subscribe).
+ 
+ 
