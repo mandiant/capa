@@ -1657,6 +1657,9 @@ class RuleSet:
         # Mapping from rule name to list of Bytes features that have to match.
         # All these features will be evaluated whenever a Bytes feature is encountered.
         bytes_rules: dict[str, list[Feature]]
+        # Mapping from 4-byte big-endian prefix (as int) to list of (rule_name, pattern) pairs.
+        # Built once at index time; key -1 holds rules with patterns shorter than _BYTES_PREFIX_SIZE.
+        bytes_prefix_index: dict[int, list[tuple[str, bytes]]]
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
@@ -1855,7 +1858,18 @@ class RuleSet:
             "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
         )
 
-        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
+        bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
+        for rule_name, wanted_bytess in bytes_rules.items():
+            for wanted_bytes in wanted_bytess:
+                assert isinstance(wanted_bytes.value, bytes)
+                pattern = wanted_bytes.value
+                if len(pattern) >= _BYTES_PREFIX_SIZE:
+                    prefix = struct.unpack_from(">I", pattern)[0]
+                    bytes_prefix_index[prefix].append((rule_name, pattern))
+                else:
+                    bytes_prefix_index[-1].append((rule_name, pattern))
+
+        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules, dict(bytes_prefix_index))
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> list[Rule]:
@@ -2029,35 +2043,23 @@ class RuleSet:
                     bytes_features[feature] = locations
 
             if bytes_features:
-                # Build a prefix-indexed lookup for faster bytes pattern matching.
-                # For patterns of length >= _BYTES_PREFIX_SIZE, we only compare
-                # against extracted bytes that share the same fixed-length prefix.
-                # See: https://github.com/mandiant/capa/issues/2128
-                bytes_prefix_index: dict[int, list[bytes]] = collections.defaultdict(list)
+                # Short-pattern rules (key -1) require a linear scan against all extracted bytes.
+                for rule_name, pattern in feature_index.bytes_prefix_index.get(-1, ()):
+                    for feature in bytes_features:
+                        assert isinstance(feature.value, bytes)
+                        if feature.value.startswith(pattern):
+                            candidate_rule_names.add(rule_name)
+                            break
+
+                # For long patterns, group extracted bytes by their 4-byte prefix and look up
+                # only the rules whose pattern prefix matches.
                 for feature in bytes_features:
                     assert isinstance(feature.value, bytes)
                     if len(feature.value) >= _BYTES_PREFIX_SIZE:
-                        bytes_prefix_index[struct.unpack_from(">I", feature.value)[0]].append(feature.value)
-
-                for rule_name, wanted_bytess in feature_index.bytes_rules.items():
-                    for wanted_bytes in wanted_bytess:
-                        assert isinstance(wanted_bytes.value, bytes)
-                        pattern = wanted_bytes.value
-                        pattern_len = len(pattern)
-
-                        if pattern_len < _BYTES_PREFIX_SIZE:
-                            # Pattern shorter than prefix; fall back to linear scan.
-                            if wanted_bytes.evaluate(bytes_features):
+                        prefix = struct.unpack_from(">I", feature.value)[0]
+                        for rule_name, pattern in feature_index.bytes_prefix_index.get(prefix, ()):
+                            if feature.value.startswith(pattern):
                                 candidate_rule_names.add(rule_name)
-                            continue
-
-                        # O(1) prefix lookup: only compare bytes features whose first
-                        # `_BYTES_PREFIX_SIZE` bytes match the pattern prefix.
-                        prefix = struct.unpack_from(">I", pattern)[0]
-                        for value in bytes_prefix_index.get(prefix, ()):
-                            if value.startswith(pattern):
-                                candidate_rule_names.add(rule_name)
-                                break
 
         # No rules can possibly match, so quickly return.
         if not candidate_rule_names:
