@@ -936,135 +936,121 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
     else:
         raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
 
-
 def main(argv: Optional[list[str]] = None):
-    if sys.version_info < (3, 10):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
-
-    if argv is None:
-        argv = sys.argv[1:]
-
-    desc = "The FLARE team's open-source tool to identify capabilities in executable files."
-    epilog = textwrap.dedent("""
-        By default, capa uses a default set of embedded rules.
-        You can see the rule set here:
-          https://github.com/mandiant/capa-rules
-
-        You can load capa JSON output to capa Explorer Web:
-          https://github.com/mandiant/capa/explorer
-
-        To provide your own rule set, use the `-r` flag:
-          capa  --rules /path/to/rules  suspicious.exe
-          capa  -r      /path/to/rules  suspicious.exe
-
-        examples:
-          identify capabilities in a binary
-            capa suspicious.exe
-
-          identify capabilities in 32-bit shellcode, see `-f` for all supported formats
-            capa -f sc32 shellcode.bin
-
-          report match locations
-            capa -v suspicious.exe
-
-          report all feature match details
-            capa -vv suspicious.exe
-
-          filter rules by meta fields, e.g. rule name or namespace
-            capa -t "create TCP socket" suspicious.exe
-         """)
-
-    parser = argparse.ArgumentParser(
-        description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    install_common_args(
-        parser,
-        {
-            "input_file",
-            "format",
-            "backend",
-            "os",
-            "signatures",
-            "rules",
-            "tag",
-            "restrict-to-functions",
-            "restrict-to-processes",
-        },
-    )
-    parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
-    args = parser.parse_args(args=argv)
-
     try:
+        if sys.version_info < (3, 10):
+            raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
+
+        if argv is None:
+            argv = sys.argv[1:]
+
+        desc = "The FLARE team's open-source tool to identify capabilities in executable files."
+        epilog = textwrap.dedent("""
+            By default, capa uses a default set of embedded rules.
+            You can see the rule set here:
+              https://github.com/mandiant/capa-rules
+
+            You can load capa JSON output to capa Explorer Web:
+              https://github.com/mandiant/capa/explorer
+
+            To provide your own rule set, use the `-r` flag:
+              capa  --rules /path/to/rules  suspicious.exe
+              capa  -r      /path/to/rules  suspicious.exe
+
+            examples:
+              identify capabilities in a binary
+                capa suspicious.exe
+
+              identify capabilities in 32-bit shellcode, see `-f` for all supported formats
+                capa -f sc32 shellcode.bin
+
+              report match locations
+                capa -v suspicious.exe
+
+              report all feature match details
+                capa -vv suspicious.exe
+
+              filter rules by meta fields, e.g. rule name or namespace
+                capa -t "create TCP socket" suspicious.exe
+             """)
+
+        parser = argparse.ArgumentParser(
+            description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
+        )
+        install_common_args(
+            parser,
+            {
+                "input_file",
+                "format",
+                "backend",
+                "os",
+                "signatures",
+                "rules",
+                "tag",
+                "restrict-to-functions",
+                "restrict-to-processes",
+            },
+        )
+        parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
+        args = parser.parse_args(args=argv)
+
         handle_common_args(args)
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
-    except ShouldExitError as e:
-        return e.status_code
 
-    if input_format == FORMAT_RESULT:
-        # render the result document immediately,
-        # no need to load the rules or do other processing.
-        result_doc = capa.render.result_document.ResultDocument.from_file(args.input_file)
+        if input_format == FORMAT_RESULT:
+            result_doc = capa.render.result_document.ResultDocument.from_file(args.input_file)
+            if args.json:
+                print(result_doc.model_dump_json(exclude_none=True))
+            elif args.vverbose:
+                print(capa.render.vverbose.render_vverbose(result_doc))
+            elif args.verbose:
+                print(capa.render.verbose.render_verbose(result_doc))
+            else:
+                print(capa.render.default.render_default(result_doc))
+            return 0
 
-        if args.json:
-            print(result_doc.model_dump_json(exclude_none=True))
-        elif args.vverbose:
-            print(capa.render.vverbose.render_vverbose(result_doc))
-        elif args.verbose:
-            print(capa.render.verbose.render_verbose(result_doc))
-        else:
-            print(capa.render.default.render_default(result_doc))
-        return 0
-
-    try:
         rules: RuleSet = get_rules_from_cli(args)
 
         found_limitation = False
         file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
-            # only static extractors have file limitations
             found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
         if input_format in DYNAMIC_FORMATS:
             found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
 
         backend = get_backend_from_cli(args, input_format)
         sample_path = get_sample_path_from_cli(args, backend)
-        if sample_path is None:
-            os_ = "unknown"
-        else:
-            os_ = capa.loader.get_os(sample_path)
+        os_ = "unknown" if sample_path is None else capa.loader.get_os(sample_path)
         extractor: FeatureExtractor = get_extractor_from_cli(args, input_format, backend)
-    except ShouldExitError as e:
-        return e.status_code
 
-    capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        meta: rdoc.Metadata = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities.matches)
+        meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
-    meta: rdoc.Metadata = capa.loader.collect_metadata(
-        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
-    )
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
-
-    if found_limitation:
-        # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
-        # or capa's dynamic feature extractor encountered some limitation e.g. a dotnet sample
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
+        if found_limitation and not (args.verbose or args.vverbose or args.json):
             return E_FILE_LIMITATION
 
-    if args.json:
-        print(capa.render.json.render(meta, rules, capabilities.matches))
-    elif args.vverbose:
-        print(capa.render.vverbose.render(meta, rules, capabilities.matches))
-    elif args.verbose:
-        print(capa.render.verbose.render(meta, rules, capabilities.matches))
-    else:
-        print(capa.render.default.render(meta, rules, capabilities.matches))
-    colorama.deinit()
+        if args.json:
+            print(capa.render.json.render(meta, rules, capabilities.matches))
+        elif args.vverbose:
+            print(capa.render.vverbose.render(meta, rules, capabilities.matches))
+        elif args.verbose:
+            print(capa.render.verbose.render(meta, rules, capabilities.matches))
+        else:
+            print(capa.render.default.render(meta, rules, capabilities.matches))
+        colorama.deinit()
 
-    logger.debug("done.")
+        logger.debug("done.")
+        return 0
 
-    return 0
-
+    except ShouldExitError as e:
+        return e.status_code
+    except SystemExit as e:
+        return e.code
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        return 1
 
 def ida_main():
     import capa.rules
