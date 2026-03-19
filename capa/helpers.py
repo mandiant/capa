@@ -52,6 +52,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_DRAKVUF,
+    FORMAT_SCRIPT,
     FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
@@ -68,6 +69,7 @@ EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 EXTENSIONS_BINJA_DB = "bndb"
+EXTENSIONS_SCRIPT = ("py", "py3")
 
 logger = logging.getLogger("capa")
 
@@ -239,6 +241,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_BINEXPORT2
     elif sample.name.endswith(EXTENSIONS_BINJA_DB):
         format_ = FORMAT_BINJA_DB
+    elif sample.name.endswith(EXTENSIONS_SCRIPT):
+        format_ = FORMAT_SCRIPT
     return format_
 
 

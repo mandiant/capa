@@ -181,6 +181,10 @@ scripts = [
 ghidra = [
     "pyghidra>=3.0.0",
 ]
+script = [
+    "tree-sitter>=0.24",
+    "tree-sitter-python>=0.23",
+]
 
 [tool.deptry]
 extend_exclude = [

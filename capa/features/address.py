@@ -182,6 +182,30 @@ class DNTokenOffsetAddress(Address):
         return self.token + self.offset
 
 
+class ScriptAddress(Address):
+    """an address for a location within a script file (line, column)."""
+
+    def __init__(self, line: int, column: int = 0):
+        assert line >= 0
+        self.line = line
+        self.column = column
+
+    def __eq__(self, other):
+        if isinstance(other, ScriptAddress):
+            return (self.line, self.column) == (other.line, other.column)
+        return False
+
+    def __lt__(self, other):
+        assert isinstance(other, ScriptAddress)
+        return (self.line, self.column) < (other.line, other.column)
+
+    def __hash__(self):
+        return hash((self.line, self.column))
+
+    def __repr__(self):
+        return f"script(line={self.line}, col={self.column})"
+
+
 class _NoAddress(Address):
     def __eq__(self, other):
         return True

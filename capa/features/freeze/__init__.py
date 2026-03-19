@@ -59,6 +59,7 @@ class AddressType(str, Enum):
     PROCESS = "process"
     THREAD = "thread"
     CALL = "call"
+    SCRIPT = "script"
     NO_ADDRESS = "no address"
 
 
@@ -101,6 +102,9 @@ class Address(HashableModel):
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
+
+        elif isinstance(a, capa.features.address.ScriptAddress):
+            return cls(type=AddressType.SCRIPT, value=(a.line, a.column))
 
         elif isinstance(a, capa.features.address.Address) and not issubclass(type(a), capa.features.address.Address):
             raise ValueError("don't use an Address instance directly")
@@ -164,6 +168,13 @@ class Address(HashableModel):
 
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
+
+        elif self.type is AddressType.SCRIPT:
+            assert isinstance(self.value, tuple)
+            line, column = self.value
+            assert isinstance(line, int)
+            assert isinstance(column, int)
+            return capa.features.address.ScriptAddress(line, column)
 
         else:
             assert_never(self.type)

@@ -57,6 +57,7 @@ from capa.loader import (
     BACKEND_FREEZE,
     BACKEND_GHIDRA,
     BACKEND_PEFILE,
+    BACKEND_SCRIPT,
     BACKEND_DRAKVUF,
     BACKEND_BINEXPORT2,
 )
@@ -98,6 +99,7 @@ from capa.features.common import (
     STATIC_FORMATS,
     DYNAMIC_FORMATS,
     FORMAT_BINJA_DB,
+    FORMAT_SCRIPT,
     FORMAT_BINEXPORT2,
 )
 from capa.capabilities.common import (
@@ -279,6 +281,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_FREEZE, "features previously frozen by capa"),
             (FORMAT_BINEXPORT2, "BinExport2"),
             (FORMAT_BINJA_DB, "Binary Ninja Database"),
+            (FORMAT_SCRIPT, "Script file (Python, etc.)"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 
@@ -304,6 +307,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_CAPE, "CAPE"),
             (BACKEND_DRAKVUF, "DRAKVUF"),
             (BACKEND_VMRAY, "VMRay"),
+            (BACKEND_SCRIPT, "Script (tree-sitter)"),
         ]
         backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
@@ -599,6 +603,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
 
     elif input_format == FORMAT_BINEXPORT2:
         return BACKEND_BINEXPORT2
+
+    elif input_format == FORMAT_SCRIPT:
+        return BACKEND_SCRIPT
 
     else:
         return BACKEND_VIV
