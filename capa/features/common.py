@@ -415,6 +415,8 @@ class StringFactory:
 
 
 class Bytes(Feature):
+    value: bytes
+
     def __init__(self, value: bytes, description=None):
         super().__init__(value, description=description)
         self.value = value

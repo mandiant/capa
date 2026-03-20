@@ -1654,11 +1654,8 @@ class RuleSet:
         # Mapping from rule name to list of Regex/Substring features that have to match.
         # All these features will be evaluated whenever a String feature is encountered.
         string_rules: dict[str, list[Feature]]
-        # Mapping from rule name to list of Bytes features that have to match.
-        # Retained for logging and the emptiness check; candidate selection uses bytes_prefix_index.
-        bytes_rules: dict[str, list[Feature]]
         # Mapping from 4-byte prefix (as big-endian uint32) to list of (rule_name, pattern) pairs.
-        # Built once at index time so _match() can bucket-lookup instead of scanning all bytes rules.
+        # Built once at index time so _match() can bucket-lookup candidate bytes patterns.
         # Key -1 holds rules whose patterns are shorter than _BYTES_PREFIX_SIZE (linear fallback).
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]]
 
@@ -1812,7 +1809,8 @@ class RuleSet:
         # These are the Regex/Substring/Bytes features that we have to use for filtering.
         # Ideally we find a way to get rid of all of these, eventually.
         string_rules: dict[str, list[Feature]] = {}
-        bytes_rules: dict[str, list[Feature]] = {}
+        bytes_rules_count = 0
+        bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1827,7 +1825,9 @@ class RuleSet:
                 for feature in features
                 if isinstance(feature, (capa.features.common.Substring, capa.features.common.Regex))
             ]
-            bytes_features = [feature for feature in features if isinstance(feature, capa.features.common.Bytes)]
+            bytes_features: list[capa.features.common.Bytes] = [
+                feature for feature in features if isinstance(feature, capa.features.common.Bytes)
+            ]
             hashable_features = [
                 feature
                 for feature in features
@@ -1845,7 +1845,14 @@ class RuleSet:
                 string_rules[rule_name] = cast(list[Feature], string_features)
 
             if bytes_features:
-                bytes_rules[rule_name] = cast(list[Feature], bytes_features)
+                bytes_rules_count += 1
+                for wanted_bytes in bytes_features:
+                    pattern = wanted_bytes.value
+                    if len(pattern) >= _BYTES_PREFIX_SIZE:
+                        prefix = struct.unpack_from(">I", pattern)[0]
+                        bytes_prefix_index[prefix].append((rule_name, pattern))
+                    else:
+                        bytes_prefix_index[-1].append((rule_name, pattern))
 
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
@@ -1856,21 +1863,9 @@ class RuleSet:
             len([feature for feature, rules in rules_by_feature.items() if len(rules) > 3]),
         )
         logger.debug(
-            "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
+            "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), bytes_rules_count
         )
-
-        bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
-        for rule_name, wanted_bytess in bytes_rules.items():
-            for wanted_bytes in wanted_bytess:
-                assert isinstance(wanted_bytes.value, bytes)
-                pattern = wanted_bytes.value
-                if len(pattern) >= _BYTES_PREFIX_SIZE:
-                    prefix = struct.unpack_from(">I", pattern)[0]
-                    bytes_prefix_index[prefix].append((rule_name, pattern))
-                else:
-                    bytes_prefix_index[-1].append((rule_name, pattern))
-
-        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules, dict(bytes_prefix_index))
+        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, dict(bytes_prefix_index))
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> list[Rule]:
@@ -2042,24 +2037,23 @@ class RuleSet:
         # matches the extracted value. Patterns shorter than 4 bytes fall back to a linear scan.
         # See: https://github.com/mandiant/capa/issues/2128
         if feature_index.bytes_prefix_index:
-            bytes_features: FeatureSet = {}
-            for feature, locations in features.items():
+            bytes_features: list[capa.features.common.Bytes] = []
+            for feature in features:
                 if isinstance(feature, capa.features.common.Bytes):
-                    bytes_features[feature] = locations
+                    bytes_features.append(feature)
 
             if bytes_features:
                 # Short-pattern rules (key -1) require a linear scan against all extracted bytes.
-                for rule_name, pattern in feature_index.bytes_prefix_index.get(-1, ()):
-                    for feature in bytes_features:
-                        assert isinstance(feature.value, bytes)
-                        if feature.value.startswith(pattern):
-                            candidate_rule_names.add(rule_name)
-                            break
+                if -1 in feature_index.bytes_prefix_index:
+                    for rule_name, pattern in feature_index.bytes_prefix_index[-1]:
+                        for feature in bytes_features:
+                            if feature.value.startswith(pattern):
+                                candidate_rule_names.add(rule_name)
+                                break
 
                 # For long patterns, group extracted bytes by their 4-byte prefix and look up
                 # only the rules whose pattern prefix matches.
                 for feature in bytes_features:
-                    assert isinstance(feature.value, bytes)
                     if len(feature.value) >= _BYTES_PREFIX_SIZE:
                         prefix = struct.unpack_from(">I", feature.value)[0]
                         for rule_name, pattern in feature_index.bytes_prefix_index.get(prefix, ()):
