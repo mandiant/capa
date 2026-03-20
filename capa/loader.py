@@ -395,6 +395,18 @@ def get_extractor(
 
         logger.debug("idalib: opening database...")
         idapro.enable_console_messages(False)
+
+        # `-R` (load resources) is only valid when loading a new input file.
+        # if an IDA database already exists, open it without `-R`.
+        # ref: https://github.com/mandiant/capa/issues/2950
+        has_existing_database = any(
+            input_path.with_name(input_path.name + ext).exists()
+            for ext in (".ida", ".i64", ".id0")
+        )
+        open_database_args = "-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+        if not has_existing_database:
+            open_database_args += " -R"
+
         with console.status("analyzing program...", spinner="dots"):
             # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
             # which sometimes provides bad names, including overwriting names from debug info.
@@ -408,7 +420,7 @@ def get_extractor(
             #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
             #   -2 - User cancelled operation
             ret = idapro.open_database(
-                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+                str(input_path), run_auto_analysis=True, args=open_database_args
             )
             if ret != 0:
                 raise RuntimeError("failed to analyze input file")
