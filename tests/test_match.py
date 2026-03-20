@@ -21,7 +21,19 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule
+from capa.features.common import (
+    OS,
+    OS_ANY,
+    OS_LINUX,
+    FORMAT_PE,
+    ARCH_AMD64,
+    OS_WINDOWS,
+    Arch,
+    Format,
+    String,
+    MatchedRule,
+)
+from capa.features.address import NO_ADDRESS
 
 
 def match(rules, features, va, scope=Scope.FUNCTION):
@@ -816,3 +828,238 @@ def test_index_features_nested_unstable():
 
     assert not index.string_rules
     assert not index.bytes_rules
+
+
+def test_filter_rules_by_meta_features_prunes_incompatible_os():
+    """Rules requiring a different OS than the binary's are removed from the RuleSet."""
+    windows_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: windows only rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: windows
+                    - api: CreateFile
+        """
+    )
+    linux_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: linux only rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: linux
+                    - api: open
+        """
+    )
+    rr = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(windows_rule),
+            capa.rules.Rule.from_yaml(linux_rule),
+        ]
+    )
+    assert len(rr.rules) == 2
+
+    # When analyzing a Linux binary, windows-only rules are pruned
+    linux_features: capa.engine.FeatureSet = {OS(OS_LINUX): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(linux_features)
+    assert "linux only rule" in filtered.rules
+    assert "windows only rule" not in filtered.rules
+
+    # When analyzing a Windows binary, linux-only rules are pruned
+    windows_features: capa.engine.FeatureSet = {OS(OS_WINDOWS): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "windows only rule" in filtered.rules
+    assert "linux only rule" not in filtered.rules
+
+
+def test_filter_rules_by_meta_features_keeps_any_os():
+    """Rules with os: any or no OS requirement are kept regardless of binary OS."""
+    any_os_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: any os rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: any
+                    - api: malloc
+        """
+    )
+    no_os_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: no os rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - api: calloc
+        """
+    )
+    rr = capa.rules.RuleSet([capa.rules.Rule.from_yaml(any_os_rule), capa.rules.Rule.from_yaml(no_os_rule)])
+
+    windows_features: capa.engine.FeatureSet = {OS(OS_WINDOWS): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "any os rule" in filtered.rules
+    assert "no os rule" in filtered.rules
+
+    linux_features: capa.engine.FeatureSet = {OS(OS_LINUX): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(linux_features)
+    assert "any os rule" in filtered.rules
+    assert "no os rule" in filtered.rules
+
+
+def test_filter_rules_by_meta_features_prunes_unreachable_some_count():
+    """Rules with an unsatisfiable Some-count over global features are pruned."""
+    unreachable_some_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: unreachable some rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - 3 or more:
+                    - os: windows
+                    - os: linux
+                    - api: CreateFile
+        """
+    )
+    baseline_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: baseline rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - api: ReadFile
+        """
+    )
+    rr = capa.rules.RuleSet(
+        [capa.rules.Rule.from_yaml(unreachable_some_rule), capa.rules.Rule.from_yaml(baseline_rule)]
+    )
+
+    windows_features: capa.engine.FeatureSet = {OS(OS_WINDOWS): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "unreachable some rule" not in filtered.rules
+    assert "baseline rule" in filtered.rules
+
+
+def test_filter_rules_by_meta_features_keeps_reachable_some_count():
+    """Rules with a satisfiable Some-count over global features are kept."""
+    reachable_some_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: reachable some rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - 2 or more:
+                    - os: windows
+                    - os: linux
+                    - api: CreateFile
+        """
+    )
+    rr = capa.rules.RuleSet([capa.rules.Rule.from_yaml(reachable_some_rule)])
+
+    windows_features: capa.engine.FeatureSet = {OS(OS_WINDOWS): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "reachable some rule" in filtered.rules
+
+
+def test_filter_rules_by_meta_features_prunes_incompatible_arch_and_format():
+    """Rules with incompatible arch/format are pruned while compatible rules are kept."""
+    incompatible_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: incompatible arch format rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - arch: i386
+                    - format: elf
+                    - api: open
+        """
+    )
+    compatible_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: compatible arch format rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - arch: amd64
+                    - format: pe
+                    - api: CreateFile
+        """
+    )
+    rr = capa.rules.RuleSet([capa.rules.Rule.from_yaml(incompatible_rule), capa.rules.Rule.from_yaml(compatible_rule)])
+
+    features: capa.engine.FeatureSet = {Arch(ARCH_AMD64): {NO_ADDRESS}, Format(FORMAT_PE): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(features)
+    assert "incompatible arch format rule" not in filtered.rules
+    assert "compatible arch format rule" in filtered.rules
+
+
+def test_filter_rules_by_meta_features_keeps_dependencies_of_surviving_rules():
+    """Dependencies of compatible rules are retained even if dependency globals are incompatible."""
+    dependency_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: linux dependency rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: linux
+                    - api: open
+        """
+    )
+    parent_rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: windows parent rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - os: windows
+                    - or:
+                        - api: CreateFile
+                        - match: linux dependency rule
+        """
+    )
+    rr = capa.rules.RuleSet([capa.rules.Rule.from_yaml(dependency_rule), capa.rules.Rule.from_yaml(parent_rule)])
+
+    windows_features: capa.engine.FeatureSet = {OS(OS_WINDOWS): {NO_ADDRESS}}
+    filtered = rr.filter_rules_by_meta_features(windows_features)
+    assert "windows parent rule" in filtered.rules
+    assert "linux dependency rule" in filtered.rules

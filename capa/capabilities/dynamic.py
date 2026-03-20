@@ -281,6 +281,16 @@ def find_dynamic_capabilities(
     # Tuples are immutable, so `t += (x,)` copies the entire tuple each time.
     process_feature_counts: list[rdoc.ProcessFeatureCount] = []
 
+    # Prune rules that cannot match this binary's global features (OS, arch, format)
+    # once, before the per-process matching loop.  This eliminates rules that could
+    # never match — e.g. Windows-specific rules when analysing a Linux trace — from all
+    # per-process, per-thread, and per-call evaluations.
+    # See: https://github.com/mandiant/capa/issues/2127
+    global_features: FeatureSet = collections.defaultdict(set)
+    for feature, addr in extractor.extract_global_features():
+        global_features[feature].add(addr)
+    ruleset = ruleset.filter_rules_by_meta_features(global_features)
+
     assert isinstance(extractor, DynamicFeatureExtractor)
     processes: list[ProcessHandle] = list(extractor.get_processes())
     n_processes: int = len(processes)
