@@ -35,6 +35,7 @@ from capa.features.common import (
     OS_WINDOWS,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_SCRIPT,
     Arch,
     Format,
     String,
@@ -42,6 +43,7 @@ from capa.features.common import (
 )
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
+from capa.features.extractors.ts.autodetect import is_script
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,8 @@ def extract_format(buf: bytes) -> Iterator[tuple[Feature, Address]]:
         # we don't know what it is exactly, but may support it (e.g. a dynamic CAPE sandbox report)
         # skip verdict here and let subsequent code analyze this further
         return
+    elif is_script(buf):
+        yield Format(FORMAT_SCRIPT), NO_ADDRESS
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)
