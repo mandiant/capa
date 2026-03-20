@@ -59,7 +59,7 @@ def get_default_cache_directory() -> Path:
     # MacOS:   ~/Library/Caches/capa
 
     # ref: https://stackoverflow.com/a/8220141/87207
-    if sys.platform == "linux" or sys.platform == "linux2":
+    if sys.platform.startswith(("linux", "freebsd", "openbsd", "netbsd", "dragonfly")):
         directory = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache" / "capa"))
     elif sys.platform == "darwin":
         directory = Path.home() / "Library" / "Caches" / "capa"
