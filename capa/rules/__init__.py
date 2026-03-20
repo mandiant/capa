@@ -1988,11 +1988,6 @@ class RuleSet:
         # We may want to try to pre-evaluate these strings, based on their presence in the file,
         # to reduce the number of evaluations we do here.
         # See: https://github.com/mandiant/capa/issues/2126
-        #
-        # We may also want to specialize case-insensitive strings, which would enable them to
-        # be indexed, and therefore skip the scanning here, improving performance.
-        # This strategy is described here:
-        # https://github.com/mandiant/capa/issues/2129
         if feature_index.string_rules:
             # This is a FeatureSet that contains only String features.
             # Since we'll only be evaluating String/Regex features below, we don't care about
@@ -2009,10 +2004,30 @@ class RuleSet:
                     string_features[feature] = locations
 
             if string_features:
+                # Build this lazily, only when we encounter a pure-literal `/i` regex.
+                # This preserves fast-path wins while avoiding avoidable overhead in
+                # workloads where such regexes are uncommon.
+                lowercased_strings: frozenset[str] | None = None
                 for rule_name, wanted_strings in feature_index.string_rules.items():
                     for wanted_string in wanted_strings:
+                        # Fast path: pure-literal /i patterns can be resolved via O(1) lookup.
+                        if isinstance(wanted_string, capa.features.common.Regex) and wanted_string._is_pure_literal_ci:
+                            if lowercased_strings is None:
+                                lowercased_strings = frozenset(
+                                    feature.value.lower()
+                                    for feature in string_features
+                                    if isinstance(feature.value, str)
+                                )
+
+                            if wanted_string._normalized_lower in lowercased_strings:
+                                candidate_rule_names.add(rule_name)
+                                break
+
+                        # When the fast path is not sufficient, keep the existing
+                        # regex behavior to preserve substring semantics.
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)
+                            break
 
         # Like with String/Regex features above, we have to scan for Bytes to find candidate rules.
         #

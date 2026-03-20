@@ -328,6 +328,13 @@ class Regex(String):
                 f"invalid regular expression: {value} it should use Python syntax, try it at https://pythex.org"
             ) from exc
 
+        # Detect pure-literal case-insensitive patterns: no regex metacharacters,
+        # just a simple string with the /i flag. For these we can skip the regex
+        # engine when the lowercased string value is present in the feature set.
+        # See: https://github.com/mandiant/capa/issues/2129
+        self._is_pure_literal_ci: bool = value.endswith("/i") and re.escape(pat) == pat
+        self._normalized_lower: str = pat.lower() if self._is_pure_literal_ci else ""
+
     def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.regex"] += 1
