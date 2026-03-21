@@ -272,8 +272,7 @@ public class CapaResultsTreeModel extends AbstractTreeTableModel {
     private static void addFeatureNode(DefaultMutableTreeNode parent,
                                         JsonObject feature,
                                         JsonObject matchDetail) {
-        String featureType = getStringOr(feature, "type", "");
-        String featureLabel;
+    	String featureLabel = renderFeature(feature);
         String addr = "";
         String details = "";
 
@@ -285,54 +284,56 @@ public class CapaResultsTreeModel extends AbstractTreeTableModel {
             }
         }
 
-        switch (featureType) {
-            case "api":
-                featureLabel = "api: " + getStringOr(feature, "api", "");
-                details = buildCallDetail(matchDetail);
-                break;
-            case "string":
-                featureLabel = "string: " + quote(getStringOr(feature, "string", ""));
-                details = buildCallDetail(matchDetail);
-                break;
-            case "number":
-                String numVal = getStringOr(feature, "number", "");
-                String numDesc = getStringOr(feature, "description", "");
-                featureLabel = "number: " + numVal + (numDesc.isEmpty() ? "" : " = " + numDesc);
-                details = buildCallDetail(matchDetail);
-                break;
-            case "regex":
-                featureLabel = "regex: " + getStringOr(feature, "regex", "");
-                details = buildCallDetail(matchDetail);
-                break;
-            case "bytes":
-                featureLabel = "bytes: " + getStringOr(feature, "bytes", "");
-                break;
-            case "offset":
-                featureLabel = "offset: " + getStringOr(feature, "offset", "");
-                break;
-            case "mnemonic":
-                featureLabel = "mnemonic: " + getStringOr(feature, "mnemonic", "");
-                details = buildCallDetail(matchDetail);
-                break;
-            case "characteristic":
-                featureLabel = "characteristic: " + getStringOr(feature, "characteristic", "");
-                break;
-            case "export":
-                featureLabel = "export: " + getStringOr(feature, "export", "");
-                break;
-            case "import":
-                featureLabel = "import: " + getStringOr(feature, "import", "");
-                break;
-            case "section":
-                featureLabel = "section: " + getStringOr(feature, "section", "");
-                break;
-            default:
-                // Fallback: show type and whatever value is present
-                featureLabel = featureType.isEmpty() ? "(feature)" : featureType;
-                if (feature.has("value")) {
-                    featureLabel += ": " + feature.get("value").getAsString();
-                }
-        }
+//        switch (featureType) {
+//            case "api":
+//                featureLabel = "api: " + getStringOr(feature, "api", "");
+//                details = buildCallDetail(matchDetail);
+//                break;
+//            case "string":
+//                featureLabel = "string: " + quote(getStringOr(feature, "string", ""));
+//                details = buildCallDetail(matchDetail);
+//                break;
+//            case "number":
+//                String numVal = getStringOr(feature, "number", "");
+//                String numDesc = getStringOr(feature, "description", "");
+//                featureLabel = "number: " + numVal + (numDesc.isEmpty() ? "" : " = " + numDesc);
+//                details = buildCallDetail(matchDetail);
+//                break;
+//            case "regex":
+//                featureLabel = "regex: " + getStringOr(feature, "regex", "");
+//                details = buildCallDetail(matchDetail);
+//                break;
+//            case "bytes":
+//                featureLabel = "bytes: " + getStringOr(feature, "bytes", "");
+//                break;
+//            case "offset":
+//                featureLabel = "offset: " + getStringOr(feature, "offset", "");
+//                break;
+//            case "mnemonic":
+//                featureLabel = "mnemonic: " + getStringOr(feature, "mnemonic", "");
+//                details = buildCallDetail(matchDetail);
+//                break;
+//            case "characteristic":
+//                featureLabel = "characteristic: " + getStringOr(feature, "characteristic", "");
+//                break;
+//            case "export":
+//                featureLabel = "export: " + getStringOr(feature, "export", "");
+//                break;
+//            case "import":
+//                featureLabel = "import: " + getStringOr(feature, "import", "");
+//                break;
+//            case "section":
+//                featureLabel = "section: " + getStringOr(feature, "section", "");
+//                break;
+//            default:
+//                // Fallback: show type and whatever value is present
+//                featureLabel = featureType.isEmpty() ? "(feature)" : featureType;
+//                if (feature.has("value")) {
+//                    featureLabel += ": " + feature.get("value").getAsString();
+//                }
+        //}
+
+        details = buildCallDetail(matchDetail);
 
         parent.add(new DefaultMutableTreeNode(
                 new CapaNodeData(featureLabel, addr, details)));
@@ -341,7 +342,57 @@ public class CapaResultsTreeModel extends AbstractTreeTableModel {
     // ------------------------------------------------------------------ //
     //  Helpers                                                             //
     // ------------------------------------------------------------------ //
+    /**
+     * Render a feature using capa's canonical string representation.
+     * This mimics the Python Feature.__str__() output.
+     */
+    private static String renderFeature(JsonObject feature) {
 
+        String type = getStringOr(feature, "type", "");
+
+        switch (type) {
+
+            case "api":
+                return "api(" + getStringOr(feature, "api", "") + ")";
+
+            case "string":
+                return "string(\"" + getStringOr(feature, "string", "") + "\")";
+
+            case "number":
+                return "number(" + getStringOr(feature, "number", "") + ")";
+
+            case "regex":
+                return "regex(" + getStringOr(feature, "regex", "") + ")";
+
+            case "mnemonic":
+                return "mnemonic(" + getStringOr(feature, "mnemonic", "") + ")";
+
+            case "characteristic":
+                return "characteristic(" +
+                        getStringOr(feature, "characteristic", "") + ")";
+
+            case "import":
+                return "import(" + getStringOr(feature, "import", "") + ")";
+
+            case "export":
+                return "export(" + getStringOr(feature, "export", "") + ")";
+
+            case "section":
+                return "section(" + getStringOr(feature, "section", "") + ")";
+
+            case "bytes":
+                return "bytes(" + getStringOr(feature, "bytes", "") + ")";
+
+            case "offset":
+                return "offset(" + getStringOr(feature, "offset", "") + ")";
+
+            default:
+                if (feature.has("value")) {
+                    return type + "(" + feature.get("value").getAsString() + ")";
+                }
+                return type;
+        }
+    }
     private static String extractAddress(JsonElement locEl) {
         if (locEl == null || locEl.isJsonNull()) return "";
         try {
@@ -363,22 +414,125 @@ public class CapaResultsTreeModel extends AbstractTreeTableModel {
         return "";
     }
 
+//    private static String buildCallDetail(JsonObject matchDetail) {
+//        if (matchDetail.has("captures")) {
+//            JsonObject cap = matchDetail.getAsJsonObject("captures");
+//            if (cap.size() > 0) return cap.keySet().iterator().next();
+//        }
+//        return "";
+//    }
+    
+//    private static String buildCallDetail(JsonObject matchDetail) {
+//
+//        // Prefer captures (used by some capa features)
+//        if (matchDetail.has("captures")) {
+//            JsonObject cap = matchDetail.getAsJsonObject("captures");
+//            if (cap.size() > 0) {
+//                return cap.keySet().iterator().next();
+//            }
+//        }
+//
+//        // Fallback: show address if available
+//        if (matchDetail.has("locations")) {
+//            JsonArray locs = matchDetail.getAsJsonArray("locations");
+//            if (locs.size() > 0) {
+//                return extractAddress(locs.get(0));
+//            }
+//        }
+//
+//        return "";
+//    }
+    
     private static String buildCallDetail(JsonObject matchDetail) {
+        // Priority 1: Show capture values (these are the most meaningful)
         if (matchDetail.has("captures")) {
             JsonObject cap = matchDetail.getAsJsonObject("captures");
-            if (cap.size() > 0) return cap.keySet().iterator().next();
+            if (cap.size() > 0) {
+                // Get first capture key-value pair
+                for (Map.Entry<String, JsonElement> entry : cap.entrySet()) {
+                    String key = entry.getKey();
+                    JsonElement value = entry.getValue();
+                    
+                    // Format the capture nicely
+                    if (value.isJsonPrimitive()) {
+                        String valStr = value.getAsString();
+                        // For API calls, imports, etc - just show the name
+                        if (key.equals("api") || key.equals("import") || key.equals("export")) {
+                            return valStr;
+                        }
+                        // For strings, quote them
+                        if (key.equals("string")) {
+                            return "\"" + valStr + "\"";
+                        }
+                        // For numbers, show as-is
+                        if (key.equals("number")) {
+                            return valStr;
+                        }
+                        // Default: show key = value
+                        return valStr;
+                    }
+                    break; // Just use first capture
+                }
+            }
         }
+
+        // Priority 2: Show instruction disassembly if available
+        if (matchDetail.has("instruction")) {
+            JsonObject ins = matchDetail.getAsJsonObject("instruction");
+            
+            // Try to build a simple disassembly: "mnemonic operands"
+            StringBuilder disasm = new StringBuilder();
+            
+            if (ins.has("mnemonic")) {
+                disasm.append(ins.get("mnemonic").getAsString());
+            }
+            
+            // Add operands if available
+            if (ins.has("operands") && ins.get("operands").isJsonArray()) {
+                JsonArray ops = ins.getAsJsonArray("operands");
+                if (ops.size() > 0) {
+                    disasm.append(" ");
+                    for (int i = 0; i < ops.size(); i++) {
+                        if (i > 0) disasm.append(", ");
+                        JsonElement op = ops.get(i);
+                        if (op.isJsonPrimitive()) {
+                            disasm.append(op.getAsString());
+                        } else if (op.isJsonObject()) {
+                            JsonObject opObj = op.getAsJsonObject();
+                            if (opObj.has("value")) {
+                                disasm.append(opObj.get("value").getAsString());
+                            }
+                        }
+                    }
+                }
+            } else if (ins.has("operand_str")) {
+                // Some capa versions may have a pre-formatted operand string
+                disasm.append(" ").append(ins.get("operand_str").getAsString());
+            }
+            
+            if (disasm.length() > 0) {
+                return disasm.toString();
+            }
+        }
+
+        // Priority 3: For feature-level matches, show the feature type/context
+        if (matchDetail.has("type")) {
+            String type = matchDetail.get("type").getAsString();
+            if ("string".equals(type) && matchDetail.has("value")) {
+                return "\"" + matchDetail.get("value").getAsString() + "\"";
+            }
+            if ("number".equals(type) && matchDetail.has("value")) {
+                return matchDetail.get("value").getAsString();
+            }
+        }
+
         return "";
     }
-
+    
     private static String getStringOr(JsonObject obj, String key, String fallback) {
         if (obj != null && obj.has(key) && !obj.get(key).isJsonNull()) {
             try { return obj.get(key).getAsString(); } catch (Exception ignored) {}
         }
         return fallback;
-    }
-
-    private static String quote(String s) {
-        return "\"" + s + "\"";
     }
 }

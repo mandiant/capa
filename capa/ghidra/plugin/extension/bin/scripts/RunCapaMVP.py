@@ -53,6 +53,9 @@ def main():
     import capa.features.extractors.ghidra.extractor
 
     # --- STEP 4: Run checks ---
+    print("[RunCapaMVP] Detected file format:", currentProgram.getExecutableFormat())
+    print("[RunCapaMVP] Detected language:", currentProgram.getLanguageID())
+    
     if not capa.ghidra.helpers.is_supported_ghidra_version():
         raise RuntimeError("Unsupported Ghidra version")
     if not capa.ghidra.helpers.is_supported_file_type():
