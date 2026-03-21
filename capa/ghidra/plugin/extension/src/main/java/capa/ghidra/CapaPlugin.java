@@ -20,18 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * CapaPlugin — Ghidra plugin entry point for capa capability detection.
- *
- * Execution model (approved by maintainer @mike-hunhoff):
- *   1. GhidraScriptService.runScript() invokes RunCapaMVP.py inside PyGhidra
- *   2. Python uses the already-loaded Program via PyGhidra context (no re-analysis)
- *   3. Python writes capa JSON results to a cache file
- *   4. Java reads the cache file and renders it in the Swing provider
- *
- * No deprecated APIs. No subprocess execution from Java.
- * All user actions originate from the CapaProvider UI.
- */
 @PluginInfo(
     status = PluginStatus.STABLE,
     packageName = "Capa",
@@ -44,9 +32,7 @@ public class CapaPlugin extends ProgramPlugin {
 
     private CapaProvider provider;
 
-    // ------------------------------------------------------------------ //
-    //  Lifecycle                                                           //
-    // ------------------------------------------------------------------ //
+    //  Lifecycle                                                           
 
     public CapaPlugin(PluginTool tool) {
         super(tool);
@@ -68,9 +54,7 @@ public class CapaPlugin extends ProgramPlugin {
         provider.onProgramDeactivated(program);
     }
 
-    // ------------------------------------------------------------------ //
-    //  Analysis entry-point (called by CapaProvider Analyze button)       //
-    // ------------------------------------------------------------------ //
+    //  Analysis entry-point 
 
     public void runAnalysis(boolean forceRerun) {
         Program program = currentProgram;
@@ -99,10 +83,9 @@ public class CapaPlugin extends ProgramPlugin {
 
         TaskLauncher.launch(new CapaAnalysisTask(program, rulesDir));
     }
+    
+    //  Background analysis task
 
-    // ------------------------------------------------------------------ //
-    //  Background analysis task                                            //
-    // ------------------------------------------------------------------ //
 
     private class CapaAnalysisTask extends Task {
 
@@ -190,10 +173,6 @@ public class CapaPlugin extends ProgramPlugin {
             }
         }
 
-        /**
-         * Poll for the JSON output file that RunCapaMVP.py writes.
-         * Returns file contents once available, or null on timeout / cancel.
-         */
         private String waitForCacheFile(String outputPath, TaskMonitor monitor)
                 throws InterruptedException {
             final int MAX_WAIT_MS   = 300_000; // 5 min — capa can be slow on large binaries
@@ -216,12 +195,7 @@ public class CapaPlugin extends ProgramPlugin {
             }
             return null;
         }
-
-        /**
-         * Locate RunCapaMVP.py relative to this plugin's jar.
-         * The Gradle build copies ghidra_scripts/ into the extension zip so
-         * the script sits alongside the jar at runtime.
-         */
+        
         private String resolveScriptPath() {
             try {
                 File jar = new File(

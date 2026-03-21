@@ -13,12 +13,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
-/**
- * CapaCacheManager handles:
- *   1. Per-binary JSON result caching  (~/.ghidra/.../capa_cache/<sha256>.json)
- *   2. Persistent config              (~/.ghidra/.../capa_cache/config.json)
- *      - rules_directory: path to capa-rules repo root
- */
 public class CapaCacheManager {
 
     private static final long   MAX_CACHE_SIZE  = 100L * 1024 * 1024; // 100 MB
@@ -26,9 +20,7 @@ public class CapaCacheManager {
     private static final String CONFIG_FILE     = "config.json";
     private static final Gson   GSON            = new GsonBuilder().setPrettyPrinting().create();
 
-    // ------------------------------------------------------------------ //
-    //  Cache directory                                                     //
-    // ------------------------------------------------------------------ //
+    //  Cache directory                                                     
 
     private static Path getCacheDir() throws IOException {
         File userDir = Application.getUserSettingsDirectory();
@@ -40,9 +32,7 @@ public class CapaCacheManager {
         return cacheDir;
     }
 
-    // ------------------------------------------------------------------ //
-    //  Per-binary result cache                                             //
-    // ------------------------------------------------------------------ //
+    //  Per-binary result cache                                             
 
     public static String computeProgramHash(Program program) {
         try {
@@ -111,7 +101,7 @@ public class CapaCacheManager {
         }
     }
 
-    /** Returns the cache file path as a string (for Python to write to). */
+
     public static String getCacheFilePathForPython(Program program) {
         try {
             return getCacheFilePath(computeProgramHash(program)).toAbsolutePath().toString();
@@ -121,10 +111,7 @@ public class CapaCacheManager {
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  Config — rules directory                                            //
-    // ------------------------------------------------------------------ //
-
+    //  Config — rules directory                                           
     private static Path getConfigFilePath() throws IOException {
         return getCacheDir().resolve(CONFIG_FILE);
     }
@@ -149,7 +136,6 @@ public class CapaCacheManager {
         }
     }
 
-    /** @return path to capa-rules root directory, or null if not configured. */
     public static String readRulesDirectory() {
         JsonObject cfg = readConfig();
         // Support both key names for backwards compatibility
@@ -162,7 +148,6 @@ public class CapaCacheManager {
         return null;
     }
 
-    /** Persist the chosen rules directory and current output path for Python. */
     public static void writeRulesDirectory(String path) {
         JsonObject cfg = readConfig();
         cfg.addProperty("rulesDirectory", path);
@@ -171,10 +156,6 @@ public class CapaCacheManager {
         writeConfig(cfg);
     }
 
-    /**
-     * Write rulesDirectory + outputPath into config.json so RunCapaMVP.py
-     * can read both without recomputing the program hash in Python.
-     */
     public static void writeAnalysisConfig(String rulesDir, String outputPath) {
         JsonObject cfg = readConfig();
         cfg.addProperty("rulesDirectory", rulesDir);
@@ -183,10 +164,8 @@ public class CapaCacheManager {
         writeConfig(cfg);
     }
 
-    // ------------------------------------------------------------------ //
-    //  Helpers                                                             //
-    // ------------------------------------------------------------------ //
-
+    //  Helpers                                                             
+    
     private static void setPosixPerms(Path path, String perms) {
         try {
             Files.setPosixFilePermissions(path, PosixFilePermissions.fromString(perms));

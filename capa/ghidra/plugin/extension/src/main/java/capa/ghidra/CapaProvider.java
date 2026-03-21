@@ -137,8 +137,8 @@ public class CapaProvider extends ComponentProvider {
         treeTable.getColumnModel().getColumn(2).setPreferredWidth(300);
 
         // Double-click on Address column navigates to that location
-        // Attach listener to the tree component inside JTreeTable
-        treeTable.getTree().addMouseListener(new MouseAdapter() {
+        // Attach listener to the JTreeTable for double-click navigation on Address column
+        treeTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -304,31 +304,36 @@ public class CapaProvider extends ComponentProvider {
      * This replicates the behavior of the capa IDA plugin.
      */
     private void navigateToSelected(MouseEvent e) {
-        // Get the row and column at the click point
+        // Get the row and column at the click point using table coordinates
         int row = treeTable.rowAtPoint(e.getPoint());
         int column = treeTable.columnAtPoint(e.getPoint());
         
-        Msg.info(this, "Double-click at row=" + row + ", column=" + column);
+        Msg.info(this, "Double-click detected at point: " + e.getPoint());
+        Msg.info(this, "Row index: " + row + ", Column index: " + column);
         
         // Only navigate when clicking the Address column (column 1)
         if (row < 0 || column != 1) {
-            Msg.info(this, "Ignoring click: not on Address column");
+            Msg.info(this, "Ignoring click: row=" + row + " is invalid or column=" + column + " is not Address column");
             return;
         }
 
-        // Read the address string from column 1
+        // Read the address string from the Address column (column 1)
         Object addressVal = treeTable.getValueAt(row, 1);
-        Msg.info(this, "Address value: " + addressVal + " (type: " + 
-                 (addressVal != null ? addressVal.getClass().getName() : "null") + ")");
+        Msg.info(this, "Address value at [" + row + ", 1]: " + addressVal + 
+                 " (type: " + (addressVal != null ? addressVal.getClass().getName() : "null") + ")");
         
-        if (!(addressVal instanceof String)) return;
+        if (addressVal == null || !(addressVal instanceof String)) {
+            Msg.info(this, "Address value is not a string or is null");
+            return;
+        }
+        
         String addrStr = ((String) addressVal).trim();
         if (addrStr.isEmpty()) {
-            Msg.info(this, "Address string is empty");
+            Msg.info(this, "Address string is empty after trim");
             return;
         }
 
-        Msg.info(this, "Attempting to navigate to: " + addrStr);
+        Msg.info(this, "Attempting to navigate to address: " + addrStr);
 
         try {
             // Parse hex address (handles both "0x4019F0" and "4019F0" formats)
@@ -336,27 +341,27 @@ public class CapaProvider extends ComponentProvider {
                     addrStr.startsWith("0x") || addrStr.startsWith("0X")
                             ? addrStr.substring(2) : addrStr, 16);
 
-            Msg.info(this, "Parsed offset: 0x" + Long.toHexString(offset));
+            Msg.info(this, "Successfully parsed offset: 0x" + Long.toHexString(offset));
 
             // Navigate using Ghidra's GoToService
             GoToService goToService = dockingTool.getService(GoToService.class);
             if (goToService == null) {
-                Msg.error(this, "GoToService is null");
+                Msg.error(this, "GoToService is null - cannot navigate");
                 return;
             }
             if (currentProgram == null) {
-                Msg.error(this, "currentProgram is null");
+                Msg.error(this, "currentProgram is null - cannot navigate");
                 return;
             }
 
             Address addr = currentProgram.getAddressFactory()
                     .getDefaultAddressSpace().getAddress(offset);
             
-            Msg.info(this, "Navigating to address: " + addr);
+            Msg.info(this, "Created Ghidra Address object: " + addr);
             goToService.goTo(addr);
-            Msg.info(this, "Navigation successful");
+            Msg.info(this, "Navigation successful to " + addr);
         } catch (NumberFormatException ex) {
-            Msg.error(this, "Failed to parse address: " + addrStr, ex);
+            Msg.error(this, "Failed to parse address '" + addrStr + "' as hex", ex);
         } catch (Exception ex) {
             Msg.error(this, "Navigation failed", ex);
         }

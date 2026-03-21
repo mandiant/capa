@@ -27,7 +27,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     print("[RunCapaMVP] Starting capa analysis via PyGhidra...")
 
-    # --- STEP 1: Initialize GhidraContext with the correct 3 arguments ---
+    # Initialize GhidraContext with the correct 3 arguments 
     from capa.features.extractors.ghidra import context as ghidra_ctx_module
     from ghidra.program.flatapi import FlatProgramAPI  # pylint: disable=import-error
 
@@ -36,7 +36,7 @@ def main():
     # Set the module-level singleton using set_context()
     ghidra_ctx_module.set_context(currentProgram, flat_api, monitor)
 
-    # --- STEP 2: Load config ---
+    # Load config 
     config = find_config()
     rules_dir = config.get("rulesDirectory") or config.get("rules_directory")
     output_path = config.get("outputPath")
@@ -44,7 +44,7 @@ def main():
     print("[RunCapaMVP] Rules :", rules_dir)
     print("[RunCapaMVP] Output:", output_path)
 
-    # --- STEP 3: Import Capa modules ---
+    # Import Capa modules 
     import capa.rules
     import capa.rules.cache
     import capa.ghidra.helpers
@@ -52,10 +52,7 @@ def main():
     import capa.render.json as capa_render_json
     import capa.features.extractors.ghidra.extractor
 
-    # --- STEP 4: Run checks ---
-    print("[RunCapaMVP] Detected file format:", currentProgram.getExecutableFormat())
-    print("[RunCapaMVP] Detected language:", currentProgram.getLanguageID())
-    
+    # Run checks 
     if not capa.ghidra.helpers.is_supported_ghidra_version():
         raise RuntimeError("Unsupported Ghidra version")
     if not capa.ghidra.helpers.is_supported_file_type():
@@ -63,7 +60,7 @@ def main():
     if not capa.ghidra.helpers.is_supported_arch_type():
         raise RuntimeError("Unsupported architecture")
 
-    # --- STEP 5: Load rules and run analysis ---
+    # Load rules and run analysis 
     rules_path = pathlib.Path(rules_dir)
     print("[RunCapaMVP] Loading rules...")
     rules = capa.rules.get_rules([rules_path], cache_dir=None)
