@@ -68,6 +68,7 @@
 ### Development
 
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
+- tests: skip `capa2sarif.py` script test when optional dependencies (`sarif_om`, `jschema_to_python`) are not installed
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
