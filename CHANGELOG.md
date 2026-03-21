@@ -6,6 +6,7 @@
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
+- scripts: add `capa-diff.py` helper to compare capability deltas (added/removed) between two capa JSON result documents
 
 ### Breaking Changes
 
