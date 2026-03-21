@@ -201,7 +201,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
         return MnemonicFeature(mnemonic=f.value, description=f.description)
 
     elif isinstance(f, capa.features.insn.OperandNumber):
-        assert isinstance(f.value, Union[int, float])
+        assert isinstance(f.value, (int, float))
         return OperandNumberFeature(index=f.index, operand_number=f.value, description=f.description)  # type: ignore
         # Mypy is unable to recognise `operand_number` as an argument due to alias
 
