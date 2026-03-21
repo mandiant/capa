@@ -88,9 +88,7 @@ def test_null_feature_extractor():
 
     rules = capa.rules.RuleSet(
         [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+            capa.rules.Rule.from_yaml(textwrap.dedent("""
                     rule:
                         meta:
                             name: xor loop
@@ -102,9 +100,7 @@ def test_null_feature_extractor():
                                 - characteristic: tight loop
                                 - mnemonic: xor
                                 - characteristic: nzxor
-                    """
-                )
-            ),
+                    """)),
         ]
     )
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)

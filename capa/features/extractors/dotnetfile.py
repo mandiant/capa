@@ -42,6 +42,7 @@ from capa.features.extractors.dnfile.types import DnType
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     iter_dotnet_table,
+    load_dotnet_image,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
@@ -184,8 +185,8 @@ GLOBAL_HANDLERS = (
 class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
-        self.path: Path = path
-        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.path = path
+        self.pe = load_dotnet_image(path)
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -217,7 +218,10 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
         assert self.pe.net.struct.MajorRuntimeVersion is not None
         assert self.pe.net.struct.MinorRuntimeVersion is not None
 
-        return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
+        return (
+            self.pe.net.struct.MajorRuntimeVersion,
+            self.pe.net.struct.MinorRuntimeVersion,
+        )
 
     def get_meta_version_string(self) -> str:
         assert self.pe.net is not None
