@@ -46,6 +46,7 @@ jobs:
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: "3.13"
+        cache: 'pip' # Added caching for pip dependencies
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
@@ -74,6 +75,7 @@ jobs:
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: "3.13"
+        cache: 'pip' # Added caching for pip dependencies
     - name: Install capa
       run: |
         pip install -r requirements.txt
@@ -106,6 +108,7 @@ jobs:
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip' # Added caching for pip dependencies
     - name: Install pyyaml
       if: matrix.os == 'ubuntu-22.04'
       run: sudo apt-get install -y libyaml-dev
@@ -119,8 +122,6 @@ jobs:
         path: tests/data/**/*.viv
         key: viv-${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
     - name: Run tests (fast)
-      # this set of tests runs about 80% of the cases in 20% of the time,
-      # and should catch most errors quickly.
       run:  pre-commit run pytest-fast --all-files --hook-stage manual
     - name: Run tests
       run: pytest -v tests/
@@ -137,7 +138,6 @@ jobs:
         python-version: ["3.10", "3.13"]
     steps:
     - name: Checkout capa with submodules
-      # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
       if: ${{ env.BN_SERIAL != 0 }}
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -147,6 +147,7 @@ jobs:
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip' # Added caching for pip dependencies
     - name: Install pyyaml
       if: ${{ env.BN_SERIAL != 0 }}
       run: sudo apt-get install -y libyaml-dev
@@ -167,7 +168,7 @@ jobs:
       if: ${{ env.BN_SERIAL != 0 }}
       env:
         BN_LICENSE: ${{ secrets.BN_LICENSE }}
-      run: pytest -v tests/test_binja_features.py  # explicitly refer to the binja tests for performance. other tests run above.
+      run: pytest -v tests/test_binja_features.py  
 
   ghidra-tests:
     name: Ghidra tests for ${{ matrix.python-version }}
@@ -190,6 +191,7 @@ jobs:
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip' # Added caching for pip dependencies
     - name: Set up Java ${{ matrix.java-version }}
       uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
       with:
@@ -230,7 +232,6 @@ jobs:
             slug: "release/9.2/ida-essential/ida-essential_92_x64linux.run"
     steps:
     - name: Checkout capa with submodules
-      # do only run if IDA_LICENSE_ID is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
       if: ${{ env.IDA_LICENSE_ID != 0 }}
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -240,6 +241,7 @@ jobs:
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip' # Added caching for pip dependencies
     - name: Setup uv
       if: ${{ env.IDA_LICENSE_ID != 0 }}
       uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
@@ -261,4 +263,4 @@ jobs:
         IDA_LICENSE_ID: ${{ secrets.IDA_LICENSE_ID }}
     - name: Run tests
       if: ${{ env.IDA_LICENSE_ID != 0 }}
-      run: pytest -v tests/test_idalib_features.py  # explicitly refer to the idalib tests for performance. other tests run above.
+      run: pytest -v tests/test_idalib_features.py
