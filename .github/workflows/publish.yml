@@ -1,3 +1,7 @@
+# This workflow uses actions that are not certified by GitHub. They are provided
+# by a third-party and are governed by separate terms of service, privacy
+# policy, and support documentation.
+
 # use PyPI trusted publishing, as described here: 
 # https://blog.trailofbits.com/2023/05/23/trusted-publishing-a-new-benchmark-for-packaging-security/
 name: publish to pypi
@@ -17,11 +21,13 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Set up Python
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        uses: actions/setup-python@v5 # Upgraded to v5 for stable caching
         with:
           python-version: '3.10'
+          cache: 'pip' # Correctly indented under "with"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
