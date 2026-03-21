@@ -2,7 +2,7 @@ name: PIP audit
 
 on:
   schedule:
-  - cron: '0 8 * * 1'
+    - cron: '0 8 * * 1'
 
 jobs:
   test:
@@ -16,6 +16,14 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
+      # Added Set up Python step with caching enabled
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Run pip-audit
+        uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
         with:
           inputs: .
