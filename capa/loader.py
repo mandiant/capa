@@ -729,7 +729,7 @@ def compute_static_layout(rules: RuleSet, extractor: StaticFeatureExtractor, cap
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if capa.rules.Scope.BASIC_BLOCK in rule.scopes:
+        if capa.rules.Scope.BASIC_BLOCK in rule.scopes or capa.rules.Scope.CONNECTED_BLOCKS in rule.scopes:
             for addr, _ in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)

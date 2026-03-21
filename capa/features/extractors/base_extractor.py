@@ -265,6 +265,14 @@ class StaticFeatureExtractor:
         """
         raise NotImplementedError()
 
+    def get_cfg_edges(self, f: FunctionHandle, bb: BBHandle) -> Iterator[BBHandle]:
+        """
+        enumerate successor basic blocks in the control-flow graph for a given basic block.
+
+        backends without CFG support may yield nothing.
+        """
+        yield from ()
+
     @abc.abstractmethod
     def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
         """

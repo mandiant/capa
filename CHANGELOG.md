@@ -8,6 +8,9 @@
 - vmray: support parsing flog.txt (Download Function Log) without full ZIP @devs6186 #2452
 - vmray: add flog.txt vs archive docs, fetch-vmray-flog.py helper, and fixture-based regression tests @devs6186 #2878
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
+- static: add function triage stage (skip/deprioritize/analyze logging) before function matching; library skip reporting unchanged
+- static rules: add `connected blocks` scope/subscope with fixed depth=2 CFG neighborhoods and Vivisect CFG-edge support
+- scripts: add `scripts/demo_connected_blocks_and_triage.py` to show triage counts and connected-block rule syntax
 
 ### Breaking Changes
 

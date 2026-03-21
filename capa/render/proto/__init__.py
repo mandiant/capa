@@ -155,6 +155,10 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
         return capa_pb2.Scope.SCOPE_FILE
     elif scope == capa.rules.Scope.FUNCTION:
         return capa_pb2.Scope.SCOPE_FUNCTION
+    elif scope == capa.rules.Scope.CONNECTED_BLOCKS:
+        # protobuf schema does not yet have a dedicated static connected-block scope enum.
+        # encode as basic block for wire compatibility.
+        return capa_pb2.Scope.SCOPE_BASIC_BLOCK
     elif scope == capa.rules.Scope.BASIC_BLOCK:
         return capa_pb2.Scope.SCOPE_BASIC_BLOCK
     elif scope == capa.rules.Scope.INSTRUCTION:

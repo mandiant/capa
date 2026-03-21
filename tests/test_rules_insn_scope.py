@@ -131,6 +131,42 @@ def test_scope_instruction_description():
         )
     )
 
+
+def test_rule_subscope_connected_blocks():
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test connected blocks subscope
+                            scopes:
+                                static: function
+                                dynamic: process
+                        features:
+                        - and:
+                            - connected blocks:
+                                - and:
+                                    - mnemonic: mov
+                                    - arch: i386
+                    """
+                )
+            )
+        ]
+    )
+
+    # parent function scope rule + derived connected-blocks subscope rule.
+    assert len(rules.function_rules) == 1
+    assert len(rules.connected_block_rules) == 1
+
+
+def test_scope_connected_blocks_ordering():
+    assert capa.rules.is_subscope_compatible(capa.rules.Scope.FUNCTION, capa.rules.Scope.CONNECTED_BLOCKS)
+    assert capa.rules.is_subscope_compatible(capa.rules.Scope.CONNECTED_BLOCKS, capa.rules.Scope.BASIC_BLOCK)
+    assert capa.rules.is_subscope_compatible(capa.rules.Scope.CONNECTED_BLOCKS, capa.rules.Scope.INSTRUCTION)
+    assert not capa.rules.is_subscope_compatible(capa.rules.Scope.BASIC_BLOCK, capa.rules.Scope.CONNECTED_BLOCKS)
+
     capa.rules.Rule.from_yaml(
         textwrap.dedent(
             """

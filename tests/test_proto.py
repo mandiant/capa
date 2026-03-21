@@ -125,6 +125,7 @@ def test_addr_to_pb2():
 def test_scope_to_pb2():
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FILE) == capa_pb2.SCOPE_FILE
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FUNCTION) == capa_pb2.SCOPE_FUNCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.CONNECTED_BLOCKS) == capa_pb2.SCOPE_BASIC_BLOCK
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.BASIC_BLOCK) == capa_pb2.SCOPE_BASIC_BLOCK
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.INSTRUCTION) == capa_pb2.SCOPE_INSTRUCTION
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.PROCESS) == capa_pb2.SCOPE_PROCESS
@@ -312,6 +313,17 @@ def assert_feature(fa, fb):
 
     elif isinstance(fa, capa.features.freeze.features.APIFeature):
         assert fa.api == fb.api
+
+    elif isinstance(fa, capa.features.freeze.features.ArgumentStringFeature):
+        assert fa.name == fb.name
+        assert fa.argument_string == fb.argument_string
+
+    elif isinstance(fa, capa.features.freeze.features.ArgumentNumberFeature):
+        assert fa.name == fb.name
+        assert fa.argument_number == getattr(fb.argument_number, fb.argument_number.WhichOneof("value"))
+
+    elif isinstance(fa, capa.features.freeze.features.ReturnValueFeature):
+        assert fa.return_value == getattr(fb.return_value, fb.return_value.WhichOneof("value"))
 
     elif isinstance(fa, capa.features.freeze.features.PropertyFeature):
         assert fa.property == fb.property_

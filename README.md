@@ -89,6 +89,22 @@ To use capa as a library or integrate with another tool, see [doc/installation.m
 
 **Documentation:** [Usage and tips](doc/usage.md) · [Installation](doc/installation.md) · [Limitations](doc/limitations.md) · [FAQ](doc/faq.md)
 
+## static pipeline triage and connected blocks
+
+Recent static pipeline updates add:
+
+- **function triage** before full function matching: functions may be conservatively marked as skip/deprioritize using lightweight signals (library/flirt state, function size, API presence when available, thunk/runtime naming patterns).
+- **connected blocks** static subscope syntax:
+
+```yaml
+- connected blocks:
+    - and:
+        - api: kernel32.CreateFileA
+        - api: kernel32.WriteFile
+```
+
+Connected-block matching currently uses fixed CFG neighborhood depth `2` and is available when using a backend with CFG edge support (Vivisect). Other static backends return no CFG edges for this scope.
+
 # capa Explorer Web
 The [capa Explorer Web](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
 

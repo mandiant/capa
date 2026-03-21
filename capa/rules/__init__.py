@@ -89,6 +89,7 @@ class Scope(str, Enum):
     SPAN_OF_CALLS = "span of calls"
     CALL = "call"
     FUNCTION = "function"
+    CONNECTED_BLOCKS = "connected blocks"
     BASIC_BLOCK = "basic block"
     INSTRUCTION = "instruction"
 
@@ -107,6 +108,7 @@ STATIC_SCOPES = {
     Scope.FILE,
     Scope.GLOBAL,
     Scope.FUNCTION,
+    Scope.CONNECTED_BLOCKS,
     Scope.BASIC_BLOCK,
     Scope.INSTRUCTION,
 }
@@ -219,6 +221,10 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.common.Characteristic("recursive call"),
         # plus basic block scope features, see below
     },
+    Scope.CONNECTED_BLOCKS: {
+        capa.features.common.MatchedRule,
+        # plus basic block scope features, see below
+    },
     Scope.BASIC_BLOCK: {
         capa.features.common.MatchedRule,
         capa.features.common.Characteristic("tight loop"),
@@ -252,6 +258,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
 # global scope features are available in all other scopes
 SUPPORTED_FEATURES[Scope.INSTRUCTION].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.BASIC_BLOCK].update(SUPPORTED_FEATURES[Scope.GLOBAL])
+SUPPORTED_FEATURES[Scope.CONNECTED_BLOCKS].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.FILE].update(SUPPORTED_FEATURES[Scope.GLOBAL])
 SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.GLOBAL])
@@ -269,6 +276,8 @@ SUPPORTED_FEATURES[Scope.PROCESS].update(SUPPORTED_FEATURES[Scope.THREAD])
 
 # all instruction scope features are also basic block features
 SUPPORTED_FEATURES[Scope.BASIC_BLOCK].update(SUPPORTED_FEATURES[Scope.INSTRUCTION])
+# all basic block scope features are also connected blocks features
+SUPPORTED_FEATURES[Scope.CONNECTED_BLOCKS].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
 # all basic block scope features are also function scope features
 SUPPORTED_FEATURES[Scope.FUNCTION].update(SUPPORTED_FEATURES[Scope.BASIC_BLOCK])
 
@@ -588,9 +597,31 @@ def unique(sequence):
     return [x for x in sequence if not (x in seen or seen.add(x))]  # type: ignore [func-returns-value]
 
 
+def parse_connected_blocks_subscope_key(key: str) -> bool:
+    """
+    return True when the key denotes a connected-blocks subscope declaration.
+
+    supported forms:
+      - connected blocks
+      - connected_blocks(depth=2)
+    """
+    if key == "connected blocks":
+        return True
+
+    if not key.startswith("connected_blocks(") or not key.endswith(")"):
+        return False
+
+    body = key[len("connected_blocks(") : -len(")")]
+    if body != "depth=2":
+        raise InvalidRule("only connected_blocks(depth=2) is supported")
+
+    return True
+
+
 STATIC_SCOPE_ORDER = [
     Scope.FILE,
     Scope.FUNCTION,
+    Scope.CONNECTED_BLOCKS,
     Scope.BASIC_BLOCK,
     Scope.INSTRUCTION,
 ]
@@ -707,7 +738,7 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "basic block":
         if not is_subscope_compatible(scopes.static, Scope.BASIC_BLOCK):
-            raise InvalidRule("`basic block` subscope supported only for `function` scope")
+            raise InvalidRule("`basic block` subscope supported only for `function` and `connected blocks` scope")
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -716,9 +747,25 @@ def build_statements(d, scopes: Scopes):
             Scope.BASIC_BLOCK, build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK)), description=description
         )
 
+    elif parse_connected_blocks_subscope_key(key):
+        if not is_subscope_compatible(scopes.static, Scope.CONNECTED_BLOCKS):
+            raise InvalidRule("`connected blocks` subscope supported only for `function` scope")
+
+        if len(d[key]) != 1:
+            raise InvalidRule("subscope must have exactly one child statement")
+
+        # MVP: fixed proximity depth=2 in static matching pipeline.
+        return ceng.Subscope(
+            Scope.CONNECTED_BLOCKS,
+            build_statements(d[key][0], Scopes(static=Scope.CONNECTED_BLOCKS)),
+            description=description,
+        )
+
     elif key == "instruction":
         if not is_subscope_compatible(scopes.static, Scope.INSTRUCTION):
-            raise InvalidRule("`instruction` subscope supported only for `function` and `basic block` scope")
+            raise InvalidRule(
+                "`instruction` subscope supported only for `function`, `connected blocks`, and `basic block` scope"
+            )
 
         if len(d[key]) == 1:
             statements = build_statements(d[key][0], Scopes(static=Scope.INSTRUCTION))
@@ -1433,6 +1480,7 @@ class RuleSet:
             Scope.PROCESS,
             Scope.INSTRUCTION,
             Scope.BASIC_BLOCK,
+            Scope.CONNECTED_BLOCKS,
             Scope.FUNCTION,
             Scope.FILE,
         )
@@ -1474,6 +1522,10 @@ class RuleSet:
     @property
     def basic_block_rules(self):
         return self.rules_by_scope[Scope.BASIC_BLOCK]
+
+    @property
+    def connected_block_rules(self):
+        return self.rules_by_scope[Scope.CONNECTED_BLOCKS]
 
     @property
     def instruction_rules(self):

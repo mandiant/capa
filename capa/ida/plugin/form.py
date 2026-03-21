@@ -1028,14 +1028,16 @@ class CapaExplorerForm(idaapi.PluginForm):
         all_function_features: FeatureSet = collections.defaultdict(set)
         try:
             if self.rulegen_current_function is not None:
-                _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
+                _, func_matches, cbb_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
                     ruleset, self.rulegen_current_function
                 )
                 all_function_features.update(
                     self.rulegen_feature_cache.get_all_function_features(self.rulegen_current_function)
                 )
 
-                for name, result in itertools.chain(func_matches.items(), bb_matches.items(), insn_matches.items()):
+                for name, result in itertools.chain(
+                    func_matches.items(), cbb_matches.items(), bb_matches.items(), insn_matches.items()
+                ):
                     rule = ruleset[name]
                     if rule.is_subscope_rule():
                         continue
@@ -1204,12 +1206,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             s in rule.scopes
             for s in (
                 capa.rules.Scope.FUNCTION,
+                capa.rules.Scope.CONNECTED_BLOCKS,
                 capa.rules.Scope.BASIC_BLOCK,
                 capa.rules.Scope.INSTRUCTION,
             )
         ):
             try:
-                _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
+                _, func_matches, cbb_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
                     ruleset, self.rulegen_current_function
                 )
             except Exception as e:
@@ -1217,6 +1220,8 @@ class CapaExplorerForm(idaapi.PluginForm):
                 return
 
             if capa.rules.Scope.FUNCTION in rule.scopes and rule.name in func_matches:
+                is_match = True
+            elif capa.rules.Scope.CONNECTED_BLOCKS in rule.scopes and rule.name in cbb_matches:
                 is_match = True
             elif capa.rules.Scope.BASIC_BLOCK in rule.scopes and rule.name in bb_matches:
                 is_match = True

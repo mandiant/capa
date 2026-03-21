@@ -346,3 +346,28 @@ def test_instruction_subscope(z9324d_extractor):
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000 on i386" in capabilities.matches
     assert 0x406F60 in {result[0] for result in capabilities.matches["push 1000 on i386"]}
+
+
+def test_connected_blocks_subscope(z9324d_extractor):
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: connected block helper
+                        scopes:
+                            static: function
+                            dynamic: process
+                      features:
+                        - connected blocks:
+                            - and:
+                                - api: kernel32.TerminateThread
+                    """
+                )
+            )
+        ]
+    )
+    capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
+    assert "connected block helper" in capabilities.matches

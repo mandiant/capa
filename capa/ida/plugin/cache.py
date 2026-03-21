@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import itertools
 import collections
+from collections import deque
 from typing import Union, Optional
 
 import capa.engine
@@ -160,19 +161,53 @@ class CapaRuleGenFeatureCache:
 
         return features, matches, insn_matches
 
+    def _build_connected_block_adjacency(
+        self, fh: FunctionHandle, f_node: CapaRuleGenFeatureCacheNode
+    ) -> dict[Address, set[Address]]:
+        adjacency: dict[Address, set[Address]] = collections.defaultdict(set)
+        bbs_by_address = {bb.address: bb for bb in f_node.children}
+        for bb in f_node.children:
+            adjacency[bb.address]
+            assert isinstance(bb.inner, BBHandle)
+            for succ in self.extractor.get_cfg_edges(fh, bb.inner):
+                if succ.address in bbs_by_address:
+                    adjacency[bb.address].add(succ.address)
+                    adjacency[succ.address].add(bb.address)
+        return adjacency
+
+    @staticmethod
+    def _collect_connected_neighborhood(
+        adjacency: dict[Address, set[Address]], seed: Address, depth: int = 2
+    ) -> set[Address]:
+        seen = {seed}
+        q = deque([(seed, 0)])
+        while q:
+            node, d = q.popleft()
+            if d >= depth:
+                continue
+            for succ in adjacency.get(node, ()):
+                if succ in seen:
+                    continue
+                seen.add(succ)
+                q.append((succ, d + 1))
+        return seen
+
     def find_code_capabilities(
         self, ruleset: RuleSet, fh: FunctionHandle
-    ) -> tuple[FeatureSet, MatchResults, MatchResults, MatchResults]:
+    ) -> tuple[FeatureSet, MatchResults, MatchResults, MatchResults, MatchResults]:
         f_node: Optional[CapaRuleGenFeatureCacheNode] = self._get_cached_func_node(fh)
         if f_node is None:
-            return {}, {}, {}, {}
+            return {}, {}, {}, {}, {}
 
         insn_matches: MatchResults = collections.defaultdict(list)
         bb_matches: MatchResults = collections.defaultdict(list)
+        connected_block_matches: MatchResults = collections.defaultdict(list)
         function_features: FeatureSet = collections.defaultdict(set)
+        bb_features_by_address: dict[Address, FeatureSet] = {}
 
         for bb in f_node.children:
             features, bmatches, imatches = self._find_basic_block_capabilities(ruleset, bb)
+            bb_features_by_address[bb.address] = features
             for feature, locs in features.items():
                 function_features[feature].update(locs)
             for name, result in bmatches.items():
@@ -180,11 +215,27 @@ class CapaRuleGenFeatureCache:
             for name, result in imatches.items():
                 insn_matches[name].extend(result)
 
+        if ruleset.connected_block_rules:
+            adjacency = self._build_connected_block_adjacency(fh, f_node)
+            for bb in f_node.children:
+                neighborhood = self._collect_connected_neighborhood(adjacency, bb.address, depth=2)
+                neighborhood_features: FeatureSet = collections.defaultdict(set)
+                for bb_addr in neighborhood:
+                    for feature, locs in bb_features_by_address.get(bb_addr, {}).items():
+                        neighborhood_features[feature].update(locs)
+
+                _, matches = ruleset.match(Scope.CONNECTED_BLOCKS, neighborhood_features, bb.address)
+                for name, result in matches.items():
+                    connected_block_matches[name].extend(result)
+                    rule = ruleset[name]
+                    for loc, _ in result:
+                        capa.engine.index_rule_matches(function_features, rule, [loc])
+
         for feature, locs in itertools.chain(f_node.features.items(), self.global_features.items()):
             function_features[feature].update(locs)
 
         _, function_matches = ruleset.match(Scope.FUNCTION, function_features, f_node.address)
-        return function_features, function_matches, bb_matches, insn_matches
+        return function_features, function_matches, connected_block_matches, bb_matches, insn_matches
 
     def find_file_capabilities(self, ruleset: RuleSet) -> tuple[FeatureSet, MatchResults]:
         features: FeatureSet = collections.defaultdict(set)
@@ -193,7 +244,7 @@ class CapaRuleGenFeatureCache:
             assert func_node.inner is not None
             assert isinstance(func_node.inner, FunctionHandle)
 
-            func_features, _, _, _ = self.find_code_capabilities(ruleset, func_node.inner)
+            func_features, _, _, _, _ = self.find_code_capabilities(ruleset, func_node.inner)
             for feature, locs in func_features.items():
                 features[feature].update(locs)
 

@@ -16,6 +16,7 @@ import logging
 from typing import Any, Iterator
 from pathlib import Path
 
+import envi
 import viv_utils
 import viv_utils.flirt
 
@@ -83,6 +84,27 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
         bb: viv_utils.BasicBlock = bbh.inner
         for insn in bb.instructions:
             yield InsnHandle(address=AbsoluteVirtualAddress(insn.va), inner=insn)
+
+    def get_cfg_edges(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[BBHandle]:
+        f: viv_utils.Function = fh.inner
+        bb: viv_utils.BasicBlock = bbh.inner
+
+        bb_by_va = {b.va: b for b in f.basic_blocks}
+        if len(bb.instructions) == 0:
+            return
+
+        last_insn = bb.instructions[-1]
+        for bva, bflags in last_insn.getBranches():
+            if bva is None:
+                continue
+
+            if (
+                bflags & envi.BR_COND
+                or bflags & envi.BR_FALL
+                or bflags & envi.BR_TABLE
+                or last_insn.mnem == "jmp"
+            ) and bva in bb_by_va:
+                yield BBHandle(address=AbsoluteVirtualAddress(bva), inner=bb_by_va[bva])
 
     def extract_insn_features(
         self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle

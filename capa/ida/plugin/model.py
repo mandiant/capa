@@ -530,7 +530,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     parent2 = parent
                 elif capa.rules.Scope.FUNCTION in rule.meta.scopes:
                     parent2 = CapaExplorerFunctionItem(parent, location)
-                elif capa.rules.Scope.BASIC_BLOCK in rule.meta.scopes:
+                elif (
+                    capa.rules.Scope.BASIC_BLOCK in rule.meta.scopes
+                    or capa.rules.Scope.CONNECTED_BLOCKS in rule.meta.scopes
+                ):
                     parent2 = CapaExplorerBlockItem(parent, location)
                 elif capa.rules.Scope.INSTRUCTION in rule.meta.scopes:
                     parent2 = CapaExplorerInstructionItem(parent, location)
