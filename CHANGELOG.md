@@ -37,10 +37,11 @@
 -
 
 ### Bug Fixes
+- ghidra: fix function truncation by using flow-insensitive block iteration @sashwathsubra #2947
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
 - render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
 - rules: handle empty or invalid YAML documents gracefully in `Rule.from_yaml` and `get_rules` @devs6186 #2900
-- Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
+- Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)git status
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
