@@ -51,7 +51,7 @@ jobs:
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
     - name: Lint with ruff
-      run: pre-commit run ruff
+      run: pre-commit run ruff --all-files
     - name: Lint with isort
       run: pre-commit run isort --show-diff-on-failure
     - name: Lint with black
