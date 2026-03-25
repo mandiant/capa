@@ -108,6 +108,7 @@ def get_function_blocks(fh: "capa.features.extractors.base_extractor.FunctionHan
     to prevent truncation at misidentified non-returning calls.
     """
     model = BasicBlockModel(get_current_program())
+    # Restoration of original logic with the flow-insensitive fix:
     for block in model.getCodeBlocksContaining(fh.inner.getBody(), get_monitor()):
         yield BBHandle(address=AbsoluteVirtualAddress(block.getMinAddress().getOffset()), inner=block)
 
