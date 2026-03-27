@@ -32,7 +32,7 @@ This technique doesn't pull the default rule set. You can obtain rule releases f
 ```console
 $ wget https://github.com/mandiant/capa-rules/archive/refs/tags/v9.3.1.zip
 $ unzip v9.3.1.zip
-$ capa -r /path/to/capa-rules suspicious.exe
+$ capa -r capa-rules-v9.3.1/ suspicious.exe
 ```
 
 This technique also doesn't set up the default library identification [signatures](https://github.com/mandiant/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.

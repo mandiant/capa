@@ -32,6 +32,11 @@ search = "v{current_version}.zip"
 replace = "v{new_version}.zip"
 
 [[tool.bumpversion.files]]
+filename = "doc/installation.md"
+search = "capa-rules-{current_version}/"
+replace = "capa-rules-{new_version}/"
+
+[[tool.bumpversion.files]]
 filename = "doc/rules.md"
 search = "capa {current_version}"
 replace = "capa {new_version}"
