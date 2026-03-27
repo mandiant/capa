@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (23)
+### New Rules (25)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -34,6 +34,8 @@
 - host-interaction/process/create/create-process-in-dotnet moritz.raabe@mandiant.com social.tarang@gmail.com
 - nursery/read-file-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
 - nursery/write-file-in-dotnet william.ballenthin@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/escalate-privileges-via-commit_creds-on-linux aryanyk
+- nursery/register-netfilter-hook-on-linux aryanyk
 -
 
 ### Bug Fixes
