@@ -279,12 +279,12 @@ def test_round_trip(request, rd_file):
 
 
 def test_json_to_rdoc():
-    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    path = fixtures.get_data_path_by_name("pma01-01.dll_.json")
     assert isinstance(rdoc.ResultDocument.from_file(path), rdoc.ResultDocument)
 
 
 def test_rdoc_to_capa():
-    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    path = fixtures.get_data_path_by_name("pma01-01.dll_.json")
 
     rd = rdoc.ResultDocument.from_file(path)
 

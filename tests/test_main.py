@@ -227,7 +227,7 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
 
 
 def test_json_meta(capsys):
-    path = str(fixtures.get_data_path_by_name("pma01-01"))
+    path = str(fixtures.get_data_path_by_name("pma01-01.dll_"))
     assert capa.main.main([path, "-j"]) == 0
     std = capsys.readouterr()
     std_json = json.loads(std.out)
@@ -271,7 +271,7 @@ def test_main_dotnet4(_039a6_dotnetfile_extractor):
 
 
 def test_main_rd():
-    path = str(fixtures.get_data_path_by_name("pma01-01-rd"))
+    path = str(fixtures.get_data_path_by_name("pma01-01.dll_.json"))
     assert capa.main.main([path, "-vv"]) == 0
     assert capa.main.main([path, "-v"]) == 0
     assert capa.main.main([path, "-j"]) == 0
