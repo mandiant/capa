@@ -170,7 +170,8 @@ class CompoundStatementType:
     OPTIONAL = "optional"
 
 
-class StatementModel(FrozenModel): ...
+class StatementModel(FrozenModel):
+    ...
 
 
 class CompoundStatement(StatementModel):
@@ -393,7 +394,6 @@ class Match(FrozenModel):
                     )
 
                 for location in result.locations:
-
                     # keep this in sync with the copy below
                     if isinstance(location, DynamicCallAddress):
                         if location in rule_matches:
@@ -733,9 +733,9 @@ class ResultDocument(FrozenModel):
     def to_capa(self) -> tuple[Metadata, "Capabilities"]:
         from capa.capabilities.common import Capabilities
 
-        matches: dict[str, list[tuple[capa.features.address.Address, capa.features.common.Result]]] = (
-            collections.defaultdict(list)
-        )
+        matches: dict[
+            str, list[tuple[capa.features.address.Address, capa.features.common.Result]]
+        ] = collections.defaultdict(list)
 
         # this doesn't quite work because we don't have the rule source for rules that aren't matched.
         rules_by_name = {

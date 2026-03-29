@@ -81,7 +81,8 @@ def test_cape_extractor(version: str, filename: str, exception: Type[BaseExcepti
 
 
 def test_cape_model_argument():
-    call = Call.model_validate_json("""
+    call = Call.model_validate_json(
+        """
         {
             "timestamp": "2023-10-20 12:30:14,015",
             "thread_id": "2380",
@@ -104,6 +105,7 @@ def test_cape_model_argument():
             "repeated": 19,
             "id": 0
         }
-        """)
+        """
+    )
     assert call.arguments[0].value == 30
     assert call.arguments[1].value == 0x30
