@@ -576,68 +576,6 @@ def get_data_path_by_name(name) -> Path:
         raise ValueError(f"unexpected sample fixture: {name}")
 
 
-def get_sample_md5_by_name(name):
-    """used by IDA tests to ensure the correct IDB is loaded"""
-    if name == "mimikatz":
-        return "5f66b82558ca92e54e77f216ef4c066c"
-    elif name == "kernel32":
-        return "e80758cf485db142fca1ee03a34ead05"
-    elif name == "kernel32-64":
-        return "a8565440629ac87f6fef7d588fe3ff0f"
-    elif name == "pma12-04":
-        return "56bed8249e7c2982a90e54e1e55391a2"
-    elif name == "pma16-01":
-        return "7faafc7e4a5c736ebfee6abbbc812d80"
-    elif name == "pma01-01":
-        return "290934c61de9176ad682ffdd65f0a669"
-    elif name == "pma21-01":
-        return "c8403fb05244e23a7931c766409b5e22"
-    elif name == "al-khaser x86":
-        return "db648cd247281954344f1d810c6fd590"
-    elif name == "al-khaser x64":
-        return "3cb21ae76ff3da4b7e02d77ff76e82be"
-    elif name.startswith("39c05"):
-        return "b7841b9d5dc1f511a93cc7576672ec0c"
-    elif name.startswith("499c2"):
-        return "499c2a85f6e8142c3f48d4251c9c7cd6"
-    elif name.startswith("9324d"):
-        return "9324d1a8ae37a36ae560c37448c9705a"
-    elif name.startswith("a1982"):
-        return "a198216798ca38f280dc413f8c57f2c2"
-    elif name.startswith("a933a"):
-        return "a933a1a402775cfa94b6bee0963f4b46"
-    elif name.startswith("bfb9b"):
-        return "bfb9b5391a13d0afd787e87ab90f14f5"
-    elif name.startswith("c9188"):
-        return "c91887d861d9bd4a5872249b641bc9f9"
-    elif name.startswith("64d9f"):
-        return "64d9f7d96b99467f36e22fada623c3bb"
-    elif name.startswith("82bf6"):
-        return "82bf6347acf15e5d883715dc289d8a2b"
-    elif name.startswith("77329"):
-        return "773290480d5445f11d3dc1b800728966"
-    elif name.startswith("3b13b"):
-        # file name is SHA256 hash
-        return "56a6ffe6a02941028cc8235204eef31d"
-    elif name.startswith("7351f"):
-        return "7351f8a40c5450557b24622417fc478d"
-    elif name.startswith("79abd"):
-        return "79abd17391adc6251ecdc58d13d76baf"
-    elif name.startswith("946a9"):
-        return "946a99f36a46d335dec080d9a4371940"
-    elif name.startswith("b9f5b"):
-        return "b9f5bd514485fb06da39beff051b9fdc"
-    elif name.startswith("294b8d"):
-        # file name is SHA256 hash
-        return "3db3e55b16a7b1b1afb970d5e77c5d98"
-    elif name.startswith("2bf18d"):
-        return "2bf18d0403677378adad9001b1243211"
-    elif name.startswith("ea2876"):
-        return "76fa734236daa023444dec26863401dc"
-    else:
-        raise ValueError(f"unexpected sample fixture: {name}")
-
-
 def resolve_sample(sample):
     return get_data_path_by_name(sample)
 
