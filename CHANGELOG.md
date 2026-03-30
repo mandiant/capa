@@ -24,7 +24,7 @@
 
 ## v9.4.0
 
-This release includes Ghidra PyGhidra support, performance improvements, and 25 new rules. We'd like to thank the following contributors: @0x1622, Daniel Adeboye (@adeboyedn), Aditya Pandey (@EclipseAditya), aryanyk, Ben Knutson (@blenbot), @cosmoworker, @devs6186, @doomedraven, kamran ul haq (@kami922), @Maijin, @mike-hunhoff, @moritzraabe, @res2500, Willi Ballenthin (@wballenthin), and others!
+This release includes Ghidra PyGhidra support, performance improvements, dependency updates, and 26 new rules. We'd like to thank the following contributors: @0x1622, Daniel Adeboye (@adeboyedn), Aditya Pandey (@EclipseAditya), aryanyk, Ben Knutson (@blenbot), @cosmoworker, @devs6186, @doomedraven, kamran ul haq (@kami922), @Maijin, @res2500, and others!
 
 ### New Features
 
@@ -61,7 +61,6 @@ This release includes Ghidra PyGhidra support, performance improvements, and 25 
 - nursery/escalate-privileges-via-commit_creds-on-linux aryanyk
 - nursery/register-netfilter-hook-on-linux aryanyk
 - nursery/get-custom-http-header @msanchit-dev
--
 
 ### Bug Fixes
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
