@@ -18,7 +18,8 @@ from capa.features.extractors.drakvuf.models import SystemCall
 
 
 def test_syscall_argument_construction():
-    call_dictionary = json.loads(r"""
+    call_dictionary = json.loads(
+        r"""
         {
             "Plugin": "syscall",
             "TimeStamp": "1716999134.581449",
@@ -42,7 +43,8 @@ def test_syscall_argument_construction():
             "Timeout": "0xfffff506a02846d8",
             "Alertable": "0x0"
         }
-        """)
+        """
+    )
     call = SystemCall(**call_dictionary)
     assert len(call.arguments) == call.nargs
     assert call.arguments["IoCompletionHandle"] == "0xffffffff80001ac0"

@@ -75,7 +75,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         yield from capa.features.extractors.ghidra.file.extract_features()
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-
         for fhandle in ghidra_helpers.get_function_symbols():
             fh: FunctionHandle = FunctionHandle(
                 address=AbsoluteVirtualAddress(fhandle.getEntryPoint().getOffset()),
@@ -86,7 +85,6 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
-
         func = ghidra_helpers.get_flat_api().getFunctionContaining(ghidra_helpers.get_flat_api().toAddr(addr))
         return FunctionHandle(address=AbsoluteVirtualAddress(func.getEntryPoint().getOffset()), inner=func)
 
@@ -94,14 +92,12 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         yield from capa.features.extractors.ghidra.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
-
         yield from ghidra_helpers.get_function_blocks(fh)
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ghidra.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
-
         yield from ghidra_helpers.get_insn_in_range(bbh)
 
     def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):

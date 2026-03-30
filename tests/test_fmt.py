@@ -17,7 +17,8 @@ import textwrap
 
 import capa.rules
 
-EXPECTED = textwrap.dedent("""\
+EXPECTED = textwrap.dedent(
+    """\
     rule:
       meta:
         name: test rule
@@ -33,11 +34,13 @@ EXPECTED = textwrap.dedent("""\
         - and:
           - number: 1
           - number: 2
-    """)
+    """
+)
 
 
 def test_rule_reformat_top_level_elements():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
           features:
             - and:
@@ -53,13 +56,15 @@ def test_rule_reformat_top_level_elements():
             examples:
               - foo1234
               - bar5678
-        """)
+        """
+    )
 
     assert capa.rules.Rule.from_yaml(rule).to_yaml() == EXPECTED
 
 
 def test_rule_reformat_indentation():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
          meta:
             name: test rule
@@ -75,13 +80,15 @@ def test_rule_reformat_indentation():
                 - and:
                              - number: 1
                              - number: 2
-        """)
+        """
+    )
 
     assert capa.rules.Rule.from_yaml(rule).to_yaml() == EXPECTED
 
 
 def test_rule_reformat_order():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
           meta:
             authors:
@@ -97,7 +104,8 @@ def test_rule_reformat_order():
             - and:
               - number: 1
               - number: 2
-        """)
+        """
+    )
 
     assert capa.rules.Rule.from_yaml(rule).to_yaml() == EXPECTED
 
@@ -105,7 +113,8 @@ def test_rule_reformat_order():
 def test_rule_reformat_meta_update():
     # test updating the rule content after parsing
 
-    src = textwrap.dedent("""
+    src = textwrap.dedent(
+        """
         rule:
           meta:
             authors:
@@ -121,7 +130,8 @@ def test_rule_reformat_meta_update():
             - and:
               - number: 1
               - number: 2
-        """)
+        """
+    )
 
     rule = capa.rules.Rule.from_yaml(src)
     rule.name = "test rule"
@@ -131,7 +141,8 @@ def test_rule_reformat_meta_update():
 def test_rule_reformat_string_description():
     # the `description` should be aligned with the preceding feature name.
     # see #263
-    src = textwrap.dedent("""
+    src = textwrap.dedent(
+        """
         rule:
           meta:
             name: test rule
@@ -144,7 +155,8 @@ def test_rule_reformat_string_description():
             - and:
               - string: foo
                 description: bar
-        """).lstrip()
+        """
+    ).lstrip()
 
     rule = capa.rules.Rule.from_yaml(src)
     assert rule.to_yaml() == src
