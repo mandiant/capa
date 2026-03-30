@@ -156,7 +156,7 @@ dev = [
     "types-colorama==0.4.15.11",
     "types-PyYAML==6.0.8",
     "types-psutil==7.2.0.20251228",
-    "types_requests==2.32.0.20240712",
+    "types_requests==2.33.0.20260327",
     "types-protobuf==6.32.1.20250918",
     "deptry==0.25.1"
 ]
