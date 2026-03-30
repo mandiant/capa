@@ -403,7 +403,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 display += f"{statement.min}"
             elif statement.min == 0:
                 display += f"{statement.max} or fewer"
-            elif statement.max == (1 << 64 - 1):
+            elif statement.max == ((1 << 64) - 1):
                 display += f"{statement.min} or more"
             else:
                 display += f"between {statement.min} and {statement.max}"

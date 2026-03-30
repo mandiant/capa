@@ -543,7 +543,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     # Mypy is unable to recognise `global_` as an argument due to alias
 
     # workaround around mypy issue: https://github.com/python/mypy/issues/1424
-    get_base_addr = getattr(extractor, "get_base_addr", None)
+    get_base_addr = getattr(extractor, "get_base_address", None)
     base_addr = get_base_addr() if get_base_addr else capa.features.address.NO_ADDRESS
 
     freeze = Freeze(
