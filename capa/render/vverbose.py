@@ -172,7 +172,7 @@ def render_statement(console: Console, layout: rd.Layout, match: rd.Match, state
             console.write(f"{statement.min}")
         elif statement.min == 0:
             console.write(f"{statement.max} or fewer")
-        elif statement.max == (1 << 64 - 1):
+        elif statement.max == ((1 << 64) - 1):
             console.write(f"{statement.min} or more")
         else:
             console.write(f"between {statement.min} and {statement.max}")
