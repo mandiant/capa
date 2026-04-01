@@ -18,6 +18,9 @@
 
 ### Development
 
+- ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
+- ci: fix ZIP_NAME environment variable in build workflow @mr-tz #2982
+
 ### Raw diffs
 - [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
 - [capa-rules v9.4.0...master](https://github.com/mandiant/capa-rules/compare/v9.4.0...master)
