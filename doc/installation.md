@@ -19,6 +19,8 @@ By default, on MacOS Catalina or greater, Gatekeeper will block execution of the
 
 ![approve dialog](img/approve.png)
 
+You can also install capa via [pipx](https://pipx.pypa.io/stable/) or [uvx.sh](https://docs.astral.sh/uv/guides/tools/), but then it [won't be packaged with the default rule set](#note-on-capa-rules-and-library-identification-signatures).
+
 ## Method 2: Using capa as a Python library
 To install capa as a Python library use `pip` to fetch the `flare-capa` module.
 
@@ -47,7 +49,7 @@ Alternatively, see Method 3 below.
 You can now import the `capa` module from a Python script or use the IDA Pro plugins from the `capa/ida` directory. For more information please see the [usage](usage.md) documentation.
 
 ## Method 3: Inspecting the capa source code
-If you'd like to review and modify the capa source code, you'll need to check it out from GitHub and install it locally. By following these instructions, you'll maintain a local directory of source code that you can modify and run easily. 
+If you'd like to review and modify the capa source code, you'll need to check it out from GitHub and install it locally. By following these instructions, you'll maintain a local directory of source code that you can modify and run easily.
 
 ### 1. Check out source code
 Clone the capa git repository.
