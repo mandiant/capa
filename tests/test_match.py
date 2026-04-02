@@ -831,26 +831,25 @@ def test_bytes_prefix_index_correctness():
                 - bytes: 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
         """)
     r = capa.rules.Rule.from_yaml(rule_text)
-    rr = capa.rules.RuleSet([r])
 
     # 16 nop bytes - exact match
     nop16 = b"\x90" * 16
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(nop16): {0x0}}, 0x0)
+    _, matches = match([r], {capa.features.common.Bytes(nop16): {0x0}}, 0x0)
     assert "test bytes prefix index" in matches
 
     # 32 nop bytes - startswith match (first 16 bytes are nops)
     nop32 = b"\x90" * 32
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(nop32): {0x0}}, 0x0)
+    _, matches = match([r], {capa.features.common.Bytes(nop32): {0x0}}, 0x0)
     assert "test bytes prefix index" in matches
 
     # Different bytes - should not match
     other = b"\x00" * 16
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(other): {0x0}}, 0x0)
+    _, matches = match([r], {capa.features.common.Bytes(other): {0x0}}, 0x0)
     assert "test bytes prefix index" not in matches
 
     # Bytes shorter than pattern - should not match
     short = b"\x90" * 8
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(short): {0x0}}, 0x0)
+    _, matches = match([r], {capa.features.common.Bytes(short): {0x0}}, 0x0)
     assert "test bytes prefix index" not in matches
 
 
@@ -866,13 +865,12 @@ def test_bytes_prefix_index_collision():
                 - bytes: 41 42 43 44 45 46 47 48
         """)
     r = capa.rules.Rule.from_yaml(rule_text)
-    rr = capa.rules.RuleSet([r])
 
     features = {
         capa.features.common.Bytes(b"ABCD1234"): {0x0},
         capa.features.common.Bytes(b"ABCDEFGHzz"): {0x1},
     }
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, features, 0x0)
+    _, matches = match([r], features, 0x0)
     assert "test bytes prefix collision" in matches
 
 
@@ -888,12 +886,11 @@ def test_bytes_prefix_index_short_pattern_fallback():
                 - bytes: 41 42 43
         """)
     r = capa.rules.Rule.from_yaml(rule_text)
-    rr = capa.rules.RuleSet([r])
 
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(b"ABCDEF"): {0x0}}, 0x0)
+    _, matches = match([r], {capa.features.common.Bytes(b"ABCDEF"): {0x0}}, 0x0)
     assert "test bytes short prefix fallback" in matches
 
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(b"XABCDEF"): {0x0}}, 0x0)
+    _, matches = match([r], {capa.features.common.Bytes(b"XABCDEF"): {0x0}}, 0x0)
     assert "test bytes short prefix fallback" not in matches
 
 
@@ -921,25 +918,24 @@ def test_bytes_prefix_index_mixed_short_and_long_patterns():
         """)
     short_rule = capa.rules.Rule.from_yaml(short_rule_text)
     long_rule = capa.rules.Rule.from_yaml(long_rule_text)
-    rr = capa.rules.RuleSet([short_rule, long_rule])
 
     # Both rules match their respective extracted values.
     features = {
         capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0},
         capa.features.common.Bytes(b"\xcc\xdd\xee\xff\x11\x22\x33\x44\x55"): {0x1},
     }
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, features, 0x0)
+    _, matches = match([short_rule, long_rule], features, 0x0)
     assert "test short pattern rule" in matches
     assert "test long pattern rule" in matches
 
     # Only the short rule matches when the long pattern is absent.
-    _, matches = rr.match(capa.rules.Scope.FUNCTION, {capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0}}, 0x0)
+    _, matches = match([short_rule, long_rule], {capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0}}, 0x0)
     assert "test short pattern rule" in matches
     assert "test long pattern rule" not in matches
 
     # Only the long rule matches when the short pattern is absent.
-    _, matches = rr.match(
-        capa.rules.Scope.FUNCTION,
+    _, matches = match(
+        [short_rule, long_rule],
         {capa.features.common.Bytes(b"\xcc\xdd\xee\xff\x11\x22\x33\x44"): {0x0}},
         0x0,
     )
