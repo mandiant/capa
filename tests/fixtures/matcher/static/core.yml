@@ -1,0 +1,200 @@
+- name: scope-boundary
+  description: function scope aggregates across basic blocks, but basic block scope does not
+  rules:
+    - meta:
+        name: function-cross-basic-block
+        description: should match when function scope aggregates features from different basic blocks
+        scopes:
+          static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - mnemonic: add
+    - meta:
+        name: basic-block-cross-basic-block
+        description: should not match because no single basic block contains both mnemonics
+        scopes:
+          static: basic block
+      features:
+        - and:
+            - mnemonic: mov
+            - mnemonic: add
+    - meta:
+        name: instruction-single-mnemonic
+        description: should match once at the instruction that contains mov
+        scopes:
+          static: instruction
+      features:
+        - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+     bb: 0x401010: basic block
+      insn: 0x401010: mnemonic(add)
+  expect:
+    matches:
+      function-cross-basic-block:
+        - 0x401000
+      instruction-single-mnemonic:
+        - 0x401000
+
+- name: combinators-and-count
+  description: and or not optional and count rules over a minimal function layout
+  rules:
+    - meta:
+        name: and-match
+        description: should match because the function contains both mov and number 0x10
+        scopes:
+          static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - number: 0x10
+    - meta:
+        name: or-match
+        description: should match because one branch of the or is satisfied by number 0x10
+        scopes:
+          static: function
+      features:
+        - or:
+            - api: CreateFileW
+            - number: 0x10
+    - meta:
+        name: not-match
+        description: should match because mov is present and number 0x20 is absent
+        scopes:
+          static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - number: 0x20
+    - meta:
+        name: optional-match
+        description: should match even though the optional child is absent
+        scopes:
+          static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - optional:
+                - number: 0x30
+    - meta:
+        name: count-exact-match
+        description: should match because number 0x10 appears exactly twice
+        scopes:
+          static: function
+      features:
+        - count(number(0x10)): 2
+    - meta:
+        name: count-range-match
+        description: should match because number 0x10 appears within the allowed range
+        scopes:
+          static: function
+      features:
+        - count(number(0x10)): (1, 2)
+    - meta:
+        name: count-negative-no-match
+        description: should not match because number 0x10 does not appear three times
+        scopes:
+          static: function
+      features:
+        - count(number(0x10)): 3
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      and-match:
+        - 0x402000
+      or-match:
+        - 0x402000
+      not-match:
+        - 0x402000
+      optional-match:
+        - 0x402000
+      count-exact-match:
+        - 0x402000
+      count-range-match:
+        - 0x402000
+
+- name: strings-and-regex
+  description: exact string, substring, regex, and anchored regex behavior over a single function
+  rules:
+    - meta:
+        name: exact-string-match
+        description: should match only the exact string hello world
+        scopes:
+          static: function
+      features:
+        - string: hello world
+    - meta:
+        name: substring-match
+        description: should match because abc appears within a larger string
+        scopes:
+          static: function
+      features:
+        - substring: abc
+    - meta:
+        name: regex-match
+        description: should match because the regex finds bbbb within abbbba
+        scopes:
+          static: function
+      features:
+        - string: /bbbb/
+    - meta:
+        name: regex-ignorecase-match
+        description: should match because the regex is case-insensitive
+        scopes:
+          static: function
+      features:
+        - string: /BBBB/i
+    - meta:
+        name: regex-anchor-no-match
+        description: should not match because the anchored regex does not start at the beginning
+        scopes:
+          static: function
+      features:
+        - string: /^bbbb/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(hello world)
+     func: 0x500000: string(zabczz)
+     func: 0x500000: string(abbbba)
+     func: 0x500000: string(aBBBBa)
+  expect:
+    matches:
+      exact-string-match:
+        - 0x500000
+      substring-match:
+        - 0x500000
+      regex-match:
+        - 0x500000
+      regex-ignorecase-match:
+        - 0x500000
+
+- name: instruction-feature-parsing
+  description: instruction lines must tolerate colons in feature text and hex literals containing e
+  rules:
+    - meta:
+        name: colon-string-and-hex-number
+        description: "should match when the parser keeps key: value inside the feature and parses 0x1e as an integer"
+        scopes:
+          static: function
+      features:
+        - and:
+            - string: "key: value"
+            - number: 0x1e
+  features: |
+    func: 0x600000
+     bb: 0x600000: basic block
+      insn: 0x600000: number(0x1e)
+      insn: 0x600001: string(key: value)
+  expect:
+    matches:
+      colon-string-and-hex-number:
+        - 0x600000
