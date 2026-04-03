@@ -99,7 +99,7 @@ Please install these dependencies before install capa (from source or from PyPI)
 
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter
-  - [ruff](https://beta.ruff.rs/docs/) code linter and formatter
+  - [ruff](https://docs.astral.sh/ruff/) code linter and formatter
   - [mypy](https://mypy-lang.org/) type checking
   - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
 
