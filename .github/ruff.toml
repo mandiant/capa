@@ -83,7 +83,6 @@ lint.ignore = [
     "UP037", # Remove quotes from type annotation
     "C409", # Unnecessary list comprehension passed to tuple()
     "E226", # Missing whitespace around arithmetic operator
-    "C419"  # Unnecessary list comprehension
 ]
 
 [lint.per-file-ignores]
