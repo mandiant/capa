@@ -169,7 +169,7 @@ def _sarif_boilerplate(data_meta: dict, data_rules: dict) -> Optional[dict]:
                 "shortDescription": {"text": data_rules[key]["meta"]["name"]},
                 "messageStrings": {"default": {"text": data_rules[key]["meta"]["name"]}},
                 "properties": {
-                    "namespace": data_rules[key]["meta"]["namespace"] if "namespace" in data_rules[key]["meta"] else [],
+                    "namespace": data_rules[key]["meta"].get("namespace", []),
                     "scopes": data_rules[key]["meta"]["scopes"],
                     "references": data_rules[key]["meta"]["references"],
                     "lib": data_rules[key]["meta"]["lib"],
