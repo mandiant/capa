@@ -78,6 +78,13 @@ def get_rule_path():
         pytest.param("show-features.py", ["-P", "MicrosoftEdgeUpdate.exe", get_cape_report_file_path()]),
         pytest.param("show-unused-features.py", [get_binary_file_path()]),
         pytest.param("capa-as-library.py", [get_binary_file_path()]),
+        pytest.param(
+            "capa-diff.py",
+            [
+                Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json",
+                Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json",
+            ],
+        ),
         # not testing "minimize-vmray-results.py" as we don't currently upload full VMRay analysis archives
     ],
 )
