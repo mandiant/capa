@@ -81,8 +81,6 @@ lint.ignore = [
     "SIM401", # Use dict.get instead of an if-else block
     "UP028", # Replace yield over for loop with yield from
     "UP037", # Remove quotes from type annotation
-    "UP036", # Outdated python version block for sys.version_info
-    "F401", # Module imported but unused
     "C409", # Unnecessary list comprehension passed to tuple()
     "E226", # Missing whitespace around arithmetic operator
     "C419"  # Unnecessary list comprehension

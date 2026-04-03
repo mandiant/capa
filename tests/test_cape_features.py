@@ -15,11 +15,9 @@
 
 import fixtures
 
-import capa.main
 import capa.features.file
 import capa.features.insn
 import capa.features.common
-import capa.features.basicblock
 
 DYNAMIC_CAPE_FEATURE_PRESENCE_TESTS = sorted(
     [

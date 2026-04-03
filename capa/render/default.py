@@ -17,7 +17,6 @@ import io
 import collections
 import urllib.parse
 
-import rich
 import rich.table
 import rich.console
 from rich.console import Console

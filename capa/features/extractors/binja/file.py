@@ -16,9 +16,7 @@ from typing import Iterator
 
 from binaryninja import Segment, BinaryView, SymbolType, SymbolBinding
 
-import capa.features.extractors.common
 import capa.features.extractors.helpers
-import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import (
     FORMAT_PE,

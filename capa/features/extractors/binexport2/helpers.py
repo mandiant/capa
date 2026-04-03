@@ -18,7 +18,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 import capa.features.extractors.helpers
-import capa.features.extractors.binexport2.helpers
 from capa.features.common import ARCH_I386, ARCH_AMD64, ARCH_AARCH64
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 

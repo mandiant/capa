@@ -307,7 +307,6 @@ def get_ghidra_extractor(path: Path):
         pyghidra.start()
 
     import capa.features.extractors.ghidra.context
-    import capa.features.extractors.ghidra.extractor
 
     if path in GHIDRA_CACHE:
         extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
