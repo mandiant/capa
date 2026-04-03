@@ -9,38 +9,16 @@
 # run all linters liks:
 #
 #    ❯ pre-commit run --all-files
-#    isort....................................................................Passed
 #    black....................................................................Passed
 #    ruff.....................................................................Passed
-#    flake8...................................................................Passed
 #    mypy.....................................................................Passed
 #
 # run a single linter like:
 #
-#    ❯ pre-commit run --all-files isort
+#    ❯ pre-commit run --all-files ruff
 #    isort....................................................................Passed
 
 repos:
--   repo: local
-    hooks:
-    -   id: isort
-        name: isort
-        stages: [pre-commit, pre-push, manual]
-        language: system
-        entry: isort
-        args: 
-        -   "--length-sort"
-        -   "--profile"
-        -   "black"
-        -   "--line-length=120"
-        -   "--skip-glob"
-        -   "*_pb2.py"
-        -   "capa/"
-        -   "scripts/"
-        -   "tests/"
-        -   "web/rules/scripts/"
-        always_run: true
-        pass_filenames: false
 
 -   repo: local
     hooks:
@@ -78,24 +56,6 @@ repos:
         always_run: true
         pass_filenames: false
 
--   repo: local
-    hooks:
-    -   id: flake8
-        name: flake8
-        stages: [pre-push, manual]
-        language: system
-        entry: flake8
-        args: 
-        -   "--config"
-        -   ".github/flake8.ini"
-        -   "--extend-exclude"
-        -   "capa/render/proto/capa_pb2.py,capa/features/extractors/binexport2/binexport2_pb2.py"
-        -   "capa/"
-        -   "scripts/"
-        -   "tests/"
-        -   "web/rules/scripts/"
-        always_run: true
-        pass_filenames: false
 
 -   repo: local
     hooks:

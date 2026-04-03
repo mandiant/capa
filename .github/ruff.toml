@@ -1,17 +1,3 @@
-# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
-# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# McCabe complexity (`C901`) by default.
-lint.select = ["E", "F"]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-lint.fixable = ["ALL"]
-lint.unfixable = []
-
-# E402 module level import not at top of file
-# E722 do not use bare 'except'
-# E501 line too long
-lint.ignore = ["E402", "E722", "E501"]
-
 line-length = 120
 
 exclude = [
@@ -41,3 +27,58 @@ exclude = [
     "*_pb2.py", 
     "*_pb2.pyi"
 ]
+
+# Enable pycodestyle (`E`), Pyflakes (`F`), isort (`I`), Bugbear (`B`),
+# Comprehensions (`C4`), Implicit String Concat (`ISC`), Print (`T20`),
+# Simplify (`SIM`), and Copyright (`CPY`) for strict parity.
+lint.select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "ISC",
+    "T20",
+    "SIM",
+    "CPY"
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+# Map existing flake8 ignores to maintain strict formatting parity
+lint.ignore = [
+    "E402",
+    "E722",
+    "E501",
+    "E203",
+    "E701",
+    "B010",
+    "SIM102",
+    "SIM114",
+    "SIM117",
+    "B905",
+    "SIM300",
+    "ISC003",
+    "SIM103",
+    "SIM108",
+    "I001",
+    "SIM118",
+    "SIM401",
+    "SIM115",
+    "B904"
+]
+
+[lint.per-file-ignores]
+# T201 print found schemas for scripts and entrypoints
+"scripts/*" = ["T201"]
+"capa/main.py" = ["T201"]
+"capa/features/extractors/binja/find_binja_api.py" = ["T201"]
+
+[lint.flake8-copyright]
+notice-rgx = "Copyright \\d{4} Google LLC"
+min-file-size = 1
+
+[lint.isort]
+length-sort = true

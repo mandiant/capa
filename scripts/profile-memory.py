@@ -47,7 +47,7 @@ def display_top(snapshot, key_type="lineno", limit=10):
 
 
 def main():
-    # import within main to keep isort happy
+    # import within main to keep ruff happy
     # while also invoking tracemalloc.start() immediately upon start.
     import io
     import os

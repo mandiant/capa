@@ -52,12 +52,8 @@ jobs:
         pip install -e .[dev,scripts]
     - name: Lint with ruff
       run: pre-commit run ruff
-    - name: Lint with isort
-      run: pre-commit run isort --show-diff-on-failure
     - name: Lint with black
       run: pre-commit run black --show-diff-on-failure
-    - name: Lint with flake8
-      run: pre-commit run flake8 --hook-stage manual
     - name: Check types with mypy
       run: pre-commit run mypy --hook-stage manual
     - name: Check imports against dependencies

@@ -195,7 +195,7 @@ All Python code must adhere to the style guide used by capa:
 
   1. [PEP8](https://www.python.org/dev/peps/pep-0008/), with clarifications from
   2. [Willi's style guide](https://docs.google.com/document/d/1iRpeg-w4DtibwytUyC_dDT7IGhNGBP25-nQfuBa-Fyk/edit?usp=sharing), formatted with
-  3. [isort](https://pypi.org/project/isort/) (with line width 120 and ordered by line length), and formatted with
+  3. [ruff](https://beta.ruff.rs/docs/) (with line length 120 and imports ordered by line length), and formatted with
   4. [black](https://github.com/psf/black) (with line width 120), and formatted with
   5. [dos2unix](https://linux.die.net/man/1/dos2unix)
   
