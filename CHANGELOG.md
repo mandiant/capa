@@ -4,12 +4,36 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
+- [capa-rules v9.4.0...master](https://github.com/mandiant/capa-rules/compare/v9.4.0...master)
+
+## v9.4.0
+
+This release includes Ghidra PyGhidra support, performance improvements, dependency updates, and 26 new rules. We'd like to thank the following contributors: @0x1622, Daniel Adeboye (@adeboyedn), Aditya Pandey (@EclipseAditya), aryanyk, Ben Knutson (@blenbot), @cosmoworker, @devs6186, @doomedraven, kamran ul haq (@kami922), @Maijin, @res2500, and others!
+
+### New Features
+
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
 ### Breaking Changes
 
-### New Rules (25)
+### New Rules (26)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -36,7 +60,7 @@
 - nursery/write-file-in-dotnet william.ballenthin@mandiant.com anushka.virgaonkar@mandiant.com
 - nursery/escalate-privileges-via-commit_creds-on-linux aryanyk
 - nursery/register-netfilter-hook-on-linux aryanyk
--
+- nursery/get-custom-http-header @msanchit-dev
 
 ### Bug Fixes
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
@@ -77,8 +101,8 @@
 - ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
 
 ### Raw diffs
-- [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
-- [capa-rules v9.3.1...master](https://github.com/mandiant/capa-rules/compare/v9.3.1...master)
+- [capa v9.3.1...v9.4.0](https://github.com/mandiant/capa/compare/v9.3.1...v9.4.0)
+- [capa-rules v9.3.1...v9.4.0](https://github.com/mandiant/capa-rules/compare/v9.3.1...v9.4.0)
 
 ## v9.3.1
 
@@ -93,8 +117,8 @@ This patch release fixes a missing import for the capa explorer plugin for IDA P
 - ci: bump binja min version @mike-hunhoff #2763
 
 ### Raw diffs
-- [capa v9.3.0...master](https://github.com/mandiant/capa/compare/v9.3.0...master)
-- [capa-rules v9.3.0...master](https://github.com/mandiant/capa-rules/compare/v9.3.0...master)
+- [capa v9.3.0...v9.3.1](https://github.com/mandiant/capa/compare/v9.3.0...v9.3.1)
+- [capa-rules v9.3.0...v9.3.1](https://github.com/mandiant/capa-rules/compare/v9.3.0...v9.3.1)
 
 ## v9.3.0
 

@@ -30,9 +30,9 @@ This method is appropriate for integrating capa in an existing project.
 This technique doesn't pull the default rule set. You can obtain rule releases from [capa-rules](https://github.com/mandiant/capa-rules/releases) and pass the directory to the entrypoint using `-r`. In the IDA Pro plugin you need to configure the rules directory path once.
 
 ```console
-$ wget https://github.com/mandiant/capa-rules/archive/refs/tags/v4.0.0.zip
-$ unzip v4.0.0.zip
-$ capa -r /path/to/capa-rules suspicious.exe
+$ wget https://github.com/mandiant/capa-rules/archive/refs/tags/v9.4.0.zip
+$ unzip v9.4.0.zip
+$ capa -r capa-rules-v9.4.0/ suspicious.exe
 ```
 
 This technique also doesn't set up the default library identification [signatures](https://github.com/mandiant/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.
