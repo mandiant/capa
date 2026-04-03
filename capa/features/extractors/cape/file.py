@@ -28,24 +28,18 @@ logger = logging.getLogger(__name__)
 
 def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
-    get all the created processes for a sample
-    """
-    seen_processes = {}
-    for process in report.behavior.processes:
-        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
-        yield ProcessHandle(address=addr, inner=process)
+    get all the created processes for a sample.
 
-        # check for pid and ppid reuse
-        if addr not in seen_processes:
-            seen_processes[addr] = [process]
-        else:
-            logger.warning(
-                "pid and ppid reuse detected between process %s and process%s: %s",
-                process,
-                "es" if len(seen_processes[addr]) > 1 else "",
-                seen_processes[addr],
-            )
-            seen_processes[addr].append(process)
+    each process receives a sequential id to ensure unique ProcessAddress
+    values even when the OS recycles a PID.
+    """
+    seq: dict[tuple[int, int], int] = {}
+    for process in report.behavior.processes:
+        key = (process.parent_id, process.process_id)
+        id_ = seq.get(key, 0)
+        seq[key] = id_ + 1
+        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id, id=id_)
+        yield ProcessHandle(address=addr, inner=process)
 
 
 def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:

@@ -91,13 +91,26 @@ class Address(HashableModel):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
 
         elif isinstance(a, capa.features.address.ProcessAddress):
-            return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
+            return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid, a.id or 0))
 
         elif isinstance(a, capa.features.address.ThreadAddress):
-            return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
+            return cls(
+                type=AddressType.THREAD,
+                value=(a.process.ppid, a.process.pid, a.tid, a.process.id or 0, a.id or 0),
+            )
 
         elif isinstance(a, capa.features.address.DynamicCallAddress):
-            return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
+            return cls(
+                type=AddressType.CALL,
+                value=(
+                    a.thread.process.ppid,
+                    a.thread.process.pid,
+                    a.thread.tid,
+                    a.id,
+                    a.thread.process.id or 0,
+                    a.thread.id or 0,
+                ),
+            )
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
@@ -137,27 +150,26 @@ class Address(HashableModel):
 
         elif self.type is AddressType.PROCESS:
             assert isinstance(self.value, tuple)
-            ppid, pid = self.value
-            assert isinstance(ppid, int)
-            assert isinstance(pid, int)
-            return capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
+            ppid, pid, process_id = self.value
+            return capa.features.address.ProcessAddress(ppid=ppid, pid=pid, id=process_id)
 
         elif self.type is AddressType.THREAD:
             assert isinstance(self.value, tuple)
-            ppid, pid, tid = self.value
-            assert isinstance(ppid, int)
-            assert isinstance(pid, int)
-            assert isinstance(tid, int)
+            ppid, pid, tid, process_id, thread_id = self.value
             return capa.features.address.ThreadAddress(
-                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid, id=process_id),
+                tid=tid,
+                id=thread_id,
             )
 
         elif self.type is AddressType.CALL:
             assert isinstance(self.value, tuple)
-            ppid, pid, tid, id_ = self.value
+            ppid, pid, tid, id_, process_id, thread_id = self.value
             return capa.features.address.DynamicCallAddress(
                 thread=capa.features.address.ThreadAddress(
-                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid, id=process_id),
+                    tid=tid,
+                    id=thread_id,
                 ),
                 id=id_,
             )

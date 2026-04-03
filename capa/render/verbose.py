@@ -112,18 +112,34 @@ def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     raise ValueError("name not found for call", addr)
 
 
+def _format_process_fields(process: capa.features.address.ProcessAddress) -> str:
+    """format process identification fields, including id when present."""
+    s = f"pid:{process.pid}"
+    if process.id is not None:
+        s += f",id:{process.id}"
+    return s
+
+
+def _format_thread_fields(thread: capa.features.address.ThreadAddress) -> str:
+    """format thread identification fields, including id when present."""
+    s = f"pid:{thread.process.pid},tid:{thread.tid}"
+    if thread.id is not None:
+        s += f",id:{thread.id}"
+    return s
+
+
 def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     process = addr.to_capa()
     assert isinstance(process, capa.features.address.ProcessAddress)
     name = _get_process_name(layout, addr)
-    return f"{name}{{pid:{process.pid}}}"
+    return f"{name}{{{_format_process_fields(process)}}}"
 
 
 def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     thread = addr.to_capa()
     assert isinstance(thread, capa.features.address.ThreadAddress)
     name = _get_process_name(layout, frz.Address.from_capa(thread.process))
-    return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
+    return f"{name}{{{_format_thread_fields(thread)}}}"
 
 
 def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> str:
@@ -134,12 +150,12 @@ def render_span_of_calls(layout: rd.DynamicLayout, addrs: list[frz.Address]) -> 
     call = calls[0]
 
     pname = _get_process_name(layout, frz.Address.from_capa(calls[0].thread.process))
+    tfields = _format_thread_fields(call.thread)
     call_ids = [str(call.id) for call in calls]
     if len(call_ids) == 1:
-        call_id = call_ids[0]
-        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call_id}}}"
+        return f"{pname}{{{tfields},call:{call_ids[0]}}}"
     else:
-        return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},calls:{{{','.join(call_ids)}}}}}"
+        return f"{pname}{{{tfields},calls:{{{','.join(call_ids)}}}}}"
 
 
 def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
@@ -158,9 +174,10 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
         s.append(f"  {arg},")
     s.append(f"){rest}")
 
+    tfields = _format_thread_fields(call.thread)
     newline = "\n"
     # Use default (non-dim) styling for API details so they remain readable in -vv output
-    return f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{newline.join(s)}"
+    return f"{pname}{{{tfields},call:{call.id}}}\n{newline.join(s)}"
 
 
 def render_short_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import abc
+from typing import Optional
 
 
 class Address(abc.ABC):
@@ -50,53 +51,83 @@ class AbsoluteVirtualAddress(int, Address):
 
 
 class ProcessAddress(Address):
-    """an address of a process in a dynamic execution trace"""
+    """an address of a process in a dynamic execution trace
 
-    def __init__(self, pid: int, ppid: int = 0):
+    Args:
+        pid: process ID assigned by the OS
+        ppid: parent process ID assigned by the OS
+        id: optional sandbox-specific unique identifier to distinguish
+            processes whose OS-assigned PIDs collide due to reuse.
+            For VMRay this is the monitor_id; for other backends
+            it may be a sequential counter or timestamp.
+    """
+
+    def __init__(self, pid: int, ppid: int = 0, id: Optional[int] = None):
         assert ppid >= 0
         assert pid > 0
         self.ppid = ppid
         self.pid = pid
+        self.id = id
 
     def __repr__(self):
-        return "process(%s%s)" % (
-            f"ppid: {self.ppid}, " if self.ppid > 0 else "",
-            f"pid: {self.pid}",
-        )
+        parts = []
+        if self.ppid > 0:
+            parts.append(f"ppid: {self.ppid}")
+        parts.append(f"pid: {self.pid}")
+        if self.id is not None:
+            parts.append(f"id: {self.id}")
+        return "process(%s)" % ", ".join(parts)
 
     def __hash__(self):
-        return hash((self.ppid, self.pid))
+        return hash((self.ppid, self.pid, self.id))
 
     def __eq__(self, other):
         assert isinstance(other, ProcessAddress)
-        return (self.ppid, self.pid) == (other.ppid, other.pid)
+        return (self.ppid, self.pid, self.id) == (other.ppid, other.pid, other.id)
 
     def __lt__(self, other):
         assert isinstance(other, ProcessAddress)
-        return (self.ppid, self.pid) < (other.ppid, other.pid)
+        # None sorts before any real id
+        self_id = self.id if self.id is not None else -1
+        other_id = other.id if other.id is not None else -1
+        return (self.ppid, self.pid, self_id) < (other.ppid, other.pid, other_id)
 
 
 class ThreadAddress(Address):
-    """addresses a thread in a dynamic execution trace"""
+    """addresses a thread in a dynamic execution trace
 
-    def __init__(self, process: ProcessAddress, tid: int):
+    Args:
+        process: address of the containing process
+        tid: thread ID assigned by the OS
+        id: optional sandbox-specific unique identifier to distinguish
+            threads whose OS-assigned TIDs collide due to reuse.
+            For VMRay this is the monitor_id; for other backends
+            it may be a sequential counter or timestamp.
+    """
+
+    def __init__(self, process: ProcessAddress, tid: int, id: Optional[int] = None):
         assert tid >= 0
         self.process = process
         self.tid = tid
+        self.id = id
 
     def __repr__(self):
-        return f"{self.process}, thread(tid: {self.tid})"
+        id_part = f", id: {self.id}" if self.id is not None else ""
+        return f"{self.process}, thread(tid: {self.tid}{id_part})"
 
     def __hash__(self):
-        return hash((self.process, self.tid))
+        return hash((self.process, self.tid, self.id))
 
     def __eq__(self, other):
         assert isinstance(other, ThreadAddress)
-        return (self.process, self.tid) == (other.process, other.tid)
+        return (self.process, self.tid, self.id) == (other.process, other.tid, other.id)
 
     def __lt__(self, other):
         assert isinstance(other, ThreadAddress)
-        return (self.process, self.tid) < (other.process, other.tid)
+        # None sorts before any real id
+        self_id = self.id if self.id is not None else -1
+        other_id = other.id if other.id is not None else -1
+        return (self.process, self.tid, self_id) < (other.process, other.tid, other_id)
 
 
 class DynamicCallAddress(Address):
