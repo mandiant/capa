@@ -21,7 +21,6 @@ from pathlib import Path
 import dnfile
 from dncil.cil.opcode import OpCodes
 
-import capa.features.extractors
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn

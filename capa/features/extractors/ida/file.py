@@ -22,7 +22,6 @@ import idautils
 import ida_entry
 
 import capa.ida.helpers
-import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers

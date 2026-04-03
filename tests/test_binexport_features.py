@@ -20,7 +20,6 @@ import fixtures
 import capa.features.file
 import capa.features.insn
 import capa.features.common
-import capa.features.basicblock
 from capa.features.common import (
     OS,
     OS_LINUX,

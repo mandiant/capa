@@ -307,7 +307,6 @@ def get_ghidra_extractor(path: Path):
         pyghidra.start()
 
     import capa.features.extractors.ghidra.context
-    import capa.features.extractors.ghidra.extractor
 
     if path in GHIDRA_CACHE:
         extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
@@ -345,7 +344,7 @@ def extract_global_features(extractor):
     return features
 
 
-@lru_cache()
+@lru_cache
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():

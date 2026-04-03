@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +21,6 @@ import fixtures
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.features
 
 
 def test_main(z9324d_extractor):

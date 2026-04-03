@@ -19,8 +19,6 @@ from collections import Counter
 import idc
 import idaapi
 
-import capa.rules
-import capa.engine
 import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock

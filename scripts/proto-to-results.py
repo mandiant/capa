@@ -44,10 +44,8 @@ import argparse
 from pathlib import Path
 
 import capa.main
-import capa.render.json
 import capa.render.proto
 import capa.render.proto.capa_pb2
-import capa.render.result_document
 
 logger = logging.getLogger("capa.proto-to-results-json")
 

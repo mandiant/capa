@@ -18,7 +18,6 @@ from typing import Iterator
 
 from ghidra.program.model.symbol import SourceType, SymbolType
 
-import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ghidra.helpers

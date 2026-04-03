@@ -19,7 +19,6 @@ from typing import Iterator
 import pefile
 from elftools.elf.elffile import ELFFile
 
-import capa.features.common
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.elffile

@@ -17,7 +17,6 @@ import logging
 import argparse
 from pathlib import Path
 
-import capa.main
 import capa.rules
 from capa.features.common import Feature
 

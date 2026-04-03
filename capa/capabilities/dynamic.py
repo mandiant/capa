@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +17,6 @@ import itertools
 import collections
 from dataclasses import dataclass
 
-import capa.perf
 import capa.engine
 import capa.helpers
 import capa.features.freeze as frz

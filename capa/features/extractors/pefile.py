@@ -18,11 +18,8 @@ from pathlib import Path
 
 import pefile
 
-import capa.features.common
-import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.helpers
-import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Characteristic
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress

@@ -16,7 +16,6 @@ from typing import Iterator
 
 import binaryninja as binja
 
-import capa.features.extractors.elf
 import capa.features.extractors.binja.file
 import capa.features.extractors.binja.insn
 import capa.features.extractors.binja.global_
