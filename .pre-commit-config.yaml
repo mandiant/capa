@@ -53,6 +53,7 @@ repos:
         -   "scripts/"
         -   "tests/"
         -   "web/rules/scripts/"
+        exclude: '.*_pb2\.py$'
         always_run: true
         pass_filenames: false
 
