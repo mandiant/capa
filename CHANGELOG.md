@@ -66,6 +66,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 - main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
 - render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
 - rules: handle empty or invalid YAML documents gracefully in `Rule.from_yaml` and `get_rules` @devs6186 #2900
+- rules cache: invalidate stale cache format after `_RuleFeatureIndex` schema update to avoid runtime AttributeError in matching
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
 - loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
@@ -93,6 +94,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 ### Development
 
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
+- tests: skip `capa2sarif.py` script test when optional dependencies (`sarif_om`, `jschema_to_python`) are not installed
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
 - binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
