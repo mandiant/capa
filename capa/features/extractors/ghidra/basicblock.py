@@ -51,6 +51,7 @@ def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
     def is_printable_utf16le(chars_: bytes):
         if all(c == 0x00 for c in chars_[1::2]):
             return is_printable_ascii(chars_[::2])
+        return False
 
     if is_printable_ascii(chars):
         return op_byte_len
@@ -72,7 +73,9 @@ def is_mov_imm_to_stack(insn: ghidra.program.database.code.InstructionDB) -> boo
 
     # MOV dword ptr [EBP + local_*], 0x65
     if insn.getMnemonicString().startswith("MOV"):
-        found = all(insn.getOperandType(i) == mov_its_ops[i] for i in range(2))
+        # Use simple bounds check to ensure we don't index out of range
+        if insn.getNumOperands() >= 2:
+            found = all(insn.getOperandType(i) == mov_its_ops[i] for i in range(2))
 
     return found
 
@@ -95,12 +98,15 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
     """
-    # Reverse Ordered, first InstructionDB
-    last_insn = (
-        capa.features.extractors.ghidra.helpers.get_current_program().getListing().getInstructions(bb, False).next()
-    )
+    # Reverse Ordered, first InstructionDB (which is the last instruction of the block)
+    instructions = capa.features.extractors.ghidra.helpers.get_current_program().getListing().getInstructions(bb, False)
+    if not instructions.hasNext():
+        return False
+        
+    last_insn = instructions.next()
 
     if last_insn.getFlowType().isJump():
+        # Check if the destination of the jump is the start of this block
         return last_insn.getAddress(0) == bb.getMinAddress()
 
     return False
@@ -133,10 +139,10 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Featur
     extract features from the given basic block.
 
     args:
-        bb: the basic block to process.
+        bbh: the basic block handle to process.
 
     yields:
-      tuple[Feature, int]: the features and their location found in this basic block.
+      tuple[Feature, Address]: the features and their location found in this basic block.
     """
     yield BasicBlock(), bbh.address
     for bb_handler in BASIC_BLOCK_HANDLERS:

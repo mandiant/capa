@@ -33,9 +33,12 @@ def extract_function_calls_to(fh: FunctionHandle):
 
 
 def extract_function_loop(fh: FunctionHandle):
+    """extract loop characteristics from the function's basic blocks"""
     f: "ghidra.program.database.function.FunctionDB" = fh.inner
 
     edges = []
+    # This uses the function body; our fix in helpers.py ensures 
+    # that fh.inner.getBody() contains the correct address set.
     for block in SimpleBlockIterator(
         BasicBlockModel(capa.features.extractors.ghidra.helpers.get_current_program()),
         f.getBody(),
@@ -45,14 +48,16 @@ def extract_function_loop(fh: FunctionHandle):
         s_addrs = block.getStartAddresses()
 
         while dests.hasNext():
+            dest_addr = dests.next().getDestinationAddress().getOffset()
             for addr in s_addrs:
-                edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
+                edges.append((addr.getOffset(), dest_addr))
 
     if loops.has_loop(edges):
         yield Characteristic("loop"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
 def extract_recursive_call(fh: FunctionHandle):
+    """extract recursive function calls"""
     f: "ghidra.program.database.function.FunctionDB" = fh.inner
 
     for func in f.getCalledFunctions(capa.features.extractors.ghidra.helpers.get_monitor()):
@@ -61,6 +66,7 @@ def extract_recursive_call(fh: FunctionHandle):
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    """yield function features"""
     for function_handler in FUNCTION_HANDLERS:
         for feature, addr in function_handler(fh):
             yield feature, addr

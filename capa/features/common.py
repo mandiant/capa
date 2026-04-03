@@ -422,8 +422,6 @@ class Bytes(Feature):
         self.value = value
 
     def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
-        assert isinstance(self.value, bytes)
-
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
         capa.perf.counters["evaluate.feature.bytes." + str(len(self.value))] += 1
@@ -432,7 +430,6 @@ class Bytes(Feature):
             if not isinstance(feature, (Bytes,)):
                 continue
 
-            assert isinstance(feature.value, bytes)
             if feature.value.startswith(self.value):
                 return Result(True, self, [], locations=locations)
 
