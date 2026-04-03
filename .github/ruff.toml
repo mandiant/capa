@@ -68,7 +68,6 @@ lint.ignore = [
     "SIM300", # Yoda condition detected (constant before variable)
     "SIM108", # Use ternary operator instead of if-else block
     "ISC003", # Explicitly concatenated string should be implicitly concatenated
-    "UP009", # UTF-8 encoding declaration is unnecessary
     "UP035", # Deprecated typing alias usage
     "UP006", # Use type instead of Type for type annotation
     "SIM115", # Use a context manager for opening files
