@@ -1,0 +1,1532 @@
+{
+  "files": [
+    {
+      "key": "mimikatz",
+      "path": "data/mimikatz.exe_"
+    },
+    {
+      "key": "kernel32",
+      "path": "data/kernel32.dll_"
+    },
+    {
+      "key": "kernel32-64",
+      "path": "data/kernel32-64.dll_"
+    },
+    {
+      "key": "pma12-04",
+      "path": "data/Practical Malware Analysis Lab 12-04.exe_"
+    },
+    {
+      "key": "pma16-01",
+      "path": "data/Practical Malware Analysis Lab 16-01.exe_"
+    },
+    {
+      "key": "7351f.elf",
+      "path": "data/7351f8a40c5450557b24622417fc478d.elf_"
+    },
+    {
+      "key": "al-khaser x64",
+      "path": "data/al-khaser_x64.exe_"
+    },
+    {
+      "key": "64d9f",
+      "path": "data/64d9f7d96b99467f36e22fada623c3bb.dll_"
+    },
+    {
+      "key": "79abd",
+      "path": "data/79abd17391adc6251ecdc58d13d76baf.dll_"
+    },
+    {
+      "key": "946a9",
+      "path": "data/946a99f36a46d335dec080d9a4371940.dll_"
+    },
+    {
+      "key": "773290",
+      "path": "data/773290480d5445f11d3dc1b800728966.exe_"
+    },
+    {
+      "key": "294b8d",
+      "path": "data/294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
+    },
+    {
+      "key": "a1982",
+      "path": "data/a198216798ca38f280dc413f8c57f2c2.exe_"
+    },
+    {
+      "key": "c91887",
+      "path": "data/c91887d861d9bd4a5872249b641bc9f9.exe_"
+    },
+    {
+      "key": "2bf18d",
+      "path": "data/2bf18d0403677378adad9001b1243211.elf_"
+    },
+    {
+      "key": "2d3edc",
+      "path": "data/2d3edc218a90f03089cc01715a9f047f.exe_"
+    },
+    {
+      "key": "ea2876",
+      "path": "data/ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
+    },
+    {
+      "key": "pma01-01.frz",
+      "path": "fixtures/freeze/Practical Malware Analysis Lab 01-01.dll_.frz"
+    },
+    {
+      "key": "009c2377.frz",
+      "path": "fixtures/freeze/009c2377b67997b0da1579f4bbc822c1.exe_.frz"
+    },
+    {
+      "key": "055da8e6.frz",
+      "path": "fixtures/freeze/055da8e6ccfe5a9380231ea04b850e18.elf_.frz"
+    },
+    {
+      "key": "034b7231.frz",
+      "path": "fixtures/freeze/034b7231a49387604e81a5a5d2fe7e08f6982c418a28b719d2faace3c312ebb5.exe_.frz"
+    }
+  ],
+  "features": [
+    {
+      "file": "pma12-04",
+      "location": "file",
+      "feature": "characteristic: embedded pe",
+      "expected": true,
+      "explanation": "should find embedded PE file in the resource section at file scope using file offset addresses",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "Embedded PE is in .rsrc section at file offset 0x4060, which IDA doesn't load by default"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "Embedded PE is in .rsrc section at file offset 0x4060, which freeze doesn't handle correctly"
+        }
+      ],
+      "address": {
+        "type": "file",
+        "value": "0x4060"
+      }
+    },
+    {
+      "file": "2d3edc",
+      "location": "file",
+      "feature": "characteristic: embedded pe",
+      "expected": true,
+      "explanation": "should find embedded PE file in mapped memory at file scope using file offset addresses",
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "Python capa has bug extracting embedded PE files at absolute offsets"
+        }
+      ],
+      "address": {
+        "type": "file",
+        "value": "0x7FB0"
+      },
+      "comment": "Embedded PE at file offset 0x7FB0. Note: vivisect freeze has 0x4091b0 but that's a virtual address mislabeled as file offset."
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "string: SCardControl",
+      "expected": true,
+      "explanation": "should find UTF-16LE encoded strings in mapped memory at file scope using file offset addresses",
+      "address": {
+        "type": "file",
+        "value": "0xB34AC"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "string: ACR  > ",
+      "expected": true,
+      "explanation": "should find UTF-16LE encoded strings with unusual characters",
+      "address": {
+        "type": "file",
+        "value": "0x72728"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "string: nope",
+      "expected": false,
+      "explanation": "should not find non-existant strings"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "section: .text",
+      "expected": true,
+      "explanation": "should find sections at file scope with virtual addresses",
+      "address": {
+        "type": "absolute",
+        "value": "0x401000"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "section: .nope",
+      "expected": false,
+      "explanation": "should not find non-existant sections"
+    },
+    {
+      "file": "kernel32",
+      "location": "file",
+      "feature": "export: BaseThreadInitThunk",
+      "expected": true,
+      "explanation": "should find exports at file scope with virtual addresses",
+      "address": {
+        "type": "absolute",
+        "value": "0x7dd733b8"
+      }
+    },
+    {
+      "file": "kernel32",
+      "location": "file",
+      "feature": "export: nope",
+      "expected": false,
+      "explanation": "should not find non-existant exports"
+    },
+    {
+      "file": "ea2876",
+      "location": "file",
+      "feature": "export: vresion.GetFileVersionInfoA",
+      "expected": true,
+      "explanation": "should find forwarded exports",
+      "address": {
+        "type": "absolute",
+        "value": "0x18003bd32"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: advapi32.CryptSetHashParam",
+      "expected": true,
+      "explanation": "should find imports at file scope with virtual addresses and DLL prefix",
+      "address": {
+        "type": "absolute",
+        "value": "0x00473000"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: CryptSetHashParam",
+      "expected": true,
+      "explanation": "should find imports with no DLL prefix",
+      "address": {
+        "type": "absolute",
+        "value": "0x473000"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: cabinet.#11",
+      "expected": true,
+      "explanation": "should find imports by ordinal",
+      "address": {
+        "type": "absolute",
+        "value": "0x4731D0"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: #11",
+      "expected": false,
+      "explanation": "should not find imports by ordinal with no DLL prefix"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: #nope",
+      "expected": false,
+      "explanation": "should not find non-existant ordinal imports"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: nope",
+      "expected": false,
+      "explanation": "should not find non-existant imports"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401517",
+      "feature": "characteristic: loop",
+      "expected": true,
+      "explanation": "should find loops",
+      "address": {
+        "type": "absolute",
+        "value": "0x401517"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "characteristic: loop",
+      "expected": false,
+      "explanation": "should not find non-existant loops"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x402EC4",
+      "feature": "characteristic: tight loop",
+      "expected": true,
+      "explanation": "should find tight-loops"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "characteristic: tight loop",
+      "expected": false,
+      "explanation": "should not find non-existant tight-loops"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x402EC4,bb=0x402F8E",
+      "feature": "characteristic: tight loop",
+      "expected": true,
+      "explanation": "should find tight-loops at basic block scope",
+      "address": {
+        "type": "absolute",
+        "value": "0x402F8E"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000,bb=0x401000",
+      "feature": "characteristic: tight loop",
+      "expected": false,
+      "explanation": "should not find non-existant tight-loops at basic block scope"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: stack string",
+      "expected": true,
+      "explanation": "should find stack strings",
+      "address": {
+        "type": "absolute",
+        "value": "0x4556E5"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "characteristic: stack string",
+      "expected": false,
+      "explanation": "should not find non-existant stack strings"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "mnemonic: push",
+      "explanation": "should find mnemonics",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "mnemonic: in",
+      "expected": false,
+      "explanation": "should not find non-existant mnemonics"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401073,insn=0x401073",
+      "feature": "operand[1].number: 0xFF",
+      "expected": true,
+      "explanation": "should find instruction operand numbers",
+      "address": {
+        "type": "absolute",
+        "value": "0x401073"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401073,insn=0x401073",
+      "feature": "operand[0].number: 0xFF",
+      "expected": false,
+      "explanation": "should not find non-existant instruction operand numbers"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x4010B0,insn=0x4010B4",
+      "feature": "operand[0].offset: 4",
+      "expected": true,
+      "explanation": "should find instruction operand offsets",
+      "address": {
+        "type": "absolute",
+        "value": "0x4010B4"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x4010B0,insn=0x4010B4",
+      "feature": "operand[1].offset: 4",
+      "expected": false,
+      "explanation": "should not find non-existant instruction operand offsets"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0xFF",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0x3136B0",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "number: 0x0",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0xC",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0x10",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401553",
+      "feature": "number: 0xFFFFFFFF",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x43e543",
+      "feature": "number: 0xFFFFFFF0",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x0",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x4",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0xC",
+      "expected": true
+    },
+    {
+      "file": "64d9f",
+      "location": "function=0x10001510,bb=0x100015B0",
+      "feature": "offset: 0x4000",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x100015C4"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x8",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x10",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "offset: -0x1",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "offset: -0x2",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "number: -0x1",
+      "expected": true,
+      "comment": "LEA instruction with negative offset should emit Number feature",
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "Freeze files need to be regenerated with the updated Rust IDA extractor that supports negative offsets in LEA instructions"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "number: -0x2",
+      "expected": true,
+      "comment": "LEA instruction with negative offset should emit Number feature",
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "Freeze files need to be regenerated with the updated Rust IDA extractor that supports negative offsets in LEA instructions"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401D64,bb=0x401D73,insn=0x401D85",
+      "feature": "offset: 0x80000000",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401CC7,bb=0x401CDE,insn=0x401CF6",
+      "feature": "offset: 0x10",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x402203,bb=0x402221,insn=0x40223C",
+      "feature": "offset: 0x4",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x40223C"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x471EAB,bb=0x471ED8,insn=0x471EE6",
+      "feature": "number: 0x4",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x47153B,bb=0x4717AB,insn=0x4717B1",
+      "feature": "number: -0x30",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401873,bb=0x4018B2,insn=0x4018C0",
+      "feature": "number: 0x2",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x4018C0"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: advapi32.CryptAcquireContextW",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: advapi32.CryptAcquireContext",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: advapi32.CryptGenKey",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: advapi32.CryptImportKey",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: advapi32.CryptDestroyKey",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptAcquireContextW",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptAcquireContext",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptGenKey",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptImportKey",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptDestroyKey",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: Nope",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: advapi32.Nope",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "api: advapi32.LsaQueryInformationPolicy",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "api: LsaQueryInformationPolicy",
+      "expected": true
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001010",
+      "feature": "api: RtlVirtualUnwind",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA identifies this as lib function and skips it"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800202B0",
+      "feature": "api: RtlCaptureContext",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA identifies this as lib function _report_gsfailure"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "IDA skipping lib functions prevents freeze from detecting this API"
+        }
+      ]
+    },
+    {
+      "file": "al-khaser x64",
+      "location": "function=0x14004B4F0",
+      "feature": "api: __vcrt_GetModuleHandle",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA identifies this as lib function GetPdbDll"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "IDA skipping lib functions prevents freeze from detecting this API"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40B3C6",
+      "feature": "api: LocalFree",
+      "expected": true
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x40156F",
+      "feature": "api: CloseClipboard",
+      "expected": true
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: kernel32.CreatePipe",
+      "expected": false
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: kernel32.SetHandleInformation",
+      "expected": false
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: kernel32.CloseHandle",
+      "expected": false
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: kernel32.WriteFile",
+      "expected": false
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: CreatePipe",
+      "expected": true
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: SetHandleInformation",
+      "expected": true
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: CloseHandle",
+      "expected": true
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: WriteFile",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: SCardControl",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: SCardTransmit",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: ACR  > ",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: nope",
+      "expected": false
+    },
+    {
+      "file": "773290",
+      "location": "function=0x140001140",
+      "feature": "string: %s:\\\\OfficePackagesForWDAG",
+      "expected": true
+    },
+    {
+      "file": "294b8d",
+      "location": "function=0x404970,bb=0x404970,insn=0x40499F",
+      "feature": "string: \r\n\u0000:ht",
+      "expected": false
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x4021B0",
+      "feature": "substring: HTTP/1.0",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x402F40",
+      "feature": "regex: www.practicalmalwareanalysis.com",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x402F40",
+      "feature": "substring: practicalmalwareanalysis.com",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x44EDEF",
+      "feature": "string: INPUTEVENT",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x46D6CE",
+      "feature": "string: (null)",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401517",
+      "feature": "bytes: CA 3B 0E 00 00 00 F8 AF 47",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x404414",
+      "feature": "bytes: 01 80 00 00 40 EA 47 00",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "bytes: 53 00 43 00 61 00 72 00 64 00 43 00 6F 00 6E 00 74 00 72 00 6F 00 6C 00",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "bytes: 53 00 43 00 61 00 72 00 64 00 54 00 72 00 61 00 6E 00 73 00 6D 00 69 00 74 00",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "bytes: 41 00 43 00 52 00 20 00 20 00 3E 00 20 00",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "bytes: 6E 6F 70 65",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "bytes: FD FF 59 F6 47",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x44570F",
+      "feature": "bytes: FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x44EDEF",
+      "feature": "bytes: 49 00 4E 00 50 00 55 00 54 00 45 00 56 00 45 00 4E 00 54 00",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x410DFC",
+      "feature": "characteristic: nzxor",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "characteristic: nzxor",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x46D534",
+      "feature": "characteristic: nzxor",
+      "expected": false
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800017D0",
+      "feature": "characteristic: peb access",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: peb access",
+      "expected": false
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068",
+      "feature": "characteristic: gs access",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: gs access",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x410DFC,bb=0x410F05,insn=0x410F0B",
+      "feature": "characteristic: nzxor",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x410F0B"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x410DFC,bb=0x410F05,insn=0x410F12",
+      "feature": "characteristic: nzxor",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x410F12"
+      }
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800017D0,bb=0x1800018AD,insn=0x1800018AD",
+      "feature": "characteristic: peb access",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x1800018AD"
+      }
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068,bb=0x18000118D,insn=0x180001197",
+      "feature": "characteristic: gs access",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x180001197"
+      }
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068,bb=0x180001269,insn=0x18000127F",
+      "feature": "characteristic: gs access",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x18000127F"
+      }
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7DD70E00,bb=0x7DD70E00,insn=0x7DD70E05",
+      "feature": "characteristic: fs access",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x7DD70E05"
+      }
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7DD70E00,bb=0x7DD70E25,insn=0x7DD70E2D",
+      "feature": "characteristic: fs access",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x7DD70E2D"
+      }
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7DD70E00,bb=0x7DD70FCB,insn=0x7DD70FCB",
+      "feature": "characteristic: fs access",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x7DD70FCB"
+      }
+    },
+    {
+      "file": "a1982",
+      "location": "function=0x4014D0",
+      "feature": "characteristic: cross section flow",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x4014D0"
+      }
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068",
+      "feature": "characteristic: cross section flow",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: cross section flow",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40640e",
+      "feature": "characteristic: recursive call",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x40640e"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4175FF",
+      "feature": "characteristic: recursive call",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4175FF",
+      "feature": "characteristic: indirect call",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: indirect call",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: calls from",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4702FD",
+      "feature": "characteristic: calls from",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "characteristic: calls to",
+      "expected": true
+    },
+    {
+      "file": "ea2876",
+      "location": "file",
+      "feature": "characteristic: forwarded export",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x18003bd32"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x456BB9",
+      "feature": "characteristic: calls to",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401089,insn=0x40108E",
+      "feature": "characteristic: calls from",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x407E2B"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401089,insn=0x40109E",
+      "feature": "characteristic: calls from",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x40D1BA"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401089,insn=0x4010A8",
+      "feature": "characteristic: calls from",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x407E2B"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5,bb=0x455898,insn=0x4558A5",
+      "feature": "characteristic: calls from",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x40D3FD"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4175FF,bb=0x41761B,insn=0x417620",
+      "feature": "characteristic: indirect call",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x417620"
+      }
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "function-name: __aulldiv",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x407490"
+      }
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "os: windows",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "os: linux",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "os: windows",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100",
+      "feature": "os: windows",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100,bb=0x401130",
+      "feature": "os: windows",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "os: windows",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100",
+      "feature": "arch: i386",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100,bb=0x401130",
+      "feature": "arch: i386",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "arch: i386",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "format: pe",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "format: elf",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "format: pe",
+      "expected": true
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100",
+      "feature": "format: pe",
+      "expected": true
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x456BB9",
+      "feature": "format: pe",
+      "expected": true
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "os: linux",
+      "expected": true
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "os: windows",
+      "expected": false
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "format: elf",
+      "expected": true
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "format: pe",
+      "expected": false
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": false
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": true
+    },
+    {
+      "file": "7351f.elf",
+      "location": "function=0x408753",
+      "feature": "string: /dev/null",
+      "expected": true
+    },
+    {
+      "file": "7351f.elf",
+      "location": "function=0x408753,bb=0x408781",
+      "feature": "api: open",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x408790"
+      }
+    },
+    {
+      "file": "79abd",
+      "location": "function=0x10002385,bb=0x10002385",
+      "feature": "characteristic: call $+5",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x10002396"
+      }
+    },
+    {
+      "file": "946a9",
+      "location": "function=0x10001510,bb=0x100015c0",
+      "feature": "characteristic: call $+5",
+      "expected": true,
+      "address": {
+        "type": "absolute",
+        "value": "0x100015C7"
+      }
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
+      "feature": "api: __GI_connect",
+      "expected": true,
+      "tags": ["symtab"],
+      "address": {
+        "type": "absolute",
+        "value": "0x40286d"
+      },
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "freeze doesn't detect alternative function names from symbol tables"
+        }
+      ]
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
+      "feature": "api: connect",
+      "expected": true,
+      "tags": ["symtab"],
+      "address": {
+        "type": "absolute",
+        "value": "0x40286d"
+      },
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "freeze doesn't detect alternative function names from symbol tables"
+        }
+      ]
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
+      "feature": "api: __libc_connect",
+      "expected": true,
+      "tags": ["symtab"],
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA fails to detect alternative name __libc_connect"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "freeze doesn't detect alternative function names from symbol tables"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x40286d"
+      }
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4088a4",
+      "feature": "function-name: __GI_connect",
+      "expected": true,
+      "tags": ["symtab"],
+      "address": {
+        "type": "absolute",
+        "value": "0x4088a4"
+      },
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "freeze doesn't detect alternative function names from symbol tables"
+        }
+      ]
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4088a4",
+      "feature": "function-name: connect",
+      "expected": true,
+      "tags": ["symtab"],
+      "address": {
+        "type": "absolute",
+        "value": "0x4088a4"
+      },
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "freeze doesn't detect alternative function names from symbol tables"
+        }
+      ]
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4088a4",
+      "feature": "function-name: __libc_connect",
+      "expected": true,
+      "tags": ["symtab"],
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA fails to detect alternative name __libc_connect"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "freeze doesn't detect alternative function names from symbol tables"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x4088a4"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000,bb=0x401000",
+      "feature": "basic block: ",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x401000"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000,bb=0x40104b",
+      "feature": "basic block: ",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x40104b"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40edf7,bb=0x40f2a3",
+      "feature": "basic block: ",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x40f2a3"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556e5,bb=0x4556e5",
+      "feature": "basic block: ",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x4556e5"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105d,bb=0x401073",
+      "feature": "basic block: ",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x401073"
+      }
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7dd70e00,bb=0x7dd70e00",
+      "feature": "basic block: ",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ],
+      "address": {
+        "type": "absolute",
+        "value": "0x7dd70e00"
+      }
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "basic block: ",
+      "expected": false,
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "BasicBlock() sentinel not in freeze files (generated before feature was added)"
+        }
+      ]
+    }
+  ]
+}
