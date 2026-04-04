@@ -78,6 +78,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 - loader: skip PE files with unrealistically large section virtual sizes to prevent resource exhaustion @devs6186 #1989
 - engine/render: fix unbounded range sentinel precedence so `count(...): N or more` uses explicit `((1 << 64) - 1)` @blenbot #2936
 - cache: support *BSD @williballenthin @res2500 #2949
+- freeze: support float `operand number` values in feature freeze conversion @blenbot #2958
 
 ### capa Explorer Web
 - webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
