@@ -29,8 +29,16 @@ def get_calls(ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
 
     tid = th.address.tid
     for call_index, call in enumerate(process.calls):
-        if call.thread_id != tid:
-            continue
+
+        if call.thread_id is None:
+            # CAPE for linux doesn't record threads
+            # so this must be the 0 value
+            # and we'll enumerate all the calls in this process
+            assert tid == 0
+
+        else:
+            if call.thread_id != tid:
+                continue
 
         for symbol in generate_symbols("", call.api):
             call.api = symbol
