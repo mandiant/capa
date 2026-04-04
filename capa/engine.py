@@ -122,11 +122,18 @@ class And(Statement):
                     # short circuit
                     return Result(False, self, results)
 
-            return Result(True, self, results)
+            locations = set()
+            for res in results:
+                locations.update(res.locations)
+            return Result(True, self, results, locations=locations)
         else:
             results = [child.evaluate(features, short_circuit=short_circuit) for child in self.children]
             success = all(results)
-            return Result(success, self, results)
+            locations = set()
+            if success:
+                for res in results:
+                    locations.update(res.locations)
+            return Result(success, self, results, locations=locations)
 
 
 class Or(Statement):
@@ -153,13 +160,17 @@ class Or(Statement):
                 results.append(result)
                 if result:
                     # short circuit as soon as we hit one match
-                    return Result(True, self, results)
+                    return Result(True, self, results, locations=result.locations)
 
             return Result(False, self, results)
         else:
             results = [child.evaluate(features, short_circuit=short_circuit) for child in self.children]
             success = any(results)
-            return Result(success, self, results)
+            locations = set()
+            for res in results:
+                if res.success:
+                    locations.update(res.locations)
+            return Result(success, self, results, locations=locations)
 
 
 class Not(Statement):
@@ -207,7 +218,11 @@ class Some(Statement):
 
                 if satisfied_children_count >= self.count:
                     # short circuit as soon as we hit the threshold
-                    return Result(True, self, results)
+                    locations = set()
+                    for res in results:
+                        if res.success:
+                            locations.update(res.locations)
+                    return Result(True, self, results, locations=locations)
 
             return Result(False, self, results)
         else:
@@ -217,7 +232,12 @@ class Some(Statement):
             #
             # we can't use `if child is True` because the instance is not True.
             success = sum([1 for child in results if bool(child) is True]) >= self.count
-            return Result(success, self, results)
+            locations = set()
+            if success:
+                for res in results:
+                    if res.success:
+                        locations.update(res.locations)
+            return Result(success, self, results, locations=locations)
 
 
 class Range(Statement):
@@ -297,6 +317,75 @@ def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations:
     features[capa.features.common.MatchedRule(rule.name)].update(locations)
     for namespace in get_rule_namespaces(rule):
         features[capa.features.common.MatchedRule(namespace)].update(locations)
+
+
+class Sequence(Statement):
+    """
+    match if the children evaluate to True in increasing order of location.
+
+    the order of evaluation is dictated by the property
+    `Sequence.children` (type: list[Statement|Feature]).
+    """
+
+    def __init__(self, children, description=None):
+        super().__init__(description=description)
+        self.children = children
+
+    def evaluate(self, features: FeatureSet, short_circuit=True):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.sequence"] += 1
+
+        results = []
+        min_location = None
+
+        for child in self.children:
+            result = child.evaluate(features, short_circuit=short_circuit)
+            results.append(result)
+
+            if not result:
+                # all children must match
+                return Result(False, self, results)
+
+            # Check for location ordering
+            # We want to find *some* location in the child's locations that is greater than
+            # the minimum location from the previous child.
+            #
+            # If this is the first child, we just take its minimum location.
+
+            # The child might match at multiple locations.
+            # We need to be careful to pick a location that allows subsequent children to match.
+            # This is a greedy approach: we pick the smallest location that satisfies the constraint.
+            # This maximizes the "room" for subsequent children.
+
+            valid_locations = sorted(result.locations)
+            if not valid_locations:
+                # This should effectively never happen if `result.success` is True,
+                # unless the feature has no associated location (e.g. global features).
+                # If a feature has no location, we can't enforce order, so strict sequence fails?
+                # OR we assume it "matches anywhere" and doesn't constrain order?
+                #
+                # For now, let's assume valid locations are required for sequence logic.
+                # If a child has no locations, it fails the sequence constraint.
+                return Result(False, self, results)
+
+            if min_location is None:
+                min_location = valid_locations[0]
+                # Filter result to only include this location
+                results[-1] = Result(True, child, result.children, locations={min_location})
+            else:
+                # Find the first location that is strictly greater than min_location
+                found = False
+                for loc in valid_locations:
+                    if loc > min_location:
+                        min_location = loc
+                        found = True
+                        results[-1] = Result(True, child, result.children, locations={min_location})
+                        break
+
+                if not found:
+                    return Result(False, self, results)
+
+        return Result(True, self, results, locations={next(iter(r.locations)) for r in results})
 
 
 def match(rules: list["capa.rules.Rule"], features: FeatureSet, addr: Address) -> tuple[FeatureSet, MatchResults]:
