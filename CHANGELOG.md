@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- ida plugin: add a "Font…" action so users can adjust the explorer font on demand, with desktop DPI awareness baked in #2570
 
 ### Breaking Changes
 
@@ -161,7 +162,7 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 
 ### Bug Fixes
 
-- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714
 
 ### capa Explorer Web
 

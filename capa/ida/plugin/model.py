@@ -65,8 +65,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
     def update_font(self, font: QtGui.QFont):
         """update the font used to render items"""
+        self.beginResetModel()
         self.current_font = font
-        self.layoutChanged.emit()
+        self.endResetModel()
 
     def reset(self):
         """reset UI elements (e.g. checkboxes, IDA color highlights)
