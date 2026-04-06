@@ -21,7 +21,7 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule
+from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule, Characteristic
 
 
 def match(rules, features, va, scope=Scope.FUNCTION):
@@ -816,6 +816,35 @@ def test_index_features_nested_unstable():
 
     assert not index.string_rules
     assert not index.bytes_prefix_index
+
+
+def test_string_prefilter_stack_string_fallback():
+    rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test string prefilter stack string fallback
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /powershell/
+        """)
+    rule = capa.rules.Rule.from_yaml(rule_text)
+    ruleset = capa.rules.RuleSet([rule])
+
+    # Mark the regex rule as impossible based on file-level strings.
+    ruleset.prepare_for_file(frozenset({"hello", "world"}))
+
+    _, matches = ruleset.match(Scope.FUNCTION, {String("powershell"): {0x0}}, 0x0)
+    assert "test string prefilter stack string fallback" not in matches
+
+    # If a stack string is present in this scope, don't trust file-level pre-filtering.
+    _, matches = ruleset.match(
+        Scope.FUNCTION,
+        {String("powershell"): {0x0}, Characteristic("stack string"): {0x0}},
+        0x0,
+    )
+    assert "test string prefilter stack string fallback" in matches
 
 
 def test_bytes_prefix_index_correctness():

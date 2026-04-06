@@ -1972,11 +1972,14 @@ class RuleSet:
             return
 
         impossible: set[str] = set()
-        total = 0
+        all_string_rule_names: set[str] = set()
 
         for feature_index in self._feature_indexes_by_scopes.values():
             for rule_name, wanted_strings in feature_index.string_rules.items():
-                total += 1
+                if rule_name in all_string_rule_names:
+                    continue
+                all_string_rule_names.add(rule_name)
+
                 can_match = False
                 for feat in wanted_strings:
                     if isinstance(feat, capa.features.common.Substring):
@@ -1998,7 +2001,7 @@ class RuleSet:
             logger.debug(
                 "pre-filter: %d/%d string rules skipped (patterns absent from binary)",
                 len(impossible),
-                total,
+                len(all_string_rule_names),
             )
 
         self._impossible_string_rule_names = impossible
@@ -2081,12 +2084,18 @@ class RuleSet:
                     string_features[feature] = locations
 
             if string_features:
+                # Some extractors may synthesize stack strings that do not exist as contiguous
+                # file bytes. In that case, avoid file-level pre-filtering for this scope.
+                has_stack_string_characteristic = any(
+                    isinstance(feature, capa.features.common.Characteristic) and feature.value == "stack string"
+                    for feature in features
+                )
                 for rule_name, wanted_strings in feature_index.string_rules.items():
                     # Skip rules whose patterns are provably absent from the binary.
                     # prepare_for_file() pre-checks all file strings once and populates
                     # _impossible_string_rule_names to avoid repeated Regex.evaluate() work.
                     # See: https://github.com/mandiant/capa/issues/2126
-                    if rule_name in self._impossible_string_rule_names:
+                    if not has_stack_string_characteristic and rule_name in self._impossible_string_rule_names:
                         continue
                     for wanted_string in wanted_strings:
                         if wanted_string.evaluate(string_features):
