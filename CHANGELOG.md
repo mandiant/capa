@@ -4,6 +4,8 @@
 
 ### New Features
 
+- rules: pre-filter string rules whose Substring/Regex patterns are absent from the binary file, reducing redundant regex evaluation during per-function matching #2126
+
 ### Breaking Changes
 
 ### New Rules (0)

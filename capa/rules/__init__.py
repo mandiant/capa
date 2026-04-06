@@ -1463,6 +1463,11 @@ class RuleSet:
             scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
         }
 
+        # Set of string-rule names whose required patterns are absent from the current binary.
+        # Populated by prepare_for_file(); empty means no pre-filtering is active.
+        # See: https://github.com/mandiant/capa/issues/2126
+        self._impossible_string_rule_names: set[str] = set()
+
     @property
     def file_rules(self):
         return self.rules_by_scope[Scope.FILE]
@@ -1948,6 +1953,56 @@ class RuleSet:
         """
         rules.sort(key=lambda r: rule_index_by_rule_name[r.name])
 
+    def prepare_for_file(self, file_strings: frozenset[str]) -> None:
+        """
+        Pre-filter string rules based on strings extracted from the binary file.
+
+        Rules whose required Substring/Regex patterns cannot match any string in
+        file_strings will be skipped during subsequent _match() calls.  This
+        saves repeated Regex.evaluate() / Substring.evaluate() work for patterns
+        that are provably absent from the binary.
+
+        Call this before analyzing functions for a binary.
+        Pass an empty frozenset to clear the filter between binaries.
+
+        See: https://github.com/mandiant/capa/issues/2126
+        """
+        if not file_strings:
+            self._impossible_string_rule_names = set()
+            return
+
+        impossible: set[str] = set()
+        total = 0
+
+        for feature_index in self._feature_indexes_by_scopes.values():
+            for rule_name, wanted_strings in feature_index.string_rules.items():
+                total += 1
+                can_match = False
+                for feat in wanted_strings:
+                    if isinstance(feat, capa.features.common.Substring):
+                        if any(feat.value in s for s in file_strings):
+                            can_match = True
+                            break
+                    elif isinstance(feat, capa.features.common.Regex):
+                        if any(feat.re.search(s) for s in file_strings):
+                            can_match = True
+                            break
+                    else:
+                        # unknown feature type: keep to be safe
+                        can_match = True
+                        break
+                if not can_match:
+                    impossible.add(rule_name)
+
+        if impossible:
+            logger.debug(
+                "pre-filter: %d/%d string rules skipped (patterns absent from binary)",
+                len(impossible),
+                total,
+            )
+
+        self._impossible_string_rule_names = impossible
+
     def _match(self, scope: Scope, features: FeatureSet, addr: Address) -> tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
@@ -2027,6 +2082,12 @@ class RuleSet:
 
             if string_features:
                 for rule_name, wanted_strings in feature_index.string_rules.items():
+                    # Skip rules whose patterns are provably absent from the binary.
+                    # prepare_for_file() pre-checks all file strings once and populates
+                    # _impossible_string_rule_names to avoid repeated Regex.evaluate() work.
+                    # See: https://github.com/mandiant/capa/issues/2126
+                    if rule_name in self._impossible_string_rule_names:
+                        continue
                     for wanted_string in wanted_strings:
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)

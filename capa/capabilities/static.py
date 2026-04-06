@@ -25,6 +25,7 @@ import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
+from capa.features.common import String
 from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
@@ -163,6 +164,17 @@ def find_static_capabilities(
     library_functions_list: list[rdoc.LibraryFunction] = []
 
     assert isinstance(extractor, StaticFeatureExtractor)
+
+    # Pre-filter string rules based on strings found in the binary.
+    # Collect all string values from the file's feature set and inform the ruleset
+    # so that rules whose required patterns are provably absent are skipped during
+    # per-function matching.  This avoids repeated Regex.evaluate() calls that can
+    # never succeed.  See: https://github.com/mandiant/capa/issues/2126
+    file_strings: frozenset[str] = frozenset(
+        feature.value for feature, _ in extractor.extract_file_features() if isinstance(feature, String)
+    )
+    ruleset.prepare_for_file(file_strings)
+
     functions: list[FunctionHandle] = list(extractor.get_functions())
     n_funcs: int = len(functions)
     n_libs: int = 0
@@ -238,6 +250,9 @@ def find_static_capabilities(
         file=all_file_capabilities.feature_count,
         functions=tuple(function_feature_counts),
     )
+
+    # Clear the string pre-filter so the ruleset is clean for potential reuse.
+    ruleset.prepare_for_file(frozenset())
 
     matches: MatchResults = dict(
         itertools.chain(
