@@ -71,10 +71,15 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         api_name: str = vertex.mangled_name
         library_name: str = ""
         if vertex.HasField("library_index"):
-            library: BinExport2.Library = be2.library[vertex.library_index]
-            if library.HasField("name"):
-                library_name = library.name
-        for name in capa.features.extractors.helpers.generate_symbols(library_name, api_name):
+            if vertex.library_index >= len(be2.library):
+                logger.debug("vertex %d has invalid library_index %d", vertex_idx, vertex.library_index)
+            else:
+                library: BinExport2.Library = be2.library[vertex.library_index]
+                if library.HasField("name"):
+                    library_name = library.name
+        for name in capa.features.extractors.helpers.generate_symbols(
+            library_name, api_name, include_dll=bool(library_name)
+        ):
             yield API(name), ih.address
 
 
