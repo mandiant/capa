@@ -60,6 +60,7 @@ CAPA_SETTINGS_RULE_PATH = "rule_path"
 CAPA_SETTINGS_RULEGEN_AUTHOR = "rulegen_author"
 CAPA_SETTINGS_RULEGEN_SCOPE = "rulegen_scope"
 CAPA_SETTINGS_ANALYZE = "analyze"
+CAPA_SETTINGS_FONT = "font"
 
 
 CAPA_OFFICIAL_RULESET_URL = f"https://github.com/mandiant/capa-rules/releases/tag/v{capa.version.__version__}"
@@ -304,6 +305,39 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # load parent view
         self.load_view_parent()
+        self.load_font()
+
+    def load_font(self):
+        """load the user-configured font or fall back to the system fixed font"""
+        font_str = settings.user.get(CAPA_SETTINGS_FONT, "")
+        font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        if font_str:
+            font.fromString(font_str)
+        self.update_fonts(font)
+
+    def slot_font(self):
+        """launch the font dialog and apply the chosen font"""
+        font_str = settings.user.get(CAPA_SETTINGS_FONT, "")
+        current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        if font_str:
+            current_font.fromString(font_str)
+        font, ok = QtWidgets.QFontDialog.getFont(current_font, self.parent, "Select Plugin Font")
+        if ok:
+            settings.user[CAPA_SETTINGS_FONT] = font.toString()
+            self.update_fonts(font)
+
+    def update_fonts(self, font: QtGui.QFont):
+        """propagate the selected font throughout the plugin UI"""
+        if hasattr(self, "model_data") and self.model_data:
+            self.model_data.update_font(font)
+        if hasattr(self, "view_tree") and self.view_tree:
+            self.view_tree.update_font(font)
+        if hasattr(self, "view_rulegen_preview") and self.view_rulegen_preview:
+            self.view_rulegen_preview.update_font(font)
+        if hasattr(self, "view_rulegen_editor") and self.view_rulegen_editor:
+            self.view_rulegen_editor.update_font(font)
+        if hasattr(self, "view_rulegen_features") and self.view_rulegen_features:
+            self.view_rulegen_features.update_font(font)
 
     def load_view_tabs(self):
         """load tabs"""
@@ -345,22 +379,26 @@ class CapaExplorerForm(idaapi.PluginForm):
         reset_button = QtWidgets.QPushButton("Reset Selections")
         save_button = QtWidgets.QPushButton("Save")
         settings_button = QtWidgets.QPushButton("Settings")
+        font_button = QtWidgets.QPushButton("Font...")
 
         analyze_button.clicked.connect(self.slot_analyze)
         reset_button.clicked.connect(self.slot_reset)
         save_button.clicked.connect(self.slot_save)
         settings_button.clicked.connect(self.slot_settings)
+        font_button.clicked.connect(self.slot_font)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(analyze_button)
         layout.addWidget(reset_button)
         layout.addWidget(settings_button)
+        layout.addWidget(font_button)
         layout.addStretch(3)
         layout.addWidget(save_button, alignment=QtCore.Qt.AlignRight)
 
         self.view_analyze_button = analyze_button
         self.view_reset_button = reset_button
         self.view_settings_button = settings_button
+        self.view_font_button = font_button
         self.view_save_button = save_button
         self.view_buttons = layout
 
@@ -416,9 +454,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         left = QtWidgets.QWidget()
         left.setLayout(layout2)
 
-        font = QtGui.QFont()
+        font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
         font.setBold(True)
-        font.setPointSize(11)
 
         label1 = QtWidgets.QLabel()
         label1.setAlignment(QtCore.Qt.AlignLeft)
