@@ -134,7 +134,6 @@ dev = [
     "pytest-sugar==1.1.1",
     "pytest-instafail==0.5.0",
     "ruff==0.15.0",
-    "black==26.3.0",
     "mypy==1.20.0",
     "mypy-protobuf==5.0.0",
     "PyGithub==2.9.0",
@@ -206,7 +205,6 @@ known_first_party = [
 [tool.deptry.per_rule_ignores]
 # dependencies defined but not used in the codebase
 DEP002 = [
-    "black",
     "build",
     "bump-my-version",
     "deptry",

@@ -1,5 +1,5 @@
-@black:
-    pre-commit run black --show-diff-on-failure --all-files
+@ruff-format:
+    pre-commit run ruff-format --show-diff-on-failure --all-files
 
 @ruff:
     pre-commit run ruff --all-files
@@ -11,7 +11,7 @@
     pre-commit run deptry --hook-stage manual --all-files
 
 @lint:
-    -just black
+    -just ruff-format
     -just ruff
     -just mypy
     -just deptry

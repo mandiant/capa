@@ -393,7 +393,6 @@ class Match(FrozenModel):
                     )
 
                 for location in result.locations:
-
                     # keep this in sync with the copy below
                     if isinstance(location, DynamicCallAddress):
                         if location in rule_matches:
@@ -409,15 +408,13 @@ class Match(FrozenModel):
                             #
                             # Despite the edge cases (like API hammering), this turns out to be pretty easy:
                             #  collect the most recent match (with the given name) prior to the wanted location.
-                            matches_in_thread = sorted(
-                                [
-                                    (a.id, m)
-                                    for a, m in rule_matches.items()
-                                    if isinstance(a, DynamicCallAddress)
-                                    and a.thread == location.thread
-                                    and a.id <= location.id
-                                ]
-                            )
+                            matches_in_thread = sorted([
+                                (a.id, m)
+                                for a, m in rule_matches.items()
+                                if isinstance(a, DynamicCallAddress)
+                                and a.thread == location.thread
+                                and a.id <= location.id
+                            ])
                             if matches_in_thread:
                                 _, most_recent_match = matches_in_thread[-1]
                                 children.append(Match.from_capa(rules, capabilities, most_recent_match))
@@ -470,15 +467,13 @@ class Match(FrozenModel):
                                 if location in rule_matches:
                                     children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
                                 else:
-                                    matches_in_thread = sorted(
-                                        [
-                                            (a.id, m)
-                                            for a, m in rule_matches.items()
-                                            if isinstance(a, DynamicCallAddress)
-                                            and a.thread == location.thread
-                                            and a.id <= location.id
-                                        ]
-                                    )
+                                    matches_in_thread = sorted([
+                                        (a.id, m)
+                                        for a, m in rule_matches.items()
+                                        if isinstance(a, DynamicCallAddress)
+                                        and a.thread == location.thread
+                                        and a.id <= location.id
+                                    ])
                                     # namespace matches may not occur within the same thread as the result, so only
                                     # proceed if a match within the same thread is found
                                     if matches_in_thread:

@@ -98,7 +98,6 @@ Please install these dependencies before install capa (from source or from PyPI)
 `$ pip install -r requirements.txt`
 
 We use the following tools to ensure consistent code style and formatting:
-  - [black](https://github.com/psf/black) code formatter
   - [ruff](https://docs.astral.sh/ruff/) code linter and formatter
   - [mypy](https://mypy-lang.org/) type checking
   - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
@@ -113,7 +112,7 @@ We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same
 Run all linters like:
 
     ❯ pre-commit run --hook-stage=manual --all-files
-    black....................................................................Passed
+    ruff-format..............................................................Passed
     ruff.....................................................................Passed
     mypy.....................................................................Passed
     pytest (fast)............................................................Passed

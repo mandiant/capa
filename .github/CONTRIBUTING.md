@@ -194,10 +194,9 @@ sign a new one.
 All Python code must adhere to the style guide used by capa: 
 
   1. [PEP8](https://www.python.org/dev/peps/pep-0008/), with clarifications from
-  2. [Willi's style guide](https://docs.google.com/document/d/1iRpeg-w4DtibwytUyC_dDT7IGhNGBP25-nQfuBa-Fyk/edit?usp=sharing), formatted with
-  3. [ruff](https://docs.astral.sh/ruff/) (with line length 120 and imports ordered by line length), and formatted with
-  4. [black](https://github.com/psf/black) (with line width 120), and formatted with
-  5. [dos2unix](https://linux.die.net/man/1/dos2unix)
+  2. [Willi's style guide](https://docs.google.com/document/d/1iRpeg-w4DtibwytUyC_dDT7IGhNGBP25-nQfuBa-Fyk/edit?usp=sharing), and checked/formatted with
+  3. [ruff](https://docs.astral.sh/ruff/) (with line length 120), and
+  4. [dos2unix](https://linux.die.net/man/1/dos2unix)
   
 Our CI pipeline will reformat and enforce the Python styleguide.
  

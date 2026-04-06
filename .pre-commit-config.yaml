@@ -6,10 +6,10 @@
 #    ❯ pre-commit install --hook-type pre-push
 #    pre-commit installed at .git/hooks/pre-push
 #
-# run all linters liks:
+# run all linters like:
 #
 #    ❯ pre-commit run --all-files
-#    black....................................................................Passed
+#    ruff-format..............................................................Passed
 #    ruff.....................................................................Passed
 #    mypy.....................................................................Passed
 #
@@ -22,19 +22,20 @@ repos:
 
 -   repo: local
     hooks:
-    -   id: black
-        name: black
+    -   id: ruff-format
+        name: ruff format
         stages: [pre-commit, pre-push, manual]
         language: system
-        entry: black
+        entry: ruff
         args: 
-        -   "--line-length=120"
-        -   "--extend-exclude"
-        -   ".*_pb2.py"
+        -   "format"
+        -   "--config"
+        -   ".github/ruff.toml"
         -   "capa/"
         -   "scripts/"
         -   "tests/"
         -   "web/rules/scripts/"
+        exclude: '.*_pb2\.py$'
         always_run: true
         pass_filenames: false
 
