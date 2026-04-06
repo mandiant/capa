@@ -1966,10 +1966,30 @@ class RuleSet:
         Pass an empty frozenset to clear the filter between binaries.
 
         See: https://github.com/mandiant/capa/issues/2126
+
+        Performance note: this method scans file_strings once per unique string-rule.
+        Cost is O(|string_rules| * |file_strings|) in the worst case, but typically
+        much faster because most rules' patterns are absent and `re.search` on a
+        concatenated string (see below) does the work in a single pass.
         """
         if not file_strings:
             self._impossible_string_rule_names = set()
             return
+
+        # Build a single concatenated string from all file strings separated by \x01.
+        # \x01 is not present in capa rule patterns nor in file strings (which are
+        # printable ASCII sequences from the binary).
+        # Using this concat lets us do ONE re.search per rule (fast C-level scan)
+        # instead of iterating over every file string.
+        #
+        # If the concat-level scan finds no match, the rule is provably impossible
+        # (a match on an individual string would also appear in the concat).
+        #
+        # If it does find a match, we confirm per-string to avoid false positives:
+        # a pattern compiled with re.DOTALL treats `.` as matching any character
+        # including \x01, so `SELECT.*FROM.*WHERE` could match across the boundary
+        # of two unrelated strings.  The per-string confirmation resolves this.
+        concat_strings: str = "\x01".join(file_strings)
 
         impossible: set[str] = set()
         all_string_rule_names: set[str] = set()
@@ -1983,15 +2003,24 @@ class RuleSet:
                 can_match = False
                 for feat in wanted_strings:
                     if isinstance(feat, capa.features.common.Substring):
-                        if any(feat.value in s for s in file_strings):
+                        # Fast: single C-level scan of the concatenated string.
+                        # No false-positive risk for Substring because feat.value
+                        # cannot span a \x01 boundary (the pattern is a literal string
+                        # and \x01 is never present in rule patterns).
+                        if feat.value in concat_strings:
                             can_match = True
                             break
                     elif isinstance(feat, capa.features.common.Regex):
-                        if any(feat.re.search(s) for s in file_strings):
-                            can_match = True
-                            break
+                        # Phase 1: check the concatenated string first.
+                        # This is usually a definitive NO (impossible rule) in one call.
+                        # When it returns a match, run per-string to confirm and avoid
+                        # false positives from patterns that accidentally span \x01.
+                        if feat.re.search(concat_strings):
+                            if any(feat.re.search(s) for s in file_strings):
+                                can_match = True
+                                break
                     else:
-                        # unknown feature type: keep to be safe
+                        # Unknown feature type: keep to be safe.
                         can_match = True
                         break
                 if not can_match:
