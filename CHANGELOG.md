@@ -4,6 +4,8 @@
 
 ### New Features
 
+- binexport2: extract API library name from BinExport2 protobuf `library_index` field, enabling library-qualified API matching #2109
+
 ### Breaking Changes
 
 ### New Rules (0)
