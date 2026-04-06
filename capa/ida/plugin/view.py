@@ -1014,6 +1014,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         brush.setColor(QtGui.QColor(*COLOR_BLUE_RGB))
         o.setForeground(CapaExplorerRulegenFeatures.get_column_address_index(), brush)
+
     def update_font(self, font: QtGui.QFont):
         """apply a new font to the feature tree and restyle nodes"""
         self.current_font = font
