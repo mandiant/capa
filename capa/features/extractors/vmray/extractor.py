@@ -16,6 +16,7 @@ import logging
 from typing import Iterator
 from pathlib import Path
 
+import capa.helpers
 import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_

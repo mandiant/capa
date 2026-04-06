@@ -15,6 +15,7 @@
 
 import fixtures
 
+import capa.main
 import capa.features.file
 import capa.features.insn
 import capa.features.common

@@ -15,6 +15,7 @@
 import logging
 from typing import Iterator
 
+import capa.features.extractors.elf
 import capa.features.extractors.common
 import capa.features.extractors.binexport2.file
 import capa.features.extractors.binexport2.insn

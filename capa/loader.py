@@ -26,6 +26,7 @@ import capa.rules
 import capa.version
 import capa.features.common
 import capa.features.freeze as frz
+import capa.features.extractors
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet

@@ -38,6 +38,7 @@ from functools import lru_cache
 import pytest
 import fixtures
 
+import capa.main
 import capa.rules
 import capa.capabilities.dynamic
 from capa.features.extractors.base_extractor import ThreadFilter, DynamicFeatureExtractor

@@ -46,6 +46,9 @@ from pathlib import Path
 
 import capa.main
 import capa.rules
+import capa.engine
+import capa.features
+import capa.features.insn
 
 logger = logging.getLogger("capa2yara")
 

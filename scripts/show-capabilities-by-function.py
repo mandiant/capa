@@ -64,8 +64,13 @@ import colorama
 
 import capa.main
 import capa.rules
+import capa.engine
+import capa.helpers
+import capa.features
+import capa.exceptions
 import capa.render.utils as rutils
 import capa.render.verbose
+import capa.features.freeze
 import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.features.freeze import Address

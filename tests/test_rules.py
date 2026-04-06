@@ -19,6 +19,7 @@ import pytest
 
 import capa.rules
 import capa.engine
+import capa.rules.cache
 import capa.features.common
 import capa.features.address
 from capa.engine import Or

@@ -19,6 +19,8 @@ import pytest
 import fixtures
 
 import capa.main
+import capa.features.file
+import capa.features.common
 
 logger = logging.getLogger(__file__)
 

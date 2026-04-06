@@ -30,6 +30,7 @@ from ghidra.util.exception import CancelledException
 from ghidra.program.flatapi import FlatProgramAPI
 from ghidra.program.model.symbol import Namespace, SourceType, SymbolType
 
+import capa
 import capa.main
 import capa.rules
 import capa.version

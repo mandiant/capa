@@ -30,7 +30,9 @@ from pefile import PEFormatError
 from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
+import capa.perf
 import capa.rules
+import capa.engine
 import capa.loader
 import capa.helpers
 import capa.version
@@ -38,9 +40,12 @@ import capa.render.json
 import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
+import capa.features.common
 import capa.render.vverbose
+import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
+import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.loader import (
     BACKEND_IDA,
@@ -72,6 +77,7 @@ from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
+    UnsupportedRuntimeError,
 )
 from capa.features.common import (
     OS_AUTO,
@@ -932,6 +938,9 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
 
 
 def main(argv: Optional[list[str]] = None):
+    if sys.version_info < (3, 10):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
+
     if argv is None:
         argv = sys.argv[1:]
 
