@@ -18,12 +18,12 @@ Example:
     python scripts/benchmark_string_prefilter.py --runs 3
 """
 
-import argparse
-import logging
-import pathlib
-import statistics
 import sys
 import time
+import logging
+import pathlib
+import argparse
+import statistics
 
 # Silence capa progress output during benchmarking.
 logging.disable(logging.WARNING)
@@ -34,10 +34,10 @@ import capa.rules.cache
 import capa.capabilities.static
 from capa.features.common import String
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_ruleset() -> capa.rules.RuleSet:
     rules_path = pathlib.Path(__file__).parent.parent / "rules"
@@ -111,9 +111,7 @@ def _time_find_capabilities(
     try:
         for _ in range(n_runs):
             t0 = time.perf_counter()
-            caps = capa.capabilities.static.find_static_capabilities(
-                ruleset, extractor, disable_progress=True
-            )
+            caps = capa.capabilities.static.find_static_capabilities(ruleset, extractor, disable_progress=True)
             t1 = time.perf_counter()
             durations.append(t1 - t0)
 
@@ -157,7 +155,7 @@ def main():
         print("[!] no sample files found; pass binary paths explicitly", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Loading rules …", end="", flush=True)
+    print("Loading rules \u2026", end="", flush=True)
     ruleset = _load_ruleset()
 
     # Count unique string-dependent rules across all scopes.
@@ -180,7 +178,7 @@ def main():
     for sample in samples:
         name = sample.name
         if len(name) > col_w - 1:
-            name = "…" + name[-(col_w - 2):]
+            name = "…" + name[-(col_w - 2) :]
 
         extractor = _make_extractor(sample)
         if extractor is None:
@@ -192,14 +190,10 @@ def main():
         print(f"  {name:<{col_w - 2}}  ", end="", flush=True)
 
         # "Before": no prefilter
-        t_before, n_funcs = _time_find_capabilities(
-            ruleset, extractor, prefilter=False, n_runs=args.runs
-        )
+        t_before, n_funcs = _time_find_capabilities(ruleset, extractor, prefilter=False, n_runs=args.runs)
 
         # "After": with prefilter
-        t_after, _ = _time_find_capabilities(
-            ruleset, extractor, prefilter=True, n_runs=args.runs
-        )
+        t_after, _ = _time_find_capabilities(ruleset, extractor, prefilter=True, n_runs=args.runs)
 
         saved = t_before - t_after
         speedup = t_before / t_after if t_after > 0 else float("inf")
