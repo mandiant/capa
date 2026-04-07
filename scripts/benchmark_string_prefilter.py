@@ -195,11 +195,13 @@ def main():
         # "After": with prefilter
         t_after, _ = _time_find_capabilities(ruleset, extractor, prefilter=True, n_runs=args.runs)
 
-        saved = t_before - t_after
+        # t_after already includes the prepare_for_file overhead, so the true
+        # wall-clock net gain is simply t_before - t_after.
+        # t_overhead is shown separately so the reader can see how much of the
+        # cost is the one-time scan vs how much is recovered in matching.
+        net = t_before - t_after
         speedup = t_before / t_after if t_after > 0 else float("inf")
         pct_skipped = 100.0 * n_skipped / n_string_rules if n_string_rules else 0.0
-        # Net gain = saved matching time minus upfront overhead
-        net = saved - t_overhead
 
         print(
             f"{n_funcs:>6}  {n_file_strings:>7}  {t_before:>9.2f}s  {t_after:>9.2f}s  "
@@ -211,8 +213,9 @@ def main():
     print("Notes:")
     print(f"  Times are median over {args.runs} run(s); perf_counter precision.")
     print("  'w/o filter' patches prepare_for_file() to a no-op (clean baseline).")
-    print("  'Overhead' = wall time of prepare_for_file() alone (one-time cost per binary).")
-    print("  'Net gain' = (w/o filter - w/ filter) - Overhead; positive = faster overall.")
+    print("  'Overhead' = wall time of prepare_for_file() alone (informational).")
+    print("  'Net gain' = w/o filter - w/ filter; t_after includes overhead, so this")
+    print("               is the true end-to-end wall-clock delta. Positive = faster.")
     print("  'Skipped' = string rules pruned because patterns are absent from the binary.")
     print("  'Strs'    = distinct String values found in the binary at file scope.")
 
