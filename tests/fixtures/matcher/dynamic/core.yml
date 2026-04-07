@@ -1,0 +1,35 @@
+- name: dynamic-span-window
+  description: span-of-calls matching honors the configured window size
+  options:
+    span size: 2
+  rules:
+    - meta:
+        name: span-resolve-add-veh
+        description: should match the span ending at the call that resolves AddVectoredExceptionHandler
+        scopes:
+          dynamic: span of calls
+      features:
+        - and:
+            - api: LdrGetDllHandle
+            - api: LdrGetProcedureAddress
+            - string: AddVectoredExceptionHandler
+    - meta:
+        name: span-window-too-small
+        description: should not match because the configured span window does not include both APIs together
+        scopes:
+          dynamic: span of calls
+      features:
+        - and:
+            - api: LdrGetDllHandle
+            - api: RtlAddVectoredExceptionHandler
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(RtlAddVectoredExceptionHandler)
+  expect:
+    matches:
+      span-resolve-add-veh:
+        - 11
