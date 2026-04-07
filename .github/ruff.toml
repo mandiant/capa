@@ -1,5 +1,6 @@
 line-length = 120
 preview = true # Required to enable pre-release copyright header checks (CPY001)
+explicit-preview-rules = true
 
 exclude = [
     # Exclude a variety of commonly ignored directories.
@@ -26,7 +27,8 @@ exclude = [
     "venv",
     # protobuf generated files
     "*_pb2.py", 
-    "*_pb2.pyi"
+    "*_pb2.pyi",
+    "rules"
 ]
 
 lint.select = [
@@ -42,7 +44,8 @@ lint.select = [
     "G",   # flake8-logging-format (logging statement validation)
     "TD",  # flake8-todos (TODO formatting requirements)
     "PTH", # flake8-use-pathlib (migration from os.path to Pathlib)
-    "UP"   # pyupgrade (modern Python syntax upgrades)
+    "UP",  # pyupgrade (modern Python syntax upgrades)
+    "CPY001", # flake8-copyright
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

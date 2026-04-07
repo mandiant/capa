@@ -11,7 +11,7 @@
     pre-commit run deptry --hook-stage manual --all-files
 
 @lint:
-    -just ruff-format
     -just ruff
+    -just ruff-format
     -just mypy
     -just deptry

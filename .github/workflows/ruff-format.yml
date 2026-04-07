@@ -35,7 +35,7 @@ jobs:
           pip install -r requirements.txt
           pip install -e .[dev,scripts]
 
-      - name: Run ruff/continue
+      - name: Run ruff check --fix/continue
         # ruff returns non-zero error code after formatting, which is what we expect
         continue-on-error: true
         run: pre-commit run ruff --all-files
