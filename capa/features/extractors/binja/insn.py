@@ -362,8 +362,6 @@ def extract_insn_nzxor_characteristic_features(
     results = []
 
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
-        # If the two operands of the xor instruction are the same, the LLIL will be translated to other instructions,
-        # e.g., <llil: eax = 0>, (LLIL_SET_REG). So we do not need to check whether the two operands are the same.
         if il.operation == LowLevelILOperation.LLIL_XOR:
             # Exclude cases related to the stack cookie
             if is_nzxor_stack_cookie(fh.inner, bbh.inner, il):
@@ -372,6 +370,20 @@ def extract_insn_nzxor_characteristic_features(
             return False
         else:
             return True
+
+    # Binary Ninja canonicalizes `xor reg, reg` to LLIL_SET_REG(reg, 0) rather than LLIL_XOR,
+    # so the llil_checker above never fires for zeroing XOR idioms.
+    # Detect them here by checking the mnemonic and the lifted result.
+    insn: DisassemblyInstruction = ih.inner
+    if insn.text and insn.text[0].text.lower() in ("xor", "xorpd", "xorps", "pxor"):
+        for llil in func.get_llils_at(ih.address):
+            if (
+                llil.operation == LowLevelILOperation.LLIL_SET_REG
+                and llil.src.operation == LowLevelILOperation.LLIL_CONST
+                and llil.src.constant == 0
+            ):
+                yield Number(0), ih.address
+                return
 
     for llil in func.get_llils_at(ih.address):
         visit_llil_exprs(llil, llil_checker)

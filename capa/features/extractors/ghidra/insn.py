@@ -457,6 +457,8 @@ def extract_insn_nzxor_characteristic_features(
     if capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
         return
     if capa.features.extractors.ghidra.helpers.is_zxor(insn):
+        # xor eax, eax and similar zero a register; emit Number(0) instead of nzxor.
+        yield Number(0), ih.address
         return
     if check_nzxor_security_cookie_delta(f, insn):
         return

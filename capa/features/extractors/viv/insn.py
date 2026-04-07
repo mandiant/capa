@@ -391,6 +391,9 @@ def extract_insn_nzxor_characteristic_features(
         return
 
     if insn.opers[0] == insn.opers[1]:
+        # xor eax, eax and similar instructions zero a register.
+        # emit Number(0) to let rules match on the produced value.
+        yield Number(0), ih.address
         return
 
     if is_security_cookie(f, bb, insn):

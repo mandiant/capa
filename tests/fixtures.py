@@ -466,6 +466,8 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "773290480d5445f11d3dc1b800728966.exe_"
     elif name.startswith("3b13b"):
         return CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
+    elif name == "microsocks":
+        return CD / "data" / "microsocks.elf_"
     elif name == "7351f.elf":
         return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
     elif name.startswith("79abd"):
@@ -919,6 +921,11 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
         ("mimikatz", "function=0x401000", capa.features.insn.Number(0x0), True),
+        # insn/number: xor-zeroing idiom, small ELF (microsocks.elf_, xor ebp,ebp at 0x2002564)
+        ("microsocks", "function=0x2002560,bb=0x2002560,insn=0x2002564", capa.features.insn.Number(0x0), True),
+        # insn/number: xor-zeroing idiom (xor eax, eax -> Number(0))
+        # function 0x40105D contains `xor ebx, ebx` at 0x401066
+        ("mimikatz", "function=0x40105D,bb=0x40105D,insn=0x401066", capa.features.insn.Number(0x0), True),
         # insn/number: stack adjustments
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
@@ -1033,6 +1040,15 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/characteristic(nzxor)
         ("mimikatz", "function=0x410DFC", capa.features.common.Characteristic("nzxor"), True),
         ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("nzxor"), False),
+        # insn/characteristic(nzxor): xor-zeroing idiom must not be tagged as nzxor
+        (
+            "mimikatz",
+            "function=0x40105D,bb=0x40105D,insn=0x401066",
+            capa.features.common.Characteristic("nzxor"),
+            False,
+        ),
+        # insn/characteristic(nzxor): xor-zeroing idiom, small ELF (microsocks.elf_, xor ebp,ebp at 0x2002564)
+        ("microsocks", "function=0x2002560,bb=0x2002560,insn=0x2002564", capa.features.common.Characteristic("nzxor"), False),
         # insn/characteristic(nzxor): no security cookies
         ("mimikatz", "function=0x46D534", capa.features.common.Characteristic("nzxor"), False),
         # insn/characteristic(nzxor): xorps
