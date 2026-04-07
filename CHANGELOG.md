@@ -17,6 +17,7 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- replace black/isort/flake8 with ruff @mike-hunhoff #2992
 
 ### Raw diffs
 - [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)

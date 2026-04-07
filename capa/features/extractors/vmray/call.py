@@ -26,14 +26,12 @@ from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, Pr
 logger = logging.getLogger(__name__)
 
 
-VOID_PTR_NUMBER_PARAMS = frozenset(
-    {
-        "hKey",
-        "hKeyRoot",
-        "hkResult",
-        "samDesired",
-    }
-)
+VOID_PTR_NUMBER_PARAMS = frozenset({
+    "hKey",
+    "hKeyRoot",
+    "hkResult",
+    "samDesired",
+})
 
 
 def get_call_param_features(param: Param, ch: CallHandle) -> Iterator[tuple[Feature, Address]]:

@@ -106,9 +106,9 @@ def test_null_feature_extractor():
         DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2),
     ]
 
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(textwrap.dedent("""
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: create file
@@ -118,9 +118,9 @@ def test_null_feature_extractor():
                         features:
                             - and:
                                 - api: CreateFile
-                    """)),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "create file" in capabilities.matches
 

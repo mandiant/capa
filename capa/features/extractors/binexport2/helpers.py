@@ -662,14 +662,10 @@ class BinExport2InstructionPatternMatcher:
 
     @classmethod
     def from_str(cls, patterns: str):
-        return cls(
-            [
-                BinExport2InstructionPattern.from_str(line)
-                for line in filter(
-                    lambda line: not line.startswith("#"), (line.strip() for line in patterns.split("\n"))
-                )
-            ]
-        )
+        return cls([
+            BinExport2InstructionPattern.from_str(line)
+            for line in filter(lambda line: not line.startswith("#"), (line.strip() for line in patterns.split("\n")))
+        ])
 
     def match(
         self, mnemonic: str, operand_expressions: list[list[BinExport2.Expression]]
