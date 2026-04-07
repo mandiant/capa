@@ -127,7 +127,7 @@ def render_rule(timestamps, path: Path) -> str:
     return html_content
 
 
-yaml_files = [str(p) for p in input_directory.glob("**/*.yml") if ".github" not in p.parts]
+yaml_files = [str(p) for p in input_directory.glob("**/*.yml") if not any(part.startswith(".") for part in p.relative_to(input_directory).parts)]
 
 timestamps = {}
 for line in txt_file_path.read_text(encoding="utf-8").splitlines():
