@@ -17,6 +17,7 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- ci: use explicit and per job permissions @mike-hunhoff #3002
 
 ### Raw diffs
 - [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
