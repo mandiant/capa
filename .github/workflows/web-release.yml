@@ -32,9 +32,9 @@ jobs:
         GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
 
     - name: Set up Node.js
-      uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
-        node-version: 20
+        node-version: 24
         cache: 'npm'
         cache-dependency-path: 'web/explorer/package-lock.json'
 
@@ -81,7 +81,7 @@ jobs:
         git add -u web/explorer/releases/
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+      uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         title: "explorer web: add release v${{ github.event.inputs.version }}"
