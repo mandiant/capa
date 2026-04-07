@@ -9,11 +9,10 @@ on:
       - '**.md'
   workflow_dispatch: # allow manual trigger
 
-permissions:
-  contents: write
-
 jobs:
   ruff-format:
+    permissions:
+      contents: write
     # only run on dependabot PRs or manual trigger
     if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04

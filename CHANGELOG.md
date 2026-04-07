@@ -17,6 +17,7 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
 
 ### Raw diffs
