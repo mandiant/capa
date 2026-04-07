@@ -104,10 +104,12 @@ def get_function_symbols():
 
 def get_function_blocks(fh: "capa.features.extractors.base_extractor.FunctionHandle") -> Iterator[BBHandle]:
     """
-    yield the basic blocks of the function
+    yield the basic blocks of the function using a flow-insensitive model
+    to prevent truncation at misidentified non-returning calls.
     """
-
-    for block in SimpleBlockIterator(BasicBlockModel(get_current_program()), fh.inner.getBody(), get_monitor()):
+    model = BasicBlockModel(get_current_program())
+    # Restoration of original logic with the flow-insensitive fix:
+    for block in model.getCodeBlocksContaining(fh.inner.getBody(), get_monitor()):
         yield BBHandle(address=AbsoluteVirtualAddress(block.getMinAddress().getOffset()), inner=block)
 
 
