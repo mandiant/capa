@@ -1967,24 +1967,34 @@ class RuleSet:
 
         See: https://github.com/mandiant/capa/issues/2126
 
-        Performance note: Substring patterns are checked via a single scan of a
-        concatenated string (O(1) calls, fast C-level `in`).  Regex patterns require
-        a per-string scan (O(|file_strings|) calls) because ^ / $ anchors would bind
-        to the boundaries of the whole concat rather than each individual string.
+        Performance note: both Substring and Regex patterns use a concatenated-string
+        fast path (O(1) regex calls per rule) rather than per-string iteration.
+        Substring uses a \x01-joined concat with a C-level `in` check.  Regex uses a
+        \n-joined concat with re.MULTILINE so that ^ / $ bind to line boundaries (one
+        re.search per rule).  A per-string fallback runs only when the concat scan
+        matches, to rule out DOTALL false positives where .* spans a \n boundary.
         """
         if not file_strings:
             self._impossible_string_rule_names = set()
             return
 
-        # Build a single concatenated string from all file strings separated by \x01.
-        # \x01 is not present in capa rule patterns nor in file strings (which are
-        # printable-ASCII sequences extracted from the binary).  Joining lets us check
-        # Substring patterns with a single C-level `in` scan instead of one per string.
-        # Note: this concat is used ONLY for Substring patterns; Regex patterns require
-        # per-string scanning because ^ / $ anchors bind to the start/end of the whole
-        # concat rather than each individual string (12 of the 83 default string rules
-        # use such anchors).
-        concat_strings: str = "\x01".join(file_strings)
+        # Two concatenated forms are used to accelerate the scan:
+        #
+        # concat_substr  (\x01-separated) — for Substring patterns.
+        #   A literal pattern cannot span a \x01 boundary (rule patterns are
+        #   printable ASCII; \x01 never appears in them or in extracted strings).
+        #   One C-level `in` check replaces N per-string comparisons.
+        #
+        # concat_regex   (\n-separated)   — for Regex patterns.
+        #   Each pattern is compiled with re.MULTILINE added so that ^ and $
+        #   match at \n boundaries rather than only at the start/end of the whole
+        #   string.  This fixes the anchor bug: `re.search("^foo", "bar\nfoo")`
+        #   succeeds when re.MULTILINE is set.  One re.search per rule replaces N
+        #   per-string calls.  For patterns compiled with re.DOTALL, `.` also
+        #   matches \n, so `.*` could bridge two adjacent strings (false positive);
+        #   per-string confirmation handles that case.
+        concat_substr: str = "\x01".join(file_strings)
+        concat_regex: str = "\n".join(file_strings)
 
         impossible: set[str] = set()
         all_string_rule_names: set[str] = set()
@@ -1998,23 +2008,21 @@ class RuleSet:
                 can_match = False
                 for feat in wanted_strings:
                     if isinstance(feat, capa.features.common.Substring):
-                        # Fast path: scan the concatenated string once (O(1) calls).
-                        # Safe because feat.value is a printable-ASCII literal and
-                        # \x01 never appears in rule patterns, so there are no false
-                        # positives or negatives from the \x01 boundary.
-                        if feat.value in concat_strings:
+                        if feat.value in concat_substr:
                             can_match = True
                             break
                     elif isinstance(feat, capa.features.common.Regex):
-                        # Must scan each file string individually.
-                        # Searching the concatenated string is unsafe for anchored
-                        # patterns (^ / $): `re.search("^foo", "bar\x01foo")` fails
-                        # because ^ anchors to the start of the whole concat, not the
-                        # start of each individual string.  12 of the 83 string rules
-                        # in the default rule set use such anchors.
-                        if any(feat.re.search(s) for s in file_strings):
-                            can_match = True
-                            break
+                        # Re-compile with MULTILINE so ^ / $ respect \n boundaries.
+                        # Python's re module caches compiled patterns internally, so
+                        # the recompile cost is paid only on the first call.
+                        ml_re = re.compile(feat.re.pattern, feat.re.flags | re.MULTILINE)
+                        if ml_re.search(concat_regex):
+                            # Concat matched: confirm per-string to rule out false
+                            # positives from DOTALL patterns whose .* spans a \n.
+                            if any(feat.re.search(s) for s in file_strings):
+                                can_match = True
+                                break
+                        # No concat match → pattern is absent from every file string.
                     else:
                         # Unknown feature type: keep to be safe.
                         can_match = True
