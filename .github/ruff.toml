@@ -1,6 +1,6 @@
 line-length = 120
 preview = true # Required to enable pre-release copyright header checks (CPY001)
-explicit-preview-rules = true
+lint.explicit-preview-rules = true
 
 exclude = [
     # Exclude a variety of commonly ignored directories.
@@ -28,7 +28,7 @@ exclude = [
     # protobuf generated files
     "*_pb2.py", 
     "*_pb2.pyi",
-    "rules"
+    "../rules"
 ]
 
 lint.select = [
@@ -40,12 +40,11 @@ lint.select = [
     "ISC", # flake8-implicit-str-concat (detect accidental multi-line string issues)
     "T20", # flake8-print (prevent leftover print/pprint statements)
     "SIM", # flake8-simplify (code simplification upgrades)
-    "CPY", # flake8-copyright (header requirement enforcement)
+    "CPY001", # flake8-copyright (header requirement enforcement)
     "G",   # flake8-logging-format (logging statement validation)
     "TD",  # flake8-todos (TODO formatting requirements)
     "PTH", # flake8-use-pathlib (migration from os.path to Pathlib)
     "UP",  # pyupgrade (modern Python syntax upgrades)
-    "CPY001", # flake8-copyright
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
