@@ -216,7 +216,7 @@ class Some(Statement):
             # because we've overridden `__bool__` above.
             #
             # we can't use `if child is True` because the instance is not True.
-            success = sum([1 for child in results if bool(child) is True]) >= self.count
+            success = sum(1 for child in results if bool(child) is True) >= self.count
             return Result(success, self, results)
 
 

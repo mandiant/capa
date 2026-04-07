@@ -424,20 +424,19 @@ def render_rules(console: Console, doc: rd.ResultDocument):
             rows.append(("namespace", rule.meta.namespace))
 
         if rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov:
-            rows.append(
-                (
-                    "maec/analysis-conclusion",
-                    rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov,
-                )
-            )
+            rows.append((
+                "maec/analysis-conclusion",
+                rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov,
+            ))
 
         if rule.meta.maec.malware_family:
             rows.append(("maec/malware-family", rule.meta.maec.malware_family))
 
         if rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov:
-            rows.append(
-                ("maec/malware-category", rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov)
-            )
+            rows.append((
+                "maec/malware-category",
+                rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov,
+            ))
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 

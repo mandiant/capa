@@ -458,7 +458,8 @@ def test_pattern_parsing():
         capture="#int",
     )
 
-    assert BinExport2InstructionPatternMatcher.from_str("""
+    assert (
+        BinExport2InstructionPatternMatcher.from_str("""
             # comment
             br      reg
             br      reg(not-stack)
@@ -479,7 +480,9 @@ def test_pattern_parsing():
             call    [reg * #int + #int]
             call    [reg + reg + #int]
             call    [reg + #int]
-            """).queries is not None
+            """).queries
+        is not None
+    )
 
 
 def match_address(extractor: BinExport2FeatureExtractor, queries: BinExport2InstructionPatternMatcher, address: int):

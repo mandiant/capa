@@ -691,30 +691,26 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
         rules=tuple(analysis.rules),
         base_address=addr_from_pb2(analysis.base_address),
         layout=rd.StaticLayout(
-            functions=tuple(
-                [
-                    rd.FunctionLayout(
-                        address=addr_from_pb2(f.address),
-                        matched_basic_blocks=tuple(
-                            [rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks]
-                        ),
-                    )
-                    for f in analysis.layout.functions
-                ]
-            )
+            functions=tuple([
+                rd.FunctionLayout(
+                    address=addr_from_pb2(f.address),
+                    matched_basic_blocks=tuple([
+                        rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks
+                    ]),
+                )
+                for f in analysis.layout.functions
+            ])
         ),
         feature_counts=rd.StaticFeatureCounts(
             file=analysis.feature_counts.file,
-            functions=tuple(
-                [
-                    rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
-                    for f in analysis.feature_counts.functions
-                ]
-            ),
+            functions=tuple([
+                rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
+                for f in analysis.feature_counts.functions
+            ]),
         ),
-        library_functions=tuple(
-            [rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions]
-        ),
+        library_functions=tuple([
+            rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions
+        ]),
     )
 
 
@@ -726,38 +722,29 @@ def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicA
         extractor=analysis.extractor,
         rules=tuple(analysis.rules),
         layout=rd.DynamicLayout(
-            processes=tuple(
-                [
-                    rd.ProcessLayout(
-                        address=addr_from_pb2(p.address),
-                        name=p.name,
-                        matched_threads=tuple(
-                            [
-                                rd.ThreadLayout(
-                                    address=addr_from_pb2(t.address),
-                                    matched_calls=tuple(
-                                        [
-                                            rd.CallLayout(address=addr_from_pb2(c.address), name=c.name)
-                                            for c in t.matched_calls
-                                        ]
-                                    ),
-                                )
-                                for t in p.matched_threads
-                            ]
-                        ),
-                    )
-                    for p in analysis.layout.processes
-                ]
-            )
+            processes=tuple([
+                rd.ProcessLayout(
+                    address=addr_from_pb2(p.address),
+                    name=p.name,
+                    matched_threads=tuple([
+                        rd.ThreadLayout(
+                            address=addr_from_pb2(t.address),
+                            matched_calls=tuple([
+                                rd.CallLayout(address=addr_from_pb2(c.address), name=c.name) for c in t.matched_calls
+                            ]),
+                        )
+                        for t in p.matched_threads
+                    ]),
+                )
+                for p in analysis.layout.processes
+            ])
         ),
         feature_counts=rd.DynamicFeatureCounts(
             file=analysis.feature_counts.file,
-            processes=tuple(
-                [
-                    rd.ProcessFeatureCount(address=addr_from_pb2(p.address), count=p.count)
-                    for p in analysis.feature_counts.processes
-                ]
-            ),
+            processes=tuple([
+                rd.ProcessFeatureCount(address=addr_from_pb2(p.address), count=p.count)
+                for p in analysis.feature_counts.processes
+            ]),
         ),
     )
 
