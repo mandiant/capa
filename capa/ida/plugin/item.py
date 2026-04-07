@@ -47,7 +47,7 @@ class CapaExplorerDataItem:
         """initialize item"""
         self.pred = parent
         self._data = data
-        self._children: list["CapaExplorerDataItem"] = []
+        self._children: list[CapaExplorerDataItem] = []
         self._checked = False
         self._can_check = can_check
 

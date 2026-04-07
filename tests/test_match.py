@@ -221,8 +221,7 @@ def test_match_matched_rules():
     """show that using `match` adds a feature for matched rules."""
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule1
@@ -231,12 +230,10 @@ def test_match_matched_rules():
                             dynamic: process
                     features:
                         - number: 100
-                """
-            )
+                """)
         ),
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule2
@@ -245,8 +242,7 @@ def test_match_matched_rules():
                             dynamic: process
                     features:
                         - match: test rule1
-                """
-            )
+                """)
         ),
     ]
 
@@ -272,8 +268,7 @@ def test_match_matched_rules():
 def test_match_namespace():
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: CreateFile API
@@ -283,12 +278,10 @@ def test_match_namespace():
                         namespace: file/create/CreateFile
                     features:
                         - api: CreateFile
-                """
-            )
+                """)
         ),
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: WriteFile API
@@ -298,12 +291,10 @@ def test_match_namespace():
                         namespace: file/write
                     features:
                         - api: WriteFile
-                """
-            )
+                """)
         ),
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: file-create
@@ -312,12 +303,10 @@ def test_match_namespace():
                             dynamic: process
                     features:
                         - match: file/create
-                """
-            )
+                """)
         ),
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: filesystem-any
@@ -326,8 +315,7 @@ def test_match_namespace():
                             dynamic: process
                     features:
                         - match: file
-                """
-            )
+                """)
         ),
     ]
 
@@ -356,8 +344,7 @@ def test_match_namespace():
 def test_match_substring():
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -367,8 +354,7 @@ def test_match_substring():
                     features:
                         - and:
                             - substring: abc
-                """
-            )
+                """)
         ),
     ]
     features, _ = match(
@@ -410,8 +396,7 @@ def test_match_substring():
 def test_match_regex():
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -421,12 +406,10 @@ def test_match_regex():
                     features:
                         - and:
                             - string: /.*bbbb.*/
-                """
-            )
+                """)
         ),
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: rule with implied wildcards
@@ -436,12 +419,10 @@ def test_match_regex():
                     features:
                         - and:
                             - string: /bbbb/
-                """
-            )
+                """)
         ),
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: rule with anchor
@@ -451,8 +432,7 @@ def test_match_regex():
                     features:
                         - and:
                             - string: /^bbbb/
-                """
-            )
+                """)
         ),
     ]
     features, _ = match(
@@ -489,8 +469,7 @@ def test_match_regex():
 def test_match_regex_ignorecase():
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -500,8 +479,7 @@ def test_match_regex_ignorecase():
                     features:
                         - and:
                             - string: /.*bbbb.*/i
-                """
-            )
+                """)
         ),
     ]
     features, _ = match(
@@ -515,8 +493,7 @@ def test_match_regex_ignorecase():
 def test_match_regex_complex():
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                r"""
+            textwrap.dedent(r"""
                 rule:
                     meta:
                         name: test rule
@@ -526,8 +503,7 @@ def test_match_regex_complex():
                     features:
                         - or:
                             - string: /.*HARDWARE\\Key\\key with spaces\\.*/i
-                """
-            )
+                """)
         ),
     ]
     features, _ = match(
@@ -541,8 +517,7 @@ def test_match_regex_complex():
 def test_match_regex_values_always_string():
     rules = [
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -553,8 +528,7 @@ def test_match_regex_values_always_string():
                         - or:
                             - string: /123/
                             - string: /0x123/
-                """
-            )
+                """)
         ),
     ]
     features, _ = match(

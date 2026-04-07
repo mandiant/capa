@@ -1,18 +1,6 @@
-# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
-# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# McCabe complexity (`C901`) by default.
-lint.select = ["E", "F"]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-lint.fixable = ["ALL"]
-lint.unfixable = []
-
-# E402 module level import not at top of file
-# E722 do not use bare 'except'
-# E501 line too long
-lint.ignore = ["E402", "E722", "E501"]
-
 line-length = 120
+preview = true # Required to enable pre-release copyright header checks (CPY001)
+explicit-preview-rules = true
 
 exclude = [
     # Exclude a variety of commonly ignored directories.
@@ -39,5 +27,77 @@ exclude = [
     "venv",
     # protobuf generated files
     "*_pb2.py", 
-    "*_pb2.pyi"
+    "*_pb2.pyi",
+    "rules"
 ]
+
+lint.select = [
+    "E",   # pycodestyle (base style rules)
+    "F",   # Pyflakes (logical/syntax errors)
+    "I",   # isort (import sorting)
+    "B",   # flake8-bugbear (common bugs/design problems)
+    "C4",  # flake8-comprehensions (simplify list/dict comprehensions)
+    "ISC", # flake8-implicit-str-concat (detect accidental multi-line string issues)
+    "T20", # flake8-print (prevent leftover print/pprint statements)
+    "SIM", # flake8-simplify (code simplification upgrades)
+    "CPY", # flake8-copyright (header requirement enforcement)
+    "G",   # flake8-logging-format (logging statement validation)
+    "TD",  # flake8-todos (TODO formatting requirements)
+    "PTH", # flake8-use-pathlib (migration from os.path to Pathlib)
+    "UP",  # pyupgrade (modern Python syntax upgrades)
+    "CPY001", # flake8-copyright
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+# Map existing flake8 ignores to maintain strict parity
+lint.ignore = [
+    # Legacy flake8 ignores
+    "E402", # Module level import not at top of file
+    "E722", # Do not use bare except
+    "E501", # Line too long
+    "E203", # Whitespace before ':'
+    "E701", # Multiple statements on one line
+    "B010", # Do not call setattr with a constant attribute value
+    "SIM102", # Use a single if statement instead of nested if statements
+    "SIM114", # Combine if branches using logical or operator
+    
+    # Newly surfaced Ruff strictness ignores
+    "B905", # zip() without an explicit strict= parameter
+    "UP032", # Use f-string instead of format call
+    "UP031", # Use format specifiers instead of percent format
+    "SIM300", # Yoda condition detected (constant before variable)
+    "SIM108", # Use ternary operator instead of if-else block
+    "ISC003", # Explicitly concatenated string should be implicitly concatenated
+    "UP035", # Deprecated typing alias usage
+    "UP006", # Use type instead of Type for type annotation
+    "SIM115", # Use a context manager for opening files
+    "SIM118", # Use key not in dict instead of key not in dict.keys()
+    "UP024", # Replace aliased errors with OSError
+    "UP045", # Use X | None for optional type annotations
+    "SIM103", # Return negated condition directly
+    "UP007", # Use X | Y for union type annotations
+    "B904", # Raise exceptions within except clause using raise from
+    "UP028", # Replace yield over for loop with yield from
+    "C409", # Unnecessary list comprehension passed to tuple()
+    # TODO(mike-hunhoff): address circular dependencies
+    # https://github.com/mandiant/capa/issues/2996
+    "F401", # Unused imports
+]
+
+[lint.per-file-ignores]
+# T201 print found schemas for scripts and entrypoints
+"scripts/*" = ["T201"]
+"capa/main.py" = ["T201"]
+"capa/features/extractors/binja/find_binja_api.py" = ["T201"]
+"tests/conftest.py" = ["I001"] # Suppress import sorting to preserve explicit legacy fixture loading order
+"*_pb2.py" = ["ALL"] # Completely disable all formatting for auto-generated protocol buffer files
+
+[lint.flake8-copyright]
+notice-rgx = "Copyright \\d{4} Google LLC"
+min-file-size = 1
+
+[lint.isort]
+length-sort = true

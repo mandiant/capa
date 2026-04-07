@@ -80,18 +80,18 @@ def parse_node_for_feature(feature, description, comment, depth):
     display = ""
 
     if feature.startswith("#"):
-        display += f"{' '*depth}{feature}\n"
+        display += f"{' ' * depth}{feature}\n"
     elif description:
         if feature.startswith(("- and", "- or", "- optional", "- basic block", "- not", "- instruction:")):
-            display += f"{' '*depth}{feature}\n"
+            display += f"{' ' * depth}{feature}\n"
             if comment:
                 display += f" # {comment}"
-            display += f"\n{' '*(depth+2)}- description: {description}\n"
+            display += f"\n{' ' * (depth + 2)}- description: {description}\n"
         elif feature.startswith("- string"):
-            display += f"{' '*depth}{feature}\n"
+            display += f"{' ' * depth}{feature}\n"
             if comment:
                 display += f" # {comment}"
-            display += f"\n{' '*(depth+2)}description: {description}\n"
+            display += f"\n{' ' * (depth + 2)}description: {description}\n"
         elif feature.startswith("- count"):
             # count is weird, we need to format description based on feature type, so we parse with regex
             # assume format - count(<feature_name>(<feature_value>)): <count>
@@ -99,20 +99,20 @@ def parse_node_for_feature(feature, description, comment, depth):
             if m:
                 name, value, count = m.groups()
                 if name in ("string",):
-                    display += f"{' '*depth}{feature}"
+                    display += f"{' ' * depth}{feature}"
                     if comment:
                         display += f" # {comment}"
-                    display += f"\n{' '*(depth+2)}description: {description}\n"
+                    display += f"\n{' ' * (depth + 2)}description: {description}\n"
                 else:
-                    display += f"{' '*depth}- count({name}({value} = {description})): {count}"
+                    display += f"{' ' * depth}- count({name}({value} = {description})): {count}"
                     if comment:
                         display += f" # {comment}\n"
         else:
-            display += f"{' '*depth}{feature} = {description}"
+            display += f"{' ' * depth}{feature} = {description}"
             if comment:
                 display += f" # {comment}\n"
     else:
-        display += f"{' '*depth}{feature}"
+        display += f"{' ' * depth}{feature}"
         if comment:
             display += f" # {comment}\n"
 
@@ -785,8 +785,13 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
     def get_features(self, selected=False, ignore=()):
         """ """
         for feature in filter(
-            lambda o: o.capa_type
-            in (CapaExplorerRulegenEditor.get_node_type_feature(), CapaExplorerRulegenEditor.get_node_type_comment()),
+            lambda o: (
+                o.capa_type
+                in (
+                    CapaExplorerRulegenEditor.get_node_type_feature(),
+                    CapaExplorerRulegenEditor.get_node_type_comment(),
+                )
+            ),
             tuple(iterate_tree(self)),
         ):
             if feature in ignore:

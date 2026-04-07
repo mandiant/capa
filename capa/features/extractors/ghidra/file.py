@@ -186,7 +186,6 @@ def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
     """
 
     for sym in capa.features.extractors.ghidra.helpers.get_current_program().getSymbolTable().getAllSymbols(True):
-
         # .isExternal() misses more than this config for the function symbols
         if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
