@@ -345,7 +345,7 @@ def extract_global_features(extractor):
     return features
 
 
-@lru_cache()
+@lru_cache
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():

@@ -22,6 +22,7 @@ import capa.rules
 import capa.render.utils
 import capa.features.file
 import capa.features.insn
+import capa.render.default
 import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
@@ -70,9 +71,7 @@ def test_render_meta_attack():
               - {:s}
           features:
             - number: 1
-        """.format(
-            canonical
-        )
+        """.format(canonical)
     )
     r = capa.rules.Rule.from_yaml(rule)
     rule_meta = capa.render.result_document.RuleMetadata.from_capa(r)
@@ -108,9 +107,7 @@ def test_render_meta_mbc():
               - {:s}
           features:
             - number: 1
-        """.format(
-            canonical
-        )
+        """.format(canonical)
     )
     r = capa.rules.Rule.from_yaml(rule)
     rule_meta = capa.render.result_document.RuleMetadata.from_capa(r)
@@ -144,9 +141,7 @@ def test_render_meta_maec():
             maec/analysis-conclusion: {:s}
           features:
             - number: 1
-        """.format(
-            malware_family, malware_category, analysis_conclusion
-        )
+        """.format(malware_family, malware_category, analysis_conclusion)
     )
     rule = capa.rules.Rule.from_yaml(rule_yaml)
     rm = capa.render.result_document.RuleMatches(
@@ -220,8 +215,7 @@ def test_render_vverbose_feature(feature, expected):
 
     layout = capa.render.result_document.StaticLayout(functions=())
 
-    src = textwrap.dedent(
-        """
+    src = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -237,8 +231,7 @@ def test_render_vverbose_feature(feature, expected):
                 - and:
                     - number: 1
                     - number: 2
-        """
-    )
+        """)
     rule = capa.rules.Rule.from_yaml(src)
 
     rm = capa.render.result_document.RuleMatches(

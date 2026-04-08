@@ -39,5 +39,5 @@ You can check the version of capa you're currently using like this:
                          
 ```console
 $ capa --version
-capa 3.0.3
+capa 9.4.0
 ```

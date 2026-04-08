@@ -22,8 +22,7 @@ import capa.rules
 
 def test_rule_scope_instruction():
     capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
+        textwrap.dedent("""
             rule:
                 meta:
                     name: test rule
@@ -35,14 +34,12 @@ def test_rule_scope_instruction():
                     - mnemonic: mov
                     - arch: i386
                     - os: windows
-            """
-        )
+            """)
     )
 
     with pytest.raises(capa.rules.InvalidRule):
         capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -51,17 +48,14 @@ def test_rule_scope_instruction():
                             dynamic: unsupported
                     features:
                         - characteristic: embedded pe
-                """
-            )
+                """)
         )
 
 
 def test_rule_subscope_instruction():
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: test rule
@@ -75,11 +69,9 @@ def test_rule_subscope_instruction():
                                     - mnemonic: mov
                                     - arch: i386
                                     - os: windows
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     # the function rule scope will have one rules:
     #  - `test rule`
     assert len(rules.function_rules) == 1
@@ -91,8 +83,7 @@ def test_rule_subscope_instruction():
 
 def test_scope_instruction_implied_and():
     capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
+        textwrap.dedent("""
             rule:
                 meta:
                     name: test rule
@@ -105,15 +96,13 @@ def test_scope_instruction_implied_and():
                       - mnemonic: mov
                       - arch: i386
                       - os: windows
-            """
-        )
+            """)
     )
 
 
 def test_scope_instruction_description():
     capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
+        textwrap.dedent("""
             rule:
                 meta:
                     name: test rule
@@ -127,13 +116,11 @@ def test_scope_instruction_description():
                       - mnemonic: mov
                       - arch: i386
                       - os: windows
-            """
-        )
+            """)
     )
 
     capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
+        textwrap.dedent("""
             rule:
                 meta:
                     name: test rule
@@ -147,6 +134,5 @@ def test_scope_instruction_description():
                       - mnemonic: mov
                       - arch: i386
                       - os: windows
-            """
-        )
+            """)
     )

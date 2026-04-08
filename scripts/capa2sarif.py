@@ -28,6 +28,7 @@ Requires:
     - sarif_om 1.0.4
     - jschema_to_python 1.2.3
 """
+
 import sys
 import json
 import logging
@@ -160,21 +161,19 @@ def _sarif_boilerplate(data_meta: dict, data_rules: dict) -> Optional[dict]:
             id = data_rules[key]["meta"]["name"]
 
         # Append current rule
-        rules.append(
-            {
-                # Default to attack identifier, fall back to MBC, mainly relevant if both are present
-                "id": id,
-                "name": data_rules[key]["meta"]["name"],
-                "shortDescription": {"text": data_rules[key]["meta"]["name"]},
-                "messageStrings": {"default": {"text": data_rules[key]["meta"]["name"]}},
-                "properties": {
-                    "namespace": data_rules[key]["meta"]["namespace"] if "namespace" in data_rules[key]["meta"] else [],
-                    "scopes": data_rules[key]["meta"]["scopes"],
-                    "references": data_rules[key]["meta"]["references"],
-                    "lib": data_rules[key]["meta"]["lib"],
-                },
-            }
-        )
+        rules.append({
+            # Default to attack identifier, fall back to MBC, mainly relevant if both are present
+            "id": id,
+            "name": data_rules[key]["meta"]["name"],
+            "shortDescription": {"text": data_rules[key]["meta"]["name"]},
+            "messageStrings": {"default": {"text": data_rules[key]["meta"]["name"]}},
+            "properties": {
+                "namespace": data_rules[key]["meta"].get("namespace", []),
+                "scopes": data_rules[key]["meta"]["scopes"],
+                "references": data_rules[key]["meta"]["references"],
+                "lib": data_rules[key]["meta"]["lib"],
+            },
+        })
 
     tool = Tool(
         driver=ToolComponent(
@@ -283,13 +282,11 @@ def _enumerate_evidence(node: dict, related_count: int) -> list[dict]:
             if loc["type"] != "absolute":
                 continue
 
-            related_locations.append(
-                {
-                    "id": related_count,
-                    "message": {"text": label},
-                    "physicalLocation": {"address": {"absoluteAddress": loc["value"]}},
-                }
-            )
+            related_locations.append({
+                "id": related_count,
+                "message": {"text": label},
+                "physicalLocation": {"address": {"absoluteAddress": loc["value"]}},
+            })
             related_count += 1
 
     if node.get("success") and node.get("node", {}).get("type") == "statement":

@@ -216,7 +216,7 @@ class Some(Statement):
             # because we've overridden `__bool__` above.
             #
             # we can't use `if child is True` because the instance is not True.
-            success = sum([1 for child in results if bool(child) is True]) >= self.count
+            success = sum(1 for child in results if bool(child) is True) >= self.count
             return Result(success, self, results)
 
 
@@ -227,7 +227,7 @@ class Range(Statement):
         super().__init__(description=description)
         self.child = child
         self.min = min if min is not None else 0
-        self.max = max if max is not None else (1 << 64 - 1)
+        self.max = max if max is not None else ((1 << 64) - 1)
 
     def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
@@ -240,7 +240,7 @@ class Range(Statement):
         return Result(self.min <= count <= self.max, self, [], locations=features.get(self.child))
 
     def __str__(self):
-        if self.max == (1 << 64 - 1):
+        if self.max == ((1 << 64) - 1):
             return f"range({str(self.child)}, min={self.min}, max=infinity)"
         else:
             return f"range({str(self.child)}, min={self.min}, max={self.max})"

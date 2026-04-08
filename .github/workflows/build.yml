@@ -11,11 +11,10 @@ on:
     types: [edited, published]
   workflow_dispatch: # manual trigger for testing
 
-permissions:
-  contents: write
-
 jobs:
   build:
+    permissions:
+      contents: read
     name: PyInstaller for ${{ matrix.os }} / Py ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -39,8 +38,8 @@ jobs:
             python_version: '3.10'
           - os: ubuntu-22.04
             artifact_name: capa
-            asset_name: linux-py312
-            python_version: '3.12'
+            asset_name: linux-py313
+            python_version: '3.13'
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
@@ -139,6 +138,8 @@ jobs:
     if: github.event_name == 'release'
     name: zip and upload ${{ matrix.asset_name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [build]
     strategy:
       matrix:
@@ -147,7 +148,7 @@ jobs:
             artifact_name: capa
           - asset_name: linux-arm64
             artifact_name: capa
-          - asset_name: linux-py312
+          - asset_name: linux-py313
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe
@@ -157,6 +158,8 @@ jobs:
             artifact_name: capa
           - asset_name: macos-arm64
             artifact_name: capa
+    env:
+      ZIP_NAME: capa-${{ github.event.release.tag_name }}-${{ matrix.asset_name }}.zip
     steps:
       - name: Download ${{ matrix.asset_name }}
         uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4.1.2
@@ -164,13 +167,11 @@ jobs:
           name: ${{ matrix.asset_name }}
       - name: Set executable flag
         run: chmod +x ${{ matrix.artifact_name }}
-      - name: Set zip name
-        run: echo "zip_name=capa-${GITHUB_REF#refs/tags/}-${{ matrix.asset_name }}.zip" >> $GITHUB_ENV
-      - name: Zip ${{ matrix.artifact_name }} into ${{ env.zip_name }}
+      - name: Zip ${{ matrix.artifact_name }} into ${{ env.ZIP_NAME }}
         run: zip ${ZIP_NAME} ${{ matrix.artifact_name }}
-      - name: Upload ${{ env.zip_name }} to GH Release
+      - name: Upload ${{ env.ZIP_NAME }} to GH Release
         uses: svenstaro/upload-release-action@2728235f7dc9ff598bd86ce3c274b74f802d2208 # v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN}}
-          file: ${{ env.zip_name }}
+          file: ${{ env.ZIP_NAME }}
           tag: ${{ github.ref }}

@@ -543,11 +543,10 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
             taddr = Address.from_capa(t.address)
             tfeatures = [
                 ThreadFeature(
-                    basic_block=taddr,
+                    thread=taddr,
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
-                )  # type: ignore
-                # Mypy is unable to recognise `basic_block` as an argument due to alias
+                )
                 for feature, addr in extractor.extract_thread_features(p, t)
             ]
 
@@ -597,7 +596,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     # Mypy is unable to recognise `global_` as an argument due to alias
 
     # workaround around mypy issue: https://github.com/python/mypy/issues/1424
-    get_base_addr = getattr(extractor, "get_base_addr", None)
+    get_base_addr = getattr(extractor, "get_base_address", None)
     base_addr = get_base_addr() if get_base_addr else capa.features.address.NO_ADDRESS
 
     freeze = Freeze(
