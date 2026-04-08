@@ -3,7 +3,6 @@
 ## master (unreleased)
 
 ### New Features
-- ida plugin: add a "Font…" action so users can adjust the explorer font on demand, with desktop DPI awareness baked in #2570
 
 ### Breaking Changes
 
@@ -16,6 +15,7 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+- ida plugin: add a font explorer in Settings with live preview #2570
 
 ### Development
 - ci: use explicit and per job permissions @mike-hunhoff #3002
