@@ -83,6 +83,11 @@ def get_scaled_ui_font(font: QtGui.QFont) -> QtGui.QFont:
     return ui_font
 
 
+def get_default_ui_font() -> QtGui.QFont:
+    """return the default UI font without any user scaling"""
+    return QtGui.QFont()
+
+
 CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
 
 
@@ -361,16 +366,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         if hasattr(self, "view_tree") and self.view_tree:
             expanded_items = self.view_tree.get_expanded_source_items()
 
-        for widget_name in (
-            "view_search_bar",
-            "view_rulegen_search",
-            "view_status_label",
-            "view_rulegen_status_label",
-        ):
-            widget = getattr(self, widget_name, None)
-            if widget:
-                widget.setFont(ui_font)
-
         for component_name in (
             "model_data",
             "view_tree",
@@ -413,6 +408,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         label = QtWidgets.QLabel()
         label.setAlignment(QtCore.Qt.AlignLeft)
         label.setText(status)
+        label.setFont(get_default_ui_font())
 
         self.view_status_label_rulegen_cache = status
         self.view_status_label_analysis_cache = status
@@ -448,6 +444,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """load the search bar control"""
         line = QtWidgets.QLineEdit()
         line.setPlaceholderText("search...")
+        line.setFont(get_default_ui_font())
         line.textChanged.connect(self.slot_limit_results_to_search)
 
         self.view_search_bar = line
@@ -516,10 +513,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_status_label = QtWidgets.QLabel()
         self.view_rulegen_status_label.setAlignment(QtCore.Qt.AlignLeft)
         self.view_rulegen_status_label.setText("")
+        self.view_rulegen_status_label.setFont(get_default_ui_font())
 
         self.view_rulegen_search = QtWidgets.QLineEdit()
         self.view_rulegen_search.setPlaceholderText("search...")
         self.view_rulegen_search.setClearButtonEnabled(True)
+        self.view_rulegen_search.setFont(get_default_ui_font())
         self.view_rulegen_search.textChanged.connect(self.slot_limit_rulegen_features_to_search)
 
         self.view_rulegen_header_label = QtWidgets.QLabel()

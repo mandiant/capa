@@ -195,18 +195,14 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
         super().__init__(parent)
 
         self.current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
-        font = QtGui.QFont(self.current_font)
-        font.setBold(True)
-        self.setFont(font)
+        self.setFont(QtGui.QFont(self.current_font))
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setAcceptRichText(False)
 
     def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
         self.current_font = font
-        preview_font = QtGui.QFont(self.current_font)
-        preview_font.setBold(True)
-        self.setFont(preview_font)
+        self.setFont(QtGui.QFont(self.current_font))
 
     def reset_view(self):
         """ """
