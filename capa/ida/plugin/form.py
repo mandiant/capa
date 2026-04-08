@@ -75,6 +75,14 @@ def get_configured_font() -> QtGui.QFont:
     return font
 
 
+def get_scaled_ui_font(font: QtGui.QFont) -> QtGui.QFont:
+    """return the default UI font scaled to the configured point size"""
+    ui_font = QtGui.QFont()
+    if font.pointSize() > 0:
+        ui_font.setPointSize(font.pointSize())
+    return ui_font
+
+
 CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
 
 
@@ -349,6 +357,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def update_fonts(self, font: QtGui.QFont):
         """propagate the selected font throughout the plugin UI"""
         expanded_items = []
+        ui_font = get_scaled_ui_font(font)
         if hasattr(self, "view_tree") and self.view_tree:
             expanded_items = self.view_tree.get_expanded_source_items()
 
@@ -360,7 +369,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         ):
             widget = getattr(self, widget_name, None)
             if widget:
-                widget.setFont(font)
+                widget.setFont(ui_font)
 
         for component_name in (
             "model_data",
@@ -371,19 +380,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         ):
             component = getattr(self, component_name, None)
             if component:
-                component.update_font(font)
+                component.update_font(font, ui_font)
 
         if hasattr(self, "view_tree") and self.view_tree:
             self.view_tree.restore_expanded_source_items(expanded_items)
-
-        bold_font = QtGui.QFont(font)
-        bold_font.setBold(True)
-        if hasattr(self, "view_rulegen_preview_label") and self.view_rulegen_preview_label:
-            self.view_rulegen_preview_label.setFont(bold_font)
-        if hasattr(self, "view_rulegen_editor_label") and self.view_rulegen_editor_label:
-            self.view_rulegen_editor_label.setFont(bold_font)
-        if hasattr(self, "view_rulegen_header_label") and self.view_rulegen_header_label:
-            self.view_rulegen_header_label.setFont(bold_font)
 
     def load_view_tabs(self):
         """load tabs"""
@@ -496,7 +496,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         left = QtWidgets.QWidget()
         left.setLayout(layout2)
 
-        font = get_configured_font()
+        font = QtGui.QFont()
         font.setBold(True)
 
         self.view_rulegen_preview_label = QtWidgets.QLabel()

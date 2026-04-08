@@ -175,6 +175,18 @@ def resize_columns_to_content(header):
         header.resizeSection(0, MAX_SECTION_SIZE)
 
 
+def clone_ui_font(ui_font: Optional[QtGui.QFont]) -> QtGui.QFont:
+    """return a copy of the given UI font or the default UI font"""
+    return QtGui.QFont() if ui_font is None else QtGui.QFont(ui_font)
+
+
+def get_bold_widget_font(widget: QtWidgets.QWidget) -> QtGui.QFont:
+    """return the widget font with bold enabled"""
+    font = QtGui.QFont(widget.font())
+    font.setBold(True)
+    return font
+
+
 class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
     INDENT = " " * 2
 
@@ -190,7 +202,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setAcceptRichText(False)
 
-    def update_font(self, font: QtGui.QFont):
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
         self.current_font = font
         preview_font = QtGui.QFont(self.current_font)
         preview_font.setBold(True)
@@ -508,11 +520,12 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
             self.is_editing = True
 
-    def update_font(self, font: QtGui.QFont):
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
         """apply a new font to the editor and restyle existing nodes"""
         self.current_font = font
-        self.setFont(font)
-        self.header().setFont(font)
+        ui_font = clone_ui_font(ui_font)
+        self.setFont(ui_font)
+        self.header().setFont(ui_font)
         for node in iterate_tree(self):
             if getattr(node, "capa_type", None) == CapaExplorerRulegenEditor.get_node_type_expression():
                 self.style_expression_node(node)
@@ -601,8 +614,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def style_expression_node(self, o):
         """ """
-        font = QtGui.QFont(self.current_font)
-        font.setBold(True)
+        font = get_bold_widget_font(self)
 
         o.setFont(CapaExplorerRulegenEditor.get_column_feature_index(), font)
 
@@ -1000,8 +1012,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
     def style_parent_node(self, o):
         """ """
-        font = QtGui.QFont(self.current_font)
-        font.setBold(True)
+        font = get_bold_widget_font(self)
 
         o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
 
@@ -1020,11 +1031,12 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         brush.setColor(QtGui.QColor(*COLOR_BLUE_RGB))
         o.setForeground(CapaExplorerRulegenFeatures.get_column_address_index(), brush)
 
-    def update_font(self, font: QtGui.QFont):
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
         """apply a new font to the feature tree and restyle nodes"""
         self.current_font = font
-        self.setFont(font)
-        self.header().setFont(font)
+        ui_font = clone_ui_font(ui_font)
+        self.setFont(ui_font)
+        self.header().setFont(ui_font)
         for node in iterate_tree(self):
             if getattr(node, "capa_type", None) == CapaExplorerRulegenFeatures.get_node_type_parent():
                 self.style_parent_node(node)
@@ -1174,10 +1186,10 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
-    def update_font(self, font: QtGui.QFont):
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
         """apply a new font to the tree view and its header"""
-        self.setFont(font)
-        self.header().setFont(font)
+        ui_font = clone_ui_font(ui_font)
+        self.setFont(ui_font)
 
     def iter_model_indexes(self, parent=None):
         """yield all indexes in the current model"""

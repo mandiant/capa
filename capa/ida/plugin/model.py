@@ -62,11 +62,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         # root node does not have parent, contains header columns
         self.root_node = CapaExplorerDataItem(None, ["Rule Information", "Address", "Details"])
         self.current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        self.current_ui_font = QtGui.QFont()
 
-    def update_font(self, font: QtGui.QFont):
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
         """update the font used to render items"""
         self.beginResetModel()
         self.current_font = font
+        self.current_ui_font = QtGui.QFont(self.current_ui_font if ui_font is None else ui_font)
         self.endResetModel()
 
     def reset(self):
@@ -164,12 +166,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
         ):
             # set bold font for important items
-            font = QtGui.QFont(self.current_font)
+            font = QtGui.QFont(self.current_ui_font)
             font.setBold(True)
             return font
-
-        if role == QtCore.Qt.FontRole:
-            return QtGui.QFont(self.current_font)
 
         if role == QtCore.Qt.ForegroundRole and column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
             # set color for virtual address column
