@@ -11,11 +11,10 @@ on:
     types: [edited, published]
   workflow_dispatch: # manual trigger for testing
 
-permissions:
-  contents: write
-
 jobs:
   build:
+    permissions:
+      contents: read
     name: PyInstaller for ${{ matrix.os }} / Py ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -139,6 +138,8 @@ jobs:
     if: github.event_name == 'release'
     name: zip and upload ${{ matrix.asset_name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [build]
     strategy:
       matrix:

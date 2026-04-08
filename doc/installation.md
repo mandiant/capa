@@ -98,10 +98,7 @@ Please install these dependencies before install capa (from source or from PyPI)
 `$ pip install -r requirements.txt`
 
 We use the following tools to ensure consistent code style and formatting:
-  - [black](https://github.com/psf/black) code formatter
-  - [isort](https://pypi.org/project/isort/) code formatter
-  - [ruff](https://beta.ruff.rs/docs/) code linter
-  - [flake8](https://flake8.pycqa.org/en/latest/) code linter
+  - [ruff](https://docs.astral.sh/ruff/) code linter and formatter
   - [mypy](https://mypy-lang.org/) type checking
   - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
 
@@ -115,17 +112,15 @@ We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same
 Run all linters like:
 
     ❯ pre-commit run --hook-stage=manual --all-files
-    isort....................................................................Passed
-    black....................................................................Passed
+    ruff-format..............................................................Passed
     ruff.....................................................................Passed
-    flake8...................................................................Passed
     mypy.....................................................................Passed
     pytest (fast)............................................................Passed
 
 Or run a single linter like:
 
-    ❯ pre-commit run --all-files --hook-stage=manual isort
-    isort....................................................................Passed
+    ❯ pre-commit run --all-files --hook-stage=manual ruff
+    ruff.....................................................................Passed
 
 
 Importantly, you can configure pre-commit to run automatically before every commit by running:

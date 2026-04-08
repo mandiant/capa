@@ -86,9 +86,9 @@ def test_null_feature_extractor():
         AbsoluteVirtualAddress(0x401002),
     ]
 
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(textwrap.dedent("""
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: xor loop
@@ -100,9 +100,9 @@ def test_null_feature_extractor():
                                 - characteristic: tight loop
                                 - mnemonic: xor
                                 - characteristic: nzxor
-                    """)),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "xor loop" in capabilities.matches
 
