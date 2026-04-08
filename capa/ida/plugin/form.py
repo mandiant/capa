@@ -64,6 +64,15 @@ CAPA_SETTINGS_FONT = "font"
 
 
 CAPA_OFFICIAL_RULESET_URL = f"https://github.com/mandiant/capa-rules/releases/tag/v{capa.version.__version__}"
+
+
+def get_configured_font() -> QtGui.QFont:
+    """return the saved font or fall back to the system fixed font"""
+    font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+    font_str = settings.user.get(CAPA_SETTINGS_FONT, "")
+    if font_str:
+        font.fromString(font_str)
+    return font
 CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
 
 
@@ -137,10 +146,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.btn_delete_results = QtWidgets.QPushButton(
             self.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop), "Delete cached capa results"
         )
-        self.font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
-        font_str = settings.user.get(CAPA_SETTINGS_FONT, "")
-        if font_str:
-            self.font.fromString(font_str)
+        self.font = get_configured_font()
 
         self.edit_rules_link.setText(
             f'<a href="{CAPA_OFFICIAL_RULESET_URL}">Download and extract official capa rules</a>'
@@ -254,6 +260,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_preview: CapaExplorerRulegenPreview
         self.view_rulegen_features: CapaExplorerRulegenFeatures
         self.view_rulegen_editor: CapaExplorerRulegenEditor
+        self.view_rulegen_preview_label: QtWidgets.QLabel
+        self.view_rulegen_editor_label: QtWidgets.QLabel
         self.view_rulegen_header_label: QtWidgets.QLabel
         self.view_rulegen_search: QtWidgets.QLineEdit
         self.view_rulegen_limit_features_by_ea: QtWidgets.QCheckBox
@@ -334,11 +342,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_font(self):
         """load the user-configured font or fall back to the system fixed font"""
-        font_str = settings.user.get(CAPA_SETTINGS_FONT, "")
-        font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
-        if font_str:
-            font.fromString(font_str)
-        self.update_fonts(font)
+        self.update_fonts(get_configured_font())
 
     def update_fonts(self, font: QtGui.QFont):
         """propagate the selected font throughout the plugin UI"""
@@ -346,17 +350,38 @@ class CapaExplorerForm(idaapi.PluginForm):
         if hasattr(self, "view_tree") and self.view_tree:
             expanded_items = self.view_tree.get_expanded_source_items()
 
-        if hasattr(self, "model_data") and self.model_data:
-            self.model_data.update_font(font)
+        for widget_name in (
+            "view_search_bar",
+            "view_rulegen_search",
+            "view_status_label",
+            "view_rulegen_status_label",
+        ):
+            widget = getattr(self, widget_name, None)
+            if widget:
+                widget.setFont(font)
+
+        for component_name in (
+            "model_data",
+            "view_tree",
+            "view_rulegen_preview",
+            "view_rulegen_editor",
+            "view_rulegen_features",
+        ):
+            component = getattr(self, component_name, None)
+            if component:
+                component.update_font(font)
+
         if hasattr(self, "view_tree") and self.view_tree:
-            self.view_tree.update_font(font)
             self.view_tree.restore_expanded_source_items(expanded_items)
-        if hasattr(self, "view_rulegen_preview") and self.view_rulegen_preview:
-            self.view_rulegen_preview.update_font(font)
-        if hasattr(self, "view_rulegen_editor") and self.view_rulegen_editor:
-            self.view_rulegen_editor.update_font(font)
-        if hasattr(self, "view_rulegen_features") and self.view_rulegen_features:
-            self.view_rulegen_features.update_font(font)
+
+        bold_font = QtGui.QFont(font)
+        bold_font.setBold(True)
+        if hasattr(self, "view_rulegen_preview_label") and self.view_rulegen_preview_label:
+            self.view_rulegen_preview_label.setFont(bold_font)
+        if hasattr(self, "view_rulegen_editor_label") and self.view_rulegen_editor_label:
+            self.view_rulegen_editor_label.setFont(bold_font)
+        if hasattr(self, "view_rulegen_header_label") and self.view_rulegen_header_label:
+            self.view_rulegen_header_label.setFont(bold_font)
 
     def load_view_tabs(self):
         """load tabs"""
@@ -469,18 +494,18 @@ class CapaExplorerForm(idaapi.PluginForm):
         left = QtWidgets.QWidget()
         left.setLayout(layout2)
 
-        font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        font = get_configured_font()
         font.setBold(True)
 
-        label1 = QtWidgets.QLabel()
-        label1.setAlignment(QtCore.Qt.AlignLeft)
-        label1.setText("Preview")
-        label1.setFont(font)
+        self.view_rulegen_preview_label = QtWidgets.QLabel()
+        self.view_rulegen_preview_label.setAlignment(QtCore.Qt.AlignLeft)
+        self.view_rulegen_preview_label.setText("Preview")
+        self.view_rulegen_preview_label.setFont(font)
 
-        label2 = QtWidgets.QLabel()
-        label2.setAlignment(QtCore.Qt.AlignLeft)
-        label2.setText("Editor")
-        label2.setFont(font)
+        self.view_rulegen_editor_label = QtWidgets.QLabel()
+        self.view_rulegen_editor_label.setAlignment(QtCore.Qt.AlignLeft)
+        self.view_rulegen_editor_label.setText("Editor")
+        self.view_rulegen_editor_label.setFont(font)
 
         self.view_rulegen_limit_features_by_ea = QtWidgets.QCheckBox("Limit features to current disassembly address")
         self.view_rulegen_limit_features_by_ea.setChecked(False)
@@ -509,10 +534,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.set_rulegen_preview_border_neutral()
 
-        layout1.addWidget(label1)
+        layout1.addWidget(self.view_rulegen_preview_label)
         layout1.addWidget(self.view_rulegen_preview, 45)
         layout1.addWidget(self.view_rulegen_status_label)
-        layout3.addWidget(label2)
+        layout3.addWidget(self.view_rulegen_editor_label)
         layout3.addWidget(self.view_rulegen_editor, 65)
 
         layout2.addWidget(self.view_rulegen_header_label)
@@ -1353,10 +1378,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def slot_settings(self):
         """ """
-        original_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
-        font_str = settings.user.get(CAPA_SETTINGS_FONT, "")
-        if font_str:
-            original_font.fromString(font_str)
+        original_font = get_configured_font()
 
         dialog = CapaSettingsInputDialog(
             "capa explorer settings", parent=self.parent, on_font_changed=self.update_fonts

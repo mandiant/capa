@@ -1175,6 +1175,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
     def update_font(self, font: QtGui.QFont):
+        """apply a new font to the tree view and its header"""
         self.setFont(font)
         self.header().setFont(font)
 
