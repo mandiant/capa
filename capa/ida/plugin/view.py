@@ -1179,8 +1179,11 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.setFont(font)
         self.header().setFont(font)
 
-    def iter_model_indexes(self, parent=QtCore.QModelIndex()):
+    def iter_model_indexes(self, parent=None):
         """yield all indexes in the current model"""
+        if parent is None:
+            parent = QtCore.QModelIndex()
+
         for row in range(self.model.rowCount(parent)):
             model_index = self.model.index(row, 0, parent)
             if not model_index.isValid():

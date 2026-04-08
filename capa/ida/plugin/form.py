@@ -73,6 +73,8 @@ def get_configured_font() -> QtGui.QFont:
     if font_str:
         font.fromString(font_str)
     return font
+
+
 CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
 
 
