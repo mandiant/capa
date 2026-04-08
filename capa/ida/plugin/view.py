@@ -1173,6 +1173,54 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.setFont(font)
         self.header().setFont(font)
 
+    def iter_model_indexes(self, parent=QtCore.QModelIndex()):
+        """yield all indexes in the current model"""
+        for row in range(self.model.rowCount(parent)):
+            model_index = self.model.index(row, 0, parent)
+            if not model_index.isValid():
+                continue
+            yield model_index
+            yield from self.iter_model_indexes(model_index)
+
+    def get_expanded_source_items(self):
+        """capture expanded items before a model reset"""
+        expanded = []
+        for model_index in self.iter_model_indexes():
+            if self.isExpanded(model_index):
+                expanded.append(self.map_index_to_source_item(model_index))
+        return expanded
+
+    def map_source_index_to_proxy(self, source_index):
+        """map a source-model index through the proxy chain"""
+        if not source_index.isValid():
+            return QtCore.QModelIndex()
+
+        models = []
+        model = self.model
+        while not isinstance(model, CapaExplorerDataModel):
+            models.append(model)
+            model = model.sourceModel()
+
+        proxy_index = source_index
+        for proxy_model in reversed(models):
+            proxy_index = proxy_model.mapFromSource(proxy_index)
+            if not proxy_index.isValid():
+                break
+
+        return proxy_index
+
+    def restore_expanded_source_items(self, items):
+        """restore expanded items after a model reset"""
+        model = self.model
+        while not isinstance(model, CapaExplorerDataModel):
+            model = model.sourceModel()
+
+        for item in items:
+            source_index = model.index_from_item(item)
+            proxy_index = self.map_source_index_to_proxy(source_index)
+            if proxy_index.isValid():
+                self.expand(proxy_index)
+
     def reset_ui(self, should_sort=True):
         """reset user interface changes
 

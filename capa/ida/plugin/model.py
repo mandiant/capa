@@ -255,6 +255,15 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         return self.createIndex(parent.row(), 0, parent)
 
+    def index_from_item(self, item, column=0):
+        """return the model index for the given item"""
+        if item is None or item == self.root_node:
+            return QtCore.QModelIndex()
+
+        parent = item.parent()
+        parent_index = self.index_from_item(parent, 0)
+        return self.index(item.row(), column, parent_index)
+
     def iterateChildrenIndexFromRootIndex(self, model_index, ignore_root=True):
         """depth-first traversal of child nodes
 
