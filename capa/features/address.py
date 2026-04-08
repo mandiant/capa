@@ -16,6 +16,15 @@ import abc
 from typing import Optional
 
 
+def _process_sort_key(process: Optional["ProcessAddress"]) -> tuple:
+    """Create a total ordering key for nested process addresses."""
+    if process is None:
+        return (0,)
+
+    instance_id = process.instance_id if process.instance_id is not None else -1
+    return (1, _process_sort_key(process.parent), process.pid, instance_id)
+
+
 class Address(abc.ABC):
     @abc.abstractmethod
     def __eq__(self, other): ...
@@ -55,42 +64,57 @@ class ProcessAddress(Address):
 
     Args:
         pid: process ID assigned by the OS
-        ppid: parent process ID assigned by the OS
-        id: optional sandbox-specific unique identifier to distinguish
+        parent: full address of the parent process, enabling unique tracking
+            of the parent even if its PID was recycled by the OS.
+            Use None for root/top-level processes (ppid == 0).
+        instance_id: sandbox-specific unique identifier to distinguish
             processes whose OS-assigned PIDs collide due to reuse.
-            For VMRay this is the monitor_id; for other backends
-            it may be a sequential counter or timestamp.
+            For VMRay this is the monitor_id; for CAPE it is a sequential
+            counter; for Drakvuf it is 0 (TID recycling is not tracked there).
     """
 
-    def __init__(self, pid: int, ppid: int = 0, id: Optional[int] = None):
-        assert ppid >= 0
+    def __init__(
+        self,
+        pid: int,
+        parent: Optional["ProcessAddress"] = None,
+        instance_id: Optional[int] = None,
+    ):
         assert pid > 0
-        self.ppid = ppid
+        if parent is not None:
+            assert parent.pid > 0
         self.pid = pid
-        self.id = id
+        self.parent = parent
+        self.instance_id = instance_id
+
+    @property
+    def ppid(self) -> int:
+        """OS parent PID (0 if no parent)."""
+        return self.parent.pid if self.parent else 0
 
     def __repr__(self):
         parts = []
-        if self.ppid > 0:
-            parts.append(f"ppid: {self.ppid}")
+        if self.parent is not None:
+            parts.append(f"ppid: {self.parent.pid}")
         parts.append(f"pid: {self.pid}")
-        if self.id is not None:
-            parts.append(f"id: {self.id}")
+        if self.instance_id is not None:
+            parts.append(f"instance_id: {self.instance_id}")
         return "process(%s)" % ", ".join(parts)
 
     def __hash__(self):
-        return hash((self.ppid, self.pid, self.id))
+        return hash((self.parent, self.pid, self.instance_id))
 
     def __eq__(self, other):
-        assert isinstance(other, ProcessAddress)
-        return (self.ppid, self.pid, self.id) == (other.ppid, other.pid, other.id)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
+        return (self.parent, self.pid, self.instance_id) == (
+            other.parent,
+            other.pid,
+            other.instance_id,
+        )
 
     def __lt__(self, other):
         assert isinstance(other, ProcessAddress)
-        # None sorts before any real id
-        self_id = self.id if self.id is not None else -1
-        other_id = other.id if other.id is not None else -1
-        return (self.ppid, self.pid, self_id) < (other.ppid, other.pid, other_id)
+        return _process_sort_key(self) < _process_sort_key(other)
 
 
 class ThreadAddress(Address):
@@ -99,35 +123,47 @@ class ThreadAddress(Address):
     Args:
         process: address of the containing process
         tid: thread ID assigned by the OS
-        id: optional sandbox-specific unique identifier to distinguish
+        instance_id: sandbox-specific unique identifier to distinguish
             threads whose OS-assigned TIDs collide due to reuse.
-            For VMRay this is the monitor_id; for other backends
-            it may be a sequential counter or timestamp.
+            For VMRay this is the monitor_id; for CAPE it is a sequential
+            counter; for Drakvuf it is 0 (TID recycling is not tracked there).
     """
 
-    def __init__(self, process: ProcessAddress, tid: int, id: Optional[int] = None):
+    def __init__(
+        self, process: ProcessAddress, tid: int, instance_id: Optional[int] = None
+    ):
         assert tid >= 0
         self.process = process
         self.tid = tid
-        self.id = id
+        self.instance_id = instance_id
 
     def __repr__(self):
-        id_part = f", id: {self.id}" if self.id is not None else ""
-        return f"{self.process}, thread(tid: {self.tid}{id_part})"
+        iid_part = (
+            f", instance_id: {self.instance_id}" if self.instance_id is not None else ""
+        )
+        return f"{self.process}, thread(tid: {self.tid}{iid_part})"
 
     def __hash__(self):
-        return hash((self.process, self.tid, self.id))
+        return hash((self.process, self.tid, self.instance_id))
 
     def __eq__(self, other):
-        assert isinstance(other, ThreadAddress)
-        return (self.process, self.tid, self.id) == (other.process, other.tid, other.id)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
+        return (self.process, self.tid, self.instance_id) == (
+            other.process,
+            other.tid,
+            other.instance_id,
+        )
 
     def __lt__(self, other):
         assert isinstance(other, ThreadAddress)
-        # None sorts before any real id
-        self_id = self.id if self.id is not None else -1
-        other_id = other.id if other.id is not None else -1
-        return (self.process, self.tid, self_id) < (other.process, other.tid, other_id)
+        self_iid = self.instance_id if self.instance_id is not None else -1
+        other_iid = other.instance_id if other.instance_id is not None else -1
+        return (_process_sort_key(self.process), self.tid, self_iid) < (
+            _process_sort_key(other.process),
+            other.tid,
+            other_iid,
+        )
 
 
 class DynamicCallAddress(Address):
@@ -145,7 +181,10 @@ class DynamicCallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (other.thread, other.id)
+        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (
+            other.thread,
+            other.id,
+        )
 
     def __lt__(self, other):
         assert isinstance(other, DynamicCallAddress)

@@ -65,21 +65,22 @@ def format_address(address: frz.Address) -> str:
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
     elif address.type == frz.AddressType.PROCESS:
         assert isinstance(address.value, tuple)
-        ppid, pid = address.value
-        assert isinstance(ppid, int)
+        _parent_t, pid, _proc_iid = address.value
         assert isinstance(pid, int)
         return f"process{{pid:{pid}}}"
     elif address.type == frz.AddressType.THREAD:
         assert isinstance(address.value, tuple)
-        ppid, pid, tid = address.value
-        assert isinstance(ppid, int)
+        proc_t, tid, _thread_iid = address.value
+        _parent_t, pid, _proc_iid = proc_t
         assert isinstance(pid, int)
         assert isinstance(tid, int)
         return f"process{{pid:{pid},tid:{tid}}}"
     elif address.type == frz.AddressType.CALL:
         assert isinstance(address.value, tuple)
-        ppid, pid, tid, id_ = address.value
-        return f"process{{pid:{pid},tid:{tid},call:{id_}}}"
+        thread_t, call_id = address.value
+        proc_t, tid, _thread_iid = thread_t
+        _parent_t, pid, _proc_iid = proc_t
+        return f"process{{pid:{pid},tid:{tid},call:{call_id}}}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
@@ -113,18 +114,18 @@ def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
 
 
 def _format_process_fields(process: capa.features.address.ProcessAddress) -> str:
-    """format process identification fields, including id when present."""
+    """format process identification fields, including instance_id when present."""
     s = f"pid:{process.pid}"
-    if process.id is not None:
-        s += f",id:{process.id}"
+    if process.instance_id is not None:
+        s += f",instance_id:{process.instance_id}"
     return s
 
 
 def _format_thread_fields(thread: capa.features.address.ThreadAddress) -> str:
-    """format thread identification fields, including id when present."""
+    """format thread identification fields, including instance_id when present."""
     s = f"pid:{thread.process.pid},tid:{thread.tid}"
-    if thread.id is not None:
-        s += f",id:{thread.id}"
+    if thread.instance_id is not None:
+        s += f",instance_id:{thread.instance_id}"
     return s
 
 
@@ -243,7 +244,10 @@ def render_static_meta(console: Console, meta: rd.StaticMetadata):
         ("library function count", str(len(meta.analysis.library_functions))),
         (
             "total feature count",
-            str(meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions)),
+            str(
+                meta.analysis.feature_counts.file
+                + sum(f.count for f in meta.analysis.feature_counts.functions)
+            ),
         ),
     ]
 
@@ -292,7 +296,10 @@ def render_dynamic_meta(console: Console, meta: rd.DynamicMetadata):
         ("process count", str(len(meta.analysis.feature_counts.processes))),
         (
             "total feature count",
-            str(meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes)),
+            str(
+                meta.analysis.feature_counts.file
+                + sum(p.count for p in meta.analysis.feature_counts.processes)
+            ),
         ),
     ]
 
@@ -328,7 +335,9 @@ def render_rules(console: Console, doc: rd.ResultDocument):
         if count == 1:
             capability = rutils.bold(rule.meta.name)
         else:
-            capability = Text.assemble(rutils.bold(rule.meta.name), f" ({count} matches)")
+            capability = Text.assemble(
+                rutils.bold(rule.meta.name), f" ({count} matches)"
+            )
 
         console.print(capability)
         had_match = True
@@ -367,20 +376,34 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                 assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
 
                 if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
-                    lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
+                    lines = [
+                        render_process(doc.meta.analysis.layout, loc)
+                        for loc in locations
+                    ]
                 elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
-                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
-                elif rule.meta.scopes.dynamic in (capa.rules.Scope.CALL, capa.rules.Scope.SPAN_OF_CALLS):
+                    lines = [
+                        render_thread(doc.meta.analysis.layout, loc)
+                        for loc in locations
+                    ]
+                elif rule.meta.scopes.dynamic in (
+                    capa.rules.Scope.CALL,
+                    capa.rules.Scope.SPAN_OF_CALLS,
+                ):
                     # because we're only in verbose mode, we won't show the full call details (name, args, retval)
                     # we'll only show the details of the thread in which the calls are found.
                     # so select the thread locations and render those.
                     thread_locations = set()
                     for loc in locations:
                         cloc = loc.to_capa()
-                        assert isinstance(cloc, capa.features.address.DynamicCallAddress)
+                        assert isinstance(
+                            cloc, capa.features.address.DynamicCallAddress
+                        )
                         thread_locations.add(frz.Address.from_capa(cloc.thread))
 
-                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in thread_locations]
+                    lines = [
+                        render_thread(doc.meta.analysis.layout, loc)
+                        for loc in thread_locations
+                    ]
                 else:
                     capa.helpers.assert_never(rule.meta.scopes.dynamic)
             else:

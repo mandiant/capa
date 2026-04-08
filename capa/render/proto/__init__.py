@@ -73,19 +73,27 @@ def number_to_pb2(v: Union[int, float]) -> capa_pb2.Number:
 def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
     if addr.type is AddressType.ABSOLUTE:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE, v=int_to_pb2(addr.value))
+        return capa_pb2.Address(
+            type=capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE, v=int_to_pb2(addr.value)
+        )
 
     elif addr.type is AddressType.RELATIVE:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_RELATIVE, v=int_to_pb2(addr.value))
+        return capa_pb2.Address(
+            type=capa_pb2.AddressType.ADDRESSTYPE_RELATIVE, v=int_to_pb2(addr.value)
+        )
 
     elif addr.type is AddressType.FILE:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_FILE, v=int_to_pb2(addr.value))
+        return capa_pb2.Address(
+            type=capa_pb2.AddressType.ADDRESSTYPE_FILE, v=int_to_pb2(addr.value)
+        )
 
     elif addr.type is AddressType.DN_TOKEN:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_DN_TOKEN, v=int_to_pb2(addr.value))
+        return capa_pb2.Address(
+            type=capa_pb2.AddressType.ADDRESSTYPE_DN_TOKEN, v=int_to_pb2(addr.value)
+        )
 
     elif addr.type is AddressType.DN_TOKEN_OFFSET:
         assert isinstance(addr.value, tuple)
@@ -99,7 +107,9 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
 
     elif addr.type is AddressType.PROCESS:
         assert isinstance(addr.value, tuple)
-        ppid, pid = addr.value
+        # nested tuple: (parent_tuple | None, pid, instance_id)
+        parent_t, pid, _proc_iid = addr.value
+        ppid = parent_t[1] if parent_t is not None else 0
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         return capa_pb2.Address(
@@ -112,7 +122,10 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
 
     elif addr.type is AddressType.THREAD:
         assert isinstance(addr.value, tuple)
-        ppid, pid, tid = addr.value
+        # nested tuple: (process_tuple, tid, thread_instance_id)
+        proc_t, tid, _thread_iid = addr.value
+        parent_t, pid, _proc_iid = proc_t
+        ppid = parent_t[1] if parent_t is not None else 0
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         assert isinstance(tid, int)
@@ -127,18 +140,22 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
 
     elif addr.type is AddressType.CALL:
         assert isinstance(addr.value, tuple)
-        ppid, pid, tid, id_ = addr.value
+        # nested tuple: (thread_tuple, call_id)
+        thread_t, call_id = addr.value
+        proc_t, tid, _thread_iid = thread_t
+        parent_t, pid, _proc_iid = proc_t
+        ppid = parent_t[1] if parent_t is not None else 0
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         assert isinstance(tid, int)
-        assert isinstance(id_, int)
+        assert isinstance(call_id, int)
         return capa_pb2.Address(
             type=capa_pb2.AddressType.ADDRESSTYPE_CALL,
             ppid_pid_tid_id=capa_pb2.Ppid_Pid_Tid_Id(
                 ppid=int_to_pb2(ppid),
                 pid=int_to_pb2(pid),
                 tid=int_to_pb2(tid),
-                id=int_to_pb2(id_),
+                id=int_to_pb2(call_id),
             ),
         )
 
@@ -203,7 +220,8 @@ def static_analysis_to_pb2(analysis: rd.StaticAnalysis) -> capa_pb2.StaticAnalys
                 capa_pb2.FunctionLayout(
                     address=addr_to_pb2(f.address),
                     matched_basic_blocks=[
-                        capa_pb2.BasicBlockLayout(address=addr_to_pb2(bb.address)) for bb in f.matched_basic_blocks
+                        capa_pb2.BasicBlockLayout(address=addr_to_pb2(bb.address))
+                        for bb in f.matched_basic_blocks
                     ],
                 )
                 for f in analysis.layout.functions
@@ -212,12 +230,15 @@ def static_analysis_to_pb2(analysis: rd.StaticAnalysis) -> capa_pb2.StaticAnalys
         feature_counts=capa_pb2.StaticFeatureCounts(
             file=analysis.feature_counts.file,
             functions=[
-                capa_pb2.FunctionFeatureCount(address=addr_to_pb2(f.address), count=f.count)
+                capa_pb2.FunctionFeatureCount(
+                    address=addr_to_pb2(f.address), count=f.count
+                )
                 for f in analysis.feature_counts.functions
             ],
         ),
         library_functions=[
-            capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name) for lf in analysis.library_functions
+            capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name)
+            for lf in analysis.library_functions
         ],
     )
 
@@ -254,7 +275,9 @@ def dynamic_analysis_to_pb2(analysis: rd.DynamicAnalysis) -> capa_pb2.DynamicAna
         feature_counts=capa_pb2.DynamicFeatureCounts(
             file=analysis.feature_counts.file,
             processes=[
-                capa_pb2.ProcessFeatureCount(address=addr_to_pb2(p.address), count=p.count)
+                capa_pb2.ProcessFeatureCount(
+                    address=addr_to_pb2(p.address), count=p.count
+                )
                 for p in analysis.feature_counts.processes
             ],
         ),
@@ -267,7 +290,9 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
             timestamp=str(meta.timestamp),
             version=meta.version,
             argv=meta.argv,
-            sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
+            sample=google.protobuf.json_format.ParseDict(
+                meta.sample.model_dump(), capa_pb2.Sample()
+            ),
             flavor=flavor_to_pb2(meta.flavor),
             static_analysis=static_analysis_to_pb2(meta.analysis),
         )
@@ -276,7 +301,9 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
             timestamp=str(meta.timestamp),
             version=meta.version,
             argv=meta.argv,
-            sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
+            sample=google.protobuf.json_format.ParseDict(
+                meta.sample.model_dump(), capa_pb2.Sample()
+            ),
             flavor=flavor_to_pb2(meta.flavor),
             dynamic_analysis=dynamic_analysis_to_pb2(meta.analysis),
         )
@@ -299,7 +326,11 @@ def statement_to_pb2(statement: rd.Statement) -> capa_pb2.StatementNode:
 
     elif isinstance(statement, rd.SomeStatement):
         return capa_pb2.StatementNode(
-            some=capa_pb2.SomeStatement(type=statement.type, description=statement.description, count=statement.count),
+            some=capa_pb2.SomeStatement(
+                type=statement.type,
+                description=statement.description,
+                count=statement.count,
+            ),
             type="statement",
         )
 
@@ -315,7 +346,9 @@ def statement_to_pb2(statement: rd.Statement) -> capa_pb2.StatementNode:
 
     elif isinstance(statement, rd.CompoundStatement):
         return capa_pb2.StatementNode(
-            compound=capa_pb2.CompoundStatement(type=statement.type, description=statement.description),
+            compound=capa_pb2.CompoundStatement(
+                type=statement.type, description=statement.description
+            ),
             type="statement",
         )
 
@@ -326,17 +359,24 @@ def statement_to_pb2(statement: rd.Statement) -> capa_pb2.StatementNode:
 def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
     if isinstance(f, frzf.OSFeature):
         return capa_pb2.FeatureNode(
-            type="feature", os=capa_pb2.OSFeature(type=f.type, os=f.os, description=f.description)
+            type="feature",
+            os=capa_pb2.OSFeature(type=f.type, os=f.os, description=f.description),
         )
 
     elif isinstance(f, frzf.ArchFeature):
         return capa_pb2.FeatureNode(
-            type="feature", arch=capa_pb2.ArchFeature(type=f.type, arch=f.arch, description=f.description)
+            type="feature",
+            arch=capa_pb2.ArchFeature(
+                type=f.type, arch=f.arch, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.FormatFeature):
         return capa_pb2.FeatureNode(
-            type="feature", format=capa_pb2.FormatFeature(type=f.type, format=f.format, description=f.description)
+            type="feature",
+            format=capa_pb2.FormatFeature(
+                type=f.type, format=f.format, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.MatchFeature):
@@ -359,17 +399,26 @@ def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
 
     elif isinstance(f, frzf.ExportFeature):
         return capa_pb2.FeatureNode(
-            type="feature", export=capa_pb2.ExportFeature(type=f.type, export=f.export, description=f.description)
+            type="feature",
+            export=capa_pb2.ExportFeature(
+                type=f.type, export=f.export, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.ImportFeature):
         return capa_pb2.FeatureNode(
-            type="feature", import_=capa_pb2.ImportFeature(type=f.type, import_=f.import_, description=f.description)
+            type="feature",
+            import_=capa_pb2.ImportFeature(
+                type=f.type, import_=f.import_, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.SectionFeature):
         return capa_pb2.FeatureNode(
-            type="feature", section=capa_pb2.SectionFeature(type=f.type, section=f.section, description=f.description)
+            type="feature",
+            section=capa_pb2.SectionFeature(
+                type=f.type, section=f.section, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.FunctionNameFeature):
@@ -383,12 +432,17 @@ def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
     elif isinstance(f, frzf.SubstringFeature):
         return capa_pb2.FeatureNode(
             type="feature",
-            substring=capa_pb2.SubstringFeature(type=f.type, substring=f.substring, description=f.description),
+            substring=capa_pb2.SubstringFeature(
+                type=f.type, substring=f.substring, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.RegexFeature):
         return capa_pb2.FeatureNode(
-            type="feature", regex=capa_pb2.RegexFeature(type=f.type, regex=f.regex, description=f.description)
+            type="feature",
+            regex=capa_pb2.RegexFeature(
+                type=f.type, regex=f.regex, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.StringFeature):
@@ -403,56 +457,77 @@ def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
 
     elif isinstance(f, frzf.ClassFeature):
         return capa_pb2.FeatureNode(
-            type="feature", class_=capa_pb2.ClassFeature(type=f.type, class_=f.class_, description=f.description)
+            type="feature",
+            class_=capa_pb2.ClassFeature(
+                type=f.type, class_=f.class_, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.NamespaceFeature):
         return capa_pb2.FeatureNode(
             type="feature",
-            namespace=capa_pb2.NamespaceFeature(type=f.type, namespace=f.namespace, description=f.description),
+            namespace=capa_pb2.NamespaceFeature(
+                type=f.type, namespace=f.namespace, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.APIFeature):
         return capa_pb2.FeatureNode(
-            type="feature", api=capa_pb2.APIFeature(type=f.type, api=f.api, description=f.description)
+            type="feature",
+            api=capa_pb2.APIFeature(type=f.type, api=f.api, description=f.description),
         )
 
     elif isinstance(f, frzf.PropertyFeature):
         return capa_pb2.FeatureNode(
             type="feature",
             property_=capa_pb2.PropertyFeature(
-                type=f.type, access=f.access, property_=f.property, description=f.description
+                type=f.type,
+                access=f.access,
+                property_=f.property,
+                description=f.description,
             ),
         )
 
     elif isinstance(f, frzf.NumberFeature):
         return capa_pb2.FeatureNode(
             type="feature",
-            number=capa_pb2.NumberFeature(type=f.type, number=number_to_pb2(f.number), description=f.description),
+            number=capa_pb2.NumberFeature(
+                type=f.type, number=number_to_pb2(f.number), description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.BytesFeature):
         return capa_pb2.FeatureNode(
-            type="feature", bytes=capa_pb2.BytesFeature(type=f.type, bytes=f.bytes, description=f.description)
+            type="feature",
+            bytes=capa_pb2.BytesFeature(
+                type=f.type, bytes=f.bytes, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.OffsetFeature):
         return capa_pb2.FeatureNode(
             type="feature",
-            offset=capa_pb2.OffsetFeature(type=f.type, offset=int_to_pb2(f.offset), description=f.description),
+            offset=capa_pb2.OffsetFeature(
+                type=f.type, offset=int_to_pb2(f.offset), description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.MnemonicFeature):
         return capa_pb2.FeatureNode(
             type="feature",
-            mnemonic=capa_pb2.MnemonicFeature(type=f.type, mnemonic=f.mnemonic, description=f.description),
+            mnemonic=capa_pb2.MnemonicFeature(
+                type=f.type, mnemonic=f.mnemonic, description=f.description
+            ),
         )
 
     elif isinstance(f, frzf.OperandNumberFeature):
         return capa_pb2.FeatureNode(
             type="feature",
             operand_number=capa_pb2.OperandNumberFeature(
-                type=f.type, index=f.index, operand_number=int_to_pb2(f.operand_number), description=f.description
+                type=f.type,
+                index=f.index,
+                operand_number=int_to_pb2(f.operand_number),
+                description=f.description,
             ),
         )
 
@@ -460,13 +535,19 @@ def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
         return capa_pb2.FeatureNode(
             type="feature",
             operand_offset=capa_pb2.OperandOffsetFeature(
-                type=f.type, index=f.index, operand_offset=int_to_pb2(f.operand_offset), description=f.description
+                type=f.type,
+                index=f.index,
+                operand_offset=int_to_pb2(f.operand_offset),
+                description=f.description,
             ),
         )
 
     elif isinstance(f, frzf.BasicBlockFeature):
         return capa_pb2.FeatureNode(
-            type="feature", basic_block=capa_pb2.BasicBlockFeature(type=f.type, description=f.description)
+            type="feature",
+            basic_block=capa_pb2.BasicBlockFeature(
+                type=f.type, description=f.description
+            ),
         )
 
     else:
@@ -568,7 +649,9 @@ def doc_to_pb2(doc: rd.ResultDocument) -> capa_pb2.ResultDocument:
             meta=rule_metadata_to_pb2(matches.meta),
             source=matches.source,
             matches=[
-                capa_pb2.Pair_Address_Match(address=addr_to_pb2(addr), match=match_to_pb2(match))
+                capa_pb2.Pair_Address_Match(
+                    address=addr_to_pb2(addr), match=match_to_pb2(match)
+                )
                 for addr, match in matches.matches
             ],
         )
@@ -620,22 +703,29 @@ def addr_from_pb2(addr: capa_pb2.Address) -> frz.Address:
         return frz.Address(type=frz.AddressType.DN_TOKEN_OFFSET, value=(token, offset))
 
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_PROCESS:
+        # proto stores flat ppid/pid; instance_id is not stored in proto, use 0 as default.
         ppid = int_from_pb2(addr.ppid_pid.ppid)
         pid = int_from_pb2(addr.ppid_pid.pid)
-        return frz.Address(type=frz.AddressType.PROCESS, value=(ppid, pid))
+        parent_t = (None, ppid, 0) if ppid > 0 else None
+        return frz.Address(type=frz.AddressType.PROCESS, value=(parent_t, pid, 0))
 
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_THREAD:
         ppid = int_from_pb2(addr.ppid_pid_tid.ppid)
         pid = int_from_pb2(addr.ppid_pid_tid.pid)
         tid = int_from_pb2(addr.ppid_pid_tid.tid)
-        return frz.Address(type=frz.AddressType.THREAD, value=(ppid, pid, tid))
+        parent_t = (None, ppid, 0) if ppid > 0 else None
+        proc_t = (parent_t, pid, 0)
+        return frz.Address(type=frz.AddressType.THREAD, value=(proc_t, tid, 0))
 
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_CALL:
         ppid = int_from_pb2(addr.ppid_pid_tid_id.ppid)
         pid = int_from_pb2(addr.ppid_pid_tid_id.pid)
         tid = int_from_pb2(addr.ppid_pid_tid_id.tid)
-        id_ = int_from_pb2(addr.ppid_pid_tid_id.id)
-        return frz.Address(type=frz.AddressType.CALL, value=(ppid, pid, tid, id_))
+        call_id = int_from_pb2(addr.ppid_pid_tid_id.id)
+        parent_t = (None, ppid, 0) if ppid > 0 else None
+        proc_t = (parent_t, pid, 0)
+        thread_t = (proc_t, tid, 0)
+        return frz.Address(type=frz.AddressType.CALL, value=(thread_t, call_id))
 
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_NO_ADDRESS:
         return frz.Address(type=frz.AddressType.NO_ADDRESS, value=None)
@@ -695,7 +785,10 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
                     rd.FunctionLayout(
                         address=addr_from_pb2(f.address),
                         matched_basic_blocks=tuple(
-                            [rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks]
+                            [
+                                rd.BasicBlockLayout(address=addr_from_pb2(bb.address))
+                                for bb in f.matched_basic_blocks
+                            ]
                         ),
                     )
                     for f in analysis.layout.functions
@@ -706,13 +799,18 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
             file=analysis.feature_counts.file,
             functions=tuple(
                 [
-                    rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
+                    rd.FunctionFeatureCount(
+                        address=addr_from_pb2(f.address), count=f.count
+                    )
                     for f in analysis.feature_counts.functions
                 ]
             ),
         ),
         library_functions=tuple(
-            [rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions]
+            [
+                rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name)
+                for lf in analysis.library_functions
+            ]
         ),
     )
 
@@ -736,7 +834,10 @@ def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicA
                                     address=addr_from_pb2(t.address),
                                     matched_calls=tuple(
                                         [
-                                            rd.CallLayout(address=addr_from_pb2(c.address), name=c.name)
+                                            rd.CallLayout(
+                                                address=addr_from_pb2(c.address),
+                                                name=c.name,
+                                            )
                                             for c in t.matched_calls
                                         ]
                                     ),
@@ -753,7 +854,9 @@ def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicA
             file=analysis.feature_counts.file,
             processes=tuple(
                 [
-                    rd.ProcessFeatureCount(address=addr_from_pb2(p.address), count=p.count)
+                    rd.ProcessFeatureCount(
+                        address=addr_from_pb2(p.address), count=p.count
+                    )
                     for p in analysis.feature_counts.processes
                 ]
             ),
@@ -847,7 +950,9 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         return frzf.MatchFeature(match=ff.match, description=ff.description or None)
     elif type_ == "characteristic":
         ff = f.characteristic
-        return frzf.CharacteristicFeature(characteristic=ff.characteristic, description=ff.description or None)
+        return frzf.CharacteristicFeature(
+            characteristic=ff.characteristic, description=ff.description or None
+        )
     elif type_ == "export":
         ff = f.export
         return frzf.ExportFeature(export=ff.export, description=ff.description or None)
@@ -857,13 +962,17 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         # Mypy is unable to recognize `import_` as an argument
     elif type_ == "section":
         ff = f.section
-        return frzf.SectionFeature(section=ff.section, description=ff.description or None)
+        return frzf.SectionFeature(
+            section=ff.section, description=ff.description or None
+        )
     elif type_ == "function_name":
         ff = f.function_name
         return frzf.FunctionNameFeature(function_name=ff.function_name, description=ff.description or None)  # type: ignore
     elif type_ == "substring":
         ff = f.substring
-        return frzf.SubstringFeature(substring=ff.substring, description=ff.description or None)
+        return frzf.SubstringFeature(
+            substring=ff.substring, description=ff.description or None
+        )
     elif type_ == "regex":
         ff = f.regex
         return frzf.RegexFeature(regex=ff.regex, description=ff.description or None)
@@ -876,34 +985,50 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         # Mypy is unable to recognize `class_` as an argument due to aliasing
     elif type_ == "namespace":
         ff = f.namespace
-        return frzf.NamespaceFeature(namespace=ff.namespace, description=ff.description or None)
+        return frzf.NamespaceFeature(
+            namespace=ff.namespace, description=ff.description or None
+        )
     elif type_ == "api":
         ff = f.api
         return frzf.APIFeature(api=ff.api, description=ff.description or None)
     elif type_ == "property_":
         ff = f.property_
-        return frzf.PropertyFeature(property=ff.property_, access=ff.access or None, description=ff.description or None)
+        return frzf.PropertyFeature(
+            property=ff.property_,
+            access=ff.access or None,
+            description=ff.description or None,
+        )
     elif type_ == "number":
         ff = f.number
-        return frzf.NumberFeature(number=number_from_pb2(ff.number), description=ff.description or None)
+        return frzf.NumberFeature(
+            number=number_from_pb2(ff.number), description=ff.description or None
+        )
     elif type_ == "bytes":
         ff = f.bytes
         return frzf.BytesFeature(bytes=ff.bytes, description=ff.description or None)
     elif type_ == "offset":
         ff = f.offset
-        return frzf.OffsetFeature(offset=int_from_pb2(ff.offset), description=ff.description or None)
+        return frzf.OffsetFeature(
+            offset=int_from_pb2(ff.offset), description=ff.description or None
+        )
     elif type_ == "mnemonic":
         ff = f.mnemonic
-        return frzf.MnemonicFeature(mnemonic=ff.mnemonic, description=ff.description or None)
+        return frzf.MnemonicFeature(
+            mnemonic=ff.mnemonic, description=ff.description or None
+        )
     elif type_ == "operand_number":
         ff = f.operand_number
         return frzf.OperandNumberFeature(
-            index=ff.index, operand_number=number_from_pb2(ff.operand_number), description=ff.description or None
+            index=ff.index,
+            operand_number=number_from_pb2(ff.operand_number),
+            description=ff.description or None,
         )  # type: ignore
     elif type_ == "operand_offset":
         ff = f.operand_offset
         return frzf.OperandOffsetFeature(
-            index=ff.index, operand_offset=int_from_pb2(ff.operand_offset), description=ff.description or None
+            index=ff.index,
+            operand_offset=int_from_pb2(ff.operand_offset),
+            description=ff.description or None,
         )  # type: ignore
         # Mypy is unable to recognize `operand_offset` as an argument due to aliasing
     elif type_ == "basic_block":
@@ -932,7 +1057,10 @@ def match_from_pb2(match: capa_pb2.Match) -> rd.Match:
             node=rd.FeatureNode(feature=feature_from_pb2(match.feature)),
             children=tuple(children),
             locations=tuple(locations),
-            captures={capture: tuple(map(addr_from_pb2, locs.address)) for capture, locs in match.captures.items()},
+            captures={
+                capture: tuple(map(addr_from_pb2, locs.address))
+                for capture, locs in match.captures.items()
+            },
         )
     else:
         assert_never(node_type)
@@ -993,7 +1121,12 @@ def doc_from_pb2(doc: capa_pb2.ResultDocument) -> rd.ResultDocument:
         m = rd.RuleMatches(
             meta=rule_metadata_from_pb2(matches.meta),
             source=matches.source,
-            matches=tuple([(addr_from_pb2(pair.address), match_from_pb2(pair.match)) for pair in matches.matches]),
+            matches=tuple(
+                [
+                    (addr_from_pb2(pair.address), match_from_pb2(pair.match))
+                    for pair in matches.matches
+                ]
+            ),
         )
         rule_matches[rule_name] = m
 

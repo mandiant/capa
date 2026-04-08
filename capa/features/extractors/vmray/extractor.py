@@ -29,8 +29,16 @@ from capa.features.address import (
     DynamicCallAddress,
     AbsoluteVirtualAddress,
 )
-from capa.features.extractors.vmray import VMRayAnalysis, VMRayMonitorThread, VMRayMonitorProcess
-from capa.features.extractors.vmray.models import PARAM_TYPE_STR, ParamList, FunctionCall
+from capa.features.extractors.vmray import (
+    VMRayAnalysis,
+    VMRayMonitorThread,
+    VMRayMonitorProcess,
+)
+from capa.features.extractors.vmray.models import (
+    PARAM_TYPE_STR,
+    ParamList,
+    FunctionCall,
+)
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -47,7 +55,11 @@ def get_formatted_params(params: ParamList) -> list[str]:
 
     for param in params:
         if param.deref and param.deref.value is not None:
-            deref_value: str = f'"{param.deref.value}"' if param.deref.type_ in PARAM_TYPE_STR else param.deref.value
+            deref_value: str = (
+                f'"{param.deref.value}"'
+                if param.deref.type_ in PARAM_TYPE_STR
+                else param.deref.value
+            )
             params_list.append(f"{param.name}: {deref_value}")
         else:
             value: str = "" if param.value is None else param.value
@@ -71,7 +83,9 @@ class VMRayExtractor(DynamicFeatureExtractor):
         self.analysis = analysis
 
         # pre-compute these because we'll yield them at *every* scope.
-        self.global_features = list(capa.features.extractors.vmray.global_.extract_features(self.analysis))
+        self.global_features = list(
+            capa.features.extractors.vmray.global_.extract_features(self.analysis)
+        )
 
     def get_base_address(self) -> Address:
         # value according to submission file header, the actual trace may use a different imagebase
@@ -88,8 +102,31 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from self.global_features
 
     def get_processes(self) -> Iterator[ProcessHandle]:
-        for monitor_process in self.analysis.monitor_processes.values():
-            # skip invalid/incomplete monitor process entries, see #2807
+        # Two-pass: first build all ProcessAddress objects indexed by monitor_id,
+        # then resolve parent references using origin_monitor_id.
+        # This handles cases where a child process appears before its parent.
+        proc_by_monitor_id: dict[int, ProcessAddress] = {}
+
+        valid = [
+            mp
+            for mp in self.analysis.monitor_processes.values()
+            if mp.pid != 0 and mp.filename
+        ]
+
+        # Pass 1: create ProcessAddress without parent links
+        for monitor_process in valid:
+            proc_by_monitor_id[monitor_process.monitor_id] = ProcessAddress(
+                pid=monitor_process.pid,
+                instance_id=monitor_process.monitor_id,
+            )
+
+        # Pass 2: attach parent references via origin_monitor_id
+        for monitor_process in valid:
+            addr = proc_by_monitor_id[monitor_process.monitor_id]
+            parent_addr = proc_by_monitor_id.get(monitor_process.origin_monitor_id)
+            addr.parent = parent_addr
+
+        for monitor_process in valid:
             if monitor_process.pid == 0 or not monitor_process.filename:
                 logger.debug(
                     "skipping incomplete process entry: pid=%d, filename=%s, monitor_id=%d",
@@ -98,13 +135,12 @@ class VMRayExtractor(DynamicFeatureExtractor):
                     monitor_process.monitor_id,
                 )
                 continue
-
-            address: ProcessAddress = ProcessAddress(
-                pid=monitor_process.pid, ppid=monitor_process.ppid, id=monitor_process.monitor_id
-            )
+            address = proc_by_monitor_id[monitor_process.monitor_id]
             yield ProcessHandle(address, inner=monitor_process)
 
-    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_process_features(
+        self, ph: ProcessHandle
+    ) -> Iterator[tuple[Feature, Address]]:
         # we have not identified process-specific features for VMRay yet
         yield from []
 
@@ -113,20 +149,30 @@ class VMRayExtractor(DynamicFeatureExtractor):
         return f"{monitor_process.image_name} ({monitor_process.cmd_line})"
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
-        for monitor_thread_id in self.analysis.monitor_threads_by_monitor_process[ph.inner.monitor_id]:
-            monitor_thread: VMRayMonitorThread = self.analysis.monitor_threads[monitor_thread_id]
+        for monitor_thread_id in self.analysis.monitor_threads_by_monitor_process[
+            ph.inner.monitor_id
+        ]:
+            monitor_thread: VMRayMonitorThread = self.analysis.monitor_threads[
+                monitor_thread_id
+            ]
 
             address: ThreadAddress = ThreadAddress(
-                process=ph.address, tid=monitor_thread.tid, id=monitor_thread.monitor_id
+                process=ph.address,
+                tid=monitor_thread.tid,
+                instance_id=monitor_thread.monitor_id,
             )
             yield ThreadHandle(address=address, inner=monitor_thread)
 
-    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_thread_features(
+        self, ph: ProcessHandle, th: ThreadHandle
+    ) -> Iterator[tuple[Feature, Address]]:
         # we have not identified thread-specific features for VMRay yet
         yield from []
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
-        for function_call in self.analysis.monitor_process_calls[ph.inner.monitor_id][th.inner.monitor_id]:
+        for function_call in self.analysis.monitor_process_calls[ph.inner.monitor_id][
+            th.inner.monitor_id
+        ]:
             addr = DynamicCallAddress(thread=th.address, id=function_call.fncall_id)
             yield CallHandle(address=addr, inner=function_call)
 
@@ -141,13 +187,17 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
         # format input parameters
         if call.params_in:
-            call_formatted += f"({', '.join(get_formatted_params(call.params_in.params))})"
+            call_formatted += (
+                f"({', '.join(get_formatted_params(call.params_in.params))})"
+            )
         else:
             call_formatted += "()"
 
         # format output parameters
         if call.params_out:
-            call_formatted += f" -> {', '.join(get_formatted_params(call.params_out.params))}"
+            call_formatted += (
+                f" -> {', '.join(get_formatted_params(call.params_out.params))}"
+            )
 
         return call_formatted
 

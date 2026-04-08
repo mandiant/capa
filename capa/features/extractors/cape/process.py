@@ -38,7 +38,9 @@ def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     for tid in threads:
         id_ = seq.get(tid, 0)
         seq[tid] = id_ + 1
-        address: ThreadAddress = ThreadAddress(process=ph.address, tid=tid, id=id_)
+        address: ThreadAddress = ThreadAddress(
+            process=ph.address, tid=tid, instance_id=id_
+        )
         yield ThreadHandle(address=address, inner={})
 
 
