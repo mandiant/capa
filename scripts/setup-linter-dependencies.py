@@ -97,24 +97,20 @@ class MitreExtractor:
         """Get tactics IDs from Mitre matrix."""
         # Only one matrix for enterprise att&ck framework
         matrix = self._remove_deprecated_objects(
-            self._memory_store.query(
-                [
-                    Filter("type", "=", "x-mitre-matrix"),
-                ]
-            )
+            self._memory_store.query([
+                Filter("type", "=", "x-mitre-matrix"),
+            ])
         )[0]
         return list(map(self._memory_store.get, matrix["tactic_refs"]))
 
     def _get_techniques_from_tactic(self, tactic: str) -> list[AttackPattern]:
         """Get techniques and sub techniques from a Mitre tactic (kill_chain_phases->phase_name)"""
         techniques = self._remove_deprecated_objects(
-            self._memory_store.query(
-                [
-                    Filter("type", "=", "attack-pattern"),
-                    Filter("kill_chain_phases.phase_name", "=", tactic),
-                    Filter("kill_chain_phases.kill_chain_name", "=", self.kill_chain_name),
-                ]
-            )
+            self._memory_store.query([
+                Filter("type", "=", "attack-pattern"),
+                Filter("kill_chain_phases.phase_name", "=", tactic),
+                Filter("kill_chain_phases.kill_chain_name", "=", self.kill_chain_name),
+            ])
         )
         return techniques
 
@@ -122,12 +118,10 @@ class MitreExtractor:
         """Get parent technique of a sub technique using the technique ID TXXXX.YYY"""
         sub_id = technique["external_references"][0]["external_id"].split(".")[0]
         parent_technique = self._remove_deprecated_objects(
-            self._memory_store.query(
-                [
-                    Filter("type", "=", "attack-pattern"),
-                    Filter("external_references.external_id", "=", sub_id),
-                ]
-            )
+            self._memory_store.query([
+                Filter("type", "=", "attack-pattern"),
+                Filter("external_references.external_id", "=", sub_id),
+            ])
         )[0]
         return parent_technique
 

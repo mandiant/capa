@@ -17,6 +17,8 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- ci: use explicit and per job permissions @mike-hunhoff #3002
+- replace black/isort/flake8 with ruff @mike-hunhoff #2992
 
 - ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
 

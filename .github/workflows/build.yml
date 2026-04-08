@@ -11,11 +11,10 @@ on:
     types: [edited, published]
   workflow_dispatch: # manual trigger for testing
 
-permissions:
-  contents: write
-
 jobs:
   build:
+    permissions:
+      contents: read
     name: PyInstaller for ${{ matrix.os }} / Py ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -39,8 +38,8 @@ jobs:
             python_version: '3.10'
           - os: ubuntu-22.04
             artifact_name: capa
-            asset_name: linux-py312
-            python_version: '3.12'
+            asset_name: linux-py313
+            python_version: '3.13'
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
@@ -139,6 +138,8 @@ jobs:
     if: github.event_name == 'release'
     name: zip and upload ${{ matrix.asset_name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [build]
     strategy:
       matrix:
@@ -147,7 +148,7 @@ jobs:
             artifact_name: capa
           - asset_name: linux-arm64
             artifact_name: capa
-          - asset_name: linux-py312
+          - asset_name: linux-py313
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe

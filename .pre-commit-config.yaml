@@ -6,53 +6,31 @@
 #    ❯ pre-commit install --hook-type pre-push
 #    pre-commit installed at .git/hooks/pre-push
 #
-# run all linters liks:
+# run all linters like:
 #
 #    ❯ pre-commit run --all-files
-#    isort....................................................................Passed
-#    black....................................................................Passed
+#    ruff-format..............................................................Passed
 #    ruff.....................................................................Passed
-#    flake8...................................................................Passed
 #    mypy.....................................................................Passed
 #
 # run a single linter like:
 #
-#    ❯ pre-commit run --all-files isort
-#    isort....................................................................Passed
+#    ❯ pre-commit run --all-files ruff
+#    ruff.....................................................................Passed
 
 repos:
--   repo: local
-    hooks:
-    -   id: isort
-        name: isort
-        stages: [pre-commit, pre-push, manual]
-        language: system
-        entry: isort
-        args: 
-        -   "--length-sort"
-        -   "--profile"
-        -   "black"
-        -   "--line-length=120"
-        -   "--skip-glob"
-        -   "*_pb2.py"
-        -   "capa/"
-        -   "scripts/"
-        -   "tests/"
-        -   "web/rules/scripts/"
-        always_run: true
-        pass_filenames: false
 
 -   repo: local
     hooks:
-    -   id: black
-        name: black
+    -   id: ruff-format
+        name: ruff format
         stages: [pre-commit, pre-push, manual]
         language: system
-        entry: black
+        entry: ruff
         args: 
-        -   "--line-length=120"
-        -   "--extend-exclude"
-        -   ".*_pb2.py"
+        -   "format"
+        -   "--config"
+        -   ".github/ruff.toml"
         -   "capa/"
         -   "scripts/"
         -   "tests/"
@@ -69,6 +47,7 @@ repos:
         entry: ruff
         args: 
         -   "check"
+        -   "--fix"
         -   "--config"
         -   ".github/ruff.toml"
         -   "capa/"
@@ -78,24 +57,6 @@ repos:
         always_run: true
         pass_filenames: false
 
--   repo: local
-    hooks:
-    -   id: flake8
-        name: flake8
-        stages: [pre-push, manual]
-        language: system
-        entry: flake8
-        args: 
-        -   "--config"
-        -   ".github/flake8.ini"
-        -   "--extend-exclude"
-        -   "capa/render/proto/capa_pb2.py,capa/features/extractors/binexport2/binexport2_pb2.py"
-        -   "capa/"
-        -   "scripts/"
-        -   "tests/"
-        -   "web/rules/scripts/"
-        always_run: true
-        pass_filenames: false
 
 -   repo: local
     hooks:

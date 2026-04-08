@@ -80,15 +80,13 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
 def maec_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
     """enumerate 'maec' rules."""
     for rule in doc.rules.values():
-        if any(
-            [
-                rule.meta.maec.analysis_conclusion,
-                rule.meta.maec.analysis_conclusion_ov,
-                rule.meta.maec.malware_family,
-                rule.meta.maec.malware_category,
-                rule.meta.maec.malware_category_ov,
-            ]
-        ):
+        if any([
+            rule.meta.maec.analysis_conclusion,
+            rule.meta.maec.analysis_conclusion_ov,
+            rule.meta.maec.malware_family,
+            rule.meta.maec.malware_category,
+            rule.meta.maec.malware_category_ov,
+        ]):
             yield rule
 
 

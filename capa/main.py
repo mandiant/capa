@@ -77,7 +77,6 @@ from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
-    UnsupportedRuntimeError,
 )
 from capa.features.common import (
     OS_AUTO,
@@ -938,9 +937,6 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
 
 
 def main(argv: Optional[list[str]] = None):
-    if sys.version_info < (3, 10):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
-
     if argv is None:
         argv = sys.argv[1:]
 

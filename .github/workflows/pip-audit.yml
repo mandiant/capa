@@ -4,6 +4,8 @@ on:
   schedule:
   - cron: '0 8 * * 1'
 
+permissions: read-all
+
 jobs:
   test:
     runs-on: ubuntu-latest
