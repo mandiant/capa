@@ -1202,7 +1202,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
         models = []
         model = self.model
-        while not isinstance(model, CapaExplorerDataModel):
+        while model is not None and not isinstance(model, CapaExplorerDataModel):
             models.append(model)
             model = model.sourceModel()
 
