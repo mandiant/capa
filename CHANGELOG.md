@@ -15,7 +15,7 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
-- ida plugin: add a font explorer in Settings with live preview #2570
+- ida plugin: add a font explorer in settings @vee1e #2995
 
 ### Development
 - ci: use explicit and per job permissions @mike-hunhoff #3002
