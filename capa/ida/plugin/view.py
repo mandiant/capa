@@ -1067,7 +1067,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             if isinstance(e, AbsoluteVirtualAddress):
                 return f"{hex(int(e))}"
             if isinstance(e, FileOffsetAddress):
-                return f"file:{hex(int(e))}"
+                return f"file:{hex(e)}"
             return ""
 
         def format_feature(feature):
