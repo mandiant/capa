@@ -12,25 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 import fixtures
 
-import capa.features.file
-
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
-    indirect=["sample", "scope"],
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="dotnetfile",
+    get_extractor=fixtures.get_dotnetfile_extractor,
+    include_tags={"dotnet"},
+    exclude_tags={
+        # dotnetfile is a file-scope extractor; drop non-file scopes
+        "function",
+        "basic-block",
+        "instruction",
+        # and drop feature types dotnetfile doesn't produce
+        "function-name",
+    },
 )
-def test_dotnetfile_features(sample, scope, feature, expected):
-    if scope.__name__ != "file":
-        pytest.xfail("dotnetfile only extracts file scope features")
 
-    if isinstance(feature, capa.features.file.FunctionName):
-        pytest.xfail("dotnetfile doesn't extract function names")
 
-    fixtures.do_test_feature_presence(fixtures.get_dotnetfile_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_dotnetfile_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)
 
 
 @fixtures.parametrize(

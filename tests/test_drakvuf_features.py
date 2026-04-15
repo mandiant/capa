@@ -15,88 +15,13 @@
 
 import fixtures
 
-import capa.main
-import capa.features.file
-import capa.features.insn
-import capa.features.common
-
-DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS = sorted(
-    [
-        ("93b2d1-drakvuf", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
-        # file/imports
-        ("93b2d1-drakvuf", "file", capa.features.file.Import("SetUnhandledExceptionFilter"), True),
-        # thread/api calls
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592", capa.features.insn.API("LdrLoadDll"), True),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592", capa.features.insn.API("DoesNotExist"), False),
-        # call/api
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=4716,call=17", capa.features.insn.API("CreateWindowExW"), True),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=4716,call=17", capa.features.insn.API("CreateWindowEx"), True),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.API("LdrLoadDll"), True),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.API("DoesNotExist"), False),
-        # call/string argument
-        (
-            "93b2d1-drakvuf",
-            "process=(3564:4852),thread=6592,call=1",
-            capa.features.common.String('0x667e2beb40:"api-ms-win-core-fibers-l1-1-1"'),
-            True,
-        ),
-        (
-            "93b2d1-drakvuf",
-            "process=(3564:4852),thread=6592,call=1",
-            capa.features.common.String("non_existant"),
-            False,
-        ),
-        # call/number argument
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.Number(0x801), True),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.Number(0x010101010101), False),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
-
-DYNAMIC_DRAKVUF_FEATURE_COUNT_TESTS = sorted(
-    [
-        ("93b2d1-drakvuf", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
-        # file/imports
-        ("93b2d1-drakvuf", "file", capa.features.file.Import("SetUnhandledExceptionFilter"), 1),
-        # thread/api calls
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592", capa.features.insn.API("LdrLoadDll"), 9),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592", capa.features.insn.API("DoesNotExist"), False),
-        # call/api
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.API("LdrLoadDll"), 1),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.API("DoesNotExist"), 0),
-        # call/string argument
-        (
-            "93b2d1-drakvuf",
-            "process=(3564:4852),thread=6592,call=1",
-            capa.features.common.String('0x667e2beb40:"api-ms-win-core-fibers-l1-1-1"'),
-            1,
-        ),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.common.String("non_existant"), 0),
-        # call/number argument
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.Number(0x801), 1),
-        ("93b2d1-drakvuf", "process=(3564:4852),thread=6592,call=1", capa.features.insn.Number(0x010101010101), 0),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="drakvuf",
+    get_extractor=fixtures.get_drakvuf_extractor,
+    include_tags={"drakvuf"},
 )
 
 
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS,
-    indirect=["sample", "scope"],
-)
-def test_drakvuf_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_drakvuf_extractor, sample, scope, feature, expected)
-
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    DYNAMIC_DRAKVUF_FEATURE_COUNT_TESTS,
-    indirect=["sample", "scope"],
-)
-def test_drakvuf_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_drakvuf_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_drakvuf_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)

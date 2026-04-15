@@ -14,20 +14,14 @@
 
 import fixtures
 
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS,
-    indirect=["sample", "scope"],
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="viv",
+    get_extractor=fixtures.get_viv_extractor,
+    include_tags={"static"},
+    exclude_tags={"dotnet", "ghidra"},
 )
-def test_viv_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_viv_extractor, sample, scope, feature, expected)
 
 
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_COUNT_TESTS,
-    indirect=["sample", "scope"],
-)
-def test_viv_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_viv_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_viv_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)

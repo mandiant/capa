@@ -1,0 +1,129 @@
+{
+  "files": [
+    {
+      "key": "93b2d1-drakvuf",
+      "path": "data/dynamic/drakvuf/93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz",
+      "tags": [
+        "dynamic",
+        "drakvuf"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "file",
+      "feature": "string: \\Program Files\\WindowsApps\\does_not_exist",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "file",
+      "feature": "import: SetUnhandledExceptionFilter"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592",
+      "feature": "api: LdrLoadDll"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592",
+      "feature": "api: DoesNotExist",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=4716,call=17",
+      "feature": "api: CreateWindowExW"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=4716,call=17",
+      "feature": "api: CreateWindowEx"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "api: LdrLoadDll"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "api: DoesNotExist",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "string: 0x667e2beb40:\"api-ms-win-core-fibers-l1-1-1\""
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "string: non_existant",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "number: 0x801"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "number: 0x10101010101",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "file",
+      "feature": "count(string(\\Program Files\\WindowsApps\\does_not_exist)): 0"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "file",
+      "feature": "count(import(SetUnhandledExceptionFilter)): 1"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592",
+      "feature": "count(api(LdrLoadDll)): 9"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592",
+      "feature": "count(api(DoesNotExist)): 0"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "count(api(LdrLoadDll)): 1"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "count(api(DoesNotExist)): 0"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "count(string(0x667e2beb40:\"api-ms-win-core-fibers-l1-1-1\")): 1"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "count(string(non_existant)): 0"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "count(number(0x801)): 1"
+    },
+    {
+      "file": "93b2d1-drakvuf",
+      "location": "process=(3564:4852),thread=6592,call=1",
+      "feature": "count(number(0x10101010101)): 0"
+    }
+  ]
+}

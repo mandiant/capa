@@ -14,20 +14,13 @@
 
 import fixtures
 
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
-    indirect=["sample", "scope"],
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="dnfile",
+    get_extractor=fixtures.get_dnfile_extractor,
+    include_tags={"dotnet"},
 )
-def test_dnfile_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
 
 
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_COUNT_TESTS_DOTNET,
-    indirect=["sample", "scope"],
-)
-def test_dnfile_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_dnfile_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)
