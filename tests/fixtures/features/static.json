@@ -2,79 +2,142 @@
   "files": [
     {
       "key": "mimikatz",
-      "path": "data/mimikatz.exe_"
+      "path": "data/mimikatz.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "kernel32",
-      "path": "data/kernel32.dll_"
+      "path": "data/kernel32.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "kernel32-64",
-      "path": "data/kernel32-64.dll_"
+      "path": "data/kernel32-64.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "pma12-04",
-      "path": "data/Practical Malware Analysis Lab 12-04.exe_"
+      "path": "data/Practical Malware Analysis Lab 12-04.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "pma16-01",
-      "path": "data/Practical Malware Analysis Lab 16-01.exe_"
+      "path": "data/Practical Malware Analysis Lab 16-01.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "7351f.elf",
-      "path": "data/7351f8a40c5450557b24622417fc478d.elf_"
+      "path": "data/7351f8a40c5450557b24622417fc478d.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
     },
     {
       "key": "055da8e6.elf",
-      "path": "data/055da8e6ccfe5a9380231ea04b850e18.elf_"
+      "path": "data/055da8e6ccfe5a9380231ea04b850e18.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
     },
     {
       "key": "bb38149.elf",
-      "path": "data/bb38149ff4b5c95722b83f24ca27a42b.elf_"
+      "path": "data/bb38149ff4b5c95722b83f24ca27a42b.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
     },
     {
       "key": "al-khaser x64",
-      "path": "data/al-khaser_x64.exe_"
+      "path": "data/al-khaser_x64.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "64d9f",
-      "path": "data/64d9f7d96b99467f36e22fada623c3bb.dll_"
+      "path": "data/64d9f7d96b99467f36e22fada623c3bb.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "79abd",
-      "path": "data/79abd17391adc6251ecdc58d13d76baf.dll_"
+      "path": "data/79abd17391adc6251ecdc58d13d76baf.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "946a9",
-      "path": "data/946a99f36a46d335dec080d9a4371940.dll_"
+      "path": "data/946a99f36a46d335dec080d9a4371940.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "773290",
-      "path": "data/773290480d5445f11d3dc1b800728966.exe_"
+      "path": "data/773290480d5445f11d3dc1b800728966.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "294b8d",
-      "path": "data/294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
+      "path": "data/294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
     },
     {
       "key": "a1982",
-      "path": "data/a198216798ca38f280dc413f8c57f2c2.exe_"
+      "path": "data/a198216798ca38f280dc413f8c57f2c2.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "c91887",
-      "path": "data/c91887d861d9bd4a5872249b641bc9f9.exe_"
+      "path": "data/c91887d861d9bd4a5872249b641bc9f9.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "2bf18d",
-      "path": "data/2bf18d0403677378adad9001b1243211.elf_"
+      "path": "data/2bf18d0403677378adad9001b1243211.elf_",
+      "tags": [
+        "elf",
+        "static",
+        "symtab"
+      ]
     },
     {
       "key": "2d3edc",
-      "path": "data/2d3edc218a90f03089cc01715a9f047f.exe_"
+      "path": "data/2d3edc218a90f03089cc01715a9f047f.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "ea2876",
-      "path": "data/ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
+      "path": "data/ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "pma01-01.frz",
@@ -92,46 +155,203 @@
       "key": "034b7231.frz",
       "path": "fixtures/freeze/034b7231a49387604e81a5a5d2fe7e08f6982c418a28b719d2faace3c312ebb5.exe_.frz"
     },
-
     {
       "key": "b9f5b",
-      "path": "data/b9f5bd514485fb06da39beff051b9fdc.exe_"
+      "path": "data/b9f5bd514485fb06da39beff051b9fdc.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "mixed-mode-64",
-      "path": "data/dotnet/dnfile-testfiles/mixed-mode/ModuleCode/bin/ModuleCode_amd64.exe"
+      "path": "data/dotnet/dnfile-testfiles/mixed-mode/ModuleCode/bin/ModuleCode_amd64.exe",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "hello-world",
-      "path": "data/dotnet/dnfile-testfiles/hello-world/hello-world.exe"
+      "path": "data/dotnet/dnfile-testfiles/hello-world/hello-world.exe",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "_1c444",
-      "path": "data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
+      "path": "data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "_692f",
-      "path": "data/dotnet/692f7fd6d198e804d6af98eb9e390d61.exe_"
+      "path": "data/dotnet/692f7fd6d198e804d6af98eb9e390d61.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "_0953c",
-      "path": "data/0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
+      "path": "data/0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "_039a6",
-      "path": "data/039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
+      "path": "data/039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "_387f15",
-      "path": "data/dotnet/387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
+      "path": "data/dotnet/387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "nested_typedef",
-      "path": "data/dotnet/dd9098ff91717f4906afe9dafdfa2f52.exe_"
+      "path": "data/dotnet/dd9098ff91717f4906afe9dafdfa2f52.exe_",
+      "tags": [
+        "static"
+      ]
     },
     {
       "key": "nested_typeref",
-      "path": "data/dotnet/2c7d60f77812607dec5085973ff76cea.dll_"
+      "path": "data/dotnet/2c7d60f77812607dec5085973ff76cea.dll_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "pma01-01",
+      "path": "data/Practical Malware Analysis Lab 01-01.dll_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "pma01-01-rd",
+      "path": "data/rd/Practical Malware Analysis Lab 01-01.dll_.json"
+    },
+    {
+      "key": "pma21-01",
+      "path": "data/Practical Malware Analysis Lab 21-01.exe_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "al-khaser x86",
+      "path": "data/al-khaser_x86.exe_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "39c05",
+      "path": "data/39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "499c2",
+      "path": "data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "9324d",
+      "path": "data/9324d1a8ae37a36ae560c37448c9705a.exe_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "395eb",
+      "path": "data/395eb0ddd99d2c9e37b6d0b73485ee9c.exe_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "a933a",
+      "path": "data/a933a1a402775cfa94b6bee0963f4b46.dll_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "bfb9b",
+      "path": "data/bfb9b5391a13d0afd787e87ab90f14f5.dll_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "82bf6",
+      "path": "data/82BF6347ACF15E5D883715DC289D8A2B.exe_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "pingtaest",
+      "path": "data/ping_t\u00e4st.exe_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "3b13b",
+      "path": "data/3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_",
+      "tags": [
+        "static"
+      ]
+    },
+    {
+      "key": "2f7f5f",
+      "path": "data/2f7f5fb5de175e770d7eae87666f9831.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
+    },
+    {
+      "key": "b5f052",
+      "path": "data/b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
+    },
+    {
+      "key": "bf7a9c",
+      "path": "data/bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
+    },
+    {
+      "key": "1038a2",
+      "path": "data/1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
+    },
+    {
+      "key": "3da7c",
+      "path": "data/3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_",
+      "tags": [
+        "elf",
+        "static"
+      ]
     }
   ],
   "features": [
@@ -1171,13 +1391,19 @@
       "expected": false,
       "explanation": "non-existant basic block feature"
     },
-
     {
       "file": "mimikatz",
       "location": "function=0x40E5C2",
       "feature": "count(basic blocks): 7",
       "expected": true,
-      "explanation": "7 basic blocks in function"
+      "explanation": "7 basic blocks in function",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
     },
     {
       "file": "mimikatz",
@@ -1191,29 +1417,51 @@
       "location": "function=0x40E5C2",
       "feature": "count(characteristic(calls from)): 3",
       "expected": true,
-      "explanation": "function has 3 calls"
+      "explanation": "function has 3 calls",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
     },
     {
       "file": "mimikatz",
       "location": "function=0x4556E5",
       "feature": "count(characteristic(calls to)): 0",
       "expected": true,
-      "explanation": "function has no callers"
+      "explanation": "function has no callers",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
     },
     {
       "file": "mimikatz",
       "location": "function=0x40B1F1",
       "feature": "count(characteristic(calls to)): 3",
       "expected": true,
-      "explanation": "function has 3 callers"
+      "explanation": "function has 3 callers",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
     },
-
     {
       "file": "mimikatz",
       "location": "function=0x4702FD",
       "feature": "count(characteristic(calls from)): 0",
       "expected": true,
-      "tags": ["ghidra"],
+      "tags": [
+        "ghidra"
+      ],
       "explanation": "Ghidra: function has no calls"
     },
     {
@@ -1221,7 +1469,9 @@
       "location": "function=0x401bf1",
       "feature": "count(characteristic(calls to)): 2",
       "expected": true,
-      "tags": ["ghidra"],
+      "tags": [
+        "ghidra"
+      ],
       "explanation": "Ghidra: function has 2 callers"
     },
     {
@@ -1229,261 +1479,334 @@
       "location": "function=0x401000",
       "feature": "count(basic blocks): 3",
       "expected": true,
-      "tags": ["ghidra"],
+      "tags": [
+        "ghidra"
+      ],
       "explanation": "Ghidra: 3 basic blocks in function"
     },
-
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "arch: i386",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "arch: amd64",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "mixed-mode-64",
       "location": "file",
       "feature": "arch: amd64",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "mixed-mode-64",
       "location": "file",
       "feature": "arch: i386",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "mixed-mode-64",
       "location": "file",
       "feature": "characteristic: mixed mode",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "characteristic: mixed mode",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "os: any",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "format: pe",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "format: dotnet",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "function-name: HelloWorld::Main",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "function-name: HelloWorld::ctor",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "function-name: HelloWorld::cctor",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "string: Hello World!",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "class: HelloWorld",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "class: System.Console",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "namespace: System.Diagnostics",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "function=0x250",
       "feature": "string: Hello World!",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "function=0x250,bb=0x250,insn=0x252",
       "feature": "string: Hello World!",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "function=0x250,bb=0x250,insn=0x257",
       "feature": "class: System.Console",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "function=0x250,bb=0x250,insn=0x257",
       "feature": "namespace: System",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "function=0x250",
       "feature": "api: System.Console::WriteLine",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "import: System.Console::WriteLine",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "string: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "string: get_IsAlive",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "import: gdi32.CreateCompatibleBitmap",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "import: CreateCompatibleBitmap",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "import: gdi32::CreateCompatibleBitmap",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "api: GetWindowDC",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "number: 0xCC0020",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "characteristic: calls to",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x6000018",
       "feature": "characteristic: calls to",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "characteristic: calls from",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x600000F",
       "feature": "characteristic: calls from",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "number: 0x0",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "number: 0x1",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_692f",
       "location": "token=0x6000004",
       "feature": "api: System.Linq.Enumerable::First",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "generic method"
     },
     {
@@ -1491,7 +1814,9 @@
       "location": "token=0x6000004",
       "feature": "property: System.Linq.Enumerable::First",
       "expected": false,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "generic method"
     },
     {
@@ -1499,7 +1824,9 @@
       "location": "token=0x6000004",
       "feature": "namespace: System.Linq",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "generic method"
     },
     {
@@ -1507,7 +1834,9 @@
       "location": "token=0x6000004",
       "feature": "class: System.Linq.Enumerable",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "generic method"
     },
     {
@@ -1515,7 +1844,9 @@
       "location": "token=0x6000020",
       "feature": "namespace: Reqss",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "ldftn"
     },
     {
@@ -1523,7 +1854,9 @@
       "location": "token=0x6000020",
       "feature": "class: Reqss.Reqss",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "ldftn"
     },
     {
@@ -1531,21 +1864,27 @@
       "location": "function=0x1F59,bb=0x1F59,insn=0x1F5B",
       "feature": "characteristic: unmanaged call",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "function=0x2544",
       "feature": "characteristic: unmanaged call",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x6000088",
       "feature": "characteristic: unmanaged call",
       "expected": false,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "same as above but using token instead of function"
     },
     {
@@ -1553,21 +1892,27 @@
       "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
       "feature": "api: System.Drawing.Image::FromHbitmap",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
       "feature": "api: FromHbitmap",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x600002B",
       "feature": "property/read: System.IO.FileInfo::Length",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1575,7 +1920,9 @@
       "location": "token=0x600002B",
       "feature": "property: System.IO.FileInfo::Length",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1583,7 +1930,9 @@
       "location": "token=0x6000081",
       "feature": "api: System.Diagnostics.Process::Start",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1591,7 +1940,9 @@
       "location": "token=0x6000081",
       "feature": "property/write: System.Diagnostics.ProcessStartInfo::UseShellExecute",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1599,7 +1950,9 @@
       "location": "token=0x6000081",
       "feature": "property/write: System.Diagnostics.ProcessStartInfo::WorkingDirectory",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1607,7 +1960,9 @@
       "location": "token=0x6000081",
       "feature": "property/write: System.Diagnostics.ProcessStartInfo::FileName",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1615,7 +1970,9 @@
       "location": "token=0x6000087",
       "feature": "property/write: Sockets.MySocket::reConnectionDelay",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "Field property access"
     },
     {
@@ -1623,7 +1980,9 @@
       "location": "token=0x600008A",
       "feature": "property/write: Sockets.MySocket::isConnected",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "Field property access"
     },
     {
@@ -1631,7 +1990,9 @@
       "location": "token=0x600008A",
       "feature": "class: Sockets.MySocket",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "Field property access"
     },
     {
@@ -1639,7 +2000,9 @@
       "location": "token=0x600008A",
       "feature": "namespace: Sockets",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "Field property access"
     },
     {
@@ -1647,7 +2010,9 @@
       "location": "token=0x600008A",
       "feature": "property/read: Sockets.MySocket::onConnected",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "Field property access"
     },
     {
@@ -1655,7 +2020,9 @@
       "location": "token=0x6000004",
       "feature": "property/read: System.Diagnostics.Debugger::IsAttached",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1663,7 +2030,9 @@
       "location": "token=0x6000004",
       "feature": "class: System.Diagnostics.Debugger",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1671,7 +2040,9 @@
       "location": "token=0x6000004",
       "feature": "namespace: System.Diagnostics",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1679,7 +2050,9 @@
       "location": "token=0x6000006",
       "feature": "property/read: System.Management.Automation.PowerShell::Streams",
       "expected": false,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef property access"
     },
     {
@@ -1687,7 +2060,9 @@
       "location": "token=0x600009E",
       "feature": "property/read: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE::geoplugin_countryCode",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MethodDef property access"
     },
     {
@@ -1695,7 +2070,9 @@
       "location": "token=0x600009E",
       "feature": "class: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MethodDef property access"
     },
     {
@@ -1703,7 +2080,9 @@
       "location": "token=0x600009E",
       "feature": "namespace: Modulo",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MethodDef property access"
     },
     {
@@ -1711,14 +2090,18 @@
       "location": "token=0x6000007",
       "feature": "api: System.Reflection.Assembly::Load",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_039a6",
       "location": "token=0x600001D",
       "feature": "property/read: StagelessHollow.Arac::Marka",
       "expected": true,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MethodDef method"
     },
     {
@@ -1726,7 +2109,9 @@
       "location": "token=0x600001C",
       "feature": "property/read: StagelessHollow.Arac::Marka",
       "expected": false,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MethodDef method"
     },
     {
@@ -1734,7 +2119,9 @@
       "location": "token=0x6000023",
       "feature": "property/read: System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task",
       "expected": false,
-      "tags": ["dotnet"],
+      "tags": [
+        "dotnet"
+      ],
       "explanation": "MemberRef method"
     },
     {
@@ -1742,141 +2129,180 @@
       "location": "file",
       "feature": "class: mynamespace.myclass_outer0",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer0/myclass_inner0_0",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer0/myclass_inner0_1",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1/myclass_inner1_1",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner_inner",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner1_0",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner1_1",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner0_0",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner0_1",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.OS.Build/VERSION::SdkInt",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.Media.Image/Plane::Buffer",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.Provider.Telephony/Sent/Sent::ContentUri",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.OS.Build::SdkInt",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Plane::Buffer",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Sent::ContentUri",
       "expected": false,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
-
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "count(characteristic(calls to)): 1",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "count(characteristic(calls from)): 9",
       "expected": true,
-      "tags": ["dotnet"]
+      "tags": [
+        "dotnet"
+      ]
     }
   ]
 }

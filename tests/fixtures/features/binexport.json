@@ -1,0 +1,517 @@
+{
+  "files": [
+    {
+      "key": "687e79.ghidra.be2",
+      "path": "data/binexport2/687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport",
+      "tags": [
+        "binexport",
+        "elf",
+        "aarch64"
+      ]
+    },
+    {
+      "key": "d1e650.ghidra.be2",
+      "path": "data/binexport2/d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8.elf_.ghidra.BinExport",
+      "tags": [
+        "binexport",
+        "elf",
+        "aarch64"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "string: AppDataService start",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "string: nope",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "section: .text",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "section: .nope",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "export: android::clearDir",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "name demangling is not implemented"
+        }
+      ]
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "export: nope",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "import: fopen",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "import: exit",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "import: _ZN7android10IInterfaceD0Ev",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "import: nope",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1056c0",
+      "feature": "characteristic: loop",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1075c0",
+      "feature": "characteristic: loop",
+      "expected": false
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x114af4",
+      "feature": "characteristic: tight loop",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x118F1C",
+      "feature": "characteristic: tight loop",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x11464c",
+      "feature": "characteristic: tight loop",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x0",
+      "feature": "characteristic: stack string",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "stack string detection not implemented yet for binexport"
+        }
+      ]
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "mnemonic: stp",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "mnemonic: adrp",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "mnemonic: bl",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "mnemonic: in",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "mnemonic: adrl",
+      "expected": false
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x11451c",
+      "feature": "number: 0x10",
+      "expected": false,
+      "comment": "00114524 add x29,sp,#0x10"
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105128",
+      "feature": "number: 0xE0",
+      "expected": false,
+      "comment": "00105128 sub sp,sp,#0xE0"
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105128,bb=0x1051e4",
+      "feature": "operand[1].number: 0xFFFFFFFF",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588,bb=0x107588",
+      "feature": "operand[1].number: 0x8",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588,bb=0x107588,insn=0x1075a4",
+      "feature": "operand[1].number: 0x8",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105128,bb=0x105450",
+      "feature": "operand[2].offset: 0x10",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x124854,bb=0x1248AC,insn=0x1248B4",
+      "feature": "operand[2].offset: -0x48",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x13347c,bb=0x133548,insn=0x133554",
+      "feature": "operand[2].offset: 0x20",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105C88",
+      "feature": "number: 0xF000",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1057f8,bb=0x1057f8",
+      "feature": "number: 0xFFFFFFFFFFFFFFFF",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1066e0,bb=0x1068c4",
+      "feature": "number: 0xFFFFFFFF",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105128,bb=0x105450",
+      "feature": "offset: 0x10",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x13347c,bb=0x133548,insn=0x133554",
+      "feature": "offset: 0x20",
+      "expected": false,
+      "comment": "ldp x29,x30,[sp, #0x20]"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x1183e0,bb=0x11849c,insn=0x1184b0",
+      "feature": "offset: 0x8",
+      "expected": true,
+      "comment": "stp x20,x0,[x19, #0x8]"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x138688,bb=0x138994,insn=0x1389a8",
+      "feature": "offset: 0x8",
+      "expected": true,
+      "comment": "str xzr,[x8, #0x8]!"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x138688,bb=0x138978,insn=0x138984",
+      "feature": "offset: 0x8",
+      "expected": true,
+      "comment": "ldr x9,[x8, #0x8]!"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x11451c",
+      "feature": "offset: 0x20",
+      "expected": false,
+      "comment": "ldr x19,[sp], #0x20"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x138a9c,bb=0x138b00,insn=0x138b00",
+      "feature": "offset: 0x1",
+      "expected": true,
+      "comment": "ldrb w9,[x8, #0x1]"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x124854,bb=0x1248AC,insn=0x1248B4",
+      "feature": "offset: -0x48",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105128,bb=0x105128,insn=0x10514c",
+      "feature": "offset: 0x8",
+      "expected": true,
+      "comment": "0010514c add x23,param_1,#0x8"
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105c88",
+      "feature": "api: memset",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105c88",
+      "feature": "api: Nope",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "string: AppDataService start",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1075c0",
+      "feature": "string: AppDataService",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "string: nope",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x106d58",
+      "feature": "string: /data/misc/wifi/wpa_supplicant.conf",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105c88",
+      "feature": "string: /innerRename/",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x106d58",
+      "feature": "string: /\\/data\\/misc/",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x106d58",
+      "feature": "substring: /data/misc",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x1165a4",
+      "feature": "bytes: E4 05 B8 93 70 BA 6B 41 9C D7 92 52 75 BF 6F CC 1E 83 60 CC",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1057f8",
+      "feature": "bytes: 2F 00 73 00 79 00 73 00 74 00 65 00 6D 00 2F 00 78 00 62 00 69 00 6E 00 2F 00 62 00 75 00 73 00 79 00 62 00 6F 00 78 00",
+      "expected": false,
+      "comment": "don't extract byte features for obvious strings"
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x114af4",
+      "feature": "characteristic: nzxor",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x117988",
+      "feature": "characteristic: nzxor",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105b38",
+      "feature": "characteristic: recursive call",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x106530",
+      "feature": "characteristic: recursive call",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x118620",
+      "feature": "characteristic: indirect call",
+      "expected": true
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x118500",
+      "feature": "characteristic: indirect call",
+      "expected": false
+    },
+    {
+      "file": "d1e650.ghidra.be2",
+      "location": "function=0x11451c",
+      "feature": "characteristic: indirect call",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x105080",
+      "feature": "characteristic: calls from",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1070e8",
+      "feature": "characteristic: calls from",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1075c0",
+      "feature": "characteristic: calls to",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "function-name: __libc_init",
+      "expected": true,
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "TODO should this be a function-name?"
+        }
+      ]
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "os: android",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "os: linux",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "os: windows",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "os: android",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1075c0,bb=0x1076c0",
+      "feature": "os: android",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "arch: aarch64",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "arch: aarch64",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x1075c0,bb=0x1076c0",
+      "feature": "arch: aarch64",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "format: elf",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "file",
+      "feature": "format: pe",
+      "expected": false
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "format: elf",
+      "expected": true
+    },
+    {
+      "file": "687e79.ghidra.be2",
+      "location": "function=0x107588",
+      "feature": "format: pe",
+      "expected": false
+    }
+  ]
+}
