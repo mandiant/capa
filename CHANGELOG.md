@@ -15,6 +15,7 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+- ida: display file-scope feature addresses (`file:0x...`) in rule generator tree and safely handle file-offset navigation/filtering @vee1e #3009
 
 ### Development
 - ci: use explicit and per job permissions @mike-hunhoff #3002
@@ -165,7 +166,7 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 
 ### Bug Fixes
 
-- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714
 
 ### capa Explorer Web
 
