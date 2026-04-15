@@ -1079,6 +1079,67 @@
       "feature": "basic blocks: 1",
       "expected": false,
       "explanation": "non-existant basic block feature"
+    },
+
+    {
+      "file": "mimikatz",
+      "location": "function=0x40E5C2",
+      "feature": "count(basic blocks): 7",
+      "expected": true,
+      "explanation": "7 basic blocks in function"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4702FD",
+      "feature": "count(characteristic(calls from)): 0",
+      "expected": true,
+      "explanation": "function has no calls"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40E5C2",
+      "feature": "count(characteristic(calls from)): 3",
+      "expected": true,
+      "explanation": "function has 3 calls"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "count(characteristic(calls to)): 0",
+      "expected": true,
+      "explanation": "function has no callers"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40B1F1",
+      "feature": "count(characteristic(calls to)): 3",
+      "expected": true,
+      "explanation": "function has 3 callers"
+    },
+
+    {
+      "file": "mimikatz",
+      "location": "function=0x4702FD",
+      "feature": "count(characteristic(calls from)): 0",
+      "expected": true,
+      "tags": ["ghidra"],
+      "explanation": "Ghidra: function has no calls"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401bf1",
+      "feature": "count(characteristic(calls to)): 2",
+      "expected": true,
+      "tags": ["ghidra"],
+      "explanation": "Ghidra: function has 2 callers"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "count(basic blocks): 3",
+      "expected": true,
+      "tags": ["ghidra"],
+      "explanation": "Ghidra: 3 basic blocks in function"
     }
   ]
 }

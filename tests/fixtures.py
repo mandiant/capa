@@ -71,28 +71,47 @@ def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
 FEATURE_MARKS: dict[tuple[str, str, str], list[dict]] = {}
 
 
-def _load_feature_tests() -> tuple[list[tuple], list[tuple]]:
+def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[tuple]]:
     with (CD / "fixtures" / "feature-presence.json").open("r") as f:
         data = json.load(f)
 
     presence_tests = []
     symtab_tests = []
+    count_tests = []
+    ghidra_count_tests = []
 
     for entry in data["features"]:
-        feature = parse_feature_string(entry["feature"])
-        test_tuple = (entry["file"], entry["location"], feature, entry["expected"])
+        feature_str = entry["feature"]
+        tags = entry.get("tags", [])
 
         if "marks" in entry:
-            FEATURE_MARKS[(entry["file"], entry["location"], entry["feature"])] = entry["marks"]
+            FEATURE_MARKS[(entry["file"], entry["location"], feature_str)] = entry["marks"]
 
-        if "symtab" in entry.get("tags", []):
-            symtab_tests.append(test_tuple)
+        if feature_str.startswith("count("):
+            key, _, value_str = feature_str.partition(": ")
+            count = int(value_str)
+            range_obj = capa.rules.build_feature(key, count, initial_description=None)
+            inner_feature = range_obj.child
+            test_tuple = (entry["file"], entry["location"], inner_feature, count)
+
+            if "ghidra" in tags:
+                ghidra_count_tests.append(test_tuple)
+            else:
+                count_tests.append(test_tuple)
         else:
-            presence_tests.append(test_tuple)
+            feature = parse_feature_string(feature_str)
+            test_tuple = (entry["file"], entry["location"], feature, entry["expected"])
+
+            if "symtab" in tags:
+                symtab_tests.append(test_tuple)
+            else:
+                presence_tests.append(test_tuple)
 
     presence_tests.sort(key=lambda t: (t[0], t[1]))
     symtab_tests.sort(key=lambda t: (t[0], t[1]))
-    return presence_tests, symtab_tests
+    count_tests.sort(key=lambda t: (t[0], t[1]))
+    ghidra_count_tests.sort(key=lambda t: (t[0], t[1]))
+    return presence_tests, symtab_tests, count_tests, ghidra_count_tests
 
 
 @lru_cache(maxsize=1)
@@ -944,7 +963,7 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-FEATURE_PRESENCE_TESTS, FEATURE_SYMTAB_FUNC_TESTS = _load_feature_tests()
+FEATURE_PRESENCE_TESTS, FEATURE_SYMTAB_FUNC_TESTS, FEATURE_COUNT_TESTS, FEATURE_COUNT_TESTS_GHIDRA = _load_feature_tests()
 
 
 FEATURE_PRESENCE_TESTS_DOTNET = sorted(
@@ -1480,56 +1499,9 @@ FEATURE_BINJA_DATABASE_TESTS = sorted(
 )
 
 
-FEATURE_COUNT_TESTS = [
-    ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
-    (
-        "mimikatz",
-        "function=0x4702FD",
-        capa.features.common.Characteristic("calls from"),
-        0,
-    ),
-    (
-        "mimikatz",
-        "function=0x40E5C2",
-        capa.features.common.Characteristic("calls from"),
-        3,
-    ),
-    (
-        "mimikatz",
-        "function=0x4556E5",
-        capa.features.common.Characteristic("calls to"),
-        0,
-    ),
-    (
-        "mimikatz",
-        "function=0x40B1F1",
-        capa.features.common.Characteristic("calls to"),
-        3,
-    ),
-]
-
-
 FEATURE_COUNT_TESTS_DOTNET = [
     ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), 1),
     ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), 9),
-]
-
-
-FEATURE_COUNT_TESTS_GHIDRA = [
-    # Ghidra may render functions as labels, as well as provide differing amounts of call references
-    (
-        "mimikatz",
-        "function=0x4702FD",
-        capa.features.common.Characteristic("calls from"),
-        0,
-    ),
-    (
-        "mimikatz",
-        "function=0x401bf1",
-        capa.features.common.Characteristic("calls to"),
-        2,
-    ),
-    ("mimikatz", "function=0x401000", capa.features.basicblock.BasicBlock(), 3),
 ]
 
 
