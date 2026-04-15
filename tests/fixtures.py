@@ -585,6 +585,10 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
     elif name == "7351f.elf":
         return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
+    elif name == "055da8e6.elf":
+        return CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
+    elif name == "bb38149.elf":
+        return CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
     elif name.startswith("79abd"):
         return CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_"
     elif name.startswith("946a9"):

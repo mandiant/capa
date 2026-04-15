@@ -25,6 +25,14 @@
       "path": "data/7351f8a40c5450557b24622417fc478d.elf_"
     },
     {
+      "key": "055da8e6.elf",
+      "path": "data/055da8e6ccfe5a9380231ea04b850e18.elf_"
+    },
+    {
+      "key": "bb38149.elf",
+      "path": "data/bb38149ff4b5c95722b83f24ca27a42b.elf_"
+    },
+    {
       "key": "al-khaser x64",
       "path": "data/al-khaser_x64.exe_"
     },
@@ -662,9 +670,16 @@
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
-      "feature": "string: /www.practicalmalwareanalysis.com/",
+      "feature": "string: /PRACTICALmalwareANALYSIS/i",
       "expected": true,
-      "explanation": "basic regex"
+      "explanation": "case-insensitive regex"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x402F40",
+      "feature": "string: /www.*/",
+      "expected": true,
+      "explanation": "simple regex prefix match"
     },
     {
       "file": "pma16-01",
@@ -1052,6 +1067,41 @@
       "feature": "api: open",
       "expected": true,
       "explanation": "API from ELF import"
+    },
+    {
+      "file": "055da8e6.elf",
+      "location": "file",
+      "feature": "import: puts",
+      "expected": true,
+      "explanation": "ELF import promoted from elffile feature tests"
+    },
+    {
+      "file": "055da8e6.elf",
+      "location": "file",
+      "feature": "section: .text",
+      "expected": true,
+      "explanation": "ELF section promoted from primary presence fixture"
+    },
+    {
+      "file": "bb38149.elf",
+      "location": "file",
+      "feature": "import: __android_log_print",
+      "expected": true,
+      "explanation": "stripped ELF import promoted from elffile feature tests"
+    },
+    {
+      "file": "bb38149.elf",
+      "location": "file",
+      "feature": "export: Java_o_ac_a",
+      "expected": true,
+      "explanation": "stripped ELF export promoted from elffile feature tests"
+    },
+    {
+      "file": "bb38149.elf",
+      "location": "file",
+      "feature": "section: .dynamic",
+      "expected": true,
+      "explanation": "stripped ELF section promoted into the shared presence fixture"
     },
     {
       "file": "79abd",
