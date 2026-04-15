@@ -15,12 +15,11 @@
 import logging
 from pathlib import Path
 
-import pytest
 import fixtures
+import pytest
 
-import capa.main
-import capa.features.file
 import capa.features.common
+import capa.main
 
 logger = logging.getLogger(__file__)
 
@@ -33,41 +32,50 @@ try:
     try:
         binaryninja.load(source=b"\x90")
     except RuntimeError:
-        logger.warning("Binary Ninja license is not valid, provide via $BN_LICENSE or license.dat")
+        logger.warning(
+            "Binary Ninja license is not valid, provide via $BN_LICENSE or license.dat"
+        )
     else:
         binja_present = True
 except ImportError:
     pass
 
 
-@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS + fixtures.FEATURE_BINJA_DATABASE_TESTS,
-    indirect=["sample", "scope"],
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="binja",
+    # binja also loads .bndb database files natively, so include `binja-db`
+    # alongside the regular static-binary fixtures.
+    get_extractor=fixtures.get_binja_extractor,
+    include_tags={"static", "binja-db"},
+    exclude_tags={"dotnet", "ghidra"},
 )
-def test_binja_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 
-@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_COUNT_TESTS,
-    indirect=["sample", "scope"],
+@pytest.mark.skipif(
+    binja_present is False,
+    reason="Skip binja tests if the binaryninja Python API is not installed",
 )
-def test_binja_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_binja_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_binja_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)
 
 
-@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
+@pytest.mark.skipif(
+    binja_present is False,
+    reason="Skip binja tests if the binaryninja Python API is not installed",
+)
 def test_standalone_binja_backend():
     CD = Path(__file__).resolve().parent
-    test_path = CD / ".." / "tests" / "data" / "Practical Malware Analysis Lab 01-01.exe_"
+    test_path = (
+        CD / ".." / "tests" / "data" / "Practical Malware Analysis Lab 01-01.exe_"
+    )
     assert capa.main.main([str(test_path), "-b", capa.main.BACKEND_BINJA]) == 0
 
 
-@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
+@pytest.mark.skipif(
+    binja_present is False,
+    reason="Skip binja tests if the binaryninja Python API is not installed",
+)
 def test_binja_version():
     version = binaryninja.core_version_info()  # type: ignore[possibly-undefined]  # guarded by skipif binja_present
     assert (version.major, version.minor) >= (5, 3)

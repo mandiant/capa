@@ -12,24 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 import fixtures
 
-import capa.features.file
-
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS,
-    indirect=["sample", "scope"],
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="pefile",
+    get_extractor=fixtures.get_pefile_extractor,
+    include_tags={"static"},
+    exclude_tags={
+        "dotnet",
+        "elf",
+        # pefile is a file-scope extractor; drop non-file scopes
+        "function",
+        "basic-block",
+        "instruction",
+        # and drop feature types pefile doesn't produce
+        "function-name",
+    },
 )
-def test_pefile_features(sample, scope, feature, expected):
-    if scope.__name__ != "file":
-        pytest.xfail("pefile only extracts file scope features")
 
-    if isinstance(feature, capa.features.file.FunctionName):
-        pytest.xfail("pefile doesn't extract function names")
 
-    if ".elf" in sample.name:
-        pytest.xfail("pefile doesn't handle ELF files")
-    fixtures.do_test_feature_presence(fixtures.get_pefile_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_pefile_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)

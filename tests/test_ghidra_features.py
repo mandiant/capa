@@ -11,42 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import importlib.util
+import os
 
-import pytest
 import fixtures
+import pytest
 
-import capa.features.common
+ghidra_present = (
+    importlib.util.find_spec("pyghidra") is not None
+    and "GHIDRA_INSTALL_DIR" in os.environ
+)
 
-ghidra_present = importlib.util.find_spec("pyghidra") is not None and "GHIDRA_INSTALL_DIR" in os.environ
+
+BACKEND = fixtures.BackendFeaturePolicy(
+    name="ghidra",
+    get_extractor=fixtures.get_ghidra_extractor,
+    include_tags={"static"},
+    exclude_tags={"dotnet"},
+)
 
 
 @pytest.mark.skipif(ghidra_present is False, reason="PyGhidra not installed")
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    [
-        (
-            pytest.param(
-                *t,
-                marks=pytest.mark.xfail(
-                    reason="specific to Vivisect and basic blocks do not align with Ghidra's analysis"
-                ),
-            )
-            if t[0] == "294b8d..." and t[2] == capa.features.common.String("\r\n\x00:ht")
-            else t
-        )
-        for t in fixtures.FEATURE_PRESENCE_TESTS
-    ],
-    indirect=["sample", "scope"],
-)
-def test_ghidra_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
-
-
-@pytest.mark.skipif(ghidra_present is False, reason="PyGhidra not installed")
-@fixtures.parametrize(
-    "sample,scope,feature,expected", fixtures.FEATURE_COUNT_TESTS_GHIDRA, indirect=["sample", "scope"]
-)
-def test_ghidra_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
+@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+def test_ghidra_features(feature_fixture):
+    fixtures.run_feature_fixture(BACKEND, feature_fixture)
