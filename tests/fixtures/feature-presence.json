@@ -83,6 +83,47 @@
     {
       "key": "034b7231.frz",
       "path": "fixtures/freeze/034b7231a49387604e81a5a5d2fe7e08f6982c418a28b719d2faace3c312ebb5.exe_.frz"
+    },
+
+    {
+      "key": "b9f5b",
+      "path": "data/b9f5bd514485fb06da39beff051b9fdc.exe_"
+    },
+    {
+      "key": "mixed-mode-64",
+      "path": "data/dotnet/dnfile-testfiles/mixed-mode/ModuleCode/bin/ModuleCode_amd64.exe"
+    },
+    {
+      "key": "hello-world",
+      "path": "data/dotnet/dnfile-testfiles/hello-world/hello-world.exe"
+    },
+    {
+      "key": "_1c444",
+      "path": "data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
+    },
+    {
+      "key": "_692f",
+      "path": "data/dotnet/692f7fd6d198e804d6af98eb9e390d61.exe_"
+    },
+    {
+      "key": "_0953c",
+      "path": "data/0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
+    },
+    {
+      "key": "_039a6",
+      "path": "data/039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
+    },
+    {
+      "key": "_387f15",
+      "path": "data/dotnet/387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
+    },
+    {
+      "key": "nested_typedef",
+      "path": "data/dotnet/dd9098ff91717f4906afe9dafdfa2f52.exe_"
+    },
+    {
+      "key": "nested_typeref",
+      "path": "data/dotnet/2c7d60f77812607dec5085973ff76cea.dll_"
     }
   ],
   "features": [
@@ -1140,6 +1181,652 @@
       "expected": true,
       "tags": ["ghidra"],
       "explanation": "Ghidra: 3 basic blocks in function"
+    },
+
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "mixed-mode-64",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "mixed-mode-64",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "mixed-mode-64",
+      "location": "file",
+      "feature": "characteristic: mixed mode",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "characteristic: mixed mode",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "os: any",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "format: pe",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "format: dotnet",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "function-name: HelloWorld::Main",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "function-name: HelloWorld::ctor",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "function-name: HelloWorld::cctor",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "string: Hello World!",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "class: HelloWorld",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "class: System.Console",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "namespace: System.Diagnostics",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250",
+      "feature": "string: Hello World!",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250,bb=0x250,insn=0x252",
+      "feature": "string: Hello World!",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250,bb=0x250,insn=0x257",
+      "feature": "class: System.Console",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250,bb=0x250,insn=0x257",
+      "feature": "namespace: System",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250",
+      "feature": "api: System.Console::WriteLine",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "import: System.Console::WriteLine",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "string: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "string: get_IsAlive",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "import: gdi32.CreateCompatibleBitmap",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "import: CreateCompatibleBitmap",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "import: gdi32::CreateCompatibleBitmap",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "api: GetWindowDC",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "number: 0xCC0020",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "characteristic: calls to",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000018",
+      "feature": "characteristic: calls to",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "characteristic: calls from",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600000F",
+      "feature": "characteristic: calls from",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "number: 0x0",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "number: 0x1",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "api: System.Linq.Enumerable::First",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "property: System.Linq.Enumerable::First",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "namespace: System.Linq",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "class: System.Linq.Enumerable",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000020",
+      "feature": "namespace: Reqss",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "ldftn"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000020",
+      "feature": "class: Reqss.Reqss",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "ldftn"
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F59,bb=0x1F59,insn=0x1F5B",
+      "feature": "characteristic: unmanaged call",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x2544",
+      "feature": "characteristic: unmanaged call",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000088",
+      "feature": "characteristic: unmanaged call",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "same as above but using token instead of function"
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
+      "feature": "api: System.Drawing.Image::FromHbitmap",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
+      "feature": "api: FromHbitmap",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600002B",
+      "feature": "property/read: System.IO.FileInfo::Length",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600002B",
+      "feature": "property: System.IO.FileInfo::Length",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "api: System.Diagnostics.Process::Start",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "property/write: System.Diagnostics.ProcessStartInfo::UseShellExecute",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "property/write: System.Diagnostics.ProcessStartInfo::WorkingDirectory",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "property/write: System.Diagnostics.ProcessStartInfo::FileName",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000087",
+      "feature": "property/write: Sockets.MySocket::reConnectionDelay",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "property/write: Sockets.MySocket::isConnected",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "class: Sockets.MySocket",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "namespace: Sockets",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "property/read: Sockets.MySocket::onConnected",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_0953c",
+      "location": "token=0x6000004",
+      "feature": "property/read: System.Diagnostics.Debugger::IsAttached",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_0953c",
+      "location": "token=0x6000004",
+      "feature": "class: System.Diagnostics.Debugger",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_0953c",
+      "location": "token=0x6000004",
+      "feature": "namespace: System.Diagnostics",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000006",
+      "feature": "property/read: System.Management.Automation.PowerShell::Streams",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_387f15",
+      "location": "token=0x600009E",
+      "feature": "property/read: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE::geoplugin_countryCode",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MethodDef property access"
+    },
+    {
+      "file": "_387f15",
+      "location": "token=0x600009E",
+      "feature": "class: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MethodDef property access"
+    },
+    {
+      "file": "_387f15",
+      "location": "token=0x600009E",
+      "feature": "namespace: Modulo",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MethodDef property access"
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x6000007",
+      "feature": "api: System.Reflection.Assembly::Load",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x600001D",
+      "feature": "property/read: StagelessHollow.Arac::Marka",
+      "expected": true,
+      "tags": ["dotnet"],
+      "explanation": "MethodDef method"
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x600001C",
+      "feature": "property/read: StagelessHollow.Arac::Marka",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "MethodDef method"
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x6000023",
+      "feature": "property/read: System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef method"
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer0",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer0/myclass_inner0_0",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer0/myclass_inner0_1",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1/myclass_inner1_1",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner_inner",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner1_0",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner1_1",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner0_0",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner0_1",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.OS.Build/VERSION::SdkInt",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.Media.Image/Plane::Buffer",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.Provider.Telephony/Sent/Sent::ContentUri",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.OS.Build::SdkInt",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Plane::Buffer",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Sent::ContentUri",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "count(characteristic(calls to)): 1",
+      "expected": true,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "count(characteristic(calls from)): 9",
+      "expected": true,
+      "tags": ["dotnet"]
     }
   ]
 }
