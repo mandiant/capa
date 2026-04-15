@@ -71,7 +71,7 @@ def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
 FEATURE_MARKS: dict[tuple[str, str, str], list[dict]] = {}
 
 
-def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[tuple]]:
+def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[tuple], list[tuple], list[tuple]]:
     with (CD / "fixtures" / "feature-presence.json").open("r") as f:
         data = json.load(f)
 
@@ -79,6 +79,8 @@ def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[t
     symtab_tests = []
     count_tests = []
     ghidra_count_tests = []
+    dotnet_presence_tests = []
+    dotnet_count_tests = []
 
     for entry in data["features"]:
         feature_str = entry["feature"]
@@ -96,6 +98,8 @@ def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[t
 
             if "ghidra" in tags:
                 ghidra_count_tests.append(test_tuple)
+            elif "dotnet" in tags:
+                dotnet_count_tests.append(test_tuple)
             else:
                 count_tests.append(test_tuple)
         else:
@@ -104,6 +108,8 @@ def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[t
 
             if "symtab" in tags:
                 symtab_tests.append(test_tuple)
+            elif "dotnet" in tags:
+                dotnet_presence_tests.append(test_tuple)
             else:
                 presence_tests.append(test_tuple)
 
@@ -111,7 +117,16 @@ def _load_feature_tests() -> tuple[list[tuple], list[tuple], list[tuple], list[t
     symtab_tests.sort(key=lambda t: (t[0], t[1]))
     count_tests.sort(key=lambda t: (t[0], t[1]))
     ghidra_count_tests.sort(key=lambda t: (t[0], t[1]))
-    return presence_tests, symtab_tests, count_tests, ghidra_count_tests
+    dotnet_presence_tests.sort(key=lambda t: (t[0], t[1]))
+    dotnet_count_tests.sort(key=lambda t: (t[0], t[1]))
+    return (
+        presence_tests,
+        symtab_tests,
+        count_tests,
+        ghidra_count_tests,
+        dotnet_presence_tests,
+        dotnet_count_tests,
+    )
 
 
 @lru_cache(maxsize=1)
@@ -963,488 +978,15 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-FEATURE_PRESENCE_TESTS, FEATURE_SYMTAB_FUNC_TESTS, FEATURE_COUNT_TESTS, FEATURE_COUNT_TESTS_GHIDRA = _load_feature_tests()
+(
+    FEATURE_PRESENCE_TESTS,
+    FEATURE_SYMTAB_FUNC_TESTS,
+    FEATURE_COUNT_TESTS,
+    FEATURE_COUNT_TESTS_GHIDRA,
+    FEATURE_PRESENCE_TESTS_DOTNET,
+    FEATURE_COUNT_TESTS_DOTNET,
+) = _load_feature_tests()
 
-
-FEATURE_PRESENCE_TESTS_DOTNET = sorted(
-    [
-        ("b9f5b", "file", Arch(ARCH_I386), True),
-        ("b9f5b", "file", Arch(ARCH_AMD64), False),
-        ("mixed-mode-64", "file", Arch(ARCH_AMD64), True),
-        ("mixed-mode-64", "file", Arch(ARCH_I386), False),
-        (
-            "mixed-mode-64",
-            "file",
-            capa.features.common.Characteristic("mixed mode"),
-            True,
-        ),
-        (
-            "hello-world",
-            "file",
-            capa.features.common.Characteristic("mixed mode"),
-            False,
-        ),
-        ("b9f5b", "file", OS(OS_ANY), True),
-        ("b9f5b", "file", Format(FORMAT_PE), True),
-        ("b9f5b", "file", Format(FORMAT_DOTNET), True),
-        (
-            "hello-world",
-            "file",
-            capa.features.file.FunctionName("HelloWorld::Main"),
-            True,
-        ),
-        (
-            "hello-world",
-            "file",
-            capa.features.file.FunctionName("HelloWorld::ctor"),
-            True,
-        ),
-        (
-            "hello-world",
-            "file",
-            capa.features.file.FunctionName("HelloWorld::cctor"),
-            False,
-        ),
-        ("hello-world", "file", capa.features.common.String("Hello World!"), True),
-        ("hello-world", "file", capa.features.common.Class("HelloWorld"), True),
-        ("hello-world", "file", capa.features.common.Class("System.Console"), True),
-        (
-            "hello-world",
-            "file",
-            capa.features.common.Namespace("System.Diagnostics"),
-            True,
-        ),
-        (
-            "hello-world",
-            "function=0x250",
-            capa.features.common.String("Hello World!"),
-            True,
-        ),
-        (
-            "hello-world",
-            "function=0x250, bb=0x250, insn=0x252",
-            capa.features.common.String("Hello World!"),
-            True,
-        ),
-        (
-            "hello-world",
-            "function=0x250, bb=0x250, insn=0x257",
-            capa.features.common.Class("System.Console"),
-            True,
-        ),
-        (
-            "hello-world",
-            "function=0x250, bb=0x250, insn=0x257",
-            capa.features.common.Namespace("System"),
-            True,
-        ),
-        (
-            "hello-world",
-            "function=0x250",
-            capa.features.insn.API("System.Console::WriteLine"),
-            True,
-        ),
-        (
-            "hello-world",
-            "file",
-            capa.features.file.Import("System.Console::WriteLine"),
-            True,
-        ),
-        (
-            "_1c444",
-            "file",
-            capa.features.common.String(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
-            True,
-        ),
-        ("_1c444", "file", capa.features.common.String("get_IsAlive"), True),
-        (
-            "_1c444",
-            "file",
-            capa.features.file.Import("gdi32.CreateCompatibleBitmap"),
-            True,
-        ),
-        ("_1c444", "file", capa.features.file.Import("CreateCompatibleBitmap"), True),
-        (
-            "_1c444",
-            "file",
-            capa.features.file.Import("gdi32::CreateCompatibleBitmap"),
-            False,
-        ),
-        ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
-        # not extracting dll anymore
-        (
-            "_1c444",
-            "function=0x1F68",
-            capa.features.insn.API("user32.GetWindowDC"),
-            False,
-        ),
-        ("_1c444", "function=0x1F68", capa.features.insn.Number(0xCC0020), True),
-        (
-            "_1c444",
-            "token=0x600001D",
-            capa.features.common.Characteristic("calls to"),
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000018",
-            capa.features.common.Characteristic("calls to"),
-            False,
-        ),
-        (
-            "_1c444",
-            "token=0x600001D",
-            capa.features.common.Characteristic("calls from"),
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600000F",
-            capa.features.common.Characteristic("calls from"),
-            False,
-        ),
-        ("_1c444", "function=0x1F68", capa.features.insn.Number(0x0), True),
-        ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
-        (
-            "_692f",
-            "token=0x6000004",
-            capa.features.insn.API("System.Linq.Enumerable::First"),
-            True,
-        ),  # generic method
-        (
-            "_692f",
-            "token=0x6000004",
-            capa.features.insn.Property("System.Linq.Enumerable::First"),
-            False,
-        ),  # generic method
-        (
-            "_692f",
-            "token=0x6000004",
-            capa.features.common.Namespace("System.Linq"),
-            True,
-        ),  # generic method
-        (
-            "_692f",
-            "token=0x6000004",
-            capa.features.common.Class("System.Linq.Enumerable"),
-            True,
-        ),  # generic method
-        (
-            "_1c444",
-            "token=0x6000020",
-            capa.features.common.Namespace("Reqss"),
-            True,
-        ),  # ldftn
-        (
-            "_1c444",
-            "token=0x6000020",
-            capa.features.common.Class("Reqss.Reqss"),
-            True,
-        ),  # ldftn
-        (
-            "_1c444",
-            "function=0x1F59, bb=0x1F59, insn=0x1F5B",
-            capa.features.common.Characteristic("unmanaged call"),
-            True,
-        ),
-        (
-            "_1c444",
-            "function=0x2544",
-            capa.features.common.Characteristic("unmanaged call"),
-            False,
-        ),
-        # same as above but using token instead of function
-        (
-            "_1c444",
-            "token=0x6000088",
-            capa.features.common.Characteristic("unmanaged call"),
-            False,
-        ),
-        (
-            "_1c444",
-            "function=0x1F68, bb=0x1F68, insn=0x1FF9",
-            capa.features.insn.API("System.Drawing.Image::FromHbitmap"),
-            True,
-        ),
-        (
-            "_1c444",
-            "function=0x1F68, bb=0x1F68, insn=0x1FF9",
-            capa.features.insn.API("FromHbitmap"),
-            False,
-        ),
-        (
-            "_1c444",
-            "token=0x600002B",
-            capa.features.insn.Property("System.IO.FileInfo::Length", access=FeatureAccess.READ),
-            True,
-        ),  # MemberRef property access
-        (
-            "_1c444",
-            "token=0x600002B",
-            capa.features.insn.Property("System.IO.FileInfo::Length"),
-            True,
-        ),  # MemberRef property access
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.API("System.Diagnostics.Process::Start"),
-            True,
-        ),  # MemberRef property access
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::UseShellExecute",
-                access=FeatureAccess.WRITE,
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::WorkingDirectory",
-                access=FeatureAccess.WRITE,
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::FileName",
-                access=FeatureAccess.WRITE,
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000087",
-            capa.features.insn.Property(
-                "Sockets.MySocket::reConnectionDelay", access=FeatureAccess.WRITE
-            ),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.insn.Property(
-                "Sockets.MySocket::isConnected", access=FeatureAccess.WRITE
-            ),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.common.Class("Sockets.MySocket"),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.common.Namespace("Sockets"),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.insn.Property(
-                "Sockets.MySocket::onConnected", access=FeatureAccess.READ
-            ),  # Field property access
-            True,
-        ),
-        (
-            "_0953c",
-            "token=0x6000004",
-            capa.features.insn.Property(
-                "System.Diagnostics.Debugger::IsAttached", access=FeatureAccess.READ
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_0953c",
-            "token=0x6000004",
-            capa.features.common.Class("System.Diagnostics.Debugger"),  # MemberRef property access
-            True,
-        ),
-        (
-            "_0953c",
-            "token=0x6000004",
-            capa.features.common.Namespace("System.Diagnostics"),  # MemberRef property access
-            True,
-        ),
-        (
-            "_692f",
-            "token=0x6000006",
-            capa.features.insn.Property(
-                "System.Management.Automation.PowerShell::Streams",
-                access=FeatureAccess.READ,
-            ),  # MemberRef property access
-            False,
-        ),
-        (
-            "_387f15",
-            "token=0x600009E",
-            capa.features.insn.Property(
-                "Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE::geoplugin_countryCode",
-                access=FeatureAccess.READ,
-            ),  # MethodDef property access
-            True,
-        ),
-        (
-            "_387f15",
-            "token=0x600009E",
-            capa.features.common.Class(
-                "Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE"
-            ),  # MethodDef property access
-            True,
-        ),
-        (
-            "_387f15",
-            "token=0x600009E",
-            capa.features.common.Namespace("Modulo"),  # MethodDef property access
-            True,
-        ),
-        (
-            "_039a6",
-            "token=0x6000007",
-            capa.features.insn.API("System.Reflection.Assembly::Load"),
-            True,
-        ),
-        (
-            "_039a6",
-            "token=0x600001D",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
-            True,
-        ),
-        (
-            "_039a6",
-            "token=0x600001C",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
-            False,
-        ),
-        (
-            "_039a6",
-            "token=0x6000023",
-            capa.features.insn.Property(
-                "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task",
-                access=FeatureAccess.READ,
-            ),  # MemberRef method
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer0"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_0"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_1"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_1"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner_inner"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner1_0"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner1_1"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner0_0"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner0_1"),
-            False,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.OS.Build/VERSION::SdkInt"),
-            True,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.Media.Image/Plane::Buffer"),
-            True,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.Provider.Telephony/Sent/Sent::ContentUri"),
-            True,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.OS.Build::SdkInt"),
-            False,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Plane::Buffer"),
-            False,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Sent::ContentUri"),
-            False,
-        ),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
 
 FEATURE_PRESENCE_TESTS_IDA = [
     # file/imports
@@ -1497,12 +1039,6 @@ FEATURE_BINJA_DATABASE_TESTS = sorted(
     # so that our LRU cache is most effective.
     key=lambda t: (t[0], t[1]),
 )
-
-
-FEATURE_COUNT_TESTS_DOTNET = [
-    ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), 1),
-    ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), 9),
-]
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
