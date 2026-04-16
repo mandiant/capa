@@ -17,6 +17,7 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
 
