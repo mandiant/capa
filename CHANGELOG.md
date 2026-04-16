@@ -18,6 +18,7 @@
 - ida: display file-scope feature addresses (`file:0x...`) in rule generator tree and safely handle file-offset navigation/filtering @vee1e #3009
 
 ### Development
+- tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
 
