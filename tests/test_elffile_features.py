@@ -15,13 +15,14 @@
 import io
 from pathlib import Path
 
+import fixtures
+
 from elftools.elf.elffile import ELFFile
 
 from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
 
-CD = Path(__file__).resolve().parent
-SAMPLE_PATH = CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
-STRIPPED_SAMPLE_PATH = CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
+SAMPLE_PATH = fixtures.CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
+STRIPPED_SAMPLE_PATH = fixtures.CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
 
 
 def check_import_features(sample_path, expected_imports):

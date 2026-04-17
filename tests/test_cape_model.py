@@ -14,7 +14,6 @@
 
 import gzip
 from typing import Type
-from pathlib import Path
 
 import pytest
 import fixtures
@@ -25,8 +24,7 @@ from capa.features.extractors.cape.models import Call, CapeReport
 from capa.features.extractors.cape.thread import get_calls
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
-CD = Path(__file__).resolve().parent
-CAPE_DIR = CD / "data" / "dynamic" / "cape"
+CAPE_DIR = fixtures.CD / "data" / "dynamic" / "cape"
 
 
 @fixtures.parametrize(

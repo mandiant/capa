@@ -16,6 +16,7 @@ import textwrap
 
 import capa.rules
 import capa.features.common
+import fixtures
 import capa.capabilities.common
 import capa.features.extractors.null
 from capa.features.address import AbsoluteVirtualAddress
@@ -212,7 +213,8 @@ def test_byte_matching(z9324d_extractor):
     assert "byte match test" in capabilities.matches
 
 
-def test_com_feature_matching(z395eb_extractor):
+def test_com_feature_matching():
+    extractor = fixtures.get_viv_extractor(fixtures.CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_")
     rules = capa.rules.RuleSet([
         capa.rules.Rule.from_yaml(
             textwrap.dedent("""
@@ -230,7 +232,7 @@ def test_com_feature_matching(z395eb_extractor):
                     """)
         )
     ])
-    capabilities = capa.capabilities.common.find_capabilities(rules, z395eb_extractor)
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
     assert "initialize IWebBrowser2" in capabilities.matches
 
 
