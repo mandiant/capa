@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 import fixtures
 
-BACKEND = fixtures.BackendFeaturePolicy(
-    name="cape",
-    get_extractor=fixtures.get_cape_extractor,
-    include_tags={"cape"},
+
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="cape",
+        include_tags={"cape"},
+    )
 )
-
-
-@fixtures.parametrize_backend_feature_fixtures(BACKEND)
 def test_cape_features(feature_fixture):
-    fixtures.run_feature_fixture(BACKEND, feature_fixture)
+    extractor = fixtures.get_cape_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)

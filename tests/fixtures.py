@@ -14,49 +14,29 @@
 
 import collections
 import contextlib
+import functools
 import json
 import logging
 from dataclasses import dataclass, field
-from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Literal, Optional, Union
 
 import pytest
 
 import capa.engine as ceng
-import capa.features.basicblock
-import capa.features.common
-import capa.features.file
-import capa.features.insn
-import capa.features.common
-import capa.features.basicblock
 import capa.loader
 import capa.rules
 import capa.render.result_document
 from capa.features.address import Address
-from capa.features.common import (
-    ARCH_AMD64,
-    ARCH_I386,
-    FORMAT_AUTO,
-    FORMAT_DOTNET,
-    FORMAT_ELF,
-    FORMAT_PE,
-    OS,
-    OS_ANY,
-    OS_AUTO,
-    OS_LINUX,
-    OS_WINDOWS,
-    Arch,
-    Feature,
-    FeatureAccess,
-    Format,
-)
+from capa.features.common import FORMAT_AUTO, OS_AUTO, Feature
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
+    DynamicFeatureExtractor,
     FunctionHandle,
     InsnHandle,
     ProcessHandle,
+    StaticFeatureExtractor,
     ThreadHandle,
 )
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
@@ -70,171 +50,110 @@ DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
 
 def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
     """
-    parse a fixture feature string into a Feature, Range, or Statement.
+    parse a feature from a single string
+    no extra description is assigned.
 
-    count(...) fixtures have a string integer value in the JSON
-    (e.g. `count(basic blocks): 7`). translate that to an int so
-    `build_feature` returns a Range rather than raising on an
-    unrecognized range expression.
+    examples:
+        "mnemonic: mov"
+        "string: /foo/"
+        "count(basic blocks): 7"
+
+    returns: Range if the feature is a count, and generated Statement for COM features, otherwise Feature.
     """
     key, _, value = s.partition(": ")
-    initial_value: str | int = value
-    if key.startswith("count(") and key.endswith(")"):
-        try:
-            initial_value = int(value)
-        except ValueError:
-            # leave as string so that `build_feature` can handle
-            # "N or more"/"N or fewer"/"(N, M)" range expressions.
-            initial_value = value
-    return capa.rules.build_feature(key, initial_value, initial_description=None)
+    return capa.rules.build_feature(key, value, initial_description=None)
 
 
-# scope-kind tags are derived from the fixture location and inserted
-# into the fixture's tag set. backends that only support a subset of
-# scopes (e.g., pefile is file-only) can exclude the others via tags.
-SCOPE_KIND_TAGS: frozenset[str] = frozenset(
+KNOWN_FEATURE_NAMES = {
+    "api",
+    "arch",
+    "basic blocks",
+    "bytes",
+    "characteristic",
+    "class",
+    "export",
+    "format",
+    "function-name",
+    "import",
+    "mnemonic",
+    "namespace",
+    "number",
+    "offset",
+    "operand[0].number",
+    "operand[0].offset",
+    "operand[1].number",
+    "operand[1].offset",
+    "operand[2].offset",
+    "os",
+    "property",
+    "property/read",
+    "property/write",
+    "section",
+    "string",
+    "substring",
+}
+
+KNOWN_SCOPE_NAMES = capa.rules.STATIC_SCOPES | capa.rules.DYNAMIC_SCOPES
+
+KNOWN_FIXTURE_TAGS: set[str] = (
     {
-        "file",
-        "function",
-        "basic-block",
-        "instruction",
-        "process",
-        "thread",
-        "call",
+        "static",  # static analysis test, PE/ELF format.
+        "dynamic",  # dynamic analysis test
+        "dotnet",  # .NET format
+        "elf",  # ELF format
+        "flirt",  # requires FLIRT signature matching
+        "symtab",  # requires ELF symbol table parsing  TODO: can we remove this?
+        "binja-db",  # Binary Ninja database format
+        "binexport",  # BinExport2 format
+        "aarch64",  # AArch64 architecture
+        "cape",  # CAPE analysis
+        "drakvuf",  # Drakvuf analysis
+        "vmray",  # VMRay analysis
     }
-)
-
-# feature-type tags are derived from the fixture feature string's key
-# and inserted into the fixture's tag set. backends that don't support
-# a feature type (e.g., pefile has no function-name features) can
-# exclude by tag rather than by Python class.
-#
-# values come from `capa.rules.parse_feature` keys so the tag names
-# align with the textual rule syntax.
-FEATURE_TYPE_TAGS: frozenset[str] = frozenset(
-    {
-        "api",
-        "string",
-        "substring",
-        "bytes",
-        "number",
-        "offset",
-        "mnemonic",
-        "basic blocks",
-        "characteristic",
-        "export",
-        "import",
-        "section",
-        "match",
-        "function-name",
-        "os",
-        "format",
-        "arch",
-        "class",
-        "namespace",
-        "property",
-        # operand[N].X is collapsed to operand.X (index-independent)
-        "operand.number",
-        "operand.offset",
-    }
-)
-
-# known fixture tags used for backend selection.
-# merged tags that are not listed here will fail collection, to catch typos.
-KNOWN_FIXTURE_TAGS: frozenset[str] = (
-    frozenset(
-        {
-            "static",
-            "dynamic",
-            "dotnet",
-            "elf",
-            "flirt",
-            "symtab",
-            "ghidra",
-            "binja-db",
-            "binexport",
-            "aarch64",
-            "cape",
-            "drakvuf",
-            "vmray",
-        }
-    )
-    | SCOPE_KIND_TAGS
-    | FEATURE_TYPE_TAGS
+    | KNOWN_SCOPE_NAMES
+    | KNOWN_FEATURE_NAMES
 )
 
 
-def get_scope_kind(location: str) -> str:
+def get_scope_from_location(location: str) -> capa.rules.Scope:
     """
     classify a fixture location string into a scope kind.
 
     reuses the same location grammar handled by `resolve_scope()`.
     """
     if location == "file":
-        return "file"
+        return capa.rules.Scope.FILE
     if "insn=" in location:
-        return "instruction"
+        return capa.rules.Scope.INSTRUCTION
     if "bb=" in location:
-        return "basic-block"
+        return capa.rules.Scope.BASIC_BLOCK
     if "call=" in location:
-        return "call"
+        return capa.rules.Scope.CALL
     if "thread=" in location:
-        return "thread"
+        return capa.rules.Scope.THREAD
     if "process=" in location:
-        return "process"
+        return capa.rules.Scope.PROCESS
     if location.startswith(("function", "token")):
-        return "function"
+        return capa.rules.Scope.FUNCTION
     raise ValueError(f"unexpected scope location: {location}")
-
-
-def get_feature_type_tag(feature_str: str) -> str:
-    """
-    extract the feature-type tag from a fixture feature string.
-
-    examples:
-      `api: CryptSetHashParam`         -> `api`
-      `function-name: __aulldiv`       -> `function-name`
-      `count(basic blocks): 7`         -> `basic blocks`
-      `count(mnemonic(mov)): 3`        -> `mnemonic`
-      `count(characteristic(nzxor))`   -> `characteristic`
-      `operand[1].number: 0xFF`        -> `operand.number`
-      `property/read: Foo.Bar`         -> `property`
-    """
-    if feature_str.startswith("count("):
-        # find the matching close-paren for the outer `count(` so that
-        # nested parens and colons inside the argument (e.g. strings with
-        # `:` or `(`) don't confuse a naive partition.
-        depth = 0
-        for i, c in enumerate(feature_str):
-            if c == "(":
-                depth += 1
-            elif c == ")":
-                depth -= 1
-                if depth == 0:
-                    inner = feature_str[len("count(") : i]
-                    # collapse nested arg: `mnemonic(mov)` -> `mnemonic`
-                    inner, _, _ = inner.partition("(")
-                    return _normalize_feature_key(inner.strip())
-        raise ValueError(f"unbalanced parentheses in feature string: {feature_str!r}")
-    key, _, _ = feature_str.partition(":")
-    return _normalize_feature_key(key.strip())
-
-
-def _normalize_feature_key(key: str) -> str:
-    # collapse `operand[N].X` -> `operand.X` so the tag is index-independent
-    if key.startswith("operand[") and "]." in key:
-        _, _, suffix = key.partition("].")
-        return f"operand.{suffix}"
-    # collapse `property/read` and `property/write` -> `property`
-    if key.startswith("property/"):
-        return "property"
-    return key
 
 
 @dataclass(frozen=True)
 class FixtureMark:
-    backend: str
-    mark: str
+    backend: (
+        Literal["vivisect"]
+        | Literal["dotnet"]
+        | Literal["binja"]
+        | Literal["pefile"]
+        | Literal["cape"]
+        | Literal["drakvuf"]
+        | Literal["vmray"]
+        | Literal["freeze"]
+        | Literal["binexport2"]
+        | Literal["ida"]
+        | Literal["ghidra"]
+    )
+    mark: Literal["skip"] | Literal["xfail"]
     reason: str
 
 
@@ -250,29 +169,22 @@ class FeatureFixture:
     sample_key: str
     sample_path: Path
     location: str
-    scope_kind: str
+    scope: capa.rules.Scope
     statement: Union[Feature, ceng.Range, ceng.Statement]
     expected: bool = True
     tags: frozenset[str] = frozenset()
     marks: tuple[FixtureMark, ...] = ()
     explanation: Optional[str] = None
-    comment: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class BackendFeaturePolicy:
     name: str
-    get_extractor: Callable[[Path], object]
-    include_tags: frozenset[str] = field(default_factory=frozenset)
-    exclude_tags: frozenset[str] = field(default_factory=frozenset)
-
-    def __post_init__(self):
-        object.__setattr__(self, "include_tags", frozenset(self.include_tags))
-        object.__setattr__(self, "exclude_tags", frozenset(self.exclude_tags))
+    include_tags: set[str] = field(default_factory=set)
+    exclude_tags: set[str] = field(default_factory=set)
 
 
-@lru_cache(maxsize=1)
-def _load_feature_fixture_manifests() -> tuple[tuple[Path, dict], ...]:
+def get_fixture_files() -> tuple[tuple[Path, dict], ...]:
     manifests = []
     for path in sorted(FIXTURE_MANIFEST_DIR.glob("*.json")):
         with path.open("r") as f:
@@ -282,20 +194,7 @@ def _load_feature_fixture_manifests() -> tuple[tuple[Path, dict], ...]:
     return tuple(manifests)
 
 
-@lru_cache(maxsize=1)
-def _load_fixture_file_paths() -> dict[str, Path]:
-    return {key: file.path for key, file in load_feature_fixture_files().items()}
-
-
-def get_fixture_file_path(key: str) -> Path:
-    paths = _load_fixture_file_paths()
-    if key not in paths:
-        raise ValueError(f"unknown fixture file key: {key}")
-    return paths[key]
-
-
-@lru_cache(maxsize=1)
-def load_feature_fixture_files() -> dict[str, FixtureFile]:
+def load_fixture_file_references() -> dict[str, FixtureFile]:
     """
     load the combined `files` tables from `tests/fixtures/features/*.json`.
 
@@ -304,7 +203,7 @@ def load_feature_fixture_files() -> dict[str, FixtureFile]:
     """
     files: dict[str, FixtureFile] = {}
     file_sources: dict[str, Path] = {}
-    for manifest_path, data in _load_feature_fixture_manifests():
+    for manifest_path, data in get_fixture_files():
         for entry in data["files"]:
             key = entry["key"]
             if key in files:
@@ -327,7 +226,6 @@ def load_feature_fixture_files() -> dict[str, FixtureFile]:
     return files
 
 
-@lru_cache(maxsize=1)
 def load_feature_fixtures() -> tuple[FeatureFixture, ...]:
     """
     load the full list of feature fixtures from `tests/fixtures/features/*.json`.
@@ -336,66 +234,60 @@ def load_feature_fixtures() -> tuple[FeatureFixture, ...]:
     the known registry, parses the statement (including `count(...)`), and
     defaults `expected` to True.
     """
-    files = load_feature_fixture_files()
+    fixture_file_references = load_fixture_file_references()
     fixtures_: list[FeatureFixture] = []
-    for manifest_path, data in _load_feature_fixture_manifests():
-        for entry in data["features"]:
-            key = entry["file"]
-            if key not in files:
+    for fixture_file_path, fixture_file_data in get_fixture_files():
+        for fixture_file_entry in fixture_file_data["features"]:
+            fixture_file_reference = fixture_file_entry["file"]
+            if fixture_file_reference not in fixture_file_references:
                 raise ValueError(
-                    f"unknown fixture file key referenced by feature in {manifest_path}: {key!r}"
+                    f"unknown fixture file key referenced by feature in {fixture_file_path}: {fixture_file_reference!r}"
                 )
-            file = files[key]
+            fixture_file = fixture_file_references[fixture_file_reference]
 
-            feature_str: str = entry["feature"]
-            feature_tags = frozenset(entry.get("tags", []))
-            merged_tags = file.tags | feature_tags
-            unknown = merged_tags - KNOWN_FIXTURE_TAGS
+            feature_str: str = fixture_file_entry["feature"]
+            tags = frozenset(fixture_file_entry.get("tags", [])) | fixture_file.tags
+            unknown = tags - KNOWN_FIXTURE_TAGS
             if unknown:
                 raise ValueError(
-                    f"unknown fixture tag(s) on feature {feature_str!r} for file {key!r} in {manifest_path}: {sorted(unknown)}"
+                    f"unknown fixture tag(s) on feature {feature_str!r} for file {fixture_file_reference!r} in {fixture_file_path}: {sorted(unknown)}"
                 )
 
-            location = entry["location"]
+            location = fixture_file_entry["location"]
             statement = parse_feature_string(feature_str)
-            scope_kind = get_scope_kind(location)
-            feature_type_tag = get_feature_type_tag(feature_str)
+            scope = get_scope_from_location(location)
             # scope-kind and feature-type tags are auto-derived so that
             # backend policies can include/exclude scopes and feature types
             # purely via `include_tags`/`exclude_tags`. they're drawn from
             # the known-tag registry so no re-validation is needed here.
-            merged_tags = merged_tags | {scope_kind, feature_type_tag}
-            expected = entry.get("expected", True)
+            tags = tags | {scope.value}
+            if isinstance(statement, Feature):
+                tags = tags | {statement.name}
+                # technically we're not extracting the feature name for COM and count features
+                # but i think thats ok for now, since no tests rely on include/excluding those.
+
+            expected = fixture_file_entry.get("expected", True)
             marks = tuple(
                 FixtureMark(backend=m["backend"], mark=m["mark"], reason=m["reason"])
-                for m in entry.get("marks", [])
+                for m in fixture_file_entry.get("marks", [])
             )
 
             fixtures_.append(
                 FeatureFixture(
-                    sample_key=key,
-                    sample_path=file.path,
+                    sample_key=fixture_file_reference,
+                    sample_path=fixture_file.path,
                     location=location,
-                    scope_kind=scope_kind,
+                    scope=scope,
                     statement=statement,
                     expected=expected,
-                    tags=merged_tags,
+                    tags=tags,
                     marks=marks,
-                    explanation=entry.get("explanation"),
-                    comment=entry.get("comment"),
+                    explanation=fixture_file_entry.get("explanation"),
                 )
             )
 
     fixtures_.sort(key=lambda f: (f.sample_key, f.location))
     return tuple(fixtures_)
-
-
-@dataclass(frozen=True)
-class FixtureSelectionSummary:
-    total: int
-    selected: int
-    excluded: int
-    excluded_by_tag: dict[str, int]
 
 
 def _fixture_is_included(policy: BackendFeaturePolicy, fixture: FeatureFixture) -> bool:
@@ -420,31 +312,6 @@ def select_feature_fixtures(policy: BackendFeaturePolicy) -> list[FeatureFixture
     a policy can restrict scope or feature type via `exclude_tags` too.
     """
     return [f for f in load_feature_fixtures() if _fixture_is_included(policy, f)]
-
-
-def summarize_feature_selection(
-    policy: BackendFeaturePolicy,
-) -> FixtureSelectionSummary:
-    """
-    summarize the effect of a policy's fixture selection.
-
-    useful for debug output and maintenance scripts.
-    """
-    all_fixtures = load_feature_fixtures()
-    excluded_by_tag: dict[str, int] = collections.defaultdict(int)
-    selected = 0
-    for fixture in all_fixtures:
-        if _fixture_is_included(policy, fixture):
-            selected += 1
-            continue
-        for tag in sorted(fixture.tags):
-            excluded_by_tag[tag] += 1
-    return FixtureSelectionSummary(
-        total=len(all_fixtures),
-        selected=selected,
-        excluded=len(all_fixtures) - selected,
-        excluded_by_tag=dict(excluded_by_tag),
-    )
 
 
 def _fixture_test_id(fixture: FeatureFixture) -> str:
@@ -489,14 +356,13 @@ def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
     return pytest.mark.parametrize("feature_fixture", params)
 
 
-def run_feature_fixture(policy: BackendFeaturePolicy, fixture: FeatureFixture) -> None:
+def run_feature_fixture(
+    extractor: StaticFeatureExtractor | DynamicFeatureExtractor,
+    fixture: FeatureFixture,
+) -> None:
     """
     generic runner that evaluates a feature fixture against a backend.
-
-    handles both plain features and `count(...)` statements via one
-    `evaluate` path, comparing the boolean result to `fixture.expected`.
     """
-    extractor = policy.get_extractor(fixture.sample_path)
     scope = resolve_scope(fixture.location)
     features = scope(extractor)
     result = fixture.statement.evaluate(features)
@@ -531,7 +397,7 @@ def xfail(condition, reason: str = ""):
     except Exception:
         if condition:
             # we expected the test to fail, so raise and register this via pytest
-            pytest.xfail(reason)
+            pytest.xfail(reason or "")
         else:
             # we don't expect an exception, so the test should fail
             raise
@@ -546,263 +412,6 @@ def xfail(condition, reason: str = ""):
             raise RuntimeError("expected to fail, but didn't")
 
 
-# need to limit cache size so GitHub Actions doesn't run out of memory, see #545
-@lru_cache(maxsize=1)
-def get_viv_extractor(path: Path):
-    import capa.loader
-    import capa.features.extractors.viv.extractor
-    import capa.main
-
-    sigpaths = [
-        CD / "data" / "sigs" / "test_aulldiv.pat",
-        CD / "data" / "sigs" / "test_aullrem.pat.gz",
-        CD.parent / "sigs" / "1_flare_msvc_rtf_32_64.sig",
-        CD.parent / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
-        CD.parent / "sigs" / "3_flare_common_libs.sig",
-    ]
-
-    if "raw32" in path.name:
-        vw = capa.loader.get_workspace(path, "sc32", sigpaths=sigpaths)
-    elif "raw64" in path.name:
-        vw = capa.loader.get_workspace(path, "sc64", sigpaths=sigpaths)
-    else:
-        vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
-    vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(
-        vw, path, OS_AUTO
-    )
-    fixup_viv(path, extractor)
-    return extractor
-
-
-def fixup_viv(path: Path, extractor):
-    """
-    vivisect fixups to overcome differences between backends
-    """
-    if "3b13b" in path.name:
-        # vivisect only recognizes calling thunk function at 0x10001573
-        extractor.vw.makeFunction(0x10006860)
-    if "294b8d" in path.name:
-        # see vivisect/#561
-        extractor.vw.makeFunction(0x404970)
-
-
-@lru_cache(maxsize=1)
-def get_pefile_extractor(path: Path):
-    import capa.features.extractors.pefile
-
-    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_dnfile_extractor(path: Path):
-    import capa.features.extractors.dnfile.extractor
-
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_dotnetfile_extractor(path: Path):
-    import capa.features.extractors.dotnetfile
-
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_binja_extractor(path: Path):
-    import binaryninja
-    from binaryninja import Settings
-
-    import capa.features.extractors.binja.extractor
-
-    # Workaround for a BN bug: https://github.com/Vector35/binaryninja-api/issues/4051
-    settings = Settings()
-    if path.name.endswith("kernel32-64.dll_"):
-        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
-        settings.set_bool("pdb.loadGlobalSymbols", False)
-        bv = binaryninja.load(str(path))
-        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
-    else:
-        bv = binaryninja.load(str(path))
-
-    # TODO(xusheng6): Temporary fix for https://github.com/mandiant/capa/issues/2507. Remove this once it is fixed in
-    # binja
-    if "al-khaser_x64.exe_" in path.name:
-        bv.create_user_function(0x14004B4F0)
-        bv.update_analysis_and_wait()
-
-    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-# we can't easily cache this because the extractor relies on global state (the opened database)
-# which also has to be closed elsewhere. so, the idalib tests will just take a little bit to run.
-def get_idalib_extractor(path: Path):
-    import capa.features.extractors.ida.idalib as idalib
-
-    if not idalib.has_idalib():
-        raise RuntimeError("cannot find IDA idalib module.")
-
-    if not idalib.load_idalib():
-        raise RuntimeError("failed to load IDA idalib module.")
-
-    import ida_auto
-    import idapro
-
-    import capa.features.extractors.ida.extractor
-
-    logger.debug("idalib: opening database...")
-
-    idapro.enable_console_messages(False)
-
-    # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
-    # which sometimes provides bad names, including overwriting names from debug info.
-    #
-    # use -R to load resources, which can help us embedded PE files.
-    #
-    # return values from open_database:
-    #   0 - Success
-    #   2 - User cancelled or 32-64 bit conversion failed
-    #   4 - Database initialization failed
-    #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
-    #   -2 - User cancelled operation
-    ret = idapro.open_database(
-        str(path),
-        run_auto_analysis=True,
-        args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
-    )
-    if ret != 0:
-        raise RuntimeError("failed to analyze input file")
-
-    logger.debug("idalib: waiting for analysis...")
-    ida_auto.auto_wait()
-    logger.debug("idalib: opened database.")
-
-    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
-    fixup_idalib(path, extractor)
-    return extractor
-
-
-def fixup_idalib(path: Path, extractor):
-    """
-    IDA fixups to overcome differences between backends
-    """
-    import ida_funcs
-    import idaapi
-
-    def remove_library_id_flag(fva):
-        f = idaapi.get_func(fva)
-        f.flags &= ~ida_funcs.FUNC_LIB
-        ida_funcs.update_func(f)
-
-    if "kernel32-64" in path.name:
-        # remove (correct) library function id, so we can test x64 thunk
-        remove_library_id_flag(0x1800202B0)
-
-    if "al-khaser_x64" in path.name:
-        # remove (correct) library function id, so we can test x64 nested thunk
-        remove_library_id_flag(0x14004B4F0)
-
-
-@lru_cache(maxsize=1)
-def get_cape_extractor(path):
-    from capa.features.extractors.cape.extractor import CapeExtractor
-    from capa.helpers import load_json_from_path
-
-    report = load_json_from_path(path)
-
-    return CapeExtractor.from_report(report)
-
-
-@lru_cache(maxsize=1)
-def get_drakvuf_extractor(path):
-    from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
-    from capa.helpers import load_jsonl_from_path
-
-    report = load_jsonl_from_path(path)
-
-    return DrakvufExtractor.from_report(report)
-
-
-@lru_cache(maxsize=1)
-def get_vmray_extractor(path):
-    from capa.features.extractors.vmray.extractor import VMRayExtractor
-
-    return VMRayExtractor.from_zipfile(path)
-
-
-GHIDRA_CACHE: dict[Path, tuple] = {}
-
-
-def get_ghidra_extractor(path: Path):
-    # we need to start PyGhidra before importing the extractor
-    # because the extractor imports Ghidra modules that are only available after PyGhidra is started
-    import pyghidra
-
-    if not pyghidra.started():
-        pyghidra.start()
-
-    import capa.loader
-    import capa.features.extractors.ghidra.context
-    import capa.features.extractors.ghidra.extractor
-
-    if path in GHIDRA_CACHE:
-        extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
-        capa.features.extractors.ghidra.context.set_context(program, flat_api, monitor)
-        return extractor
-
-    # We use a larger cache size to avoid re-opening the same file multiple times
-    # which is very slow with Ghidra.
-    extractor = capa.loader.get_extractor(
-        path,
-        FORMAT_AUTO,
-        OS_AUTO,
-        capa.loader.BACKEND_GHIDRA,
-        [],
-        disable_progress=True,
-    )
-
-    ctx = capa.features.extractors.ghidra.context.get_context()
-    GHIDRA_CACHE[path] = (extractor, ctx.program, ctx.flat_api, ctx.monitor)
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_binexport_extractor(path):
-    import capa.features.extractors.binexport2
-    import capa.features.extractors.binexport2.extractor
-
-    be2 = capa.features.extractors.binexport2.get_binexport2(path)
-    search_paths = [CD / "data", CD / "data" / "aarch64"]
-    path = capa.features.extractors.binexport2.get_sample_from_binexport2(
-        path, be2, search_paths
-    )
-    buf = path.read_bytes()
-
-    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(
-        be2, buf
-    )
-
-
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -810,7 +419,7 @@ def extract_global_features(extractor):
     return features
 
 
-@lru_cache
+@functools.lru_cache()
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
@@ -848,7 +457,7 @@ def extract_call_features(extractor, ph, th, ch):
     return features
 
 
-# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+# f may not be hashable (e.g. ida func_t) so cannot @functools.lru_cache this
 def extract_function_features(extractor, fh):
     features = collections.defaultdict(set)
     for bb in extractor.get_basic_blocks(fh):
@@ -862,7 +471,7 @@ def extract_function_features(extractor, fh):
     return features
 
 
-# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+# f may not be hashable (e.g. ida func_t) so cannot @functools.lru_cache this
 def extract_basic_block_features(extractor, fh, bbh):
     features = collections.defaultdict(set)
     for insn in extractor.get_instructions(fh, bbh):
@@ -873,307 +482,12 @@ def extract_basic_block_features(extractor, fh, bbh):
     return features
 
 
-# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+# f may not be hashable (e.g. ida func_t) so cannot @functools.lru_cache this
 def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Address]]:
     features = collections.defaultdict(set)
     for feature, addr in extractor.extract_insn_features(fh, bbh, ih):
         features[feature].add(addr)
     return features
-
-
-# note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
-def get_data_path_by_name(name) -> Path:
-    # prefer the fixture manifest registry; fall back to the legacy hard-coded
-    # branches below for any keys not yet migrated.
-    lookup_key = name[:-3] if name.endswith("...") else name
-    json_paths = _load_fixture_file_paths()
-    if lookup_key in json_paths:
-        return json_paths[lookup_key]
-
-    if name == "mimikatz":
-        return CD / "data" / "mimikatz.exe_"
-    elif name == "kernel32":
-        return CD / "data" / "kernel32.dll_"
-    elif name == "kernel32-64":
-        return CD / "data" / "kernel32-64.dll_"
-    elif name == "pma01-01":
-        return CD / "data" / "Practical Malware Analysis Lab 01-01.dll_"
-    elif name == "pma01-01-rd":
-        return CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
-    elif name == "pma12-04":
-        return CD / "data" / "Practical Malware Analysis Lab 12-04.exe_"
-    elif name == "pma16-01":
-        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
-    elif name == "pma16-01_binja_db":
-        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_.bndb"
-    elif name == "pma21-01":
-        return CD / "data" / "Practical Malware Analysis Lab 21-01.exe_"
-    elif name == "al-khaser x86":
-        return CD / "data" / "al-khaser_x86.exe_"
-    elif name == "al-khaser x64":
-        return CD / "data" / "al-khaser_x64.exe_"
-    elif name.startswith("39c05"):
-        return (
-            CD
-            / "data"
-            / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
-        )
-    elif name.startswith("499c2"):
-        return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
-    elif name.startswith("9324d"):
-        return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
-    elif name.startswith("395eb"):
-        return CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
-    elif name.startswith("a1982"):
-        return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
-    elif name.startswith("a933a"):
-        return CD / "data" / "a933a1a402775cfa94b6bee0963f4b46.dll_"
-    elif name.startswith("bfb9b"):
-        return CD / "data" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_"
-    elif name.startswith("c9188"):
-        return CD / "data" / "c91887d861d9bd4a5872249b641bc9f9.exe_"
-    elif name.startswith("64d9f"):
-        return CD / "data" / "64d9f7d96b99467f36e22fada623c3bb.dll_"
-    elif name.startswith("82bf6"):
-        return CD / "data" / "82BF6347ACF15E5D883715DC289D8A2B.exe_"
-    elif name.startswith("pingtaest"):
-        return CD / "data" / "ping_täst.exe_"
-    elif name.startswith("77329"):
-        return CD / "data" / "773290480d5445f11d3dc1b800728966.exe_"
-    elif name.startswith("3b13b"):
-        return (
-            CD
-            / "data"
-            / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
-        )
-    elif name == "7351f.elf":
-        return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
-    elif name == "055da8e6.elf":
-        return CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
-    elif name == "bb38149.elf":
-        return CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
-    elif name.startswith("79abd"):
-        return CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_"
-    elif name.startswith("946a9"):
-        return CD / "data" / "946a99f36a46d335dec080d9a4371940.dll_"
-    elif name.startswith("2f7f5f"):
-        return CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
-    elif name.startswith("b9f5b"):
-        return CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
-    elif name.startswith("mixed-mode-64"):
-        return (
-            DNFILE_TESTFILES
-            / "mixed-mode"
-            / "ModuleCode"
-            / "bin"
-            / "ModuleCode_amd64.exe"
-        )
-    elif name.startswith("hello-world"):
-        return DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
-    elif name.startswith("_1c444"):
-        return DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
-    elif name.startswith("_387f15"):
-        return (
-            DOTNET_DIR
-            / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
-        )
-    elif name.startswith("_692f"):
-        return DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_"
-    elif name.startswith("_0953c"):
-        return (
-            CD
-            / "data"
-            / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
-        )
-    elif name.startswith("_039a6"):
-        return (
-            CD
-            / "data"
-            / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
-        )
-    elif name.startswith("b5f052"):
-        return (
-            CD
-            / "data"
-            / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
-        )
-    elif name.startswith("bf7a9c"):
-        return (
-            CD
-            / "data"
-            / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
-        )
-    elif name.startswith("294b8d"):
-        return (
-            CD
-            / "data"
-            / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
-        )
-    elif name.startswith("2bf18d"):
-        return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
-    elif name.startswith("2d3edc"):
-        return CD / "data" / "2d3edc218a90f03089cc01715a9f047f.exe_"
-    elif name.startswith("0000a657"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "cape"
-            / "v2.2"
-            / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
-        )
-    elif name.startswith("d46900"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "cape"
-            / "v2.2"
-            / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
-        )
-    elif name.startswith("93b2d1-drakvuf"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "drakvuf"
-            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
-        )
-    elif name.startswith("93b2d1-vmray"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "vmray"
-            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip"
-        )
-    elif name.startswith("2f8a79-vmray"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "vmray"
-            / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
-        )
-    elif name.startswith("eb1287-vmray"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "vmray"
-            / "eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip"
-        )
-    elif name.startswith("ea2876"):
-        return (
-            CD
-            / "data"
-            / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
-        )
-    elif name.startswith("1038a2"):
-        return (
-            CD
-            / "data"
-            / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
-        )
-    elif name.startswith("3da7c"):
-        return (
-            CD
-            / "data"
-            / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
-        )
-    elif name.startswith("nested_typedef"):
-        return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
-    elif name.startswith("nested_typeref"):
-        return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
-    elif name.startswith("687e79.ghidra.be2"):
-        return (
-            CD
-            / "data"
-            / "binexport2"
-            / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
-        )
-    elif name.startswith("d1e650.ghidra.be2"):
-        return (
-            CD
-            / "data"
-            / "binexport2"
-            / "d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8.elf_.ghidra.BinExport"
-        )
-    else:
-        raise ValueError(f"unexpected sample fixture: {name}")
-
-
-def get_sample_md5_by_name(name):
-    """used by IDA tests to ensure the correct IDB is loaded"""
-    if name == "mimikatz":
-        return "5f66b82558ca92e54e77f216ef4c066c"
-    elif name == "kernel32":
-        return "e80758cf485db142fca1ee03a34ead05"
-    elif name == "kernel32-64":
-        return "a8565440629ac87f6fef7d588fe3ff0f"
-    elif name == "pma12-04":
-        return "56bed8249e7c2982a90e54e1e55391a2"
-    elif name == "pma16-01":
-        return "7faafc7e4a5c736ebfee6abbbc812d80"
-    elif name == "pma01-01":
-        return "290934c61de9176ad682ffdd65f0a669"
-    elif name == "pma21-01":
-        return "c8403fb05244e23a7931c766409b5e22"
-    elif name == "al-khaser x86":
-        return "db648cd247281954344f1d810c6fd590"
-    elif name == "al-khaser x64":
-        return "3cb21ae76ff3da4b7e02d77ff76e82be"
-    elif name.startswith("39c05"):
-        return "b7841b9d5dc1f511a93cc7576672ec0c"
-    elif name.startswith("499c2"):
-        return "499c2a85f6e8142c3f48d4251c9c7cd6"
-    elif name.startswith("9324d"):
-        return "9324d1a8ae37a36ae560c37448c9705a"
-    elif name.startswith("a1982"):
-        return "a198216798ca38f280dc413f8c57f2c2"
-    elif name.startswith("a933a"):
-        return "a933a1a402775cfa94b6bee0963f4b46"
-    elif name.startswith("bfb9b"):
-        return "bfb9b5391a13d0afd787e87ab90f14f5"
-    elif name.startswith("c9188"):
-        return "c91887d861d9bd4a5872249b641bc9f9"
-    elif name.startswith("64d9f"):
-        return "64d9f7d96b99467f36e22fada623c3bb"
-    elif name.startswith("82bf6"):
-        return "82bf6347acf15e5d883715dc289d8a2b"
-    elif name.startswith("77329"):
-        return "773290480d5445f11d3dc1b800728966"
-    elif name.startswith("3b13b"):
-        # file name is SHA256 hash
-        return "56a6ffe6a02941028cc8235204eef31d"
-    elif name.startswith("7351f"):
-        return "7351f8a40c5450557b24622417fc478d"
-    elif name.startswith("79abd"):
-        return "79abd17391adc6251ecdc58d13d76baf"
-    elif name.startswith("946a9"):
-        return "946a99f36a46d335dec080d9a4371940"
-    elif name.startswith("b9f5b"):
-        return "b9f5bd514485fb06da39beff051b9fdc"
-    elif name.startswith("294b8d"):
-        # file name is SHA256 hash
-        return "3db3e55b16a7b1b1afb970d5e77c5d98"
-    elif name.startswith("2bf18d"):
-        return "2bf18d0403677378adad9001b1243211"
-    elif name.startswith("2d3edc"):
-        return "2d3edc218a90f03089cc01715a9f047f"
-    elif name.startswith("ea2876"):
-        return "76fa734236daa023444dec26863401dc"
-    else:
-        raise ValueError(f"unexpected sample fixture: {name}")
-
-
-def resolve_sample(sample):
-    return get_data_path_by_name(sample)
-
-
-@pytest.fixture
-def sample(request):
-    return resolve_sample(request.param)
 
 
 def get_process(extractor, ppid: int, pid: int) -> ProcessHandle:
@@ -1388,166 +702,6 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-# legacy tuple-of-tuples lists still needed by `test_binexport_features.py`,
-# which rewrites a mimikatz sample path to its `.ghidra.BinExport` counterpart
-# at test time.
-#
-# built from the new `load_feature_fixtures()` so the JSON manifests remain the
-# single source of truth for fixture data.
-FEATURE_PRESENCE_TESTS: list[tuple] = sorted(
-    (
-        (f.sample_key, f.location, f.statement, f.expected)
-        for f in load_feature_fixtures()
-        if not isinstance(f.statement, ceng.Range)
-        and not (f.tags & frozenset({"dotnet", "symtab"}))
-    ),
-    key=lambda t: (t[0], t[1]),
-)
-
-FEATURE_COUNT_TESTS_GHIDRA: list[tuple] = sorted(
-    (
-        (f.sample_key, f.location, f.statement.child, f.statement.min)
-        for f in load_feature_fixtures()
-        if isinstance(f.statement, ceng.Range) and "ghidra" in f.tags
-    ),
-    key=lambda t: (t[0], t[1]),
-)
-
-
-def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
-    extractor = get_extractor(sample)
-    features = scope(extractor)
-    if expected:
-        msg = f"{str(feature)} should be found in {scope.__name__}"
-    else:
-        msg = f"{str(feature)} should not be found in {scope.__name__}"
-    assert feature.evaluate(features) == expected, msg
-
-
-def do_test_feature_count(get_extractor, sample, scope, feature, expected):
-    extractor = get_extractor(sample)
-    features = scope(extractor)
-    msg = f"{str(feature)} should be found {expected} times in {scope.__name__}, found: {len(features[feature])}"
-    assert len(features[feature]) == expected, msg
-
-
-def get_extractor(path: Path):
-    extractor = get_viv_extractor(path)
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-    return extractor
-
-
-@pytest.fixture
-def mimikatz_extractor():
-    return get_extractor(get_data_path_by_name("mimikatz"))
-
-
-@pytest.fixture
-def a933a_extractor():
-    return get_extractor(get_data_path_by_name("a933a..."))
-
-
-@pytest.fixture
-def kernel32_extractor():
-    return get_extractor(get_data_path_by_name("kernel32"))
-
-
-@pytest.fixture
-def a1982_extractor():
-    return get_extractor(get_data_path_by_name("a1982..."))
-
-
-@pytest.fixture
-def z9324d_extractor():
-    return get_extractor(get_data_path_by_name("9324d..."))
-
-
-@pytest.fixture
-def z395eb_extractor():
-    return get_extractor(get_data_path_by_name("395eb..."))
-
-
-@pytest.fixture
-def pma12_04_extractor():
-    return get_extractor(get_data_path_by_name("pma12-04"))
-
-
-@pytest.fixture
-def pma16_01_extractor():
-    return get_extractor(get_data_path_by_name("pma16-01"))
-
-
-@pytest.fixture
-def bfb9b_extractor():
-    return get_extractor(get_data_path_by_name("bfb9b..."))
-
-
-@pytest.fixture
-def pma21_01_extractor():
-    return get_extractor(get_data_path_by_name("pma21-01"))
-
-
-@pytest.fixture
-def c9188_extractor():
-    return get_extractor(get_data_path_by_name("c9188..."))
-
-
-@pytest.fixture
-def z39c05_extractor():
-    return get_extractor(get_data_path_by_name("39c05..."))
-
-
-@pytest.fixture
-def z499c2_extractor():
-    return get_extractor(get_data_path_by_name("499c2..."))
-
-
-@pytest.fixture
-def al_khaser_x86_extractor():
-    return get_extractor(get_data_path_by_name("al-khaser x86"))
-
-
-@pytest.fixture
-def pingtaest_extractor():
-    return get_extractor(get_data_path_by_name("pingtaest"))
-
-
-@pytest.fixture
-def b9f5b_dotnetfile_extractor():
-    return get_dotnetfile_extractor(get_data_path_by_name("b9f5b"))
-
-
-@pytest.fixture
-def mixed_mode_64_dotnetfile_extractor():
-    return get_dotnetfile_extractor(get_data_path_by_name("mixed-mode-64"))
-
-
-@pytest.fixture
-def hello_world_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("hello-world"))
-
-
-@pytest.fixture
-def _1c444_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_1c444"))
-
-
-@pytest.fixture
-def _692f_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_692f"))
-
-
-@pytest.fixture
-def _0953c_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_0953c"))
-
-
-@pytest.fixture
-def _039a6_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_039a6"))
-
-
 def get_result_doc(path: Path):
     return capa.render.result_document.ResultDocument.from_file(path)
 
@@ -1606,4 +760,234 @@ def dynamic_a0000a6_rd():
         / "data"
         / "rd"
         / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )
+
+
+PMA1601 = CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
+z9324 = CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
+
+
+# used by test_viv_features
+# as well as some fixtures below
+@functools.lru_cache(maxsize=1)
+def get_viv_extractor(path: Path):
+    import capa.features.extractors.viv.extractor
+    import capa.main
+
+    sigpaths = [
+        CD / "data" / "sigs" / "test_aulldiv.pat",
+        CD / "data" / "sigs" / "test_aullrem.pat.gz",
+        CD.parent / "sigs" / "1_flare_msvc_rtf_32_64.sig",
+        CD.parent / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
+        CD.parent / "sigs" / "3_flare_common_libs.sig",
+    ]
+
+    if "raw32" in path.name:
+        vw = capa.loader.get_workspace(path, "sc32", sigpaths=sigpaths)
+    elif "raw64" in path.name:
+        vw = capa.loader.get_workspace(path, "sc64", sigpaths=sigpaths)
+    else:
+        vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
+    vw.saveWorkspace()
+
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(
+        vw, path, OS_AUTO
+    )
+
+    #
+    # fixups to overcome differences between backends
+    # 
+    if "3b13b" in path.name:
+        # vivisect only recognizes calling thunk function at 0x10001573
+        extractor.vw.makeFunction(0x10006860)
+    if "294b8d" in path.name:
+        # see vivisect/#561
+        extractor.vw.makeFunction(0x404970)
+
+    return extractor
+
+
+@pytest.fixture
+def z9324d_extractor():
+    return get_viv_extractor(z9324)
+
+
+@pytest.fixture
+def pma16_01_extractor():
+    return get_viv_extractor(PMA1601)
+
+
+@functools.lru_cache(maxsize=1)
+def get_pefile_extractor(path: Path):
+    import capa.features.extractors.pefile
+
+    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
+
+
+@functools.lru_cache(maxsize=1)
+def get_dnfile_extractor(path: Path):
+    extractor = DnfileFeatureExtractor(path)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
+
+
+@functools.lru_cache(maxsize=1)
+def get_dotnetfile_extractor(path: Path):
+    import capa.features.extractors.dotnetfile
+
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
+
+
+@functools.lru_cache(maxsize=1)
+def get_cape_extractor(path):
+    from capa.helpers import load_json_from_path
+    from capa.features.extractors.cape.extractor import CapeExtractor
+
+    report = load_json_from_path(path)
+    return CapeExtractor.from_report(report)
+
+
+@functools.lru_cache(maxsize=1)
+def get_drakvuf_extractor(path):
+    from capa.helpers import load_jsonl_from_path
+    from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
+
+    report = load_jsonl_from_path(path)
+    return DrakvufExtractor.from_report(report)
+
+
+@functools.lru_cache(maxsize=1)
+def get_vmray_extractor(path):
+    from capa.features.extractors.vmray.extractor import VMRayExtractor
+
+    return VMRayExtractor.from_zipfile(path)
+
+
+@functools.lru_cache(maxsize=1)
+def get_binja_extractor(path: Path):
+    import binaryninja
+    from binaryninja import Settings
+
+    import capa.features.extractors.binja.extractor
+
+    settings = Settings()
+    if path.name.endswith("kernel32-64.dll_"):
+        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
+        settings.set_bool("pdb.loadGlobalSymbols", False)
+    else:
+        old_pdb = False
+    bv = binaryninja.load(str(path))
+    if path.name.endswith("kernel32-64.dll_"):
+        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+
+    if "al-khaser_x64.exe_" in path.name:
+        bv.create_user_function(0x14004B4F0)
+        bv.update_analysis_and_wait()
+
+    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
+
+
+GHIDRA_CACHE: dict[Path, tuple] = {}
+
+
+def get_ghidra_extractor(path: Path):
+    import pyghidra
+
+    if not pyghidra.started():
+        pyghidra.start()
+
+    import capa.features.extractors.ghidra.context
+    import capa.features.extractors.ghidra.extractor
+
+    if path in GHIDRA_CACHE:
+        extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
+        capa.features.extractors.ghidra.context.set_context(program, flat_api, monitor)
+        return extractor
+
+    extractor = capa.loader.get_extractor(
+        path,
+        FORMAT_AUTO,
+        OS_AUTO,
+        capa.loader.BACKEND_GHIDRA,
+        [],
+        disable_progress=True,
+    )
+
+    ctx = capa.features.extractors.ghidra.context.get_context()
+    GHIDRA_CACHE[path] = (extractor, ctx.program, ctx.flat_api, ctx.monitor)
+    return extractor
+
+
+def _fixup_idalib(path: Path, extractor):
+    import idaapi
+    import ida_funcs
+
+    def remove_library_id_flag(fva):
+        f = idaapi.get_func(fva)
+        f.flags &= ~ida_funcs.FUNC_LIB
+        ida_funcs.update_func(f)
+
+    if "kernel32-64" in path.name:
+        remove_library_id_flag(0x1800202B0)
+
+    if "al-khaser_x64" in path.name:
+        remove_library_id_flag(0x14004B4F0)
+
+
+def get_idalib_extractor(path: Path):
+    import capa.features.extractors.ida.extractor
+    import capa.features.extractors.ida.idalib as idalib
+
+    if not idalib.has_idalib():
+        raise RuntimeError("cannot find IDA idalib module.")
+
+    if not idalib.load_idalib():
+        raise RuntimeError("failed to load IDA idalib module.")
+
+    import idapro
+    import ida_auto
+
+    logger.debug("idalib: opening database...")
+    idapro.enable_console_messages(False)
+
+    ret = idapro.open_database(
+        str(path),
+        run_auto_analysis=True,
+        args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
+    )
+    if ret != 0:
+        raise RuntimeError("failed to analyze input file")
+
+    logger.debug("idalib: waiting for analysis...")
+    ida_auto.auto_wait()
+    logger.debug("idalib: opened database.")
+
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    _fixup_idalib(path, extractor)
+    return extractor
+
+
+# used by both:
+# - test_binexport_features
+# - test_binexport_accessors
+@functools.lru_cache(maxsize=1)
+def get_binexport_extractor(path):
+    import capa.features.extractors.binexport2
+    import capa.features.extractors.binexport2.extractor
+
+    be2 = capa.features.extractors.binexport2.get_binexport2(path)
+    search_paths = [CD / "data", CD / "data" / "aarch64"]
+    path = capa.features.extractors.binexport2.get_sample_from_binexport2(
+        path, be2, search_paths
+    )
+    buf = path.read_bytes()
+
+    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(
+        be2, buf
     )

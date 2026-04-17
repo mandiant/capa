@@ -3,141 +3,97 @@
     {
       "key": "mimikatz",
       "path": "data/mimikatz.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "kernel32",
       "path": "data/kernel32.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "kernel32-64",
       "path": "data/kernel32-64.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "pma12-04",
       "path": "data/Practical Malware Analysis Lab 12-04.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "pma16-01",
       "path": "data/Practical Malware Analysis Lab 16-01.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "7351f.elf",
       "path": "data/7351f8a40c5450557b24622417fc478d.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "055da8e6.elf",
       "path": "data/055da8e6ccfe5a9380231ea04b850e18.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "bb38149.elf",
       "path": "data/bb38149ff4b5c95722b83f24ca27a42b.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "al-khaser x64",
       "path": "data/al-khaser_x64.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "64d9f",
       "path": "data/64d9f7d96b99467f36e22fada623c3bb.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "79abd",
       "path": "data/79abd17391adc6251ecdc58d13d76baf.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "946a9",
       "path": "data/946a99f36a46d335dec080d9a4371940.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "773290",
       "path": "data/773290480d5445f11d3dc1b800728966.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "294b8d",
       "path": "data/294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "a1982",
       "path": "data/a198216798ca38f280dc413f8c57f2c2.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "c91887",
       "path": "data/c91887d861d9bd4a5872249b641bc9f9.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "2bf18d",
       "path": "data/2bf18d0403677378adad9001b1243211.elf_",
-      "tags": [
-        "elf",
-        "static",
-        "symtab"
-      ]
+      "tags": ["elf", "static", "symtab"]
     },
     {
       "key": "2d3edc",
       "path": "data/2d3edc218a90f03089cc01715a9f047f.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "ea2876",
       "path": "data/ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "pma01-01.frz",
@@ -158,79 +114,57 @@
     {
       "key": "b9f5b",
       "path": "data/b9f5bd514485fb06da39beff051b9fdc.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "mixed-mode-64",
       "path": "data/dotnet/dnfile-testfiles/mixed-mode/ModuleCode/bin/ModuleCode_amd64.exe",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "hello-world",
       "path": "data/dotnet/dnfile-testfiles/hello-world/hello-world.exe",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "_1c444",
       "path": "data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "_692f",
       "path": "data/dotnet/692f7fd6d198e804d6af98eb9e390d61.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "_0953c",
       "path": "data/0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "_039a6",
       "path": "data/039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "_387f15",
       "path": "data/dotnet/387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "nested_typedef",
       "path": "data/dotnet/dd9098ff91717f4906afe9dafdfa2f52.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "nested_typeref",
       "path": "data/dotnet/2c7d60f77812607dec5085973ff76cea.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "pma01-01",
       "path": "data/Practical Malware Analysis Lab 01-01.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "pma01-01-rd",
@@ -239,119 +173,82 @@
     {
       "key": "pma21-01",
       "path": "data/Practical Malware Analysis Lab 21-01.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "al-khaser x86",
       "path": "data/al-khaser_x86.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "39c05",
       "path": "data/39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "499c2",
       "path": "data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "9324d",
       "path": "data/9324d1a8ae37a36ae560c37448c9705a.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "395eb",
       "path": "data/395eb0ddd99d2c9e37b6d0b73485ee9c.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "a933a",
       "path": "data/a933a1a402775cfa94b6bee0963f4b46.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "bfb9b",
       "path": "data/bfb9b5391a13d0afd787e87ab90f14f5.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "82bf6",
       "path": "data/82BF6347ACF15E5D883715DC289D8A2B.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "pingtaest",
       "path": "data/ping_t\u00e4st.exe_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "3b13b",
       "path": "data/3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_",
-      "tags": [
-        "static"
-      ]
+      "tags": ["static"]
     },
     {
       "key": "2f7f5f",
       "path": "data/2f7f5fb5de175e770d7eae87666f9831.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "b5f052",
       "path": "data/b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "bf7a9c",
       "path": "data/bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "1038a2",
       "path": "data/1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     },
     {
       "key": "3da7c",
       "path": "data/3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_",
-      "tags": [
-        "elf",
-        "static"
-      ]
+      "tags": ["elf", "static"]
     }
   ],
   "features": [
@@ -359,7 +256,6 @@
       "file": "pma12-04",
       "location": "file",
       "feature": "characteristic: embedded pe",
-      "expected": true,
       "explanation": "embedded PE file in resource section",
       "marks": [
         {
@@ -378,7 +274,6 @@
       "file": "2d3edc",
       "location": "file",
       "feature": "characteristic: embedded pe",
-      "expected": true,
       "explanation": "embedded PE file at file scope using file offset addresses",
       "marks": [
         {
@@ -386,28 +281,24 @@
           "mark": "skip",
           "reason": "Python capa has bug extracting embedded PE files at absolute offsets"
         }
-      ],
-      "comment": "Embedded PE at file offset 0x7FB0. Note: vivisect freeze has 0x4091b0 but that's a virtual address mislabeled as file offset."
+      ]
     },
     {
       "file": "mimikatz",
       "location": "file",
       "feature": "string: SCardControl",
-      "expected": true,
       "explanation": "basic UTF-16LE string"
     },
     {
       "file": "mimikatz",
       "location": "file",
       "feature": "string: ACR  > ",
-      "expected": true,
       "explanation": "UTF-16LE encoded strings with unusual characters and trailing spaces"
     },
     {
       "file": "pma12-04",
       "location": "file",
       "feature": "string: winlogon.exe",
-      "expected": true,
       "explanation": "basic ASCII string"
     },
     {
@@ -421,7 +312,6 @@
       "file": "mimikatz",
       "location": "file",
       "feature": "section: .text",
-      "expected": true,
       "explanation": "basic section name"
     },
     {
@@ -435,7 +325,6 @@
       "file": "kernel32",
       "location": "file",
       "feature": "export: BaseThreadInitThunk",
-      "expected": true,
       "explanation": "basic export name"
     },
     {
@@ -449,28 +338,24 @@
       "file": "ea2876",
       "location": "file",
       "feature": "export: vresion.GetFileVersionInfoA",
-      "expected": true,
       "explanation": "forwarded export"
     },
     {
       "file": "mimikatz",
       "location": "file",
       "feature": "import: advapi32.CryptSetHashParam",
-      "expected": true,
       "explanation": "import with DLL prefix"
     },
     {
       "file": "mimikatz",
       "location": "file",
       "feature": "import: CryptSetHashParam",
-      "expected": true,
       "explanation": "import with no DLL prefix"
     },
     {
       "file": "mimikatz",
       "location": "file",
       "feature": "import: cabinet.#11",
-      "expected": true,
       "explanation": "import by ordinal"
     },
     {
@@ -498,7 +383,6 @@
       "file": "mimikatz",
       "location": "function=0x401517",
       "feature": "characteristic: loop",
-      "expected": true,
       "explanation": "loop"
     },
     {
@@ -512,7 +396,6 @@
       "file": "mimikatz",
       "location": "function=0x402EC4",
       "feature": "characteristic: tight loop",
-      "expected": true,
       "explanation": "tight-loop"
     },
     {
@@ -526,7 +409,6 @@
       "file": "mimikatz",
       "location": "function=0x402EC4,bb=0x402F8E",
       "feature": "characteristic: tight loop",
-      "expected": true,
       "explanation": "tight-loop at basic block scope"
     },
     {
@@ -540,7 +422,6 @@
       "file": "mimikatz",
       "location": "function=0x4556E5",
       "feature": "characteristic: stack string",
-      "expected": true,
       "explanation": "stack string (but capa doesn't extract it as a string yet)"
     },
     {
@@ -554,8 +435,7 @@
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "mnemonic: push",
-      "explanation": "basic mnemonic",
-      "expected": true
+      "explanation": "basic mnemonic"
     },
     {
       "file": "mimikatz",
@@ -568,14 +448,12 @@
       "file": "mimikatz",
       "location": "function=0x40105D,bb=0x401073,insn=0x401073",
       "feature": "number: 0xFF",
-      "expected": true,
       "explanation": "number"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40105D,bb=0x401073,insn=0x401073",
       "feature": "operand[1].number: 0xFF",
-      "expected": true,
       "explanation": "mov eax, 0FFh; instruction operand number"
     },
     {
@@ -589,7 +467,6 @@
       "file": "mimikatz",
       "location": "function=0x40105D,bb=0x4010B0,insn=0x4010B4",
       "feature": "operand[0].offset: 4",
-      "expected": true,
       "explanation": "cmp [esi+4], ebx; instruction operand offset"
     },
     {
@@ -603,21 +480,18 @@
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "number: 0xFF",
-      "expected": true,
       "explanation": "small number"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "number: 0x3136B0",
-      "expected": true,
       "explanation": "large number"
     },
     {
       "file": "mimikatz",
       "location": "function=0x401000",
       "feature": "number: 0x0",
-      "expected": true,
       "explanation": "zero number"
     },
     {
@@ -631,35 +505,30 @@
       "file": "mimikatz",
       "location": "function=0x401553",
       "feature": "number: 0xFFFFFFFF",
-      "expected": true,
       "explanation": "max u32 number"
     },
     {
       "file": "mimikatz",
       "location": "function=0x43e543",
       "feature": "number: 0xFFFFFFF0",
-      "expected": true,
       "explanation": "large u32 number"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "offset: 0x0",
-      "explanation": "cmp [esi], ebx; zero offset",
-      "expected": true
+      "explanation": "cmp [esi], ebx; zero offset"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "offset: 0x4",
-      "explanation": "cmp [esi+4], ebx; simple offset",
-      "expected": true
+      "explanation": "cmp [esi+4], ebx; simple offset"
     },
     {
       "file": "64d9f",
       "location": "function=0x10001510,bb=0x100015B0",
       "feature": "offset: 0x4000",
-      "expected": true,
       "explanation": "regression test for issue #276"
     },
     {
@@ -673,14 +542,12 @@
       "file": "mimikatz",
       "location": "function=0x4011FB",
       "feature": "offset: -0x1",
-      "expected": true,
       "explanation": "movzx ecx, [eax-1]; negative offset"
     },
     {
       "file": "mimikatz",
       "location": "function=0x4011FB",
       "feature": "offset: -0x2",
-      "expected": true,
       "explanation": "cmp [eax-2], cx; negative offset -2"
     },
     {
@@ -708,7 +575,6 @@
       "file": "mimikatz",
       "location": "function=0x402203,bb=0x402221,insn=0x40223C",
       "feature": "offset: 0x4",
-      "expected": true,
       "explanation": "add eax, 4; non-stack register ADD should emit an offset feature, treating eax as a pointer"
     },
     {
@@ -729,21 +595,18 @@
       "file": "mimikatz",
       "location": "function=0x401873,bb=0x4018B2,insn=0x4018C0",
       "feature": "number: 0x2",
-      "expected": true,
       "explanation": "lea ecx, [ebx+2]; should emit Number feature, treating ebx as zero"
     },
     {
       "file": "mimikatz",
       "location": "function=0x403BAC",
       "feature": "api: CryptAcquireContextW",
-      "expected": true,
       "explanation": "basic API feature with trailing W"
     },
     {
       "file": "mimikatz",
       "location": "function=0x403BAC",
       "feature": "api: CryptAcquireContext",
-      "expected": true,
       "explanation": "basic API feature with stripped W"
     },
     {
@@ -756,14 +619,12 @@
     {
       "file": "mimikatz",
       "location": "function=0x4556E5",
-      "feature": "api: LsaQueryInformationPolicy",
-      "expected": true
+      "feature": "api: LsaQueryInformationPolicy"
     },
     {
       "file": "kernel32-64",
       "location": "function=0x180001010",
       "feature": "api: RtlVirtualUnwind",
-      "expected": true,
       "marks": [
         {
           "backend": "idalib",
@@ -776,7 +637,6 @@
       "file": "kernel32-64",
       "location": "function=0x1800202B0",
       "feature": "api: RtlCaptureContext",
-      "expected": true,
       "explanation": "API called via thunk",
       "marks": [
         {
@@ -795,7 +655,6 @@
       "file": "al-khaser x64",
       "location": "function=0x14004B4F0",
       "feature": "api: __vcrt_GetModuleHandle",
-      "expected": true,
       "explanation": "API called via nested thunks",
       "marks": [
         {
@@ -814,49 +673,42 @@
       "file": "mimikatz",
       "location": "function=0x40B3C6",
       "feature": "api: LocalFree",
-      "expected": true,
       "explanation": "tail call to API via jmp"
     },
     {
       "file": "c91887",
       "location": "function=0x40156F",
       "feature": "api: CloseClipboard",
-      "expected": true,
       "explanation": "tail call to API via jmp"
     },
     {
       "file": "c91887",
       "location": "function=0x401A77",
       "feature": "api: CreatePipe",
-      "expected": true,
       "explanation": "API is present"
     },
     {
       "file": "c91887",
       "location": "function=0x401A77",
       "feature": "api: kernel32.CreatePipe",
-      "expected": true,
       "explanation": "API is present, and DLL name is ignored"
     },
     {
       "file": "c91887",
       "location": "function=0x401A77",
       "feature": "api: CreatePipe",
-      "expected": true,
       "explanation": "API resolved from call to GetProcAddress"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "string: SCardControl",
-      "expected": true,
       "explanation": "basic string"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "string: ACR  > ",
-      "expected": true,
       "explanation": "basic string with trailing whitespace"
     },
     {
@@ -870,7 +722,6 @@
       "file": "773290",
       "location": "function=0x140001140",
       "feature": "string: %s:\\\\OfficePackagesForWDAG",
-      "expected": true,
       "explanation": "string with escaping characters"
     },
     {
@@ -884,55 +735,47 @@
       "file": "pma16-01",
       "location": "function=0x4021B0",
       "feature": "substring: HTTP/1.0",
-      "expected": true,
       "explanation": "basic substring"
     },
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
       "feature": "string: /PRACTICALmalwareANALYSIS/i",
-      "expected": true,
       "explanation": "case-insensitive regex"
     },
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
       "feature": "string: /www.*/",
-      "expected": true,
       "explanation": "simple regex prefix match"
     },
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
-      "feature": "substring: practicalmalwareanalysis.com",
-      "expected": true
+      "feature": "substring: practicalmalwareanalysis.com"
     },
     {
       "file": "mimikatz",
       "location": "function=0x44EDEF",
       "feature": "string: INPUTEVENT",
-      "expected": true,
       "explanation": "string referenced via a pointer"
     },
     {
       "file": "mimikatz",
       "location": "function=0x46D6CE",
       "feature": "string: (null)",
-      "expected": true,
       "explanation": "string referenced via direct memory reference"
     },
     {
       "file": "mimikatz",
       "location": "function=0x401517",
       "feature": "bytes: CA 3B 0E 00 00 00 F8 AF 47",
-      "expected": true,
       "explanation": "basic bytes"
     },
     {
       "file": "mimikatz",
       "location": "function=0x404414",
       "feature": "bytes: 01 80 00 00 40 EA 47 00",
-      "expected": true,
       "explanation": "basic bytes, which are a pointer"
     },
     {
@@ -967,7 +810,6 @@
       "file": "mimikatz",
       "location": "function=0x410DFC",
       "feature": "characteristic: nzxor",
-      "expected": true,
       "explanation": "should extract nzxor characteristic, including from xorps SSE instructions"
     },
     {
@@ -987,8 +829,7 @@
     {
       "file": "kernel32-64",
       "location": "function=0x1800017D0",
-      "feature": "characteristic: peb access",
-      "expected": true
+      "feature": "characteristic: peb access"
     },
     {
       "file": "mimikatz",
@@ -999,8 +840,7 @@
     {
       "file": "kernel32-64",
       "location": "function=0x180001068",
-      "feature": "characteristic: gs access",
-      "expected": true
+      "feature": "characteristic: gs access"
     },
     {
       "file": "mimikatz",
@@ -1011,56 +851,47 @@
     {
       "file": "mimikatz",
       "location": "function=0x410DFC,bb=0x410F05,insn=0x410F0B",
-      "feature": "characteristic: nzxor",
-      "expected": true
+      "feature": "characteristic: nzxor"
     },
     {
       "file": "mimikatz",
       "location": "function=0x410DFC,bb=0x410F05,insn=0x410F12",
-      "feature": "characteristic: nzxor",
-      "expected": true
+      "feature": "characteristic: nzxor"
     },
     {
       "file": "kernel32-64",
       "location": "function=0x1800017D0,bb=0x1800018AD,insn=0x1800018AD",
-      "feature": "characteristic: peb access",
-      "expected": true
+      "feature": "characteristic: peb access"
     },
     {
       "file": "kernel32-64",
       "location": "function=0x180001068,bb=0x18000118D,insn=0x180001197",
-      "feature": "characteristic: gs access",
-      "expected": true
+      "feature": "characteristic: gs access"
     },
     {
       "file": "kernel32-64",
       "location": "function=0x180001068,bb=0x180001269,insn=0x18000127F",
-      "feature": "characteristic: gs access",
-      "expected": true
+      "feature": "characteristic: gs access"
     },
     {
       "file": "kernel32",
       "location": "function=0x7DD70E00,bb=0x7DD70E00,insn=0x7DD70E05",
-      "feature": "characteristic: fs access",
-      "expected": true
+      "feature": "characteristic: fs access"
     },
     {
       "file": "kernel32",
       "location": "function=0x7DD70E00,bb=0x7DD70E25,insn=0x7DD70E2D",
-      "feature": "characteristic: fs access",
-      "expected": true
+      "feature": "characteristic: fs access"
     },
     {
       "file": "kernel32",
       "location": "function=0x7DD70E00,bb=0x7DD70FCB,insn=0x7DD70FCB",
-      "feature": "characteristic: fs access",
-      "expected": true
+      "feature": "characteristic: fs access"
     },
     {
       "file": "a1982",
       "location": "function=0x4014D0",
-      "feature": "characteristic: cross section flow",
-      "expected": true
+      "feature": "characteristic: cross section flow"
     },
     {
       "file": "kernel32-64",
@@ -1078,8 +909,7 @@
     {
       "file": "mimikatz",
       "location": "function=0x40640e",
-      "feature": "characteristic: recursive call",
-      "expected": true
+      "feature": "characteristic: recursive call"
     },
     {
       "file": "mimikatz",
@@ -1091,8 +921,7 @@
     {
       "file": "mimikatz",
       "location": "function=0x4175FF",
-      "feature": "characteristic: indirect call",
-      "expected": true
+      "feature": "characteristic: indirect call"
     },
     {
       "file": "mimikatz",
@@ -1103,8 +932,7 @@
     {
       "file": "mimikatz",
       "location": "function=0x4556E5",
-      "feature": "characteristic: calls from",
-      "expected": true
+      "feature": "characteristic: calls from"
     },
     {
       "file": "mimikatz",
@@ -1115,14 +943,12 @@
     {
       "file": "mimikatz",
       "location": "function=0x40105D",
-      "feature": "characteristic: calls to",
-      "expected": true
+      "feature": "characteristic: calls to"
     },
     {
       "file": "ea2876",
       "location": "file",
-      "feature": "characteristic: forwarded export",
-      "expected": true
+      "feature": "characteristic: forwarded export"
     },
     {
       "file": "mimikatz",
@@ -1134,27 +960,23 @@
     {
       "file": "mimikatz",
       "location": "function=0x40105D,bb=0x401089,insn=0x40108E",
-      "feature": "characteristic: calls from",
-      "expected": true
+      "feature": "characteristic: calls from"
     },
     {
       "file": "mimikatz",
       "location": "function=0x4175FF,bb=0x41761B,insn=0x417620",
-      "feature": "characteristic: indirect call",
-      "expected": true
+      "feature": "characteristic: indirect call"
     },
     {
       "file": "pma16-01",
       "location": "file",
       "feature": "function-name: __aulldiv",
-      "expected": true,
       "explanation": "recognize function name via FLIRT signatures"
     },
     {
       "file": "pma16-01",
       "location": "file",
-      "feature": "os: windows",
-      "expected": true
+      "feature": "os: windows"
     },
     {
       "file": "pma16-01",
@@ -1165,28 +987,24 @@
     {
       "file": "mimikatz",
       "location": "file",
-      "feature": "os: windows",
-      "expected": true
+      "feature": "os: windows"
     },
     {
       "file": "pma16-01",
       "location": "function=0x401100",
       "feature": "os: windows",
-      "expected": true,
       "explanation": "OS available at function scope"
     },
     {
       "file": "pma16-01",
       "location": "function=0x401100,bb=0x401130",
       "feature": "os: windows",
-      "expected": true,
       "explanation": "OS available at basic block scope"
     },
     {
       "file": "pma16-01",
       "location": "file",
-      "feature": "arch: i386",
-      "expected": true
+      "feature": "arch: i386"
     },
     {
       "file": "pma16-01",
@@ -1197,28 +1015,24 @@
     {
       "file": "mimikatz",
       "location": "file",
-      "feature": "arch: i386",
-      "expected": true
+      "feature": "arch: i386"
     },
     {
       "file": "pma16-01",
       "location": "function=0x401100",
       "feature": "arch: i386",
-      "expected": true,
       "explanation": "arch available at function scope"
     },
     {
       "file": "pma16-01",
       "location": "function=0x401100,bb=0x401130",
       "feature": "arch: i386",
-      "expected": true,
       "explanation": "arch available at basic blockscope"
     },
     {
       "file": "pma16-01",
       "location": "file",
-      "feature": "format: pe",
-      "expected": true
+      "feature": "format: pe"
     },
     {
       "file": "pma16-01",
@@ -1229,21 +1043,18 @@
     {
       "file": "mimikatz",
       "location": "file",
-      "feature": "format: pe",
-      "expected": true
+      "feature": "format: pe"
     },
     {
       "file": "pma16-01",
       "location": "function=0x401100",
       "feature": "format: pe",
-      "expected": true,
       "explanation": "format available at function scope"
     },
     {
       "file": "7351f.elf",
       "location": "file",
-      "feature": "os: linux",
-      "expected": true
+      "feature": "os: linux"
     },
     {
       "file": "7351f.elf",
@@ -1254,8 +1065,7 @@
     {
       "file": "7351f.elf",
       "location": "file",
-      "feature": "format: elf",
-      "expected": true
+      "feature": "format: elf"
     },
     {
       "file": "7351f.elf",
@@ -1272,116 +1082,99 @@
     {
       "file": "7351f.elf",
       "location": "file",
-      "feature": "arch: amd64",
-      "expected": true
+      "feature": "arch: amd64"
     },
     {
       "file": "7351f.elf",
       "location": "function=0x408753",
-      "feature": "string: /dev/null",
-      "expected": true
+      "feature": "string: /dev/null"
     },
     {
       "file": "7351f.elf",
       "location": "function=0x408753,bb=0x408781",
       "feature": "api: open",
-      "expected": true,
       "explanation": "API from ELF import"
     },
     {
       "file": "055da8e6.elf",
       "location": "file",
       "feature": "import: puts",
-      "expected": true,
       "explanation": "ELF import promoted from elffile feature tests"
     },
     {
       "file": "055da8e6.elf",
       "location": "file",
       "feature": "section: .text",
-      "expected": true,
       "explanation": "ELF section promoted from primary presence fixture"
     },
     {
       "file": "bb38149.elf",
       "location": "file",
       "feature": "import: __android_log_print",
-      "expected": true,
       "explanation": "stripped ELF import promoted from elffile feature tests"
     },
     {
       "file": "bb38149.elf",
       "location": "file",
       "feature": "export: Java_o_ac_a",
-      "expected": true,
       "explanation": "stripped ELF export promoted from elffile feature tests"
     },
     {
       "file": "bb38149.elf",
       "location": "file",
       "feature": "section: .dynamic",
-      "expected": true,
       "explanation": "stripped ELF section promoted into the shared presence fixture"
     },
     {
       "file": "79abd",
       "location": "function=0x10002385,bb=0x10002385",
-      "feature": "characteristic: call $+5",
-      "expected": true
+      "feature": "characteristic: call $+5"
     },
     {
       "file": "946a9",
       "location": "function=0x10001510,bb=0x100015c0",
-      "feature": "characteristic: call $+5",
-      "expected": true
+      "feature": "characteristic: call $+5"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: __GI_connect",
-      "expected": true,
       "explanation": "API from symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: connect",
-      "expected": true,
       "explanation": "API from symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: __libc_connect",
-      "expected": true,
       "explanation": "API from symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: __GI_connect",
-      "expected": true,
       "explanation": "function name from symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: connect",
-      "expected": true,
       "explanation": "function name from symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: __libc_connect",
-      "expected": true,
       "explanation": "function name from symbol table alternative name"
     },
     {
       "file": "mimikatz",
       "location": "function=0x401000,bb=0x401000",
       "feature": "basic blocks: x",
-      "expected": true,
       "explanation": "basic block feature emitted"
     },
     {
@@ -1395,7 +1188,6 @@
       "file": "mimikatz",
       "location": "function=0x40E5C2",
       "feature": "count(basic blocks): 7",
-      "expected": true,
       "explanation": "7 basic blocks in function",
       "marks": [
         {
@@ -1409,14 +1201,12 @@
       "file": "mimikatz",
       "location": "function=0x4702FD",
       "feature": "count(characteristic(calls from)): 0",
-      "expected": true,
       "explanation": "function has no calls"
     },
     {
       "file": "mimikatz",
       "location": "function=0x40E5C2",
       "feature": "count(characteristic(calls from)): 3",
-      "expected": true,
       "explanation": "function has 3 calls",
       "marks": [
         {
@@ -1430,7 +1220,6 @@
       "file": "mimikatz",
       "location": "function=0x4556E5",
       "feature": "count(characteristic(calls to)): 0",
-      "expected": true,
       "explanation": "function has no callers",
       "marks": [
         {
@@ -1444,7 +1233,6 @@
       "file": "mimikatz",
       "location": "function=0x40B1F1",
       "feature": "count(characteristic(calls to)): 3",
-      "expected": true,
       "explanation": "function has 3 callers",
       "marks": [
         {
@@ -1458,355 +1246,243 @@
       "file": "mimikatz",
       "location": "function=0x4702FD",
       "feature": "count(characteristic(calls from)): 0",
-      "expected": true,
-      "tags": [
-        "ghidra"
-      ],
       "explanation": "Ghidra: function has no calls"
     },
     {
       "file": "mimikatz",
       "location": "function=0x401bf1",
       "feature": "count(characteristic(calls to)): 2",
-      "expected": true,
-      "tags": [
-        "ghidra"
-      ],
       "explanation": "Ghidra: function has 2 callers"
     },
     {
       "file": "mimikatz",
       "location": "function=0x401000",
       "feature": "count(basic blocks): 3",
-      "expected": true,
-      "tags": [
-        "ghidra"
-      ],
       "explanation": "Ghidra: 3 basic blocks in function"
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "arch: i386",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "arch: amd64",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "mixed-mode-64",
       "location": "file",
       "feature": "arch: amd64",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "mixed-mode-64",
       "location": "file",
       "feature": "arch: i386",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "mixed-mode-64",
       "location": "file",
       "feature": "characteristic: mixed mode",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "characteristic: mixed mode",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "os: any",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "format: pe",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "b9f5b",
       "location": "file",
       "feature": "format: dotnet",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "function-name: HelloWorld::Main",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "function-name: HelloWorld::ctor",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "function-name: HelloWorld::cctor",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "string: Hello World!",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "class: HelloWorld",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "class: System.Console",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "namespace: System.Diagnostics",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "function=0x250",
       "feature": "string: Hello World!",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "function=0x250,bb=0x250,insn=0x252",
       "feature": "string: Hello World!",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "function=0x250,bb=0x250,insn=0x257",
       "feature": "class: System.Console",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "function=0x250,bb=0x250,insn=0x257",
       "feature": "namespace: System",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "function=0x250",
       "feature": "api: System.Console::WriteLine",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "hello-world",
       "location": "file",
       "feature": "import: System.Console::WriteLine",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "string: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "string: get_IsAlive",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "import: gdi32.CreateCompatibleBitmap",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "import: CreateCompatibleBitmap",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "file",
       "feature": "import: gdi32::CreateCompatibleBitmap",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "api: GetWindowDC",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "number: 0xCC0020",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "characteristic: calls to",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x6000018",
       "feature": "characteristic: calls to",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "characteristic: calls from",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x600000F",
       "feature": "characteristic: calls from",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "number: 0x0",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68",
       "feature": "number: 0x1",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_692f",
       "location": "token=0x6000004",
       "feature": "api: System.Linq.Enumerable::First",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "generic method"
     },
     {
@@ -1814,235 +1490,167 @@
       "location": "token=0x6000004",
       "feature": "property: System.Linq.Enumerable::First",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "generic method"
     },
     {
       "file": "_692f",
       "location": "token=0x6000004",
       "feature": "namespace: System.Linq",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "generic method"
     },
     {
       "file": "_692f",
       "location": "token=0x6000004",
       "feature": "class: System.Linq.Enumerable",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "generic method"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000020",
       "feature": "namespace: Reqss",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "ldftn"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000020",
       "feature": "class: Reqss.Reqss",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "ldftn"
     },
     {
       "file": "_1c444",
       "location": "function=0x1F59,bb=0x1F59,insn=0x1F5B",
       "feature": "characteristic: unmanaged call",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "function=0x2544",
       "feature": "characteristic: unmanaged call",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x6000088",
       "feature": "characteristic: unmanaged call",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "same as above but using token instead of function"
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
       "feature": "api: System.Drawing.Image::FromHbitmap",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
       "feature": "api: FromHbitmap",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x600002B",
       "feature": "property/read: System.IO.FileInfo::Length",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x600002B",
       "feature": "property: System.IO.FileInfo::Length",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000081",
       "feature": "api: System.Diagnostics.Process::Start",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000081",
       "feature": "property/write: System.Diagnostics.ProcessStartInfo::UseShellExecute",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000081",
       "feature": "property/write: System.Diagnostics.ProcessStartInfo::WorkingDirectory",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000081",
       "feature": "property/write: System.Diagnostics.ProcessStartInfo::FileName",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x6000087",
       "feature": "property/write: Sockets.MySocket::reConnectionDelay",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "Field property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x600008A",
       "feature": "property/write: Sockets.MySocket::isConnected",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "Field property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x600008A",
       "feature": "class: Sockets.MySocket",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "Field property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x600008A",
       "feature": "namespace: Sockets",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "Field property access"
     },
     {
       "file": "_1c444",
       "location": "token=0x600008A",
       "feature": "property/read: Sockets.MySocket::onConnected",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "Field property access"
     },
     {
       "file": "_0953c",
       "location": "token=0x6000004",
       "feature": "property/read: System.Diagnostics.Debugger::IsAttached",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_0953c",
       "location": "token=0x6000004",
       "feature": "class: System.Diagnostics.Debugger",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_0953c",
       "location": "token=0x6000004",
       "feature": "namespace: System.Diagnostics",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
@@ -2050,58 +1658,41 @@
       "location": "token=0x6000006",
       "feature": "property/read: System.Management.Automation.PowerShell::Streams",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef property access"
     },
     {
       "file": "_387f15",
       "location": "token=0x600009E",
       "feature": "property/read: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE::geoplugin_countryCode",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MethodDef property access"
     },
     {
       "file": "_387f15",
       "location": "token=0x600009E",
       "feature": "class: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MethodDef property access"
     },
     {
       "file": "_387f15",
       "location": "token=0x600009E",
       "feature": "namespace: Modulo",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MethodDef property access"
     },
     {
       "file": "_039a6",
       "location": "token=0x6000007",
       "feature": "api: System.Reflection.Assembly::Load",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_039a6",
       "location": "token=0x600001D",
       "feature": "property/read: StagelessHollow.Arac::Marka",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MethodDef method"
     },
     {
@@ -2109,9 +1700,7 @@
       "location": "token=0x600001C",
       "feature": "property/read: StagelessHollow.Arac::Marka",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MethodDef method"
     },
     {
@@ -2119,190 +1708,136 @@
       "location": "token=0x6000023",
       "feature": "property/read: System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ],
+      "tags": ["dotnet"],
       "explanation": "MemberRef method"
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer0",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer0/myclass_inner0_0",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer0/myclass_inner0_1",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1/myclass_inner1_1",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner_inner",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner1_0",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner1_1",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner0_0",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typedef",
       "location": "file",
       "feature": "class: myclass_inner0_1",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.OS.Build/VERSION::SdkInt",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.Media.Image/Plane::Buffer",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.Provider.Telephony/Sent/Sent::ContentUri",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Android.OS.Build::SdkInt",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Plane::Buffer",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "nested_typeref",
       "location": "file",
       "feature": "import: Sent::ContentUri",
       "expected": false,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "count(characteristic(calls to)): 1",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     },
     {
       "file": "_1c444",
       "location": "token=0x600001D",
       "feature": "count(characteristic(calls from)): 9",
-      "expected": true,
-      "tags": [
-        "dotnet"
-      ]
+      "tags": ["dotnet"]
     }
   ]
 }

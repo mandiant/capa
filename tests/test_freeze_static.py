@@ -15,11 +15,10 @@
 import textwrap
 from pathlib import Path
 
-import pytest
+import fixtures
 
 import capa.main
 import capa.rules
-import capa.helpers
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -192,26 +191,15 @@ def test_no_address_lt_irreflexivity():
     assert not (no_addr < no_addr)
 
 
-def test_freeze_sample(tmpdir, z9324d_extractor):
+def test_freeze_sample(tmpdir):
     # tmpdir fixture handles cleanup
     o = tmpdir.mkdir("capa").join("test.frz").strpath
-    path = z9324d_extractor.path
+    path = str(fixtures.CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
     assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
-@pytest.mark.parametrize(
-    "extractor",
-    [
-        pytest.param("z9324d_extractor"),
-    ],
-)
-def test_freeze_load_sample(tmpdir, request, extractor):
+def test_freeze_load_sample(tmpdir, z9324d_extractor):
     o = tmpdir.mkdir("capa").join("test.frz")
-
-    extractor = request.getfixturevalue(extractor)
-
-    Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
-
+    Path(o.strpath).write_bytes(capa.features.freeze.dump(z9324d_extractor))
     null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
-
-    compare_extractors(extractor, null_extractor)
+    compare_extractors(z9324d_extractor, null_extractor)
