@@ -63,7 +63,7 @@ def test_optimizer_order():
                     - arch: amd64
                     - mnemonic: cmp
                     - and:
-                      - bytes: 3
+                      - bytes: 03 04 05
                       - offset: 2
                     - or:
                       - number: 1

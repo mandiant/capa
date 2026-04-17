@@ -23,15 +23,14 @@ ghidra_present = (
 )
 
 
-BACKEND = fixtures.BackendFeaturePolicy(
-    name="ghidra",
-    get_extractor=fixtures.get_ghidra_extractor,
-    include_tags={"static"},
-    exclude_tags={"dotnet"},
-)
-
-
 @pytest.mark.skipif(ghidra_present is False, reason="PyGhidra not installed")
-@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="ghidra",
+        include_tags={"static"},
+        exclude_tags={"dotnet"},
+    )
+)
 def test_ghidra_features(feature_fixture):
-    fixtures.run_feature_fixture(BACKEND, feature_fixture)
+    extractor = fixtures.get_ghidra_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)

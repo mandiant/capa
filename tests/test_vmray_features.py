@@ -11,24 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 import fixtures
 
-BACKEND = fixtures.BackendFeaturePolicy(
-    name="vmray",
-    get_extractor=fixtures.get_vmray_extractor,
-    include_tags={"vmray"},
+
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="vmray",
+        include_tags={"vmray"},
+    )
 )
-
-
-@fixtures.parametrize_backend_feature_fixtures(BACKEND)
 def test_vmray_features(feature_fixture):
-    fixtures.run_feature_fixture(BACKEND, feature_fixture)
+    extractor = fixtures.get_vmray_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)
 
 
 def test_vmray_processes():
     # see #2394
-    path = fixtures.get_data_path_by_name("2f8a79-vmray")
+    path = fixtures.CD / "data" / "dynamic" / "vmray" / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
     vmre = fixtures.get_vmray_extractor(path)
     assert len(vmre.analysis.monitor_processes) == 9
