@@ -11,17 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import fixtures
 
-BACKEND = fixtures.BackendFeaturePolicy(
-    name="viv",
-    get_extractor=fixtures.get_viv_extractor,
-    include_tags={"static"},
-    exclude_tags={"dotnet", "ghidra"},
+
+
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="viv",
+        include_tags={"static"},
+        exclude_tags={"dotnet", "ghidra"},
+    )
 )
-
-
-@fixtures.parametrize_backend_feature_fixtures(BACKEND)
 def test_viv_features(feature_fixture):
-    fixtures.run_feature_fixture(BACKEND, feature_fixture)
+    extractor = fixtures.get_viv_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)

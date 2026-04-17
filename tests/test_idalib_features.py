@@ -16,18 +16,19 @@ import logging
 import fixtures
 import pytest
 
-import capa.features.extractors.ida.idalib
+import capa.features.extractors.ida.idalib as idalib
 from capa.features.common import Characteristic
 from capa.features.file import FunctionName
 from capa.features.insn import API
 
 logger = logging.getLogger(__name__)
 
-idalib_present = capa.features.extractors.ida.idalib.has_idalib()
+idalib_present = idalib.has_idalib()
 if idalib_present:
     try:
+        if True:
+            import idapro  # noqa: F401 [imported but unused]
         import ida_kernwin
-        import idapro  # noqa: F401 [imported but unused]
 
         kernel_version: str = ida_kernwin.get_kernel_version()
     except ImportError:
@@ -37,19 +38,17 @@ else:
     kernel_version = "0.0"
 
 
-BACKEND = fixtures.BackendFeaturePolicy(
-    name="idalib",
-    get_extractor=fixtures.get_idalib_extractor,
-    include_tags={"static"},
-    exclude_tags={"dotnet", "ghidra"},
-)
-
-
 @pytest.mark.skipif(
     idalib_present is False,
     reason="Skip idalib tests if the idalib Python API is not installed",
 )
-@fixtures.parametrize_backend_feature_fixtures(BACKEND)
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="idalib",
+        include_tags={"static"},
+        exclude_tags={"dotnet", "ghidra"},
+    )
+)
 def test_idalib_features(feature_fixture):
     # apply runtime-conditional xfails for specific IDA versions.
     # version-specific behavior stays in the test body because it
@@ -79,7 +78,8 @@ def test_idalib_features(feature_fixture):
             pytest.xfail("idalib 9.0 does not support loading resource segments")
 
     try:
-        fixtures.run_feature_fixture(BACKEND, feature_fixture)
+        extractor = fixtures.get_idalib_extractor(feature_fixture.sample_path)
+        fixtures.run_feature_fixture(extractor, feature_fixture)
     finally:
         import idapro
 

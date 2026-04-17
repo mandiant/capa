@@ -14,7 +14,6 @@
 
 import gzip
 from typing import Type
-from pathlib import Path
 
 import pytest
 import fixtures
@@ -22,8 +21,7 @@ import fixtures
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.extractors.cape.models import Call, CapeReport
 
-CD = Path(__file__).resolve().parent
-CAPE_DIR = CD / "data" / "dynamic" / "cape"
+CAPE_DIR = fixtures.CD / "data" / "dynamic" / "cape"
 
 
 @fixtures.parametrize(

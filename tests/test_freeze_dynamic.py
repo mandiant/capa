@@ -160,7 +160,7 @@ def test_freeze_bytes_roundtrip():
 def test_freeze_load_sample(tmpdir):
     o = tmpdir.mkdir("capa").join("test.frz")
 
-    extractor = fixtures.get_cape_extractor(fixtures.get_data_path_by_name("d46900"))
+    extractor = fixtures.get_cape_extractor(fixtures.CD / "data" / "dynamic" / "cape" / "v2.2" / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz")
 
     Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
 

@@ -126,16 +126,17 @@ For example:
 ```python
 import fixtures
 
-BACKEND = fixtures.BackendFeaturePolicy(
-    name="viv",
-    get_extractor=fixtures.get_viv_extractor,
-    exclude_tags={"dotnet"},
+
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="viv",
+        include_tags={"static"},
+        exclude_tags={"dotnet", "ghidra"},
+    )
 )
-
-
-@fixtures.parametrize_backend_feature_fixtures(BACKEND)
 def test_viv_features(feature_fixture):
-    fixtures.run_feature_fixture(BACKEND, feature_fixture)
+    extractor = fixtures.get_viv_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)
 ```
 
 Module-level availability checks are still allowed. runtime-specific hooks are allowed only when they depend on the installed backend or tool version and cannot be represented declaratively in the fixture manifests.

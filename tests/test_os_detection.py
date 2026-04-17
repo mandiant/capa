@@ -14,9 +14,8 @@
 
 import io
 import zlib
-from pathlib import Path
 
-from fixtures import get_data_path_by_name
+import fixtures
 
 import capa.features.extractors.elf
 import capa.features.extractors.common
@@ -31,8 +30,8 @@ def test_elf_sh_notes():
     # guess: ABI versions needed: None
     # guess: symtab: None
     # guess: needed dependencies: None
-    path = get_data_path_by_name("2f7f5f")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
@@ -44,8 +43,8 @@ def test_elf_pt_notes():
     # guess: ABI versions needed: OS.LINUX
     # guess: symtab: None
     # guess: needed dependencies: None
-    path = get_data_path_by_name("7351f.elf")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
@@ -57,8 +56,8 @@ def test_elf_so_needed():
     # guess: ABI versions needed: OS.HURD
     # guess: symtab: None
     # guess: needed dependencies: OS.HURD
-    path = get_data_path_by_name("b5f052")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "hurd"
 
 
@@ -70,8 +69,8 @@ def test_elf_abi_version_hurd():
     # guess: ABI versions needed: OS.HURD
     # guess: symtab: None
     # guess: needed dependencies: None
-    path = get_data_path_by_name("bf7a9c")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "hurd"
 
 
@@ -83,8 +82,8 @@ def test_elf_symbol_table():
     # guess: ABI versions needed: None
     # guess: symtab: OS.LINUX
     # guess: needed dependencies: None
-    path = get_data_path_by_name("2bf18d")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
@@ -95,14 +94,14 @@ def test_elf_android_notes():
     # DEBUG:capa.features.extractors.elf:guess: linker: None
     # DEBUG:capa.features.extractors.elf:guess: ABI versions needed: None
     # DEBUG:capa.features.extractors.elf:guess: needed dependencies: OS.ANDROID
-    path = get_data_path_by_name("1038a2")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "android"
 
 
 def test_elf_go_buildinfo():
-    path = get_data_path_by_name("3da7c")
-    with Path(path).open("rb") as f:
+    path = fixtures.CD / "data" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
+    with path.open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
