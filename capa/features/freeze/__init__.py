@@ -20,9 +20,9 @@ import json
 import zlib
 import logging
 from enum import Enum
-from typing import Union, Literal, TypeAlias
+from typing import Any, Union, Literal, TypeAlias
 
-from pydantic import Field, BaseModel, ConfigDict
+from pydantic import Field, BaseModel, ConfigDict, field_validator
 
 import capa.helpers
 import capa.version
@@ -62,16 +62,63 @@ class AddressType(str, Enum):
     NO_ADDRESS = "no address"
 
 
+def _to_hashable(v: Any) -> Any:
+    """Recursively convert lists to tuples so nested address values remain hashable."""
+    if isinstance(v, list):
+        return tuple(_to_hashable(item) for item in v)
+    return v
+
+
+def _sort_key(v: Any) -> Any:
+    """Return a sortable key for a nested address value, replacing None with a sentinel."""
+    if v is None:
+        return (0,)
+    elif isinstance(v, int):
+        return (1, v)
+    elif isinstance(v, tuple):
+        return (2,) + tuple(_sort_key(x) for x in v)
+    return (3,)
+
+
 class Address(HashableModel):
     type: AddressType
+    # The value encoding differs by address type:
+    #   - absolute / relative / file / dn_token: int
+    #   - dn_token_offset:                        (token: int, offset: int)
+    #   - process:  (parent_tuple | None, pid: int, instance_id: int | None)
+    #   - thread:   (process_tuple, tid: int, instance_id: int | None)
+    #   - call:     (thread_tuple, call_id: int)
+    #   - no_address: None
+    #
+    # process_tuple / thread_tuple are nested using the same structure above,
+    # giving each scope its full parent context and unique instance_id.
     value: Union[
-        # for absolute, relative, file
+        # for absolute, relative, file, dn_token
         int,
-        # for DNToken, Process, Thread, Call
-        tuple[int, ...],
-        # for NO_ADDRESS,
+        # for dn_token_offset, process, thread, call (nested tuples allowed)
+        tuple,
+        # for no_address
         None,
     ] = None  # None default value to support deserialization of NO_ADDRESS
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def _coerce_value(cls, v: Any) -> Any:
+        # JSON deserializes arrays as lists; convert to tuples for hashability.
+        return _to_hashable(v)
+
+    @staticmethod
+    def _process_to_tuple(p: "capa.features.address.ProcessAddress") -> tuple:
+        parent_t = Address._process_to_tuple(p.parent) if p.parent is not None else None
+        return (parent_t, p.pid, p.instance_id)
+
+    @staticmethod
+    def _tuple_to_process(t: tuple) -> "capa.features.address.ProcessAddress":
+        parent_t, pid, proc_iid = t
+        parent = Address._tuple_to_process(parent_t) if parent_t is not None else None
+        return capa.features.address.ProcessAddress(
+            pid=pid, parent=parent, instance_id=proc_iid
+        )
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -91,18 +138,28 @@ class Address(HashableModel):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
 
         elif isinstance(a, capa.features.address.ProcessAddress):
-            return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
+            return cls(type=AddressType.PROCESS, value=cls._process_to_tuple(a))
 
         elif isinstance(a, capa.features.address.ThreadAddress):
-            return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
+            proc_t = cls._process_to_tuple(a.process)
+            return cls(
+                type=AddressType.THREAD,
+                value=(proc_t, a.tid, a.instance_id),
+            )
 
         elif isinstance(a, capa.features.address.DynamicCallAddress):
-            return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
+            proc_t = cls._process_to_tuple(a.thread.process)
+            thread_t = (proc_t, a.thread.tid, a.thread.instance_id)
+            return cls(type=AddressType.CALL, value=(thread_t, a.id))
 
-        elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
+        elif a == capa.features.address.NO_ADDRESS or isinstance(
+            a, capa.features.address._NoAddress
+        ):
             return cls(type=AddressType.NO_ADDRESS, value=None)
 
-        elif isinstance(a, capa.features.address.Address) and not issubclass(type(a), capa.features.address.Address):
+        elif isinstance(a, capa.features.address.Address) and not issubclass(
+            type(a), capa.features.address.Address
+        ):
             raise ValueError("don't use an Address instance directly")
 
         elif isinstance(a, capa.features.address.Address):
@@ -137,29 +194,28 @@ class Address(HashableModel):
 
         elif self.type is AddressType.PROCESS:
             assert isinstance(self.value, tuple)
-            ppid, pid = self.value
-            assert isinstance(ppid, int)
-            assert isinstance(pid, int)
-            return capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
+            return self._tuple_to_process(self.value)
 
         elif self.type is AddressType.THREAD:
             assert isinstance(self.value, tuple)
-            ppid, pid, tid = self.value
-            assert isinstance(ppid, int)
-            assert isinstance(pid, int)
-            assert isinstance(tid, int)
+            proc_t, tid, thread_iid = self.value
             return capa.features.address.ThreadAddress(
-                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                process=self._tuple_to_process(proc_t),
+                tid=tid,
+                instance_id=thread_iid,
             )
 
         elif self.type is AddressType.CALL:
             assert isinstance(self.value, tuple)
-            ppid, pid, tid, id_ = self.value
+            thread_t, call_id = self.value
+            proc_t, tid, thread_iid = thread_t
             return capa.features.address.DynamicCallAddress(
                 thread=capa.features.address.ThreadAddress(
-                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                    process=self._tuple_to_process(proc_t),
+                    tid=tid,
+                    instance_id=thread_iid,
                 ),
-                id=id_,
+                id=call_id,
             )
 
         elif self.type is AddressType.NO_ADDRESS:
@@ -177,10 +233,7 @@ class Address(HashableModel):
 
         else:
             assert self.type == other.type
-            # mypy doesn't realize we've proven that either
-            # both are ints, or both are tuples of ints.
-            # and both of these are comparable.
-            return self.value < other.value  # type: ignore
+            return _sort_key(self.value) < _sort_key(other.value)
 
 
 class GlobalFeature(HashableModel):
@@ -572,16 +625,26 @@ def loads_static(s: str) -> StaticFeatureExtractor:
         base_address=freeze.base_address.to_capa(),
         sample_hashes=freeze.sample_hashes,
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
-        file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
+        file_features=[
+            (f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file
+        ],
         functions={
             f.address.to_capa(): null.FunctionFeatures(
-                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in f.features],
+                features=[
+                    (fe.address.to_capa(), fe.feature.to_capa()) for fe in f.features
+                ],
                 basic_blocks={
                     bb.address.to_capa(): null.BasicBlockFeatures(
-                        features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in bb.features],
+                        features=[
+                            (fe.address.to_capa(), fe.feature.to_capa())
+                            for fe in bb.features
+                        ],
                         instructions={
                             i.address.to_capa(): null.InstructionFeatures(
-                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in i.features]
+                                features=[
+                                    (fe.address.to_capa(), fe.feature.to_capa())
+                                    for fe in i.features
+                                ]
                             )
                             for i in bb.instructions
                         },
@@ -607,18 +670,28 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
         base_address=freeze.base_address.to_capa(),
         sample_hashes=freeze.sample_hashes,
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
-        file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
+        file_features=[
+            (f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file
+        ],
         processes={
             p.address.to_capa(): null.ProcessFeatures(
                 name=p.name,
-                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in p.features],
+                features=[
+                    (fe.address.to_capa(), fe.feature.to_capa()) for fe in p.features
+                ],
                 threads={
                     t.address.to_capa(): null.ThreadFeatures(
-                        features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in t.features],
+                        features=[
+                            (fe.address.to_capa(), fe.feature.to_capa())
+                            for fe in t.features
+                        ],
                         calls={
                             c.address.to_capa(): null.CallFeatures(
                                 name=c.name,
-                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in c.features],
+                                features=[
+                                    (fe.address.to_capa(), fe.feature.to_capa())
+                                    for fe in c.features
+                                ],
                             )
                             for c in t.calls
                         },
@@ -690,7 +763,9 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="save capa features to a file")
-    capa.main.install_common_args(parser, {"input_file", "format", "backend", "os", "signatures"})
+    capa.main.install_common_args(
+        parser, {"input_file", "format", "backend", "os", "signatures"}
+    )
     parser.add_argument("output", type=str, help="Path to output file")
     args = parser.parse_args(args=argv)
 

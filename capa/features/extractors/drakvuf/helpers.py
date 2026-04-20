@@ -19,7 +19,9 @@ from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.drakvuf.models import Call, DrakvufReport
 
 
-def index_calls(report: DrakvufReport) -> dict[ProcessAddress, dict[ThreadAddress, list[Call]]]:
+def index_calls(
+    report: DrakvufReport,
+) -> dict[ProcessAddress, dict[ThreadAddress, list[Call]]]:
     # this method organizes calls into processes and threads, and then sorts them based on
     # timestamp so that we can address individual calls per index (CallAddress requires call index)
     result: dict[ProcessAddress, dict[ThreadAddress, list[Call]]] = {}
@@ -29,8 +31,11 @@ def index_calls(report: DrakvufReport) -> dict[ProcessAddress, dict[ThreadAddres
             # we ignore the pid 0 since it's a system process and it's unlikely for it to
             # be hijacked or so on, in addition to capa addresses not supporting null pids
             continue
-        proc_addr = ProcessAddress(pid=call.pid, ppid=call.ppid)
-        thread_addr = ThreadAddress(process=proc_addr, tid=call.tid)
+        parent_addr = (
+            ProcessAddress(pid=call.ppid, instance_id=0) if call.ppid else None
+        )
+        proc_addr = ProcessAddress(pid=call.pid, parent=parent_addr, instance_id=0)
+        thread_addr = ThreadAddress(process=proc_addr, tid=call.tid, instance_id=0)
         if proc_addr not in result:
             result[proc_addr] = {}
         if thread_addr not in result[proc_addr]:

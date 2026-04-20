@@ -18,7 +18,12 @@ from typing import Iterator
 
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    ProcessAddress,
+    AbsoluteVirtualAddress,
+)
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.cape.models import CapeReport
 from capa.features.extractors.base_extractor import ProcessHandle
@@ -28,24 +33,33 @@ logger = logging.getLogger(__name__)
 
 def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
-    get all the created processes for a sample
-    """
-    seen_processes = {}
-    for process in report.behavior.processes:
-        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
-        yield ProcessHandle(address=addr, inner=process)
+    get all the created processes for a sample.
 
-        # check for pid and ppid reuse
-        if addr not in seen_processes:
-            seen_processes[addr] = [process]
-        else:
-            logger.warning(
-                "pid and ppid reuse detected between process %s and process%s: %s",
-                process,
-                "es" if len(seen_processes[addr]) > 1 else "",
-                seen_processes[addr],
-            )
-            seen_processes[addr].append(process)
+    each process receives a sequential instance_id to ensure unique ProcessAddress
+    values even when the OS recycles a PID.  Parent references are resolved from
+    the process list so that a recycled parent PID is also tracked uniquely.
+    """
+    seq: dict[tuple[int, int], int] = {}
+    # pid → latest ProcessAddress for parent lookups (ordered insertion matters)
+    proc_by_pid: dict[int, ProcessAddress] = {}
+    handles: list[ProcessHandle] = []
+
+    for process in report.behavior.processes:
+        key = (process.parent_id, process.process_id)
+        id_ = seq.get(key, 0)
+        seq[key] = id_ + 1
+        parent_addr = proc_by_pid.get(process.parent_id)
+        if parent_addr is None and process.parent_id:
+            # parent not in CAPE report (e.g., OS/host process); create a skeleton entry
+            # so that ppid is preserved for filtering and display.
+            parent_addr = ProcessAddress(pid=process.parent_id)
+        addr = ProcessAddress(
+            pid=process.process_id, parent=parent_addr, instance_id=id_
+        )
+        proc_by_pid[process.process_id] = addr
+        handles.append(ProcessHandle(address=addr, inner=process))
+
+    yield from handles
 
 
 def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:

@@ -26,13 +26,21 @@ logger = logging.getLogger(__name__)
 
 def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     """
-    get the threads associated with a given process
+    get the threads associated with a given process.
+
+    each thread receives a sequential id to ensure unique ThreadAddress
+    values even when the OS recycles a TID.
     """
     process: Process = ph.inner
     threads: list[int] = process.threads
 
-    for thread in threads:
-        address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
+    seq: dict[int, int] = {}
+    for tid in threads:
+        id_ = seq.get(tid, 0)
+        seq[tid] = id_ + 1
+        address: ThreadAddress = ThreadAddress(
+            process=ph.address, tid=tid, instance_id=id_
+        )
         yield ThreadHandle(address=address, inner={})
 
 
