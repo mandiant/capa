@@ -574,15 +574,18 @@ def pop_statement_description_entry(d):
 
 
 def trim_dll_part(api: str) -> str:
-    # ordinal imports, like ws2_32.#1, keep dll
+    # ordinal imports, like ws2_32.#1, keep dll part
     if ".#" in api:
         return api
 
-    # kernel32.CreateFileA
+    # .NET namespace, like System.Diagnostics.Debugger::IsLogging, keep the namespace part
+    if "::" in api:
+        return api
+
+    # kernel32.CreateFileA -> CreateFileA
     if api.count(".") == 1:
-        if "::" not in api:
-            # skip System.Convert::FromBase64String
-            api = api.split(".")[1]
+        api = api.split(".")[1]
+
     return api
 
 

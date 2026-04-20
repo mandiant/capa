@@ -72,22 +72,26 @@ def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
     dll = dll[0:-4] if dll.endswith(".drv") else dll
     dll = dll[0:-3] if dll.endswith(".so") else dll
 
-    if include_dll or is_ordinal(symbol):
-        # ws2_32.#1
+    # ordinal imports like ws2_32.#1 always include the DLL name
+    if is_ordinal(symbol):
+        yield f"{dll}.{symbol}"
+        return
+
+    # for non-ordinal symbols
+    if include_dll:
         # kernel32.CreateFileA
         yield f"{dll}.{symbol}"
 
-    if not is_ordinal(symbol):
-        # CreateFileA
-        yield symbol
+    # CreateFileA
+    yield symbol
 
-        if is_aw_function(symbol):
-            if include_dll:
-                # kernel32.CreateFile
-                yield f"{dll}.{symbol[:-1]}"
+    if is_aw_function(symbol):
+        if include_dll:
+            # kernel32.CreateFile
+            yield f"{dll}.{symbol[:-1]}"
 
-            # CreateFile
-            yield symbol[:-1]
+        # CreateFile
+        yield symbol[:-1]
 
 
 def reformat_forwarded_export_name(forwarded_name: str) -> str:
