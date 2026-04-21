@@ -3,18 +3,7 @@
     {
       "key": "0000a657",
       "path": "data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz",
-      "tags": [
-        "dynamic",
-        "cape"
-      ]
-    },
-    {
-      "key": "d46900",
-      "path": "data/dynamic/cape/v2.2/d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz",
-      "tags": [
-        "dynamic",
-        "cape"
-      ]
+      "tags": ["dynamic", "cape"]
     }
   ],
   "features": [

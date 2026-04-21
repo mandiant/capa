@@ -27,6 +27,11 @@ idalib_present = idalib.has_idalib()
 if idalib_present:
     try:
         if True:
+            # in order to use idalib, we have to import the idapro package
+            # which manipulates the search path as a side effect.
+            # we have to do this before importing ida_* packages.
+            # but isort wants to put idapro after ida_kernwin, so we use
+            # this dumb branch to keep the ordering correct.
             import idapro  # noqa: F401 [imported but unused]
         import ida_kernwin
 

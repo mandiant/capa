@@ -1055,6 +1055,18 @@
       "location": "function=0x401000",
       "feature": "count(basic blocks): 3",
       "explanation": "Ghidra: 3 basic blocks in function"
+    },
+    {
+      "file": "mimikatz.ghidra.be2",
+      "location": "function=0x40105d,bb=0x401125,insn=0x401125",
+      "feature": "count(offset(0x0)): 1",
+      "explanation": "MOV [EDI], CX matches OFFSET_ZERO_PATTERNS, must yield Offset(0) exactly once"
+    },
+    {
+      "file": "mimikatz.ghidra.be2",
+      "location": "function=0x40105d,bb=0x401125,insn=0x401125",
+      "feature": "count(operand[1].offset(0x0)): 1",
+      "explanation": "MOV [EDI], CX matches OFFSET_ZERO_PATTERNS, must yield OperandOffset(1, 0) exactly once"
     }
   ]
 }
