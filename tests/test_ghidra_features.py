@@ -11,16 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib.util
 import os
+import importlib.util
 
-import fixtures
 import pytest
+import fixtures
 
-ghidra_present = (
-    importlib.util.find_spec("pyghidra") is not None
-    and "GHIDRA_INSTALL_DIR" in os.environ
-)
+ghidra_present = importlib.util.find_spec("pyghidra") is not None and "GHIDRA_INSTALL_DIR" in os.environ
 
 
 @pytest.mark.skipif(ghidra_present is False, reason="PyGhidra not installed")

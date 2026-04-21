@@ -13,13 +13,13 @@
 # limitations under the License.
 import logging
 
-import fixtures
 import pytest
+import fixtures
 
 import capa.features.extractors.ida.idalib as idalib
-from capa.features.common import Characteristic
 from capa.features.file import FunctionName
 from capa.features.insn import API
+from capa.features.common import Characteristic
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +57,7 @@ def test_idalib_features(feature_fixture):
     statement = feature_fixture.statement
 
     if kernel_version in {"9.0", "9.1"} and sample_name.startswith("2bf18d"):
-        if (
-            isinstance(statement, (API, FunctionName))
-            and statement.value == "__libc_connect"
-        ):
+        if isinstance(statement, (API, FunctionName)) and statement.value == "__libc_connect":
             # see discussion here: https://github.com/mandiant/capa/pull/2742#issuecomment-3674146335
             #
             # > i confirmed that there were changes in 9.2 related to the ELF loader handling names,
@@ -68,9 +65,7 @@ def test_idalib_features(feature_fixture):
             # > prevented this name from surfacing.
             pytest.xfail(f"IDA {kernel_version} does not extract all ELF symbols")
 
-    if kernel_version in {"9.0"} and sample_name.startswith(
-        "Practical Malware Analysis Lab 12-04.exe_"
-    ):
+    if kernel_version in {"9.0"} and sample_name.startswith("Practical Malware Analysis Lab 12-04.exe_"):
         if isinstance(statement, Characteristic) and statement.value == "embedded pe":
             # see discussion here: https://github.com/mandiant/capa/pull/2742#issuecomment-3667086165
             #
