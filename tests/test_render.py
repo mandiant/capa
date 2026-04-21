@@ -20,6 +20,7 @@ import fixtures
 
 import capa.rules
 import capa.render.utils
+import capa.render.default
 import capa.features.file
 import capa.features.insn
 import capa.render.default
