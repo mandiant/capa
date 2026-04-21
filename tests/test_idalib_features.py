@@ -77,12 +77,5 @@ def test_idalib_features(feature_fixture):
             # idalib for IDA 9.0 doesn't support argv arguments, so we can't ask that resources are loaded
             pytest.xfail("idalib 9.0 does not support loading resource segments")
 
-    try:
-        extractor = fixtures.get_idalib_extractor(feature_fixture.sample_path)
+    with fixtures.get_idalib_extractor(feature_fixture.sample_path) as extractor:
         fixtures.run_feature_fixture(extractor, feature_fixture)
-    finally:
-        import idapro
-
-        logger.debug("closing database...")
-        idapro.close_database(save=False)
-        logger.debug("closed database.")

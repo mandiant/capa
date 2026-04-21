@@ -940,7 +940,27 @@ def _fixup_idalib(path: Path, extractor):
         remove_library_id_flag(0x14004B4F0)
 
 
+IDA_UNPACKED_EXTENSIONS = (".id0", ".id1", ".id2", ".nam", ".til")
+
+
+def _check_stale_idalib_files(path: Path):
+    i64_path = Path(str(path) + ".i64")
+    for ext in IDA_UNPACKED_EXTENSIONS:
+        component = i64_path.with_suffix(ext)
+        if component.exists():
+            stale = ", ".join(i64_path.with_suffix(e).name for e in IDA_UNPACKED_EXTENSIONS)
+            raise RuntimeError(
+                f"stale IDA database component files detected (e.g., {component.name}). "
+                f"a previous analysis was likely interrupted. "
+                f"remove files like {stale} from {path.parent} before re-running tests."
+            )
+
+
+@contextlib.contextmanager
 def get_idalib_extractor(path: Path):
+    import shutil
+    import tempfile
+
     import capa.features.extractors.ida.extractor
     import capa.features.extractors.ida.idalib as idalib
 
@@ -950,27 +970,58 @@ def get_idalib_extractor(path: Path):
     if not idalib.load_idalib():
         raise RuntimeError("failed to load IDA idalib module.")
 
+    _check_stale_idalib_files(path)
+
     import idapro
     import ida_auto
 
-    logger.debug("idalib: opening database...")
-    idapro.enable_console_messages(False)
+    i64_path = Path(str(path) + ".i64")
+    had_i64 = i64_path.exists()
 
-    ret = idapro.open_database(
-        str(path),
-        run_auto_analysis=True,
-        args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
-    )
-    if ret != 0:
-        raise RuntimeError("failed to analyze input file")
+    with tempfile.TemporaryDirectory(prefix="capa-idalib-") as tmp:
+        tmp_dir = Path(tmp)
+        tmp_sample = tmp_dir / path.name
+        shutil.copy2(path, tmp_sample)
 
-    logger.debug("idalib: waiting for analysis...")
-    ida_auto.auto_wait()
-    logger.debug("idalib: opened database.")
+        if had_i64:
+            shutil.copy2(i64_path, tmp_dir / i64_path.name)
 
-    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
-    _fixup_idalib(path, extractor)
-    return extractor
+        logger.debug("idalib: opening database...")
+        idapro.enable_console_messages(False)
+
+        # -R (load resources) is only valid when creating a new database.
+        # when reopening an existing .i64, IDA rejects it.
+        if had_i64:
+            args = "-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+        else:
+            args = "-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+
+        ret = idapro.open_database(
+            str(tmp_sample),
+            run_auto_analysis=True,
+            args=args,
+        )
+        if ret != 0:
+            raise RuntimeError("failed to analyze input file")
+
+        logger.debug("idalib: waiting for analysis...")
+        ida_auto.auto_wait()
+        logger.debug("idalib: opened database.")
+
+        extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+        _fixup_idalib(path, extractor)
+
+        try:
+            yield extractor
+        finally:
+            logger.debug("closing database...")
+            idapro.close_database(save=(not had_i64))
+            logger.debug("closed database.")
+
+            if not had_i64:
+                tmp_i64 = tmp_dir / i64_path.name
+                if tmp_i64.exists():
+                    shutil.copy2(tmp_i64, i64_path)
 
 
 # used by both:
