@@ -1123,7 +1123,14 @@
       "file": "bb38149.elf",
       "location": "file",
       "feature": "section: .dynamic",
-      "explanation": "stripped ELF section promoted into the shared presence fixture"
+      "explanation": "stripped ELF section promoted into the shared presence fixture",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "xfail",
+          "reason": "IDA maps this stripped ELF from program headers, not section headers, so .dynamic is subsumed into a LOAD segment"
+        }
+      ]
     },
     {
       "file": "79abd",
