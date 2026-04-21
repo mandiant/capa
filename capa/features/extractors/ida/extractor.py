@@ -16,19 +16,19 @@ from typing import Iterator
 
 import idaapi
 
-import capa.features.extractors.ida.basicblock
-import capa.features.extractors.ida.file
-import capa.features.extractors.ida.function
-import capa.features.extractors.ida.global_
-import capa.features.extractors.ida.insn
 import capa.ida.helpers
-from capa.features.address import AbsoluteVirtualAddress, Address
+import capa.features.extractors.ida.file
+import capa.features.extractors.ida.insn
+import capa.features.extractors.ida.global_
+import capa.features.extractors.ida.function
+import capa.features.extractors.ida.basicblock
 from capa.features.common import Feature
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import (
     BBHandle,
-    FunctionHandle,
     InsnHandle,
     SampleHashes,
+    FunctionHandle,
     StaticFeatureExtractor,
 )
 
@@ -43,9 +43,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
             )
         )
         self.global_features: list[tuple[Feature, Address]] = []
-        self.global_features.extend(
-            capa.features.extractors.ida.file.extract_file_format()
-        )
+        self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
 
@@ -69,9 +67,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         f = idaapi.get_func(ea)
         return FunctionHandle(address=AbsoluteVirtualAddress(f.start_ea), inner=f)
 
-    def extract_function_features(
-        self, fh: FunctionHandle
-    ) -> Iterator[tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
@@ -80,19 +76,13 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         for bb in ida_helpers.get_function_blocks(fh.inner):
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start_ea), inner=bb)
 
-    def extract_basic_block_features(
-        self, fh: FunctionHandle, bbh: BBHandle
-    ) -> Iterator[tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.basicblock.extract_features(fh, bbh)
 
-    def get_instructions(
-        self, fh: FunctionHandle, bbh: BBHandle
-    ) -> Iterator[InsnHandle]:
+    def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         import capa.features.extractors.ida.helpers as ida_helpers
 
-        for insn in ida_helpers.get_instructions_in_range(
-            bbh.inner.start_ea, bbh.inner.end_ea
-        ):
+        for insn in ida_helpers.get_instructions_in_range(bbh.inner.start_ea, bbh.inner.end_ea):
             yield InsnHandle(address=AbsoluteVirtualAddress(insn.ea), inner=insn)
 
     def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):

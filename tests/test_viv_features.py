@@ -14,7 +14,6 @@
 import fixtures
 
 
-
 @fixtures.parametrize_backend_feature_fixtures(
     fixtures.BackendFeaturePolicy(
         name="viv",

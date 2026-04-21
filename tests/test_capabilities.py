@@ -17,6 +17,7 @@ import textwrap
 import capa.rules
 import capa.features.common
 import fixtures
+
 import capa.capabilities.common
 import capa.features.extractors.null
 from capa.features.address import AbsoluteVirtualAddress

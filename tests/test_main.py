@@ -82,7 +82,7 @@ def test_main_non_ascii_filename_nonexistent(tmpdir, caplog):
 
 def test_main_shellcode():
     path = str(fixtures.CD / "./data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32")
-    
+
     assert capa.main.main([path, "-vv", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-v", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-j", "-f", "sc32"]) == 0
@@ -294,7 +294,11 @@ def extract_cape_report(tmp_path: Path, gz: Path) -> Path:
 
 
 def test_main_cape1(tmp_path):
-    path = extract_cape_report(tmp_path, fixtures.CD / "./data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz")
+    path = extract_cape_report(
+        tmp_path,
+        fixtures.CD
+        / "./data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz",
+    )
 
     # TODO(williballenthin): use default rules set
     # https://github.com/mandiant/capa/pull/1696
@@ -343,5 +347,8 @@ def test_main_cape1(tmp_path):
 
 def test_main_cape_gzip():
     # tests successful execution of .json.gz
-    path = str(fixtures.CD / "./data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz")
+    path = str(
+        fixtures.CD
+        / "./data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )
     assert capa.main.main([path]) == 0

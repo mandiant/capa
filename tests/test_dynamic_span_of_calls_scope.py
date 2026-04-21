@@ -65,7 +65,14 @@ def filter_threads(extractor: DynamicFeatureExtractor, ppid: int, pid: int, tid:
 
 @lru_cache(maxsize=1)
 def get_0000a657_thread3064():
-    extractor = fixtures.get_cape_extractor(fixtures.CD / "data" / "dynamic" / "cape" / "v2.2" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz")
+    extractor = fixtures.get_cape_extractor(
+        fixtures.CD
+        / "data"
+        / "dynamic"
+        / "cape"
+        / "v2.2"
+        / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )
     extractor = filter_threads(extractor, 2456, 3052, 3064)
     return extractor
 
