@@ -817,7 +817,14 @@ def build_feature(
                     assert isinstance(value, str)
                     return Feature(value, description=description)
 
-                case capa.features.common.StringFactory | capa.features.common.Substring:
+                case capa.features.common.StringFactory:
+                    assert isinstance(value, str)
+                    return cast(
+                        capa.features.common.Feature,
+                        capa.features.common.StringFactory(value, description=description),
+                    )
+
+                case capa.features.common.Substring:
                     assert isinstance(value, str)
                     return Feature(value, description=description)
 

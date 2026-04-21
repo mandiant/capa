@@ -12,32 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import collections
-import contextlib
-import functools
 import json
 import logging
-from dataclasses import dataclass, field
+import functools
+import contextlib
+import collections
+from typing import Union, Literal, Optional
 from pathlib import Path
-from typing import Literal, Optional, Union
+from dataclasses import field, dataclass
 
 import pytest
 
+import capa.rules
 import capa.engine as ceng
 import capa.loader
-import capa.rules
 import capa.render.result_document
+from capa.features.common import OS_AUTO, FORMAT_AUTO, Feature
 from capa.features.address import Address
-from capa.features.common import FORMAT_AUTO, OS_AUTO, Feature
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
-    DynamicFeatureExtractor,
-    FunctionHandle,
     InsnHandle,
-    ProcessHandle,
-    StaticFeatureExtractor,
     ThreadHandle,
+    ProcessHandle,
+    FunctionHandle,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
 )
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
@@ -207,16 +207,12 @@ def load_fixture_file_references() -> dict[str, FixtureFile]:
         for entry in data["files"]:
             key = entry["key"]
             if key in files:
-                raise ValueError(
-                    f"duplicate fixture file key {key!r} in {file_sources[key]} and {manifest_path}"
-                )
+                raise ValueError(f"duplicate fixture file key {key!r} in {file_sources[key]} and {manifest_path}")
 
             tags = frozenset(entry.get("tags", []))
             unknown = tags - KNOWN_FIXTURE_TAGS
             if unknown:
-                raise ValueError(
-                    f"unknown fixture tag(s) on file {key!r} in {manifest_path}: {sorted(unknown)}"
-                )
+                raise ValueError(f"unknown fixture tag(s) on file {key!r} in {manifest_path}: {sorted(unknown)}")
             files[key] = FixtureFile(
                 key=key,
                 path=CD / entry["path"],
@@ -320,14 +316,12 @@ def _fixture_test_id(fixture: FeatureFixture) -> str:
 
     mirrors the legacy `make_test_id` shape: sample-location-statement-expected.
     """
-    return "-".join(
-        [
-            fixture.sample_key,
-            fixture.location,
-            str(fixture.statement),
-            str(fixture.expected),
-        ]
-    )
+    return "-".join([
+        fixture.sample_key,
+        fixture.location,
+        str(fixture.statement),
+        str(fixture.expected),
+    ])
 
 
 def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
@@ -349,9 +343,7 @@ def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
             elif mark.mark == "xfail":
                 marks.append(pytest.mark.xfail(reason=mark.reason))
             else:
-                raise ValueError(
-                    f"unknown mark {mark.mark!r} for backend {policy.name!r}"
-                )
+                raise ValueError(f"unknown mark {mark.mark!r} for backend {policy.name!r}")
         params.append(pytest.param(fixture, marks=marks, id=_fixture_test_id(fixture)))
     return pytest.mark.parametrize("feature_fixture", params)
 
@@ -419,7 +411,7 @@ def extract_global_features(extractor):
     return features
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
@@ -540,9 +532,7 @@ def get_basic_block(extractor, fh: FunctionHandle, va: int) -> BBHandle:
     raise ValueError("basic block not found")
 
 
-def get_instruction(
-    extractor, fh: FunctionHandle, bbh: BBHandle, va: int
-) -> InsnHandle:
+def get_instruction(extractor, fh: FunctionHandle, bbh: BBHandle, va: int) -> InsnHandle:
     for ih in extractor.get_instructions(fh, bbh):
         if isinstance(extractor, DnfileFeatureExtractor):
             addr = ih.inner.offset
@@ -709,26 +699,20 @@ def get_result_doc(path: Path):
 @pytest.fixture
 def pma0101_rd():
     # python -m capa.main tests/data/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ --json > tests/data/rd/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
 
 
 @pytest.fixture
 def dotnet_1c444e_rd():
     # .NET sample
     # python -m capa.main tests/data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_ --json > tests/data/rd/1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
 
 
 @pytest.fixture
 def a3f3bbc_rd():
     # python -m capa.main tests/data/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_ --json > tests/data/rd/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
 
 
 @pytest.fixture
@@ -746,9 +730,7 @@ def al_khaserx64_rd():
 @pytest.fixture
 def a076114_rd():
     # python -m capa.main tests/data/0761142efbda6c4b1e801223de723578.dll_ --json > tests/data/rd/0761142efbda6c4b1e801223de723578.dll_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")
 
 
 @pytest.fixture
@@ -756,10 +738,7 @@ def dynamic_a0000a6_rd():
     # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
     # gzip tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
     return get_result_doc(
-        CD
-        / "data"
-        / "rd"
-        / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     )
 
 
@@ -771,8 +750,8 @@ z9324 = CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
 # as well as some fixtures below
 @functools.lru_cache(maxsize=1)
 def get_viv_extractor(path: Path):
-    import capa.features.extractors.viv.extractor
     import capa.main
+    import capa.features.extractors.viv.extractor
 
     sigpaths = [
         CD / "data" / "sigs" / "test_aulldiv.pat",
@@ -790,13 +769,11 @@ def get_viv_extractor(path: Path):
         vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
 
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(
-        vw, path, OS_AUTO
-    )
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
 
     #
     # fixups to overcome differences between backends
-    # 
+    #
     if "3b13b" in path.name:
         # vivisect only recognizes calling thunk function at 0x10001573
         extractor.vw.makeFunction(0x10006860)
@@ -961,8 +938,8 @@ def get_idalib_extractor(path: Path):
     import shutil
     import tempfile
 
-    import capa.features.extractors.ida.extractor
     import capa.features.extractors.ida.idalib as idalib
+    import capa.features.extractors.ida.extractor
 
     if not idalib.has_idalib():
         raise RuntimeError("cannot find IDA idalib module.")
@@ -1034,11 +1011,7 @@ def get_binexport_extractor(path):
 
     be2 = capa.features.extractors.binexport2.get_binexport2(path)
     search_paths = [CD / "data", CD / "data" / "aarch64"]
-    path = capa.features.extractors.binexport2.get_sample_from_binexport2(
-        path, be2, search_paths
-    )
+    path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
     buf = path.read_bytes()
 
-    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(
-        be2, buf
-    )
+    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)

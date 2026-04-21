@@ -14,8 +14,8 @@
 
 import logging
 
-import fixtures
 import pytest
+import fixtures
 
 import capa.main
 
@@ -30,9 +30,7 @@ try:
     try:
         binaryninja.load(source=b"\x90")
     except RuntimeError:
-        logger.warning(
-            "Binary Ninja license is not valid, provide via $BN_LICENSE or license.dat"
-        )
+        logger.warning("Binary Ninja license is not valid, provide via $BN_LICENSE or license.dat")
     else:
         binja_present = True
 except ImportError:

@@ -16,7 +16,6 @@ import io
 from pathlib import Path
 
 import fixtures
-
 from elftools.elf.elffile import ELFFile
 
 from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
