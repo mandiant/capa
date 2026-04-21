@@ -27,6 +27,12 @@ def test_vmray_features(feature_fixture):
 
 def test_vmray_processes():
     # see #2394
-    path = fixtures.CD / "data" / "dynamic" / "vmray" / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
+    path = (
+        fixtures.CD
+        / "data"
+        / "dynamic"
+        / "vmray"
+        / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
+    )
     vmre = fixtures.get_vmray_extractor(path)
     assert len(vmre.analysis.monitor_processes) == 9
