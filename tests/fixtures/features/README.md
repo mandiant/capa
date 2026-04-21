@@ -78,7 +78,6 @@ Examples include:
 - `elf`
 - `dynamic`
 - `flirt`
-- `symtab`
 - `binja-db`
 - `binexport`
 - `aarch64`
@@ -145,12 +144,16 @@ Module-level availability checks are still allowed. runtime-specific hooks are a
 
 Known backend bugs should be represented in the fixture manifests through backend-specific marks.
 
-Backends should not usually edit the shared JSON manifests just to avoid a fixture. they should prefer selecting or excluding fixtures through backend policy.
+Backends should not usually edit the shared JSON manifests just to avoid a fixture. They should prefer selecting or excluding fixtures through backend policy.
 
 The main reason to keep marks in JSON is to record known exceptions such as:
 
 - a backend-specific `xfail`
 - a backend-specific `skip`
+
+Ideally, this information is better to put in the backend-specific test code (like test_viv_features.py);
+however, in order to triage one of these failures, you have to go look at the json file anyways, and its
+easier to see the mark next to the thing that fails.
 
 ## Expected contributor workflow
 

@@ -25,7 +25,6 @@ import pytest
 
 import capa.rules
 import capa.engine as ceng
-import capa.loader
 import capa.render.result_document
 from capa.features.common import OS_AUTO, FORMAT_AUTO, Feature
 from capa.features.address import Address
@@ -44,8 +43,7 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
 FIXTURE_MANIFEST_DIR = CD / "fixtures" / "features"
-DOTNET_DIR = CD / "data" / "dotnet"
-DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
+DNFILE_TESTFILES = CD / "data" / "dotnet" / "dnfile-testfiles"
 
 
 def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
@@ -102,7 +100,6 @@ KNOWN_FIXTURE_TAGS: set[str] = (
         "dotnet",  # .NET format
         "elf",  # ELF format
         "flirt",  # requires FLIRT signature matching
-        "symtab",  # requires ELF symbol table parsing  TODO: can we remove this?
         "binja-db",  # Binary Ninja database format
         "binexport",  # BinExport2 format
         "aarch64",  # AArch64 architecture
@@ -364,44 +361,6 @@ def run_feature_fixture(
     else:
         msg = f"{fixture.statement} should not match in {fixture.location}"
     assert actual == fixture.expected, msg
-
-
-@contextlib.contextmanager
-def xfail(condition, reason: str = ""):
-    """
-    context manager that wraps a block that is expected to fail in some cases.
-    when it does fail (and is expected), then mark this as pytest.xfail.
-    if its unexpected, raise an exception, so the test fails.
-
-    example::
-
-        # this test:
-        #  - passes on Linux if foo() works
-        #  - fails  on Linux if foo() fails
-        #  - xfails on Windows if foo() fails
-        #  - fails  on Windows if foo() works
-        with xfail(sys.platform == "win32", reason="doesn't work on Windows"):
-            foo()
-    """
-    try:
-        # do the block
-        yield
-    except Exception:
-        if condition:
-            # we expected the test to fail, so raise and register this via pytest
-            pytest.xfail(reason or "")
-        else:
-            # we don't expect an exception, so the test should fail
-            raise
-    else:
-        if not condition:
-            # here we expect the block to run successfully,
-            # and we've received no exception,
-            # so this is good
-            pass
-        else:
-            # we expected an exception, but didn't find one. that's an error.
-            raise RuntimeError("expected to fail, but didn't")
 
 
 def extract_global_features(extractor):
@@ -671,11 +630,6 @@ def resolve_scope(scope):
         raise ValueError("unexpected scope fixture")
 
 
-@pytest.fixture
-def scope(request):
-    return resolve_scope(request.param)
-
-
 def make_test_id(values):
     return "-".join(map(str, values))
 
@@ -690,29 +644,6 @@ def parametrize(params, values, **kwargs):
     """
     ids = list(map(make_test_id, values))
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
-
-
-FEATURE_COUNT_TESTS_BE2_INTEL = [
-    (
-        "mimikatz",
-        "function=0x40105d,bb=0x401125,insn=0x401125",
-        capa.features.insn.Offset(0),
-        1,
-    ),
-    (
-        "mimikatz",
-        "function=0x40105d,bb=0x401125,insn=0x401125",
-        capa.features.insn.OperandOffset(1, 0),
-        1,
-    ),
-]
-
-
-def do_test_feature_count(get_extractor, sample, scope, feature, expected):
-    extractor = get_extractor(sample)
-    features = scope(extractor)
-    assert features.get(feature, set()) != set(), f"{feature} should be found in {scope.__name__}"
-    assert len(features[feature]) == expected, f"{feature} should be found {expected} times in {scope.__name__}"
 
 
 def get_result_doc(path: Path):
@@ -766,14 +697,13 @@ def dynamic_a0000a6_rd():
 
 
 PMA1601 = CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
-z9324 = CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
 
 
 # used by test_viv_features
 # as well as some fixtures below
 @functools.lru_cache(maxsize=1)
 def get_viv_extractor(path: Path):
-    import capa.main
+    import capa.loader
     import capa.features.extractors.viv.extractor
 
     sigpaths = [
@@ -809,7 +739,7 @@ def get_viv_extractor(path: Path):
 
 @pytest.fixture
 def z9324d_extractor():
-    return get_viv_extractor(z9324)
+    return get_viv_extractor(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 @pytest.fixture
@@ -902,6 +832,7 @@ def get_ghidra_extractor(path: Path):
     if not pyghidra.started():
         pyghidra.start()
 
+    import capa.loader
     import capa.features.extractors.ghidra.context
 
     if path in GHIDRA_CACHE:

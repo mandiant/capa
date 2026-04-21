@@ -21,11 +21,13 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
-import capa.rules
 import fixtures
 
+import capa.rules
+
 logger = logging.getLogger(__name__)
+
+CD = Path(__file__).resolve().parent
 
 
 def get_script_path(s: str):
