@@ -44,8 +44,7 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
 FIXTURE_MANIFEST_DIR = CD / "fixtures" / "features"
-DOTNET_DIR = CD / "data" / "dotnet"
-DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
+DNFILE_TESTFILES = CD / "data" / "dotnet" / "dnfile-testfiles"
 
 
 def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
@@ -366,44 +365,6 @@ def run_feature_fixture(
     assert actual == fixture.expected, msg
 
 
-@contextlib.contextmanager
-def xfail(condition, reason: str = ""):
-    """
-    context manager that wraps a block that is expected to fail in some cases.
-    when it does fail (and is expected), then mark this as pytest.xfail.
-    if its unexpected, raise an exception, so the test fails.
-
-    example::
-
-        # this test:
-        #  - passes on Linux if foo() works
-        #  - fails  on Linux if foo() fails
-        #  - xfails on Windows if foo() fails
-        #  - fails  on Windows if foo() works
-        with xfail(sys.platform == "win32", reason="doesn't work on Windows"):
-            foo()
-    """
-    try:
-        # do the block
-        yield
-    except Exception:
-        if condition:
-            # we expected the test to fail, so raise and register this via pytest
-            pytest.xfail(reason or "")
-        else:
-            # we don't expect an exception, so the test should fail
-            raise
-    else:
-        if not condition:
-            # here we expect the block to run successfully,
-            # and we've received no exception,
-            # so this is good
-            pass
-        else:
-            # we expected an exception, but didn't find one. that's an error.
-            raise RuntimeError("expected to fail, but didn't")
-
-
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -671,11 +632,6 @@ def resolve_scope(scope):
         raise ValueError("unexpected scope fixture")
 
 
-@pytest.fixture
-def scope(request):
-    return resolve_scope(request.param)
-
-
 def make_test_id(values):
     return "-".join(map(str, values))
 
@@ -692,58 +648,7 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-def get_result_doc(path: Path):
-    return capa.render.result_document.ResultDocument.from_file(path)
-
-
-@pytest.fixture
-def pma0101_rd():
-    # python -m capa.main tests/data/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ --json > tests/data/rd/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_.json
-    return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
-
-
-@pytest.fixture
-def dotnet_1c444e_rd():
-    # .NET sample
-    # python -m capa.main tests/data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_ --json > tests/data/rd/1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
-
-
-@pytest.fixture
-def a3f3bbc_rd():
-    # python -m capa.main tests/data/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_ --json > tests/data/rd/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
-
-
-@pytest.fixture
-def al_khaserx86_rd():
-    # python -m capa.main tests/data/al-khaser_x86.exe_ --json > tests/data/rd/al-khaser_x86.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "al-khaser_x86.exe_.json")
-
-
-@pytest.fixture
-def al_khaserx64_rd():
-    # python -m capa.main tests/data/al-khaser_x64.exe_ --json > tests/data/rd/al-khaser_x64.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "al-khaser_x64.exe_.json")
-
-
-@pytest.fixture
-def a076114_rd():
-    # python -m capa.main tests/data/0761142efbda6c4b1e801223de723578.dll_ --json > tests/data/rd/0761142efbda6c4b1e801223de723578.dll_.json
-    return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")
-
-
-@pytest.fixture
-def dynamic_a0000a6_rd():
-    # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
-    # gzip tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
-    return get_result_doc(
-        CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
-    )
-
-
 PMA1601 = CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
-z9324 = CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
 
 
 # used by test_viv_features
@@ -786,7 +691,7 @@ def get_viv_extractor(path: Path):
 
 @pytest.fixture
 def z9324d_extractor():
-    return get_viv_extractor(z9324)
+    return get_viv_extractor(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 @pytest.fixture
