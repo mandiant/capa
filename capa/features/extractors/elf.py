@@ -1552,7 +1552,7 @@ def detect_elf_os(f) -> str:
         logger.debug("guess: vdso strings: %s", vdso_guess)
     except Exception as e:
         logger.warning("Error guessing OS from vdso strings: %s", e)
-        symtab_guess = None
+        vdso_guess = None
 
     ret = None
 
