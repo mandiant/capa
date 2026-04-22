@@ -245,3 +245,10 @@ def test_render_vverbose_feature(feature, expected):
 
     output = capture.get().strip()
     assert output == expected
+
+
+def test_render_default_returns_non_empty(pma0101_rd):
+    output = capa.render.default.render_default(pma0101_rd)
+    assert output != ""
+    assert "md5" in output
+    assert "290934c61de9176ad682ffdd65f0a669" in output
