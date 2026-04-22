@@ -31,7 +31,7 @@ from capa.features.common import (
     Feature,
     Characteristic,
 )
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
@@ -181,5 +181,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_embedded_pe,
     extract_file_function_names,
-    extract_file_format,
 )

@@ -63,7 +63,6 @@ FILE_HANDLERS = (
     extract_file_import_names,
     extract_file_function_names,
     extract_file_strings,
-    extract_file_format,
     extract_file_mixed_mode_characteristic_features,
     extract_file_namespace_features,
     extract_file_class_features,

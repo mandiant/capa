@@ -241,5 +241,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
-    extract_file_format,
 )

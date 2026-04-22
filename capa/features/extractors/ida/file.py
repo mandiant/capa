@@ -212,5 +212,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_embedded_pe,
     extract_file_function_names,
-    extract_file_format,
 )

@@ -19,9 +19,13 @@ import pytest
 import fixtures
 from dncil.clr.token import Token
 
+from capa.features.common import Format
 from capa.features.extractors.dnfile.insn import get_callee
 from capa.features.extractors.dnfile.helpers import get_dotnet_table_row, calculate_dotnet_token_value
-from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
+from capa.features.extractors.dnfile.extractor import (
+    DnfileFeatureExtractor,
+    DnFileFeatureExtractorCache,
+)
 
 CD = Path(__file__).resolve().parent
 
@@ -79,6 +83,22 @@ def test_get_dotnet_table_row_out_of_bounds():
     table = pe.net.mdtables.tables.get(dnfile.mdtable.TypeDef.number)
     assert table is not None
     assert get_dotnet_table_row(pe, dnfile.mdtable.TypeDef.number, len(table.rows) + 1) is None
+
+
+def test_no_duplicate_format_feature_in_dnfile_extractor():
+    path = fixtures.DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
+    if not path.exists():
+        pytest.skip("test data not available")
+
+    extractor = DnfileFeatureExtractor(path)
+
+    format_values = [
+        f.value
+        for f, _ in list(extractor.extract_file_features()) + list(extractor.extract_global_features())
+        if isinstance(f, Format)
+    ]
+
+    assert len(format_values) == len(set(format_values)), f"duplicate Format features: {format_values}"
 
 
 def test_get_callee_invalid_methodspec_token_returns_none():
