@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: address classes __eq__ and __lt__ assert on type @williballenthin #3021
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
