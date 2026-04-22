@@ -14,8 +14,12 @@
 
 import textwrap
 
+import capa.rules
+import capa.features.common
 import capa.capabilities.common
-from capa.features.extractors.base_extractor import FunctionFilter
+import capa.features.extractors.null
+from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import SampleHashes, FunctionFilter
 
 
 def test_match_across_scopes_file_function(z9324d_extractor):
@@ -301,3 +305,32 @@ def test_instruction_subscope(z9324d_extractor):
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000 on i386" in capabilities.matches
     assert 0x406F60 in {result[0] for result in capabilities.matches["push 1000 on i386"]}
+
+
+def test_find_file_capabilities_preserves_address_zero():
+    feature = capa.features.common.Characteristic("embedded pe")
+    addr = AbsoluteVirtualAddress(0)
+    extractor = capa.features.extractors.null.NullStaticFeatureExtractor(
+        base_address=AbsoluteVirtualAddress(0),
+        sample_hashes=SampleHashes(md5="a" * 32, sha1="b" * 40, sha256="c" * 64),
+        global_features=[],
+        file_features=[(addr, feature)],
+        functions={},
+    )
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: embedded pe
+                        scopes:
+                            static: file
+                            dynamic: process
+                    features:
+                        - characteristic: embedded pe
+            """)
+        )
+    ])
+    caps = capa.capabilities.common.find_file_capabilities(rules, extractor, {})
+    assert feature in caps.features
+    assert addr in caps.features[feature]

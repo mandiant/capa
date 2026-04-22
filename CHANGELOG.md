@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: capabilities/common.py: if va: drops address 0x0 @williballenthin #3015
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
