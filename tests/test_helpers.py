@@ -13,10 +13,19 @@
 # limitations under the License.
 
 
+import gzip
 import codecs
+from pathlib import Path
+
+import pytest
 
 import capa.helpers
 from capa.features.extractors import helpers
+
+CD = Path(__file__).resolve().parent
+DRAKVUF_LOG_GZ = (
+    CD / "data" / "dynamic" / "drakvuf" / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
+)
 
 
 def test_all_zeros():
@@ -77,3 +86,23 @@ def test_generate_symbols():
 def test_is_dev_environment():
     # testing environment should be a dev environment
     assert capa.helpers.is_dev_environment() is True
+
+
+def test_load_one_jsonl_from_path_gz():
+    result = capa.helpers.load_one_jsonl_from_path(DRAKVUF_LOG_GZ)
+    assert isinstance(result, dict)
+    assert "Plugin" in result
+
+
+def test_load_one_jsonl_from_path_plain(tmp_path):
+    p = tmp_path / "sample.jsonl"
+    p.write_bytes(b'{"key": "value"}\n{"key": "second"}\n')
+    result = capa.helpers.load_one_jsonl_from_path(p)
+    assert result == {"key": "value"}
+
+
+def test_load_one_jsonl_from_path_empty_raises(tmp_path):
+    p = tmp_path / "empty.jsonl"
+    p.write_bytes(b"")
+    with pytest.raises(StopIteration):
+        capa.helpers.load_one_jsonl_from_path(p)
