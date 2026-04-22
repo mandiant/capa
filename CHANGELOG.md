@@ -27,6 +27,8 @@
 
 - fix: optimizer doesn't recurse into And/Or/Some children @williballenthin #3020
 
+- fix: address classes __eq__ and __lt__ assert on type @williballenthin #3021
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

@@ -68,11 +68,13 @@ class ProcessAddress(Address):
         return hash((self.ppid, self.pid))
 
     def __eq__(self, other):
-        assert isinstance(other, ProcessAddress)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
         return (self.ppid, self.pid) == (other.ppid, other.pid)
 
     def __lt__(self, other):
-        assert isinstance(other, ProcessAddress)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
         return (self.ppid, self.pid) < (other.ppid, other.pid)
 
 
@@ -91,11 +93,13 @@ class ThreadAddress(Address):
         return hash((self.process, self.tid))
 
     def __eq__(self, other):
-        assert isinstance(other, ThreadAddress)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
         return (self.process, self.tid) == (other.process, other.tid)
 
     def __lt__(self, other):
-        assert isinstance(other, ThreadAddress)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
         return (self.process, self.tid) < (other.process, other.tid)
 
 
@@ -114,10 +118,13 @@ class DynamicCallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (other.thread, other.id)
+        if not isinstance(other, DynamicCallAddress):
+            return NotImplemented
+        return (self.thread, self.id) == (other.thread, other.id)
 
     def __lt__(self, other):
-        assert isinstance(other, DynamicCallAddress)
+        if not isinstance(other, DynamicCallAddress):
+            return NotImplemented
         return (self.thread, self.id) < (other.thread, other.id)
 
 
