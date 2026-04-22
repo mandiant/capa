@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: use f-string in binexport2 extractor so unexpected global feature value appears in ValueError message @williballenthin
 - fix: correct scale/displacement expressions in get_operand_phrase_info 5-expression branch (used expression3 operator instead of expression4 value) @williballenthin
 - fix: use HasField instead of truthiness in _index_vertex_edges so call-graph edges to/from vertex 0 are not silently dropped @williballenthin
 - fix: change bare `if` to `elif` in get_backend_from_cli DRAKVUF branch to complete the if/elif chain @williballenthin
