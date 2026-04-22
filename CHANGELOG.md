@@ -26,6 +26,7 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: add missing ELF branch in get_format_from_extension for .elf_ files @williballenthin #3031
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
+- fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 
 ### capa Explorer Web
 
