@@ -24,17 +24,14 @@ import idaapi
 import ida_kernwin
 import ida_settings
 
-import capa.main
 import capa.rules
 import capa.engine
 import capa.loader
 import capa.version
 import capa.ida.helpers
-import capa.render.json
 import capa.features.common
 import capa.capabilities.common
 import capa.render.result_document
-import capa.features.extractors.ida.extractor
 from capa.rules import Rule
 from capa.engine import FeatureSet
 from capa.rules.cache import compute_ruleset_cache_identifier
