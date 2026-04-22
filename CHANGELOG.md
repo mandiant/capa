@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: EXTENSIONS_ELF never referenced @williballenthin #3031
 
 ### capa Explorer Web
 

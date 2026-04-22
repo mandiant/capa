@@ -65,7 +65,6 @@ EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 # VMRay (.zip)
 EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz", ".zip")
 EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
-EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 EXTENSIONS_BINJA_DB = "bndb"
 
