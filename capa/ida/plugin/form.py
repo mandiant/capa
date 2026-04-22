@@ -1011,12 +1011,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         update_wait_box("extracting features")
 
         # resolve function selected in disassembly view
+        f = None
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f is not None:
                 self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
         except Exception as e:
-            logger.exception("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e)
+            addr = f.start_ea if f else idaapi.get_screen_ea()
+            logger.exception("Failed to resolve function at address 0x%X (error: %s)", addr, e)
             return False
 
         if ida_kernwin.user_cancelled():
