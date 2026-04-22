@@ -774,7 +774,8 @@ def build_statements(d, scopes: Scopes):
                 value, description = parse_description(arg, term)
 
                 if term == "api":
-                    assert isinstance(value, str)
+                    if not isinstance(value, str):
+                        raise InvalidRule(f"unexpected {term} value type: {type(value)}")
                     value = trim_dll_part(value)
 
                 feature = Feature(value, description=description)  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
@@ -854,7 +855,8 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule(f"unexpected {key} access {access}")
 
         value, description = parse_description(d[key], key, d.get("description"))
-        assert isinstance(value, str)
+        if not isinstance(value, str):
+            raise InvalidRule(f"unexpected {key} value type: {type(value)}")
         try:
             feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
@@ -869,7 +871,8 @@ def build_statements(d, scopes: Scopes):
         except ValueError:
             raise InvalidRule(f"unexpected COM type: {com_type_name}")
         value, description = parse_description(d[key], key, d.get("description"))
-        assert isinstance(value, str)
+        if not isinstance(value, str):
+            raise InvalidRule(f"unexpected {key} value type: {type(value)}")
         return translate_com_feature(value, com_type)
 
     else:
@@ -877,7 +880,8 @@ def build_statements(d, scopes: Scopes):
         value, description = parse_description(d[key], key, d.get("description"))
 
         if key == "api":
-            assert isinstance(value, str)
+            if not isinstance(value, str):
+                raise InvalidRule(f"unexpected {key} value type: {type(value)}")
             value = trim_dll_part(value)
 
         try:
