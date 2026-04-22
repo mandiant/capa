@@ -31,7 +31,12 @@ from capa.features.common import (
     Feature,
     Characteristic,
 )
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    FileOffsetAddress,
+    AbsoluteVirtualAddress,
+)
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
@@ -62,7 +67,10 @@ def extract_file_export_names(bv: BinaryView) -> Iterator[tuple[Feature, Address
             name = sym.short_name
             if name.startswith("__forwarder_name(") and name.endswith(")"):
                 yield Export(name[17:-1]), AbsoluteVirtualAddress(sym.address)
-                yield Characteristic("forwarded export"), AbsoluteVirtualAddress(sym.address)
+                yield (
+                    Characteristic("forwarded export"),
+                    AbsoluteVirtualAddress(sym.address),
+                )
             else:
                 yield Export(name), AbsoluteVirtualAddress(sym.address)
 
@@ -131,7 +139,10 @@ def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Addre
     """
     for sym_name in bv.symbols:
         for sym in bv.symbols[sym_name]:
-            if sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.FunctionSymbol]:
+            if sym.type not in [
+                SymbolType.LibraryFunctionSymbol,
+                SymbolType.FunctionSymbol,
+            ]:
                 continue
 
             name = sym.short_name
@@ -181,5 +192,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_embedded_pe,
     extract_file_function_names,
-    extract_file_format,
 )

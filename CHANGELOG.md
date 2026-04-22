@@ -50,6 +50,7 @@
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove extract_file_format from FILE_HANDLERS in five extractors to prevent duplicate Format features @williballenthin (SURF-51)
 - fix: replace assert with guard so 2-operand ARM ADD/SUB instructions are skipped instead of crashing @williballenthin (SURF-50)
 - fix: omit trailing ` -> ` suffix in syscall names when there is no return value @williballenthin (SURF-49)
 - fix: use AbsoluteVirtualAddress instead of FileOffsetAddress for string addresses in Ghidra and IDA file extractors @williballenthin (SURF-48)
