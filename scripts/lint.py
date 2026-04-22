@@ -161,15 +161,23 @@ class MissingStaticScope(Lint):
     recommendation = "Add a static scope for the rule (file, function, basic block, instruction, or unsupported)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "static" not in rule.meta.get("scopes")
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return "static" not in scopes
 
 
 class MissingDynamicScope(Lint):
     name = "missing dynamic scope"
-    recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unsupported)"
+    recommendation = (
+        "Add a dynamic scope for the rule (file, process, thread, call, or unsupported)"
+    )
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "dynamic" not in rule.meta.get("scopes")
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return "dynamic" not in scopes
 
 
 class InvalidStaticScope(Lint):
