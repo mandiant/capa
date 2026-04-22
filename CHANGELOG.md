@@ -48,6 +48,8 @@
 
 - fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
 
+- fix: loader.py reads entire file for magic byte check @williballenthin #3029
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
