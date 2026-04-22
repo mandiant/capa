@@ -102,9 +102,6 @@ class Result:
     def __bool__(self):
         return self.success
 
-    def __nonzero__(self):
-        return self.success
-
     def __str__(self):
         # as this object isn't user facing, this formatting is just to help with debugging
 
