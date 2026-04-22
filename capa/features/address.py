@@ -17,20 +17,20 @@ import abc
 
 class Address(abc.ABC):
     @abc.abstractmethod
-    def __eq__(self, other): ...
+    def __eq__(self, other) -> bool: ...
 
     @abc.abstractmethod
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         # implement < so that addresses can be sorted from low to high
         ...
 
     @abc.abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         # implement hash so that addresses can be used in sets and dicts
         ...
 
     @abc.abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         # implement repr to help during debugging
         ...
 
