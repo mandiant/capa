@@ -204,7 +204,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_search_bar: QtWidgets.QLineEdit
         self.view_tree: CapaExplorerQtreeView
         self.view_tabs: QtWidgets.QTabWidget
-        self.view_tab_rulegen = None
         self.view_status_label: QtWidgets.QLabel
         self.view_status_label_analysis_cache: str = ""
         self.view_status_label_rulegen_cache: str = ""
