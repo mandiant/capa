@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: invert scope filter in import-to-ida.py so function-scope rules are annotated instead of skipped @williballenthin (SURF-81)
 - fix: remove dead string literal in test_detect_duplicate_features @williballenthin (SURF-80)
 - fix: remove duplicate Rule.from_yaml call in test_scope_instruction_description @williballenthin (SURF-79)
 - fix: remove unused imports of capa.helpers, capa.features.basicblock, and redundant bare capa.features.extractors.base_extractor from test_freeze_dynamic.py @williballenthin (SURF-78)
