@@ -46,6 +46,7 @@
 - fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
+- fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 
 ### capa Explorer Web
 
