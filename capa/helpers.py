@@ -58,16 +58,16 @@ from capa.features.common import (
     Format,
 )
 
-EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
-EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_SHELLCODE_32 = (".sc32", ".raw32")
+EXTENSIONS_SHELLCODE_64 = (".sc64", ".raw64")
 # CAPE (.json, .json_, .json.gz)
 # DRAKVUF (.log, .log.gz)
 # VMRay (.zip)
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz", ".zip")
-EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
-EXTENSIONS_ELF = "elf_"
-EXTENSIONS_FREEZE = "frz"
-EXTENSIONS_BINJA_DB = "bndb"
+EXTENSIONS_DYNAMIC = (".json", ".json_", ".json.gz", ".log", ".log.gz", ".zip")
+EXTENSIONS_BINEXPORT2 = (".BinExport", ".BinExport2")
+EXTENSIONS_ELF = ".elf_"
+EXTENSIONS_FREEZE = ".frz"
+EXTENSIONS_BINJA_DB = ".bndb"
 
 logger = logging.getLogger("capa")
 
@@ -203,7 +203,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
 
 
 def get_format_from_report(sample: Path) -> str:
-    if sample.name.endswith((".log", "log.gz")):
+    if sample.name.endswith((".log", ".log.gz")):
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
@@ -213,7 +213,7 @@ def get_format_from_report(sample: Path) -> str:
             if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
                 # assume VMRay zipfile at a minimum has these files
                 return FORMAT_VMRAY
-    elif sample.name.endswith(("json", "json_", "json.gz")):
+    elif sample.name.endswith((".json", ".json_", ".json.gz")):
         report = load_json_from_path(sample)
         if "CAPE" in report:
             return FORMAT_CAPE

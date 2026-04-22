@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: EXTENSIONS_DYNAMIC has inconsistent leading dots @williballenthin #3028
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
