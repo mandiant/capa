@@ -88,7 +88,9 @@ def extract_format(buf: bytes) -> Iterator[tuple[Feature, Address]]:
 
 def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
     if buf.startswith(MATCH_PE):
-        yield from capa.features.extractors.pefile.extract_file_arch(pe=pefile.PE(data=buf))
+        yield from capa.features.extractors.pefile.extract_file_arch(
+            pe=pefile.PE(data=buf)
+        )
 
     elif buf.startswith(MATCH_RESULT):
         yield Arch(ARCH_ANY), NO_ADDRESS
@@ -114,7 +116,10 @@ def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
         # rules that rely on arch conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s, will not guess Arch", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug(
+            "unsupported file format: %s, will not guess Arch",
+            binascii.hexlify(buf[:4]).decode("ascii"),
+        )
         return
 
 
@@ -146,5 +151,8 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
         # rules that rely on OS conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s, will not guess OS", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug(
+            "unsupported file format: %s, will not guess OS",
+            binascii.hexlify(buf[:4]).decode("ascii"),
+        )
         return

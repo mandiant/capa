@@ -240,15 +240,29 @@ def install_common_args(parser, wanted=None):
     # common arguments that all scripts will have
     #
 
-    parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
+        "--version",
+        action="version",
+        version="%(prog)s {:s}".format(capa.version.__version__),
     )
     parser.add_argument(
-        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="enable verbose result document (no effect with --json)",
     )
-    parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
-    parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
+    parser.add_argument(
+        "-vv",
+        "--vverbose",
+        action="store_true",
+        help="enable very verbose result document (no effect with --json)",
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="enable debugging output on STDERR"
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="disable all output but errors"
+    )
     parser.add_argument(
         "--color",
         type=str,
@@ -365,7 +379,9 @@ def install_common_args(parser, wanted=None):
         )
 
     if "tag" in wanted:
-        parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
+        parser.add_argument(
+            "-t", "--tag", type=str, help="filter on rule meta field values"
+        )
 
 
 ###############################################################################
@@ -427,7 +443,9 @@ def handle_common_args(args):
     logformat = "[dim]%(name)s[/]: %(message)s"
 
     # set markup=True to allow the use of Rich's markup syntax in log messages
-    rich_handler = RichHandler(markup=True, show_time=False, show_path=True, console=capa.helpers.log_console)
+    rich_handler = RichHandler(
+        markup=True, show_time=False, show_path=True, console=capa.helpers.log_console
+    )
     rich_handler.setFormatter(logging.Formatter(logformat))
 
     # use RichHandler for root logger
@@ -492,7 +510,9 @@ def handle_common_args(args):
                 # this pulls down just the source code - not the default rules.
                 # i'm not sure the default rules should even be written to the library directory,
                 # so in this case, we require the user to use -r to specify the rule directory.
-                logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
+                logger.error(
+                    "default embedded rules not found! (maybe you installed capa as a library?)"
+                )
                 logger.error("provide your own rule set via the `-r` option.")
                 raise ShouldExitError(E_MISSING_RULES)
 
@@ -559,7 +579,9 @@ def get_input_format_from_cli(args) -> str:
     try:
         return get_auto_format(args.input_file)
     except PEFormatError as e:
-        logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
+        logger.error(
+            "Input file '%s' is not a valid PE file: %s", args.input_file, str(e)
+        )
         raise ShouldExitError(E_CORRUPT_FILE) from e
     except UnsupportedFormatError as e:
         log_unsupported_format_error()
@@ -673,11 +695,17 @@ def get_rules_from_cli(args) -> RuleSet:
             # using the rules cache during development may result in unexpected errors, see #1898
             enable_cache = capa.helpers.is_cache_newer_than_rule_code(cache_dir)
             if not enable_cache:
-                logger.debug("not using cache. delete the cache file manually to use rule caching again")
+                logger.debug(
+                    "not using cache. delete the cache file manually to use rule caching again"
+                )
             else:
-                logger.debug("cache can be used, no potentially outdated cache files found")
+                logger.debug(
+                    "cache can be used, no potentially outdated cache files found"
+                )
 
-        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir, enable_cache=enable_cache)
+        rules = capa.rules.get_rules(
+            args.rules, cache_dir=cache_dir, enable_cache=enable_cache
+        )
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
@@ -730,10 +758,14 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
     try:
         return capa.loader.get_file_extractors(args.input_file, input_format)
     except PEFormatError as e:
-        logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
+        logger.error(
+            "Input file '%s' is not a valid PE file: %s", args.input_file, str(e)
+        )
         raise ShouldExitError(E_CORRUPT_FILE) from e
     except (ELFError, OverflowError) as e:
-        logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
+        logger.error(
+            "Input file '%s' is not a valid ELF file: %s", args.input_file, str(e)
+        )
         raise ShouldExitError(E_CORRUPT_FILE) from e
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
@@ -757,7 +789,9 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_static_limitations_from_cli(
+    args, rules: RuleSet, file_extractors: list[FeatureExtractor]
+) -> bool:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -773,10 +807,14 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
         try:
             pure_file_capabilities = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
-            logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
+            logger.error(
+                "Input file '%s' is not a valid PE file: %s", args.input_file, str(e)
+            )
             raise ShouldExitError(E_CORRUPT_FILE) from e
         except (ELFError, OverflowError) as e:
-            logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
+            logger.error(
+                "Input file '%s' is not a valid ELF file: %s", args.input_file, str(e)
+            )
             raise ShouldExitError(E_CORRUPT_FILE) from e
 
         # file limitations that rely on non-file scope won't be detected here.
@@ -791,7 +829,9 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
     return found_file_limitation
 
 
-def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_dynamic_limitations_from_cli(
+    args, rules: RuleSet, file_extractors: list[FeatureExtractor]
+) -> bool:
     """
     Does the dynamic analysis describe some trace that we may not support well?
     For example, .NET samples detonated in a sandbox, which may rely on different API patterns than we currently describe in our rules.
@@ -805,7 +845,9 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
     found_dynamic_limitation = False
     for file_extractor in file_extractors:
         pure_dynamic_capabilities = find_file_capabilities(rules, file_extractor, {})
-        found_dynamic_limitation |= has_dynamic_limitation(rules, pure_dynamic_capabilities)
+        found_dynamic_limitation |= has_dynamic_limitation(
+            rules, pure_dynamic_capabilities
+        )
 
     if found_dynamic_limitation:
         # bail if capa encountered file limitation e.g. a dotnet sample is detected
@@ -818,11 +860,15 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
 
 def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]:
     if backend != BACKEND_VIV:
-        logger.debug("skipping library code matching: only supported by the vivisect backend")
+        logger.debug(
+            "skipping library code matching: only supported by the vivisect backend"
+        )
         return []
 
     if input_format != FORMAT_PE:
-        logger.debug("skipping library code matching: signatures only supports PE files")
+        logger.debug(
+            "skipping library code matching: signatures only supports PE files"
+        )
         return []
 
     if args.is_default_signatures:
@@ -839,7 +885,9 @@ def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]
                 + "Please install the signatures first: "
                 + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
             )
-            raise IOError(f"signatures path {args.signatures} does not exist or cannot be accessed")
+            raise IOError(
+                f"signatures path {args.signatures} does not exist or cannot be accessed"
+            )
     else:
         logger.debug("using signatures path: %s", args.signatures)
 
@@ -862,7 +910,13 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     """
     sig_paths = get_signatures_from_cli(args, input_format, backend)
 
-    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in (
+        "0",
+        "no",
+        "NO",
+        "n",
+        None,
+    )
 
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
@@ -905,7 +959,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
 
 def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
-    if not hasattr(args, "restrict_to_processes") and not hasattr(args, "restrict_to_functions"):
+    if not hasattr(args, "restrict_to_processes") and not hasattr(
+        args, "restrict_to_functions"
+    ):
         # no processes or function filters were installed in the args
         return {}
 
@@ -921,7 +977,9 @@ def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
 
-def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: FilterConfig):
+def apply_extractor_filters(
+    extractor: FeatureExtractor, extractor_filters: FilterConfig
+):
     if not any(extractor_filters.values()):
         return extractor
 
@@ -971,7 +1029,9 @@ def main(argv: Optional[list[str]] = None):
          """)
 
     parser = argparse.ArgumentParser(
-        description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=desc,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     install_common_args(
         parser,
@@ -987,7 +1047,9 @@ def main(argv: Optional[list[str]] = None):
             "restrict-to-processes",
         },
     )
-    parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
+    parser.add_argument(
+        "-j", "--json", action="store_true", help="emit JSON instead of text"
+    )
     args = parser.parse_args(args=argv)
 
     try:
@@ -1000,7 +1062,9 @@ def main(argv: Optional[list[str]] = None):
     if input_format == FORMAT_RESULT:
         # render the result document immediately,
         # no need to load the rules or do other processing.
-        result_doc = capa.render.result_document.ResultDocument.from_file(args.input_file)
+        result_doc = capa.render.result_document.ResultDocument.from_file(
+            args.input_file
+        )
 
         if args.json:
             print(result_doc.model_dump_json(exclude_none=True))
@@ -1019,9 +1083,13 @@ def main(argv: Optional[list[str]] = None):
         file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
             # only static extractors have file limitations
-            found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
+            found_limitation = find_static_limitations_from_cli(
+                args, rules, file_extractors
+            )
         if input_format in DYNAMIC_FORMATS:
-            found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
+            found_limitation = find_dynamic_limitations_from_cli(
+                args, rules, file_extractors
+            )
 
         backend = get_backend_from_cli(args, input_format)
         sample_path = get_sample_path_from_cli(args, backend)
@@ -1029,16 +1097,22 @@ def main(argv: Optional[list[str]] = None):
             os_ = "unknown"
         else:
             os_ = capa.loader.get_os(sample_path)
-        extractor: FeatureExtractor = get_extractor_from_cli(args, input_format, backend)
+        extractor: FeatureExtractor = get_extractor_from_cli(
+            args, input_format, backend
+        )
     except ShouldExitError as e:
         return e.status_code
 
-    capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
+    capabilities: Capabilities = find_capabilities(
+        rules, extractor, disable_progress=args.quiet
+    )
 
     meta: rdoc.Metadata = capa.loader.collect_metadata(
         argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
     )
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+    meta.analysis.layout = capa.loader.compute_layout(
+        rules, extractor, capabilities.matches
+    )
 
     if found_limitation:
         # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
@@ -1090,7 +1164,9 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
-    capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
+    capabilities = find_capabilities(
+        rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+    )
 
     meta.analysis.feature_counts = capabilities.feature_counts
     meta.analysis.library_functions = capabilities.library_functions

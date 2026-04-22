@@ -102,7 +102,9 @@ def find_subrule_matches(doc: rd.ResultDocument):
             for child in match.children:
                 rec(child)
 
-        elif isinstance(match.node, rd.FeatureNode) and isinstance(match.node.feature, frzf.MatchFeature):
+        elif isinstance(match.node, rd.FeatureNode) and isinstance(
+            match.node.feature, frzf.MatchFeature
+        ):
             matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
@@ -183,7 +185,9 @@ def render_attack(doc: rd.ResultDocument, console: Console):
     tactics = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         for attack in rule.meta.attack:
-            tactics[attack.tactic].add((attack.technique, attack.subtechnique, attack.id.strip("[").strip("]")))
+            tactics[attack.tactic].add(
+                (attack.technique, attack.subtechnique, attack.id.strip("[").strip("]"))
+            )
 
     rows = []
     for tactic, techniques in sorted(tactics.items()):
@@ -194,7 +198,9 @@ def render_attack(doc: rd.ResultDocument, console: Console):
                 inner_rows.append(f"{bold_markup(technique)} {render_attack_link(id)}")
             else:
                 # example: Code Discovery::Enumerate PE Sections [T1084.001]
-                inner_rows.append(f"{bold_markup(technique)}::{subtechnique} {render_attack_link(id)}")
+                inner_rows.append(
+                    f"{bold_markup(technique)}::{subtechnique} {render_attack_link(id)}"
+                )
 
         tactic = bold_markup(tactic.upper())
         technique = "\n".join(inner_rows)
@@ -245,7 +251,9 @@ def render_maec(doc: rd.ResultDocument, console: Console):
     for category in sorted(maec_categories):
         values = maec_table.get(category, set())
         if values:
-            rows.append((bold_markup(category.replace("_", "-")), "\n".join(sorted(values))))
+            rows.append(
+                (bold_markup(category.replace("_", "-")), "\n".join(sorted(values)))
+            )
 
     if rows:
         table = rich.table.Table(min_width=100)
@@ -264,7 +272,9 @@ def render_mbc_link(id: str, objective: str, behavior: str) -> str:
         base_url = "https://github.com/MBCProject/mbc-markdown/blob/main"
     elif id[0] == "C":
         # micro-behavior
-        base_url = "https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors"
+        base_url = (
+            "https://github.com/MBCProject/mbc-markdown/blob/main/micro-behaviors"
+        )
     else:
         raise ValueError("unexpected MBC prefix")
 
@@ -292,7 +302,9 @@ def render_mbc(doc: rd.ResultDocument, console: Console):
     objectives = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         for mbc in rule.meta.mbc:
-            objectives[mbc.objective].add((mbc.behavior, mbc.method, mbc.id.strip("[").strip("]")))
+            objectives[mbc.objective].add(
+                (mbc.behavior, mbc.method, mbc.id.strip("[").strip("]"))
+            )
 
     rows = []
     for objective, behaviors in sorted(objectives.items()):
@@ -300,7 +312,9 @@ def render_mbc(doc: rd.ResultDocument, console: Console):
         for technique, subtechnique, id in sorted(behaviors):
             if not subtechnique:
                 # example: File and Directory Discovery [T1083]
-                inner_rows.append(f"{bold_markup(technique)} {render_mbc_link(id, objective, technique)}")
+                inner_rows.append(
+                    f"{bold_markup(technique)} {render_mbc_link(id, objective, technique)}"
+                )
             else:
                 # example: Code Discovery::Enumerate PE Sections [T1084.001]
                 inner_rows.append(

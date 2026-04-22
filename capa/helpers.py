@@ -282,7 +282,9 @@ def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
     logger.error(" Input file is not a valid CAPE report: %s", error)
     logger.error(" ")
-    logger.error(" capa currently only supports analyzing standard CAPE reports in JSON format.")
+    logger.error(
+        " capa currently only supports analyzing standard CAPE reports in JSON format."
+    )
     logger.error(
         " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
     )
@@ -293,7 +295,9 @@ def log_unsupported_drakvuf_report_error(error: str):
     logger.error("-" * 80)
     logger.error(" Input file is not a valid DRAKVUF output file: %s", error)
     logger.error(" ")
-    logger.error(" capa currently only supports analyzing standard DRAKVUF outputs in JSONL format.")
+    logger.error(
+        " capa currently only supports analyzing standard DRAKVUF outputs in JSONL format."
+    )
     logger.error(
         " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
     )
@@ -307,15 +311,23 @@ def log_unsupported_vmray_report_error(error: str):
     logger.error(
         " capa only supports analyzing VMRay dynamic analysis archives containing summary_v2.json and flog.xml log files."
     )
-    logger.error(" Please make sure you have downloaded a dynamic analysis archive from VMRay.")
+    logger.error(
+        " Please make sure you have downloaded a dynamic analysis archive from VMRay."
+    )
     logger.error("-" * 80)
 
 
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
-    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
+    logger.error(
+        " %s report is empty or only contains little useful data: %s",
+        sandbox_name,
+        error,
+    )
     logger.error(" ")
-    logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
+    logger.error(
+        " Please make sure the sandbox run captures useful behaviour of your sample."
+    )
     logger.error("-" * 80)
 
 
@@ -326,7 +338,9 @@ def log_unsupported_os_error():
     logger.error(" capa currently only analyzes executables for some operating systems")
     logger.error(" (including Windows, Linux, and Android).")
     logger.error(" ")
-    logger.error(" If you know the target OS, you can specify it explicitly, for example:")
+    logger.error(
+        " If you know the target OS, you can specify it explicitly, for example:"
+    )
     logger.error("   capa --os linux <sample>")
     logger.error("-" * 80)
 
@@ -395,7 +409,10 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
     import capa.rules
     import capa.rules.cache
 
-    latest_rule_code_file = max([Path(capa.rules.__file__), Path(capa.rules.cache.__file__)], key=os.path.getmtime)
+    latest_rule_code_file = max(
+        [Path(capa.rules.__file__), Path(capa.rules.cache.__file__)],
+        key=os.path.getmtime,
+    )
     rule_code_timestamp = Path(latest_rule_code_file).stat().st_mtime
 
     if rule_code_timestamp > cache_timestamp:

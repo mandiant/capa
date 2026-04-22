@@ -28,7 +28,11 @@ import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.extractors.base_extractor
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, SampleHashes, FunctionHandle
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    SampleHashes,
+    FunctionHandle,
+)
 
 EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
@@ -39,28 +43,54 @@ EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     ),
     global_features=[],
     file_features=[
-        (AbsoluteVirtualAddress(0x402345), capa.features.common.Characteristic("embedded pe")),
+        (
+            AbsoluteVirtualAddress(0x402345),
+            capa.features.common.Characteristic("embedded pe"),
+        ),
     ],
     functions={
-        AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.FunctionFeatures(
+        AbsoluteVirtualAddress(
+            0x401000
+        ): capa.features.extractors.null.FunctionFeatures(
             features=[
-                (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("indirect call")),
+                (
+                    AbsoluteVirtualAddress(0x401000),
+                    capa.features.common.Characteristic("indirect call"),
+                ),
             ],
             basic_blocks={
-                AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.BasicBlockFeatures(
+                AbsoluteVirtualAddress(
+                    0x401000
+                ): capa.features.extractors.null.BasicBlockFeatures(
                     features=[
-                        (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("tight loop")),
+                        (
+                            AbsoluteVirtualAddress(0x401000),
+                            capa.features.common.Characteristic("tight loop"),
+                        ),
                     ],
                     instructions={
-                        AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.InstructionFeatures(
+                        AbsoluteVirtualAddress(
+                            0x401000
+                        ): capa.features.extractors.null.InstructionFeatures(
                             features=[
-                                (AbsoluteVirtualAddress(0x401000), capa.features.insn.Mnemonic("xor")),
-                                (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("nzxor")),
+                                (
+                                    AbsoluteVirtualAddress(0x401000),
+                                    capa.features.insn.Mnemonic("xor"),
+                                ),
+                                (
+                                    AbsoluteVirtualAddress(0x401000),
+                                    capa.features.common.Characteristic("nzxor"),
+                                ),
                             ],
                         ),
-                        AbsoluteVirtualAddress(0x401002): capa.features.extractors.null.InstructionFeatures(
+                        AbsoluteVirtualAddress(
+                            0x401002
+                        ): capa.features.extractors.null.InstructionFeatures(
                             features=[
-                                (AbsoluteVirtualAddress(0x401002), capa.features.insn.Mnemonic("mov")),
+                                (
+                                    AbsoluteVirtualAddress(0x401002),
+                                    capa.features.insn.Mnemonic("mov"),
+                                ),
                             ],
                         ),
                     },
@@ -80,15 +110,18 @@ def test_null_feature_extractor():
     bbh = BBHandle(AbsoluteVirtualAddress(0x401000), None)
 
     assert addresses(EXTRACTOR.get_functions()) == [AbsoluteVirtualAddress(0x401000)]
-    assert addresses(EXTRACTOR.get_basic_blocks(fh)) == [AbsoluteVirtualAddress(0x401000)]
+    assert addresses(EXTRACTOR.get_basic_blocks(fh)) == [
+        AbsoluteVirtualAddress(0x401000)
+    ]
     assert addresses(EXTRACTOR.get_instructions(fh, bbh)) == [
         AbsoluteVirtualAddress(0x401000),
         AbsoluteVirtualAddress(0x401002),
     ]
 
-    rules = capa.rules.RuleSet([
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: xor loop
@@ -101,8 +134,9 @@ def test_null_feature_extractor():
                                 - mnemonic: xor
                                 - characteristic: nzxor
                     """)
-        ),
-    ])
+            ),
+        ]
+    )
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "xor loop" in capabilities.matches
 
@@ -113,10 +147,14 @@ def compare_extractors(a, b):
     assert addresses(a.get_functions()) == addresses(b.get_functions())
     for f in a.get_functions():
         assert addresses(a.get_basic_blocks(f)) == addresses(b.get_basic_blocks(f))
-        assert sorted(set(a.extract_function_features(f))) == sorted(set(b.extract_function_features(f)))
+        assert sorted(set(a.extract_function_features(f))) == sorted(
+            set(b.extract_function_features(f))
+        )
 
         for bb in a.get_basic_blocks(f):
-            assert addresses(a.get_instructions(f, bb)) == addresses(b.get_instructions(f, bb))
+            assert addresses(a.get_instructions(f, bb)) == addresses(
+                b.get_instructions(f, bb)
+            )
             assert sorted(set(a.extract_basic_block_features(f, bb))) == sorted(
                 set(b.extract_basic_block_features(f, bb))
             )
@@ -159,7 +197,9 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Import("#11"))
     roundtrip_feature(capa.features.insn.OperandOffset(0, 0x8))
     roundtrip_feature(
-        capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ)
+        capa.features.insn.Property(
+            "System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ
+        )
     )
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 

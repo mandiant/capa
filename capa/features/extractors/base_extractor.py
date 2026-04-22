@@ -23,7 +23,13 @@ from dataclasses import dataclass
 
 import capa.features.address
 from capa.features.common import Feature
-from capa.features.address import Address, ThreadAddress, ProcessAddress, DynamicCallAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+    AbsoluteVirtualAddress,
+)
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
@@ -47,7 +53,9 @@ class SampleHashes:
         sha1.update(buf)
         sha256.update(buf)
 
-        return cls(md5=md5.hexdigest(), sha1=sha1.hexdigest(), sha256=sha256.hexdigest())
+        return cls(
+            md5=md5.hexdigest(), sha1=sha1.hexdigest(), sha256=sha256.hexdigest()
+        )
 
 
 @dataclass
@@ -119,7 +127,9 @@ class StaticFeatureExtractor(abc.ABC):
         self._sample_hashes = hashes
 
     @abc.abstractmethod
-    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
+    def get_base_address(
+        self,
+    ) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         """
         fetch the preferred load address at which the sample was analyzed.
 
@@ -212,7 +222,9 @@ class StaticFeatureExtractor(abc.ABC):
         raise KeyError(addr)
 
     @abc.abstractmethod
-    def extract_function_features(self, f: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_function_features(
+        self, f: FunctionHandle
+    ) -> Iterator[tuple[Feature, Address]]:
         """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -241,7 +253,9 @@ class StaticFeatureExtractor(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_basic_block_features(
+        self, f: FunctionHandle, bb: BBHandle
+    ) -> Iterator[tuple[Feature, Address]]:
         """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -299,7 +313,9 @@ class StaticFeatureExtractor(abc.ABC):
         raise NotImplementedError()
 
 
-def FunctionFilter(extractor: StaticFeatureExtractor, functions: set) -> StaticFeatureExtractor:
+def FunctionFilter(
+    extractor: StaticFeatureExtractor, functions: set
+) -> StaticFeatureExtractor:
     original_get_functions = extractor.get_functions
 
     def filtered_get_functions(self):
@@ -425,7 +441,9 @@ class DynamicFeatureExtractor(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_process_features(self, ph: ProcessHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_process_features(
+        self, ph: ProcessHandle
+    ) -> Iterator[tuple[Feature, Address]]:
         """
         Yields all the features of a process. These include:
         - file features of the process' image
@@ -448,7 +466,9 @@ class DynamicFeatureExtractor(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_thread_features(
+        self, ph: ProcessHandle, th: ThreadHandle
+    ) -> Iterator[tuple[Feature, Address]]:
         """
         Yields all the features of a thread. These include:
         - sequenced api traces
@@ -484,7 +504,9 @@ class DynamicFeatureExtractor(abc.ABC):
         raise NotImplementedError()
 
 
-def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> DynamicFeatureExtractor:
+def ProcessFilter(
+    extractor: DynamicFeatureExtractor, pids: set[int]
+) -> DynamicFeatureExtractor:
     original_get_processes = extractor.get_processes
 
     def filtered_get_processes(self):
@@ -500,7 +522,9 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> Dynamic
     return new_extractor
 
 
-def ThreadFilter(extractor: DynamicFeatureExtractor, threads: set[Address]) -> DynamicFeatureExtractor:
+def ThreadFilter(
+    extractor: DynamicFeatureExtractor, threads: set[Address]
+) -> DynamicFeatureExtractor:
     original_get_threads = extractor.get_threads
 
     def filtered_get_threads(self, ph: ProcessHandle):

@@ -32,7 +32,11 @@ from capa.features.extractors import helpers
 
 CD = Path(__file__).resolve().parent
 DRAKVUF_LOG_GZ = (
-    CD / "data" / "dynamic" / "drakvuf" / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
+    CD
+    / "data"
+    / "dynamic"
+    / "drakvuf"
+    / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
 )
 
 
@@ -56,7 +60,9 @@ def test_generate_symbols():
     )
 
     # A/W import
-    symbols = list(helpers.generate_symbols("kernel32", "CreateFileA", include_dll=True))
+    symbols = list(
+        helpers.generate_symbols("kernel32", "CreateFileA", include_dll=True)
+    )
     assert len(symbols) == 4
     assert "kernel32.CreateFileA" in symbols
     assert "kernel32.CreateFile" in symbols
@@ -75,7 +81,9 @@ def test_generate_symbols():
     assert "ws2_32.#1" in symbols
 
     # A/W api
-    symbols = list(helpers.generate_symbols("kernel32", "CreateFileA", include_dll=False))
+    symbols = list(
+        helpers.generate_symbols("kernel32", "CreateFileA", include_dll=False)
+    )
     assert len(symbols) == 2
     assert "CreateFileA" in symbols
     assert "CreateFile" in symbols

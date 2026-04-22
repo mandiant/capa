@@ -44,7 +44,12 @@ def test_render_offset():
 
 def test_render_property():
     assert (
-        str(capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ))
+        str(
+            capa.features.insn.Property(
+                "System.IO.FileInfo::Length",
+                access=capa.features.common.FeatureAccess.READ,
+            )
+        )
         == "property/read(System.IO.FileInfo::Length)"
     )
 
@@ -184,7 +189,10 @@ def test_render_meta_maec():
         (capa.features.common.Regex("^foo"), "regex: ^foo"),
         (capa.features.common.String("foo"), 'string: "foo" @ 0x401000'),
         (capa.features.common.Class("BeanFactory"), "class: BeanFactory @ 0x401000"),
-        (capa.features.common.Namespace("std::enterprise"), "namespace: std::enterprise @ 0x401000"),
+        (
+            capa.features.common.Namespace("std::enterprise"),
+            "namespace: std::enterprise @ 0x401000",
+        ),
         (capa.features.insn.API("CreateFileW"), "api: CreateFileW @ 0x401000"),
         (capa.features.insn.Property("foo"), "property: foo @ 0x401000"),
         (capa.features.insn.Property("foo", "read"), "property/read: foo @ 0x401000"),
@@ -202,7 +210,9 @@ def test_render_meta_maec():
 def test_render_vverbose_feature(feature, expected):
     console = Console(highlight=False)
 
-    addr = capa.features.freeze.Address.from_capa(capa.features.address.AbsoluteVirtualAddress(0x401000))
+    addr = capa.features.freeze.Address.from_capa(
+        capa.features.address.AbsoluteVirtualAddress(0x401000)
+    )
     feature = capa.features.freeze.features.feature_from_capa(feature)
 
     matches = capa.render.result_document.Match(
@@ -241,7 +251,9 @@ def test_render_vverbose_feature(feature, expected):
     )
 
     with console.capture() as capture:
-        capa.render.vverbose.render_feature(console, layout, rm, matches, feature, indent=0)
+        capa.render.vverbose.render_feature(
+            console, layout, rm, matches, feature, indent=0
+        )
 
     output = capture.get().strip()
     assert output == expected

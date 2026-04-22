@@ -17,7 +17,13 @@ import pytest
 import capa.features.address
 from capa.engine import Or, And, Not, Some, Range
 from capa.features.insn import Number
-from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+    DNTokenOffsetAddress,
+    AbsoluteVirtualAddress,
+)
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
@@ -78,7 +84,14 @@ def test_and():
     assert bool(And([Number(1), Number(2)]).evaluate({Number(0): {ADDR1}})) is False
     assert bool(And([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is False
     assert bool(And([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}})) is False
-    assert bool(And([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}, Number(2): {ADDR2}})) is True
+    assert (
+        bool(
+            And([Number(1), Number(2)]).evaluate(
+                {Number(1): {ADDR1}, Number(2): {ADDR2}}
+            )
+        )
+        is True
+    )
 
 
 def test_or():
@@ -87,7 +100,14 @@ def test_or():
     assert bool(Or([Number(1), Number(2)]).evaluate({Number(0): {ADDR1}})) is False
     assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is True
     assert bool(Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}})) is True
-    assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}, Number(2): {ADDR2}})) is True
+    assert (
+        bool(
+            Or([Number(1), Number(2)]).evaluate(
+                {Number(1): {ADDR1}, Number(2): {ADDR2}}
+            )
+        )
+        is True
+    )
 
 
 def test_not():
@@ -99,38 +119,54 @@ def test_some():
     assert bool(Some(0, [Number(1)]).evaluate({Number(0): {ADDR1}})) is True
     assert bool(Some(1, [Number(1)]).evaluate({Number(0): {ADDR1}})) is False
 
-    assert bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}})) is False
-    assert bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
+    assert (
+        bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}}))
+        is False
+    )
     assert (
         bool(
-            Some(2, [Number(1), Number(2), Number(3)]).evaluate({
-                Number(0): {ADDR1},
-                Number(1): {ADDR1},
-                Number(2): {ADDR1},
-            })
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {Number(0): {ADDR1}, Number(1): {ADDR1}}
+            )
+        )
+        is False
+    )
+    assert (
+        bool(
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {
+                    Number(0): {ADDR1},
+                    Number(1): {ADDR1},
+                    Number(2): {ADDR1},
+                }
+            )
         )
         is True
     )
     assert (
         bool(
-            Some(2, [Number(1), Number(2), Number(3)]).evaluate({
-                Number(0): {ADDR1},
-                Number(1): {ADDR1},
-                Number(2): {ADDR1},
-                Number(3): {ADDR1},
-            })
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {
+                    Number(0): {ADDR1},
+                    Number(1): {ADDR1},
+                    Number(2): {ADDR1},
+                    Number(3): {ADDR1},
+                }
+            )
         )
         is True
     )
     assert (
         bool(
-            Some(2, [Number(1), Number(2), Number(3)]).evaluate({
-                Number(0): {ADDR1},
-                Number(1): {ADDR1},
-                Number(2): {ADDR1},
-                Number(3): {ADDR1},
-                Number(4): {ADDR1},
-            })
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {
+                    Number(0): {ADDR1},
+                    Number(1): {ADDR1},
+                    Number(2): {ADDR1},
+                    Number(3): {ADDR1},
+                    Number(4): {ADDR1},
+                }
+            )
         )
         is True
     )
@@ -138,21 +174,35 @@ def test_some():
 
 def test_complex():
     assert True is bool(
-        Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]).evaluate({
-            Number(5): {ADDR1},
-            Number(6): {ADDR1},
-            Number(7): {ADDR1},
-            Number(8): {ADDR1},
-        })
+        Or(
+            [
+                And([Number(1), Number(2)]),
+                Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])]),
+            ]
+        ).evaluate(
+            {
+                Number(5): {ADDR1},
+                Number(6): {ADDR1},
+                Number(7): {ADDR1},
+                Number(8): {ADDR1},
+            }
+        )
     )
 
     assert False is bool(
-        Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate({
-            Number(5): {ADDR1},
-            Number(6): {ADDR1},
-            Number(7): {ADDR1},
-            Number(8): {ADDR1},
-        })
+        Or(
+            [
+                And([Number(1), Number(2)]),
+                Or([Number(3), Some(2, [Number(4), Number(5)])]),
+            ]
+        ).evaluate(
+            {
+                Number(5): {ADDR1},
+                Number(6): {ADDR1},
+                Number(7): {ADDR1},
+                Number(8): {ADDR1},
+            }
+        )
     )
 
 
@@ -175,27 +225,62 @@ def test_range():
     assert bool(Range(Number(1), max=1).evaluate({Number(1): {ADDR1}})) is True
     assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1}})) is True
     assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1, ADDR2}})) is True
-    assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})) is False
+    assert (
+        bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}}))
+        is False
+    )
 
     # we can do an exact match by setting min==max
     assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {}})) is False  # type: ignore
     assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1}})) is True
-    assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1, ADDR2}})) is False
+    assert (
+        bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1, ADDR2}}))
+        is False
+    )
 
     # bounded range
     assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {}})) is False  # type: ignore
     assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1}})) is True
-    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2}})) is True
-    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})) is True
-    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2, ADDR3, ADDR4}})) is False
+    assert (
+        bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2}}))
+        is True
+    )
+    assert (
+        bool(
+            Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})
+        )
+        is True
+    )
+    assert (
+        bool(
+            Range(Number(1), min=1, max=3).evaluate(
+                {Number(1): {ADDR1, ADDR2, ADDR3, ADDR4}}
+            )
+        )
+        is False
+    )
 
 
 def test_short_circuit():
     assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is True
 
     # with short circuiting, only the children up until the first satisfied child are captured.
-    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}, short_circuit=True).children) == 1
-    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}, short_circuit=False).children) == 2
+    assert (
+        len(
+            Or([Number(1), Number(2)])
+            .evaluate({Number(1): {ADDR1}}, short_circuit=True)
+            .children
+        )
+        == 1
+    )
+    assert (
+        len(
+            Or([Number(1), Number(2)])
+            .evaluate({Number(1): {ADDR1}}, short_circuit=False)
+            .children
+        )
+        == 2
+    )
 
 
 def test_eval_order():
@@ -206,14 +291,29 @@ def test_eval_order():
     # with short circuiting, only the children up until the first satisfied child are captured.
     assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children) == 1
     assert len(Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children) == 2
-    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}}).children) == 1
+    assert (
+        len(
+            Or([Number(1), Number(2)])
+            .evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}})
+            .children
+        )
+        == 1
+    )
 
     # and its guaranteed that children are evaluated in order.
-    assert Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children[0].statement == Number(1)
-    assert Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children[0].statement != Number(2)
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children[
+        0
+    ].statement == Number(1)
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children[
+        0
+    ].statement != Number(2)
 
-    assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[1].statement == Number(2)
-    assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[1].statement != Number(1)
+    assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[
+        1
+    ].statement == Number(2)
+    assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[
+        1
+    ].statement != Number(1)
 
 
 def test_address_cross_type_eq():

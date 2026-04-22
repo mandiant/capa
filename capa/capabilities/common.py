@@ -21,8 +21,16 @@ from dataclasses import dataclass
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
-from capa.render.result_document import LibraryFunction, StaticFeatureCounts, DynamicFeatureCounts
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.render.result_document import (
+    LibraryFunction,
+    StaticFeatureCounts,
+    DynamicFeatureCounts,
+)
+from capa.features.extractors.base_extractor import (
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +47,9 @@ def find_file_capabilities(
 ) -> FileCapabilities:
     file_features: FeatureSet = collections.defaultdict(set)
 
-    for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
+    for feature, va in itertools.chain(
+        extractor.extract_file_features(), extractor.extract_global_features()
+    ):
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
@@ -64,7 +74,9 @@ class Capabilities:
     library_functions: Optional[tuple[LibraryFunction, ...]] = None
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs) -> Capabilities:
+def find_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
+) -> Capabilities:
     from capa.capabilities.static import find_static_capabilities
     from capa.capabilities.dynamic import find_dynamic_capabilities
 
@@ -72,14 +84,20 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
         # for the time being, extractors are either static or dynamic.
         # Remove this assertion once that has changed
         assert not isinstance(extractor, DynamicFeatureExtractor)
-        return find_static_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
+        return find_static_capabilities(
+            ruleset, extractor, disable_progress=disable_progress, **kwargs
+        )
     if isinstance(extractor, DynamicFeatureExtractor):
-        return find_dynamic_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
+        return find_dynamic_capabilities(
+            ruleset, extractor, disable_progress=disable_progress, **kwargs
+        )
 
     raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
 
-def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, is_standalone: bool) -> bool:
+def has_limitation(
+    rules: list, capabilities: Capabilities | FileCapabilities, is_standalone: bool
+) -> bool:
 
     for rule in rules:
         if rule.name not in capabilities.matches:
@@ -90,7 +108,9 @@ def has_limitation(rules: list, capabilities: Capabilities | FileCapabilities, i
         logger.warning(" Identified via rule: %s", rule.name)
         if is_standalone:
             logger.warning(" ")
-            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
+            logger.warning(
+                " Use -v or -vv if you really want to see the capabilities identified by capa."
+            )
         logger.warning("-" * 80)
 
         # bail on first file limitation
@@ -102,8 +122,12 @@ def is_static_limitation_rule(r: Rule) -> bool:
     return r.meta.get("namespace", "") == "internal/limitation/static"
 
 
-def has_static_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
-    file_limitation_rules = list(filter(lambda r: is_static_limitation_rule(r), rules.rules.values()))
+def has_static_limitation(
+    rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True
+) -> bool:
+    file_limitation_rules = list(
+        filter(lambda r: is_static_limitation_rule(r), rules.rules.values())
+    )
     return has_limitation(file_limitation_rules, capabilities, is_standalone)
 
 
@@ -111,6 +135,10 @@ def is_dynamic_limitation_rule(r: Rule) -> bool:
     return r.meta.get("namespace", "") == "internal/limitation/dynamic"
 
 
-def has_dynamic_limitation(rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True) -> bool:
-    dynamic_limitation_rules = list(filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values()))
+def has_dynamic_limitation(
+    rules: RuleSet, capabilities: Capabilities | FileCapabilities, is_standalone=True
+) -> bool:
+    dynamic_limitation_rules = list(
+        filter(lambda r: is_dynamic_limitation_rule(r), rules.rules.values())
+    )
     return has_limitation(dynamic_limitation_rules, capabilities, is_standalone)

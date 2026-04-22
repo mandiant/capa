@@ -37,7 +37,11 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
             logger.debug("Symbol table '%s' has a sh_entsize of zero!", section.name)
             continue
 
-        logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
+        logger.debug(
+            "Symbol table '%s' contains %s entries:",
+            section.name,
+            section.num_symbols(),
+        )
 
         for symbol in section.iter_symbols():
             # The following conditions are based on the following article
@@ -113,7 +117,9 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
             continue
 
         relocation_tables = segment.get_relocation_tables()
-        logger.debug("Dynamic Segment contains %s relocation tables:", len(relocation_tables))
+        logger.debug(
+            "Dynamic Segment contains %s relocation tables:", len(relocation_tables)
+        )
 
         for relocation_table in relocation_tables.values():
             relocations = []
@@ -126,7 +132,10 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
                     break
 
             for relocation in relocations:
-                if "r_info_sym" not in relocation.entry or "r_offset" not in relocation.entry:
+                if (
+                    "r_info_sym" not in relocation.entry
+                    or "r_offset" not in relocation.entry
+                ):
                     continue
 
                 symbol_address: int = relocation["r_offset"]
@@ -232,25 +241,41 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
             yield feature, addr
 
     def get_functions(self):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def extract_function_features(self, f):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def get_basic_blocks(self, f):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def extract_basic_block_features(self, f, bb):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def get_instructions(self, f, bb):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def extract_insn_features(self, f, bb, insn):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def is_library_function(self, addr):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )
 
     def get_function_name(self, addr):
-        raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError(
+            "ElfFeatureExtractor can only be used to extract file features"
+        )

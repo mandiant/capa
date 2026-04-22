@@ -55,7 +55,11 @@ def hanging_indent(s: str, indent: int) -> str:
 
 
 def render_locations(
-    console: Console, layout: rd.Layout, locations: Iterable[frz.Address], indent: int, use_short_format: bool = False
+    console: Console,
+    layout: rd.Layout,
+    locations: Iterable[frz.Address],
+    indent: int,
+    use_short_format: bool = False,
 ):
     """
     Render the given locations, such as virtual address or pid/tid/callid with process name.
@@ -117,7 +121,13 @@ def render_locations(
         raise RuntimeError("unreachable")
 
 
-def render_statement(console: Console, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int):
+def render_statement(
+    console: Console,
+    layout: rd.Layout,
+    match: rd.Match,
+    statement: rd.Statement,
+    indent: int,
+):
     console.write("  " * indent)
 
     if isinstance(statement, rd.SubscopeStatement):
@@ -191,7 +201,12 @@ def render_string_value(s: str) -> str:
 
 
 def render_feature(
-    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, feature: frzf.Feature, indent: int
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    feature: frzf.Feature,
+    indent: int,
 ):
     console.write("  " * indent)
 
@@ -220,7 +235,13 @@ def render_feature(
             value = render_string_value(value)
 
         elif isinstance(
-            feature, (frzf.NumberFeature, frzf.OffsetFeature, frzf.OperandNumberFeature, frzf.OperandOffsetFeature)
+            feature,
+            (
+                frzf.NumberFeature,
+                frzf.OffsetFeature,
+                frzf.OperandNumberFeature,
+                frzf.OperandOffsetFeature,
+            ),
         ):
             assert isinstance(value, int)
             value = capa.helpers.hex(value)
@@ -246,15 +267,22 @@ def render_feature(
         if isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
             # don't show the location of these global features
             pass
-        elif isinstance(layout, rd.DynamicLayout) and rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+        elif (
+            isinstance(layout, rd.DynamicLayout)
+            and rule.meta.scopes.dynamic == capa.rules.Scope.CALL
+        ):
             # if we're in call scope, then the call will have been rendered at the top
             # of the output, so don't re-render it again for each feature.
             pass
-        elif isinstance(layout, rd.DynamicLayout) and isinstance(feature, frzf.MatchFeature):
+        elif isinstance(layout, rd.DynamicLayout) and isinstance(
+            feature, frzf.MatchFeature
+        ):
             # don't render copies of the span of calls address for submatches
             pass
         else:
-            render_locations(console, layout, match.locations, indent, use_short_format=True)
+            render_locations(
+                console, layout, match.locations, indent, use_short_format=True
+            )
         console.writeln()
     else:
         # like:
@@ -267,15 +295,27 @@ def render_feature(
             console.write("  " * (indent + 1))
             console.write("- ")
             console.write(rutils.bold2(render_string_value(capture)))
-            if isinstance(layout, rd.DynamicLayout) and rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+            if (
+                isinstance(layout, rd.DynamicLayout)
+                and rule.meta.scopes.dynamic == capa.rules.Scope.CALL
+            ):
                 # like above, don't re-render calls when in call scope.
                 pass
             else:
-                render_locations(console, layout, locations, indent=indent + 1, use_short_format=True)
+                render_locations(
+                    console, layout, locations, indent=indent + 1, use_short_format=True
+                )
             console.writeln()
 
 
-def render_node(console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, node: rd.Node, indent: int):
+def render_node(
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    node: rd.Node,
+    indent: int,
+):
     if isinstance(node, rd.StatementNode):
         render_statement(console, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
@@ -293,7 +333,12 @@ MODE_FAILURE = "failure"
 
 
 def render_match(
-    console: Console, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, indent=0, mode=MODE_SUCCESS
+    console: Console,
+    layout: rd.Layout,
+    rule: rd.RuleMatches,
+    match: rd.Match,
+    indent=0,
+    mode=MODE_SUCCESS,
 ):
     child_mode = mode
     if mode == MODE_SUCCESS:
@@ -302,12 +347,18 @@ def render_match(
             return
 
         # optional statement with no successful children is empty
-        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
+        if (
+            isinstance(match.node, rd.StatementNode)
+            and match.node.statement.type == rd.CompoundStatementType.OPTIONAL
+        ):
             if not any(m.success for m in match.children):
                 return
 
         # not statement, so invert the child mode to show failed evaluations
-        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.NOT:
+        if (
+            isinstance(match.node, rd.StatementNode)
+            and match.node.statement.type == rd.CompoundStatementType.NOT
+        ):
             child_mode = MODE_FAILURE
 
     elif mode == MODE_FAILURE:
@@ -316,12 +367,18 @@ def render_match(
             return
 
         # optional statement with successful children is not relevant
-        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
+        if (
+            isinstance(match.node, rd.StatementNode)
+            and match.node.statement.type == rd.CompoundStatementType.OPTIONAL
+        ):
             if any(m.success for m in match.children):
                 return
 
         # not statement, so invert the child mode to show successful evaluations
-        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.NOT:
+        if (
+            isinstance(match.node, rd.StatementNode)
+            and match.node.statement.type == rd.CompoundStatementType.NOT
+        ):
             child_mode = MODE_SUCCESS
     else:
         raise RuntimeError("unexpected mode: " + mode)
@@ -355,7 +412,10 @@ def collect_span_of_calls_locations(
         yield location
 
     child_mode = mode
-    if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.NOT:
+    if (
+        isinstance(match.node, rd.StatementNode)
+        and match.node.statement.type == rd.CompoundStatementType.NOT
+    ):
         child_mode = MODE_FAILURE if mode == MODE_SUCCESS else MODE_SUCCESS
 
     for child in match.children:
@@ -381,7 +441,9 @@ def render_rules(console: Console, doc: rd.ResultDocument):
     """
     import capa.render.verbose as v
 
-    functions_by_bb: dict[capa.features.address.Address, capa.features.address.Address] = {}
+    functions_by_bb: dict[
+        capa.features.address.Address, capa.features.address.Address
+    ] = {}
     if isinstance(doc.meta.analysis, rd.StaticAnalysis):
         for finfo in doc.meta.analysis.layout.functions:
             faddress = finfo.address.to_capa()
@@ -396,7 +458,9 @@ def render_rules(console: Console, doc: rd.ResultDocument):
 
     had_match = False
 
-    for _, _, rule in sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in doc.rules.values()):
+    for _, _, rule in sorted(
+        (rule.meta.namespace or "", rule.meta.name, rule) for rule in doc.rules.values()
+    ):
         # default scope hides things like lib rules, malware-category rules, etc.
         # but in vverbose mode, we really want to show everything.
         #
@@ -413,7 +477,9 @@ def render_rules(console: Console, doc: rd.ResultDocument):
         else:
             if rule.meta.lib:
                 lib_info = ", only showing first match of library rule"
-            capability = Text.assemble(rutils.bold(rule.meta.name), f" ({count} matches{lib_info})")
+            capability = Text.assemble(
+                rutils.bold(rule.meta.name), f" ({count} matches{lib_info})"
+            )
 
         console.writeln(capability)
         had_match = True
@@ -424,19 +490,25 @@ def render_rules(console: Console, doc: rd.ResultDocument):
             rows.append(("namespace", rule.meta.namespace))
 
         if rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov:
-            rows.append((
-                "maec/analysis-conclusion",
-                rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov,
-            ))
+            rows.append(
+                (
+                    "maec/analysis-conclusion",
+                    rule.meta.maec.analysis_conclusion
+                    or rule.meta.maec.analysis_conclusion_ov,
+                )
+            )
 
         if rule.meta.maec.malware_family:
             rows.append(("maec/malware-family", rule.meta.maec.malware_family))
 
         if rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov:
-            rows.append((
-                "maec/malware-category",
-                rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov,
-            ))
+            rows.append(
+                (
+                    "maec/malware-category",
+                    rule.meta.maec.malware_category
+                    or rule.meta.maec.malware_category_ov,
+                )
+            )
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
@@ -449,10 +521,17 @@ def render_rules(console: Console, doc: rd.ResultDocument):
             rows.append(("scope", rule.meta.scopes.dynamic.value))
 
         if rule.meta.attack:
-            rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
+            rows.append(
+                (
+                    "att&ck",
+                    ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack]),
+                )
+            )
 
         if rule.meta.mbc:
-            rows.append(("mbc", ", ".join([rutils.format_parts_id(v) for v in rule.meta.mbc])))
+            rows.append(
+                ("mbc", ", ".join([rutils.format_parts_id(v) for v in rule.meta.mbc]))
+            )
 
         if rule.meta.references:
             rows.append(("references", ", ".join(rule.meta.references)))
@@ -487,8 +566,12 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                     console.write(capa.render.verbose.format_address(location))
 
                     if rule.meta.scopes.static == capa.rules.Scope.BASIC_BLOCK:
-                        func = frz.Address.from_capa(functions_by_bb[location.to_capa()])
-                        console.write(f" in function {capa.render.verbose.format_address(func)}")
+                        func = frz.Address.from_capa(
+                            functions_by_bb[location.to_capa()]
+                        )
+                        console.write(
+                            f" in function {capa.render.verbose.format_address(func)}"
+                        )
 
                 elif doc.meta.flavor == rd.Flavor.DYNAMIC:
                     assert rule.meta.scopes.dynamic is not None
@@ -497,14 +580,28 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                     console.write(rule.meta.scopes.dynamic.value + " @ ")
 
                     if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
-                        console.write(v.render_process(doc.meta.analysis.layout, location))
+                        console.write(
+                            v.render_process(doc.meta.analysis.layout, location)
+                        )
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
-                        console.write(v.render_thread(doc.meta.analysis.layout, location))
+                        console.write(
+                            v.render_thread(doc.meta.analysis.layout, location)
+                        )
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.SPAN_OF_CALLS:
                         calls = sorted(set(collect_span_of_calls_locations(match)))
-                        console.write(hanging_indent(v.render_span_of_calls(doc.meta.analysis.layout, calls), indent=1))
+                        console.write(
+                            hanging_indent(
+                                v.render_span_of_calls(doc.meta.analysis.layout, calls),
+                                indent=1,
+                            )
+                        )
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
-                        console.write(hanging_indent(v.render_call(doc.meta.analysis.layout, location), indent=1))
+                        console.write(
+                            hanging_indent(
+                                v.render_call(doc.meta.analysis.layout, location),
+                                indent=1,
+                            )
+                        )
                     else:
                         capa.helpers.assert_never(rule.meta.scopes.dynamic)
 

@@ -145,7 +145,9 @@ class Scopes:
         elif self.dynamic:
             return f"dynamic-scope: {self.dynamic}"
         else:
-            raise ValueError("invalid rules class. at least one scope must be specified")
+            raise ValueError(
+                "invalid rules class. at least one scope must be specified"
+            )
 
     @classmethod
     def from_dict(self, scopes: dict[str, str]) -> "Scopes":
@@ -169,7 +171,9 @@ class Scopes:
             scopes_["dynamic"] = None
 
         if (not scopes_["static"]) and (not scopes_["dynamic"]):
-            raise InvalidRule("invalid scopes value. At least one scope must be specified")
+            raise InvalidRule(
+                "invalid scopes value. At least one scope must be specified"
+            )
 
         # check that all the specified scopes are valid
         if scopes_["static"] and scopes_["static"] not in STATIC_SCOPES:
@@ -363,8 +367,12 @@ def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Statement:
         guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
         prefix = capa.features.com.COM_PREFIXES[com_type]
         symbol = prefix + com_name
-        com_features.append(capa.features.common.String(guid, f"{symbol} as GUID string"))
-        com_features.append(capa.features.common.Bytes(guid_bytes, f"{symbol} as bytes"))
+        com_features.append(
+            capa.features.common.String(guid, f"{symbol} as GUID string")
+        )
+        com_features.append(
+            capa.features.common.Bytes(guid_bytes, f"{symbol} as bytes")
+        )
     return ceng.Or(com_features)
 
 
@@ -468,7 +476,9 @@ def parse_bytes(s: str) -> bytes:
     try:
         b = bytes.fromhex(s.replace(" ", ""))
     except binascii.Error:
-        raise InvalidRule(f'unexpected bytes value: must be a valid hex sequence: "{s}"')
+        raise InvalidRule(
+            f'unexpected bytes value: must be a valid hex sequence: "{s}"'
+        )
 
     if len(b) > MAX_BYTES_FEATURE_SIZE:
         raise InvalidRule(
@@ -502,7 +512,9 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
                 if description == "":
                     # sanity check:
                     # there is an empty description, like `number: 10 =`
-                    raise InvalidRule(f'unexpected value: "{s}", description cannot be empty')
+                    raise InvalidRule(
+                        f'unexpected value: "{s}", description cannot be empty'
+                    )
             else:
                 # this is a string, but there is no description,
                 # like: `api: CreateFileA`
@@ -523,13 +535,18 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
                 or value_type.startswith(("number/", "offset/"))
                 or (
                     value_type.startswith("operand[")
-                    and (value_type.endswith("].number") or value_type.endswith("].offset"))
+                    and (
+                        value_type.endswith("].number")
+                        or value_type.endswith("].offset")
+                    )
                 )
             ):
                 try:
                     value = parse_int(value)
                 except ValueError:
-                    raise InvalidRule(f'unexpected value: "{value}", must begin with numerical value')
+                    raise InvalidRule(
+                        f'unexpected value: "{value}", must begin with numerical value'
+                    )
 
         else:
             # the value might be a number, like: `number: 10`
@@ -560,7 +577,9 @@ def pop_statement_description_entry(d):
         return None
 
     # identify child of form '{ "description": <description> }'
-    descriptions = list(filter(lambda c: isinstance(c, dict) and len(c) == 1 and "description" in c, d))
+    descriptions = list(
+        filter(lambda c: isinstance(c, dict) and len(c) == 1 and "description" in c, d)
+    )
     if len(descriptions) > 1:
         raise InvalidRule("statements can only have one description")
 
@@ -624,7 +643,9 @@ def is_subscope_compatible(scope: Scope | None, subscope: Scope) -> bool:
 
     elif subscope in DYNAMIC_SCOPE_ORDER:
         try:
-            return DYNAMIC_SCOPE_ORDER.index(subscope) >= DYNAMIC_SCOPE_ORDER.index(scope)
+            return DYNAMIC_SCOPE_ORDER.index(subscope) >= DYNAMIC_SCOPE_ORDER.index(
+                scope
+            )
         except ValueError:
             return False
 
@@ -639,21 +660,35 @@ def build_statements(d, scopes: Scopes):
     key = list(d.keys())[0]
     description = pop_statement_description_entry(d[key])
     if key == "and":
-        return ceng.And(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.And(
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
     elif key == "or":
-        return ceng.Or(unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.Or(
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
         return ceng.Not(build_statements(d[key][0], scopes), description=description)
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return ceng.Some(count, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.Some(
+            count,
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return ceng.Some(0, unique(build_statements(dd, scopes) for dd in d[key]), description=description)
+        return ceng.Some(
+            0,
+            unique(build_statements(dd, scopes) for dd in d[key]),
+            description=description,
+        )
 
     elif key == "process":
         if not is_subscope_compatible(scopes.dynamic, Scope.PROCESS):
@@ -663,23 +698,31 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.PROCESS, build_statements(d[key][0], Scopes(dynamic=Scope.PROCESS)), description=description
+            Scope.PROCESS,
+            build_statements(d[key][0], Scopes(dynamic=Scope.PROCESS)),
+            description=description,
         )
 
     elif key == "thread":
         if not is_subscope_compatible(scopes.dynamic, Scope.THREAD):
-            raise InvalidRule("`thread` subscope supported only for the `process` scope")
+            raise InvalidRule(
+                "`thread` subscope supported only for the `process` scope"
+            )
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.THREAD, build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)), description=description
+            Scope.THREAD,
+            build_statements(d[key][0], Scopes(dynamic=Scope.THREAD)),
+            description=description,
         )
 
     elif key == "span of calls":
         if not is_subscope_compatible(scopes.dynamic, Scope.SPAN_OF_CALLS):
-            raise InvalidRule("`span of calls` subscope supported only for the `process` and `thread` scopes")
+            raise InvalidRule(
+                "`span of calls` subscope supported only for the `process` and `thread` scopes"
+            )
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
@@ -692,13 +735,17 @@ def build_statements(d, scopes: Scopes):
 
     elif key == "call":
         if not is_subscope_compatible(scopes.dynamic, Scope.CALL):
-            raise InvalidRule("`call` subscope supported only for the `process`, `thread`, and `call` scopes")
+            raise InvalidRule(
+                "`call` subscope supported only for the `process`, `thread`, and `call` scopes"
+            )
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.CALL, build_statements(d[key][0], Scopes(dynamic=Scope.CALL)), description=description
+            Scope.CALL,
+            build_statements(d[key][0], Scopes(dynamic=Scope.CALL)),
+            description=description,
         )
 
     elif key == "function":
@@ -709,23 +756,31 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.FUNCTION, build_statements(d[key][0], Scopes(static=Scope.FUNCTION)), description=description
+            Scope.FUNCTION,
+            build_statements(d[key][0], Scopes(static=Scope.FUNCTION)),
+            description=description,
         )
 
     elif key == "basic block":
         if not is_subscope_compatible(scopes.static, Scope.BASIC_BLOCK):
-            raise InvalidRule("`basic block` subscope supported only for `function` scope")
+            raise InvalidRule(
+                "`basic block` subscope supported only for `function` scope"
+            )
 
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(
-            Scope.BASIC_BLOCK, build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK)), description=description
+            Scope.BASIC_BLOCK,
+            build_statements(d[key][0], Scopes(static=Scope.BASIC_BLOCK)),
+            description=description,
         )
 
     elif key == "instruction":
         if not is_subscope_compatible(scopes.static, Scope.INSTRUCTION):
-            raise InvalidRule("`instruction` subscope supported only for `function` and `basic block` scope")
+            raise InvalidRule(
+                "`instruction` subscope supported only for `function` and `basic block` scope"
+            )
 
         if len(d[key]) == 1:
             statements = build_statements(d[key][0], Scopes(static=Scope.INSTRUCTION))
@@ -742,7 +797,12 @@ def build_statements(d, scopes: Scopes):
             #       - arch: i386
             #       - mnemonic: cmp
             #
-            statements = ceng.And(unique(build_statements(dd, Scopes(static=Scope.INSTRUCTION)) for dd in d[key]))
+            statements = ceng.And(
+                unique(
+                    build_statements(dd, Scopes(static=Scope.INSTRUCTION))
+                    for dd in d[key]
+                )
+            )
 
         return ceng.Subscope(Scope.INSTRUCTION, statements, description=description)
 
@@ -806,7 +866,9 @@ def build_statements(d, scopes: Scopes):
         else:
             raise InvalidRule(f"unexpected range: {count}")
     elif key == "string" and not isinstance(d[key], str):
-        raise InvalidRule(f"ambiguous string value {d[key]}, must be defined as explicit string")
+        raise InvalidRule(
+            f"ambiguous string value {d[key]}, must be defined as explicit string"
+        )
 
     elif key.startswith("operand[") and key.endswith("].number"):
         index = key[len("operand[") : -len("].number")]
@@ -818,7 +880,9 @@ def build_statements(d, scopes: Scopes):
         value, description = parse_description(d[key], key, d.get("description"))
         assert isinstance(value, int)
         try:
-            feature = capa.features.insn.OperandNumber(index, value, description=description)
+            feature = capa.features.insn.OperandNumber(
+                index, value, description=description
+            )
         except ValueError as e:
             raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scopes(scopes, feature)
@@ -834,7 +898,9 @@ def build_statements(d, scopes: Scopes):
         value, description = parse_description(d[key], key, d.get("description"))
         assert isinstance(value, int)
         try:
-            feature = capa.features.insn.OperandOffset(index, value, description=description)
+            feature = capa.features.insn.OperandOffset(
+                index, value, description=description
+            )
         except ValueError as e:
             raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scopes(scopes, feature)
@@ -854,7 +920,9 @@ def build_statements(d, scopes: Scopes):
 
         value, description = parse_description(d[key], key, d.get("description"))
         try:
-            feature = capa.features.insn.Property(value, access=access, description=description)
+            feature = capa.features.insn.Property(
+                value, access=access, description=description
+            )
         except ValueError as e:
             raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scopes(scopes, feature)
@@ -893,7 +961,9 @@ def second(s: list[Any]) -> Any:
 
 
 class Rule:
-    def __init__(self, name: str, scopes: Scopes, statement: Statement, meta, definition=""):
+    def __init__(
+        self, name: str, scopes: Scopes, statement: Statement, meta, definition=""
+    ):
         super().__init__()
         self.name = name
         self.scopes = scopes
@@ -1069,13 +1139,19 @@ class Rule:
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
         if "scope" in meta:
-            raise InvalidRule(f"legacy rule detected (rule.meta.scope), please update to the new syntax: {name}")
+            raise InvalidRule(
+                f"legacy rule detected (rule.meta.scope), please update to the new syntax: {name}"
+            )
         elif "scopes" in meta:
             scopes_ = meta.get("scopes")
         else:
-            raise InvalidRule("please specify at least one of this rule's (static/dynamic) scopes")
+            raise InvalidRule(
+                "please specify at least one of this rule's (static/dynamic) scopes"
+            )
         if not isinstance(scopes_, dict):
-            raise InvalidRule("the scopes field must contain a dictionary specifying the scopes")
+            raise InvalidRule(
+                "the scopes field must contain a dictionary specifying the scopes"
+            )
 
         scopes: Scopes = Scopes.from_dict(scopes_)
         statements = d["rule"]["features"]
@@ -1094,7 +1170,9 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        return cls(
+            name, scopes, build_statements(statements[0], scopes), meta, definition
+        )
 
     @staticmethod
     @lru_cache()
@@ -1106,7 +1184,9 @@ class Rule:
             logger.debug("using libyaml CSafeLoader.")
             return yaml.CSafeLoader
         except Exception:
-            logger.debug("unable to import libyaml CSafeLoader, falling back to Python yaml parser.")
+            logger.debug(
+                "unable to import libyaml CSafeLoader, falling back to Python yaml parser."
+            )
             logger.debug("this will be slower to load rules.")
             return yaml.SafeLoader
 
@@ -1261,7 +1341,9 @@ class Rule:
         # only do this for the features section, so the meta description doesn't get reformatted
         # assumes features section always exists
         features_offset = doc.find("features")
-        doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
+        doc = doc[:features_offset] + doc[features_offset:].replace(
+            "  description:", "    description:"
+        )
 
         # for negative hex numbers, yaml dump outputs:
         # - offset: !!int '0x-30'
@@ -1448,19 +1530,25 @@ class RuleSet:
 
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
-        self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
+        self.rules_by_scope = {
+            scope: self._get_rules_for_scope(rules, scope) for scope in scopes
+        }
 
         # these structures are unstable and may change before the next major release.
         scores_by_rule: dict[str, int] = {}
         self._feature_indexes_by_scopes = {
-            scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
+            scope: self._index_rules_by_feature(
+                scope, self.rules_by_scope[scope], scores_by_rule
+            )
+            for scope in scopes
         }
 
         # Pre-compute the topological index mapping for each scope.
         # This avoids rebuilding the dict on every call to _match (which runs once per
         # instruction/basic-block/function/file scope, i.e. potentially millions of times).
         self._rule_index_by_scope: dict[Scope, dict[str, int]] = {
-            scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
+            scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])}
+            for scope in scopes
         }
 
     @property
@@ -1506,7 +1594,9 @@ class RuleSet:
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
-    def _score_feature(scores_by_rule: dict[str, int], node: capa.features.common.Feature) -> int:
+    def _score_feature(
+        scores_by_rule: dict[str, int], node: capa.features.common.Feature
+    ) -> int:
         """
         Score the given feature by how "uncommon" we think it will be.
         Features that we expect to be very selective (ie. uniquely identify a rule and be required to match),
@@ -1561,7 +1651,9 @@ class RuleSet:
 
             return scores_by_rule[rule_name]
 
-        elif isinstance(node, (capa.features.insn.Number, capa.features.insn.OperandNumber)):
+        elif isinstance(
+            node, (capa.features.insn.Number, capa.features.insn.OperandNumber)
+        ):
             v = node.value
             assert isinstance(v, int)
 
@@ -1581,7 +1673,14 @@ class RuleSet:
             # Other numbers are assumed to be uncommon.
             return 7
 
-        elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)):
+        elif isinstance(
+            node,
+            (
+                capa.features.common.Substring,
+                capa.features.common.Regex,
+                capa.features.common.Bytes,
+            ),
+        ):
             # Scanning features (non-hashable), which we can't use for quick matching/filtering.
             return 0
 
@@ -1661,7 +1760,9 @@ class RuleSet:
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
-    def _index_rules_by_feature(scope: Scope, rules: list[Rule], scores_by_rule: dict[str, int]) -> _RuleFeatureIndex:
+    def _index_rules_by_feature(
+        scope: Scope, rules: list[Rule], scores_by_rule: dict[str, int]
+    ) -> _RuleFeatureIndex:
         """
         Index the given rules by their minimal set of most "uncommon" features required to match.
 
@@ -1810,7 +1911,9 @@ class RuleSet:
         # Ideally we find a way to get rid of all of these, eventually.
         string_rules: dict[str, list[Feature]] = {}
         bytes_rules_count = 0
-        bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
+        bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = (
+            collections.defaultdict(list)
+        )
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1823,26 +1926,45 @@ class RuleSet:
             string_features = [
                 feature
                 for feature in features
-                if isinstance(feature, (capa.features.common.Substring, capa.features.common.Regex))
+                if isinstance(
+                    feature,
+                    (capa.features.common.Substring, capa.features.common.Regex),
+                )
             ]
             hashable_features = [
                 feature
                 for feature in features
                 if not isinstance(
-                    feature, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)
+                    feature,
+                    (
+                        capa.features.common.Substring,
+                        capa.features.common.Regex,
+                        capa.features.common.Bytes,
+                    ),
                 )
             ]
 
-            logger.debug("indexing: features: %d, score: %d, rule: %s", len(features), score, rule_name)
+            logger.debug(
+                "indexing: features: %d, score: %d, rule: %s",
+                len(features),
+                score,
+                rule_name,
+            )
             scores_by_rule[rule_name] = score
             for feature in features:
-                logger.debug("        : [%d] %s", RuleSet._score_feature(scores_by_rule, feature), feature)
+                logger.debug(
+                    "        : [%d] %s",
+                    RuleSet._score_feature(scores_by_rule, feature),
+                    feature,
+                )
 
             if string_features:
                 string_rules[rule_name] = cast(list[Feature], string_features)
 
             bytes_features: list[capa.features.common.Bytes] = [
-                feature for feature in features if isinstance(feature, capa.features.common.Bytes)
+                feature
+                for feature in features
+                if isinstance(feature, capa.features.common.Bytes)
             ]
             if bytes_features:
                 bytes_rules_count += 1
@@ -1857,15 +1979,27 @@ class RuleSet:
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
 
-        logger.debug("indexing: %d features indexed for scope %s", len(rules_by_feature), scope)
+        logger.debug(
+            "indexing: %d features indexed for scope %s", len(rules_by_feature), scope
+        )
         logger.debug(
             "indexing: %d indexed features are shared by more than 3 rules",
-            len([feature for feature, rules in rules_by_feature.items() if len(rules) > 3]),
+            len(
+                [
+                    feature
+                    for feature, rules in rules_by_feature.items()
+                    if len(rules) > 3
+                ]
+            ),
         )
         logger.debug(
-            "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), bytes_rules_count
+            "indexing: %d scanning string features, %d scanning bytes features",
+            len(string_rules),
+            bytes_rules_count,
         )
-        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, dict(bytes_prefix_index))
+        return RuleSet._RuleFeatureIndex(
+            rules_by_feature, string_rules, dict(bytes_prefix_index)
+        )
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> list[Rule]:
@@ -1926,20 +2060,36 @@ class RuleSet:
         for rule in rules:
             for k, v in rule.meta.items():
                 if isinstance(v, str) and tag in v:
-                    logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
-                    rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
+                    logger.debug(
+                        'using rule "%s" and dependencies, found tag in meta.%s: %s',
+                        rule.name,
+                        k,
+                        v,
+                    )
+                    rules_filtered.update(
+                        set(get_rules_and_dependencies(rules, rule.name))
+                    )
                     break
                 if isinstance(v, list):
                     for vv in v:
                         if tag in vv:
-                            logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, vv)
-                            rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
+                            logger.debug(
+                                'using rule "%s" and dependencies, found tag in meta.%s: %s',
+                                rule.name,
+                                k,
+                                vv,
+                            )
+                            rules_filtered.update(
+                                set(get_rules_and_dependencies(rules, rule.name))
+                            )
                             break
         return RuleSet(list(rules_filtered))
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
-    def _sort_rules_by_index(rule_index_by_rule_name: dict[str, int], rules: list[Rule]):
+    def _sort_rules_by_index(
+        rule_index_by_rule_name: dict[str, int], rules: list[Rule]
+    ):
         """
         Sort (in place) the given rules by their index provided by the given dict.
         This mapping is intended to represent the topologic index of the given rule;
@@ -1948,7 +2098,9 @@ class RuleSet:
         """
         rules.sort(key=lambda r: rule_index_by_rule_name[r.name])
 
-    def _match(self, scope: Scope, features: FeatureSet, addr: Address) -> tuple[FeatureSet, ceng.MatchResults]:
+    def _match(
+        self, scope: Scope, features: FeatureSet, addr: Address
+    ) -> tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
 
@@ -1956,7 +2108,9 @@ class RuleSet:
         It uses its knowledge of all the rules to evaluate a minimal set of candidate rules for the given features.
         """
 
-        feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
+        feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[
+            scope
+        ]
         # Topologic location of rule given its name.
         # That is, rules with a lower index should be evaluated first, since their dependencies
         # will be evaluated later.
@@ -2056,7 +2210,9 @@ class RuleSet:
                 for feature in bytes_features:
                     if len(feature.value) >= _BYTES_PREFIX_SIZE:
                         prefix = struct.unpack_from(">I", feature.value)[0]
-                        for rule_name, pattern in feature_index.bytes_prefix_index.get(prefix, ()):
+                        for rule_name, pattern in feature_index.bytes_prefix_index.get(
+                            prefix, ()
+                        ):
                             if feature.value.startswith(pattern):
                                 candidate_rule_names.add(rule_name)
 
@@ -2103,7 +2259,9 @@ class RuleSet:
                 # such as rule or namespace matches.
                 if augmented_features is features:
                     # lazily create the copy of features only when a rule matches, since it could be expensive.
-                    augmented_features = collections.defaultdict(set, copy.copy(features))
+                    augmented_features = collections.defaultdict(
+                        set, copy.copy(features)
+                    )
 
                 ceng.index_rule_matches(augmented_features, rule, [addr])
 
@@ -2118,12 +2276,18 @@ class RuleSet:
                 if new_features:
                     new_candidates: list[str] = []
                     for new_feature in new_features:
-                        new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
+                        new_candidates.extend(
+                            feature_index.rules_by_feature.get(new_feature, ())
+                        )
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
-                        candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
-                        RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+                        candidate_rules.extend(
+                            [self.rules[rule_name] for rule_name in new_candidates]
+                        )
+                        RuleSet._sort_rules_by_index(
+                            rule_index_by_rule_name, candidate_rules
+                        )
                         candidate_rules.reverse()
 
         return (augmented_features, results)
@@ -2153,17 +2317,25 @@ class RuleSet:
 
         if paranoid:
             rules: list[Rule] = self.rules_by_scope[scope]
-            paranoid_features, paranoid_matches = capa.engine.match(rules, features, addr)
+            paranoid_features, paranoid_matches = capa.engine.match(
+                rules, features, addr
+            )
 
             if features != paranoid_features:
                 logger.warning("paranoid: %s: %s", scope, addr)
-                for feature in sorted(set(features.keys()) & set(paranoid_features.keys())):
+                for feature in sorted(
+                    set(features.keys()) & set(paranoid_features.keys())
+                ):
                     logger.warning("paranoid:   %s", feature)
 
-                for feature in sorted(set(features.keys()) - set(paranoid_features.keys())):
+                for feature in sorted(
+                    set(features.keys()) - set(paranoid_features.keys())
+                ):
                     logger.warning("paranoid: + %s", feature)
 
-                for feature in sorted(set(paranoid_features.keys()) - set(features.keys())):
+                for feature in sorted(
+                    set(paranoid_features.keys()) - set(features.keys())
+                ):
                     logger.warning("paranoid: - %s", feature)
 
             assert features == paranoid_features
@@ -2208,7 +2380,10 @@ def collect_rule_file_paths(rule_paths: list[Path]) -> list[Path]:
                     continue
                 for file in files:
                     if not file.endswith(".yml"):
-                        if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                        if not (
+                            file.startswith(".git")
+                            or file.endswith((".git", ".md", ".txt"))
+                        ):
                             # expect to see .git* files, readme.md, format.md, and maybe a .git directory
                             # other things maybe are rules, but are mis-named.
                             logger.warning("skipping non-.yml file: %s", file)
