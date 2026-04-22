@@ -781,7 +781,7 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
-        found_file_limitation = has_static_limitation(rules, pure_file_capabilities)
+        found_file_limitation |= has_static_limitation(rules, pure_file_capabilities)
         if found_file_limitation:
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
@@ -805,7 +805,7 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
     found_dynamic_limitation = False
     for file_extractor in file_extractors:
         pure_dynamic_capabilities = find_file_capabilities(rules, file_extractor, {})
-        found_dynamic_limitation = has_dynamic_limitation(rules, pure_dynamic_capabilities)
+        found_dynamic_limitation |= has_dynamic_limitation(rules, pure_dynamic_capabilities)
 
     if found_dynamic_limitation:
         # bail if capa encountered file limitation e.g. a dotnet sample is detected
