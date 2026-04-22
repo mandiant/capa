@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: correct off-by-one in dynamic analysis call_count debug log (enumerate -> explicit counter) @williballenthin
 - fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: add missing ELF branch in get_format_from_extension for .elf_ files @williballenthin #3031
