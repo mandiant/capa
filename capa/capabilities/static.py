@@ -16,6 +16,7 @@ import time
 import logging
 import itertools
 import collections
+from typing import Optional
 from dataclasses import dataclass
 
 import capa.perf
@@ -149,7 +150,7 @@ def find_code_capabilities(ruleset: RuleSet, extractor: StaticFeatureExtractor, 
 
 
 def find_static_capabilities(
-    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress: Optional[bool] = None
 ) -> Capabilities:
     all_function_matches: MatchResults = collections.defaultdict(list)
     all_bb_matches: MatchResults = collections.defaultdict(list)
@@ -168,7 +169,7 @@ def find_static_capabilities(
     percentage: float = 0
 
     with capa.helpers.CapaProgressBar(
-        console=capa.helpers.log_console, transient=True, disable=disable_progress
+        console=capa.helpers.log_console, transient=True, disable=bool(disable_progress)
     ) as pbar:
         task = pbar.add_task(
             "matching", total=n_funcs, unit="functions", postfix=f"skipped {n_libs} library functions, {percentage}%"
