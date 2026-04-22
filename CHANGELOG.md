@@ -48,8 +48,7 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
-fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
-- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove dead view_tab_rulegen assignment from CapaExplorerForm that was never read @williballenthin (SURF-70)
 - fix: remove dead reset_query method from CapaExplorerSearchProxyModel that was never called @williballenthin (SURF-69)
 - fix: remove unused imports of capa.rules and capa.engine from view.py @williballenthin (SURF-68)
 - fix: remove unused imports of capa.main, capa.render.json, and capa.features.extractors.ida.extractor from form.py @williballenthin (SURF-67)
