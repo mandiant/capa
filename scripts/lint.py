@@ -745,11 +745,15 @@ class FeatureRegexRegistryControlSetMatchIncomplete(Lint):
 
             pat = feature.value.lower()
 
-            if "system\\\\" in pat and "controlset" in pat or "currentcontrolset" in pat:
+            if (
+                "system\\\\" in pat
+                and "controlset" in pat
+                or "currentcontrolset" in pat
+            ):
                 if "system\\\\(controlset\\d{3}|currentcontrolset)" not in pat:
                     return True
 
-            return False
+        return False
 
 
 class FeatureRegexContainsUnescapedPeriod(Lint):
