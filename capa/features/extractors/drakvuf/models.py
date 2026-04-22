@@ -40,7 +40,7 @@ REQUIRED_SYSCALL_FIELD_NAMES = {
 
 
 class ConciseModel(BaseModel):
-    ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")
 
 
 class DiscoveredDLL(ConciseModel):
@@ -111,7 +111,9 @@ class SystemCall(Call):
         # DRAKVUF stores argument names and values as entries in the syscall's entry.
         # This model validator collects those arguments into a list in the model.
         values["arguments"] = {
-            name: value for name, value in values.items() if name not in REQUIRED_SYSCALL_FIELD_NAMES
+            name: value
+            for name, value in values.items()
+            if name not in REQUIRED_SYSCALL_FIELD_NAMES
         }
         return values
 
