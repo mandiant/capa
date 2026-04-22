@@ -585,7 +585,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
-    if input_format == FORMAT_DRAKVUF:
+    elif input_format == FORMAT_DRAKVUF:
         return BACKEND_DRAKVUF
 
     elif input_format == FORMAT_VMRAY:
