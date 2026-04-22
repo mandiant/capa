@@ -23,18 +23,9 @@ import logging
 import binascii
 import collections
 from enum import Enum
-from pathlib import Path
-
-from capa.helpers import assert_never
-
-try:
-    from functools import lru_cache
-except ImportError:
-    # need to type ignore this due to mypy bug here (duplicate name):
-    # https://github.com/python/mypy/issues/1153
-    from backports.functools_lru_cache import lru_cache  # type: ignore
-
 from typing import Any, Union, Callable, Iterator, Optional, cast
+from pathlib import Path
+from functools import lru_cache
 from dataclasses import asdict, dataclass
 
 import yaml
@@ -51,6 +42,7 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
+from capa.helpers import assert_never
 from capa.features.com import ComType
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.address import Address
@@ -1129,7 +1121,7 @@ class Rule:
         return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)  # type: ignore[arg-type]  # build_statements infers wide union but top-level always returns Statement
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def _get_yaml_loader():
         try:
             # prefer to use CLoader to be fast, see #306 / CSafeLoader is the same as CLoader but with safe loading
