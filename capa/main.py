@@ -173,7 +173,7 @@ def get_default_root() -> Path:
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
         assert hasattr(sys, "_MEIPASS")
-        return Path(sys._MEIPASS)
+        return Path(sys._MEIPASS)  # type: ignore[attr-defined]  # PyInstaller injects _MEIPASS at runtime
     else:
         return Path(__file__).resolve().parent.parent
 
