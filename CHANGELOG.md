@@ -34,6 +34,8 @@
 
 - fix: elffile.py: get_base_address returns None instead of NO_ADDRESS @williballenthin #3023
 
+- fix: base_extractor.py: __metaclass__ is Python 2 syntax, ignored in Py3 @williballenthin #3024
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
