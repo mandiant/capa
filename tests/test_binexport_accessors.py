@@ -23,6 +23,8 @@ import fixtures
 from google.protobuf.json_format import ParseDict
 
 import capa.features.extractors.binexport2.helpers
+from capa.features.common import ARCH_AARCH64
+from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import (
     AddressSpace,
     MemoryRegion,
@@ -31,7 +33,9 @@ from capa.features.extractors.binexport2 import (
     FunctionContext,
     BasicBlockContext,
     BinExport2Analysis,
+    InstructionContext,
 )
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
     BinExport2InstructionPattern,
     BinExport2InstructionPatternMatcher,
@@ -43,6 +47,9 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
+from capa.features.extractors.binexport2.arch.arm.insn import (
+    extract_insn_number_features,
+)
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 from capa.features.extractors.binexport2.arch.intel.insn import is_security_cookie
 from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
@@ -770,3 +777,84 @@ def test_is_security_cookie_single_insn_terminal_bb():
     fhi, bbi, insn = _make_security_cookie_ctx(xor_addr, bb_index=0, is_terminal=True)
     result = is_security_cookie(fhi, bbi, xor_addr, insn)
     assert isinstance(result, bool)
+
+
+def _make_arm_insn_context(
+    insn_dict: dict,
+) -> tuple[FunctionHandle, BBHandle, InsnHandle]:
+    """Build the minimal handle/context triple needed to call extract_insn_number_features."""
+    be2_dict: dict[str, Any] = {
+        "section": [{"address": 0x1000, "size": 0x100, "flag_r": True, "flag_x": True}],
+        "expression": insn_dict["expressions"],
+        "operand": insn_dict["operands"],
+        "mnemonic": [{"name": insn_dict["mnemonic"]}],
+        "instruction": [
+            {
+                "mnemonic_index": 0,
+                "operand_index": insn_dict["operand_indices"],
+                "address": 0x1000,
+                "raw_bytes": b"\x00\x00\x00\x00",
+            }
+        ],
+    }
+    be2 = ParseDict(be2_dict, BinExport2())
+    idx = BinExport2Index(be2)
+    analysis = BinExport2Analysis(be2, idx, b"")
+    address_space = AddressSpace(base_address=0x1000, memory_regions=())
+    ctx = AnalysisContext(
+        sample_bytes=b"",
+        be2=be2,
+        idx=idx,
+        analysis=analysis,
+        address_space=address_space,
+    )
+    fctx = FunctionContext(ctx=ctx, flow_graph_index=0, format=set(), os=set(), arch={ARCH_AARCH64})
+    ictx = InstructionContext(instruction_index=0)
+    fh = FunctionHandle(address=AbsoluteVirtualAddress(0x1000), inner=fctx)
+    bbh = BBHandle(address=AbsoluteVirtualAddress(0x1000), inner=None)
+    ih = InsnHandle(address=AbsoluteVirtualAddress(0x1000), inner=ictx)
+    return fh, bbh, ih
+
+
+def test_arm_add_two_operand_does_not_crash():
+    # Thumb-2: add sp, #0x10  (2 operands — used to hit an assert that expected exactly 3)
+    # The fix replaces `assert len == 3` with a guard, so this must not raise.
+    # The 3-operand stack-skip only fires when operand[1] is sp; with 2 operands the
+    # immediate falls through to the for-loop and yields Number/OperandNumber.
+    fh, bbh, ih = _make_arm_insn_context({
+        "mnemonic": "add",
+        "expressions": [
+            {"type": BinExport2.Expression.REGISTER, "symbol": "sp"},
+            {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x10},
+        ],
+        "operands": [
+            {"expression_index": [0]},
+            {"expression_index": [1]},
+        ],
+        "operand_indices": [0, 1],
+    })
+    from capa.features.insn import Number
+
+    features = list(extract_insn_number_features(fh, bbh, ih))
+    values = {f.value for f, _ in features}
+    assert 0x10 in values
+
+
+def test_arm_add_two_operand_non_stack_yields_number():
+    # add r0, #0x42  (2 operands, non-stack dest)
+    fh, bbh, ih = _make_arm_insn_context({
+        "mnemonic": "add",
+        "expressions": [
+            {"type": BinExport2.Expression.REGISTER, "symbol": "r0"},
+            {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x42},
+        ],
+        "operands": [
+            {"expression_index": [0]},
+            {"expression_index": [1]},
+        ],
+        "operand_indices": [0, 1],
+    })
+
+    features = list(extract_insn_number_features(fh, bbh, ih))
+    values = {f.value for f, _ in features}
+    assert 0x42 in values
