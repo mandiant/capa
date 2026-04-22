@@ -50,6 +50,7 @@
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: correct operator precedence in FeatureRegexRegistryControlSetMatchIncomplete to avoid false positives on unrelated currentcontrolset patterns @williballenthin (SURF-85)
 - fix: FeatureRegexRegistryControlSetMatchIncomplete now checks all Regex features instead of returning after the first @williballenthin (SURF-84)
 - fix: MissingStaticScope and MissingDynamicScope lint checks guard against absent scopes dict to prevent TypeError @williballenthin (SURF-83)
 - fix: MissingExampleOffset lint now reads scopes.static instead of obsolete scope key @williballenthin (SURF-82)
