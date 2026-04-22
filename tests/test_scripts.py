@@ -234,6 +234,22 @@ def test_detect_duplicate_features(tmpdir):
         assert overlaps_found.returncode == expected_overlaps
 
 
+def test_missing_static_dynamic_scope_no_crash_when_scopes_absent():
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    import capa.engine
+    import capa.features.common
+
+    scopes = capa.rules.Scopes(static=capa.rules.Scope.FUNCTION, dynamic=capa.rules.Scope.PROCESS)
+    statement = capa.engine.And([])
+    rule = capa.rules.Rule("test rule no scopes", scopes, statement, {"name": "test rule no scopes"})
+
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([]), is_thorough=False)
+    assert lint_module.MissingStaticScope().check_rule(ctx, rule) is False
+    assert lint_module.MissingDynamicScope().check_rule(ctx, rule) is False
+
+
 def test_missing_example_offset_uses_scopes():
     sys.path.insert(0, str(CD / ".." / "scripts"))
     import lint as lint_module

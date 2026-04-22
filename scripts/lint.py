@@ -161,7 +161,10 @@ class MissingStaticScope(Lint):
     recommendation = "Add a static scope for the rule (file, function, basic block, instruction, or unsupported)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "static" not in rule.meta.get("scopes")
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return "static" not in scopes
 
 
 class MissingDynamicScope(Lint):
@@ -169,7 +172,10 @@ class MissingDynamicScope(Lint):
     recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unsupported)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "dynamic" not in rule.meta.get("scopes")
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return "dynamic" not in scopes
 
 
 class InvalidStaticScope(Lint):
@@ -177,7 +183,10 @@ class InvalidStaticScope(Lint):
     recommendation = "For the static scope, use either: file, function, basic block, instruction, or unsupported"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scopes").get("static") not in (
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return scopes.get("static") not in (
             "file",
             "function",
             "basic block",
@@ -187,11 +196,14 @@ class InvalidStaticScope(Lint):
 
 
 class InvalidDynamicScope(Lint):
-    name = "invalid static scope"
+    name = "invalid dynamic scope"
     recommendation = "For the dynamic scope, use either: file, process, thread, call, or unsupported"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scopes").get("dynamic") not in (
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return scopes.get("dynamic") not in (
             "file",
             "process",
             "thread",
@@ -206,8 +218,11 @@ class InvalidScopes(Lint):
     recommendation = "At least one scope (static or dynamic) must be specified"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return (rule.meta.get("scopes").get("static") == "unsupported") and (
-            rule.meta.get("scopes").get("dynamic") == "unsupported"
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return (scopes.get("static") == "unsupported") and (
+            scopes.get("dynamic") == "unsupported"
         )
 
 
