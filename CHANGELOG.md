@@ -20,6 +20,8 @@
 
 - fix: vverbose.py: render_call variable assigned but never used @williballenthin #3016
 
+- fix: extract_os yields duplicate/contradictory OS values @williballenthin #3017
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
