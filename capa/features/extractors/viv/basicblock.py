@@ -27,20 +27,6 @@ from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
-def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given basic block.
-
-    args:
-      f: the function to process.
-      bb: the basic block to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
 def _bb_has_tight_loop(f, bb):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
@@ -54,7 +40,9 @@ def _bb_has_tight_loop(f, bb):
     return False
 
 
-def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_bb_tight_loop(
+    f: FunctionHandle, bb: BBHandle
+) -> Iterator[tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
     if _bb_has_tight_loop(f, bb.inner):
         yield Characteristic("tight loop"), bb.address
@@ -77,7 +65,9 @@ def _bb_has_stackstring(f, bb):
     return False
 
 
-def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_stackstring(
+    f: FunctionHandle, bb: BBHandle
+) -> Iterator[tuple[Feature, Address]]:
     """check basic block for stackstring indicators"""
     if _bb_has_stackstring(f, bb.inner):
         yield Characteristic("stack string"), bb.address
@@ -152,7 +142,9 @@ def is_printable_utf16le(chars: bytes) -> bool:
     return False
 
 
-def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_features(
+    f: FunctionHandle, bb: BBHandle
+) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
