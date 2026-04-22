@@ -304,3 +304,24 @@ def test_missing_example_offset_uses_scopes():
         """)
     )
     assert lint_instance.check_rule(ctx, file_scope_rule_no_offset) is not True
+
+
+def test_feature_regex_registry_control_set_checks_all_features():
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    from capa.features.common import Regex
+
+    lint_instance = lint_module.FeatureRegexRegistryControlSetMatchIncomplete()
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([]), is_thorough=False)
+
+    ok_regex = Regex("unrelated-pattern")
+    bad_regex = Regex("system\\\\CurrentControlSet\\\\Services")
+    correct_regex = Regex("system\\\\(ControlSet\\d{3}|CurrentControlSet)\\\\Services")
+    unrelated_currentcontrolset_regex = Regex("HKLM\\\\Software\\\\CurrentControlSet")
+
+    assert lint_instance.check_features(ctx, [bad_regex]) is True
+    assert lint_instance.check_features(ctx, [ok_regex]) is False
+    assert lint_instance.check_features(ctx, [ok_regex, bad_regex]) is True
+    assert lint_instance.check_features(ctx, [correct_regex]) is False
+    assert lint_instance.check_features(ctx, [unrelated_currentcontrolset_regex]) is False

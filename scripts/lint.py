@@ -756,7 +756,7 @@ class FeatureRegexRegistryControlSetMatchIncomplete(Lint):
                 if "system\\\\(controlset\\d{3}|currentcontrolset)" not in pat:
                     return True
 
-            return False
+        return False
 
 
 class FeatureRegexContainsUnescapedPeriod(Lint):
