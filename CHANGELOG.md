@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: stop mutating call.api in cape thread.get_calls; yield one CallHandle per call so the original API name is preserved for all handles @williballenthin
 - fix: use instruction_indices in is_security_cookie to handle single-instruction basic blocks where end_index is omitted, preventing KeyError on -1 @williballenthin
 - fix: guard get_operand_expressions against empty expression tree so Ghidra-exported BinExport2 files with empty operands no longer raise IndexError @williballenthin
 - fix: add return after zero-offset yield in extract_insn_offset_features so Offset(0) is not emitted twice @williballenthin

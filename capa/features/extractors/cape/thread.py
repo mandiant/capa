@@ -17,7 +17,6 @@ import logging
 from typing import Iterator
 
 from capa.features.address import DynamicCallAddress
-from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.cape.models import Process
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
@@ -32,8 +31,5 @@ def get_calls(ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         if call.thread_id != tid:
             continue
 
-        for symbol in generate_symbols("", call.api):
-            call.api = symbol
-
-            addr = DynamicCallAddress(thread=th.address, id=call_index)
-            yield CallHandle(address=addr, inner=call)
+        addr = DynamicCallAddress(thread=th.address, id=call_index)
+        yield CallHandle(address=addr, inner=call)
