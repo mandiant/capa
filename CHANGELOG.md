@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: break thunk chain loop after resolving import to avoid duplicate API features @williballenthin (SURF-57)
 - fix: pass insn instead of oper to getOperValue/getOperAddr in viv insn extractor @williballenthin (SURF-56)
 - fix: implement extract_function_loop in dnfile extractor to detect backward branches as loops @williballenthin (SURF-55)
 - fix: remove dead find_process function and helpers.py from cape extractor @williballenthin (SURF-54)

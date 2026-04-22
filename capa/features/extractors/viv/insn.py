@@ -162,6 +162,7 @@ def extract_insn_api_features(
                     dll, symbol
                 ):
                     yield API(name), ih.address
+                break
 
             # if jump leads to an ENDBRANCH instruction, skip it
             _offset, _buf = f.vw.getByteDef(target)
