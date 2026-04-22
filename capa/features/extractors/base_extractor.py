@@ -304,7 +304,7 @@ class StaticFeatureExtractor:
 def FunctionFilter(extractor: StaticFeatureExtractor, functions: set) -> StaticFeatureExtractor:
     original_get_functions = extractor.get_functions
 
-    def filtered_get_functions(self):
+    def filtered_get_functions(_self):
         yield from (f for f in original_get_functions() if f.address in functions)
 
     # we make a copy of the original extractor object and then update its get_functions() method with the decorated filter one.
@@ -491,7 +491,7 @@ class DynamicFeatureExtractor:
 def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> DynamicFeatureExtractor:
     original_get_processes = extractor.get_processes
 
-    def filtered_get_processes(self):
+    def filtered_get_processes(_self):
         yield from (f for f in original_get_processes() if f.address.pid in pids)
 
     # we make a copy of the original extractor object and then update its get_processes() method with the decorated filter one.
@@ -507,7 +507,7 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> Dynamic
 def ThreadFilter(extractor: DynamicFeatureExtractor, threads: set[Address]) -> DynamicFeatureExtractor:
     original_get_threads = extractor.get_threads
 
-    def filtered_get_threads(self, ph: ProcessHandle):
+    def filtered_get_threads(_self, ph: ProcessHandle):
         yield from (t for t in original_get_threads(ph) if t.address in threads)
 
     new_extractor = copy(extractor)
