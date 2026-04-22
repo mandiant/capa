@@ -50,16 +50,14 @@ def get_previous_instructions(vw: VivWorkspace, va: int) -> list[int]:
 
     # find the immediate prior instruction.
     # ensure that it falls through to this one.
-    loc = vw.getPrevLocation(va, adjacent=True)
-    if loc is not None:
-        ploc = vw.getPrevLocation(va, adjacent=True)
-        if ploc is not None:
-            # from vivisect.const:
-            # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
-            pva, _, ptype, pinfo = ploc
+    ploc = vw.getPrevLocation(va, adjacent=True)
+    if ploc is not None:
+        # from vivisect.const:
+        # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
+        pva, _, ptype, pinfo = ploc
 
-            if ptype == LOC_OP and not (pinfo & IF_NOFALL):
-                ret.append(pva)
+        if ptype == LOC_OP and not (pinfo & IF_NOFALL):
+            ret.append(pva)
 
     # find any code refs, e.g. jmp, to this location.
     # ignore any calls.
@@ -113,7 +111,11 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> tuple[int, Optional[
             continue
 
         opnd0 = insn.opers[0]
-        if not (isinstance(opnd0, i386RegOper) and opnd0.reg == reg and insn.mnem in DESTRUCTIVE_MNEMONICS):
+        if not (
+            isinstance(opnd0, i386RegOper)
+            and opnd0.reg == reg
+            and insn.mnem in DESTRUCTIVE_MNEMONICS
+        ):
             q.extend(get_previous_instructions(vw, cur))
             continue
 
@@ -143,10 +145,14 @@ def is_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
-    return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
+    return insn.mnem in ("call", "jmp") and isinstance(
+        insn.opers[0], envi.archs.i386.disasm.i386RegOper
+    )
 
 
-def resolve_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> tuple[int, Optional[int]]:
+def resolve_indirect_call(
+    vw: VivWorkspace, va: int, insn: envi.Opcode
+) -> tuple[int, Optional[int]]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.
 

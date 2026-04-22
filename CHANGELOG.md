@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove duplicate getPrevLocation call and dead loc variable in get_previous_instructions @williballenthin (SURF-46)
 - fix: unpack getByteDef offset and slice buffer so ENDBRANCH check applies to target address, not segment start @williballenthin (SURF-45)
 - fix: correct inverted loop structure in extract_function_loop so each block edge is recorded as (src, dest) @williballenthin (SURF-44)
 - fix: initialize addr to None in Ghidra import extractors to prevent UnboundLocalError when external functions have no data references @williballenthin (SURF-43)
