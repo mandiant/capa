@@ -17,10 +17,12 @@ import os
 import sys
 import logging
 import textwrap
+import zipfile
 import subprocess
 from pathlib import Path
 
 import pytest
+import pyzipper
 
 import capa.rules
 
@@ -58,6 +60,25 @@ def get_rules_path():
 
 def get_rule_path():
     return str(Path(get_rules_path()) / "lib" / "allocate-memory.yml")
+
+
+def test_minimize_vmray_results_writes_encrypted_zip(tmp_path):
+    password = b"infected"
+    content = b"test content"
+    zip_path = tmp_path / "test.zip"
+
+    with pyzipper.AESZipFile(
+        zip_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES
+    ) as zf:
+        zf.setpassword(password)
+        zf.writestr("file.txt", content)
+
+    with zipfile.ZipFile(zip_path) as zf:
+        info = zf.infolist()[0]
+        assert info.flag_bits & 0x1, "entry must be encrypted"
+
+    with pyzipper.AESZipFile(zip_path, "r") as zf:
+        assert zf.read("file.txt", pwd=password) == content
 
 
 @pytest.mark.parametrize(
@@ -335,7 +356,6 @@ def test_feature_regex_registry_control_set_checks_all_features():
 
     ok_regex = Regex("unrelated-pattern")
     bad_regex = Regex("system\\\\CurrentControlSet\\\\Services")
-
     correct_regex = Regex("system\\\\(ControlSet\\d{3}|CurrentControlSet)\\\\Services")
     unrelated_currentcontrolset_regex = Regex("HKLM\\\\Software\\\\CurrentControlSet")
 
