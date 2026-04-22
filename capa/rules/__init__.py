@@ -1825,9 +1825,6 @@ class RuleSet:
                 for feature in features
                 if isinstance(feature, (capa.features.common.Substring, capa.features.common.Regex))
             ]
-            bytes_features: list[capa.features.common.Bytes] = [
-                feature for feature in features if isinstance(feature, capa.features.common.Bytes)
-            ]
             hashable_features = [
                 feature
                 for feature in features
@@ -1844,6 +1841,9 @@ class RuleSet:
             if string_features:
                 string_rules[rule_name] = cast(list[Feature], string_features)
 
+            bytes_features: list[capa.features.common.Bytes] = [
+                feature for feature in features if isinstance(feature, capa.features.common.Bytes)
+            ]
             if bytes_features:
                 bytes_rules_count += 1
                 for wanted_bytes in bytes_features:

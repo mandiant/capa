@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+<<<<<<< HEAD
 - fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
 
 - fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
@@ -38,6 +39,8 @@
 - fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
 
 - fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
+
+- fix: rules/__init__.py: duplicate bytes_features line @williballenthin #3027
 
 ### capa Explorer Web
 
