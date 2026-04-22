@@ -164,6 +164,11 @@ def test_serialize_features():
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 
 
+def test_no_address_lt_irreflexivity():
+    no_addr = capa.features.freeze.Address.from_capa(capa.features.address.NO_ADDRESS)
+    assert not (no_addr < no_addr)
+
+
 def test_freeze_sample(tmpdir, z9324d_extractor):
     # tmpdir fixture handles cleanup
     o = tmpdir.mkdir("capa").join("test.frz").strpath

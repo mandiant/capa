@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
