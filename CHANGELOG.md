@@ -32,6 +32,7 @@
 - fix: loader.py reads entire file for magic byte check @williballenthin #3029
 - fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
 - fix: EXTENSIONS_ELF never referenced @williballenthin #3031
+- fix: use HasField instead of truthiness in _index_vertex_edges so call-graph edges to/from vertex 0 are not silently dropped @williballenthin
 - fix: change bare `if` to `elif` in get_backend_from_cli DRAKVUF branch to complete the if/elif chain @williballenthin
 - fix: close file handle in get_file_taste using a with statement @williballenthin
 - fix: correct off-by-one in dynamic analysis call_count debug log (enumerate -> explicit counter) @williballenthin
