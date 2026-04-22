@@ -229,11 +229,11 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
     def get_instructions(self, f, bb):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def extract_insn_features(self, f, bb, insn):
+    def extract_insn_features(self, fh, bbh, ih):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def is_library_function(self, va):
+    def is_library_function(self, addr):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def get_function_name(self, va):
+    def get_function_name(self, addr):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")

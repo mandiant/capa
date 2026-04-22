@@ -214,7 +214,7 @@ class StaticFeatureExtractor:
         raise KeyError(addr)
 
     @abc.abstractmethod
-    def extract_function_features(self, f: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -227,7 +227,7 @@ class StaticFeatureExtractor:
                     print('0x%x: %s', address, feature)
 
         args:
-          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          fh [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
 
         yields:
           tuple[Feature, Address]: feature and its location
@@ -235,7 +235,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
+    def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         """
         enumerate the basic blocks in the given function and provide opaque values that will
          subsequently be provided to `.extract_basic_block_features()`, etc.
@@ -243,7 +243,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -257,8 +257,8 @@ class StaticFeatureExtractor:
                         print('0x%x: %s', address, feature)
 
         args:
-          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
-          bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
+          fh [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          bbh [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
 
         yields:
           tuple[Feature, Address]: feature and its location
@@ -266,7 +266,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
+    def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         """
         enumerate the instructions in the given basic block and provide opaque values that will
          subsequently be provided to `.extract_insn_features()`, etc.
@@ -275,7 +275,7 @@ class StaticFeatureExtractor:
 
     @abc.abstractmethod
     def extract_insn_features(
-        self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+        self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
     ) -> Iterator[tuple[Feature, Address]]:
         """
         extract instruction-scope features.
@@ -291,9 +291,9 @@ class StaticFeatureExtractor:
                             print('0x%x: %s', address, feature)
 
         args:
-          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
-          bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
-          insn [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
+          fh [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          bbh [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
+          ih [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
 
         yields:
           tuple[Feature, Address]: feature and its location
