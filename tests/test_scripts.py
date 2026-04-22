@@ -22,6 +22,8 @@ from pathlib import Path
 
 import pytest
 
+import capa.rules
+
 logger = logging.getLogger(__name__)
 
 CD = Path(__file__).resolve().parent
@@ -230,3 +232,59 @@ def test_detect_duplicate_features(tmpdir):
         args = [rule_dir.strpath, rule_path]
         overlaps_found = run_program(script_path, args)
         assert overlaps_found.returncode == expected_overlaps
+
+
+def test_missing_example_offset_uses_scopes():
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    lint_instance = lint_module.MissingExampleOffset()
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([]), is_thorough=False)
+
+    function_scope_rule_missing_offset = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule function scope no offset
+                    scopes:
+                        static: function
+                        dynamic: process
+                    examples:
+                        - 9324d1a8ae37a36ae560c37448c9705a.exe_
+                features:
+                    - api: CreateFile
+        """)
+    )
+    assert lint_instance.check_rule(ctx, function_scope_rule_missing_offset) is True
+
+    function_scope_rule_with_offset = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule function scope with offset
+                    scopes:
+                        static: function
+                        dynamic: process
+                    examples:
+                        - 9324d1a8ae37a36ae560c37448c9705a.exe_:0x407970
+                features:
+                    - api: CreateFile
+        """)
+    )
+    assert lint_instance.check_rule(ctx, function_scope_rule_with_offset) is not True
+
+    file_scope_rule_no_offset = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule file scope no offset
+                    scopes:
+                        static: file
+                        dynamic: process
+                    examples:
+                        - 9324d1a8ae37a36ae560c37448c9705a.exe_
+                features:
+                    - api: CreateFile
+        """)
+    )
+    assert lint_instance.check_rule(ctx, file_scope_rule_no_offset) is not True

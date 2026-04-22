@@ -237,7 +237,8 @@ class MissingExampleOffset(Lint):
     recommendation = "Add offset of example function"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        if rule.meta.get("scope") in ("function", "basic block"):
+        static_scope = rule.meta.get("scopes", {}).get("static")
+        if static_scope in ("function", "basic block"):
             examples = rule.meta.get("examples")
             if isinstance(examples, list):
                 for example in examples:
