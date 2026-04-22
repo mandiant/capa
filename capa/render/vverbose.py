@@ -14,7 +14,7 @@
 
 import logging
 import textwrap
-from typing import Iterable, Optional
+from typing import Iterable, Optional, assert_never
 
 from rich.text import Text
 from rich.table import Table
@@ -183,7 +183,7 @@ def render_statement(console: Console, layout: rd.Layout, match: rd.Match, state
         console.writeln()
 
     else:
-        raise RuntimeError("unexpected match statement type: " + str(statement))
+        assert_never(statement)
 
 
 def render_string_value(s: str) -> str:
@@ -281,7 +281,7 @@ def render_node(console: Console, layout: rd.Layout, rule: rd.RuleMatches, match
     elif isinstance(node, rd.FeatureNode):
         render_feature(console, layout, rule, match, node.feature, indent=indent)
     else:
-        raise RuntimeError("unexpected node type: " + str(node))
+        assert_never(node)
 
 
 # display nodes that successfully evaluated against the sample.
