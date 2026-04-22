@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: implement extract_function_loop in dnfile extractor to detect backward branches as loops @williballenthin (SURF-55)
 - fix: remove dead find_process function and helpers.py from cape extractor @williballenthin (SURF-54)
 - fix: remove dead interface_extract_* stub functions from viv basicblock, function, and insn extractors @williballenthin (SURF-53)
 - fix: remove unused import of capa.features.extractors.strings from binexport2 intel insn.py @williballenthin (SURF-52)
