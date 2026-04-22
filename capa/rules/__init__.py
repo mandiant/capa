@@ -2157,7 +2157,7 @@ class RuleSet:
 
         if paranoid:
             rules: list[Rule] = self.rules_by_scope[scope]
-            paranoid_features, paranoid_matches = capa.engine.match(rules, features, addr)
+            paranoid_features, paranoid_matches = ceng.match(rules, features, addr)
 
             if features != paranoid_features:
                 logger.warning("paranoid: %s: %s", scope, addr)
@@ -2242,6 +2242,8 @@ def get_rules(
       on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
       enable_cache: enable loading of a cached ruleset (default: True)
     """
+    import capa.rules.cache  # local import to avoid circular dependency (cache.py imports capa.rules)
+
     if cache_dir is None:
         cache_dir = capa.rules.cache.get_default_cache_directory()
     # rule_paths may contain directory paths,
