@@ -55,8 +55,8 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
     def tell(self) -> int:
         return self.offset
 
-    def seek(self, offset: int) -> int:
-        self.offset = offset
+    def seek(self, rva: int) -> int:
+        self.offset = rva
         return self.offset
 
 

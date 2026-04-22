@@ -237,19 +237,19 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
     def get_functions(self):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def extract_function_features(self, f):
+    def extract_function_features(self, fh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def get_basic_blocks(self, f):
+    def get_basic_blocks(self, fh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def extract_basic_block_features(self, f, bb):
+    def extract_basic_block_features(self, fh, bbh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def get_instructions(self, f, bb):
+    def get_instructions(self, fh, bbh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def extract_insn_features(self, f, bb, insn):
+    def extract_insn_features(self, fh, bbh, ih):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
     def is_library_function(self, addr):
