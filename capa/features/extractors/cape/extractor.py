@@ -21,6 +21,7 @@ import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
+from capa.helpers import assert_never
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress
@@ -110,7 +111,7 @@ class CapeExtractor(DynamicFeatureExtractor):
                 elif isinstance(argument.value, list):
                     pass
                 else:
-                    capa.helpers.assert_never(argument.value)
+                    assert_never(argument.value)
 
             parts.append(", ")
         if call.arguments:
