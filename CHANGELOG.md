@@ -32,6 +32,7 @@
 - fix: loader.py reads entire file for magic byte check @williballenthin #3029
 - fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
 - fix: EXTENSIONS_ELF never referenced @williballenthin #3031
+- fix: close file handle in get_file_taste using a with statement @williballenthin
 - fix: correct off-by-one in dynamic analysis call_count debug log (enumerate -> explicit counter) @williballenthin
 - fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin

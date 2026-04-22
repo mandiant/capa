@@ -27,6 +27,7 @@ from capa.helpers import (
     EXTENSIONS_BINEXPORT2,
     EXTENSIONS_SHELLCODE_32,
     EXTENSIONS_SHELLCODE_64,
+    get_file_taste,
     get_format_from_extension,
 )
 from capa.features.common import (
@@ -166,3 +167,16 @@ def test_get_format_from_extension():
     assert get_format_from_extension(Path("sample.BinExport2")) == FORMAT_BINEXPORT2
     assert get_format_from_extension(Path("sample.bndb")) == FORMAT_BINJA_DB
     assert get_format_from_extension(Path("sample.exe")) == FORMAT_UNKNOWN
+
+
+def test_get_file_taste_reads_first_bytes(tmp_path):
+    sample = tmp_path / "sample.bin"
+    sample.write_bytes(b"\x4d\x5a\x90\x00\x01\x02\x03\x04\xff\xfe")
+    taste = get_file_taste(sample)
+    assert taste == b"\x4d\x5a\x90\x00\x01\x02\x03\x04"
+    assert len(taste) == 8
+
+
+def test_get_file_taste_missing_file_raises():
+    with pytest.raises(IOError):
+        get_file_taste(Path("/nonexistent/path/sample.exe"))
