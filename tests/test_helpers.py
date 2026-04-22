@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-import gzip
 import codecs
 from pathlib import Path
 
