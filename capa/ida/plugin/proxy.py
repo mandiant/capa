@@ -227,6 +227,3 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
     def set_query(self, query):
         self.query = query
         self.invalidateFilter()
-
-    def reset_query(self):
-        self.set_query("")
