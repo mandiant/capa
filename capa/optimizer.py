@@ -62,6 +62,8 @@ def optimize_statement(statement):
     if isinstance(statement, (ceng.And, ceng.Or, ceng.Some)):
         # has .children
         statement.children = sorted(statement.children, key=get_node_cost)
+        for child in statement.children:
+            optimize_statement(child)
         return
     elif isinstance(statement, (ceng.Not, ceng.Range)):
         # has .child
