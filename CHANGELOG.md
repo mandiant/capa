@@ -11,43 +11,26 @@
 -
 
 ### Bug Fixes
-- fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
-
-- fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
-
-- fix: capabilities/common.py: if va: drops address 0x0 @williballenthin #3015
-
-- fix: vverbose.py: render_call variable assigned but never used @williballenthin #3016
-
-- fix: extract_os yields duplicate/contradictory OS values @williballenthin #3017
-
-- fix: load_one_jsonl_from_path: finally block runs on unrelated exceptions @williballenthin #3018
-
-- fix: find_dynamic_limitations_from_cli overwrites instead of OR-ing @williballenthin #3019
-
-- fix: optimizer doesn't recurse into And/Or/Some children @williballenthin #3020
-
-- fix: address classes __eq__ and __lt__ assert on type @williballenthin #3021
-
-- fix: DNTokenOffsetAddress.__eq__ lacks type guard @williballenthin #3022
-
-- fix: elffile.py: get_base_address returns None instead of NO_ADDRESS @williballenthin #3023
-
-- fix: base_extractor.py: __metaclass__ is Python 2 syntax, ignored in Py3 @williballenthin #3024
-
-- fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
-
-- fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
-
-- fix: rules/__init__.py: duplicate bytes_features line @williballenthin #3027
-
-- fix: EXTENSIONS_DYNAMIC has inconsistent leading dots @williballenthin #3028
-
 - fix: render_default always returns empty string @williballenthin #3012
-
-- fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
-
+- fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
+- fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
+- fix: capabilities/common.py: if va: drops address 0x0 @williballenthin #3015
+- fix: vverbose.py: render_call variable assigned but never used @williballenthin #3016
+- fix: extract_os yields duplicate/contradictory OS values @williballenthin #3017
+- fix: load_one_jsonl_from_path: finally block runs on unrelated exceptions @williballenthin #3018
+- fix: find_dynamic_limitations_from_cli overwrites instead of OR-ing @williballenthin #3019
+- fix: optimizer doesn't recurse into And/Or/Some children @williballenthin #3020
+- fix: address classes __eq__ and __lt__ assert on type @williballenthin #3021
+- fix: DNTokenOffsetAddress.__eq__ lacks type guard @williballenthin #3022
+- fix: elffile.py: get_base_address returns None instead of NO_ADDRESS @williballenthin #3023
+- fix: base_extractor.py: __metaclass__ is Python 2 syntax, ignored in Py3 @williballenthin #3024
+- fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
+- fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
+- fix: rules/__init__.py: duplicate bytes_features line @williballenthin #3027
+- fix: EXTENSIONS_DYNAMIC has inconsistent leading dots @williballenthin #3028
 - fix: loader.py reads entire file for magic byte check @williballenthin #3029
+- fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
+- fix: EXTENSIONS_ELF never referenced @williballenthin #3031
 
 ### capa Explorer Web
 
