@@ -101,7 +101,7 @@ def render_locations(
             render_call = v.render_short_call
         else:
             render_call = v.render_call
-        s = f"{v.render_call(layout, location)}\nand {(len(locations) - 1)} more..."
+        s = f"{render_call(layout, location)}\nand {(len(locations) - 1)} more..."
         console.write(hanging_indent(s, indent + 1))
 
     elif len(locations) > 4:

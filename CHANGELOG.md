@@ -17,6 +17,8 @@
 
 - fix: capabilities/common.py: if va: drops address 0x0 @williballenthin #3015
 
+- fix: vverbose.py: render_call variable assigned but never used @williballenthin #3016
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
