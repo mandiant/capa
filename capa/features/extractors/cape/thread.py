@@ -19,7 +19,11 @@ from typing import Iterator
 from capa.features.address import DynamicCallAddress
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.cape.models import Process
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
+)
 
 logger = logging.getLogger(__name__)
 

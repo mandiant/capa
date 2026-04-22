@@ -18,7 +18,12 @@ from typing import Iterator
 
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    ProcessAddress,
+    AbsoluteVirtualAddress,
+)
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.cape.models import CapeReport
 from capa.features.extractors.base_extractor import ProcessHandle
