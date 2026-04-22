@@ -45,6 +45,8 @@
 
 - fix: render_default always returns empty string @williballenthin #3012
 
+- fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

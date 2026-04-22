@@ -102,9 +102,6 @@ class Address(HashableModel):
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
 
-        elif isinstance(a, capa.features.address.Address) and not issubclass(type(a), capa.features.address.Address):
-            raise ValueError("don't use an Address instance directly")
-
         elif isinstance(a, capa.features.address.Address):
             raise ValueError("don't use an Address instance directly")
 
