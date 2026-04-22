@@ -24,6 +24,8 @@
 
 - fix: load_one_jsonl_from_path: finally block runs on unrelated exceptions @williballenthin #3018
 
+- fix: find_dynamic_limitations_from_cli overwrites instead of OR-ing @williballenthin #3019
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
