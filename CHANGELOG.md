@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: optimizer doesn't recurse into And/Or/Some children @williballenthin #3020
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
