@@ -106,7 +106,6 @@ def test_is_dev_environment():
     assert capa.helpers.is_dev_environment() is True
 
 
-<<<<<<< HEAD
 def test_load_one_jsonl_from_path_gz():
     result = capa.helpers.load_one_jsonl_from_path(DRAKVUF_LOG_GZ)
     assert isinstance(result, dict)
