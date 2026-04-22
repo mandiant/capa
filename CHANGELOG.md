@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove unused imports of capa.rules and capa.engine from view.py @williballenthin (SURF-68)
 - fix: remove unused imports of capa.main, capa.render.json, and capa.features.extractors.ida.extractor from form.py @williballenthin (SURF-67)
 - fix: remove dead trim_function_name function from form.py that was never called @williballenthin (SURF-66)
 - fix: replace get_file_md5/get_file_sha256 with retrieve_input_file_md5/sha256 shims so all callers use consistent IDA version-aware API @williballenthin (SURF-65)
