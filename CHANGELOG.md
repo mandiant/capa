@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove unused import of capa.features.extractors.strings from binexport2 intel insn.py @williballenthin (SURF-52)
 - fix: remove extract_file_format from FILE_HANDLERS in five extractors to prevent duplicate Format features @williballenthin (SURF-51)
 - fix: replace assert with guard so 2-operand ARM ADD/SUB instructions are skipped instead of crashing @williballenthin (SURF-50)
 - fix: omit trailing ` -> ` suffix in syscall names when there is no return value @williballenthin (SURF-49)
