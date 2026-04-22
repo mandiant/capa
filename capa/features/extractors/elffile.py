@@ -17,12 +17,14 @@ import logging
 from typing import Iterator
 from pathlib import Path
 
-from elftools.elf.elffile import ELFFile, DynamicSegment, SymbolTableSection
+from elftools.elf.dynamic import DynamicSegment
+from elftools.elf.elffile import ELFFile
+from elftools.elf.sections import SymbolTableSection
 
 import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
-from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -179,7 +181,7 @@ def extract_file_arch(elf: ELFFile, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
+def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -195,7 +197,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
+def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, Address]]:
     for global_handler in GLOBAL_HANDLERS:
         for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -218,14 +220,15 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
         for segment in self.elf.iter_segments():
             if segment.header.p_type == "PT_LOAD":
                 return AbsoluteVirtualAddress(segment.header.p_vaddr)
+        return NO_ADDRESS
 
-    def extract_global_features(self):
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         buf = self.path.read_bytes()
 
         for feature, addr in extract_global_features(self.elf, buf):
             yield feature, addr
 
-    def extract_file_features(self):
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         buf = self.path.read_bytes()
 
         for feature, addr in extract_file_features(self.elf, buf):

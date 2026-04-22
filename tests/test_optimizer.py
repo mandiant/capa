@@ -16,9 +16,7 @@
 import textwrap
 
 import capa.rules
-import capa.engine
 import capa.optimizer
-import capa.features.common
 from capa.engine import Or, And
 from capa.features.insn import Mnemonic
 from capa.features.common import Arch, Substring
