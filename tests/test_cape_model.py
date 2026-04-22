@@ -20,7 +20,10 @@ import pytest
 import fixtures
 
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
+from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.cape.models import Call, CapeReport
+from capa.features.extractors.cape.thread import get_calls
+from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 CD = Path(__file__).resolve().parent
 CAPE_DIR = CD / "data" / "dynamic" / "cape"
@@ -78,6 +81,111 @@ def test_cape_extractor(version: str, filename: str, exception: Type[BaseExcepti
     else:
         cr = fixtures.get_cape_extractor(path)
         assert cr is not None
+
+
+def test_get_calls_no_api_mutation():
+    process_addr = ProcessAddress(pid=1, ppid=0)
+    thread_addr = ThreadAddress(process=process_addr, tid=100)
+
+    call_json = """
+        {
+            "thread_id": 100,
+            "api": "RegQueryValueExW",
+            "status": true,
+            "return": "0x00000000",
+            "arguments": []
+        }
+    """
+    call = Call.model_validate_json(call_json)
+
+    from capa.features.extractors.cape.models import Process
+
+    process = Process.model_validate({
+        "process_id": 1,
+        "process_name": "test.exe",
+        "parent_id": 0,
+        "calls": [call],
+        "threads": [100],
+        "environ": {},
+    })
+
+    ph = ProcessHandle(address=process_addr, inner=process)
+    th = ThreadHandle(address=thread_addr, inner=None)
+
+    handles = list(get_calls(ph, th))
+
+    assert len(handles) == 1
+    assert handles[0].inner.api == "RegQueryValueExW"
+
+
+def test_get_calls_no_mutation_with_ordinal():
+    process_addr = ProcessAddress(pid=1, ppid=0)
+    thread_addr = ThreadAddress(process=process_addr, tid=100)
+
+    call_json = """
+        {
+            "thread_id": 100,
+            "api": "ws2_32.#1",
+            "status": true,
+            "return": "0x00000000",
+            "arguments": []
+        }
+    """
+    call = Call.model_validate_json(call_json)
+
+    from capa.features.extractors.cape.models import Process
+
+    process = Process.model_validate({
+        "process_id": 1,
+        "process_name": "test.exe",
+        "parent_id": 0,
+        "calls": [call],
+        "threads": [100],
+        "environ": {},
+    })
+
+    ph = ProcessHandle(address=process_addr, inner=process)
+    th = ThreadHandle(address=thread_addr, inner=None)
+
+    handles = list(get_calls(ph, th))
+
+    assert len(handles) == 1
+    assert handles[0].inner.api == "ws2_32.#1"
+
+
+def test_get_calls_no_mutation_with_aw_suffix():
+    process_addr = ProcessAddress(pid=1, ppid=0)
+    thread_addr = ThreadAddress(process=process_addr, tid=100)
+
+    call_json = """
+        {
+            "thread_id": 100,
+            "api": "CreateFileW",
+            "status": true,
+            "return": "0x00000000",
+            "arguments": []
+        }
+    """
+    call = Call.model_validate_json(call_json)
+
+    from capa.features.extractors.cape.models import Process
+
+    process = Process.model_validate({
+        "process_id": 1,
+        "process_name": "test.exe",
+        "parent_id": 0,
+        "calls": [call],
+        "threads": [100],
+        "environ": {},
+    })
+
+    ph = ProcessHandle(address=process_addr, inner=process)
+    th = ThreadHandle(address=thread_addr, inner=None)
+
+    handles = list(get_calls(ph, th))
+
+    assert len(handles) == 1
+    assert handles[0].inner.api == "CreateFileW"
 
 
 def test_cape_model_argument():
