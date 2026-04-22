@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: DNTokenOffsetAddress.__eq__ lacks type guard @williballenthin #3022
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

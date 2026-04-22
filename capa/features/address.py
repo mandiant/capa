@@ -167,9 +167,13 @@ class DNTokenOffsetAddress(Address):
         self.offset = offset
 
     def __eq__(self, other):
+        if not isinstance(other, DNTokenOffsetAddress):
+            return NotImplemented
         return (self.token, self.offset) == (other.token, other.offset)
 
     def __lt__(self, other):
+        if not isinstance(other, DNTokenOffsetAddress):
+            return NotImplemented
         return (self.token, self.offset) < (other.token, other.offset)
 
     def __hash__(self):
