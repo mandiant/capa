@@ -15,6 +15,8 @@
 
 - fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
 
+- fix: capabilities/common.py: if va: drops address 0x0 @williballenthin #3015
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

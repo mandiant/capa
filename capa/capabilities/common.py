@@ -43,11 +43,11 @@ def find_file_capabilities(
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
-        if va:
-            file_features[feature].add(va)
-        else:
+        if va is NO_ADDRESS:
             if feature not in file_features:
                 file_features[feature] = set()
+        else:
+            file_features[feature].add(va)
 
     logger.debug("analyzed file and extracted %d features", len(file_features))
 
