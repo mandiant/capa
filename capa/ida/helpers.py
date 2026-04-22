@@ -31,6 +31,7 @@ import capa.version
 import capa.render.utils as rutils
 import capa.features.freeze
 import capa.render.result_document as rdoc
+import capa.features.extractors.elf
 from capa.features.address import AbsoluteVirtualAddress
 
 logger = logging.getLogger("capa")
