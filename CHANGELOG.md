@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: fix unreachable elif for NOT CompoundStatement so NOT rules render children in IDA plugin tree view @williballenthin (SURF-60)
 - fix: use next(iter(addrs)) instead of addrs.pop() to avoid mutating the feature cache in parse_features_for_tree @williballenthin (SURF-59)
 - fix: use integer division in get_printable_len for UTF-16 LE operands @williballenthin (SURF-58)
 - fix: break thunk chain loop after resolving import to avoid duplicate API features @williballenthin (SURF-57)
