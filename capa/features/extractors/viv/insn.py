@@ -139,6 +139,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 dll, symbol = imports[target]
                 for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
                     yield API(name), ih.address
+                break
 
             # if jump leads to an ENDBRANCH instruction, skip it
             _offset, _buf = f.vw.getByteDef(target)
