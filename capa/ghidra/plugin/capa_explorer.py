@@ -366,7 +366,12 @@ def get_locations(match_dict):
 def parse_node(node_data):
     """pull match descriptions and sub features by parsing node dicts"""
 
-    node = node_data.get(node_data.get("type"))
+    node_type = node_data.get("type")
+    if node_type is None:
+        return
+    node = node_data.get(node_type)
+    if not isinstance(node, dict):
+        return
 
     if "description" in node:
         yield "description", node.get("description")
