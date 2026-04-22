@@ -208,9 +208,9 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             "      - <insert_references>",
             "    examples:",
             (
-                f"      - {capa.ida.helpers.get_file_md5().upper()}:{hex(ea)}"
+                f"      - {capa.ida.helpers.retrieve_input_file_md5().upper()}:{hex(ea)}"
                 if ea
-                else f"      - {capa.ida.helpers.get_file_md5().upper()}"
+                else f"      - {capa.ida.helpers.retrieve_input_file_md5().upper()}"
             ),
             "  features:",
         ]

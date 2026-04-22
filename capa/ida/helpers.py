@@ -22,7 +22,6 @@ import idc
 import idaapi
 import ida_ida
 import ida_nalt
-import idautils
 import ida_bytes
 import ida_loader
 from netnode import netnode
@@ -30,7 +29,6 @@ from netnode import netnode
 import capa
 import capa.version
 import capa.render.utils as rutils
-import capa.features.common
 import capa.features.freeze
 import capa.render.result_document as rdoc
 from capa.features.address import AbsoluteVirtualAddress
@@ -156,26 +154,10 @@ def get_func_start_ea(ea):
     return f if f is None else f.start_ea
 
 
-def get_file_md5():
-    """ """
-    md5 = idautils.GetInputFileMD5()
-    if not isinstance(md5, str):
-        md5 = capa.features.common.bytes_to_str(md5)
-    return md5
-
-
-def get_file_sha256():
-    """ """
-    sha256 = idaapi.retrieve_input_file_sha256()
-    if not isinstance(sha256, str):
-        sha256 = capa.features.common.bytes_to_str(sha256)
-    return sha256
-
-
 def collect_metadata(rules: list[Path]):
     """ """
-    md5 = get_file_md5()
-    sha256 = get_file_sha256()
+    md5 = retrieve_input_file_md5()
+    sha256 = retrieve_input_file_sha256()
 
     procname = get_processor_name()
     if procname == "metapc" and is_64bit():
