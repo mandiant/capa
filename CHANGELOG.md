@@ -31,6 +31,8 @@
 
 - fix: DNTokenOffsetAddress.__eq__ lacks type guard @williballenthin #3022
 
+- fix: elffile.py: get_base_address returns None instead of NO_ADDRESS @williballenthin #3023
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
