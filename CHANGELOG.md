@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: loader.py reads entire file for magic byte check @williballenthin #3029
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

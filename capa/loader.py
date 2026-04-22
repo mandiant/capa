@@ -23,6 +23,7 @@ from rich.console import Console
 from typing_extensions import assert_never
 
 import capa.rules
+import capa.helpers
 import capa.version
 import capa.features.common
 import capa.features.freeze as frz
@@ -496,8 +497,7 @@ def _get_binexport2_file_extractors(input_file: Path) -> list[FeatureExtractor]:
         input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
     )
 
-    with sample_path.open("rb") as f:
-        taste = f.read()
+    taste = capa.helpers.get_file_taste(sample_path)
 
     if taste.startswith(capa.features.extractors.common.MATCH_PE):
         return get_file_extractors(sample_path, FORMAT_PE)
