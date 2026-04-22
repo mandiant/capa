@@ -65,17 +65,27 @@ def get_rule_path():
         pytest.param("capafmt.py", [get_rule_path()]),
         pytest.param(
             "capa2sarif.py",
-            [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
+            [
+                Path(__file__).resolve().parent
+                / "data"
+                / "rd"
+                / "Practical Malware Analysis Lab 01-01.dll_.json"
+            ],
         ),
         # testing some variations of linter script
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
         # `create directory` rule has native and .NET example PEs
-        pytest.param("lint.py", ["--thorough", "-t", "create directory", get_rules_path()]),
+        pytest.param(
+            "lint.py", ["--thorough", "-t", "create directory", get_rules_path()]
+        ),
         pytest.param("match-function-id.py", [get_binary_file_path()]),
         pytest.param("show-capabilities-by-function.py", [get_binary_file_path()]),
         pytest.param("show-features.py", [get_binary_file_path()]),
         pytest.param("show-features.py", ["-F", "0x407970", get_binary_file_path()]),
-        pytest.param("show-features.py", ["-P", "MicrosoftEdgeUpdate.exe", get_cape_report_file_path()]),
+        pytest.param(
+            "show-features.py",
+            ["-P", "MicrosoftEdgeUpdate.exe", get_cape_report_file_path()],
+        ),
         pytest.param("show-unused-features.py", [get_binary_file_path()]),
         pytest.param("capa-as-library.py", [get_binary_file_path()]),
         # not testing "minimize-vmray-results.py" as we don't currently upload full VMRay analysis archives
@@ -127,7 +137,12 @@ def run_program(script_path, args):
 def test_proto_conversion(tmp_path):
     t = tmp_path / "proto-test"
     t.mkdir()
-    json_file = Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
+    json_file = (
+        Path(__file__).resolve().parent
+        / "data"
+        / "rd"
+        / "Practical Malware Analysis Lab 01-01.dll_.json"
+    )
 
     p = run_program(get_script_path("proto-from-results.py"), [json_file])
     assert p.returncode == 0
@@ -138,7 +153,9 @@ def test_proto_conversion(tmp_path):
     p = run_program(get_script_path("proto-to-results.py"), [pb_file])
     assert p.returncode == 0
 
-    assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')
+    assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(
+        b'{\r\n  "meta": '
+    )
 
 
 def test_detect_duplicate_features(tmpdir):
@@ -210,16 +227,6 @@ def test_detect_duplicate_features(tmpdir):
             """),
     }
 
-    """
-        The rule_overlaps list represents the number of overlaps between each rule in the RULESET.
-        An overlap includes a rule overlap with itself.
-        The scripts
-        The overlaps are like:
-        - Rule 0 has zero overlaps in RULESET
-        - Rule 1 overlaps with 3 other rules in RULESET
-        These overlap values indicate the number of rules with which
-        each rule in RULESET has overlapping features.
-    """
     rule_overlaps = [0, 4, 3, 3]
 
     rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
