@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
 
 ### capa Explorer Web
 
