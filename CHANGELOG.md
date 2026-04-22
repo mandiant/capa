@@ -25,6 +25,8 @@
 
 - fix: find_dynamic_limitations_from_cli overwrites instead of OR-ing @williballenthin #3019
 
+- fix: optimizer doesn't recurse into And/Or/Some children @williballenthin #3020
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

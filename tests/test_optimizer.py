@@ -24,6 +24,33 @@ from capa.features.insn import Mnemonic
 from capa.features.common import Arch, Substring
 
 
+def test_optimizer_recurses_into_nested_compound():
+    rule = textwrap.dedent("""
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - mnemonic: cmp
+                    - or:
+                      - substring: "foo"
+                      - arch: amd64
+        """)
+    r = capa.rules.Rule.from_yaml(rule)
+
+    capa.optimizer.optimize_rules([r])
+
+    outer_children = list(r.statement.get_children())
+    inner_or = next(c for c in outer_children if isinstance(c, Or))
+    inner_children = list(inner_or.get_children())
+
+    assert isinstance(inner_children[0], Arch)
+    assert isinstance(inner_children[1], Substring)
+
+
 def test_optimizer_order():
     rule = textwrap.dedent("""
         rule:
