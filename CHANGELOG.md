@@ -50,6 +50,7 @@
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: assign yara_strings/yara_condition to empty string when Some has cmin=0 to prevent UnboundLocalError @williballenthin (SURF-87)
 - fix: parenthesize s_type checks in capa2yara.py so kid.name != "Some" guard applies to And/Or/Not uniformly @williballenthin (SURF-86)
 - fix: correct operator precedence in FeatureRegexRegistryControlSetMatchIncomplete to avoid false positives on unrelated currentcontrolset patterns @williballenthin (SURF-85)
 - fix: FeatureRegexRegistryControlSetMatchIncomplete now checks all Regex features instead of returning after the first @williballenthin (SURF-84)

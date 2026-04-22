@@ -512,6 +512,8 @@ def convert_rule(rule, rulename, cround, depth):
 
         if not cmin:
             logger.info("this is optional: which means, we can just ignore it")
+            yara_strings = ""
+            yara_condition = ""
         else:
             # this is "x or more". could be coded for strings TODO
             return "BREAK", "Some aka x or more (TODO)", rule_comment, incomplete
