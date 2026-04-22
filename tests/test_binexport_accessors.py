@@ -23,6 +23,7 @@ import fixtures
 from google.protobuf.json_format import ParseDict
 
 import capa.features.extractors.binexport2.helpers
+from capa.features.extractors.binexport2 import BinExport2Index
 from capa.features.extractors.binexport2.helpers import (
     BinExport2InstructionPattern,
     BinExport2InstructionPatternMatcher,
@@ -595,3 +596,20 @@ def test_pattern_matching_x86():
     # query:     cmp|lea     reg, [reg(not-stack) + #int0]  ; capture #int0
     assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
     assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+
+
+def test_index_vertex_edges_includes_vertex_zero():
+    be2 = BinExport2()
+    be2.ParseFromString((CD / "data" / "binexport2" / "mimikatz.exe_.ida.BinExport").read_bytes())
+    idx = BinExport2Index(be2)
+
+    assert be2.call_graph.vertex[0].HasField("address")
+    assert be2.call_graph.vertex[0].address == 0x401000
+
+    assert 1585 in idx.callers_by_vertex_index[0]
+    assert 2118 in idx.callees_by_vertex_index[0]
+    assert 166 in idx.callees_by_vertex_index[0]
+
+    assert 0 in idx.callees_by_vertex_index[1585]
+    assert 0 in idx.callers_by_vertex_index[2118]
+    assert 0 in idx.callers_by_vertex_index[166]
