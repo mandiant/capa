@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import logging
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 from pathlib import Path
 
+import envi
 import viv_utils
 import viv_utils.flirt
 
@@ -73,7 +74,9 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         f: viv_utils.Function = fh.inner
-        for bb in f.basic_blocks:
+        basic_blocks = cast(list[viv_utils.BasicBlock], f.basic_blocks)
+        assert isinstance(basic_blocks, list)
+        for bb in basic_blocks:
             yield BBHandle(address=AbsoluteVirtualAddress(bb.va), inner=bb)
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh) -> Iterator[tuple[Feature, Address]]:
@@ -81,7 +84,9 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         bb: viv_utils.BasicBlock = bbh.inner
-        for insn in bb.instructions:
+        instructions = cast(list[envi.Opcode], bb.instructions)
+        assert isinstance(instructions, list)
+        for insn in instructions:
             yield InsnHandle(address=AbsoluteVirtualAddress(insn.va), inner=insn)
 
     def extract_insn_features(
@@ -93,4 +98,4 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
         return viv_utils.flirt.is_library_function(self.vw, addr)
 
     def get_function_name(self, addr):
-        return viv_utils.get_function_name(self.vw, addr)
+        return viv_utils.get_function_name(self.vw, addr)  # type: ignore  # addr is AbsoluteVirtualAddress (int subclass) in this extractor
