@@ -713,6 +713,8 @@ class SymTab:
                 name_offset, info, other, shndx, value, size = struct.unpack_from(
                     endian + "IBBHQQ", symtab_buf, i * self.symtab.entsize
                 )
+            else:
+                continue
 
             self.symbols.append(Symbol(name_offset, value, size, info, other, shndx))
 
@@ -743,6 +745,8 @@ class SymTab:
         bitness = elf.bits
 
         SHT_SYMTAB = 0x2
+        sh_symtab: Optional[Shdr] = None
+        sh_strtab: Optional[Shdr] = None
         for section in elf.sections:
             if section.sh_type == SHT_SYMTAB:
                 strtab_section = elf.sections[section.sh_link]
@@ -751,10 +755,11 @@ class SymTab:
                     strtab_section, elf.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
                 )
 
+        if sh_symtab is None or sh_strtab is None:
+            return None
+
         try:
             return cls(endian, bitness, sh_symtab, sh_strtab)
-        except NameError:
-            return None
         except Exception:
             # all exceptions that could be encountered by
             # cls._parse() imply a faulty symbol's table.
@@ -892,7 +897,7 @@ def guess_os_from_linker(elf: ELF) -> Optional[OS]:
     # search for recognizable dynamic linkers (interpreters)
     # for example, on linux, we see file paths like: /lib64/ld-linux-x86-64.so.2
     linker = elf.linker
-    if linker and "ld-linux" in elf.linker:
+    if linker and "ld-linux" in linker:
         return OS.LINUX
 
     return None
