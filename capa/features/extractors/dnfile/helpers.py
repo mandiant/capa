@@ -347,7 +347,7 @@ def get_dotnet_table_row(pe: dnfile.dnPE, table_index: int, row_index: int) -> O
     assert pe.net is not None
     assert pe.net.mdtables is not None
 
-    if row_index - 1 <= 0:
+    if row_index <= 0:
         return None
 
     table: Optional[dnfile.base.ClrMetaDataTable] = pe.net.mdtables.tables.get(table_index)
