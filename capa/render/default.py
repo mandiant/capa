@@ -13,13 +13,11 @@
 # limitations under the License.
 
 
-import io
 import collections
 import urllib.parse
 
 import rich
 import rich.table
-import rich.console
 from rich.console import Console
 
 import capa.render.utils as rutils
@@ -325,17 +323,15 @@ def render_mbc(doc: rd.ResultDocument, console: Console):
         console.print(table)
 
 
-def render_default(doc: rd.ResultDocument):
-    f = io.StringIO()
-    console = rich.console.Console()
-
-    render_meta(doc, console)
-    render_attack(doc, console)
-    render_maec(doc, console)
-    render_mbc(doc, console)
-    render_capabilities(doc, console)
-
-    return f.getvalue()
+def render_default(doc: rd.ResultDocument) -> str:
+    console = Console(highlight=False)
+    with console.capture() as capture:
+        render_meta(doc, console)
+        render_attack(doc, console)
+        render_maec(doc, console)
+        render_mbc(doc, console)
+        render_capabilities(doc, console)
+    return capture.get()
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:

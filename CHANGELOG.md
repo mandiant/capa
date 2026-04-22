@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: render_default always returns empty string @williballenthin #3012
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
