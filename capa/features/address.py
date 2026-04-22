@@ -184,7 +184,7 @@ class DNTokenOffsetAddress(Address):
 
 class _NoAddress(Address):
     def __eq__(self, other):
-        return True
+        return isinstance(other, _NoAddress)
 
     def __lt__(self, other):
         return False
@@ -195,7 +195,7 @@ class _NoAddress(Address):
         return other is not self
 
     def __hash__(self):
-        return hash(0)
+        return hash(None)
 
     def __repr__(self):
         return "no address"
