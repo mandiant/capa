@@ -22,6 +22,30 @@ ADDR3 = capa.features.address.AbsoluteVirtualAddress(0x401003)
 ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 
+def test_no_address_equality():
+    no_addr = capa.features.address.NO_ADDRESS
+    addr_zero = capa.features.address.AbsoluteVirtualAddress(0)
+
+    assert no_addr == no_addr
+    assert no_addr != addr_zero
+    assert addr_zero != no_addr
+    assert no_addr != ADDR1
+
+
+def test_no_address_hash():
+    no_addr = capa.features.address.NO_ADDRESS
+    addr_zero = capa.features.address.AbsoluteVirtualAddress(0)
+
+    assert hash(no_addr) != hash(addr_zero)
+
+    s = {no_addr, addr_zero}
+    assert len(s) == 2
+
+    d = {no_addr: "no", addr_zero: "zero"}
+    assert d[no_addr] == "no"
+    assert d[addr_zero] == "zero"
+
+
 def test_number():
     assert bool(Number(1).evaluate({Number(0): {ADDR1}})) is False
     assert bool(Number(1).evaluate({Number(1): {ADDR1}})) is True

@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
