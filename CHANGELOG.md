@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: add missing ELF branch in get_format_from_extension for .elf_ files @williballenthin #3031
 
 ### capa Explorer Web
