@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove dead view_tab_rulegen assignment from CapaExplorerForm that was never read @williballenthin (SURF-70)
 - fix: remove dead reset_query method from CapaExplorerSearchProxyModel that was never called @williballenthin (SURF-69)
 - fix: remove unused imports of capa.rules and capa.engine from view.py @williballenthin (SURF-68)
 - fix: remove unused imports of capa.main, capa.render.json, and capa.features.extractors.ida.extractor from form.py @williballenthin (SURF-67)
