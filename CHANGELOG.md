@@ -48,6 +48,9 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: initialize f=None before try block in load_capa_function_results to prevent UnboundLocalError in except handler @williballenthin (SURF-61)
 - fix: fix unreachable elif for NOT CompoundStatement so NOT rules render children in IDA plugin tree view @williballenthin (SURF-60)
 - fix: use next(iter(addrs)) instead of addrs.pop() to avoid mutating the feature cache in parse_features_for_tree @williballenthin (SURF-59)
 - fix: use integer division in get_printable_len for UTF-16 LE operands @williballenthin (SURF-58)
