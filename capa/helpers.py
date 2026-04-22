@@ -27,10 +27,10 @@ from zipfile import ZipFile
 from datetime import datetime
 
 import msgspec.json
+from rich.text import Text
 from rich.console import Console
 from rich.progress import (
     Task,
-    Text,
     Progress,
     BarColumn,
     TextColumn,
@@ -142,6 +142,7 @@ def stdout_redirector(stream):
 
     # Save a copy of the original stdout fd in saved_stdout_fd
     saved_stdout_fd = os.dup(original_stdout_fd)
+    tfile = None
     try:
         # Create a temporary file and redirect stdout to it
         tfile = tempfile.TemporaryFile(mode="w+b")
@@ -154,7 +155,8 @@ def stdout_redirector(stream):
         tfile.seek(0, io.SEEK_SET)
         stream.write(tfile.read())
     finally:
-        tfile.close()
+        if tfile is not None:
+            tfile.close()
         os.close(saved_stdout_fd)
 
 
@@ -197,9 +199,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
     except gzip.BadGzipFile:
         with jsonl_path.open(mode="rb") as f:
             line = next(iter(f))
-    finally:
-        line = msgspec.json.decode(line.decode(errors="ignore"))
-    return line
+    return msgspec.json.decode(line.decode(errors="ignore"))
 
 
 def get_format_from_report(sample: Path) -> str:
@@ -444,18 +444,18 @@ class MofNCompleteColumnWithUnit(MofNCompleteColumn):
 
 class CapaProgressBar(Progress):
     @classmethod
-    def get_default_columns(cls):
+    def get_default_columns(cls) -> tuple[ProgressColumn, ...]:
         return (
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             TaskProgressColumn(),
             BarColumn(),
             MofNCompleteColumnWithUnit(),
-            "•",
+            TextColumn("•"),
             TimeElapsedColumn(),
-            "<",
+            TextColumn("<"),
             TimeRemainingColumn(),
-            "•",
+            TextColumn("•"),
             RateColumn(),
             PostfixColumn(),
         )
