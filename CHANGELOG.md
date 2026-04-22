@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: correct off-by-one in get_dotnet_table_row so row_index=1 (first valid .NET metadata row) is no longer rejected @williballenthin
 - fix: add missing import for assert_never in cape extractor.py to avoid NameError when call argument has unexpected type @williballenthin
 - fix: stop mutating call.api in cape thread.get_calls; yield one CallHandle per call so the original API name is preserved for all handles @williballenthin
 - fix: use instruction_indices in is_security_cookie to handle single-instruction basic blocks where end_index is omitted, preventing KeyError on -1 @williballenthin
