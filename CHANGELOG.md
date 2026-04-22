@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: correct self-comparison sa.max == sa.max to sa.max == sb.max in test_proto assert_statement @williballenthin (SURF-74)
 - fix: guard parse_node against missing "type" key to avoid TypeError crash @williballenthin (SURF-73)
 - fix: allocate feat_dict per feature in parse_json to avoid shared-reference aliasing @williballenthin (SURF-72)
 - fix: add missing capa.features.extractors.elf import to ghidra/helpers.py and ida/helpers.py @williballenthin (SURF-71)
