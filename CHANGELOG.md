@@ -38,6 +38,8 @@
 
 - fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
 
+- fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
