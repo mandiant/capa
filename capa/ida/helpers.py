@@ -22,7 +22,6 @@ import idc
 import idaapi
 import ida_ida
 import ida_nalt
-import idautils
 import ida_bytes
 import ida_loader
 from netnode import netnode
@@ -30,7 +29,6 @@ from netnode import netnode
 import capa
 import capa.version
 import capa.render.utils as rutils
-import capa.features.common
 import capa.features.freeze
 import capa.render.result_document as rdoc
 from capa.features.address import AbsoluteVirtualAddress
@@ -109,7 +107,10 @@ def is_supported_ida_version():
     if version < 7.4 or version >= 10:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.", version)
+        logger.warning(
+            "Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.",
+            version,
+        )
         return False
     return True
 
@@ -122,14 +123,18 @@ def is_supported_file_type():
         logger.error(
             " capa currently only supports analyzing PE, ELF, or binary files containing x86 (32- and 64-bit) shellcode."
         )
-        logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+        logger.error(
+            " If you don't know the input file type, you can try using the `file` utility to guess it."
+        )
         logger.error("-" * 80)
         return False
     return True
 
 
 def is_supported_arch_type():
-    if get_processor_name() not in SUPPORTED_ARCH_TYPES or not any((is_32bit(), is_64bit())):
+    if get_processor_name() not in SUPPORTED_ARCH_TYPES or not any(
+        (is_32bit(), is_64bit())
+    ):
         logger.error("-" * 80)
         logger.error(" Input file does not appear to target a supported architecture.")
         logger.error(" ")
@@ -156,26 +161,10 @@ def get_func_start_ea(ea):
     return f if f is None else f.start_ea
 
 
-def get_file_md5():
-    """ """
-    md5 = idautils.GetInputFileMD5()
-    if not isinstance(md5, str):
-        md5 = capa.features.common.bytes_to_str(md5)
-    return md5
-
-
-def get_file_sha256():
-    """ """
-    sha256 = idaapi.retrieve_input_file_sha256()
-    if not isinstance(sha256, str):
-        sha256 = capa.features.common.bytes_to_str(sha256)
-    return sha256
-
-
 def collect_metadata(rules: list[Path]):
     """ """
-    md5 = get_file_md5()
-    sha256 = get_file_sha256()
+    md5 = retrieve_input_file_md5()
+    sha256 = retrieve_input_file_sha256()
 
     procname = get_processor_name()
     if procname == "metapc" and is_64bit():
@@ -211,7 +200,9 @@ def collect_metadata(rules: list[Path]):
             os=os,
             extractor="ida",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
-            base_address=capa.features.freeze.Address.from_capa(AbsoluteVirtualAddress(idaapi.get_imagebase())),
+            base_address=capa.features.freeze.Address.from_capa(
+                AbsoluteVirtualAddress(idaapi.get_imagebase())
+            ),
             layout=rdoc.StaticLayout(
                 functions=(),
                 # this is updated after capabilities have been collected.
@@ -243,7 +234,9 @@ class IDAIO:
     def read(self, size):
         ea = ida_loader.get_fileregion_ea(self.offset)
         if ea == idc.BADADDR:
-            logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
+            logger.debug(
+                "cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset
+            )
             return b""
 
         logger.debug("reading 0x%x bytes at 0x%x (ea: 0x%x)", size, self.offset, ea)
@@ -283,7 +276,10 @@ def load_and_verify_cached_results() -> Optional[rdoc.ResultDocument]:
             if isinstance(location, AbsoluteVirtualAddress):
                 ea = int(location)
                 if not idaapi.is_mapped(ea):
-                    logger.error("cached address %s is not a valid location in this database", hex(ea))
+                    logger.error(
+                        "cached address %s is not a valid location in this database",
+                        hex(ea),
+                    )
                     return None
     return doc
 
