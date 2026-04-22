@@ -216,7 +216,6 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
         self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
     def get_base_address(self):
-        # virtual address of the first segment with type LOAD
         for segment in self.elf.iter_segments():
             if segment.header.p_type == "PT_LOAD":
                 return AbsoluteVirtualAddress(segment.header.p_vaddr)
