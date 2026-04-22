@@ -125,9 +125,9 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> tuple[int, Optional[
         else:
             opnd1 = insn.opers[1]
             if isinstance(opnd1, i386ImmOper):
-                return (cur, opnd1.getOperValue(opnd1))
+                return (cur, opnd1.getOperValue(insn))
             elif isinstance(opnd1, i386ImmMemOper):
-                return (cur, opnd1.getOperAddr(opnd1))
+                return (cur, opnd1.getOperAddr(insn))
             elif isinstance(opnd1, Amd64RipRelOper):
                 return (cur, opnd1.getOperAddr(insn))
             else:

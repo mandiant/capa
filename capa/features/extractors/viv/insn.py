@@ -268,7 +268,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
 
     for oper in insn.opers:
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-            v = oper.getOperValue(oper)
+            v = oper.getOperValue(insn)
         elif isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
             # handle case like:
             #   movzx   ecx, ds:byte_423258[eax]
@@ -591,9 +591,9 @@ def extract_op_number_features(
         return
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-        v = oper.getOperValue(oper)
+        v = oper.getOperValue(insn)
     else:
-        v = oper.getOperAddr(oper)
+        v = oper.getOperAddr(insn)
 
     if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
         # this is a valid address
@@ -682,7 +682,7 @@ def extract_op_string_features(
     f: viv_utils.Function = fh.inner
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-        v = oper.getOperValue(oper)
+        v = oper.getOperValue(insn)
     elif isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper):
         # like 0x10056CB4 in `lea eax, dword [0x10056CB4]`
         v = oper.imm
