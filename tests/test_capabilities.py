@@ -226,7 +226,7 @@ def test_com_feature_matching(z395eb_extractor):
                     """)
         )
     ])
-    capabilities = capa.main.find_capabilities(rules, z395eb_extractor)
+    capabilities = capa.capabilities.common.find_capabilities(rules, z395eb_extractor)
     assert "initialize IWebBrowser2" in capabilities.matches
 
 

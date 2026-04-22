@@ -15,6 +15,7 @@
 import logging
 import itertools
 import collections
+from typing import Optional
 from dataclasses import dataclass
 
 import capa.perf
@@ -269,7 +270,7 @@ def find_process_capabilities(
 
 
 def find_dynamic_capabilities(
-    ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress: bool = False
+    ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress: Optional[bool] = None
 ) -> Capabilities:
     all_process_matches: MatchResults = collections.defaultdict(list)
     all_thread_matches: MatchResults = collections.defaultdict(list)
@@ -285,7 +286,7 @@ def find_dynamic_capabilities(
     n_processes: int = len(processes)
 
     with capa.helpers.CapaProgressBar(
-        console=capa.helpers.log_console, transient=True, disable=disable_progress
+        console=capa.helpers.log_console, transient=True, disable=bool(disable_progress)
     ) as pbar:
         task = pbar.add_task("matching", total=n_processes, unit="processes")
         for p in processes:
