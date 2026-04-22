@@ -19,6 +19,8 @@ from pathlib import Path
 from fixtures import get_data_path_by_name
 
 import capa.features.extractors.elf
+import capa.features.extractors.common
+from capa.features.common import OS_LINUX, OS_WINDOWS
 
 
 def test_elf_sh_notes():
@@ -181,3 +183,19 @@ def test_elf_parse_capa_pyinstaller_header():
         ])
     )
     assert capa.features.extractors.elf.detect_elf_os(io.BytesIO(elf_header)) == "linux"
+
+
+def test_extract_os_explicit_yields_exactly_one():
+    pe_buf = b"MZ" + b"\x00" * 64
+    results = list(capa.features.extractors.common.extract_os(pe_buf, os=OS_LINUX))
+    assert len(results) == 1
+    feature, _ = results[0]
+    assert feature.value == OS_LINUX
+
+
+def test_extract_os_auto_pe_yields_exactly_one():
+    pe_buf = b"MZ" + b"\x00" * 64
+    results = list(capa.features.extractors.common.extract_os(pe_buf))
+    assert len(results) == 1
+    feature, _ = results[0]
+    assert feature.value == OS_WINDOWS

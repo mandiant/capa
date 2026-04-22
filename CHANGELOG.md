@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: extract_os yields duplicate/contradictory OS values @williballenthin #3017
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

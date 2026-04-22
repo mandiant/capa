@@ -121,6 +121,7 @@ def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
 def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
     if os != OS_AUTO:
         yield OS(os), NO_ADDRESS
+        return
 
     if buf.startswith(MATCH_PE):
         yield OS(OS_WINDOWS), NO_ADDRESS
