@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: load_one_jsonl_from_path: finally block runs on unrelated exceptions @williballenthin #3018
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
