@@ -65,7 +65,7 @@ class Capabilities:
 
 
 def find_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress: Optional[bool] = None, **kwargs
+    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress: bool = False, **kwargs
 ) -> Capabilities:
     from capa.capabilities.static import find_static_capabilities
     from capa.capabilities.dynamic import find_dynamic_capabilities
