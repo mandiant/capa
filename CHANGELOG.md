@@ -32,6 +32,7 @@
 - fix: loader.py reads entire file for magic byte check @williballenthin #3029
 - fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
 - fix: EXTENSIONS_ELF never referenced @williballenthin #3031
+- fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 
