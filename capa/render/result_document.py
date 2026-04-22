@@ -749,6 +749,8 @@ class ResultDocument(FrozenModel):
             )
         elif isinstance(self.meta.analysis, DynamicAnalysis):
             capabilities = Capabilities(matches, self.meta.analysis.feature_counts)
+        else:
+            assert_never(self.meta.analysis)
 
         return self.meta, capabilities
 

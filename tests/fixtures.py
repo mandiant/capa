@@ -183,9 +183,10 @@ def get_binja_extractor(path: Path):
     if path.name.endswith("kernel32-64.dll_"):
         old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
         settings.set_bool("pdb.loadGlobalSymbols", False)
-    bv = binaryninja.load(str(path))
-    if path.name.endswith("kernel32-64.dll_"):
+        bv = binaryninja.load(str(path))
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+    else:
+        bv = binaryninja.load(str(path))
 
     # TODO(xusheng6): Temporary fix for https://github.com/mandiant/capa/issues/2507. Remove this once it is fixed in
     # binja
