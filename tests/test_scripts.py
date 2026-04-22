@@ -318,6 +318,11 @@ def test_feature_regex_registry_control_set_checks_all_features():
     ok_regex = Regex("unrelated-pattern")
     bad_regex = Regex("system\\\\CurrentControlSet\\\\Services")
 
+    correct_regex = Regex("system\\\\(ControlSet\\d{3}|CurrentControlSet)\\\\Services")
+    unrelated_currentcontrolset_regex = Regex("HKLM\\\\Software\\\\CurrentControlSet")
+
     assert lint_instance.check_features(None, [bad_regex]) is True
     assert lint_instance.check_features(None, [ok_regex]) is False
     assert lint_instance.check_features(None, [ok_regex, bad_regex]) is True
+    assert lint_instance.check_features(None, [correct_regex]) is False
+    assert lint_instance.check_features(None, [unrelated_currentcontrolset_regex]) is False
