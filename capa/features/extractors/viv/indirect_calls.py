@@ -50,16 +50,14 @@ def get_previous_instructions(vw: VivWorkspace, va: int) -> list[int]:
 
     # find the immediate prior instruction.
     # ensure that it falls through to this one.
-    loc = vw.getPrevLocation(va, adjacent=True)
-    if loc is not None:
-        ploc = vw.getPrevLocation(va, adjacent=True)
-        if ploc is not None:
-            # from vivisect.const:
-            # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
-            pva, _, ptype, pinfo = ploc
+    ploc = vw.getPrevLocation(va, adjacent=True)
+    if ploc is not None:
+        # from vivisect.const:
+        # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
+        pva, _, ptype, pinfo = ploc
 
-            if ptype == LOC_OP and not (pinfo & IF_NOFALL):
-                ret.append(pva)
+        if ptype == LOC_OP and not (pinfo & IF_NOFALL):
+            ret.append(pva)
 
     # find any code refs, e.g. jmp, to this location.
     # ignore any calls.
