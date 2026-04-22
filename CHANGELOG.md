@@ -48,6 +48,9 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove unused imports of capa.helpers, capa.features.basicblock, and redundant bare capa.features.extractors.base_extractor from test_freeze_dynamic.py @williballenthin (SURF-78)
 - fix: replace capa.main.find_capabilities with capa.capabilities.common.find_capabilities in test_com_feature_matching to avoid implicit transitive import dependency @williballenthin (SURF-77)
 - fix: correct test_json_meta to iterate list of function dicts and use correct address format for matched_basic_blocks assertion @williballenthin (SURF-76)
 - fix: remove unreachable StaticAnalysis assert in assert_meta and add dynamic fixture to test_doc_to_pb2 @williballenthin (SURF-75)
