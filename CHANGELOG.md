@@ -49,6 +49,7 @@
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: guard statistics.quantiles/mean in compare-backends.py report() against empty duration lists @williballenthin (SURF-89)
 - fix: replace zipfile with pyzipper in minimize_vmray_results.py so output archive is AES-encrypted @williballenthin (SURF-88)
 - fix: assign yara_strings/yara_condition to empty string when Some has cmin=0 to prevent UnboundLocalError @williballenthin (SURF-87)
 - fix: parenthesize s_type checks in capa2yara.py so kid.name != "Some" guard applies to And/Or/Not uniformly @williballenthin (SURF-86)
