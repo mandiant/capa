@@ -33,7 +33,11 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import (
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+)
 from capa.features.common import (
     OS_AUTO,
     FORMAT_PE,
@@ -410,7 +414,9 @@ def get_extractor(
             #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
             #   -2 - User cancelled operation
             ret = idapro.open_database(
-                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+                str(input_path),
+                run_auto_analysis=True,
+                args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
             )
             if ret != 0:
                 raise RuntimeError("failed to analyze input file")

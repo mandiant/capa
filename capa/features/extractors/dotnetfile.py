@@ -114,7 +114,10 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Cla
         typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
 
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
-        yield Class(DnType.format_name(typedefname, namespace=typedefnamespace)), DNTokenAddress(token)
+        yield (
+            Class(DnType.format_name(typedefname, namespace=typedefnamespace)),
+            DNTokenAddress(token),
+        )
 
     for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         # emit external .NET classes
@@ -123,7 +126,10 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Cla
         typerefnamespace, typerefname = resolve_nested_typeref_name(typeref.ResolutionScope.row_index, typeref, pe)
 
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
-        yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
+        yield (
+            Class(DnType.format_name(typerefname, namespace=typerefnamespace)),
+            DNTokenAddress(token),
+        )
 
 
 def extract_file_os(**kwargs) -> Iterator[tuple[OS, Address]]:

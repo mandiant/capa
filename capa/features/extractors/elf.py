@@ -181,7 +181,12 @@ class ELF:
         else:
             raise NotImplementedError()
 
-        logger.debug("e_phoff: 0x%02x e_phentsize: 0x%02x e_phnum: %d", e_phoff, self.e_phentsize, self.e_phnum)
+        logger.debug(
+            "e_phoff: 0x%02x e_phentsize: 0x%02x e_phnum: %d",
+            e_phoff,
+            self.e_phentsize,
+            self.e_phnum,
+        )
 
         self.f.seek(e_phoff)
         program_header_size = self.e_phnum * self.e_phentsize
@@ -362,13 +367,31 @@ class ELF:
         shent = self.shbuf[shent_offset : shent_offset + self.e_shentsize]
 
         if self.bitness == 32:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, _, _, sh_entsize = struct.unpack_from(
-                self.endian + "IIIIIIIIII", shent, 0x0
-            )
+            (
+                sh_name,
+                sh_type,
+                sh_flags,
+                sh_addr,
+                sh_offset,
+                sh_size,
+                sh_link,
+                _,
+                _,
+                sh_entsize,
+            ) = struct.unpack_from(self.endian + "IIIIIIIIII", shent, 0x0)
         elif self.bitness == 64:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, _, _, sh_entsize = struct.unpack_from(
-                self.endian + "IIQQQQIIQQ", shent, 0x0
-            )
+            (
+                sh_name,
+                sh_type,
+                sh_flags,
+                sh_addr,
+                sh_offset,
+                sh_size,
+                sh_link,
+                _,
+                _,
+                sh_entsize,
+            ) = struct.unpack_from(self.endian + "IIQQQQIIQQ", shent, 0x0)
         else:
             raise NotImplementedError()
 
@@ -377,7 +400,17 @@ class ELF:
         if len(buf) != sh_size:
             raise ValueError("failed to read section header content")
 
-        return Shdr(sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_entsize, buf)
+        return Shdr(
+            sh_name,
+            sh_type,
+            sh_flags,
+            sh_addr,
+            sh_offset,
+            sh_size,
+            sh_link,
+            sh_entsize,
+            buf,
+        )
 
     @property
     def section_headers(self):
@@ -596,7 +629,12 @@ class PHNote:
         name_offset = 0xC
         self.desc_offset = name_offset + align(namesz, 0x4)
 
-        logger.debug("ph:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, self.descsz, self.type_)
+        logger.debug(
+            "ph:namesz: 0x%02x descsz: 0x%02x type: 0x%04x",
+            namesz,
+            self.descsz,
+            self.type_,
+        )
 
         self.name = self.buf[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
         logger.debug("name: %s", self.name)
@@ -623,7 +661,13 @@ class PHNote:
         if not os:
             return None
 
-        logger.debug("abi tag: %s earliest compatible kernel: %d.%d.%d", os, kmajor, kminor, kpatch)
+        logger.debug(
+            "abi tag: %s earliest compatible kernel: %d.%d.%d",
+            os,
+            kmajor,
+            kminor,
+            kpatch,
+        )
 
         return ABITag(os, kmajor, kminor, kpatch)
 
@@ -645,7 +689,12 @@ class SHNote:
         name_offset = 0xC
         self.desc_offset = name_offset + align(namesz, 0x4)
 
-        logger.debug("sh:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, self.descsz, self.type_)
+        logger.debug(
+            "sh:namesz: 0x%02x descsz: 0x%02x type: 0x%04x",
+            namesz,
+            self.descsz,
+            self.type_,
+        )
 
         name_buf = self.buf[name_offset : name_offset + namesz]
         self.name = read_cstr(name_buf, 0x0)
@@ -667,7 +716,13 @@ class SHNote:
         if not os:
             return None
 
-        logger.debug("abi tag: %s earliest compatible kernel: %d.%d.%d", os, kmajor, kminor, kpatch)
+        logger.debug(
+            "abi tag: %s earliest compatible kernel: %d.%d.%d",
+            os,
+            kmajor,
+            kminor,
+            kpatch,
+        )
         return ABITag(os, kmajor, kminor, kpatch)
 
 
@@ -752,7 +807,8 @@ class SymTab:
                 strtab_section = elf.sections[section.sh_link]
                 sh_symtab = Shdr.from_viv(section, elf.readAtOffset(section.sh_offset, section.sh_size))
                 sh_strtab = Shdr.from_viv(
-                    strtab_section, elf.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
+                    strtab_section,
+                    elf.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size),
                 )
 
         if sh_symtab is None or sh_strtab is None:
@@ -1105,7 +1161,12 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
     assert psize in (4, 8)
     is_big_endian = flags & 0b01
     has_inline_strings = flags & 0b10
-    logger.debug("go buildinfo: psize: %d big endian: %s inline: %s", psize, is_big_endian, has_inline_strings)
+    logger.debug(
+        "go buildinfo: psize: %d big endian: %s inline: %s",
+        psize,
+        is_big_endian,
+        has_inline_strings,
+    )
 
     GOOS_TO_OS = {
         b"aix": OS.AIX,
@@ -1466,7 +1527,12 @@ def guess_os_from_vdso_strings(elf: ELF) -> Optional[OS]:
             ("x86/32", b"__vdso_time", b"LINUX_2.6"),
         ):
             if symbol in buf and version in buf:
-                logger.debug("vdso string: %s %s %s", arch, symbol.decode("ascii"), version.decode("ascii"))
+                logger.debug(
+                    "vdso string: %s %s %s",
+                    arch,
+                    symbol.decode("ascii"),
+                    version.decode("ascii"),
+                )
                 return OS.LINUX
 
     return None

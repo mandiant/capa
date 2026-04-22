@@ -17,7 +17,13 @@ import pytest
 import capa.features.address
 from capa.engine import Or, And, Not, Some, Range
 from capa.features.insn import Number
-from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+    DNTokenOffsetAddress,
+    AbsoluteVirtualAddress,
+)
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
@@ -138,7 +144,10 @@ def test_some():
 
 def test_complex():
     assert True is bool(
-        Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]).evaluate({
+        Or([
+            And([Number(1), Number(2)]),
+            Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])]),
+        ]).evaluate({
             Number(5): {ADDR1},
             Number(6): {ADDR1},
             Number(7): {ADDR1},
@@ -147,7 +156,10 @@ def test_complex():
     )
 
     assert False is bool(
-        Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate({
+        Or([
+            And([Number(1), Number(2)]),
+            Or([Number(3), Some(2, [Number(4), Number(5)])]),
+        ]).evaluate({
             Number(5): {ADDR1},
             Number(6): {ADDR1},
             Number(7): {ADDR1},
