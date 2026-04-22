@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: elffile.py: get_base_address returns None instead of NO_ADDRESS @williballenthin #3023
 
 ### capa Explorer Web
 
