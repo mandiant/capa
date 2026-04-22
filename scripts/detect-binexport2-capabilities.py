@@ -39,10 +39,7 @@ import argparse
 
 import capa.main
 import capa.rules
-import capa.engine
 import capa.loader
-import capa.helpers
-import capa.features
 import capa.exceptions
 import capa.render.proto
 import capa.render.verbose
@@ -103,8 +100,12 @@ def main(argv=None):
 
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+    meta = capa.loader.collect_metadata(
+        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+    )
+    meta.analysis.layout = capa.loader.compute_layout(
+        rules, extractor, capabilities.matches
+    )
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
     pb = capa.render.proto.doc_to_pb2(doc)

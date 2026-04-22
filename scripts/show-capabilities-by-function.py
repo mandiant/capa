@@ -64,9 +64,7 @@ import colorama
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.helpers
-import capa.features
+import capa.loader
 import capa.exceptions
 import capa.render.utils as rutils
 import capa.render.verbose
@@ -124,7 +122,9 @@ def render_matches_by_function(doc: rd.ResultDocument):
     for f in doc.meta.analysis.feature_counts.functions:
         if not matches_by_function.get(f.address, {}):
             continue
-        ostream.writeln(f"function at {capa.render.verbose.format_address(f.address)} with {f.count} features: ")
+        ostream.writeln(
+            f"function at {capa.render.verbose.format_address(f.address)} with {f.count} features: "
+        )
         for rule_name in sorted(matches_by_function[f.address]):
             ostream.writeln("  - " + rule_name)
 
@@ -137,7 +137,8 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
     capa.main.install_common_args(
-        parser, wanted={"format", "os", "backend", "input_file", "signatures", "rules", "tag"}
+        parser,
+        wanted={"format", "os", "backend", "input_file", "signatures", "rules", "tag"},
     )
     args = parser.parse_args(args=argv)
 
@@ -158,8 +159,12 @@ def main(argv=None):
 
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+    meta = capa.loader.collect_metadata(
+        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+    )
+    meta.analysis.layout = capa.loader.compute_layout(
+        rules, extractor, capabilities.matches
+    )
 
     if capa.capabilities.common.has_static_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
