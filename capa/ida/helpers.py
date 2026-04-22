@@ -30,6 +30,7 @@ import capa
 import capa.version
 import capa.render.utils as rutils
 import capa.features.freeze
+import capa.features.extractors.elf
 import capa.render.result_document as rdoc
 from capa.features.address import AbsoluteVirtualAddress
 
