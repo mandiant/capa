@@ -85,14 +85,13 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
             continue
 
         for off, _ in find_embedded_pe(capa.features.extractors.ghidra.helpers.get_block_bytes(block), mz_xor):
-            # add offset back to block start
             ea_addr = block.getStart().add(off)
             ea = ea_addr.getOffset()
             f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
             if f_offset != -1:
-                ea = f_offset
-
-            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+                yield Characteristic("embedded pe"), FileOffsetAddress(f_offset)
+            else:
+                yield Characteristic("embedded pe"), AbsoluteVirtualAddress(ea)
 
 
 def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
@@ -187,11 +186,11 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
             offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), FileOffsetAddress(offset)
+            yield String(s.s), AbsoluteVirtualAddress(offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(p_bytes):
             offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), FileOffsetAddress(offset)
+            yield String(s.s), AbsoluteVirtualAddress(offset)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
