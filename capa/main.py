@@ -40,12 +40,9 @@ import capa.render.json
 import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
-import capa.features.common
 import capa.render.vverbose
-import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
-import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.loader import (
     BACKEND_IDA,
@@ -445,10 +442,8 @@ def handle_common_args(args):
         #
         # To use methods from TextIOWrapper, use an isinstance check to ensure that
         # the streams have not been overridden:
-        #
-        # if isinstance(sys.stdout, io.TextIOWrapper):
-        #    sys.stdout.reconfigure(...)
-        sys.stdout.reconfigure(encoding="utf-8")
+        if isinstance(sys.stdout, io.TextIOWrapper):
+            sys.stdout.reconfigure(encoding="utf-8")
     colorama.just_fix_windows_console()
 
     if args.color == "always":
@@ -927,11 +922,13 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
 
     # if the user specified extractor filters, then apply them here
     if isinstance(extractor, StaticFeatureExtractor):
-        assert extractor_filters["functions"]
-        return FunctionFilter(extractor, extractor_filters["functions"])
+        functions = extractor_filters.get("functions")
+        assert functions
+        return FunctionFilter(extractor, functions)
     elif isinstance(extractor, DynamicFeatureExtractor):
-        assert extractor_filters["processes"]
-        return ProcessFilter(extractor, extractor_filters["processes"])
+        processes = extractor_filters.get("processes")
+        assert processes
+        return ProcessFilter(extractor, processes)
     else:
         raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
 
@@ -1038,7 +1035,13 @@ def main(argv: Optional[list[str]] = None):
     meta: rdoc.Metadata = capa.loader.collect_metadata(
         argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
     )
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+    layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+    if isinstance(meta, rdoc.StaticMetadata):
+        assert isinstance(layout, rdoc.StaticLayout)
+        meta.analysis.layout = layout
+    elif isinstance(meta, rdoc.DynamicMetadata):
+        assert isinstance(layout, rdoc.DynamicLayout)
+        meta.analysis.layout = layout
 
     if found_limitation:
         # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
@@ -1092,8 +1095,10 @@ def ida_main():
 
     capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
 
+    assert isinstance(meta.analysis, rdoc.StaticAnalysis)
+    assert isinstance(capabilities.feature_counts, rdoc.StaticFeatureCounts)
     meta.analysis.feature_counts = capabilities.feature_counts
-    meta.analysis.library_functions = capabilities.library_functions
+    meta.analysis.library_functions = capabilities.library_functions or ()
 
     if has_static_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
@@ -1142,8 +1147,10 @@ def ghidra_main():
         not capa.ghidra.helpers.is_running_headless(),
     )
 
+    assert isinstance(meta.analysis, rdoc.StaticAnalysis)
+    assert isinstance(capabilities.feature_counts, rdoc.StaticFeatureCounts)
     meta.analysis.feature_counts = capabilities.feature_counts
-    meta.analysis.library_functions = capabilities.library_functions
+    meta.analysis.library_functions = capabilities.library_functions or ()
 
     if has_static_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
