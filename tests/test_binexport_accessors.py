@@ -340,6 +340,26 @@ BE2 = ParseDict(
 )
 
 
+def test_get_operand_expressions_empty_operand():
+    be2 = ParseDict(
+        {
+            "expression": [
+                {"type": BinExport2.Expression.REGISTER, "symbol": "x0"},
+            ],
+            "operand": [
+                {"expression_index": [0]},
+                {},
+            ],
+        },
+        BinExport2(),
+    )
+    normal_op = be2.operand[0]
+    empty_op = be2.operand[1]
+
+    assert len(get_operand_expressions(be2, normal_op)) == 1
+    assert get_operand_expressions(be2, empty_op) == []
+
+
 def test_is_stack_register_expression():
     mov = ParseDict(BE2_DICT["instruction"][0], BinExport2.Instruction())
     add = ParseDict(BE2_DICT["instruction"][2], BinExport2.Instruction())
