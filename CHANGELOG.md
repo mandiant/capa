@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix lots of linter errors identified by pyright @williballenthin #3052
 
 ### capa Explorer Web
 
