@@ -53,12 +53,14 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
     rule_file = tmpdir.mkdir("capa").join("rule.yml")
     rule_file.write(RULE_CONTENT)
     assert (
-        capa.main.main([
-            path,
-            "-v",
-            "-r",
-            rule_file.strpath,
-        ])
+        capa.main.main(
+            [
+                path,
+                "-v",
+                "-r",
+                rule_file.strpath,
+            ]
+        )
         == 0
     )
 
@@ -67,7 +69,12 @@ def test_main_non_ascii_filename(pingtaest_extractor, tmpdir, capsys):
     # here we print a string with unicode characters in it
     # (specifically, a byte string with utf-8 bytes in it, see file encoding)
     # only use one rule to speed up analysis
-    assert capa.main.main(["-q", pingtaest_extractor.path, "-r", "rules/communication/icmp"]) == 0
+    assert (
+        capa.main.main(
+            ["-q", pingtaest_extractor.path, "-r", "rules/communication/icmp"]
+        )
+        == 0
+    )
 
     std = capsys.readouterr()
     # but here, we have to use a unicode instance,
@@ -93,9 +100,10 @@ def test_main_shellcode(z499c2_extractor):
 
 
 def test_ruleset():
-    rules = capa.rules.RuleSet([
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: file rule
@@ -105,9 +113,9 @@ def test_ruleset():
                         features:
                           - characteristic: embedded pe
                     """)
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: function rule
@@ -117,9 +125,9 @@ def test_ruleset():
                         features:
                           - characteristic: tight loop
                     """)
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: basic block rule
@@ -129,9 +137,9 @@ def test_ruleset():
                         features:
                           - characteristic: nzxor
                     """)
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: process rule
@@ -141,9 +149,9 @@ def test_ruleset():
                         features:
                           - string: "explorer.exe"
                     """)
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                         rule:
                             meta:
                                 name: thread rule
@@ -153,9 +161,9 @@ def test_ruleset():
                             features:
                               - api: RegDeleteKey
                         """)
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: test call subscope
@@ -168,9 +176,9 @@ def test_ruleset():
                             - call:
                               - api: HttpOpenRequestW
                     """)
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent("""
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent("""
                     rule:
                         meta:
                             name: test rule
@@ -189,8 +197,9 @@ def test_ruleset():
                             - number: 1 = SOCK_STREAM
                             - number: 2 = AF_INET
                     """)
-        ),
-    ])
+            ),
+        ]
+    )
     assert len(rules.file_rules) == 2
     assert len(rules.function_rules) == 2
     assert len(rules.basic_block_rules) == 2
@@ -245,9 +254,11 @@ def test_json_meta(capsys):
         f["address"] for f in std_json["meta"]["analysis"]["layout"]["functions"]
     ]
 
-    for addr, info in std_json["meta"]["analysis"]["layout"]["functions"]:
-        if addr == ["absolute", 0x10001010]:
-            assert {"address": ["absolute", 0x10001179]} in info["matched_basic_blocks"]
+    for func in std_json["meta"]["analysis"]["layout"]["functions"]:
+        if func["address"] == {"type": "absolute", "value": 0x10001010}:
+            assert {"address": {"type": "absolute", "value": 0x1000108C}} in func[
+                "matched_basic_blocks"
+            ]
 
 
 def test_main_dotnet(_1c444_dotnetfile_extractor):

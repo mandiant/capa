@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: correct test_json_meta to iterate list of function dicts and use correct address format for matched_basic_blocks assertion @williballenthin (SURF-76)
 - fix: remove unreachable StaticAnalysis assert in assert_meta and add dynamic fixture to test_doc_to_pb2 @williballenthin (SURF-75)
 - fix: correct self-comparison sa.max == sa.max to sa.max == sb.max in test_proto assert_statement @williballenthin (SURF-74)
 - fix: guard parse_node against missing "type" key to avoid TypeError crash @williballenthin (SURF-73)
