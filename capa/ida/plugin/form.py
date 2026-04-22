@@ -85,14 +85,6 @@ def write_file(path: Path, data):
     path.write_bytes(data)
 
 
-def trim_function_name(f, max_length=25):
-    """ """
-    n = idaapi.get_name(f.start_ea)
-    if len(n) > max_length:
-        n = f"{n[:max_length]}..."
-    return n
-
-
 def update_wait_box(text):
     """update the IDA wait box"""
     ida_kernwin.replace_wait_box(f"capa explorer...{text}")
