@@ -658,7 +658,7 @@ class RuleMetadata(FrozenModel):
     description: str
 
     lib: bool = Field(False, alias="lib")
-    is_subscope_rule: bool = Field(False, alias="capa/subscope")
+    is_subscope_rule: bool = Field(False, alias="capa/subscope-rule")
     maec: MaecMetadata
 
     @classmethod
@@ -674,7 +674,7 @@ class RuleMetadata(FrozenModel):
             examples=rule.meta.get("examples", []),
             description=rule.meta.get("description", ""),
             lib=rule.meta.get("lib", False),
-            is_subscope_rule=rule.meta.get("capa/subscope", False),
+            is_subscope_rule=rule.meta.get("capa/subscope-rule", False),
             maec=MaecMetadata(
                 analysis_conclusion=rule.meta.get("maec/analysis-conclusion"),
                 analysis_conclusion_ov=rule.meta.get("maec/analysis-conclusion-ov"),
