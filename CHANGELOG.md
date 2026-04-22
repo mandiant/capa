@@ -40,6 +40,8 @@
 
 - fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
 
+- fix: rules/__init__.py: duplicate bytes_features line @williballenthin #3027
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
