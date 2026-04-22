@@ -14,7 +14,16 @@
 
 import json
 
-from capa.features.extractors.drakvuf.models import SystemCall
+from capa.features.extractors.drakvuf.models import SystemCall, ConciseModel
+
+
+def test_concise_model_ignores_extra_fields():
+    class Strict(ConciseModel):
+        x: int
+
+    instance = Strict(x=1, unexpected_field="hello")  # type: ignore[call-arg]
+    assert instance.x == 1
+    assert not hasattr(instance, "unexpected_field")
 
 
 def test_syscall_argument_construction():
