@@ -21,7 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_node_cost(node):
-    if isinstance(node, (capa.features.common.OS, capa.features.common.Arch, capa.features.common.Format)):
+    if isinstance(
+        node,
+        (
+            capa.features.common.OS,
+            capa.features.common.Arch,
+            capa.features.common.Format,
+        ),
+    ):
         # we assume these are the most restrictive features:
         # authors commonly use them at the start of rules to restrict the category of samples to inspect
         return 0
@@ -32,7 +39,14 @@ def get_node_cost(node):
     # this should be all hash-lookup features.
     # see below.
 
-    elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)):
+    elif isinstance(
+        node,
+        (
+            capa.features.common.Substring,
+            capa.features.common.Regex,
+            capa.features.common.Bytes,
+        ),
+    ):
         # substring and regex features require a full scan of each string
         # which we anticipate is more expensive then a hash lookup feature (e.g. mnemonic or count).
         #
