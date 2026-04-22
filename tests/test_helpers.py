@@ -27,6 +27,16 @@ from capa.helpers import (
     EXTENSIONS_BINEXPORT2,
     EXTENSIONS_SHELLCODE_32,
     EXTENSIONS_SHELLCODE_64,
+    get_format_from_extension,
+)
+from capa.features.common import (
+    FORMAT_ELF,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    FORMAT_FREEZE,
+    FORMAT_UNKNOWN,
+    FORMAT_BINJA_DB,
+    FORMAT_BINEXPORT2,
 )
 from capa.features.extractors import helpers
 
@@ -96,6 +106,7 @@ def test_is_dev_environment():
     assert capa.helpers.is_dev_environment() is True
 
 
+<<<<<<< HEAD
 def test_load_one_jsonl_from_path_gz():
     result = capa.helpers.load_one_jsonl_from_path(DRAKVUF_LOG_GZ)
     assert isinstance(result, dict)
@@ -143,3 +154,16 @@ def test_extensions_dot_prefix():
     assert Path("sample.elf_").name.endswith(EXTENSIONS_ELF)
     assert Path("sample.frz").name.endswith(EXTENSIONS_FREEZE)
     assert Path("sample.bndb").name.endswith(EXTENSIONS_BINJA_DB)
+
+
+def test_get_format_from_extension():
+    assert get_format_from_extension(Path("sample.sc32")) == FORMAT_SC32
+    assert get_format_from_extension(Path("sample.raw32")) == FORMAT_SC32
+    assert get_format_from_extension(Path("sample.sc64")) == FORMAT_SC64
+    assert get_format_from_extension(Path("sample.raw64")) == FORMAT_SC64
+    assert get_format_from_extension(Path("sample.elf_")) == FORMAT_ELF
+    assert get_format_from_extension(Path("sample.frz")) == FORMAT_FREEZE
+    assert get_format_from_extension(Path("sample.BinExport")) == FORMAT_BINEXPORT2
+    assert get_format_from_extension(Path("sample.BinExport2")) == FORMAT_BINEXPORT2
+    assert get_format_from_extension(Path("sample.bndb")) == FORMAT_BINJA_DB
+    assert get_format_from_extension(Path("sample.exe")) == FORMAT_UNKNOWN

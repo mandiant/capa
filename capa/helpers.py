@@ -45,6 +45,7 @@ from rich.progress import (
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
     FORMAT_PE,
+    FORMAT_ELF,
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
@@ -227,6 +228,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
+    elif sample.name.endswith(EXTENSIONS_ELF):
+        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
