@@ -12,7 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+
+import dnfile
+import pytest
+from dncil.clr.token import Token
+
 import fixtures
+from capa.features.extractors.dnfile.helpers import calculate_dotnet_token_value
+from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
+from capa.features.extractors.dnfile.insn import get_callee
+
+CD = Path(__file__).resolve().parent
 
 
 @fixtures.parametrize(
@@ -21,7 +32,9 @@ import fixtures
     indirect=["sample", "scope"],
 )
 def test_dnfile_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
+    fixtures.do_test_feature_presence(
+        fixtures.get_dnfile_extractor, sample, scope, feature, expected
+    )
 
 
 @fixtures.parametrize(
@@ -30,4 +43,31 @@ def test_dnfile_features(sample, scope, feature, expected):
     indirect=["sample", "scope"],
 )
 def test_dnfile_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
+    fixtures.do_test_feature_count(
+        fixtures.get_dnfile_extractor, sample, scope, feature, expected
+    )
+
+
+def test_get_callee_invalid_methodspec_token_returns_none():
+    path = (
+        CD
+        / "data"
+        / "2dae11cc5f86f5399b560b8837c26274b7e09431deed669b0844fef44e917915.exe_"
+    )
+    if not path.exists():
+        pytest.skip("test data not available")
+
+    pe = dnfile.dnPE(str(path))
+    cache = DnFileFeatureExtractorCache(pe)
+
+    ms_table = pe.net.mdtables.tables.get(dnfile.mdtable.MethodSpec.number)
+    assert ms_table is not None and len(ms_table.rows) > 0
+
+    out_of_range_rid = len(ms_table.rows) + 999
+    token_value = calculate_dotnet_token_value(
+        dnfile.mdtable.MethodSpec.number, out_of_range_rid
+    )
+    token = Token(token_value)
+
+    result = get_callee(pe, cache, token)
+    assert result is None

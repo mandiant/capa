@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
 
 ### capa Explorer Web
 
