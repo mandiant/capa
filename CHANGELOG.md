@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: use dest.value.value and indirect_src.value.value for LLIL_CONST call destinations in binja insn.py @williballenthin (SURF-47)
 - fix: remove duplicate getPrevLocation call and dead loc variable in get_previous_instructions @williballenthin (SURF-46)
 - fix: unpack getByteDef offset and slice buffer so ENDBRANCH check applies to target address, not segment start @williballenthin (SURF-45)
 - fix: correct inverted loop structure in extract_function_loop so each block edge is recorded as (src, dest) @williballenthin (SURF-44)
