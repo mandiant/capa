@@ -16,7 +16,13 @@ import logging
 from typing import Iterator, Optional
 
 import capa.features.extractors.binexport2.helpers
-from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
+from capa.features.insn import (
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    OperandNumber,
+    OperandOffset,
+)
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
@@ -30,7 +36,9 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.arm.helpers import (
+    is_stack_register_expression,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,13 +61,15 @@ def extract_insn_number_features(
 
     mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
-    if mnemonic in ("add", "sub"):
-        assert len(instruction.operand_index) == 3
-
-        operand1_expression: Optional[BinExport2.Expression] = get_operand_register_expression(
-            be2, be2.operand[instruction.operand_index[1]]
+    if mnemonic in ("add", "sub") and len(instruction.operand_index) == 3:
+        operand1_expression: Optional[BinExport2.Expression] = (
+            get_operand_register_expression(
+                be2, be2.operand[instruction.operand_index[1]]
+            )
         )
-        if operand1_expression and is_stack_register_expression(be2, operand1_expression):
+        if operand1_expression and is_stack_register_expression(
+            be2, operand1_expression
+        ):
             # skip things like:
             # add x0,sp,#0x8
             return
@@ -67,7 +77,9 @@ def extract_insn_number_features(
     for i, operand_index in enumerate(instruction.operand_index):
         operand: BinExport2.Operand = be2.operand[operand_index]
 
-        immediate_expression: Optional[BinExport2.Expression] = get_operand_immediate_expression(be2, operand)
+        immediate_expression: Optional[BinExport2.Expression] = (
+            get_operand_immediate_expression(be2, operand)
+        )
         if not immediate_expression:
             continue
 
@@ -110,7 +122,9 @@ def extract_insn_offset_features(
 
     value = mask_immediate(fhi.arch, value)
     if not is_address_mapped(be2, value):
-        value = capa.features.extractors.binexport2.helpers.twos_complement(fhi.arch, value)
+        value = capa.features.extractors.binexport2.helpers.twos_complement(
+            fhi.arch, value
+        )
         yield Offset(value), ih.address
         yield OperandOffset(match.operand_index, value), ih.address
 
@@ -134,7 +148,9 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
+    operands: list[BinExport2.Operand] = [
+        be2.operand[operand_index] for operand_index in instruction.operand_index
+    ]
 
     if operands[1] != operands[2]:
         yield Characteristic("nzxor"), ih.address
