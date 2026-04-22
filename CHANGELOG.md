@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: rules/__init__.py: duplicate bytes_features line @williballenthin #3027
 
 ### capa Explorer Web
 
