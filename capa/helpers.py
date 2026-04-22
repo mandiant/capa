@@ -88,8 +88,8 @@ def hex(n: int) -> str:
 def get_file_taste(sample_path: Path) -> bytes:
     if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    taste = sample_path.open("rb").read(8)
-    return taste
+    with sample_path.open("rb") as f:
+        return f.read(8)
 
 
 def is_runtime_ida():
