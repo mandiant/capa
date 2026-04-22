@@ -163,6 +163,7 @@ scripts = [
     "stix2==3.0.1",
     "sarif_om==1.0.4",
     "requests>=2.32.4",
+    "pyzipper>=0.3.6",
 ]
 ghidra = [
     "pyghidra>=3.0.0",
