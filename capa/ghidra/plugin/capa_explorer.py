@@ -313,7 +313,14 @@ def get_locations(match_dict):
 def parse_node(node_data):
     """pull match descriptions and sub features by parsing node dicts"""
 
-    node = node_data.get(node_data.get("type"))
+    node_type = node_data.get("type")
+    if node_type is None:
+        logger.debug("parse_node: node_data missing 'type' key: %s", node_data)
+        return
+    node = node_data.get(node_type)
+    if not isinstance(node, dict):
+        logger.debug("parse_node: node_data[%s] is not a dict: %s", node_type, type(node))
+        return
 
     if "description" in node:
         yield "description", node.get("description")
