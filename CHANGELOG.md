@@ -48,6 +48,9 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: break thunk chain loop after resolving import to avoid duplicate API features @williballenthin (SURF-57)
 - fix: pass insn instead of oper to getOperValue/getOperAddr in viv insn extractor @williballenthin (SURF-56)
 - fix: implement extract_function_loop in dnfile extractor to detect backward branches as loops @williballenthin (SURF-55)
 - fix: remove dead find_process function and helpers.py from cape extractor @williballenthin (SURF-54)
