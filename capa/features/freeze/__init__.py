@@ -173,7 +173,7 @@ class Address(HashableModel):
             return self.type < other.type
 
         if self.type is AddressType.NO_ADDRESS:
-            return True
+            return False
 
         else:
             assert self.type == other.type
