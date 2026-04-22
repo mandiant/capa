@@ -17,7 +17,7 @@ import pytest
 import capa.features.address
 from capa.engine import Or, And, Not, Some, Range
 from capa.features.insn import Number
-from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress
+from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
@@ -47,6 +47,23 @@ def test_no_address_hash():
     d = {no_addr: "no", addr_zero: "zero"}
     assert d[no_addr] == "no"
     assert d[addr_zero] == "zero"
+
+
+def test_dn_token_offset_address_cross_type_eq():
+    addr = DNTokenOffsetAddress(0x1000, 0x10)
+    assert (addr == AbsoluteVirtualAddress(0x1010)) is False
+    assert (addr == "not an address") is False
+    assert (addr == None) is False  # noqa: E711
+    assert (addr == DNTokenOffsetAddress(0x1000, 0x10)) is True
+    assert (addr == DNTokenOffsetAddress(0x1000, 0x11)) is False
+
+
+def test_dn_token_offset_address_cross_type_lt():
+    addr = DNTokenOffsetAddress(0x1000, 0x10)
+    assert addr.__lt__(AbsoluteVirtualAddress(0x1010)) is NotImplemented
+    assert addr.__lt__("not an address") is NotImplemented
+    assert (addr < DNTokenOffsetAddress(0x1000, 0x11)) is True
+    assert (addr < DNTokenOffsetAddress(0x1000, 0x10)) is False
 
 
 def test_number():
