@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
