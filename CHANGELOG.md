@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: parenthesize s_type checks in capa2yara.py so kid.name != "Some" guard applies to And/Or/Not uniformly @williballenthin (SURF-86)
 - fix: correct operator precedence in FeatureRegexRegistryControlSetMatchIncomplete to avoid false positives on unrelated currentcontrolset patterns @williballenthin (SURF-85)
 - fix: FeatureRegexRegistryControlSetMatchIncomplete now checks all Regex features instead of returning after the first @williballenthin (SURF-84)
 - fix: MissingStaticScope and MissingDynamicScope lint checks guard against absent scopes dict to prevent TypeError @williballenthin (SURF-83)
