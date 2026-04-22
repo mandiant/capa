@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: replace capa.main.find_capabilities with capa.capabilities.common.find_capabilities in test_com_feature_matching to avoid implicit transitive import dependency @williballenthin (SURF-77)
 - fix: correct test_json_meta to iterate list of function dicts and use correct address format for matched_basic_blocks assertion @williballenthin (SURF-76)
 - fix: remove unreachable StaticAnalysis assert in assert_meta and add dynamic fixture to test_doc_to_pb2 @williballenthin (SURF-75)
 - fix: correct self-comparison sa.max == sa.max to sa.max == sb.max in test_proto assert_statement @williballenthin (SURF-74)
