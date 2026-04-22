@@ -121,8 +121,14 @@ def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
                         forwarded_name = f"{libname}.{ext_loc.getLabel()}"
                         forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
 
-                        yield Export(forwarded_name), AbsoluteVirtualAddress(addr.getOffset())
-                        yield Characteristic("forwarded export"), AbsoluteVirtualAddress(addr.getOffset())
+                        yield (
+                            Export(forwarded_name),
+                            AbsoluteVirtualAddress(addr.getOffset()),
+                        )
+                        yield (
+                            Characteristic("forwarded export"),
+                            AbsoluteVirtualAddress(addr.getOffset()),
+                        )
                         is_forwarded = True
                         break
 
@@ -143,10 +149,14 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
     """
 
     for f in capa.features.extractors.ghidra.helpers.get_current_program().getFunctionManager().getExternalFunctions():
-        addr: int = 0
+        addr = None
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
+                break
+
+        if addr is None:
+            continue
 
         fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_*
         if "Ordinal_" in fstr[1]:
@@ -160,7 +170,10 @@ def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
     """extract section names"""
 
     for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
-        yield Section(block.getName()), AbsoluteVirtualAddress(block.getStart().getOffset())
+        yield (
+            Section(block.getName()),
+            AbsoluteVirtualAddress(block.getStart().getOffset()),
+        )
 
 
 def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
