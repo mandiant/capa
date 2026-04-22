@@ -17,8 +17,13 @@ from pathlib import Path
 import dnfile
 import pytest
 import fixtures
+from dncil.clr.token import Token
 
-from capa.features.extractors.dnfile.helpers import get_dotnet_table_row
+from capa.features.extractors.dnfile.insn import get_callee
+from capa.features.extractors.dnfile.helpers import get_dotnet_table_row, calculate_dotnet_token_value
+from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
+
+CD = Path(__file__).resolve().parent
 
 DOTNET_DIR = Path(__file__).resolve().parent / "data" / "dotnet"
 
@@ -74,3 +79,21 @@ def test_get_dotnet_table_row_out_of_bounds():
     table = pe.net.mdtables.tables.get(dnfile.mdtable.TypeDef.number)
     assert table is not None
     assert get_dotnet_table_row(pe, dnfile.mdtable.TypeDef.number, len(table.rows) + 1) is None
+
+
+def test_get_callee_invalid_methodspec_token_returns_none():
+    path = CD / "data" / "2dae11cc5f86f5399b560b8837c26274b7e09431deed669b0844fef44e917915.exe_"
+    pe = dnfile.dnPE(str(path))
+    cache = DnFileFeatureExtractorCache(pe)
+
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+    ms_table = pe.net.mdtables.tables.get(dnfile.mdtable.MethodSpec.number)
+    assert ms_table is not None and len(ms_table.rows) > 0
+
+    out_of_range_rid = len(ms_table.rows) + 999
+    token_value = calculate_dotnet_token_value(dnfile.mdtable.MethodSpec.number, out_of_range_rid)
+    token = Token(token_value)
+
+    result = get_callee(pe, cache, token)
+    assert result is None
