@@ -14,8 +14,19 @@
 
 
 import codecs
+from pathlib import Path
 
 import capa.helpers
+from capa.helpers import get_format_from_extension
+from capa.features.common import (
+    FORMAT_ELF,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    FORMAT_FREEZE,
+    FORMAT_UNKNOWN,
+    FORMAT_BINJA_DB,
+    FORMAT_BINEXPORT2,
+)
 from capa.features.extractors import helpers
 
 
@@ -77,3 +88,16 @@ def test_generate_symbols():
 def test_is_dev_environment():
     # testing environment should be a dev environment
     assert capa.helpers.is_dev_environment() is True
+
+
+def test_get_format_from_extension():
+    assert get_format_from_extension(Path("sample.sc32")) == FORMAT_SC32
+    assert get_format_from_extension(Path("sample.raw32")) == FORMAT_SC32
+    assert get_format_from_extension(Path("sample.sc64")) == FORMAT_SC64
+    assert get_format_from_extension(Path("sample.raw64")) == FORMAT_SC64
+    assert get_format_from_extension(Path("sample.elf_")) == FORMAT_ELF
+    assert get_format_from_extension(Path("sample.frz")) == FORMAT_FREEZE
+    assert get_format_from_extension(Path("sample.BinExport")) == FORMAT_BINEXPORT2
+    assert get_format_from_extension(Path("sample.BinExport2")) == FORMAT_BINEXPORT2
+    assert get_format_from_extension(Path("sample.bndb")) == FORMAT_BINJA_DB
+    assert get_format_from_extension(Path("sample.exe")) == FORMAT_UNKNOWN
