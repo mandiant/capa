@@ -1548,6 +1548,22 @@ FEATURE_COUNT_TESTS_GHIDRA = [
     ("mimikatz", "function=0x401000", capa.features.basicblock.BasicBlock(), 3),
 ]
 
+FEATURE_COUNT_TESTS_BE2_INTEL = [
+    # 0x401125: MOV [EDI], CX  -- matches OFFSET_ZERO_PATTERNS, must yield Offset(0) exactly once
+    (
+        "mimikatz",
+        "function=0x40105d,bb=0x401125,insn=0x401125",
+        capa.features.insn.Offset(0),
+        1,
+    ),
+    (
+        "mimikatz",
+        "function=0x40105d,bb=0x401125,insn=0x401125",
+        capa.features.insn.OperandOffset(1, 0),
+        1,
+    ),
+]
+
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)

@@ -136,6 +136,7 @@ def extract_insn_offset_features(
 
         yield Offset(0), ih.address
         yield OperandOffset(match.operand_index, 0), ih.address
+        return
 
     value = mask_immediate(fhi.arch, match.expression.immediate)
     if is_address_mapped(be2, value):
