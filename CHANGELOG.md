@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove dead except ValueError clause in capa2sarif.py so JSONDecodeError is caught by the specific handler @williballenthin (SURF-91)
 - fix: dedent bulk-process.py main() body so explicit argv argument is used instead of silently ignored @williballenthin (SURF-90)
 - fix: guard statistics.quantiles/mean in compare-backends.py report() against empty duration lists @williballenthin (SURF-89)
 - fix: replace zipfile with pyzipper in minimize_vmray_results.py so output archive is AES-encrypted @williballenthin (SURF-88)

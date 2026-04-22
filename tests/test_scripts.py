@@ -203,6 +203,13 @@ def test_proto_conversion(tmp_path):
     )
 
 
+def test_capa2sarif_invalid_json(tmp_path):
+    invalid_json_file = tmp_path / "bad.json"
+    invalid_json_file.write_text("this is not valid json", encoding="utf-8")
+    p = run_program(get_script_path("capa2sarif.py"), [str(invalid_json_file)])
+    assert p.returncode != 0
+
+
 def test_detect_duplicate_features(tmpdir):
     TEST_RULE_0 = textwrap.dedent("""
         rule:

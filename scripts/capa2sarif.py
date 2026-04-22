@@ -80,7 +80,9 @@ def _parse_args() -> argparse.Namespace:
         help="Compatibility for Radare r2sarif plugin v2.0",
     )
     parser.add_argument("-t", "--tag", help="Filter on rule meta field values (ruleid)")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
 
     return parser.parse_args()
 
@@ -93,17 +95,17 @@ def main() -> int:
 
     try:
         json_data = json.loads(Path(args.capa_output).read_text(encoding="utf-8"))
-    except ValueError:
-        logger.error("Input data was not valid JSON, input should be a capa json output file.")
-        return -1
     except json.JSONDecodeError:
-        # An exception has occured
-        logger.error("Input data was not valid JSON, input should be a capa json output file.")
-        return -2
+        logger.error(
+            "Input data was not valid JSON, input should be a capa json output file."
+        )
+        return -1
 
     # Marshall json into Sarif
     # Create baseline sarif structure to be populated from json data
-    sarif_structure: Optional[dict] = _sarif_boilerplate(json_data["meta"], json_data["rules"])
+    sarif_structure: Optional[dict] = _sarif_boilerplate(
+        json_data["meta"], json_data["rules"]
+    )
     if sarif_structure is None:
         logger.error("An Error has occured creating default sarif structure.")
         return -3
@@ -119,7 +121,9 @@ def main() -> int:
 
         # artifacts must include a description as well with a text field.
         if "artifacts" in sarif_structure["runs"][0]:
-            sarif_structure["runs"][0]["artifacts"][0]["description"] = {"text": "placeholder"}
+            sarif_structure["runs"][0]["artifacts"][0]["description"] = {
+                "text": "placeholder"
+            }
 
         # For better compliance with Ghidra table. Iteraction through properties['additionalProperties']
         """
@@ -161,19 +165,23 @@ def _sarif_boilerplate(data_meta: dict, data_rules: dict) -> Optional[dict]:
             id = data_rules[key]["meta"]["name"]
 
         # Append current rule
-        rules.append({
-            # Default to attack identifier, fall back to MBC, mainly relevant if both are present
-            "id": id,
-            "name": data_rules[key]["meta"]["name"],
-            "shortDescription": {"text": data_rules[key]["meta"]["name"]},
-            "messageStrings": {"default": {"text": data_rules[key]["meta"]["name"]}},
-            "properties": {
-                "namespace": data_rules[key]["meta"].get("namespace", []),
-                "scopes": data_rules[key]["meta"]["scopes"],
-                "references": data_rules[key]["meta"]["references"],
-                "lib": data_rules[key]["meta"]["lib"],
-            },
-        })
+        rules.append(
+            {
+                # Default to attack identifier, fall back to MBC, mainly relevant if both are present
+                "id": id,
+                "name": data_rules[key]["meta"]["name"],
+                "shortDescription": {"text": data_rules[key]["meta"]["name"]},
+                "messageStrings": {
+                    "default": {"text": data_rules[key]["meta"]["name"]}
+                },
+                "properties": {
+                    "namespace": data_rules[key]["meta"].get("namespace", []),
+                    "scopes": data_rules[key]["meta"]["scopes"],
+                    "references": data_rules[key]["meta"]["references"],
+                    "lib": data_rules[key]["meta"]["lib"],
+                },
+            }
+        )
 
     tool = Tool(
         driver=ToolComponent(
@@ -262,11 +270,15 @@ def _enumerate_evidence(node: dict, related_count: int) -> list[dict]:
                 label = f"offset: {node.get('node', {}).get('feature', {}).get('description')} ({node.get('node', {}).get('feature', {}).get('offset')})"
             elif node.get("node", {}).get("feature", {}).get("type") == "mnemonic":
                 label = f"mnemonic: {node.get('node', {}).get('feature', {}).get('mnemonic')}"
-            elif node.get("node", {}).get("feature", {}).get("type") == "characteristic":
+            elif (
+                node.get("node", {}).get("feature", {}).get("type") == "characteristic"
+            ):
                 label = f"characteristic: {node.get('node', {}).get('feature', {}).get('characteristic')}"
             elif node.get("node", {}).get("feature", {}).get("type") == "os":
                 label = f"os: {node.get('node', {}).get('feature', {}).get('os')}"
-            elif node.get("node", {}).get("feature", {}).get("type") == "operand number":
+            elif (
+                node.get("node", {}).get("feature", {}).get("type") == "operand number"
+            ):
                 label = f"operand: ({node.get('node', {}).get('feature', {}).get('index')} ) {node.get('node', {}).get('feature', {}).get('description')} ({node.get('node', {}).get('feature', {}).get('operand_number')})"
             else:
                 logger.error(
@@ -282,11 +294,13 @@ def _enumerate_evidence(node: dict, related_count: int) -> list[dict]:
             if loc["type"] != "absolute":
                 continue
 
-            related_locations.append({
-                "id": related_count,
-                "message": {"text": label},
-                "physicalLocation": {"address": {"absoluteAddress": loc["value"]}},
-            })
+            related_locations.append(
+                {
+                    "id": related_count,
+                    "message": {"text": label},
+                    "physicalLocation": {"address": {"absoluteAddress": loc["value"]}},
+                }
+            )
             related_count += 1
 
     if node.get("success") and node.get("node", {}).get("type") == "statement":
