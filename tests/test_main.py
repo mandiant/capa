@@ -245,9 +245,9 @@ def test_json_meta(capsys):
         f["address"] for f in std_json["meta"]["analysis"]["layout"]["functions"]
     ]
 
-    for addr, info in std_json["meta"]["analysis"]["layout"]["functions"]:
-        if addr == ["absolute", 0x10001010]:
-            assert {"address": ["absolute", 0x10001179]} in info["matched_basic_blocks"]
+    for func in std_json["meta"]["analysis"]["layout"]["functions"]:
+        if func["address"] == {"type": "absolute", "value": 0x10001010}:
+            assert {"address": {"type": "absolute", "value": 0x1000108C}} in func["matched_basic_blocks"]
 
 
 def test_main_dotnet(_1c444_dotnetfile_extractor):
