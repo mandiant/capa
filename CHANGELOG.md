@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: rename dragEventEnter to dragEnterEvent so Qt dispatches drag-enter events correctly in CapaExplorerRulegenEditor @williballenthin (SURF-64)
 - fix: guard against None in lessThan else-branch so sorting columns with empty cells does not raise AttributeError @williballenthin (SURF-63)
 - fix: add explicit import capa.loader in form.py to avoid fragile transitive import dependency @williballenthin (SURF-62)
 - fix: initialize f=None before try block in load_capa_function_results to prevent UnboundLocalError in except handler @williballenthin (SURF-61)
