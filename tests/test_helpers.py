@@ -14,6 +14,7 @@
 
 
 import codecs
+import dataclasses
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,11 @@ from capa.features.common import (
     FORMAT_BINEXPORT2,
 )
 from capa.features.extractors import helpers
+from capa.features.extractors.viv.basicblock import (
+    get_printable_len,
+    is_printable_ascii,
+    is_printable_utf16le,
+)
 
 CD = Path(__file__).resolve().parent
 DRAKVUF_LOG_GZ = (
@@ -180,3 +186,37 @@ def test_get_file_taste_reads_first_bytes(tmp_path):
 def test_get_file_taste_missing_file_raises():
     with pytest.raises(IOError):
         get_file_taste(Path("/nonexistent/path/sample.exe"))
+
+
+def test_is_printable_ascii():
+    assert is_printable_ascii(b"AB") is True
+    assert is_printable_ascii(b"A\x00") is False
+    assert is_printable_ascii(b"\x80\x81") is False
+
+
+def test_is_printable_utf16le():
+    assert is_printable_utf16le(b"A\x00B\x00") is True
+    assert is_printable_utf16le(b"AB") is False
+    assert is_printable_utf16le(b"\x80\x00\x81\x00") is False
+
+
+def test_get_printable_len_returns_int():
+    @dataclasses.dataclass
+    class FakeOper:
+        tsize: int
+        imm: int
+
+    ascii_oper = FakeOper(tsize=4, imm=int.from_bytes(b"ABCD", "little"))
+    result = get_printable_len(ascii_oper)
+    assert isinstance(result, int)
+    assert result == 4
+
+    utf16_oper = FakeOper(tsize=4, imm=int.from_bytes(b"A\x00B\x00", "little"))
+    result = get_printable_len(utf16_oper)
+    assert isinstance(result, int)
+    assert result == 2
+
+    utf16_oper_8 = FakeOper(tsize=8, imm=int.from_bytes(b"A\x00B\x00C\x00D\x00", "little"))
+    result = get_printable_len(utf16_oper_8)
+    assert isinstance(result, int)
+    assert result == 4
