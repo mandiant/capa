@@ -48,6 +48,8 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: initialize addr to None in Ghidra import extractors to prevent UnboundLocalError when external functions have no data references @williballenthin (SURF-43)
 - fix: assign ConfigDict to model_config in ConciseModel so extra="ignore" is actually applied @williballenthin (SURF-42)
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
 

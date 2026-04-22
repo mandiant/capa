@@ -102,13 +102,18 @@ def get_function_symbols():
     yield from get_current_program().getFunctionManager().getFunctionsNoStubs(True)
 
 
-def get_function_blocks(fh: "capa.features.extractors.base_extractor.FunctionHandle") -> Iterator[BBHandle]:
+def get_function_blocks(
+    fh: "capa.features.extractors.base_extractor.FunctionHandle",
+) -> Iterator[BBHandle]:
     """
     yield the basic blocks of the function
     """
 
     for block in SimpleBlockIterator(BasicBlockModel(get_current_program()), fh.inner.getBody(), get_monitor()):
-        yield BBHandle(address=AbsoluteVirtualAddress(block.getMinAddress().getOffset()), inner=block)
+        yield BBHandle(
+            address=AbsoluteVirtualAddress(block.getMinAddress().getOffset()),
+            inner=block,
+        )
 
 
 def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
@@ -123,10 +128,14 @@ def get_file_imports() -> dict[int, list[str]]:
     import_dict: dict[int, list[str]] = {}
 
     for f in get_current_program().getFunctionManager().getExternalFunctions():
-        addr: int = 0
+        addr = None
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
+                break
+
+        if addr is None:
+            continue
 
         ex_loc = f.getExternalLocation().getAddress()  # map external locations as well (offset into module files)
 
