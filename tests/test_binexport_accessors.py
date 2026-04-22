@@ -23,7 +23,15 @@ import fixtures
 from google.protobuf.json_format import ParseDict
 
 import capa.features.extractors.binexport2.helpers
-from capa.features.extractors.binexport2 import BinExport2Index
+from capa.features.extractors.binexport2 import (
+    AddressSpace,
+    MemoryRegion,
+    AnalysisContext,
+    BinExport2Index,
+    FunctionContext,
+    BasicBlockContext,
+    BinExport2Analysis,
+)
 from capa.features.extractors.binexport2.helpers import (
     BinExport2InstructionPattern,
     BinExport2InstructionPatternMatcher,
@@ -36,6 +44,7 @@ from capa.features.extractors.binexport2.helpers import (
 )
 from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+from capa.features.extractors.binexport2.arch.intel.insn import is_security_cookie
 from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
 from capa.features.extractors.binexport2.arch.intel.helpers import get_operand_phrase_info
 
@@ -677,3 +686,87 @@ def test_get_operand_phrase_info_index_scale_displacement():
     assert phrase.displacement.type == BinExport2.Expression.IMMEDIATE_INT
     assert phrase.displacement.immediate == 4202519
     assert phrase.base is None
+
+
+def test_instruction_indices_single_insn_range():
+    be2_dict: dict[str, Any] = {
+        "instruction": [
+            {"address": 0x1000, "raw_bytes": b"\x90"},
+        ],
+        "basic_block": [
+            {"instruction_index": [{"begin_index": 0}]},
+        ],
+    }
+    be2 = ParseDict(be2_dict, BinExport2())
+    idx = BinExport2Index(be2)
+
+    bb = be2.basic_block[0]
+    assert not bb.instruction_index[0].HasField("end_index")
+    assert list(idx.instruction_indices(bb)) == [0]
+
+
+def _make_security_cookie_ctx(xor_addr: int, bb_index: int, is_terminal: bool):
+    be2 = BinExport2()
+
+    section = be2.section.add()
+    section.address = 0x1000
+    section.size = 0x100
+    section.flag_x = True
+
+    expr_eax = be2.expression.add()
+    expr_eax.type = BinExport2.Expression.REGISTER
+    expr_eax.symbol = "eax"
+
+    expr_esp = be2.expression.add()
+    expr_esp.type = BinExport2.Expression.REGISTER
+    expr_esp.symbol = "esp"
+
+    op0 = be2.operand.add()
+    op0.expression_index.append(0)
+
+    op1 = be2.operand.add()
+    op1.expression_index.append(1)
+
+    mnem = be2.mnemonic.add()
+    mnem.name = "xor"
+
+    insn = be2.instruction.add()
+    insn.address = xor_addr
+    insn.raw_bytes = b"\x31\xc4"
+    insn.mnemonic_index = 0
+    insn.operand_index.extend([0, 1])
+
+    bb = be2.basic_block.add()
+    ir = bb.instruction_index.add()
+    ir.begin_index = 0
+
+    fg = be2.flow_graph.add()
+    fg.entry_basic_block_index = 0
+    fg.basic_block_index.append(0)
+
+    if not is_terminal:
+        edge = fg.edge.add()
+        edge.source_basic_block_index = 0
+        edge.target_basic_block_index = 0
+
+    idx = BinExport2Index(be2)
+    buf = b"\x00" * 0x200
+    analysis = BinExport2Analysis(be2, idx, buf)
+    address_space = AddressSpace(base_address=0x1000, memory_regions=(MemoryRegion(0, buf),))
+    ctx = AnalysisContext(
+        sample_bytes=buf,
+        be2=be2,
+        idx=idx,
+        analysis=analysis,
+        address_space=address_space,
+    )
+    fhi = FunctionContext(ctx=ctx, flow_graph_index=0, format=set(), os=set(), arch=set())
+    bbi = BasicBlockContext(basic_block_index=bb_index)
+    return fhi, bbi, be2.instruction[0]
+
+
+def test_is_security_cookie_single_insn_terminal_bb():
+    xor_addr = 0x1000
+    fhi, bbi, insn = _make_security_cookie_ctx(xor_addr, bb_index=0, is_terminal=True)
+    result = is_security_cookie(fhi, bbi, xor_addr, insn)
+    assert isinstance(result, bool)
