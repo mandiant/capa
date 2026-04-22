@@ -18,7 +18,9 @@ from pathlib import Path
 
 import dnfile
 import pefile
+import dnfile.mdtable
 
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
 from capa.features.common import (
@@ -143,7 +145,8 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address
 
 
 def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
+    if pe.__data__ is not None:
+        yield from capa.features.extractors.common.extract_file_strings(bytes(pe.__data__))
 
 
 def extract_file_mixed_mode_characteristic_features(
@@ -252,8 +255,8 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def extract_insn_features(self, f, bb, insn):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def is_library_function(self, va):
+    def is_library_function(self, addr):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def get_function_name(self, va):
+    def get_function_name(self, addr):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")

@@ -148,7 +148,7 @@ class Scopes:
             raise ValueError("invalid rules class. at least one scope must be specified")
 
     @classmethod
-    def from_dict(self, scopes: dict[str, str]) -> "Scopes":
+    def from_dict(cls, scopes: dict[str, str]) -> "Scopes":
         # make local copy so we don't make changes outside of this routine.
         # we'll use the value None to indicate the scope is not supported.
         scopes_: dict[str, Optional[str]] = dict(scopes)
@@ -774,9 +774,10 @@ def build_statements(d, scopes: Scopes):
                 value, description = parse_description(arg, term)
 
                 if term == "api":
+                    assert isinstance(value, str)
                     value = trim_dll_part(value)
 
-                feature = Feature(value, description=description)
+                feature = Feature(value, description=description)  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
             else:
                 # arg is string (which doesn't support inline descriptions), like:
                 #
@@ -786,7 +787,7 @@ def build_statements(d, scopes: Scopes):
                 # this may become a problem (or not), so address it when encountered.
                 feature = Feature(arg)
         else:
-            feature = Feature()
+            feature = Feature()  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
         ensure_feature_valid_for_scopes(scopes, feature)
 
         count = d[key]
@@ -853,6 +854,7 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule(f"unexpected {key} access {access}")
 
         value, description = parse_description(d[key], key, d.get("description"))
+        assert isinstance(value, str)
         try:
             feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
@@ -867,6 +869,7 @@ def build_statements(d, scopes: Scopes):
         except ValueError:
             raise InvalidRule(f"unexpected COM type: {com_type_name}")
         value, description = parse_description(d[key], key, d.get("description"))
+        assert isinstance(value, str)
         return translate_com_feature(value, com_type)
 
     else:
@@ -874,10 +877,11 @@ def build_statements(d, scopes: Scopes):
         value, description = parse_description(d[key], key, d.get("description"))
 
         if key == "api":
+            assert isinstance(value, str)
             value = trim_dll_part(value)
 
         try:
-            feature = Feature(value, description=description)
+            feature = Feature(value, description=description)  # type: ignore[misc]  # Feature is a runtime union; constructor args vary per subclass
         except ValueError as e:
             raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scopes(scopes, feature)

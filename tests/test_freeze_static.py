@@ -26,6 +26,7 @@ import capa.features.common
 import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.null
+import capa.features.freeze.features
 import capa.features.extractors.base_extractor
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, SampleHashes, FunctionHandle
