@@ -64,9 +64,7 @@ import colorama
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.helpers
-import capa.features
+import capa.loader
 import capa.exceptions
 import capa.render.utils as rutils
 import capa.render.verbose
