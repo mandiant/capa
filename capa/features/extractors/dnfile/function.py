@@ -18,6 +18,8 @@ from __future__ import annotations
 import logging
 from typing import Iterator
 
+from dncil.cil.opcode import FlowControl
+
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import FunctionHandle
@@ -45,7 +47,24 @@ def extract_recursive_call(fh: FunctionHandle) -> Iterator[tuple[Characteristic,
 
 def extract_function_loop(fh: FunctionHandle) -> Iterator[tuple[Characteristic, Address]]:
     """extract loop indicators from a function"""
-    raise NotImplementedError()
+    for insn in fh.inner.instructions:
+        if insn.opcode.flow_control not in (
+            FlowControl.Branch,
+            FlowControl.Cond_Branch,
+        ):
+            continue
+
+        if isinstance(insn.operand, list):
+            targets = insn.operand
+        elif isinstance(insn.operand, int):
+            targets = [insn.operand]
+        else:
+            continue
+
+        for target in targets:
+            if target < insn.offset:
+                yield Characteristic("loop"), fh.address
+                return
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
@@ -54,4 +73,9 @@ def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_calls_from, extract_recursive_call)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_calls_from,
+    extract_recursive_call,
+    extract_function_loop,
+)

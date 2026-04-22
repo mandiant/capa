@@ -1185,19 +1185,46 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "token=0x6000018", capa.features.common.Characteristic("calls to"), False),
         ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), True),
         ("_1c444", "token=0x600000F", capa.features.common.Characteristic("calls from"), False),
+        ("_1c444", "token=0x600001D", capa.features.common.Characteristic("loop"), True),
+        ("_1c444", "token=0x6000001", capa.features.common.Characteristic("loop"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x0), True),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
-        ("_692f", "token=0x6000004", capa.features.insn.API("System.Linq.Enumerable::First"), True),  # generic method
+        (
+            "_692f",
+            "token=0x6000004",
+            capa.features.insn.API("System.Linq.Enumerable::First"),
+            True,
+        ),  # generic method
         (
             "_692f",
             "token=0x6000004",
             capa.features.insn.Property("System.Linq.Enumerable::First"),
             False,
         ),  # generic method
-        ("_692f", "token=0x6000004", capa.features.common.Namespace("System.Linq"), True),  # generic method
-        ("_692f", "token=0x6000004", capa.features.common.Class("System.Linq.Enumerable"), True),  # generic method
-        ("_1c444", "token=0x6000020", capa.features.common.Namespace("Reqss"), True),  # ldftn
-        ("_1c444", "token=0x6000020", capa.features.common.Class("Reqss.Reqss"), True),  # ldftn
+        (
+            "_692f",
+            "token=0x6000004",
+            capa.features.common.Namespace("System.Linq"),
+            True,
+        ),  # generic method
+        (
+            "_692f",
+            "token=0x6000004",
+            capa.features.common.Class("System.Linq.Enumerable"),
+            True,
+        ),  # generic method
+        (
+            "_1c444",
+            "token=0x6000020",
+            capa.features.common.Namespace("Reqss"),
+            True,
+        ),  # ldftn
+        (
+            "_1c444",
+            "token=0x6000020",
+            capa.features.common.Class("Reqss.Reqss"),
+            True,
+        ),  # ldftn
         (
             "_1c444",
             "function=0x1F59, bb=0x1F59, insn=0x1F5B",
@@ -1236,7 +1263,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_1c444",
             "token=0x6000081",
             capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::UseShellExecute", access=FeatureAccess.WRITE
+                "System.Diagnostics.ProcessStartInfo::UseShellExecute",
+                access=FeatureAccess.WRITE,
             ),  # MemberRef property access
             True,
         ),
@@ -1244,7 +1272,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_1c444",
             "token=0x6000081",
             capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::WorkingDirectory", access=FeatureAccess.WRITE
+                "System.Diagnostics.ProcessStartInfo::WorkingDirectory",
+                access=FeatureAccess.WRITE,
             ),  # MemberRef property access
             True,
         ),
@@ -1252,7 +1281,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_1c444",
             "token=0x6000081",
             capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::FileName", access=FeatureAccess.WRITE
+                "System.Diagnostics.ProcessStartInfo::FileName",
+                access=FeatureAccess.WRITE,
             ),  # MemberRef property access
             True,
         ),
@@ -1316,7 +1346,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_692f",
             "token=0x6000006",
             capa.features.insn.Property(
-                "System.Management.Automation.PowerShell::Streams", access=FeatureAccess.READ
+                "System.Management.Automation.PowerShell::Streams",
+                access=FeatureAccess.READ,
             ),  # MemberRef property access
             False,
         ),
@@ -1365,7 +1396,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_039a6",
             "token=0x6000023",
             capa.features.insn.Property(
-                "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task", access=FeatureAccess.READ
+                "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task",
+                access=FeatureAccess.READ,
             ),  # MemberRef method
             False,
         ),
