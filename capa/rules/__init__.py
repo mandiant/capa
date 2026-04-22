@@ -789,7 +789,7 @@ def build_statements(d, scopes: Scopes):
                 feature = Feature(arg)
         else:
             feature = Feature()  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
-        ensure_feature_valid_for_scopes(scopes, feature)
+        ensure_feature_valid_for_scopes(scopes, feature)  # type: ignore[arg-type]  # StringFactory.__new__ returns Feature subclass at runtime
 
         count = d[key]
         if isinstance(count, int):
@@ -888,7 +888,7 @@ def build_statements(d, scopes: Scopes):
             feature = Feature(value, description=description)  # type: ignore[misc]  # Feature is a runtime union; constructor args vary per subclass
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scopes, feature)
+        ensure_feature_valid_for_scopes(scopes, feature)  # type: ignore[arg-type]  # StringFactory.__new__ returns Feature subclass at runtime
         return feature
 
 
@@ -1102,7 +1102,7 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)  # type: ignore[arg-type]  # build_statements infers wide union but top-level always returns Statement
 
     @staticmethod
     @lru_cache()
