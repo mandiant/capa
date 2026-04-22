@@ -355,7 +355,7 @@ def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
     if isinstance(sa, rd.RangeStatement):
         assert isinstance(sb, capa_pb2.RangeStatement)
         assert sa.min == sb.min
-        assert sa.max == sa.max
+        assert sa.max == sb.max
         assert_feature(sa.child, sb.child)
 
     elif isinstance(sa, rd.SomeStatement):
