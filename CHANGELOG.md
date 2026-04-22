@@ -50,6 +50,7 @@
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove dead interface_extract_* stub functions from viv basicblock, function, and insn extractors @williballenthin (SURF-53)
 - fix: remove unused import of capa.features.extractors.strings from binexport2 intel insn.py @williballenthin (SURF-52)
 - fix: remove extract_file_format from FILE_HANDLERS in five extractors to prevent duplicate Format features @williballenthin (SURF-51)
 - fix: replace assert with guard so 2-operand ARM ADD/SUB instructions are skipped instead of crashing @williballenthin (SURF-50)

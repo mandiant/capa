@@ -39,23 +39,6 @@ from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_i
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def interface_extract_instruction_XXX(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given instruction.
-
-    args:
-      fh: the function handle to process.
-      bbh: the basic block handle to process.
-      ih: the instruction handle to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
 def get_imports(vw):
     """
     caching accessor to vivisect workspace imports
