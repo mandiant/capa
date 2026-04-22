@@ -14,6 +14,8 @@
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
 
+- fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
