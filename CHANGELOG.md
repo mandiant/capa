@@ -48,6 +48,9 @@
 - fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: replace get_file_md5/get_file_sha256 with retrieve_input_file_md5/sha256 shims so all callers use consistent IDA version-aware API @williballenthin (SURF-65)
 - fix: rename dragEventEnter to dragEnterEvent so Qt dispatches drag-enter events correctly in CapaExplorerRulegenEditor @williballenthin (SURF-64)
 - fix: guard against None in lessThan else-branch so sorting columns with empty cells does not raise AttributeError @williballenthin (SURF-63)
 - fix: add explicit import capa.loader in form.py to avoid fragile transitive import dependency @williballenthin (SURF-62)
