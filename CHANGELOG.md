@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: allocate feat_dict per feature in parse_json to avoid shared-reference aliasing @williballenthin (SURF-72)
 - fix: add missing capa.features.extractors.elf import to ghidra/helpers.py and ida/helpers.py @williballenthin (SURF-71)
 - fix: remove dead view_tab_rulegen assignment from CapaExplorerForm that was never read @williballenthin (SURF-70)
 - fix: remove dead reset_query method from CapaExplorerSearchProxyModel that was never called @williballenthin (SURF-69)
