@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: change bare `if` to `elif` in get_backend_from_cli DRAKVUF branch to complete the if/elif chain @williballenthin
 - fix: close file handle in get_file_taste using a with statement @williballenthin
 - fix: correct off-by-one in dynamic analysis call_count debug log (enumerate -> explicit counter) @williballenthin
 - fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
