@@ -19,8 +19,12 @@ import pytest
 from dncil.clr.token import Token
 
 import fixtures
+from capa.features.common import Format
 from capa.features.extractors.dnfile.helpers import calculate_dotnet_token_value
-from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
+from capa.features.extractors.dnfile.extractor import (
+    DnFileFeatureExtractorCache,
+    DnfileFeatureExtractor,
+)
 from capa.features.extractors.dnfile.insn import get_callee
 
 CD = Path(__file__).resolve().parent
@@ -45,6 +49,25 @@ def test_dnfile_features(sample, scope, feature, expected):
 def test_dnfile_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(
         fixtures.get_dnfile_extractor, sample, scope, feature, expected
+    )
+
+
+def test_no_duplicate_format_feature_in_dnfile_extractor():
+    path = fixtures.DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
+    if not path.exists():
+        pytest.skip("test data not available")
+
+    extractor = DnfileFeatureExtractor(path)
+
+    format_values = [
+        f.value
+        for f, _ in list(extractor.extract_file_features())
+        + list(extractor.extract_global_features())
+        if isinstance(f, Format)
+    ]
+
+    assert len(format_values) == len(set(format_values)), (
+        f"duplicate Format features: {format_values}"
     )
 
 

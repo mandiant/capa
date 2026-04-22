@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: remove extract_file_format from FILE_HANDLERS in five extractors to prevent duplicate Format features @williballenthin (SURF-51)
 - fix: replace assert with guard so 2-operand ARM ADD/SUB instructions are skipped instead of crashing @williballenthin (SURF-50)
 - fix: omit trailing ` -> ` suffix in syscall names when there is no return value @williballenthin (SURF-49)
 - fix: use AbsoluteVirtualAddress instead of FileOffsetAddress for string addresses in Ghidra and IDA file extractors @williballenthin (SURF-48)
