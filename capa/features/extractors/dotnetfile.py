@@ -19,6 +19,7 @@ from pathlib import Path
 import dnfile
 import pefile
 
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
 from capa.features.common import (

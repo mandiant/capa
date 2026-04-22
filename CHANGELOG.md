@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
 
 ### capa Explorer Web
 
