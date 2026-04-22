@@ -32,6 +32,7 @@
 - fix: loader.py reads entire file for magic byte check @williballenthin #3029
 - fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
 - fix: EXTENSIONS_ELF never referenced @williballenthin #3031
+- fix: guard get_operand_expressions against empty expression tree so Ghidra-exported BinExport2 files with empty operands no longer raise IndexError @williballenthin
 - fix: add return after zero-offset yield in extract_insn_offset_features so Offset(0) is not emitted twice @williballenthin
 - fix: use f-string in binexport2 extractor so unexpected global feature value appears in ValueError message @williballenthin
 - fix: correct scale/displacement expressions in get_operand_phrase_info 5-expression branch (used expression3 operator instead of expression4 value) @williballenthin
