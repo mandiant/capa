@@ -15,7 +15,6 @@
 import logging
 from typing import Iterator
 
-import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
 from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
 from capa.features.common import Feature, Characteristic
