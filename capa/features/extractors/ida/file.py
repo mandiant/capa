@@ -27,8 +27,15 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
-from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    Format,
+    String,
+    Feature,
+    Characteristic,
+)
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
@@ -64,7 +71,10 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
         if seg_max < (e_lfanew + 4):
             continue
 
-        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i))[0]
+        newoff = struct.unpack(
+            "<I",
+            capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i),
+        )[0]
 
         # assume XOR'd "PE" bytes exist within threshold
         if newoff > MAX_OFFSET_PE_AFTER_MZ:
@@ -87,7 +97,7 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         for ea, _ in check_segment_for_pe(seg):
-            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+            yield Characteristic("embedded pe"), AbsoluteVirtualAddress(ea)
 
 
 def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
@@ -161,10 +171,10 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
 
         # differing to common string extractor factor in segment offset here
         for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
-            yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
+            yield String(s.s), AbsoluteVirtualAddress(seg.start_ea + s.offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff):
-            yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
+            yield String(s.s), AbsoluteVirtualAddress(seg.start_ea + s.offset)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:

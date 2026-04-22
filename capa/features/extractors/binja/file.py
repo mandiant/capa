@@ -31,7 +31,7 @@ from capa.features.common import (
     Feature,
     Characteristic,
 )
-from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
@@ -46,7 +46,7 @@ def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[tuple[Feature
     buf = bv.read(seg.start, seg.length)
 
     for offset, _ in capa.features.extractors.helpers.carve_pe(buf, start):
-        yield Characteristic("embedded pe"), FileOffsetAddress(seg.start + offset)
+        yield Characteristic("embedded pe"), AbsoluteVirtualAddress(seg.start + offset)
 
 
 def extract_file_embedded_pe(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
@@ -122,7 +122,7 @@ def extract_file_section_names(bv: BinaryView) -> Iterator[tuple[Feature, Addres
 def extract_file_strings(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
     for s in bv.strings:
-        yield String(s.value), FileOffsetAddress(s.start)
+        yield String(s.value), AbsoluteVirtualAddress(s.start)
 
 
 def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
