@@ -35,6 +35,8 @@
 
 - fix: base_extractor.py: __metaclass__ is Python 2 syntax, ignored in Py3 @williballenthin #3024
 
+- fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
