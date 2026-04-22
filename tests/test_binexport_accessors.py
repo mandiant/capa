@@ -37,6 +37,7 @@ from capa.features.extractors.binexport2.helpers import (
 from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.intel.helpers import get_operand_phrase_info
 
 logger = logging.getLogger(__name__)
 
@@ -613,3 +614,46 @@ def test_index_vertex_edges_includes_vertex_zero():
     assert 0 in idx.callees_by_vertex_index[1585]
     assert 0 in idx.callers_by_vertex_index[2118]
     assert 0 in idx.callers_by_vertex_index[166]
+
+
+def test_get_operand_phrase_info_base_index_scale():
+    # 0x40194d: MOVZX DI, [EAX + ECX * 1]
+    # operand: [EAX + ECX * scale(1)]
+    # expression layout after DEREFERENCE: EAX(REGISTER) +(OPERATOR) ECX(REGISTER) *(OPERATOR) 1(IMMEDIATE_INT)
+    # the scale field must be expression4 (immediate=1), not expression3 (the '*' operator)
+    be2 = BE2_EXTRACTOR_MIMI.be2
+    idx = BE2_EXTRACTOR_MIMI.idx
+    insn = idx.insn_by_address[0x40194D]
+    mem_operand = be2.operand[insn.operand_index[1]]
+    phrase = get_operand_phrase_info(be2, mem_operand)
+    assert phrase is not None
+    assert phrase.base is not None
+    assert phrase.base.symbol == "EAX"
+    assert phrase.index is not None
+    assert phrase.index.symbol == "ECX"
+    assert phrase.scale is not None
+    assert phrase.scale.type == BinExport2.Expression.IMMEDIATE_INT
+    assert phrase.scale.immediate == 1
+    assert phrase.displacement is None
+
+
+def test_get_operand_phrase_info_index_scale_displacement():
+    # 0x401fd4: JMP [EAX * 4 + switchdataD_00402017]
+    # operand: [EAX * scale(4) + displacement(switchdataD_00402017)]
+    # expression layout after DEREFERENCE: EAX(REGISTER) *(OPERATOR) 4(IMMEDIATE_INT) +(OPERATOR) 4202519(IMMEDIATE_INT)
+    # the displacement field must be expression4 (immediate=4202519), not expression3 (the '+' operator)
+    be2 = BE2_EXTRACTOR_MIMI.be2
+    idx = BE2_EXTRACTOR_MIMI.idx
+    insn = idx.insn_by_address[0x401FD4]
+    mem_operand = be2.operand[insn.operand_index[0]]
+    phrase = get_operand_phrase_info(be2, mem_operand)
+    assert phrase is not None
+    assert phrase.index is not None
+    assert phrase.index.symbol == "EAX"
+    assert phrase.scale is not None
+    assert phrase.scale.type == BinExport2.Expression.IMMEDIATE_INT
+    assert phrase.scale.immediate == 4
+    assert phrase.displacement is not None
+    assert phrase.displacement.type == BinExport2.Expression.IMMEDIATE_INT
+    assert phrase.displacement.immediate == 4202519
+    assert phrase.base is None
