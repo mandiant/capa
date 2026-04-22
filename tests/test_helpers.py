@@ -20,6 +20,15 @@ from pathlib import Path
 import pytest
 
 import capa.helpers
+from capa.helpers import (
+    EXTENSIONS_ELF,
+    EXTENSIONS_FREEZE,
+    EXTENSIONS_DYNAMIC,
+    EXTENSIONS_BINJA_DB,
+    EXTENSIONS_BINEXPORT2,
+    EXTENSIONS_SHELLCODE_32,
+    EXTENSIONS_SHELLCODE_64,
+)
 from capa.features.extractors import helpers
 
 CD = Path(__file__).resolve().parent
@@ -106,3 +115,32 @@ def test_load_one_jsonl_from_path_empty_raises(tmp_path):
     p.write_bytes(b"")
     with pytest.raises(StopIteration):
         capa.helpers.load_one_jsonl_from_path(p)
+
+
+def test_extensions_dot_prefix():
+    for ext_group in (
+        EXTENSIONS_SHELLCODE_32,
+        EXTENSIONS_SHELLCODE_64,
+        EXTENSIONS_DYNAMIC,
+        EXTENSIONS_BINEXPORT2,
+        (EXTENSIONS_ELF,),
+        (EXTENSIONS_FREEZE,),
+        (EXTENSIONS_BINJA_DB,),
+    ):
+        for ext in ext_group:
+            assert ext.startswith("."), f"extension {ext!r} must start with a dot"
+
+    assert Path("sample.log").name.endswith(EXTENSIONS_DYNAMIC)
+    assert not Path("dialog").name.endswith(EXTENSIONS_DYNAMIC)
+    assert not Path("catalog").name.endswith(EXTENSIONS_DYNAMIC)
+    assert Path("report.json").name.endswith(EXTENSIONS_DYNAMIC)
+    assert not Path("notajson").name.endswith(EXTENSIONS_DYNAMIC)
+    assert Path("sample.sc32").name.endswith(EXTENSIONS_SHELLCODE_32)
+    assert Path("sample.raw32").name.endswith(EXTENSIONS_SHELLCODE_32)
+    assert Path("sample.sc64").name.endswith(EXTENSIONS_SHELLCODE_64)
+    assert Path("sample.raw64").name.endswith(EXTENSIONS_SHELLCODE_64)
+    assert Path("sample.BinExport").name.endswith(EXTENSIONS_BINEXPORT2)
+    assert Path("sample.BinExport2").name.endswith(EXTENSIONS_BINEXPORT2)
+    assert Path("sample.elf_").name.endswith(EXTENSIONS_ELF)
+    assert Path("sample.frz").name.endswith(EXTENSIONS_FREEZE)
+    assert Path("sample.bndb").name.endswith(EXTENSIONS_BINJA_DB)
