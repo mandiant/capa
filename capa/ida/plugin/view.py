@@ -1085,7 +1085,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                     )
             else:
                 if addrs:
-                    addr = addrs.pop()
+                    addr = next(iter(addrs))
                 else:
                     # some features may not have an address e.g. "format"
                     addr = _NoAddress()
