@@ -180,9 +180,9 @@ def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
         logger.error("%s", str(e))
         return False
 
-    content = capa.rules.cache.get_ruleset_content(rules)
-    id = capa.rules.cache.compute_cache_identifier(content)
-    path = capa.rules.cache.get_cache_path(cache_dir, id)
+    content = get_ruleset_content(rules)
+    id = compute_cache_identifier(content)
+    path = get_cache_path(cache_dir, id)
 
     assert path.exists()
     logger.info("rules cache saved to: %s", path)

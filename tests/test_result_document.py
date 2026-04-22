@@ -18,7 +18,12 @@ import pytest
 import fixtures
 
 import capa
+import capa.rules
 import capa.engine as ceng
+import capa.features.file
+import capa.features.insn
+import capa.features.common
+import capa.features.basicblock
 import capa.render.result_document as rdoc
 import capa.features.freeze.features as frzf
 from capa.capabilities.common import Capabilities
