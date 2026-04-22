@@ -49,6 +49,7 @@
 - fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove unused imports of capa.engine, capa.helpers, and capa.features from cache-ruleset.py, detect-binexport2-capabilities.py, and show-capabilities-by-function.py @williballenthin (SURF-92)
 - fix: remove dead except ValueError clause in capa2sarif.py so JSONDecodeError is caught by the specific handler @williballenthin (SURF-91)
 - fix: dedent bulk-process.py main() body so explicit argv argument is used instead of silently ignored @williballenthin (SURF-90)
 - fix: guard statistics.quantiles/mean in compare-backends.py report() against empty duration lists @williballenthin (SURF-89)
