@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: MissingExampleOffset lint now reads scopes.static instead of obsolete scope key @williballenthin (SURF-82)
 - fix: invert scope filter in import-to-ida.py so function-scope rules are annotated instead of skipped @williballenthin (SURF-81)
 - fix: remove dead string literal in test_detect_duplicate_features @williballenthin (SURF-80)
 - fix: remove duplicate Rule.from_yaml call in test_scope_instruction_description @williballenthin (SURF-79)
