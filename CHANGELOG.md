@@ -12,6 +12,7 @@
 
 ### Bug Fixes
 - fix lots of linter errors identified by pyright @williballenthin #3052
+- fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
 
 ### capa Explorer Web
 
