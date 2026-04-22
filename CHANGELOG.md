@@ -21,6 +21,8 @@
 
 - fix: extract_os yields duplicate/contradictory OS values @williballenthin #3017
 
+- fix: load_one_jsonl_from_path: finally block runs on unrelated exceptions @williballenthin #3018
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

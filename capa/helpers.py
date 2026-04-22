@@ -197,9 +197,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
     except gzip.BadGzipFile:
         with jsonl_path.open(mode="rb") as f:
             line = next(iter(f))
-    finally:
-        line = msgspec.json.decode(line.decode(errors="ignore"))
-    return line
+    return msgspec.json.decode(line.decode(errors="ignore"))
 
 
 def get_format_from_report(sample: Path) -> str:
