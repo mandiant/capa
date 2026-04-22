@@ -38,6 +38,7 @@ from capa.helpers import assert_never
         pytest.param("a076114_rd"),
         pytest.param("pma0101_rd"),
         pytest.param("dotnet_1c444e_rd"),
+        pytest.param("dynamic_a0000a6_rd"),
     ],
 )
 def test_doc_to_pb2(request, rd_file):
@@ -197,7 +198,7 @@ def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAn
         for rd_t, proto_t in zip(rd_p.matched_threads, proto_p.matched_threads):
             assert capa.render.proto.addr_to_pb2(rd_t.address) == proto_t.address
 
-    assert analysis.feature_counts.processes == dst.feature_counts.processes
+    assert analysis.feature_counts.file == dst.feature_counts.file
     assert len(analysis.feature_counts.processes) == len(dst.feature_counts.processes)
     for rd_cp, proto_cp in zip(analysis.feature_counts.processes, dst.feature_counts.processes):
         assert capa.render.proto.addr_to_pb2(rd_cp.address) == proto_cp.address
@@ -205,7 +206,6 @@ def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAn
 
 
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
-    assert isinstance(meta.analysis, rd.StaticAnalysis)
     assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
     if meta.argv is None:
