@@ -170,7 +170,7 @@ class Scopes:
         if scopes_["dynamic"] and scopes_["dynamic"] not in DYNAMIC_SCOPES:
             raise InvalidRule(f"{scopes_['dynamic']} is not a valid dynamic scope")
 
-        return Scopes(
+        return cls(
             static=Scope(scopes_["static"]) if scopes_["static"] else None,
             dynamic=Scope(scopes_["dynamic"]) if scopes_["dynamic"] else None,
         )
