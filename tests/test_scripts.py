@@ -119,6 +119,26 @@ def test_bulk_process(tmp_path):
     assert p.returncode == 0
 
 
+def test_bulk_process_explicit_argv(tmp_path):
+    import importlib.util
+
+    t = tmp_path / "test"
+    t.mkdir()
+
+    source_file = Path(__file__).resolve().parent / "data" / "ping_täst.exe_"
+    dest_file = t / "test.exe_"
+    dest_file.write_bytes(source_file.read_bytes())
+
+    spec = importlib.util.spec_from_file_location("bulk_process", get_script_path("bulk-process.py"))
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+    result = module.main(argv=[str(t.parent), "--no-mp", "--parallelism", "1"])
+    assert result == 0
+
+
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
     logger.debug("running: %r", args)
