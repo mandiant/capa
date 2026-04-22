@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- fix: correct inverted loop structure in extract_function_loop so each block edge is recorded as (src, dest) @williballenthin (SURF-44)
 - fix: initialize addr to None in Ghidra import extractors to prevent UnboundLocalError when external functions have no data references @williballenthin (SURF-43)
 - fix: assign ConfigDict to model_config in ConciseModel so extra="ignore" is actually applied @williballenthin (SURF-42)
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
