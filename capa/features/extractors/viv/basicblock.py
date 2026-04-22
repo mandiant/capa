@@ -122,7 +122,7 @@ def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     if is_printable_ascii(chars):
         return oper.tsize
     elif is_printable_utf16le(chars):
-        return oper.tsize / 2
+        return oper.tsize // 2
     else:
         return 0
 

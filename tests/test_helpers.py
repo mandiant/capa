@@ -14,9 +14,15 @@
 
 
 import codecs
+import dataclasses
 
 import capa.helpers
 from capa.features.extractors import helpers
+from capa.features.extractors.viv.basicblock import (
+    get_printable_len,
+    is_printable_ascii,
+    is_printable_utf16le,
+)
 
 
 def test_all_zeros():
@@ -39,7 +45,9 @@ def test_generate_symbols():
     )
 
     # A/W import
-    symbols = list(helpers.generate_symbols("kernel32", "CreateFileA", include_dll=True))
+    symbols = list(
+        helpers.generate_symbols("kernel32", "CreateFileA", include_dll=True)
+    )
     assert len(symbols) == 4
     assert "kernel32.CreateFileA" in symbols
     assert "kernel32.CreateFile" in symbols
@@ -58,7 +66,9 @@ def test_generate_symbols():
     assert "ws2_32.#1" in symbols
 
     # A/W api
-    symbols = list(helpers.generate_symbols("kernel32", "CreateFileA", include_dll=False))
+    symbols = list(
+        helpers.generate_symbols("kernel32", "CreateFileA", include_dll=False)
+    )
     assert len(symbols) == 2
     assert "CreateFileA" in symbols
     assert "CreateFile" in symbols
@@ -77,3 +87,32 @@ def test_generate_symbols():
 def test_is_dev_environment():
     # testing environment should be a dev environment
     assert capa.helpers.is_dev_environment() is True
+
+
+def test_is_printable_ascii():
+    assert is_printable_ascii(b"AB") is True
+    assert is_printable_ascii(b"A\x00") is False
+    assert is_printable_ascii(b"\x80\x81") is False
+
+
+def test_is_printable_utf16le():
+    assert is_printable_utf16le(b"A\x00B\x00") is True
+    assert is_printable_utf16le(b"AB") is False
+    assert is_printable_utf16le(b"\x80\x00\x81\x00") is False
+
+
+def test_get_printable_len_returns_int():
+    @dataclasses.dataclass
+    class FakeOper:
+        tsize: int
+        imm: int
+
+    ascii_oper = FakeOper(tsize=4, imm=int.from_bytes(b"ABCD", "little"))
+    result = get_printable_len(ascii_oper)
+    assert isinstance(result, int)
+    assert result == 4
+
+    utf16_oper = FakeOper(tsize=4, imm=int.from_bytes(b"A\x00B\x00", "little"))
+    result = get_printable_len(utf16_oper)
+    assert isinstance(result, int)
+    assert result == 2
