@@ -20,7 +20,8 @@ from typing import Optional
 from pathlib import Path
 
 from rich.console import Console
-from typing_extensions import assert_never
+
+from capa.helpers import assert_never
 
 import capa.rules
 import capa.helpers
