@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix: base_extractor.py: __metaclass__ is Python 2 syntax, ignored in Py3 @williballenthin #3024
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin

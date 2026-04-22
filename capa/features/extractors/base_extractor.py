@@ -91,7 +91,7 @@ class InsnHandle:
     inner: Any
 
 
-class StaticFeatureExtractor:
+class StaticFeatureExtractor(abc.ABC):
     """
     StaticFeatureExtractor defines the interface for fetching features from a
     sample without running it; extractors that rely on the execution trace of
@@ -108,8 +108,6 @@ class StaticFeatureExtractor:
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, hashes: SampleHashes):
         #
@@ -359,7 +357,7 @@ class CallHandle:
     inner: Any
 
 
-class DynamicFeatureExtractor:
+class DynamicFeatureExtractor(abc.ABC):
     """
     DynamicFeatureExtractor defines the interface for fetching features from a
     sandbox' analysis of a sample; extractors that rely on statically analyzing
@@ -371,8 +369,6 @@ class DynamicFeatureExtractor:
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, hashes: SampleHashes):
         #
