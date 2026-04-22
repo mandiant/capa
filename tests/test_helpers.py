@@ -14,10 +14,13 @@
 
 
 import codecs
+import tempfile
 from pathlib import Path
 
+import pytest
+
 import capa.helpers
-from capa.helpers import get_format_from_extension
+from capa.helpers import get_file_taste, get_format_from_extension
 from capa.features.common import (
     FORMAT_ELF,
     FORMAT_SC32,
@@ -101,3 +104,20 @@ def test_get_format_from_extension():
     assert get_format_from_extension(Path("sample.BinExport2")) == FORMAT_BINEXPORT2
     assert get_format_from_extension(Path("sample.bndb")) == FORMAT_BINJA_DB
     assert get_format_from_extension(Path("sample.exe")) == FORMAT_UNKNOWN
+
+
+def test_get_file_taste_reads_first_bytes():
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(b"\x4d\x5a\x90\x00\x01\x02\x03\x04\xff\xfe")
+        tmp_path = Path(tmp.name)
+    try:
+        taste = get_file_taste(tmp_path)
+        assert taste == b"\x4d\x5a\x90\x00\x01\x02\x03\x04"
+        assert len(taste) == 8
+    finally:
+        tmp_path.unlink()
+
+
+def test_get_file_taste_missing_file_raises():
+    with pytest.raises(IOError):
+        get_file_taste(Path("/nonexistent/path/sample.exe"))
