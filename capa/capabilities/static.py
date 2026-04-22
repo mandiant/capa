@@ -19,6 +19,7 @@ import collections
 from dataclasses import dataclass
 
 import capa.perf
+import capa.engine
 import capa.helpers
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc

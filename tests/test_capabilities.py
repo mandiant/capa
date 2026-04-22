@@ -14,6 +14,7 @@
 
 import textwrap
 
+import capa.rules
 import capa.capabilities.common
 from capa.features.extractors.base_extractor import FunctionFilter
 

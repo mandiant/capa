@@ -17,8 +17,8 @@ import io
 from typing import Union, Iterator, Optional
 
 import rich.console
+from rich.text import Text
 from rich.markup import escape
-from rich.progress import Text
 
 import capa.render.result_document as rd
 
