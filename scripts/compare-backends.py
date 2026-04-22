@@ -133,7 +133,10 @@ def collect(args):
 
         for backend in BACKENDS:
             if (backend, file.name) in {
-                ("binja", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_")
+                (
+                    "binja",
+                    "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_",
+                )
             }:
                 # this file takes 38GB+ and 20hrs+
                 # https://github.com/Vector35/binaryninja-api/issues/5951
@@ -214,7 +217,9 @@ def report(args):
                 rules_by_backend[backend].update(matches)
                 durations_by_backend[backend].append(duration)
 
-                console.print(f"  {backend: >8}: {duration: >6.1f}s   {len(matches): >3d} matches")
+                console.print(
+                    f"  {backend: >8}: {duration: >6.1f}s   {len(matches): >3d} matches"
+                )
 
             else:
                 failures_by_backend[backend].add(sample)
@@ -252,33 +257,47 @@ def report(args):
     console.print("durations:", style="bold")
     console.print("  (10-quantiles, in seconds)", style="grey37")
     for backend in BACKENDS:
-        q = statistics.quantiles(durations_by_backend[backend], n=10)
-        console.print(f"  {backend: <8}: ", end="")
-        for i in range(9):
-            if i in (4, 8):
-                style = "bold"
-            else:
-                style = "default"
-            console.print(f"{q[i]: >6.1f}", style=style, end=" ")
-        console.print()
-    console.print("                ^-- 10% of samples took less than this                  ^", style="grey37")
-    console.print("                    10% of samples took more than this -----------------+", style="grey37")
+        durations = durations_by_backend[backend]
+        if len(durations) >= 2:
+            q = statistics.quantiles(durations, n=10)
+            console.print(f"  {backend: <8}: ", end="")
+            for i in range(9):
+                if i in (4, 8):
+                    style = "bold"
+                else:
+                    style = "default"
+                console.print(f"{q[i]: >6.1f}", style=style, end=" ")
+            console.print()
+        else:
+            console.print(f"  {backend: <8}: (no data)")
+    console.print(
+        "                ^-- 10% of samples took less than this                  ^",
+        style="grey37",
+    )
+    console.print(
+        "                    10% of samples took more than this -----------------+",
+        style="grey37",
+    )
 
     console.print()
     for backend in BACKENDS:
-        total = sum(durations_by_backend[backend])
-        successes = len(durations_by_backend[backend])
-        avg = statistics.mean(durations_by_backend[backend])
-        console.print(
-            f"  {backend: <8}: {total: >7.0f} seconds across {successes: >4d} successful runs, {avg: >4.1f} average"
-        )
+        durations = durations_by_backend[backend]
+        if durations:
+            total = sum(durations)
+            avg = statistics.mean(durations)
+            console.print(
+                f"  {backend: <8}: {total: >7.0f} seconds across {len(durations): >4d} successful runs, {avg: >4.1f} average"
+            )
+        else:
+            console.print(f"  {backend: <8}: (no successful runs)")
     console.print()
 
     console.print("slowest samples:", style="bold")
     for backend in BACKENDS:
         console.print(backend)
         for duration, path in sorted(
-            ((d["duration"], Path(d["path"]).name) for d in doc[backend].values()), reverse=True
+            ((d["duration"], Path(d["path"]).name) for d in doc[backend].values()),
+            reverse=True,
         )[:5]:
             console.print(f"  - {duration: >6.1f} {path}")
 
@@ -299,9 +318,15 @@ def main(argv=None):
 
     subparsers = parser.add_subparsers()
     collect_parser = subparsers.add_parser("collect")
-    collect_parser.add_argument("results_path", type=Path, help="Path to output JSON file")
-    collect_parser.add_argument("--samples", type=Path, default=default_samples_path, help="Path to samples")
-    collect_parser.add_argument("--retry-failures", action="store_true", help="Retry previous failures")
+    collect_parser.add_argument(
+        "results_path", type=Path, help="Path to output JSON file"
+    )
+    collect_parser.add_argument(
+        "--samples", type=Path, default=default_samples_path, help="Path to samples"
+    )
+    collect_parser.add_argument(
+        "--retry-failures", action="store_true", help="Retry previous failures"
+    )
     collect_parser.set_defaults(func=collect)
 
     report_parser = subparsers.add_parser("report")
