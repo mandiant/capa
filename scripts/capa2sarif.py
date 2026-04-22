@@ -93,13 +93,9 @@ def main() -> int:
 
     try:
         json_data = json.loads(Path(args.capa_output).read_text(encoding="utf-8"))
-    except ValueError:
+    except json.JSONDecodeError:
         logger.error("Input data was not valid JSON, input should be a capa json output file.")
         return -1
-    except json.JSONDecodeError:
-        # An exception has occured
-        logger.error("Input data was not valid JSON, input should be a capa json output file.")
-        return -2
 
     # Marshall json into Sarif
     # Create baseline sarif structure to be populated from json data
