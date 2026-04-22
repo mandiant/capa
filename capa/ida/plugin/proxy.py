@@ -49,7 +49,9 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
             # convert virtual address before compare
             return int(ldata, 16) < int(rdata, 16)
         else:
-            # compare as lowercase
+            # compare as lowercase, guard against None from empty rows
+            ldata = ldata or ""
+            rdata = rdata or ""
             return ldata.lower() < rdata.lower()
 
     def filterAcceptsRow(self, row, parent):

@@ -50,6 +50,7 @@
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: guard against None in lessThan else-branch so sorting columns with empty cells does not raise AttributeError @williballenthin (SURF-63)
 - fix: add explicit import capa.loader in form.py to avoid fragile transitive import dependency @williballenthin (SURF-62)
 - fix: initialize f=None before try block in load_capa_function_results to prevent UnboundLocalError in except handler @williballenthin (SURF-61)
 - fix: fix unreachable elif for NOT CompoundStatement so NOT rules render children in IDA plugin tree view @williballenthin (SURF-60)
