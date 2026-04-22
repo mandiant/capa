@@ -16,7 +16,13 @@ import logging
 from typing import Iterator, Optional
 
 import capa.features.extractors.binexport2.helpers
-from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
+from capa.features.insn import (
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    OperandNumber,
+    OperandOffset,
+)
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
@@ -30,7 +36,9 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.arm.helpers import (
+    is_stack_register_expression,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +61,7 @@ def extract_insn_number_features(
 
     mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
-    if mnemonic in ("add", "sub"):
-        assert len(instruction.operand_index) == 3
-
+    if mnemonic in ("add", "sub") and len(instruction.operand_index) == 3:
         operand1_expression: Optional[BinExport2.Expression] = get_operand_register_expression(
             be2, be2.operand[instruction.operand_index[1]]
         )
