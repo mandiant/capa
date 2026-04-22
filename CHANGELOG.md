@@ -50,6 +50,7 @@
 - fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
 fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove dead string literal in test_detect_duplicate_features @williballenthin (SURF-80)
 - fix: remove duplicate Rule.from_yaml call in test_scope_instruction_description @williballenthin (SURF-79)
 - fix: remove unused imports of capa.helpers, capa.features.basicblock, and redundant bare capa.features.extractors.base_extractor from test_freeze_dynamic.py @williballenthin (SURF-78)
 - fix: replace capa.main.find_capabilities with capa.capabilities.common.find_capabilities in test_com_feature_matching to avoid implicit transitive import dependency @williballenthin (SURF-77)
