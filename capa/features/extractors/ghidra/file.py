@@ -231,11 +231,11 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
             offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), FileOffsetAddress(offset)
+            yield String(s.s), AbsoluteVirtualAddress(offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(p_bytes):
             offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), FileOffsetAddress(offset)
+            yield String(s.s), AbsoluteVirtualAddress(offset)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
