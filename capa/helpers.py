@@ -142,21 +142,15 @@ def stdout_redirector(stream):
 
     # Save a copy of the original stdout fd in saved_stdout_fd
     saved_stdout_fd = os.dup(original_stdout_fd)
-    tfile = None
     try:
-        # Create a temporary file and redirect stdout to it
-        tfile = tempfile.TemporaryFile(mode="w+b")
-        _redirect_stdout(tfile.fileno())
-        # Yield to caller, then redirect stdout back to the saved fd
-        yield
-        _redirect_stdout(saved_stdout_fd)
-        # Copy contents of temporary file to the given stream
-        tfile.flush()
-        tfile.seek(0, io.SEEK_SET)
-        stream.write(tfile.read())
+        with tempfile.TemporaryFile(mode="w+b") as tfile:
+            _redirect_stdout(tfile.fileno())
+            yield
+            _redirect_stdout(saved_stdout_fd)
+            tfile.flush()
+            tfile.seek(0, io.SEEK_SET)
+            stream.write(tfile.read())
     finally:
-        if tfile is not None:
-            tfile.close()
         os.close(saved_stdout_fd)
 
 
