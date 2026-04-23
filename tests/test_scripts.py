@@ -18,6 +18,7 @@ import sys
 import logging
 import textwrap
 import subprocess
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -25,6 +26,7 @@ import pytest
 logger = logging.getLogger(__name__)
 
 CD = Path(__file__).resolve().parent
+HAS_CAPA2SARIF_DEPS = importlib.util.find_spec("sarif_om") is not None and importlib.util.find_spec("jschema_to_python") is not None
 
 
 def get_script_path(s: str):
@@ -66,6 +68,9 @@ def get_rule_path():
         pytest.param(
             "capa2sarif.py",
             [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
+            marks=pytest.mark.skipif(
+                not HAS_CAPA2SARIF_DEPS, reason="capa2sarif.py requires optional deps: sarif_om and jschema_to_python"
+            ),
         ),
         # testing some variations of linter script
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
