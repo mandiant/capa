@@ -14,7 +14,7 @@
 
 import logging
 import textwrap
-from typing import Iterable, Optional, assert_never
+from typing import Iterable, Optional
 
 from rich.text import Text
 from rich.table import Table
@@ -183,7 +183,7 @@ def render_statement(console: Console, layout: rd.Layout, match: rd.Match, state
         console.writeln()
 
     else:
-        assert_never(statement)
+        capa.helpers.assert_never(statement)
 
 
 def render_string_value(s: str) -> str:
@@ -281,7 +281,7 @@ def render_node(console: Console, layout: rd.Layout, rule: rd.RuleMatches, match
     elif isinstance(node, rd.FeatureNode):
         render_feature(console, layout, rule, match, node.feature, indent=indent)
     else:
-        assert_never(node)
+        capa.helpers.assert_never(node)
 
 
 # display nodes that successfully evaluated against the sample.
