@@ -21,23 +21,22 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import fixtures
 
 logger = logging.getLogger(__name__)
 
-CD = Path(__file__).resolve().parent
-
 
 def get_script_path(s: str):
-    return str(CD / ".." / "scripts" / s)
+    return str(fixtures.CD / ".." / "scripts" / s)
 
 
 def get_binary_file_path():
-    return str(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
+    return str(fixtures.CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 def get_cape_report_file_path():
     return str(
-        CD
+        fixtures.CD
         / "data"
         / "dynamic"
         / "cape"
@@ -47,11 +46,11 @@ def get_cape_report_file_path():
 
 
 def get_binexport2_file_path():
-    return str(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
+    return str(fixtures.CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
 
 
 def get_rules_path():
-    return str(CD / ".." / "rules")
+    return str(fixtures.CD / ".." / "rules")
 
 
 def get_rule_path():
@@ -65,7 +64,7 @@ def get_rule_path():
         pytest.param("capafmt.py", [get_rule_path()]),
         pytest.param(
             "capa2sarif.py",
-            [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
+            [fixtures.CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
         ),
         # testing some variations of linter script
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
@@ -96,7 +95,7 @@ def test_scripts(script, args):
 )
 def test_binexport_scripts(script, args):
     # define sample bytes location
-    os.environ["CAPA_SAMPLES_DIR"] = str(Path(CD / "data"))
+    os.environ["CAPA_SAMPLES_DIR"] = str(fixtures.CD / "data")
 
     script_path = get_script_path(script)
     p = run_program(script_path, args)
@@ -108,7 +107,7 @@ def test_bulk_process(tmp_path):
     t = tmp_path / "test"
     t.mkdir()
 
-    source_file = Path(__file__).resolve().parent / "data" / "ping_täst.exe_"
+    source_file = fixtures.CD / "data" / "ping_täst.exe_"
     dest_file = t / "test.exe_"
 
     dest_file.write_bytes(source_file.read_bytes())
@@ -127,7 +126,7 @@ def run_program(script_path, args):
 def test_proto_conversion(tmp_path):
     t = tmp_path / "proto-test"
     t.mkdir()
-    json_file = Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
+    json_file = fixtures.CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
 
     p = run_program(get_script_path("proto-from-results.py"), [json_file])
     assert p.returncode == 0

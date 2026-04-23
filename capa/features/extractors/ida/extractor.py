@@ -17,7 +17,6 @@ from typing import Iterator
 import idaapi
 
 import capa.ida.helpers
-import capa.features.extractors.elf
 import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.global_
