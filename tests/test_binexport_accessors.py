@@ -33,6 +33,7 @@ from capa.features.extractors.binexport2 import (
     BinExport2Analysis,
     InstructionContext,
 )
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
     BinExport2InstructionPattern,
     BinExport2InstructionPatternMatcher,
@@ -43,12 +44,11 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_register_expression,
     get_operand_immediate_expression,
 )
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
-from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 from capa.features.extractors.binexport2.arch.arm.insn import (
     extract_insn_number_features,
 )
+from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 from capa.features.extractors.binexport2.arch.arm.helpers import (
     is_stack_register_expression,
 )
@@ -163,11 +163,7 @@ def _parse_ghidra_disassembly(disasm: str) -> dict:
             dd[int(m["address"], 0x10)] = {
                 "bytes": m["bytes"].strip(),
                 "mnemonic": m["mnemonic"],
-                "operands": [
-                    e
-                    for e in [m["operand1"], m["operand2"], m["operand3"]]
-                    if e is not None
-                ],
+                "operands": [e for e in [m["operand1"], m["operand2"], m["operand3"]] if e is not None],
             }
         else:
             logger.debug("No match\t%s", line)
@@ -216,9 +212,7 @@ def test_get_instruction_operands_count():
             0x210158,
             (
                 BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x0"),
-                BinExport2.Expression(
-                    type=BinExport2.Expression.IMMEDIATE_INT, immediate=0x1
-                ),
+                BinExport2.Expression(type=BinExport2.Expression.IMMEDIATE_INT, immediate=0x1),
             ),
         ),
         # 0021015c a1 02 00 58     ldr        x1=>helloWorldStr,DAT_002101b0
@@ -241,21 +235,11 @@ def test_get_instruction_operands_count():
             (
                 BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="w2"),
                 (
-                    BinExport2.Expression(
-                        type=BinExport2.Expression.DEREFERENCE, symbol="["
-                    ),
-                    BinExport2.Expression(
-                        type=BinExport2.Expression.REGISTER, symbol="x0"
-                    ),
-                    BinExport2.Expression(
-                        type=BinExport2.Expression.OPERATOR, symbol=","
-                    ),
-                    BinExport2.Expression(
-                        type=BinExport2.Expression.REGISTER, symbol="x1"
-                    ),
-                    BinExport2.Expression(
-                        type=BinExport2.Expression.DEREFERENCE, symbol="]"
-                    ),
+                    BinExport2.Expression(type=BinExport2.Expression.DEREFERENCE, symbol="["),
+                    BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x0"),
+                    BinExport2.Expression(type=BinExport2.Expression.OPERATOR, symbol=","),
+                    BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
+                    BinExport2.Expression(type=BinExport2.Expression.DEREFERENCE, symbol="]"),
                 ),
             ),
         ),
@@ -265,9 +249,7 @@ def test_get_instruction_operands_count():
             (
                 BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
                 BinExport2.Expression(type=BinExport2.Expression.REGISTER, symbol="x1"),
-                BinExport2.Expression(
-                    type=BinExport2.Expression.IMMEDIATE_INT, immediate=0x1
-                ),
+                BinExport2.Expression(type=BinExport2.Expression.IMMEDIATE_INT, immediate=0x1),
             ),
         ),
     ],
@@ -415,33 +397,23 @@ def test_split_with_delimiters():
 def test_pattern_parsing():
     assert BinExport2InstructionPattern.from_str(
         "br      reg                     ; capture reg"
-    ) == BinExport2InstructionPattern(
-        mnemonics=("br",), operands=("reg",), capture="reg"
-    )
+    ) == BinExport2InstructionPattern(mnemonics=("br",), operands=("reg",), capture="reg")
 
     assert BinExport2InstructionPattern.from_str(
         "mov     reg0, reg1              ; capture reg0"
-    ) == BinExport2InstructionPattern(
-        mnemonics=("mov",), operands=("reg0", "reg1"), capture="reg0"
-    )
+    ) == BinExport2InstructionPattern(mnemonics=("mov",), operands=("reg0", "reg1"), capture="reg0")
 
     assert BinExport2InstructionPattern.from_str(
         "adrp    reg, #int               ; capture #int"
-    ) == BinExport2InstructionPattern(
-        mnemonics=("adrp",), operands=("reg", "#int"), capture="#int"
-    )
+    ) == BinExport2InstructionPattern(mnemonics=("adrp",), operands=("reg", "#int"), capture="#int")
 
     assert BinExport2InstructionPattern.from_str(
         "add     reg, reg, #int          ; capture #int"
-    ) == BinExport2InstructionPattern(
-        mnemonics=("add",), operands=("reg", "reg", "#int"), capture="#int"
-    )
+    ) == BinExport2InstructionPattern(mnemonics=("add",), operands=("reg", "reg", "#int"), capture="#int")
 
     assert BinExport2InstructionPattern.from_str(
         "ldr     reg0, [reg1]            ; capture reg1"
-    ) == BinExport2InstructionPattern(
-        mnemonics=("ldr",), operands=("reg0", ("[", "reg1")), capture="reg1"
-    )
+    ) == BinExport2InstructionPattern(mnemonics=("ldr",), operands=("reg0", ("[", "reg1")), capture="reg1")
 
     assert BinExport2InstructionPattern.from_str(
         "ldr|str reg, [reg, #int]        ; capture #int"
@@ -554,11 +526,7 @@ def match_address(
     operands = []
     for operand_index in instruction.operand_index:
         operand = extractor.be2.operand[operand_index]
-        operands.append(
-            capa.features.extractors.binexport2.helpers.get_operand_expressions(
-                extractor.be2, operand
-            )
-        )
+        operands.append(capa.features.extractors.binexport2.helpers.get_operand_expressions(extractor.be2, operand))
 
     return queries.match(mnemonic, operands)
 
@@ -592,26 +560,17 @@ def test_pattern_matching():
     # 0x210184: ldrb      w2, [x0,                x1]
     # query:    ldrb    reg0, [reg1(not-stack), reg2]      ; capture reg2"
     assert match_address(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
-    assert (
-        match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol
-        == "x1"
-    )
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
 
     # 0x210198:  mov         x2, x1
     # query:     mov       reg0, reg1           ; capture reg0"),
     assert match_address(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
-    assert (
-        match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol
-        == "x2"
-    )
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
 
     # 0x210190:  add         x1, x1,  0x1
     # query:     add        reg, reg, #int      ; capture #int
     assert match_address(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
-    assert (
-        match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate
-        == 1
-    )
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
 
 
 BE2_EXTRACTOR_687 = fixtures.get_binexport_extractor(
@@ -630,16 +589,8 @@ def test_pattern_matching_exclamation():
     # note this captures the sp
     # 0x107918:  stp  x20, x19, [sp,0xFFFFFFFFFFFFFFE0]!
     # query:     stp  reg, reg, [reg, #int]!  ; capture #int
-    assert (
-        match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate
-        == 0xFFFFFFFFFFFFFFE0
-    )
-    assert (
-        match_address_with_be2(
-            BE2_EXTRACTOR_687, queries, 0x107918
-        ).expression.immediate
-        == 0xFFFFFFFFFFFFFFE0
-    )
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
 
 
 def test_pattern_matching_stack():
@@ -651,16 +602,8 @@ def test_pattern_matching_stack():
     # compare this with the test above (exclamation)
     # 0x107918:  stp  x20, x19, [sp,         0xFFFFFFFFFFFFFFE0]!
     # query:     stp  reg, reg, [reg(stack), #int]!  ; capture #int
-    assert (
-        match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate
-        == 0xFFFFFFFFFFFFFFE0
-    )
-    assert (
-        match_address_with_be2(
-            BE2_EXTRACTOR_687, queries, 0x107918
-        ).expression.immediate
-        == 0xFFFFFFFFFFFFFFE0
-    )
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
 
 
 def test_pattern_matching_not_stack():
@@ -676,9 +619,7 @@ def test_pattern_matching_not_stack():
     assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918) is None
 
 
-BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(
-    CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport"
-)
+BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
 
 
 def test_pattern_matching_x86():
@@ -688,15 +629,8 @@ def test_pattern_matching_x86():
 
     # 0x4018c0:  LEA         ECX, [EBX+0x2]
     # query:     cmp|lea     reg, [reg(not-stack) + #int0]  ; capture #int0
-    assert (
-        match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
-    )
-    assert (
-        match_address_with_be2(
-            BE2_EXTRACTOR_MIMI, queries, 0x4018C0
-        ).expression.immediate
-        == 2
-    )
+    assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
+    assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
 
 
 def _make_arm_insn_context(
@@ -728,9 +662,7 @@ def _make_arm_insn_context(
         analysis=analysis,
         address_space=address_space,
     )
-    fctx = FunctionContext(
-        ctx=ctx, flow_graph_index=0, format=set(), os=set(), arch={ARCH_AARCH64}
-    )
+    fctx = FunctionContext(ctx=ctx, flow_graph_index=0, format=set(), os=set(), arch={ARCH_AARCH64})
     ictx = InstructionContext(instruction_index=0)
     fh = FunctionHandle(address=AbsoluteVirtualAddress(0x1000), inner=fctx)
     bbh = BBHandle(address=AbsoluteVirtualAddress(0x1000), inner=None)
@@ -743,20 +675,18 @@ def test_arm_add_two_operand_does_not_crash():
     # The fix replaces `assert len == 3` with a guard, so this must not raise.
     # The 3-operand stack-skip only fires when operand[1] is sp; with 2 operands the
     # immediate falls through to the for-loop and yields Number/OperandNumber.
-    fh, bbh, ih = _make_arm_insn_context(
-        {
-            "mnemonic": "add",
-            "expressions": [
-                {"type": BinExport2.Expression.REGISTER, "symbol": "sp"},
-                {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x10},
-            ],
-            "operands": [
-                {"expression_index": [0]},
-                {"expression_index": [1]},
-            ],
-            "operand_indices": [0, 1],
-        }
-    )
+    fh, bbh, ih = _make_arm_insn_context({
+        "mnemonic": "add",
+        "expressions": [
+            {"type": BinExport2.Expression.REGISTER, "symbol": "sp"},
+            {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x10},
+        ],
+        "operands": [
+            {"expression_index": [0]},
+            {"expression_index": [1]},
+        ],
+        "operand_indices": [0, 1],
+    })
     from capa.features.insn import Number
 
     features = list(extract_insn_number_features(fh, bbh, ih))
@@ -766,20 +696,18 @@ def test_arm_add_two_operand_does_not_crash():
 
 def test_arm_add_two_operand_non_stack_yields_number():
     # add r0, #0x42  (2 operands, non-stack dest)
-    fh, bbh, ih = _make_arm_insn_context(
-        {
-            "mnemonic": "add",
-            "expressions": [
-                {"type": BinExport2.Expression.REGISTER, "symbol": "r0"},
-                {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x42},
-            ],
-            "operands": [
-                {"expression_index": [0]},
-                {"expression_index": [1]},
-            ],
-            "operand_indices": [0, 1],
-        }
-    )
+    fh, bbh, ih = _make_arm_insn_context({
+        "mnemonic": "add",
+        "expressions": [
+            {"type": BinExport2.Expression.REGISTER, "symbol": "r0"},
+            {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x42},
+        ],
+        "operands": [
+            {"expression_index": [0]},
+            {"expression_index": [1]},
+        ],
+        "operand_indices": [0, 1],
+    })
 
     features = list(extract_insn_number_features(fh, bbh, ih))
     values = {f.value for f, _ in features}

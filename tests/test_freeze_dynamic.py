@@ -54,9 +54,7 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
             name="explorer.exe",
             features=[],
             threads={
-                ThreadAddress(
-                    ProcessAddress(pid=1), tid=1
-                ): capa.features.extractors.null.ThreadFeatures(
+                ThreadAddress(ProcessAddress(pid=1), tid=1): capa.features.extractors.null.ThreadFeatures(
                     features=[],
                     calls={
                         DynamicCallAddress(
@@ -66,18 +64,14 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
                             features=[
                                 (
                                     DynamicCallAddress(
-                                        thread=ThreadAddress(
-                                            ProcessAddress(pid=1), tid=1
-                                        ),
+                                        thread=ThreadAddress(ProcessAddress(pid=1), tid=1),
                                         id=1,
                                     ),
                                     capa.features.insn.API("CreateFile"),
                                 ),
                                 (
                                     DynamicCallAddress(
-                                        thread=ThreadAddress(
-                                            ProcessAddress(pid=1), tid=1
-                                        ),
+                                        thread=ThreadAddress(ProcessAddress(pid=1), tid=1),
                                         id=1,
                                     ),
                                     capa.features.insn.Number(12),
@@ -91,9 +85,7 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
                             features=[
                                 (
                                     DynamicCallAddress(
-                                        thread=ThreadAddress(
-                                            ProcessAddress(pid=1), tid=1
-                                        ),
+                                        thread=ThreadAddress(ProcessAddress(pid=1), tid=1),
                                         id=2,
                                     ),
                                     capa.features.insn.API("WriteFile"),
@@ -117,18 +109,15 @@ def test_null_feature_extractor():
     th = ThreadHandle(ThreadAddress(ProcessAddress(pid=1), tid=1), None)
 
     assert addresses(EXTRACTOR.get_processes()) == [ProcessAddress(pid=1)]
-    assert addresses(EXTRACTOR.get_threads(ph)) == [
-        ThreadAddress(ProcessAddress(pid=1), tid=1)
-    ]
+    assert addresses(EXTRACTOR.get_threads(ph)) == [ThreadAddress(ProcessAddress(pid=1), tid=1)]
     assert addresses(EXTRACTOR.get_calls(ph, th)) == [
         DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=1),
         DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2),
     ]
 
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent("""
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: create file
@@ -139,9 +128,8 @@ def test_null_feature_extractor():
                             - and:
                                 - api: CreateFile
                     """)
-            ),
-        ]
-    )
+        ),
+    ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "create file" in capabilities.matches
 
@@ -152,20 +140,14 @@ def compare_extractors(a: DynamicFeatureExtractor, b: DynamicFeatureExtractor):
     assert addresses(a.get_processes()) == addresses(b.get_processes())
     for p in a.get_processes():
         assert addresses(a.get_threads(p)) == addresses(b.get_threads(p))
-        assert sorted(set(a.extract_process_features(p))) == sorted(
-            set(b.extract_process_features(p))
-        )
+        assert sorted(set(a.extract_process_features(p))) == sorted(set(b.extract_process_features(p)))
 
         for t in a.get_threads(p):
             assert addresses(a.get_calls(p, t)) == addresses(b.get_calls(p, t))
-            assert sorted(set(a.extract_thread_features(p, t))) == sorted(
-                set(b.extract_thread_features(p, t))
-            )
+            assert sorted(set(a.extract_thread_features(p, t))) == sorted(set(b.extract_thread_features(p, t)))
 
             for c in a.get_calls(p, t):
-                assert sorted(set(a.extract_call_features(p, t, c))) == sorted(
-                    set(b.extract_call_features(p, t, c))
-                )
+                assert sorted(set(a.extract_call_features(p, t, c))) == sorted(set(b.extract_call_features(p, t, c)))
 
 
 def test_freeze_str_roundtrip():

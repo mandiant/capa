@@ -77,9 +77,7 @@ def get_imports(vw):
         return imports
 
 
-def extract_insn_api_features(
-    fh: FunctionHandle, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse API features from the given instruction.
 
@@ -158,9 +156,7 @@ def extract_insn_api_features(
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:
                 dll, symbol = imports[target]
-                for name in capa.features.extractors.helpers.generate_symbols(
-                    dll, symbol
-                ):
+                for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
                     yield API(name), ih.address
                 break
 
@@ -278,9 +274,7 @@ def read_bytes(vw, va: int) -> bytes:
         raise
 
 
-def extract_insn_bytes_features(
-    fh: FunctionHandle, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse byte sequence features from the given instruction.
     example:
@@ -383,9 +377,7 @@ def is_security_cookie(f, bb, insn) -> bool:
         return True
 
     # ... or within last bytes (instructions) before a return
-    elif bb.instructions[-1].isReturn() and insn.va > (
-        bb.va + bb.size - SECURITY_COOKIE_BYTES_DELTA
-    ):
+    elif bb.instructions[-1].isReturn() and insn.va > (bb.va + bb.size - SECURITY_COOKIE_BYTES_DELTA):
         return True
 
     return False
@@ -414,16 +406,12 @@ def extract_insn_nzxor_characteristic_features(
     yield Characteristic("nzxor"), ih.address
 
 
-def extract_insn_mnemonic_features(
-    f, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_mnemonic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse mnemonic features from the given instruction."""
     yield Mnemonic(ih.inner.mnem), ih.address
 
 
-def extract_insn_obfs_call_plus_5_characteristic_features(
-    f, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
@@ -447,9 +435,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(
             yield Characteristic("call $+5"), ih.address
 
 
-def extract_insn_peb_access_characteristic_features(
-    f, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
@@ -469,38 +455,23 @@ def extract_insn_peb_access_characteristic_features(
             #     IDA: push    large dword ptr fs:30h
             #     viv: fs: push dword [0x00000030]
             #     fs: push dword [eax + 0x30]  ; i386RegMemOper, with eax = 0
-            if (
-                isinstance(oper, envi.archs.i386.disasm.i386RegMemOper)
-                and oper.disp == 0x30
-            ) or (
-                isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper)
-                and oper.imm == 0x30
+            if (isinstance(oper, envi.archs.i386.disasm.i386RegMemOper) and oper.disp == 0x30) or (
+                isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper) and oper.imm == 0x30
             ):
                 yield Characteristic("peb access"), ih.address
     elif "gs" in prefix:
         for oper in insn.opers:
             if (
-                (
-                    isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper)
-                    and oper.disp == 0x60
-                )
-                or (
-                    isinstance(oper, envi.archs.amd64.disasm.i386SibOper)
-                    and oper.imm == 0x60
-                )
-                or (
-                    isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper)
-                    and oper.imm == 0x60
-                )
+                (isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper) and oper.disp == 0x60)
+                or (isinstance(oper, envi.archs.amd64.disasm.i386SibOper) and oper.imm == 0x60)
+                or (isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper) and oper.imm == 0x60)
             ):
                 yield Characteristic("peb access"), ih.address
     else:
         pass
 
 
-def extract_insn_segment_access_features(
-    f, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_segment_access_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """parse the instruction for access to fs or gs"""
     insn: envi.Opcode = ih.inner
 
@@ -521,9 +492,7 @@ def get_section(vw, va: int):
     raise KeyError(va)
 
 
-def extract_insn_cross_section_cflow(
-    fh: FunctionHandle, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_cross_section_cflow(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
@@ -540,9 +509,7 @@ def extract_insn_cross_section_cflow(
 
         try:
             # skip 32-bit calls to imports
-            if insn.mnem == "call" and isinstance(
-                insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper
-            ):
+            if insn.mnem == "call" and isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):
                 oper = insn.opers[0]
                 target = oper.getOperAddr(insn)
 
@@ -550,9 +517,7 @@ def extract_insn_cross_section_cflow(
                     continue
 
             # skip 64-bit calls to imports
-            elif insn.mnem == "call" and isinstance(
-                insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper
-            ):
+            elif insn.mnem == "call" and isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
                 op = insn.opers[0]
                 target = op.getOperAddr(insn)
 
@@ -568,9 +533,7 @@ def extract_insn_cross_section_cflow(
 
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_calls_from(
-    fh: FunctionHandle, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
 
@@ -611,9 +574,7 @@ def extract_function_calls_from(
 
 # this is a feature that's most relevant at the function or basic block scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_indirect_call_characteristic_features(
-    f, bb, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_function_indirect_call_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
@@ -663,11 +624,7 @@ def extract_op_number_features(
         # assume it's not also a constant.
         return
 
-    if (
-        insn.mnem == "add"
-        and insn.opers[0].isReg()
-        and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP
-    ):
+    if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP:
         # skip things like:
         #
         #    .text:00401140                 call    sub_407E2B
@@ -677,11 +634,7 @@ def extract_op_number_features(
     yield Number(v), ih.address
     yield OperandNumber(i, v), ih.address
 
-    if (
-        insn.mnem == "add"
-        and 0 < v < MAX_STRUCTURE_SIZE
-        and isinstance(oper, envi.archs.i386.disasm.i386ImmOper)
-    ):
+    if insn.mnem == "add" and 0 < v < MAX_STRUCTURE_SIZE and isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
         # for pattern like:
         #
         #     add eax, 0x10
@@ -721,11 +674,7 @@ def extract_op_offset_features(
         yield Offset(v), ih.address
         yield OperandOffset(i, v), ih.address
 
-        if (
-            insn.mnem == "lea"
-            and i == 1
-            and not f.vw.probeMemory(v, 1, envi.memory.MM_READ)
-        ):
+        if insn.mnem == "lea" and i == 1 and not f.vw.probeMemory(v, 1, envi.memory.MM_READ):
             # for pattern like:
             #
             #     lea eax, [ebx + 1]
@@ -779,9 +728,7 @@ def extract_op_string_features(
                 yield String(s), ih.address
 
 
-def extract_operand_features(
-    f: FunctionHandle, bb, insn: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_operand_features(f: FunctionHandle, bb, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     for i, oper in enumerate(insn.inner.opers):
         for op_handler in OPERAND_HANDLERS:
             for feature, addr in op_handler(f, bb, insn, i, oper):
@@ -817,9 +764,7 @@ def extract_features(f, bb, insn) -> Iterator[tuple[Feature, Address]]:
             yield feature, addr
 
 
-INSTRUCTION_HANDLERS: list[
-    Callable[[FunctionHandle, BBHandle, InsnHandle], Iterator[tuple[Feature, Address]]]
-] = [
+INSTRUCTION_HANDLERS: list[Callable[[FunctionHandle, BBHandle, InsnHandle], Iterator[tuple[Feature, Address]]]] = [
     extract_insn_api_features,
     extract_insn_bytes_features,
     extract_insn_nzxor_characteristic_features,

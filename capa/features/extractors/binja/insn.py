@@ -81,9 +81,7 @@ def is_stub_function(bv: BinaryView, addr: int) -> Optional[int]:
     return llil.dest.constant
 
 
-def extract_insn_api_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse instruction API features
 
@@ -132,15 +130,11 @@ def extract_insn_api_features(
                         elif lib_name.endswith(".so"):
                             lib_name = lib_name[:-3]
 
-                    for name in capa.features.extractors.helpers.generate_symbols(
-                        lib_name, sym_name
-                    ):
+                    for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym_name):
                         yield API(name), ih.address
 
                     if sym_name.startswith("_"):
-                        for name in capa.features.extractors.helpers.generate_symbols(
-                            lib_name, sym_name[1:]
-                        ):
+                        for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym_name[1:]):
                             yield API(name), ih.address
 
 
@@ -156,9 +150,7 @@ def extract_insn_number_features(
 
     results: list[tuple[Any[Number, OperandNumber], Address]] = []
 
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation == LowLevelILOperation.LLIL_LOAD:
             return False
 
@@ -177,10 +169,7 @@ def extract_insn_number_features(
                 "sp",
             ]:
                 return False
-            elif (
-                isinstance(op, LowLevelILInstruction)
-                and op.operation == LowLevelILOperation.LLIL_REG
-            ):
+            elif isinstance(op, LowLevelILInstruction) and op.operation == LowLevelILOperation.LLIL_REG:
                 if op.src.name in ["esp", "ebp", "rsp", "rbp", "sp"]:
                     return False
 
@@ -199,9 +188,7 @@ def extract_insn_number_features(
     yield from results
 
 
-def extract_insn_bytes_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """
     parse referenced byte sequences
     example:
@@ -229,9 +216,7 @@ def extract_insn_bytes_features(
         candidate_addrs.add(ref)
 
     # collect candidate address by enumerating all integers, https://github.com/Vector35/binaryninja-api/issues/3966
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation in [
             LowLevelILOperation.LLIL_CONST,
             LowLevelILOperation.LLIL_CONST_PTR,
@@ -248,9 +233,7 @@ def extract_insn_bytes_features(
 
     for addr in candidate_addrs:
         extracted_bytes = bv.read(addr, MAX_BYTES_FEATURE_SIZE)
-        if extracted_bytes and not capa.features.extractors.helpers.all_zeros(
-            extracted_bytes
-        ):
+        if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
             if bv.get_string_at(addr) is None:
                 # don't extract byte features for obvious strings
                 yield Bytes(extracted_bytes), ih.address
@@ -281,9 +264,7 @@ def extract_insn_string_features(
         candidate_addrs.add(ref)
 
     # collect candidate address by enumerating all integers, https://github.com/Vector35/binaryninja-api/issues/3966
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation in [
             LowLevelILOperation.LLIL_CONST,
             LowLevelILOperation.LLIL_CONST_PTR,
@@ -332,9 +313,7 @@ def extract_insn_offset_features(
     results: list[tuple[Any[Offset, OperandOffset], Address]] = []
     address_size = func.view.arch.address_size * 8
 
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         #  The most common case, read/write dereference to something like `dword [eax+0x28]`
         if il.operation in [LowLevelILOperation.LLIL_ADD, LowLevelILOperation.LLIL_SUB]:
             left = il.left
@@ -361,16 +340,12 @@ def extract_insn_offset_features(
                 LowLevelILOperation.LLIL_LOAD,
                 LowLevelILOperation.LLIL_STORE,
             ]:
-                if il.operation != LowLevelILOperation.LLIL_ADD or (
-                    not 0 < raw_value < MAX_STRUCTURE_SIZE
-                ):
+                if il.operation != LowLevelILOperation.LLIL_ADD or (not 0 < raw_value < MAX_STRUCTURE_SIZE):
                     return False
 
             if address_size > 0:
                 # BN also encodes the constant value as two's complement, we need to restore its original value
-                value = capa.features.extractors.helpers.twos_complement(
-                    raw_value, address_size
-                )
+                value = capa.features.extractors.helpers.twos_complement(raw_value, address_size)
             else:
                 value = raw_value
 
@@ -396,9 +371,7 @@ def extract_insn_offset_features(
     yield from results
 
 
-def is_nzxor_stack_cookie(
-    f: Function, bb: bn.BasicBlock, llil: LowLevelILInstruction
-) -> bool:
+def is_nzxor_stack_cookie(f: Function, bb: bn.BasicBlock, llil: LowLevelILInstruction) -> bool:
     """check if nzxor exists within stack cookie delta"""
     # TODO(xusheng): use LLIL SSA to do more accurate analysis
     # https://github.com/mandiant/capa/issues/1609
@@ -415,15 +388,11 @@ def is_nzxor_stack_cookie(
         return False
 
     # expect security cookie init in first basic block within first bytes (instructions)
-    if len(bb.incoming_edges) == 0 and llil.address < (
-        bb.start + SECURITY_COOKIE_BYTES_DELTA
-    ):
+    if len(bb.incoming_edges) == 0 and llil.address < (bb.start + SECURITY_COOKIE_BYTES_DELTA):
         return True
 
     # ... or within last bytes (instructions) before a return
-    if len(bb.outgoing_edges) == 0 and llil.address > (
-        bb.end - SECURITY_COOKIE_BYTES_DELTA
-    ):
+    if len(bb.outgoing_edges) == 0 and llil.address > (bb.end - SECURITY_COOKIE_BYTES_DELTA):
         return True
 
     return False
@@ -440,9 +409,7 @@ def extract_insn_nzxor_characteristic_features(
 
     results = []
 
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         # If the two operands of the xor instruction are the same, the LLIL will be translated to other instructions,
         # e.g., <llil: eax = 0>, (LLIL_SET_REG). So we do not need to check whether the two operands are the same.
         if il.operation == LowLevelILOperation.LLIL_XOR:
@@ -490,9 +457,7 @@ def extract_insn_peb_access_characteristic_features(
 
     results = []
 
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILOperation, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILOperation, index: int) -> bool:
         if il.operation != LowLevelILOperation.LLIL_LOAD:
             return True
 
@@ -532,9 +497,7 @@ def extract_insn_segment_access_features(
 
     results = []
 
-    def llil_checker(
-        il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int
-    ) -> bool:
+    def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation == LowLevelILOperation.LLIL_REG:
             reg = il.src.name
             if reg == "fsbase":
@@ -575,9 +538,7 @@ def extract_insn_cross_section_cflow(
             yield Characteristic("cross section flow"), ih.address
 
 
-def extract_function_calls_from(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
@@ -660,9 +621,7 @@ def extract_function_indirect_call_characteristic_features(
     yield Characteristic("indirect call"), ih.address
 
 
-def extract_features(
-    f: FunctionHandle, bbh: BBHandle, insn: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
         for feature, ea in inst_handler(f, bbh, insn):

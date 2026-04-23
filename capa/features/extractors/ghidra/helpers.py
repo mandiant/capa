@@ -49,9 +49,7 @@ def ints_to_bytes(bytez: list[int]) -> bytes:
     return bytes([b & 0xFF for b in bytez])
 
 
-def find_byte_sequence(
-    addr: "ghidra.program.model.address.Address", seq: bytes
-) -> Iterator[int]:
+def find_byte_sequence(addr: "ghidra.program.model.address.Address", seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
 
     args:
@@ -111,9 +109,7 @@ def get_function_blocks(
     yield the basic blocks of the function
     """
 
-    for block in SimpleBlockIterator(
-        BasicBlockModel(get_current_program()), fh.inner.getBody(), get_monitor()
-    ):
+    for block in SimpleBlockIterator(BasicBlockModel(get_current_program()), fh.inner.getBody(), get_monitor()):
         yield BBHandle(
             address=AbsoluteVirtualAddress(block.getMinAddress().getOffset()),
             inner=block,
@@ -123,9 +119,7 @@ def get_function_blocks(
 def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
     """yield InshHandle for each insn in a given basicblock"""
     for insn in get_current_program().getListing().getInstructions(bbh.inner, True):
-        yield InsnHandle(
-            address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn
-        )
+        yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
 def get_file_imports() -> dict[int, list[str]]:
@@ -137,21 +131,15 @@ def get_file_imports() -> dict[int, list[str]]:
         addr = None
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
-                addr = (
-                    r.getFromAddress().getOffset()
-                )  # gets pointer to fake external addr
+                addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
                 break
 
         if addr is None:
             continue
 
-        ex_loc = (
-            f.getExternalLocation().getAddress()
-        )  # map external locations as well (offset into module files)
+        ex_loc = f.getExternalLocation().getAddress()  # map external locations as well (offset into module files)
 
-        fstr = f.toString().split(
-            "::"
-        )  # format: MODULE.dll::import / MODULE::Ordinal_* / <EXTERNAL>::import
+        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_* / <EXTERNAL>::import
         if "Ordinal_" in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
@@ -184,11 +172,7 @@ def get_file_externs() -> dict[int, list[str]]:
 
     for sym in get_current_program().getSymbolTable().getAllSymbols(True):
         # .isExternal() misses more than this config for the function symbols
-        if (
-            sym.getSymbolType() == SymbolType.FUNCTION
-            and sym.getSource() == SourceType.ANALYSIS
-            and sym.isGlobal()
-        ):
+        if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
             if name.startswith("FID_conflict:"):  # format: FID_conflict:<function-name>
                 name = name[13:]
@@ -198,9 +182,7 @@ def get_file_externs() -> dict[int, list[str]]:
                 # extract features for both the mangled and un-mangled representations.
                 # e.g. `_fwrite` -> `fwrite`
                 # see: https://stackoverflow.com/a/2628384/87207
-                extern_dict.setdefault(sym.getAddress().getOffset(), []).append(
-                    name[1:]
-                )
+                extern_dict.setdefault(sym.getAddress().getOffset(), []).append(name[1:])
 
     return extern_dict
 
@@ -229,9 +211,7 @@ def map_fake_import_addrs() -> dict[int, list[int]]:
     for f in get_current_program().getFunctionManager().getExternalFunctions():
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
-                fake_dict.setdefault(f.getEntryPoint().getOffset(), []).append(
-                    r.getFromAddress().getOffset()
-                )
+                fake_dict.setdefault(f.getEntryPoint().getOffset(), []).append(r.getFromAddress().getOffset())
 
     return fake_dict
 
@@ -260,18 +240,13 @@ def check_addr_for_api(
 
 
 def is_call_or_jmp(insn: "ghidra.program.database.code.InstructionDB") -> bool:
-    return any(
-        mnem in insn.getMnemonicString() for mnem in ["CALL", "J"]
-    )  # JMP, JNE, JNZ, etc
+    return any(mnem in insn.getMnemonicString() for mnem in ["CALL", "J"])  # JMP, JNE, JNZ, etc
 
 
 def is_sp_modified(insn: "ghidra.program.database.code.InstructionDB") -> bool:
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
-            return (
-                "SP" in insn.getRegister(i).getName()
-                and insn.getOperandRefType(i).isWrite()
-            )
+            return "SP" in insn.getRegister(i).getName() and insn.getOperandRefType(i).isWrite()
     return False
 
 

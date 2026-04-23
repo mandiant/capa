@@ -62,9 +62,7 @@ def show_info(msg):
 
 def add_bookmark(addr, txt, category="CapaExplorer"):
     """create bookmark at addr"""
-    capa.ghidra.helpers.get_current_program().getBookmarkManager().setBookmark(
-        addr, "Info", category, txt
-    )
+    capa.ghidra.helpers.get_current_program().getBookmarkManager().setBookmark(addr, "Info", category, txt)
 
 
 def create_namespace(namespace_str):
@@ -80,10 +78,7 @@ def create_label(ghidra_addr, name, capa_namespace):
     # prevent duplicate labels under the same capa-generated namespace
     symbol_table = capa.ghidra.helpers.get_current_program().getSymbolTable()
     for sym in symbol_table.getSymbols(ghidra_addr):
-        if (
-            sym.getName(True)
-            == capa_namespace.getName(True) + Namespace.DELIMITER + name
-        ):
+        if sym.getName(True) == capa_namespace.getName(True) + Namespace.DELIMITER + name:
             return
 
     # create SymbolType.LABEL at addr
@@ -133,9 +128,7 @@ class CapaMatchData:
                         for part in item.get("parts", {}):
                             attack_txt = attack_txt + part + Namespace.DELIMITER
                         attack_txt = attack_txt + item.get("id", {})
-                        add_bookmark(
-                            func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK"
-                        )
+                        add_bookmark(func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
 
                 if self.mbc != []:
                     for item in self.mbc:
@@ -164,28 +157,11 @@ class CapaMatchData:
         """set pre comments at subscoped matches of main rules"""
         comment = capa.ghidra.helpers.get_flat_api().getPreComment(ghidra_addr)
         if comment is None:
-            comment = (
-                "capa: "
-                + sub_type
-                + "("
-                + description
-                + ")"
-                + ' matched in "'
-                + self.capability
-                + '"\n'
-            )
+            comment = "capa: " + sub_type + "(" + description + ")" + ' matched in "' + self.capability + '"\n'
             capa.ghidra.helpers.get_flat_api().setPreComment(ghidra_addr, comment)
         elif self.capability not in comment:
             comment = (
-                comment
-                + "capa: "
-                + sub_type
-                + "("
-                + description
-                + ")"
-                + ' matched in "'
-                + self.capability
-                + '"\n'
+                comment + "capa: " + sub_type + "(" + description + ")" + ' matched in "' + self.capability + '"\n'
             )
             capa.ghidra.helpers.get_flat_api().setPreComment(ghidra_addr, comment)
         else:
@@ -219,9 +195,7 @@ class CapaMatchData:
                 # under the encompassing function(s)
                 for sub_match in self.matches.get(addr):
                     for loc, node in sub_match.items():
-                        sub_ghidra_addr = capa.ghidra.helpers.get_flat_api().toAddr(
-                            hex(loc)
-                        )
+                        sub_ghidra_addr = capa.ghidra.helpers.get_flat_api().toAddr(hex(loc))
                         if sub_ghidra_addr == ghidra_addr:
                             # skip duplicates
                             continue
@@ -229,9 +203,7 @@ class CapaMatchData:
                         # precomment subscope matches under the function
                         if node != {} and do_comments:
                             for sub_type, description in parse_node(node):
-                                self.set_pre_comment(
-                                    sub_ghidra_addr, sub_type, description
-                                )
+                                self.set_pre_comment(sub_ghidra_addr, sub_type, description)
         else:
             # resolve the encompassing function for the capa namespace
             # of non-function scoped main matches
@@ -240,9 +212,7 @@ class CapaMatchData:
 
                 # basic block / insn scoped main matches
                 # Ex. See "Create Process on Windows" Rule
-                func = capa.ghidra.helpers.get_flat_api().getFunctionContaining(
-                    ghidra_addr
-                )
+                func = capa.ghidra.helpers.get_flat_api().getFunctionContaining(ghidra_addr)
                 if func is not None:
                     func_addr = func.getEntryPoint()
                     if do_namespaces:
@@ -253,25 +223,19 @@ class CapaMatchData:
                 # create subscope match precomments
                 for sub_match in self.matches.get(addr):
                     for loc, node in sub_match.items():
-                        sub_ghidra_addr = capa.ghidra.helpers.get_flat_api().toAddr(
-                            hex(loc)
-                        )
+                        sub_ghidra_addr = capa.ghidra.helpers.get_flat_api().toAddr(hex(loc))
 
                         if node != {}:
                             if func is not None:
                                 # basic block/ insn scope under resolved function
                                 if do_comments:
                                     for sub_type, description in parse_node(node):
-                                        self.set_pre_comment(
-                                            sub_ghidra_addr, sub_type, description
-                                        )
+                                        self.set_pre_comment(sub_ghidra_addr, sub_type, description)
                             else:
                                 # this would be a global/file scoped main match
                                 # try to resolve the encompassing function via the subscope match, instead
                                 # Ex. "run as service" rule
-                                sub_func = capa.ghidra.helpers.get_flat_api().getFunctionContaining(
-                                    sub_ghidra_addr
-                                )
+                                sub_func = capa.ghidra.helpers.get_flat_api().getFunctionContaining(sub_ghidra_addr)
                                 if sub_func is not None:
                                     sub_func_addr = sub_func.getEntryPoint()
                                     # place function in capa namespace & create the subscope match label in Ghidra's global namespace
@@ -286,9 +250,7 @@ class CapaMatchData:
 
                                     if do_comments:
                                         for sub_type, description in parse_node(node):
-                                            self.set_pre_comment(
-                                                sub_ghidra_addr, sub_type, description
-                                            )
+                                            self.set_pre_comment(sub_ghidra_addr, sub_type, description)
                                 else:
                                     # addr is in some other file section like .data
                                     # represent this location with a label symbol under the capa namespace
@@ -297,28 +259,19 @@ class CapaMatchData:
                                         for _sub_type, _description in parse_node(node):
                                             # in many cases, these will be ghidra-labeled data, so just add the existing
                                             # label symbol to the capa namespace
-                                            for sym in symbol_table.getSymbols(
-                                                sub_ghidra_addr
-                                            ):
-                                                if (
-                                                    sym.getSymbolType()
-                                                    == SymbolType.LABEL
-                                                ):
+                                            for sym in symbol_table.getSymbols(sub_ghidra_addr):
+                                                if sym.getSymbolType() == SymbolType.LABEL:
                                                     sym.setNamespace(capa_namespace)
                                     if do_comments:
                                         for sub_type, description in parse_node(node):
-                                            self.set_pre_comment(
-                                                sub_ghidra_addr, sub_type, description
-                                            )
+                                            self.set_pre_comment(sub_ghidra_addr, sub_type, description)
 
 
 def get_capabilities():
     rules_dir = ""
 
     show_monitor_message(f"requesting capa {capa.version.__version__} rules directory")
-    selected_dir = askDirectory(
-        f"choose capa {capa.version.__version__} rules directory", "Ok"
-    )  # type: ignore [name-defined] # noqa: F821
+    selected_dir = askDirectory(f"choose capa {capa.version.__version__} rules directory", "Ok")  # type: ignore [name-defined] # noqa: F821
 
     if selected_dir:
         rules_dir = selected_dir.getPath()
@@ -339,9 +292,7 @@ def get_capabilities():
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor, True)
 
     show_monitor_message("checking for static limitations")
-    if capa.capabilities.common.has_static_limitation(
-        rules, capabilities, is_standalone=False
-    ):
+    if capa.capabilities.common.has_static_limitation(rules, capabilities, is_standalone=False):
         show_warn(
             "capa explorer encountered warnings during analysis. Please check the console output for more information.",
         )
@@ -457,9 +408,7 @@ def main():
     for c in choice_labels:
         choice_labels_java.add(c)
 
-    selected = list(
-        askChoices("capa explorer", "select actions:", choices_java, choice_labels_java)
-    )  # type: ignore [name-defined] # noqa: F821
+    selected = list(askChoices("capa explorer", "select actions:", choices_java, choice_labels_java))  # type: ignore [name-defined] # noqa: F821
 
     do_namespaces = "namespaces" in selected
     do_comments = "comments" in selected

@@ -14,16 +14,14 @@
 
 import json
 
-
-from capa.features.extractors.drakvuf.models import ConciseModel, SystemCall, WinApiCall
-from capa.features.address import DynamicCallAddress, ProcessAddress, ThreadAddress
+from capa.features.address import ThreadAddress, ProcessAddress, DynamicCallAddress
 from capa.features.extractors.base_extractor import (
     CallHandle,
-    ProcessHandle,
     ThreadHandle,
+    ProcessHandle,
 )
+from capa.features.extractors.drakvuf.models import SystemCall, WinApiCall, ConciseModel, DrakvufReport
 from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
-from capa.features.extractors.drakvuf.models import DrakvufReport
 
 
 def test_concise_model_ignores_extra_fields():

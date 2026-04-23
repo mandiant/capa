@@ -53,17 +53,13 @@ def extract_file_strings(pe: dnfile.dnPE) -> Iterator[tuple[String, Address]]:
 def extract_file_mixed_mode_characteristic_features(
     pe: dnfile.dnPE,
 ) -> Iterator[tuple[Characteristic, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(
-        pe=pe
-    )
+    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(pe=pe)
 
 
 def extract_file_namespace_features(
     pe: dnfile.dnPE,
 ) -> Iterator[tuple[Namespace, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(
-        pe=pe
-    )
+    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(pe=pe)
 
 
 def extract_file_class_features(pe: dnfile.dnPE) -> Iterator[tuple[Class, Address]]:

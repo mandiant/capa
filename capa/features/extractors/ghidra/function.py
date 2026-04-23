@@ -60,9 +60,7 @@ def extract_function_loop(fh: FunctionHandle):
 def extract_recursive_call(fh: FunctionHandle):
     f: ghidra.program.database.function.FunctionDB = fh.inner
 
-    for func in f.getCalledFunctions(
-        capa.features.extractors.ghidra.helpers.get_monitor()
-    ):
+    for func in f.getCalledFunctions(capa.features.extractors.ghidra.helpers.get_monitor()):
         if func.getEntryPoint().getOffset() == f.getEntryPoint().getOffset():
             yield (
                 Characteristic("recursive call"),

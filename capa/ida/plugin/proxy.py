@@ -103,9 +103,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
             return True
 
         index = self.sourceModel().index(row, 0, parent)
-        data = index.internalPointer().data(
-            CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS
-        )
+        data = index.internalPointer().data(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS)
 
         # virtual address may be empty
         if not data:

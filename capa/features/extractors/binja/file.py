@@ -40,9 +40,7 @@ from capa.features.address import (
 from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
-def check_segment_for_pe(
-    bv: BinaryView, seg: Segment
-) -> Iterator[tuple[Feature, Address]]:
+def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[tuple[Feature, Address]]:
     """check segment for embedded PE"""
     start = 0
     if bv.view_type == "PE" and seg.start == bv.start:
@@ -64,9 +62,7 @@ def extract_file_embedded_pe(bv: BinaryView) -> Iterator[tuple[Feature, Address]
 
 def extract_file_export_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract function exports"""
-    for sym in bv.get_symbols_of_type(
-        SymbolType.FunctionSymbol
-    ) + bv.get_symbols_of_type(SymbolType.DataSymbol):
+    for sym in bv.get_symbols_of_type(SymbolType.FunctionSymbol) + bv.get_symbols_of_type(SymbolType.DataSymbol):
         if sym.binding in [SymbolBinding.GlobalBinding, SymbolBinding.WeakBinding]:
             name = sym.short_name
             if name.startswith("__forwarder_name(") and name.endswith(")"):
@@ -96,9 +92,7 @@ def extract_file_export_names(bv: BinaryView) -> Iterator[tuple[Feature, Address
         # Once the above issue is closed in the next binjs stable release, we can update the code here to use the
         # symbol name directly.
         name = read_c_string(bv, sym.address, 1024)
-        forwarded_name = (
-            capa.features.extractors.helpers.reformat_forwarded_export_name(name)
-        )
+        forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(name)
         yield Export(forwarded_name), AbsoluteVirtualAddress(sym.address)
         yield Characteristic("forwarded export"), AbsoluteVirtualAddress(sym.address)
 
@@ -117,17 +111,13 @@ def extract_file_import_names(bv: BinaryView) -> Iterator[tuple[Feature, Address
     for sym in bv.get_symbols_of_type(SymbolType.ImportAddressSymbol):
         lib_name = str(sym.namespace)
         addr = AbsoluteVirtualAddress(sym.address)
-        for name in capa.features.extractors.helpers.generate_symbols(
-            lib_name, sym.short_name, include_dll=True
-        ):
+        for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym.short_name, include_dll=True):
             yield Import(name), addr
 
         ordinal = sym.ordinal
         if ordinal != 0 and (lib_name != ""):
             ordinal_name = f"#{ordinal}"
-            for name in capa.features.extractors.helpers.generate_symbols(
-                lib_name, ordinal_name, include_dll=True
-            ):
+            for name in capa.features.extractors.helpers.generate_symbols(lib_name, ordinal_name, include_dll=True):
                 yield Import(name), addr
 
 

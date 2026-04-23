@@ -53,10 +53,9 @@ def test_rule_scope_instruction():
 
 
 def test_rule_subscope_instruction():
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent("""
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: test rule
@@ -71,9 +70,8 @@ def test_rule_subscope_instruction():
                                     - arch: i386
                                     - os: windows
                     """)
-            )
-        ]
-    )
+        )
+    ])
     # the function rule scope will have one rules:
     #  - `test rule`
     assert len(rules.function_rules) == 1

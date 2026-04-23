@@ -217,9 +217,7 @@ def report(args):
                 rules_by_backend[backend].update(matches)
                 durations_by_backend[backend].append(duration)
 
-                console.print(
-                    f"  {backend: >8}: {duration: >6.1f}s   {len(matches): >3d} matches"
-                )
+                console.print(f"  {backend: >8}: {duration: >6.1f}s   {len(matches): >3d} matches")
 
             else:
                 failures_by_backend[backend].add(sample)
@@ -318,15 +316,9 @@ def main(argv=None):
 
     subparsers = parser.add_subparsers()
     collect_parser = subparsers.add_parser("collect")
-    collect_parser.add_argument(
-        "results_path", type=Path, help="Path to output JSON file"
-    )
-    collect_parser.add_argument(
-        "--samples", type=Path, default=default_samples_path, help="Path to samples"
-    )
-    collect_parser.add_argument(
-        "--retry-failures", action="store_true", help="Retry previous failures"
-    )
+    collect_parser.add_argument("results_path", type=Path, help="Path to output JSON file")
+    collect_parser.add_argument("--samples", type=Path, default=default_samples_path, help="Path to samples")
+    collect_parser.add_argument("--retry-failures", action="store_true", help="Retry previous failures")
     collect_parser.set_defaults(func=collect)
 
     report_parser = subparsers.add_parser("report")

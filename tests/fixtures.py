@@ -118,9 +118,7 @@ def get_viv_extractor(path: Path):
     else:
         vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(
-        vw, path, OS_AUTO
-    )
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
     fixup_viv(path, extractor)
     return extractor
 
@@ -341,14 +339,10 @@ def get_binexport_extractor(path):
 
     be2 = capa.features.extractors.binexport2.get_binexport2(path)
     search_paths = [CD / "data", CD / "data" / "aarch64"]
-    path = capa.features.extractors.binexport2.get_sample_from_binexport2(
-        path, be2, search_paths
-    )
+    path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
     buf = path.read_bytes()
 
-    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(
-        be2, buf
-    )
+    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
 
 
 def extract_global_features(extractor):
@@ -454,11 +448,7 @@ def get_data_path_by_name(name) -> Path:
     elif name == "al-khaser x64":
         return CD / "data" / "al-khaser_x64.exe_"
     elif name.startswith("39c05"):
-        return (
-            CD
-            / "data"
-            / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
-        )
+        return CD / "data" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
     elif name.startswith("499c2"):
         return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
     elif name.startswith("9324d"):
@@ -482,11 +472,7 @@ def get_data_path_by_name(name) -> Path:
     elif name.startswith("77329"):
         return CD / "data" / "773290480d5445f11d3dc1b800728966.exe_"
     elif name.startswith("3b13b"):
-        return (
-            CD
-            / "data"
-            / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
-        )
+        return CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
     elif name == "7351f.elf":
         return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
     elif name.startswith("79abd"):
@@ -498,54 +484,25 @@ def get_data_path_by_name(name) -> Path:
     elif name.startswith("b9f5b"):
         return CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
     elif name.startswith("mixed-mode-64"):
-        return (
-            DNFILE_TESTFILES
-            / "mixed-mode"
-            / "ModuleCode"
-            / "bin"
-            / "ModuleCode_amd64.exe"
-        )
+        return DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
     elif name.startswith("hello-world"):
         return DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
     elif name.startswith("_1c444"):
         return DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
     elif name.startswith("_387f15"):
-        return (
-            DOTNET_DIR
-            / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
-        )
+        return DOTNET_DIR / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
     elif name.startswith("_692f"):
         return DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_"
     elif name.startswith("_0953c"):
-        return (
-            CD
-            / "data"
-            / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
-        )
+        return CD / "data" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
     elif name.startswith("_039a6"):
-        return (
-            CD
-            / "data"
-            / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
-        )
+        return CD / "data" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
     elif name.startswith("b5f052"):
-        return (
-            CD
-            / "data"
-            / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
-        )
+        return CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
     elif name.startswith("bf7a9c"):
-        return (
-            CD
-            / "data"
-            / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
-        )
+        return CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
     elif name.startswith("294b8d"):
-        return (
-            CD
-            / "data"
-            / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
-        )
+        return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
     elif name.startswith("2bf18d"):
         return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
     elif name.startswith("0000a657"):
@@ -599,23 +556,11 @@ def get_data_path_by_name(name) -> Path:
             / "eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip"
         )
     elif name.startswith("ea2876"):
-        return (
-            CD
-            / "data"
-            / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
-        )
+        return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):
-        return (
-            CD
-            / "data"
-            / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
-        )
+        return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
     elif name.startswith("3da7c"):
-        return (
-            CD
-            / "data"
-            / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
-        )
+        return CD / "data" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
     elif name.startswith("nested_typedef"):
         return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
     elif name.startswith("nested_typeref"):
@@ -759,9 +704,7 @@ def get_basic_block(extractor, fh: FunctionHandle, va: int) -> BBHandle:
     raise ValueError("basic block not found")
 
 
-def get_instruction(
-    extractor, fh: FunctionHandle, bbh: BBHandle, va: int
-) -> InsnHandle:
+def get_instruction(extractor, fh: FunctionHandle, bbh: BBHandle, va: int) -> InsnHandle:
     for ih in extractor.get_instructions(fh, bbh):
         if isinstance(extractor, DnfileFeatureExtractor):
             addr = ih.inner.offset
@@ -1720,9 +1663,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "file",
-            capa.features.common.String(
-                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
-            ),
+            capa.features.common.String(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
             True,
         ),
         ("_1c444", "file", capa.features.common.String("get_IsAlive"), True),
@@ -1856,9 +1797,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "token=0x600002B",
-            capa.features.insn.Property(
-                "System.IO.FileInfo::Length", access=FeatureAccess.READ
-            ),
+            capa.features.insn.Property("System.IO.FileInfo::Length", access=FeatureAccess.READ),
             True,
         ),  # MemberRef property access
         (
@@ -1947,17 +1886,13 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_0953c",
             "token=0x6000004",
-            capa.features.common.Class(
-                "System.Diagnostics.Debugger"
-            ),  # MemberRef property access
+            capa.features.common.Class("System.Diagnostics.Debugger"),  # MemberRef property access
             True,
         ),
         (
             "_0953c",
             "token=0x6000004",
-            capa.features.common.Namespace(
-                "System.Diagnostics"
-            ),  # MemberRef property access
+            capa.features.common.Namespace("System.Diagnostics"),  # MemberRef property access
             True,
         ),
         (
@@ -2001,17 +1936,13 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_039a6",
             "token=0x600001D",
-            capa.features.insn.Property(
-                "StagelessHollow.Arac::Marka", access=FeatureAccess.READ
-            ),  # MethodDef method
+            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
             True,
         ),
         (
             "_039a6",
             "token=0x600001C",
-            capa.features.insn.Property(
-                "StagelessHollow.Arac::Marka", access=FeatureAccess.READ
-            ),  # MethodDef method
+            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
             False,
         ),
         (
@@ -2062,9 +1993,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "nested_typedef",
             "file",
-            capa.features.common.Class(
-                "mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner"
-            ),
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner"),
             True,
         ),
         (
@@ -2112,9 +2041,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "nested_typeref",
             "file",
-            capa.features.file.Import(
-                "Android.Provider.Telephony/Sent/Sent::ContentUri"
-            ),
+            capa.features.file.Import("Android.Provider.Telephony/Sent/Sent::ContentUri"),
             True,
         ),
         (
@@ -2388,26 +2315,20 @@ def get_result_doc(path: Path):
 @pytest.fixture
 def pma0101_rd():
     # python -m capa.main tests/data/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ --json > tests/data/rd/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
 
 
 @pytest.fixture
 def dotnet_1c444e_rd():
     # .NET sample
     # python -m capa.main tests/data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_ --json > tests/data/rd/1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
 
 
 @pytest.fixture
 def a3f3bbc_rd():
     # python -m capa.main tests/data/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_ --json > tests/data/rd/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
 
 
 @pytest.fixture
@@ -2425,9 +2346,7 @@ def al_khaserx64_rd():
 @pytest.fixture
 def a076114_rd():
     # python -m capa.main tests/data/0761142efbda6c4b1e801223de723578.dll_ --json > tests/data/rd/0761142efbda6c4b1e801223de723578.dll_.json
-    return get_result_doc(
-        CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json"
-    )
+    return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")
 
 
 @pytest.fixture
@@ -2435,8 +2354,5 @@ def dynamic_a0000a6_rd():
     # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
     # gzip tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
     return get_result_doc(
-        CD
-        / "data"
-        / "rd"
-        / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     )

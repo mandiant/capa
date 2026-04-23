@@ -111,11 +111,7 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> tuple[int, Optional[
             continue
 
         opnd0 = insn.opers[0]
-        if not (
-            isinstance(opnd0, i386RegOper)
-            and opnd0.reg == reg
-            and insn.mnem in DESTRUCTIVE_MNEMONICS
-        ):
+        if not (isinstance(opnd0, i386RegOper) and opnd0.reg == reg and insn.mnem in DESTRUCTIVE_MNEMONICS):
             q.extend(get_previous_instructions(vw, cur))
             continue
 
@@ -145,14 +141,10 @@ def is_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
-    return insn.mnem in ("call", "jmp") and isinstance(
-        insn.opers[0], envi.archs.i386.disasm.i386RegOper
-    )
+    return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
-def resolve_indirect_call(
-    vw: VivWorkspace, va: int, insn: envi.Opcode
-) -> tuple[int, Optional[int]]:
+def resolve_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> tuple[int, Optional[int]]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.
 

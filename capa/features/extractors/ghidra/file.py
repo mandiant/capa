@@ -41,9 +41,7 @@ from capa.features.address import (
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
 
-def find_embedded_pe(
-    block_bytez: bytes, mz_xor: list[tuple[bytes, bytes, int]]
-) -> Iterator[tuple[int, int]]:
+def find_embedded_pe(block_bytez: bytes, mz_xor: list[tuple[bytes, bytes, int]]) -> Iterator[tuple[int, int]]:
     """check segment for embedded PE
 
     adapted for Ghidra from:
@@ -66,9 +64,7 @@ def find_embedded_pe(
             continue
 
         e_lfanew_bytes = block_bytez[e_lfanew : e_lfanew + 4]
-        newoff = struct.unpack(
-            "<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i)
-        )[0]
+        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
 
         # assume XOR'd "PE" bytes exist within threshold
         if newoff > MAX_OFFSET_PE_AFTER_MZ:
@@ -96,19 +92,11 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
         for i in range(256)
     ]
 
-    for block in (
-        capa.features.extractors.ghidra.helpers.get_current_program()
-        .getMemory()
-        .getBlocks()
-    ):
-        if not all(
-            (block.isLoaded(), block.isInitialized(), "Headers" not in block.getName())
-        ):
+    for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
+        if not all((block.isLoaded(), block.isInitialized(), "Headers" not in block.getName())):
             continue
 
-        for off, _ in find_embedded_pe(
-            capa.features.extractors.ghidra.helpers.get_block_bytes(block), mz_xor
-        ):
+        for off, _ in find_embedded_pe(capa.features.extractors.ghidra.helpers.get_block_bytes(block), mz_xor):
             # add offset back to block start
             ea_addr = block.getStart().add(off)
             ea = ea_addr.getOffset()
@@ -143,9 +131,7 @@ def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
                             libname = libname[:-4]
 
                         forwarded_name = f"{libname}.{ext_loc.getLabel()}"
-                        forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(
-                            forwarded_name
-                        )
+                        forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
 
                         yield (
                             Export(forwarded_name),
@@ -174,42 +160,28 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
      - importname
     """
 
-    for f in (
-        capa.features.extractors.ghidra.helpers.get_current_program()
-        .getFunctionManager()
-        .getExternalFunctions()
-    ):
+    for f in capa.features.extractors.ghidra.helpers.get_current_program().getFunctionManager().getExternalFunctions():
         addr = None
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
-                addr = (
-                    r.getFromAddress().getOffset()
-                )  # gets pointer to fake external addr
+                addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
                 break
 
         if addr is None:
             continue
 
-        fstr = f.toString().split(
-            "::"
-        )  # format: MODULE.dll::import / MODULE::Ordinal_*
+        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_*
         if "Ordinal_" in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
-        for name in capa.features.extractors.helpers.generate_symbols(
-            fstr[0][:-4], fstr[1], include_dll=True
-        ):
+        for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1], include_dll=True):
             yield Import(name), AbsoluteVirtualAddress(addr)
 
 
 def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
     """extract section names"""
 
-    for block in (
-        capa.features.extractors.ghidra.helpers.get_current_program()
-        .getMemory()
-        .getBlocks()
-    ):
+    for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
         yield (
             Section(block.getName()),
             AbsoluteVirtualAddress(block.getStart().getOffset()),
@@ -219,11 +191,7 @@ def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
 def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
-    for block in (
-        capa.features.extractors.ghidra.helpers.get_current_program()
-        .getMemory()
-        .getBlocks()
-    ):
+    for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
         if not block.isInitialized():
             continue
 
@@ -243,17 +211,9 @@ def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for sym in (
-        capa.features.extractors.ghidra.helpers.get_current_program()
-        .getSymbolTable()
-        .getAllSymbols(True)
-    ):
+    for sym in capa.features.extractors.ghidra.helpers.get_current_program().getSymbolTable().getAllSymbols(True):
         # .isExternal() misses more than this config for the function symbols
-        if (
-            sym.getSymbolType() == SymbolType.FUNCTION
-            and sym.getSource() == SourceType.ANALYSIS
-            and sym.isGlobal()
-        ):
+        if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
             if name.startswith("FID_conflict:"):  # format: FID_conflict:<function-name>
                 name = name[13:]

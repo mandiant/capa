@@ -44,28 +44,20 @@ def get_first_vw_filename(vw: vivisect.VivWorkspace):
     return next(iter(vw.filemeta.keys()))
 
 
-def extract_file_export_names(
-    vw: vivisect.VivWorkspace, **kwargs
-) -> Iterator[tuple[Feature, Address]]:
+def extract_file_export_names(vw: vivisect.VivWorkspace, **kwargs) -> Iterator[tuple[Feature, Address]]:
     for va, _, name, _ in vw.getExports():
         yield Export(name), AbsoluteVirtualAddress(va)
 
     if vw.getMeta("Format") == "pe":
         pe = vw.parsedbin
         baseaddr = pe.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
-        for rva, _, forwarded_name in vw.getFileMeta(
-            get_first_vw_filename(vw), "forwarders"
-        ):
+        for rva, _, forwarded_name in vw.getFileMeta(get_first_vw_filename(vw), "forwarders"):
             try:
                 forwarded_name = forwarded_name.partition(b"\x00")[0].decode("ascii")
             except UnicodeDecodeError:
                 continue
 
-            forwarded_name = (
-                capa.features.extractors.helpers.reformat_forwarded_export_name(
-                    forwarded_name
-                )
-            )
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
             va = baseaddr + rva
             yield Export(forwarded_name), AbsoluteVirtualAddress(va)
             yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
@@ -88,9 +80,7 @@ def extract_file_import_names(vw, **kwargs) -> Iterator[tuple[Feature, Address]]
             impname = "#" + impname[len("ord") :]
 
         addr = AbsoluteVirtualAddress(va)
-        for name in capa.features.extractors.helpers.generate_symbols(
-            modname, impname, include_dll=True
-        ):
+        for name in capa.features.extractors.helpers.generate_symbols(modname, impname, include_dll=True):
             yield Import(name), addr
 
 

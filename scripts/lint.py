@@ -169,9 +169,7 @@ class MissingStaticScope(Lint):
 
 class MissingDynamicScope(Lint):
     name = "missing dynamic scope"
-    recommendation = (
-        "Add a dynamic scope for the rule (file, process, thread, call, or unsupported)"
-    )
+    recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unsupported)"
 
     def check_rule(self, ctx: Context, rule: Rule):
         scopes = rule.meta.get("scopes")
@@ -745,9 +743,7 @@ class FeatureRegexRegistryControlSetMatchIncomplete(Lint):
 
             pat = feature.value.lower()
 
-            if "system\\\\" in pat and (
-                "controlset" in pat or "currentcontrolset" in pat
-            ):
+            if "system\\\\" in pat and ("controlset" in pat or "currentcontrolset" in pat):
                 if "system\\\\(controlset\\d{3}|currentcontrolset)" not in pat:
                     return True
 

@@ -55,9 +55,7 @@ logger = logging.getLogger("capa2yara")
 today = str(datetime.date.today())
 
 # create unique variable names for each rule in case somebody wants to move/copy stuff around later
-var_names = [
-    "".join(letters) for letters in itertools.product(string.ascii_lowercase, repeat=3)
-]
+var_names = ["".join(letters) for letters in itertools.product(string.ascii_lowercase, repeat=3)]
 
 
 # this have to be the internal names used by capa.py which are sometimes different to the ones written out in the rules, e.g. "2 or more" is "Some", count is Range
@@ -189,15 +187,7 @@ def convert_rule(rule, rulename, cround, depth):
             string = string.replace("\n", "\\n")
             string = string.replace("\t", "\\t")
             var_name = "str_" + var_names.pop(0)
-            yara_strings += (
-                "\t$"
-                + var_name
-                + ' = "'
-                + string
-                + '" ascii wide'
-                + convert_description(kid)
-                + "\n"
-            )
+            yara_strings += "\t$" + var_name + ' = "' + string + '" ascii wide' + convert_description(kid) + "\n"
             yara_condition += "\t$" + var_name + " "
         elif s_type == "api" or s_type == "import":
             # research needed to decide if it's possible in YARA to make a difference between api & import?
@@ -214,9 +204,7 @@ def convert_rule(rule, rulename, cround, depth):
                 mod, api = api.split("::")
 
                 var_name = "api_" + var_names.pop(0)
-                yara_strings += (
-                    "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
-                )
+                yara_strings += "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
                 yara_condition += "\t$" + var_name + " "
 
             elif api.count(".") == 1:
@@ -237,9 +225,7 @@ def convert_rule(rule, rulename, cround, depth):
 
                 # limit regex with word boundary \b but also search for appended A and W
                 # alternatively: use something like /(\\x00|\\x01|\\x02|\\x03|\\x04)' + api + '(A|W)?\\x00/  ???
-                yara_strings += (
-                    "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
-                )
+                yara_strings += "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
                 yara_condition += "\t$" + var_name + " "
 
         elif s_type == "export":
@@ -257,13 +243,7 @@ def convert_rule(rule, rulename, cround, depth):
             var_name_sec = var_names.pop(0)
             # yeah, it would be better to make one loop out of multiple sections but we're in POC-land (and I guess it's not much of a performance hit, loop over short array?)
             yara_condition += (
-                "\tfor any "
-                + var_name_sec
-                + " in pe.sections : ( "
-                + var_name_sec
-                + '.name == "'
-                + section
-                + '" ) '
+                "\tfor any " + var_name_sec + " in pe.sections : ( " + var_name_sec + '.name == "' + section + '" ) '
             )
 
         elif s_type == "match":
@@ -297,15 +277,7 @@ def convert_rule(rule, rulename, cround, depth):
             logger.info("doing bytes: %r", bytesv)
             var_name = var_names.pop(0)
 
-            yara_strings += (
-                "\t$"
-                + var_name
-                + " = { "
-                + bytesv
-                + " }"
-                + convert_description(kid)
-                + "\n"
-            )
+            yara_strings += "\t$" + var_name + " = { " + bytesv + " }" + convert_description(kid) + "\n"
             yara_condition += "\t$" + var_name + " "
 
         elif s_type == "number":
@@ -328,15 +300,7 @@ def convert_rule(rule, rulename, cround, depth):
             logger.info("number ok: %r", number)
 
             var_name = "num_" + var_names.pop(0)
-            yara_strings += (
-                "\t$"
-                + var_name
-                + " = { "
-                + number
-                + "}"
-                + convert_description(kid)
-                + "\n"
-            )
+            yara_strings += "\t$" + var_name + " = { " + number + "}" + convert_description(kid) + "\n"
             yara_condition += "$" + var_name + " "
 
         elif s_type == "regex":
@@ -372,16 +336,7 @@ def convert_rule(rule, rulename, cround, depth):
 
             # strange: if statement.name == "string", the string is as it is, if statement.name == "regex", the string has // around it, e.g. /regex/
             var_name = "re_" + var_names.pop(0)
-            yara_strings += (
-                "\t"
-                + "$"
-                + var_name
-                + " = "
-                + regex
-                + " ascii wide "
-                + convert_description(kid)
-                + "\n"
-            )
+            yara_strings += "\t" + "$" + var_name + " = " + regex + " ascii wide " + convert_description(kid) + "\n"
             yara_condition += "\t" + "$" + var_name + " "
         elif s_type == "Not" or s_type == "And" or s_type == "Or":
             pass
@@ -470,9 +425,7 @@ def convert_rule(rule, rulename, cround, depth):
                         incomplete,
                     )
 
-            if (
-                s_type == "And" or s_type == "Or" or s_type == "Not"
-            ) and kid.name != "Some":
+            if (s_type == "And" or s_type == "Or" or s_type == "Not") and kid.name != "Some":
                 logger.info("doing bool with recursion: %r", kid)
                 logger.info("kid coming: %r", kid.name)
                 # logger.info("grandchildren: " + repr(kid.children))
@@ -487,9 +440,7 @@ def convert_rule(rule, rulename, cround, depth):
                     incomplete_sub,
                 ) = convert_rule(kid, rulename, cround, depth)
 
-                logger.info(
-                    "coming out of this recursion, depth: %d s_type: %s", depth, s_type
-                )
+                logger.info("coming out of this recursion, depth: %d s_type: %s", depth, s_type)
 
                 if yara_strings_sub == "BREAK":
                     logger.info(
@@ -533,9 +484,7 @@ def convert_rule(rule, rulename, cround, depth):
 
             if yara_strings_sub == "BREAK":
                 logger.info("Unknown feature at3: %s", rule.name)
-                logger.info(
-                    "rule.name,  depth,  cround: %s, %d, %d", rule.name, depth, cround
-                )
+                logger.info("rule.name,  depth,  cround: %s, %d, %d", rule.name, depth, cround)
                 if rule.name == "Or" and depth == 1 and cround > min_rounds - 1:
                     logger.info(
                         "Unknown feature, just ignore this branch and keep the rest bec we're in Or (2): %s - depth: %d",
@@ -544,9 +493,7 @@ def convert_rule(rule, rulename, cround, depth):
                     )
 
                     rule_comment += "This rule is incomplete because a branch inside an Or-statement had an unsupported feature and was skipped"
-                    rule_comment += (
-                        "=> coverage is reduced compared to the original capa rule. "
-                    )
+                    rule_comment += "=> coverage is reduced compared to the original capa rule. "
                     x += 1
                     incomplete = 1
                     continue
@@ -565,9 +512,7 @@ def convert_rule(rule, rulename, cround, depth):
     if not yara_condition_list:
         return (
             "BREAK",
-            'Multiple statements inside "- or:" where all unsupported, the last one was "'
-            + s_type
-            + '"',
+            'Multiple statements inside "- or:" where all unsupported, the last one was "' + s_type + '"',
             rule_comment,
             incomplete,
         )
@@ -578,11 +523,7 @@ def convert_rule(rule, rulename, cround, depth):
         else:
             yara_strings = ""
 
-        yara_condition = (
-            " (\n\t\t"
-            + ("\n\t\t" + statement.lower() + " ").join(yara_condition_list)
-            + " \n\t) "
-        )
+        yara_condition = " (\n\t\t" + ("\n\t\t" + statement.lower() + " ").join(yara_condition_list) + " \n\t) "
 
     elif statement == "Some":
         cmin = rule.count
@@ -601,9 +542,7 @@ def convert_rule(rule, rulename, cround, depth):
         yara_condition = "not " + "".join(yara_condition_list) + " "
     else:
         if len(yara_condition_list) != 1:
-            logger.info(
-                "something wrong around here %r - %s", yara_condition_list, statement
-            )
+            logger.info("something wrong around here %r - %s", yara_condition_list, statement)
             sys.exit()
 
         # strings might be empty with only conditions
@@ -629,9 +568,7 @@ def output_yar(yara):
 def output_unsupported_capa_rules(yaml, capa_rulename, url, reason):
     if reason != "NOLOG":
         if capa_rulename not in unsupported_capa_rules_list:
-            logger.info(
-                "unsupported: %s - reason: %s, - url: %s", capa_rulename, reason, url
-            )
+            logger.info("unsupported: %s - reason: %s, - url: %s", capa_rulename, reason, url)
 
             unsupported_capa_rules_list.append(capa_rulename)
             unsupported_capa_rules.write(yaml.encode("utf-8") + b"\n")
@@ -643,10 +580,7 @@ def output_unsupported_capa_rules(yaml, capa_rulename, url, reason):
                 ).encode("utf-8")
                 + b"\n"
             )
-            unsupported_capa_rules.write(
-                url.encode("utf-8")
-                + b"\n----------------------------------------------\n"
-            )
+            unsupported_capa_rules.write(url.encode("utf-8") + b"\n----------------------------------------------\n")
             unsupported_capa_rules_names.write(capa_rulename.encode("utf-8") + b":")
             unsupported_capa_rules_names.write(reason.encode("utf-8") + b":")
             unsupported_capa_rules_names.write(url.encode("utf-8") + b"\n")
@@ -694,16 +628,12 @@ def convert_rules(rules, namespaces, cround, make_priv):
                     logger.info("Depending on another rule: %s", dep)
                     continue
 
-        yara_strings, yara_condition, rule_comment, incomplete = convert_rule(
-            rule.statement, rule.name, cround, 0
-        )
+        yara_strings, yara_condition, rule_comment, incomplete = convert_rule(rule.statement, rule.name, cround, 0)
 
         if yara_strings == "BREAK":
             # only give up if in final extra round #9000
             if cround == 9000:
-                output_unsupported_capa_rules(
-                    rule.to_yaml(), rule.name, url, yara_condition
-                )
+                output_unsupported_capa_rules(rule.to_yaml(), rule.name, url, yara_condition)
             logger.info("Unknown feature at5: %s", rule.name)
         else:
             yara_meta = ""
@@ -716,20 +646,8 @@ def convert_rules(rules, namespaces, cround, make_priv):
                 seen_hashes = []
                 if isinstance(metas[meta], dict):
                     if meta_name == "scopes":
-                        yara_meta += (
-                            "\t"
-                            + "static scope"
-                            + ' = "'
-                            + metas[meta]["static"]
-                            + '"\n'
-                        )
-                        yara_meta += (
-                            "\t"
-                            + "dynamic scope"
-                            + ' = "'
-                            + metas[meta]["dynamic"]
-                            + '"\n'
-                        )
+                        yara_meta += "\t" + "static scope" + ' = "' + metas[meta]["static"] + '"\n'
+                        yara_meta += "\t" + "dynamic scope" + ' = "' + metas[meta]["dynamic"] + '"\n'
 
                 elif isinstance(metas[meta], list):
                     if meta_name == "examples":
@@ -815,15 +733,7 @@ def convert_rules(rules, namespaces, cround, make_priv):
 
                 # put yara rule tags here:
                 rule_tags = default_tags + rule_tags
-                yara += (
-                    "rule "
-                    + rule_name
-                    + " : "
-                    + rule_tags
-                    + " { \n  meta: \n "
-                    + yara_meta
-                    + "\n"
-                )
+                yara += "rule " + rule_name + " : " + rule_tags + " { \n  meta: \n " + yara_meta + "\n"
 
                 if "$" in yara_strings:
                     yara += "  strings: \n " + yara_strings + " \n"
@@ -834,9 +744,7 @@ def convert_rules(rules, namespaces, cround, make_priv):
                 converted_rules.append(rule_name)
                 count_incomplete += incomplete
             else:
-                output_unsupported_capa_rules(
-                    rule.to_yaml(), rule.name, url, yara_condition
-                )
+                output_unsupported_capa_rules(rule.to_yaml(), rule.name, url, yara_condition)
                 pass
 
     return count_incomplete
@@ -893,9 +801,7 @@ def main(argv=None):
     output_yar(
         '// att&ck and MBC tags are put into YARA rule tags. All rules are tagged with "CAPA" for easy filtering'
     )
-    output_yar(
-        "// The date = in meta: is the date of converting (there is no date in capa rules)"
-    )
+    output_yar("// The date = in meta: is the date of converting (there is no date in capa rules)")
     output_yar("// Minimum YARA version is 3.8.0 plus PE module")
     output_yar('\nimport "pe"')
 
@@ -916,11 +822,7 @@ def main(argv=None):
 
     stats = "\n// converted rules              : " + str(len(converted_rules))
     stats += "\n//   among those are incomplete : " + str(count_incomplete)
-    stats += (
-        "\n// unconverted rules            : "
-        + str(len(unsupported_capa_rules_list))
-        + "\n"
-    )
+    stats += "\n// unconverted rules            : " + str(len(unsupported_capa_rules_list)) + "\n"
     logger.info("%s", stats)
     output_yar(stats)
 

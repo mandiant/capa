@@ -74,9 +74,7 @@ def main(argv=None):
     # ensure capa loads the minimized archive
     assert isinstance(VMRayAnalysis(Path(new_zip_name)), VMRayAnalysis)
 
-    print(
-        f"Created minimized VMRay archive '{new_zip_name}' with password '{args.password}'."
-    )
+    print(f"Created minimized VMRay archive '{new_zip_name}' with password '{args.password}'.")
 
 
 if __name__ == "__main__":

@@ -40,9 +40,7 @@ def _bb_has_tight_loop(f, bb):
     return False
 
 
-def extract_bb_tight_loop(
-    f: FunctionHandle, bb: BBHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
     if _bb_has_tight_loop(f, bb.inner):
         yield Characteristic("tight loop"), bb.address
@@ -65,9 +63,7 @@ def _bb_has_stackstring(f, bb):
     return False
 
 
-def extract_stackstring(
-    f: FunctionHandle, bb: BBHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """check basic block for stackstring indicators"""
     if _bb_has_stackstring(f, bb.inner):
         yield Characteristic("stack string"), bb.address
@@ -142,9 +138,7 @@ def is_printable_utf16le(chars: bytes) -> bool:
     return False
 
 
-def extract_features(
-    f: FunctionHandle, bb: BBHandle
-) -> Iterator[tuple[Feature, Address]]:
+def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 

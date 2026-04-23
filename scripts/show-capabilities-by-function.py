@@ -122,9 +122,7 @@ def render_matches_by_function(doc: rd.ResultDocument):
     for f in doc.meta.analysis.feature_counts.functions:
         if not matches_by_function.get(f.address, {}):
             continue
-        ostream.writeln(
-            f"function at {capa.render.verbose.format_address(f.address)} with {f.count} features: "
-        )
+        ostream.writeln(f"function at {capa.render.verbose.format_address(f.address)} with {f.count} features: ")
         for rule_name in sorted(matches_by_function[f.address]):
             ostream.writeln("  - " + rule_name)
 
@@ -159,12 +157,8 @@ def main(argv=None):
 
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(
-        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
-    )
-    meta.analysis.layout = capa.loader.compute_layout(
-        rules, extractor, capabilities.matches
-    )
+    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     if capa.capabilities.common.has_static_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary

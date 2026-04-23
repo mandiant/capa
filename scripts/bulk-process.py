@@ -105,9 +105,7 @@ def get_capa_results(args):
     rules, signatures, format_, backend, os_, input_file = args
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    capa.main.install_common_args(
-        parser, wanted={"rules", "signatures", "format", "os", "backend", "input_file"}
-    )
+    capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os", "backend", "input_file"})
     argv = [
         "--signatures",
         signatures,
@@ -154,16 +152,10 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    capabilities = capa.capabilities.common.find_capabilities(
-        rules, extractor, disable_progress=True
-    )
+    capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
-    meta = capa.loader.collect_metadata(
-        argv, args.input_file, format_, os_, [], extractor, capabilities
-    )
-    meta.analysis.layout = capa.loader.compute_layout(
-        rules, extractor, capabilities.matches
-    )
+    meta = capa.loader.collect_metadata(argv, args.input_file, format_, os_, [], extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
     return {"path": input_file, "status": "ok", "ok": doc.model_dump()}
@@ -174,9 +166,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    capa.main.install_common_args(
-        parser, wanted={"rules", "signatures", "format", "os", "backend"}
-    )
+    capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os", "backend"})
     parser.add_argument(
         "input_directory",
         type=str,
@@ -245,9 +235,7 @@ def main(argv=None):
         if result["status"] == "error":
             logger.warning(result["error"])
         elif result["status"] == "ok":
-            doc = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(
-                exclude_none=True
-            )
+            doc = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(exclude_none=True)
             results[result["path"]] = json.loads(doc)
 
         else:

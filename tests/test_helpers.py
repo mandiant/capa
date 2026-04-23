@@ -45,9 +45,7 @@ def test_generate_symbols():
     )
 
     # A/W import
-    symbols = list(
-        helpers.generate_symbols("kernel32", "CreateFileA", include_dll=True)
-    )
+    symbols = list(helpers.generate_symbols("kernel32", "CreateFileA", include_dll=True))
     assert len(symbols) == 4
     assert "kernel32.CreateFileA" in symbols
     assert "kernel32.CreateFile" in symbols
@@ -66,9 +64,7 @@ def test_generate_symbols():
     assert "ws2_32.#1" in symbols
 
     # A/W api
-    symbols = list(
-        helpers.generate_symbols("kernel32", "CreateFileA", include_dll=False)
-    )
+    symbols = list(helpers.generate_symbols("kernel32", "CreateFileA", include_dll=False))
     assert len(symbols) == 2
     assert "CreateFileA" in symbols
     assert "CreateFile" in symbols

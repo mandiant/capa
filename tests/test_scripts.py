@@ -16,8 +16,8 @@
 import os
 import sys
 import logging
-import textwrap
 import zipfile
+import textwrap
 import subprocess
 from pathlib import Path
 
@@ -67,9 +67,7 @@ def test_minimize_vmray_results_writes_encrypted_zip(tmp_path):
     content = b"test content"
     zip_path = tmp_path / "test.zip"
 
-    with pyzipper.AESZipFile(
-        zip_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES
-    ) as zf:
+    with pyzipper.AESZipFile(zip_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
         zf.setpassword(password)
         zf.writestr("file.txt", content)
 
@@ -88,19 +86,12 @@ def test_minimize_vmray_results_writes_encrypted_zip(tmp_path):
         pytest.param("capafmt.py", [get_rule_path()]),
         pytest.param(
             "capa2sarif.py",
-            [
-                Path(__file__).resolve().parent
-                / "data"
-                / "rd"
-                / "Practical Malware Analysis Lab 01-01.dll_.json"
-            ],
+            [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
         ),
         # testing some variations of linter script
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
         # `create directory` rule has native and .NET example PEs
-        pytest.param(
-            "lint.py", ["--thorough", "-t", "create directory", get_rules_path()]
-        ),
+        pytest.param("lint.py", ["--thorough", "-t", "create directory", get_rules_path()]),
         pytest.param("match-function-id.py", [get_binary_file_path()]),
         pytest.param("show-capabilities-by-function.py", [get_binary_file_path()]),
         pytest.param("show-features.py", [get_binary_file_path()]),
@@ -160,9 +151,7 @@ def test_bulk_process_explicit_argv(tmp_path):
     dest_file = t / "test.exe_"
     dest_file.write_bytes(source_file.read_bytes())
 
-    spec = importlib.util.spec_from_file_location(
-        "bulk_process", get_script_path("bulk-process.py")
-    )
+    spec = importlib.util.spec_from_file_location("bulk_process", get_script_path("bulk-process.py"))
     assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
@@ -182,12 +171,7 @@ def run_program(script_path, args):
 def test_proto_conversion(tmp_path):
     t = tmp_path / "proto-test"
     t.mkdir()
-    json_file = (
-        Path(__file__).resolve().parent
-        / "data"
-        / "rd"
-        / "Practical Malware Analysis Lab 01-01.dll_.json"
-    )
+    json_file = Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
 
     p = run_program(get_script_path("proto-from-results.py"), [json_file])
     assert p.returncode == 0
@@ -198,9 +182,7 @@ def test_proto_conversion(tmp_path):
     p = run_program(get_script_path("proto-to-results.py"), [pb_file])
     assert p.returncode == 0
 
-    assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(
-        b'{\r\n  "meta": '
-    )
+    assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')
 
 
 def test_capa2sarif_invalid_json(tmp_path):
@@ -308,13 +290,9 @@ def test_missing_static_dynamic_scope_no_crash_when_scopes_absent():
     import capa.engine
     import capa.features.common
 
-    scopes = capa.rules.Scopes(
-        static=capa.rules.Scope.FUNCTION, dynamic=capa.rules.Scope.PROCESS
-    )
+    scopes = capa.rules.Scopes(static=capa.rules.Scope.FUNCTION, dynamic=capa.rules.Scope.PROCESS)
     statement = capa.engine.And([])
-    rule = capa.rules.Rule(
-        "test rule no scopes", scopes, statement, {"name": "test rule no scopes"}
-    )
+    rule = capa.rules.Rule("test rule no scopes", scopes, statement, {"name": "test rule no scopes"})
 
     assert lint_module.MissingStaticScope().check_rule(None, rule) is False
     assert lint_module.MissingDynamicScope().check_rule(None, rule) is False
@@ -392,6 +370,4 @@ def test_feature_regex_registry_control_set_checks_all_features():
     assert lint_instance.check_features(None, [ok_regex]) is False
     assert lint_instance.check_features(None, [ok_regex, bad_regex]) is True
     assert lint_instance.check_features(None, [correct_regex]) is False
-    assert (
-        lint_instance.check_features(None, [unrelated_currentcontrolset_regex]) is False
-    )
+    assert lint_instance.check_features(None, [unrelated_currentcontrolset_regex]) is False

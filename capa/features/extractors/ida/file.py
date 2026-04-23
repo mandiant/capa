@@ -64,9 +64,7 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[tuple[int, int]]:
     todo = []
     for mzx, pex, i in mz_xor:
         # find all segment offsets containing XOR'd "MZ" bytes
-        for off in capa.features.extractors.ida.helpers.find_byte_sequence(
-            seg.start_ea, seg.end_ea, mzx
-        ):
+        for off in capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx):
             todo.append((off, mzx, pex, i))
 
     while len(todo):
@@ -102,9 +100,7 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
         - '-R' from console
         - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments(
-        skip_header_segments=True
-    ):
+    for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         for ea, _ in check_segment_for_pe(seg):
             yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
@@ -116,11 +112,7 @@ def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
         if forwarded_name is None:
             yield Export(name), AbsoluteVirtualAddress(ea)
         else:
-            forwarded_name = (
-                capa.features.extractors.helpers.reformat_forwarded_export_name(
-                    forwarded_name
-                )
-            )
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
             yield Export(forwarded_name), AbsoluteVirtualAddress(ea)
             yield Characteristic("forwarded export"), AbsoluteVirtualAddress(ea)
 
@@ -141,9 +133,7 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
         if info[1] and info[2]:
             # e.g. in mimikatz: ('cabinet', 'FCIAddFile', 11L)
             # extract by name here and by ordinal below
-            for name in capa.features.extractors.helpers.generate_symbols(
-                info[0], info[1], include_dll=True
-            ):
+            for name in capa.features.extractors.helpers.generate_symbols(info[0], info[1], include_dll=True):
                 yield Import(name), addr
             dll = info[0]
             symbol = f"#{info[2]}"
@@ -156,9 +146,7 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
         else:
             continue
 
-        for name in capa.features.extractors.helpers.generate_symbols(
-            dll, symbol, include_dll=True
-        ):
+        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol, include_dll=True):
             yield Import(name), addr
 
     for ea, info in capa.features.extractors.ida.helpers.get_file_externs().items():
@@ -172,9 +160,7 @@ def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
         - '-R' from console
         - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments(
-        skip_header_segments=True
-    ):
+    for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         yield Section(idaapi.get_segm_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
 
 

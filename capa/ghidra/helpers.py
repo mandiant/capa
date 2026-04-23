@@ -21,8 +21,8 @@ import capa
 import capa.version
 import capa.features.common
 import capa.features.freeze
-import capa.features.extractors.elf
 import capa.render.result_document as rdoc
+import capa.features.extractors.elf
 import capa.features.extractors.ghidra.context as ghidra_context
 import capa.features.extractors.ghidra.helpers
 from capa.features.address import AbsoluteVirtualAddress
@@ -74,9 +74,7 @@ class GHIDRAIO:
         )
 
         if size > len(self.bytes_) - self.offset:
-            logger.debug(
-                "cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset
-            )
+            logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
             return b""
         else:
             return self.bytes_[self.offset : self.offset + size]
@@ -128,9 +126,7 @@ def is_supported_file_type():
         logger.error(
             " capa currently only supports analyzing PE, ELF, or binary files containing x86 (32- and 64-bit) shellcode."
         )
-        logger.error(
-            " If you don't know the input file type, you can try using the `file` utility to guess it."
-        )
+        logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
         logger.error("-" * 80)
         return False
     return True
@@ -139,9 +135,7 @@ def is_supported_file_type():
 def is_supported_arch_type():
     lang_id = str(get_current_program().getLanguageID()).lower()
 
-    if not all(
-        (lang_id.startswith("x86"), any(arch in lang_id for arch in ("32", "64")))
-    ):
+    if not all((lang_id.startswith("x86"), any(arch in lang_id for arch in ("32", "64")))):
         logger.error("-" * 80)
         logger.error(" Input file does not appear to target a supported architecture.")
         logger.error(" ")

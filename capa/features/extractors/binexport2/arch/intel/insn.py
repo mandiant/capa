@@ -153,9 +153,7 @@ def extract_insn_offset_features(
     if is_address_mapped(be2, value):
         return
 
-    value = capa.features.extractors.binexport2.helpers.twos_complement(
-        fhi.arch, value, 32
-    )
+    value = capa.features.extractors.binexport2.helpers.twos_complement(fhi.arch, value, 32)
     yield Offset(value), ih.address
     yield OperandOffset(match.operand_index, value), ih.address
 
@@ -174,13 +172,8 @@ def is_security_cookie(
 
     # security cookie check should use SP or BP
     op1: BinExport2.Operand = be2.operand[instruction.operand_index[1]]
-    op1_exprs: list[BinExport2.Expression] = [
-        be2.expression[expr_i] for expr_i in op1.expression_index
-    ]
-    if all(
-        expr.symbol.lower() not in ("bp", "esp", "ebp", "rbp", "rsp")
-        for expr in op1_exprs
-    ):
+    op1_exprs: list[BinExport2.Expression] = [be2.expression[expr_i] for expr_i in op1.expression_index]
+    if all(expr.symbol.lower() not in ("bp", "esp", "ebp", "rbp", "rsp") for expr in op1_exprs):
         return False
 
     # check_nzxor_security_cookie_delta
@@ -189,16 +182,12 @@ def is_security_cookie(
     basic_block_index: int = bbi.basic_block_index
     bb: BinExport2.BasicBlock = be2.basic_block[basic_block_index]
     if flow_graph.entry_basic_block_index == basic_block_index:
-        first_addr: int = min(
-            idx.insn_address_by_index[ir.begin_index] for ir in bb.instruction_index
-        )
+        first_addr: int = min(idx.insn_address_by_index[ir.begin_index] for ir in bb.instruction_index)
         if instruction_address < first_addr + SECURITY_COOKIE_BYTES_DELTA:
             return True
     # or insn falls at the end before return in a terminal basic block.
     if basic_block_index not in (e.source_basic_block_index for e in flow_graph.edge):
-        last_addr: int = max(
-            idx.insn_address_by_index[ir.end_index - 1] for ir in bb.instruction_index
-        )
+        last_addr: int = max(idx.insn_address_by_index[ir.end_index - 1] for ir in bb.instruction_index)
         if instruction_address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
             return True
     return False
@@ -229,9 +218,7 @@ def extract_insn_nzxor_characteristic_features(
     instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     # guaranteed to be simple int/reg operands
     # so we don't have to realize the tree/list.
-    operands: list[BinExport2.Operand] = [
-        be2.operand[operand_index] for operand_index in instruction.operand_index
-    ]
+    operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
     if operands[0] == operands[1]:
         return
