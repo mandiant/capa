@@ -209,6 +209,9 @@ def extract_insn_nzxor_characteristic_features(
     operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
     if operands[0] == operands[1]:
+        # xor eax, eax and similar instructions zero a register.
+        # emit Number(0) to let rules match on the produced value.
+        yield Number(0), ih.address
         return
 
     instruction_address: int = idx.insn_address_by_index[ii.instruction_index]
