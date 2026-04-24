@@ -25,6 +25,7 @@ import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
+from capa.features.common import String
 from capa.capabilities.common import Capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
@@ -163,7 +164,23 @@ def find_static_capabilities(
     library_functions_list: list[rdoc.LibraryFunction] = []
 
     assert isinstance(extractor, StaticFeatureExtractor)
+
     functions: list[FunctionHandle] = list(extractor.get_functions())
+
+    # Pre-filter string rules based on strings found in the binary.
+    # For each rule whose required Substring/Regex patterns are provably absent
+    # from the binary's file-level strings, mark it as skippable in _match().
+    # This replaces repeated Regex.evaluate() calls (once per function × per rule)
+    # with a single file-level scan.  See: https://github.com/mandiant/capa/issues/2126
+    #
+    # The upfront scan cost is O(|string_rules| × |file_strings|).  For small
+    # binaries this overhead can exceed the savings, so we only activate the
+    # pre-filter when there are enough functions to justify it.
+    if len(functions) >= 10:
+        file_strings: frozenset[str] = frozenset(
+            feature.value for feature, _ in extractor.extract_file_features() if isinstance(feature, String)
+        )
+        ruleset.prepare_for_file(file_strings)
     n_funcs: int = len(functions)
     n_libs: int = 0
     percentage: float = 0
@@ -238,6 +255,9 @@ def find_static_capabilities(
         file=all_file_capabilities.feature_count,
         functions=tuple(function_feature_counts),
     )
+
+    # Clear the string pre-filter so the ruleset is clean for potential reuse.
+    ruleset.prepare_for_file(frozenset())
 
     matches: MatchResults = dict(
         itertools.chain(

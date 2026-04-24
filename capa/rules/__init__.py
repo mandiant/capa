@@ -1495,6 +1495,11 @@ class RuleSet:
             scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
         }
 
+        # Set of string-rule names whose required patterns are absent from the current binary.
+        # Populated by prepare_for_file(); empty means no pre-filtering is active.
+        # See: https://github.com/mandiant/capa/issues/2126
+        self._impossible_string_rule_names: set[str] = set()
+
     @property
     def file_rules(self):
         return self.rules_by_scope[Scope.FILE]
@@ -2016,6 +2021,92 @@ class RuleSet:
         """
         rules.sort(key=lambda r: rule_index_by_rule_name[r.name])
 
+    def prepare_for_file(self, file_strings: frozenset[str]) -> None:
+        """
+        Pre-filter string rules based on strings extracted from the binary file.
+
+        Rules whose required Substring/Regex patterns cannot match any string in
+        file_strings will be skipped during subsequent _match() calls.  This
+        saves repeated Regex.evaluate() / Substring.evaluate() work for patterns
+        that are provably absent from the binary.
+
+        Call this before analyzing functions for a binary.
+        Pass an empty frozenset to clear the filter between binaries.
+
+        See: https://github.com/mandiant/capa/issues/2126
+
+        Performance note: both Substring and Regex patterns use a concatenated-string
+        fast path (O(1) regex calls per rule) rather than per-string iteration.
+        Substring uses a \x01-joined concat with a C-level `in` check.  Regex uses a
+        \n-joined concat with re.MULTILINE so that ^ / $ bind to line boundaries (one
+        re.search per rule).  A per-string fallback runs only when the concat scan
+        matches, to rule out DOTALL false positives where .* spans a \n boundary.
+        """
+        if not file_strings:
+            self._impossible_string_rule_names = set()
+            return
+
+        # Two concatenated forms are used to accelerate the scan:
+        #
+        # concat_substr  (\x01-separated) — for Substring patterns.
+        #   A literal pattern cannot span a \x01 boundary (rule patterns are
+        #   printable ASCII; \x01 never appears in them or in extracted strings).
+        #   One C-level `in` check replaces N per-string comparisons.
+        #
+        # concat_regex   (\n-separated)   — for Regex patterns.
+        #   Each pattern is compiled with re.MULTILINE added so that ^ and $
+        #   match at \n boundaries rather than only at the start/end of the whole
+        #   string.  This fixes the anchor bug: `re.search("^foo", "bar\nfoo")`
+        #   succeeds when re.MULTILINE is set.  One re.search per rule replaces N
+        #   per-string calls.  For patterns compiled with re.DOTALL, `.` also
+        #   matches \n, so `.*` could bridge two adjacent strings (false positive);
+        #   per-string confirmation handles that case.
+        concat_substr: str = "\x01".join(file_strings)
+        concat_regex: str = "\n".join(file_strings)
+
+        impossible: set[str] = set()
+        all_string_rule_names: set[str] = set()
+
+        for feature_index in self._feature_indexes_by_scopes.values():
+            for rule_name, wanted_strings in feature_index.string_rules.items():
+                if rule_name in all_string_rule_names:
+                    continue
+                all_string_rule_names.add(rule_name)
+
+                can_match = False
+                for feat in wanted_strings:
+                    if isinstance(feat, capa.features.common.Substring):
+                        if feat.value in concat_substr:
+                            can_match = True
+                            break
+                    elif isinstance(feat, capa.features.common.Regex):
+                        # Re-compile with MULTILINE so ^ / $ respect \n boundaries.
+                        # Python's re module caches compiled patterns internally, so
+                        # the recompile cost is paid only on the first call.
+                        ml_re = re.compile(feat.re.pattern, feat.re.flags | re.MULTILINE)
+                        if ml_re.search(concat_regex):
+                            # Concat matched: confirm per-string to rule out false
+                            # positives from DOTALL patterns whose .* spans a \n.
+                            if any(feat.re.search(s) for s in file_strings):
+                                can_match = True
+                                break
+                        # No concat match → pattern is absent from every file string.
+                    else:
+                        # Unknown feature type: keep to be safe.
+                        can_match = True
+                        break
+                if not can_match:
+                    impossible.add(rule_name)
+
+        if impossible:
+            logger.debug(
+                "pre-filter: %d/%d string rules skipped (patterns absent from binary)",
+                len(impossible),
+                len(all_string_rule_names),
+            )
+
+        self._impossible_string_rule_names = impossible
+
     def _match(self, scope: Scope, features: FeatureSet, addr: Address) -> tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
@@ -2094,7 +2185,19 @@ class RuleSet:
                     string_features[feature] = locations
 
             if string_features:
+                # Some extractors may synthesize stack strings that do not exist as contiguous
+                # file bytes. In that case, avoid file-level pre-filtering for this scope.
+                has_stack_string_characteristic = any(
+                    isinstance(feature, capa.features.common.Characteristic) and feature.value == "stack string"
+                    for feature in features
+                )
                 for rule_name, wanted_strings in feature_index.string_rules.items():
+                    # Skip rules whose patterns are provably absent from the binary.
+                    # prepare_for_file() pre-checks all file strings once and populates
+                    # _impossible_string_rule_names to avoid repeated Regex.evaluate() work.
+                    # See: https://github.com/mandiant/capa/issues/2126
+                    if not has_stack_string_characteristic and rule_name in self._impossible_string_rule_names:
+                        continue
                     for wanted_string in wanted_strings:
                         if wanted_string.evaluate(string_features):
                             candidate_rule_names.add(rule_name)
