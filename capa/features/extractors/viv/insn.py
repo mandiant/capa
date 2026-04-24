@@ -142,9 +142,11 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 break
 
             # if jump leads to an ENDBRANCH instruction, skip it
-            _offset, _buf = f.vw.getByteDef(target)
-            if _buf[_offset:].startswith(b"\xf3\x0f\x1e"):
-                target += 4
+            byte_def = f.vw.getByteDef(target)
+            if byte_def:
+                _offset, _buf = byte_def
+                if _buf[_offset:].startswith(b"\xf3\x0f\x1e"):
+                    target += 4
 
             target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, target)
             if not target:
