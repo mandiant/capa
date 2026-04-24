@@ -446,3 +446,14 @@ def test_binexport_feature_counts_ghidra(sample, scope, feature, expected):
     sample = sample.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
     assert sample.exists()
     fixtures.do_test_feature_count(fixtures.get_binexport_extractor, sample, scope, feature, expected)
+
+
+@fixtures.parametrize(
+    "sample,scope,feature,expected",
+    fixtures.FEATURE_COUNT_TESTS_BE2_INTEL,
+    indirect=["sample", "scope"],
+)
+def test_binexport_feature_counts_intel(sample, scope, feature, expected):
+    sample = sample.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
+    assert sample.exists()
+    fixtures.do_test_feature_count(fixtures.get_binexport_extractor, sample, scope, feature, expected)

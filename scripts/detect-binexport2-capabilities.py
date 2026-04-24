@@ -39,10 +39,7 @@ import argparse
 
 import capa.main
 import capa.rules
-import capa.engine
 import capa.loader
-import capa.helpers
-import capa.features
 import capa.exceptions
 import capa.render.proto
 import capa.render.verbose

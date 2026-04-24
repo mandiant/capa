@@ -19,8 +19,6 @@ from collections import Counter
 import idc
 import idaapi
 
-import capa.rules
-import capa.engine
 import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
@@ -208,9 +206,9 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             "      - <insert_references>",
             "    examples:",
             (
-                f"      - {capa.ida.helpers.get_file_md5().upper()}:{hex(ea)}"
+                f"      - {capa.ida.helpers.retrieve_input_file_md5().upper()}:{hex(ea)}"
                 if ea
-                else f"      - {capa.ida.helpers.get_file_md5().upper()}"
+                else f"      - {capa.ida.helpers.retrieve_input_file_md5().upper()}"
             ),
             "  features:",
         ]
@@ -237,7 +235,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                 # determine lineno for first selected line, and column
                 cur.setPosition(select_start_ppos)
                 start_lineno = self.count_previous_lines_from_block(cur.block())
-                start_lineco = cur.columnNumber()
+                start_colno = cur.columnNumber()
 
                 # determine lineno for last selected line
                 cur.setPosition(select_end_ppos)
@@ -282,7 +280,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                     select_end_ppos += (lines_modified * len(self.INDENT)) + len(self.INDENT)
                 elif lines_modified:
                     # user SHIFT + Tab, decrease selection positions
-                    if start_lineco not in (0, 1) and first_modified:
+                    if start_colno not in (0, 1) and first_modified:
                         # only decrease start position if not in first column
                         select_start_ppos -= len(self.INDENT)
                     select_end_ppos -= lines_modified * len(self.INDENT)
@@ -377,14 +375,6 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
     def get_node_type_comment():
         """ """
         return 2
-
-    def dragMoveEvent(self, e):
-        """ """
-        super().dragMoveEvent(e)
-
-    def dragEventEnter(self, e):
-        """ """
-        super().dragEventEnter(e)
 
     def dropEvent(self, e):
         """ """
@@ -562,8 +552,16 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             ("or", ("- or:", self.itemAt(pos)), self.slot_edit_expression),
             ("not", ("- not:", self.itemAt(pos)), self.slot_edit_expression),
             ("optional", ("- optional:", self.itemAt(pos)), self.slot_edit_expression),
-            ("basic block", ("- basic block:", self.itemAt(pos)), self.slot_edit_expression),
-            ("instruction", ("- instruction:", self.itemAt(pos)), self.slot_edit_expression),
+            (
+                "basic block",
+                ("- basic block:", self.itemAt(pos)),
+                self.slot_edit_expression,
+            ),
+            (
+                "instruction",
+                ("- instruction:", self.itemAt(pos)),
+                self.slot_edit_expression,
+            ),
         )
 
         # build submenu with modify actions
@@ -719,7 +717,14 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             node.setText(idx, text)
 
         # we need to set our own type so we can control the GUI accordingly
-        if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- instruction:", "- optional:")):
+        if feature.startswith((
+            "- and:",
+            "- or:",
+            "- not:",
+            "- basic block:",
+            "- instruction:",
+            "- optional:",
+        )):
             setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_expression())
         elif feature.startswith("#"):
             setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_comment())
@@ -803,7 +808,8 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
     def get_expressions(self, selected=False, ignore=()):
         """ """
         for expression in filter(
-            lambda o: o.capa_type == CapaExplorerRulegenEditor.get_node_type_expression(), tuple(iterate_tree(self))
+            lambda o: o.capa_type == CapaExplorerRulegenEditor.get_node_type_expression(),
+            tuple(iterate_tree(self)),
         ):
             if expression in ignore:
                 continue
@@ -875,7 +881,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
     def slot_add_n_bytes_feature(self, action):
         """ """
-        count = idaapi.ask_long(16, f"Enter number of bytes (1-{capa.features.common.MAX_BYTES_FEATURE_SIZE}):")
+        count = idaapi.ask_long(
+            16,
+            f"Enter number of bytes (1-{capa.features.common.MAX_BYTES_FEATURE_SIZE}):",
+        )
         if count and 1 <= count <= capa.features.common.MAX_BYTES_FEATURE_SIZE:
             item = self.selectedItems()[0].data(0, 0x100)
             item.value = item.value[:count]
@@ -1035,7 +1044,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         """ """
         self.parse_features_for_tree(self.new_parent_node(self, ("File Scope",)), file_features)
         if func_features:
-            self.parse_features_for_tree(self.new_parent_node(self, ("Function/Basic Block Scope",)), func_features)
+            self.parse_features_for_tree(
+                self.new_parent_node(self, ("Function/Basic Block Scope",)),
+                func_features,
+            )
         resize_columns_to_content(self.header())
 
     def parse_features_for_tree(self, parent, features):
@@ -1070,22 +1082,28 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             if feature not in self.parent_items:
                 if len(addrs) > 1:
                     self.parent_items[feature] = self.new_parent_node(
-                        self.parent_items[type(feature)], (format_feature(feature),), feature=feature
+                        self.parent_items[type(feature)],
+                        (format_feature(feature),),
+                        feature=feature,
                     )
                 else:
                     self.parent_items[feature] = self.new_leaf_node(
-                        self.parent_items[type(feature)], (format_feature(feature),), feature=feature
+                        self.parent_items[type(feature)],
+                        (format_feature(feature),),
+                        feature=feature,
                     )
 
             # level n > 1
             if len(addrs) > 1:
                 for addr in sorted(addrs):
                     self.new_leaf_node(
-                        self.parent_items[feature], (format_feature(feature), format_address(addr)), feature=feature
+                        self.parent_items[feature],
+                        (format_feature(feature), format_address(addr)),
+                        feature=feature,
                     )
             else:
                 if addrs:
-                    addr = addrs.pop()
+                    addr = next(iter(addrs))
                 else:
                     # some features may not have an address e.g. "format"
                     addr = _NoAddress()
@@ -1146,7 +1164,10 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         @param should_sort: True, sort results after reset, False don't sort results after reset
         """
         if should_sort:
-            self.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
+            self.sortByColumn(
+                CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION,
+                QtCore.Qt.AscendingOrder,
+            )
 
         self.should_resize_columns = False
         self.expandToDepth(0)

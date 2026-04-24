@@ -27,20 +27,6 @@ from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
-def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given basic block.
-
-    args:
-      f: the function to process.
-      bb: the basic block to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
 def _bb_has_tight_loop(f, bb):
     """
     parse tight loops, true if last instruction in basic block branches to bb start

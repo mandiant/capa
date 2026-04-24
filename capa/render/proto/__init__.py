@@ -971,7 +971,7 @@ def rule_metadata_from_pb2(pb: capa_pb2.RuleMetadata) -> rd.RuleMetadata:
         examples=tuple(pb.examples),
         description=pb.description,
         lib=pb.lib,
-        is_subscope_rule=pb.is_subscope_rule,  # type: ignore  # Pydantic alias capa/subscope; populate_by_name=True
+        is_subscope_rule=pb.is_subscope_rule,  # type: ignore  # Pydantic alias capa/subscope-rule; populate_by_name=True
         maec=maec_from_pb2(pb.maec),
     )
 

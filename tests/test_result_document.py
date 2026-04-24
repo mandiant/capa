@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import copy
+import textwrap
 
 import pytest
 import fixtures
@@ -296,3 +297,30 @@ def test_rdoc_to_capa():
     meta, capabilites = rd.to_capa()
     assert isinstance(meta, rdoc.Metadata)
     assert isinstance(capabilites, Capabilities)
+
+
+def test_rule_metadata_is_subscope_rule_alias():
+    rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                    authors:
+                        - test
+                features:
+                    - api: CreateFile
+        """)
+    )
+    meta = rdoc.RuleMetadata.from_capa(rule)
+    assert meta.is_subscope_rule is False
+
+    raw = meta.model_dump(by_alias=True)
+    assert "capa/subscope-rule" in raw
+    assert raw["capa/subscope-rule"] is False
+
+    raw["capa/subscope-rule"] = True
+    meta_true = rdoc.RuleMetadata.model_validate(raw)
+    assert meta_true.is_subscope_rule is True

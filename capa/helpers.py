@@ -45,6 +45,7 @@ from rich.progress import (
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
     FORMAT_PE,
+    FORMAT_ELF,
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
@@ -87,8 +88,8 @@ def hex(n: int) -> str:
 def get_file_taste(sample_path: Path) -> bytes:
     if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    taste = sample_path.open("rb").read(8)
-    return taste
+    with sample_path.open("rb") as f:
+        return f.read(8)
 
 
 def is_runtime_ida():
@@ -227,6 +228,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
+    elif sample.name.endswith(EXTENSIONS_ELF):
+        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
