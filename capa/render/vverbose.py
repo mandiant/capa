@@ -22,7 +22,6 @@ from rich.table import Table
 import capa.rules
 import capa.helpers
 import capa.render.utils as rutils
-from capa.helpers import assert_never
 import capa.render.verbose
 import capa.features.common
 import capa.features.freeze as frz
@@ -31,6 +30,7 @@ import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.helpers import assert_never
 from capa.render.utils import Console
 
 logger = logging.getLogger(__name__)
