@@ -221,9 +221,7 @@ class InvalidScopes(Lint):
         scopes = rule.meta.get("scopes")
         if not isinstance(scopes, dict):
             return False
-        return (scopes.get("static") == "unsupported") and (
-            scopes.get("dynamic") == "unsupported"
-        )
+        return (scopes.get("static") == "unsupported") and (scopes.get("dynamic") == "unsupported")
 
 
 class MissingAuthors(Lint):
