@@ -149,6 +149,7 @@ function @ 0x4011C0
       string: "cmd.exe" @ 0x4012FD
 ...
 ```
+
 # dynamic capa
 capa also supports dynamic capabilities detection for multiple sandboxes including:
 * [CAPE](https://github.com/kevoreilly/CAPEv2) (supported report formats: `.json`, `.json_`, `.json.gz`)
