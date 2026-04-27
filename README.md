@@ -150,6 +150,7 @@ function @ 0x4011C0
 ...
 ```
 
+# dynamic capa
 capa also supports dynamic capabilities detection for multiple sandboxes including:
 * [CAPE](https://github.com/kevoreilly/CAPEv2) (supported report formats: `.json`, `.json_`, `.json.gz`)
 * [DRAKVUF](https://github.com/CERT-Polska/drakvuf-sandbox/) (supported report formats: `.log`, `.log.gz`)
