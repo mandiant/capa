@@ -28,7 +28,14 @@ from dncil.cil.opcode import OpCodes
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Property
-from capa.features.common import Class, String, Feature, Namespace, FeatureAccess, Characteristic
+from capa.features.common import (
+    Class,
+    String,
+    Feature,
+    Namespace,
+    FeatureAccess,
+    Characteristic,
+)
 from capa.features.address import Address
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -49,7 +56,8 @@ def get_callee(
     if token.table == dnfile.mdtable.MethodSpec.number:
         # map MethodSpec to MethodDef or MemberRef
         row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(pe, token)
-        assert isinstance(row, dnfile.mdtable.MethodSpecRow)
+        if not isinstance(row, dnfile.mdtable.MethodSpecRow):
+            return None
 
         if row.Method.table is None:
             logger.debug("MethodSpec[0x%X] Method table is None", token.rid)
@@ -104,7 +112,12 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 name = str(callee)
                 access = callee.access
 
-    elif ih.inner.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
+    elif ih.inner.opcode in (
+        OpCodes.Ldfld,
+        OpCodes.Ldflda,
+        OpCodes.Ldsfld,
+        OpCodes.Ldsflda,
+    ):
         # property read via Field
         read_field: Optional[Union[DnType, DnUnmanagedMethod]] = fh.ctx["cache"].get_field(ih.inner.operand.value)
         if read_field is not None:
@@ -176,7 +189,10 @@ def extract_insn_namespace_class_features(
         type_ = fh.ctx["cache"].get_type(ih.inner.operand.value)
 
     if isinstance(type_, DnType):
-        yield Class(DnType.format_name(type_.class_, namespace=type_.namespace)), ih.address
+        yield (
+            Class(DnType.format_name(type_.class_, namespace=type_.namespace)),
+            ih.address,
+        )
         if type_.namespace:
             yield Namespace(type_.namespace), ih.address
 

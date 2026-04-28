@@ -240,7 +240,11 @@ class CapaMatchData:
                                     sub_func_addr = sub_func.getEntryPoint()
                                     # place function in capa namespace & create the subscope match label in Ghidra's global namespace
                                     if do_namespaces:
-                                        create_label(sub_func_addr, sub_func.getName(), capa_namespace)
+                                        create_label(
+                                            sub_func_addr,
+                                            sub_func.getName(),
+                                            capa_namespace,
+                                        )
                                     if do_comments:
                                         self.set_plate_comment(sub_func_addr)
 
@@ -267,7 +271,7 @@ def get_capabilities():
     rules_dir = ""
 
     show_monitor_message(f"requesting capa {capa.version.__version__} rules directory")
-    selected_dir = askDirectory(f"choose capa {capa.version.__version__} rules directory", "Ok")  # type: ignore [name-defined] # noqa: F821
+    selected_dir = askDirectory(f"choose capa {capa.version.__version__} rules directory", "Ok")  # type: ignore[name-defined]  # noqa: F821  # Ghidra scripting environment provides this builtin
 
     if selected_dir:
         rules_dir = selected_dir.getPath()
@@ -313,7 +317,14 @@ def get_locations(match_dict):
 def parse_node(node_data):
     """pull match descriptions and sub features by parsing node dicts"""
 
-    node = node_data.get(node_data.get("type"))
+    node_type = node_data.get("type")
+    if node_type is None:
+        logger.debug("parse_node: node_data missing 'type' key: %s", node_data)
+        return
+    node = node_data.get(node_type)
+    if not isinstance(node, dict):
+        logger.debug("parse_node: node_data[%s] is not a dict: %s", node_type, type(node))
+        return
 
     if "description" in node:
         yield "description", node.get("description")
@@ -346,10 +357,8 @@ def parse_json(capa_data):
             # feature[0]: location
             # feature[1]: node
             features = capability.get("matches")[i][1]
-            feat_dict = {}
             for feature in get_locations(features):
-                feat_dict[feature[0]] = feature[1]
-                rule_matches[match_loc].append(feat_dict)
+                rule_matches[match_loc].append({feature[0]: feature[1]})
 
         # dict data of currently matched rule
         meta = capability["meta"]
@@ -401,7 +410,7 @@ def main():
     for c in choice_labels:
         choice_labels_java.add(c)
 
-    selected = list(askChoices("capa explorer", "select actions:", choices_java, choice_labels_java))  # type: ignore [name-defined] # noqa: F821
+    selected = list(askChoices("capa explorer", "select actions:", choices_java, choice_labels_java))  # type: ignore[name-defined]  # noqa: F821  # Ghidra scripting environment provides this builtin
 
     do_namespaces = "namespaces" in selected
     do_comments = "comments" in selected

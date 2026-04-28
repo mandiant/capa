@@ -24,16 +24,14 @@ import idaapi
 import ida_kernwin
 import ida_settings
 
-import capa.main
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.version
 import capa.ida.helpers
-import capa.render.json
 import capa.features.common
 import capa.capabilities.common
 import capa.render.result_document
-import capa.features.extractors.ida.extractor
 from capa.rules import Rule
 from capa.engine import FeatureSet
 from capa.rules.cache import compute_ruleset_cache_identifier
@@ -48,7 +46,10 @@ from capa.ida.plugin.cache import CapaRuleGenFeatureCache
 from capa.ida.plugin.error import UserCancelledError
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
-from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
+from capa.ida.plugin.proxy import (
+    CapaExplorerRangeProxyModel,
+    CapaExplorerSearchProxyModel,
+)
 from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
 from capa.ida.plugin.qt_compat import QtGui, QtCore, QtWidgets
 from capa.features.extractors.base_extractor import FunctionHandle
@@ -84,14 +85,6 @@ def write_file(path: Path, data):
     path.write_bytes(data)
 
 
-def trim_function_name(f, max_length=25):
-    """ """
-    n = idaapi.get_name(f.start_ea)
-    if len(n) > max_length:
-        n = f"{n[:max_length]}..."
-    return n
-
-
 def update_wait_box(text):
     """update the IDA wait box"""
     ida_kernwin.replace_wait_box(f"capa explorer...{text}")
@@ -107,7 +100,9 @@ class QLineEditClicked(QtWidgets.QLineEdit):
         old = self.text()
         new = str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent(), "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+                self.parent(),
+                "Please select a capa rules directory",
+                settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
             )
         )
         if new:
@@ -131,7 +126,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.edit_rules_link = QtWidgets.QLabel()
         self.edit_analyze = QtWidgets.QComboBox()
         self.btn_delete_results = QtWidgets.QPushButton(
-            self.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop), "Delete cached capa results"
+            self.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop),
+            "Delete cached capa results",
         )
 
         self.edit_rules_link.setText(
@@ -214,7 +210,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_search_bar: QtWidgets.QLineEdit
         self.view_tree: CapaExplorerQtreeView
         self.view_tabs: QtWidgets.QTabWidget
-        self.view_tab_rulegen = None
         self.view_status_label: QtWidgets.QLabel
         self.view_status_label_analysis_cache: str = ""
         self.view_status_label_rulegen_cache: str = ""
@@ -652,7 +647,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                 f"Failed to load capa rules from {settings.user[CAPA_SETTINGS_RULE_PATH]}"
             )
 
-            logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
+            logger.error(
+                "Failed to load capa rules from %s (error: %s).",
+                settings.user[CAPA_SETTINGS_RULE_PATH],
+                e,
+            )
             logger.error(
                 "Make sure your file directory contains properly "  # noqa: G003 [logging statement uses +]
                 + "formatted capa rules. You can download and extract the official rules from %s. "
@@ -1011,12 +1010,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         update_wait_box("extracting features")
 
         # resolve function selected in disassembly view
+        f = None
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f is not None:
                 self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
         except Exception as e:
-            logger.exception("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e)
+            addr = f.start_ea if f else idaapi.get_screen_ea()
+            logger.exception("Failed to resolve function at address 0x%X (error: %s)", addr, e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -1325,7 +1326,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         path = Path(path)
         if not path.parent.exists():
-            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            logger.warning(
+                "Failed to save file: parent directory '%s' does not exist.",
+                path.parent,
+            )
             return
 
         logger.info("Saving capa results to %s.", path)
@@ -1345,7 +1349,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         path = Path(rule_file_path)
         if not path.parent.exists():
-            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            logger.warning(
+                "Failed to save file: parent directory '%s' does not exist.",
+                path.parent,
+            )
             return
 
         logger.info("Saving rule to %s.", path)
@@ -1408,7 +1415,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+                self.parent,
+                "Please select a capa rules directory",
+                settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
             )
         )
 

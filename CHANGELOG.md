@@ -32,6 +32,77 @@
 - fix: loader.py reads entire file for magic byte check @williballenthin #3029
 - fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
 - fix: EXTENSIONS_ELF never referenced @williballenthin #3031
+- fix: correct off-by-one in get_dotnet_table_row so row_index=1 (first valid .NET metadata row) is no longer rejected @williballenthin
+- fix: add missing import for assert_never in cape extractor.py to avoid NameError when call argument has unexpected type @williballenthin
+- fix: stop mutating call.api in cape thread.get_calls; yield one CallHandle per call so the original API name is preserved for all handles @williballenthin
+- fix: use instruction_indices in is_security_cookie to handle single-instruction basic blocks where end_index is omitted, preventing KeyError on -1 @williballenthin
+- fix: guard get_operand_expressions against empty expression tree so Ghidra-exported BinExport2 files with empty operands no longer raise IndexError @williballenthin
+- fix: add return after zero-offset yield in extract_insn_offset_features so Offset(0) is not emitted twice @williballenthin
+- fix: use f-string in binexport2 extractor so unexpected global feature value appears in ValueError message @williballenthin
+- fix: correct scale/displacement expressions in get_operand_phrase_info 5-expression branch (used expression3 operator instead of expression4 value) @williballenthin
+- fix: use HasField instead of truthiness in _index_vertex_edges so call-graph edges to/from vertex 0 are not silently dropped @williballenthin
+- fix: change bare `if` to `elif` in get_backend_from_cli DRAKVUF branch to complete the if/elif chain @williballenthin
+- fix: close file handle in get_file_taste using a with statement @williballenthin
+- fix: correct off-by-one in dynamic analysis call_count debug log (enumerate -> explicit counter) @williballenthin
+- fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
+- fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
+- fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
+- fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove unused imports of capa.engine, capa.helpers, and capa.features from cache-ruleset.py, detect-binexport2-capabilities.py, and show-capabilities-by-function.py @williballenthin (SURF-92)
+- fix: remove dead except ValueError clause in capa2sarif.py so JSONDecodeError is caught by the specific handler @williballenthin (SURF-91)
+- fix: dedent bulk-process.py main() body so explicit argv argument is used instead of silently ignored @williballenthin (SURF-90)
+- fix: guard statistics.quantiles/mean in compare-backends.py report() against empty duration lists @williballenthin (SURF-89)
+- fix: replace zipfile with pyzipper in minimize_vmray_results.py so output archive is AES-encrypted @williballenthin (SURF-88)
+- fix: assign yara_strings/yara_condition to empty string when Some has cmin=0 to prevent UnboundLocalError @williballenthin (SURF-87)
+- fix: parenthesize s_type checks in capa2yara.py so kid.name != "Some" guard applies to And/Or/Not uniformly @williballenthin (SURF-86)
+- fix: correct operator precedence in FeatureRegexRegistryControlSetMatchIncomplete to avoid false positives on unrelated currentcontrolset patterns @williballenthin (SURF-85)
+- fix: FeatureRegexRegistryControlSetMatchIncomplete now checks all Regex features instead of returning after the first @williballenthin (SURF-84)
+- fix: MissingStaticScope and MissingDynamicScope lint checks guard against absent scopes dict to prevent TypeError @williballenthin (SURF-83)
+- fix: MissingExampleOffset lint now reads scopes.static instead of obsolete scope key @williballenthin (SURF-82)
+- fix: invert scope filter in import-to-ida.py so function-scope rules are annotated instead of skipped @williballenthin (SURF-81)
+- fix: remove dead string literal in test_detect_duplicate_features @williballenthin (SURF-80)
+- fix: remove duplicate Rule.from_yaml call in test_scope_instruction_description @williballenthin (SURF-79)
+- fix: remove unused imports of capa.helpers, capa.features.basicblock, and redundant bare capa.features.extractors.base_extractor from test_freeze_dynamic.py @williballenthin (SURF-78)
+- fix: replace capa.main.find_capabilities with capa.capabilities.common.find_capabilities in test_com_feature_matching to avoid implicit transitive import dependency @williballenthin (SURF-77)
+- fix: correct test_json_meta to iterate list of function dicts and use correct address format for matched_basic_blocks assertion @williballenthin (SURF-76)
+- fix: remove unreachable StaticAnalysis assert in assert_meta and add dynamic fixture to test_doc_to_pb2 @williballenthin (SURF-75)
+- fix: correct self-comparison sa.max == sa.max to sa.max == sb.max in test_proto assert_statement @williballenthin (SURF-74)
+- fix: guard parse_node against missing "type" key to avoid TypeError crash @williballenthin (SURF-73)
+- fix: allocate feat_dict per feature in parse_json to avoid shared-reference aliasing @williballenthin (SURF-72)
+- fix: add missing capa.features.extractors.elf import to ghidra/helpers.py and ida/helpers.py @williballenthin (SURF-71)
+- fix: remove dead view_tab_rulegen assignment from CapaExplorerForm that was never read @williballenthin (SURF-70)
+- fix: remove dead reset_query method from CapaExplorerSearchProxyModel that was never called @williballenthin (SURF-69)
+- fix: remove unused imports of capa.rules and capa.engine from view.py @williballenthin (SURF-68)
+- fix: remove unused imports of capa.main, capa.render.json, and capa.features.extractors.ida.extractor from form.py @williballenthin (SURF-67)
+- fix: remove dead trim_function_name function from form.py that was never called @williballenthin (SURF-66)
+- fix: replace get_file_md5/get_file_sha256 with retrieve_input_file_md5/sha256 shims so all callers use consistent IDA version-aware API @williballenthin (SURF-65)
+- fix: rename dragEventEnter to dragEnterEvent so Qt dispatches drag-enter events correctly in CapaExplorerRulegenEditor @williballenthin (SURF-64)
+- fix: guard against None in lessThan else-branch so sorting columns with empty cells does not raise AttributeError @williballenthin (SURF-63)
+- fix: add explicit import capa.loader in form.py to avoid fragile transitive import dependency @williballenthin (SURF-62)
+- fix: initialize f=None before try block in load_capa_function_results to prevent UnboundLocalError in except handler @williballenthin (SURF-61)
+- fix: fix unreachable elif for NOT CompoundStatement so NOT rules render children in IDA plugin tree view @williballenthin (SURF-60)
+- fix: use next(iter(addrs)) instead of addrs.pop() to avoid mutating the feature cache in parse_features_for_tree @williballenthin (SURF-59)
+- fix: use integer division in get_printable_len for UTF-16 LE operands @williballenthin (SURF-58)
+- fix: break thunk chain loop after resolving import to avoid duplicate API features @williballenthin (SURF-57)
+- fix: pass insn instead of oper to getOperValue/getOperAddr in viv insn extractor @williballenthin (SURF-56)
+- fix: implement extract_function_loop in dnfile extractor to detect backward branches as loops @williballenthin (SURF-55)
+- fix: remove dead find_process function and helpers.py from cape extractor @williballenthin (SURF-54)
+- fix: remove dead interface_extract_* stub functions from viv basicblock, function, and insn extractors @williballenthin (SURF-53)
+- fix: remove unused import of capa.features.extractors.strings from binexport2 intel insn.py @williballenthin (SURF-52)
+- fix: remove extract_file_format from FILE_HANDLERS in five extractors to prevent duplicate Format features @williballenthin (SURF-51)
+- fix: replace assert with guard so 2-operand ARM ADD/SUB instructions are skipped instead of crashing @williballenthin (SURF-50)
+- fix: omit trailing ` -> ` suffix in syscall names when there is no return value @williballenthin (SURF-49)
+- fix: use AbsoluteVirtualAddress instead of FileOffsetAddress for string addresses in Ghidra and IDA file extractors @williballenthin (SURF-48)
+- fix: use dest.value.value and indirect_src.value.value for LLIL_CONST call destinations in binja insn.py @williballenthin (SURF-47)
+- fix: remove duplicate getPrevLocation call and dead loc variable in get_previous_instructions @williballenthin (SURF-46)
+- fix: unpack getByteDef offset and slice buffer so ENDBRANCH check applies to target address, not segment start @williballenthin (SURF-45)
+- fix: guard getByteDef against None return for unmapped addresses in viv insn extractor @williballenthin #3057
+- fix: correct inverted loop structure in extract_function_loop so each block edge is recorded as (src, dest) @williballenthin (SURF-44)
+- fix: initialize addr to None in Ghidra import extractors to prevent UnboundLocalError when external functions have no data references @williballenthin (SURF-43)
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: assign ConfigDict to model_config in ConciseModel so extra="ignore" is actually applied @williballenthin (SURF-42)
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
 
 ### capa Explorer Web
 

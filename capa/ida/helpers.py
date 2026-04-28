@@ -22,7 +22,6 @@ import idc
 import idaapi
 import ida_ida
 import ida_nalt
-import idautils
 import ida_bytes
 import ida_loader
 from netnode import netnode
@@ -30,9 +29,9 @@ from netnode import netnode
 import capa
 import capa.version
 import capa.render.utils as rutils
-import capa.features.common
 import capa.features.freeze
 import capa.render.result_document as rdoc
+import capa.features.extractors.elf
 from capa.features.address import AbsoluteVirtualAddress
 
 logger = logging.getLogger("capa")
@@ -109,7 +108,10 @@ def is_supported_ida_version():
     if version < 7.4 or version >= 10:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.", version)
+        logger.warning(
+            "Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 10.0.",
+            version,
+        )
         return False
     return True
 
@@ -156,26 +158,10 @@ def get_func_start_ea(ea):
     return f if f is None else f.start_ea
 
 
-def get_file_md5():
-    """ """
-    md5 = idautils.GetInputFileMD5()
-    if not isinstance(md5, str):
-        md5 = capa.features.common.bytes_to_str(md5)
-    return md5
-
-
-def get_file_sha256():
-    """ """
-    sha256 = idaapi.retrieve_input_file_sha256()
-    if not isinstance(sha256, str):
-        sha256 = capa.features.common.bytes_to_str(sha256)
-    return sha256
-
-
 def collect_metadata(rules: list[Path]):
     """ """
-    md5 = get_file_md5()
-    sha256 = get_file_sha256()
+    md5 = retrieve_input_file_md5()
+    sha256 = retrieve_input_file_sha256()
 
     procname = get_processor_name()
     if procname == "metapc" and is_64bit():
@@ -283,7 +269,10 @@ def load_and_verify_cached_results() -> Optional[rdoc.ResultDocument]:
             if isinstance(location, AbsoluteVirtualAddress):
                 ea = int(location)
                 if not idaapi.is_mapped(ea):
-                    logger.error("cached address %s is not a valid location in this database", hex(ea))
+                    logger.error(
+                        "cached address %s is not a valid location in this database",
+                        hex(ea),
+                    )
                     return None
     return doc
 

@@ -40,7 +40,7 @@ REQUIRED_SYSCALL_FIELD_NAMES = {
 
 
 class ConciseModel(BaseModel):
-    ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore")
 
 
 class DiscoveredDLL(ConciseModel):

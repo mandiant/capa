@@ -20,7 +20,6 @@ from typing import Optional
 from pathlib import Path
 
 from rich.console import Console
-from typing_extensions import assert_never
 
 import capa.rules
 import capa.helpers
@@ -33,6 +32,7 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.helpers import assert_never
 from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,

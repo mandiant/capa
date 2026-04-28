@@ -378,15 +378,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """
 
         if isinstance(statement, rd.CompoundStatement):
-            if statement.type != rd.CompoundStatementType.NOT:
-                display = statement.type
-                if statement.description:
-                    display += f" ({statement.description})"
-                return CapaExplorerDefaultItem(parent, display)
-        elif isinstance(statement, rd.CompoundStatement) and statement.type == rd.CompoundStatementType.NOT:
-            # TODO(mike-hunhoff): verify that we can display NOT statements
-            # https://github.com/mandiant/capa/issues/1602
-            pass
+            display = statement.type
+            if statement.description:
+                display += f" ({statement.description})"
+            return CapaExplorerDefaultItem(parent, display)
         elif isinstance(statement, rd.SomeStatement):
             display = f"{statement.count} or more"
             if statement.description:
@@ -462,8 +457,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         else:
             raise RuntimeError("unexpected node type: " + str(match.node.type))
 
-        for child in match.children:
-            self.render_capa_doc_match(parent2, child, doc)
+        if parent2 is not None:
+            for child in match.children:
+                self.render_capa_doc_match(parent2, child, doc)
 
     def render_capa_doc_by_function(self, doc: rd.ResultDocument):
         """render rule matches by function meaning each rule match is nested under function where it was found"""

@@ -109,10 +109,10 @@ def get_operand_phrase_info(be2: BinExport2, operand: BinExport2.Operand) -> Opt
             return OperandPhraseInfo(base=expression0, index=expression2, displacement=expression4)
         elif expression1.symbol == "+" and expression3.symbol == "*":
             # Base + (Index * Scale)
-            return OperandPhraseInfo(base=expression0, index=expression2, scale=expression3)
+            return OperandPhraseInfo(base=expression0, index=expression2, scale=expression4)
         elif expression1.symbol == "*" and expression3.symbol == "+":
             # (Index * Scale) + Displacement
-            return OperandPhraseInfo(index=expression0, scale=expression2, displacement=expression3)
+            return OperandPhraseInfo(index=expression0, scale=expression2, displacement=expression4)
         else:
             raise NotImplementedError(expression1.symbol, expression3.symbol)
 
