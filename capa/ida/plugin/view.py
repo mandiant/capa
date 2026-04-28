@@ -175,6 +175,18 @@ def resize_columns_to_content(header):
         header.resizeSection(0, MAX_SECTION_SIZE)
 
 
+def clone_ui_font(ui_font: Optional[QtGui.QFont]) -> QtGui.QFont:
+    """return a copy of the given UI font or the default UI font"""
+    return QtGui.QFont() if ui_font is None else QtGui.QFont(ui_font)
+
+
+def get_bold_widget_font(widget: QtWidgets.QWidget) -> QtGui.QFont:
+    """return the widget font with bold enabled"""
+    font = QtGui.QFont(widget.font())
+    font.setBold(True)
+    return font
+
+
 class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
     INDENT = " " * 2
 
@@ -182,10 +194,15 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
         """ """
         super().__init__(parent)
 
-        self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
+        self.current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        self.setFont(QtGui.QFont(self.current_font))
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setAcceptRichText(False)
+
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
+        self.current_font = font
+        self.setFont(QtGui.QFont(self.current_font))
 
     def reset_view(self):
         """ """
@@ -347,6 +364,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         self.reset_view()
 
         self.is_editing = False
+        self.current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
 
     @staticmethod
     def get_column_feature_index():
@@ -498,6 +516,21 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
             self.is_editing = True
 
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
+        """apply a new font to the editor and restyle existing nodes"""
+        self.current_font = font
+        ui_font = clone_ui_font(ui_font)
+        self.setFont(ui_font)
+        self.header().setFont(ui_font)
+        for node in iterate_tree(self):
+            if getattr(node, "capa_type", None) == CapaExplorerRulegenEditor.get_node_type_expression():
+                self.style_expression_node(node)
+            elif getattr(node, "capa_type", None) == CapaExplorerRulegenEditor.get_node_type_feature():
+                self.style_feature_node(node)
+            elif getattr(node, "capa_type", None) == CapaExplorerRulegenEditor.get_node_type_comment():
+                self.style_comment_node(node)
+        self.slot_resize_columns_to_content()
+
     def update_preview(self):
         """ """
         rule_text = self.preview.toPlainText()
@@ -577,17 +610,15 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def style_expression_node(self, o):
         """ """
-        font = QtGui.QFont()
-        font.setBold(True)
+        font = get_bold_widget_font(self)
 
         o.setFont(CapaExplorerRulegenEditor.get_column_feature_index(), font)
 
     def style_feature_node(self, o):
         """ """
-        font = QtGui.QFont()
+        font = QtGui.QFont(self.current_font)
         brush = QtGui.QBrush()
 
-        font.setFamily("Courier")
         font.setWeight(QtGui.QFont.Medium)
         brush.setColor(QtGui.QColor(*COLOR_GREEN_RGB))
 
@@ -596,9 +627,8 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def style_comment_node(self, o):
         """ """
-        font = QtGui.QFont()
+        font = QtGui.QFont(self.current_font)
         font.setBold(True)
-        font.setFamily("Courier")
 
         o.setFont(CapaExplorerRulegenEditor.get_column_feature_index(), font)
 
@@ -819,6 +849,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         self.parent_items = {}
         self.editor = editor
+        self.current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
 
         self.setHeaderLabels(["Feature", "Address"])
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
@@ -977,14 +1008,14 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
     def style_parent_node(self, o):
         """ """
-        font = QtGui.QFont()
-        font.setBold(True)
+        font = get_bold_widget_font(self)
 
         o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
 
     def style_leaf_node(self, o):
         """ """
-        font = QtGui.QFont("Courier", weight=QtGui.QFont.Bold)
+        font = QtGui.QFont(self.current_font)
+        font.setBold(True)
         brush = QtGui.QBrush()
 
         o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
@@ -995,6 +1026,19 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         brush.setColor(QtGui.QColor(*COLOR_BLUE_RGB))
         o.setForeground(CapaExplorerRulegenFeatures.get_column_address_index(), brush)
+
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
+        """apply a new font to the feature tree and restyle nodes"""
+        self.current_font = font
+        ui_font = clone_ui_font(ui_font)
+        self.setFont(ui_font)
+        self.header().setFont(ui_font)
+        for node in iterate_tree(self):
+            if getattr(node, "capa_type", None) == CapaExplorerRulegenFeatures.get_node_type_parent():
+                self.style_parent_node(node)
+            elif getattr(node, "capa_type", None) == CapaExplorerRulegenFeatures.get_node_type_leaf():
+                self.style_leaf_node(node)
+        self.slot_resize_columns_to_content()
 
     def set_parent_node(self, o):
         """ """
@@ -1137,6 +1181,62 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.doubleClicked.connect(self.slot_double_click)
 
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
+
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
+        """apply a new font to the tree view and its header"""
+        ui_font = clone_ui_font(ui_font)
+        self.setFont(ui_font)
+
+    def iter_model_indexes(self, parent=None):
+        """yield all indexes in the current model"""
+        if parent is None:
+            parent = QtCore.QModelIndex()
+
+        for row in range(self.model.rowCount(parent)):
+            model_index = self.model.index(row, 0, parent)
+            if not model_index.isValid():
+                continue
+            yield model_index
+            yield from self.iter_model_indexes(model_index)
+
+    def get_expanded_source_items(self):
+        """capture expanded items before a model reset"""
+        expanded = []
+        for model_index in self.iter_model_indexes():
+            if self.isExpanded(model_index):
+                expanded.append(self.map_index_to_source_item(model_index))
+        return expanded
+
+    def map_source_index_to_proxy(self, source_index):
+        """map a source-model index through the proxy chain"""
+        if not source_index.isValid():
+            return QtCore.QModelIndex()
+
+        models = []
+        model = self.model
+        while model is not None and not isinstance(model, CapaExplorerDataModel):
+            models.append(model)
+            model = model.sourceModel()
+
+        proxy_index = source_index
+        for proxy_model in reversed(models):
+            proxy_index = proxy_model.mapFromSource(proxy_index)
+            if not proxy_index.isValid():
+                break
+
+        return proxy_index
+
+    def restore_expanded_source_items(self, items):
+        """restore expanded items after a model reset"""
+        model = self.model
+        while not isinstance(model, CapaExplorerDataModel):
+            model = model.sourceModel()
+
+        for item in items:
+            source_index = model.index_from_item(item)
+            proxy_index = self.map_source_index_to_proxy(source_index)
+            if proxy_index.isValid():
+                self.expand(proxy_index)
 
     def reset_ui(self, should_sort=True):
         """reset user interface changes
