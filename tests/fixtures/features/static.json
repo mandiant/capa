@@ -1,0 +1,1752 @@
+{
+  "files": [
+    {
+      "key": "mimikatz",
+      "path": "data/mimikatz.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "kernel32",
+      "path": "data/kernel32.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "kernel32-64",
+      "path": "data/kernel32-64.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "pma12-04",
+      "path": "data/Practical Malware Analysis Lab 12-04.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "pma16-01",
+      "path": "data/Practical Malware Analysis Lab 16-01.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "7351f.elf",
+      "path": "data/7351f8a40c5450557b24622417fc478d.elf_",
+      "tags": ["elf", "static"]
+    },
+    {
+      "key": "055da8e6.elf",
+      "path": "data/055da8e6ccfe5a9380231ea04b850e18.elf_",
+      "tags": ["elf", "static"]
+    },
+    {
+      "key": "bb38149.elf",
+      "path": "data/bb38149ff4b5c95722b83f24ca27a42b.elf_",
+      "tags": ["elf", "static"]
+    },
+    {
+      "key": "al-khaser x64",
+      "path": "data/al-khaser_x64.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "64d9f",
+      "path": "data/64d9f7d96b99467f36e22fada623c3bb.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "79abd",
+      "path": "data/79abd17391adc6251ecdc58d13d76baf.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "946a9",
+      "path": "data/946a99f36a46d335dec080d9a4371940.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "773290",
+      "path": "data/773290480d5445f11d3dc1b800728966.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "294b8d",
+      "path": "data/294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_",
+      "tags": ["elf", "static"]
+    },
+    {
+      "key": "a1982",
+      "path": "data/a198216798ca38f280dc413f8c57f2c2.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "c91887",
+      "path": "data/c91887d861d9bd4a5872249b641bc9f9.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "2bf18d",
+      "path": "data/2bf18d0403677378adad9001b1243211.elf_",
+      "tags": ["elf", "static"]
+    },
+    {
+      "key": "2d3edc",
+      "path": "data/2d3edc218a90f03089cc01715a9f047f.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "ea2876",
+      "path": "data/ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "b9f5b",
+      "path": "data/b9f5bd514485fb06da39beff051b9fdc.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "mixed-mode-64",
+      "path": "data/dotnet/dnfile-testfiles/mixed-mode/ModuleCode/bin/ModuleCode_amd64.exe",
+      "tags": ["static"]
+    },
+    {
+      "key": "hello-world",
+      "path": "data/dotnet/dnfile-testfiles/hello-world/hello-world.exe",
+      "tags": ["static"]
+    },
+    {
+      "key": "_1c444",
+      "path": "data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "_692f",
+      "path": "data/dotnet/692f7fd6d198e804d6af98eb9e390d61.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "_0953c",
+      "path": "data/0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "_039a6",
+      "path": "data/039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "_387f15",
+      "path": "data/dotnet/387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_",
+      "tags": ["static"]
+    },
+    {
+      "key": "nested_typedef",
+      "path": "data/dotnet/dd9098ff91717f4906afe9dafdfa2f52.exe_",
+      "tags": ["static"]
+    },
+    {
+      "key": "nested_typeref",
+      "path": "data/dotnet/2c7d60f77812607dec5085973ff76cea.dll_",
+      "tags": ["static"]
+    }
+  ],
+  "features": [
+    {
+      "file": "pma12-04",
+      "location": "file",
+      "feature": "characteristic: embedded pe",
+      "explanation": "embedded PE file in resource section",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "Embedded PE is in .rsrc section at file offset 0x4060, which IDA doesn't load by default"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "Embedded PE is in .rsrc section at file offset 0x4060, which freeze doesn't handle correctly"
+        }
+      ]
+    },
+    {
+      "file": "2d3edc",
+      "location": "file",
+      "feature": "characteristic: embedded pe",
+      "explanation": "embedded PE file at file scope using file offset addresses",
+      "marks": [
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "Python capa has bug extracting embedded PE files at absolute offsets"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "string: SCardControl",
+      "explanation": "basic UTF-16LE string"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "string: ACR  > ",
+      "explanation": "UTF-16LE encoded strings with unusual characters and trailing spaces"
+    },
+    {
+      "file": "pma12-04",
+      "location": "file",
+      "feature": "string: winlogon.exe",
+      "explanation": "basic ASCII string"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "string: nope",
+      "expected": false,
+      "explanation": "non-existant string"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "section: .text",
+      "explanation": "basic section name"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "section: .nope",
+      "expected": false,
+      "explanation": "non-existant section"
+    },
+    {
+      "file": "kernel32",
+      "location": "file",
+      "feature": "export: BaseThreadInitThunk",
+      "explanation": "basic export name"
+    },
+    {
+      "file": "kernel32",
+      "location": "file",
+      "feature": "export: nope",
+      "expected": false,
+      "explanation": "non-existant export"
+    },
+    {
+      "file": "ea2876",
+      "location": "file",
+      "feature": "export: vresion.GetFileVersionInfoA",
+      "explanation": "forwarded export"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: advapi32.CryptSetHashParam",
+      "explanation": "import with DLL prefix"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: CryptSetHashParam",
+      "explanation": "import with no DLL prefix"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: cabinet.#11",
+      "explanation": "import by ordinal"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: #11",
+      "expected": false,
+      "explanation": "non-existant ordinal import"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: #nope",
+      "expected": false,
+      "explanation": "non-existant ordinal import"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "import: nope",
+      "expected": false,
+      "explanation": "non-existant import"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401517",
+      "feature": "characteristic: loop",
+      "explanation": "loop"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "characteristic: loop",
+      "expected": false,
+      "explanation": "non-existant loop"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x402EC4",
+      "feature": "characteristic: tight loop",
+      "explanation": "tight-loop"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "characteristic: tight loop",
+      "expected": false,
+      "explanation": "non-existant tight-loop"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x402EC4,bb=0x402F8E",
+      "feature": "characteristic: tight loop",
+      "explanation": "tight-loop at basic block scope"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000,bb=0x401000",
+      "feature": "characteristic: tight loop",
+      "expected": false,
+      "explanation": "non-existant tight-loop at basic block scope"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: stack string",
+      "explanation": "stack string (but capa doesn't extract it as a string yet)"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "characteristic: stack string",
+      "expected": false,
+      "explanation": "non-existant stack string"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "mnemonic: push",
+      "explanation": "basic mnemonic"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "mnemonic: in",
+      "expected": false,
+      "explanation": "non-existant mnemonic"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401073,insn=0x401073",
+      "feature": "number: 0xFF",
+      "explanation": "number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401073,insn=0x401073",
+      "feature": "operand[1].number: 0xFF",
+      "explanation": "mov eax, 0FFh; instruction operand number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401073,insn=0x401073",
+      "feature": "operand[0].number: 0xFF",
+      "expected": false,
+      "explanation": "mov eax, 0FFh; non-existant instruction operand number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x4010B0,insn=0x4010B4",
+      "feature": "operand[0].offset: 4",
+      "explanation": "cmp [esi+4], ebx; instruction operand offset"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x4010B0,insn=0x4010B4",
+      "feature": "operand[1].offset: 4",
+      "expected": false,
+      "explanation": "cmp [esi+4], ebx; non-existant instruction operand offset"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0xFF",
+      "explanation": "small number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0x3136B0",
+      "explanation": "large number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "number: 0x0",
+      "explanation": "zero number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "number: 0xC",
+      "expected": false,
+      "explanation": "non-existant number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401553",
+      "feature": "number: 0xFFFFFFFF",
+      "explanation": "max u32 number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x43e543",
+      "feature": "number: 0xFFFFFFF0",
+      "explanation": "large u32 number"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x0",
+      "explanation": "cmp [esi], ebx; zero offset"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x4",
+      "explanation": "cmp [esi+4], ebx; simple offset"
+    },
+    {
+      "file": "64d9f",
+      "location": "function=0x10001510,bb=0x100015B0",
+      "feature": "offset: 0x4000",
+      "explanation": "regression test for issue #276"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "offset: 0x8",
+      "expected": false,
+      "explanation": "no instruction in the function references [reg+8]"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "offset: -0x1",
+      "explanation": "movzx ecx, [eax-1]; negative offset"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "offset: -0x2",
+      "explanation": "cmp [eax-2], cx; negative offset -2"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4011FB",
+      "feature": "number: -0x2",
+      "expected": false,
+      "explanation": "cmp [eax-2], cx; negative offset shouldn't emit a number too"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401D64,bb=0x401D73,insn=0x401D85",
+      "feature": "offset: 0x80000000",
+      "expected": false,
+      "explanation": "add ecx, 80000000h; too-large immediate should not be considered an offset"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401CC7,bb=0x401CDE,insn=0x401CF6",
+      "feature": "offset: 0x10",
+      "expected": false,
+      "explanation": "add esp, 10h; stack-relative ADD should not be considered an offset"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x402203,bb=0x402221,insn=0x40223C",
+      "feature": "offset: 0x4",
+      "explanation": "add eax, 4; non-stack register ADD should emit an offset feature, treating eax as a pointer"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x471EAB,bb=0x471ED8,insn=0x471EE6",
+      "feature": "number: 0x4",
+      "expected": false,
+      "explanation": "lea ebx, [ecx+eax*4]; should not emit Number feature for the scale"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x47153B,bb=0x4717AB,insn=0x4717B1",
+      "feature": "number: -0x30",
+      "expected": false,
+      "explanation": "lea ecx, [ecx+esi-30h]; should not emit Number feature for the displacement"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401873,bb=0x4018B2,insn=0x4018C0",
+      "feature": "number: 0x2",
+      "explanation": "lea ecx, [ebx+2]; should emit Number feature, treating ebx as zero"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptAcquireContextW",
+      "explanation": "basic API feature with trailing W"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: CryptAcquireContext",
+      "explanation": "basic API feature with stripped W"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x403BAC",
+      "feature": "api: Nope",
+      "expected": false,
+      "explanation": "non-existent API"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "api: LsaQueryInformationPolicy"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001010",
+      "feature": "api: RtlVirtualUnwind",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA identifies 0x180001010 as lib function and skips it"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800202B0",
+      "feature": "api: RtlCaptureContext",
+      "explanation": "API called via thunk",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA identifies 0x1800202B0 as lib function _report_gsfailure"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "IDA skipping lib functions prevents freeze from detecting this API"
+        }
+      ]
+    },
+    {
+      "file": "al-khaser x64",
+      "location": "function=0x14004B4F0",
+      "feature": "api: __vcrt_GetModuleHandle",
+      "explanation": "API called via nested thunks",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "skip",
+          "reason": "IDA identifies this as lib function GetPdbDll"
+        },
+        {
+          "backend": "freeze",
+          "mark": "skip",
+          "reason": "IDA skipping lib functions prevents freeze from detecting this API"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40B3C6",
+      "feature": "api: LocalFree",
+      "explanation": "tail call to API via jmp"
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x40156F",
+      "feature": "api: CloseClipboard",
+      "explanation": "tail call to API via jmp"
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: CreatePipe",
+      "explanation": "API is present"
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: kernel32.CreatePipe",
+      "explanation": "API is present, and DLL name is ignored"
+    },
+    {
+      "file": "c91887",
+      "location": "function=0x401A77",
+      "feature": "api: CreatePipe",
+      "explanation": "API resolved from call to GetProcAddress"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: SCardControl",
+      "explanation": "basic string"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: ACR  > ",
+      "explanation": "basic string with trailing whitespace"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "string: nope",
+      "expected": false,
+      "explanation": "basic string not present"
+    },
+    {
+      "file": "773290",
+      "location": "function=0x140001140",
+      "feature": "string: %s:\\\\OfficePackagesForWDAG",
+      "explanation": "string with escaping characters"
+    },
+    {
+      "file": "294b8d",
+      "location": "function=0x404970,bb=0x404970,insn=0x40499F",
+      "feature": "string: \r\n\u0000:ht",
+      "expected": false,
+      "explanation": "regression test for issue #1271: should not extract overlapping string spanning a NUL byte"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x4021B0",
+      "feature": "substring: HTTP/1.0",
+      "explanation": "basic substring"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x4021B0",
+      "feature": "substring: nope",
+      "expected": false,
+      "explanation": "substring not present"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x402F40",
+      "feature": "string: /PRACTICALmalwareANALYSIS/i",
+      "explanation": "case-insensitive regex"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x402F40",
+      "feature": "string: /www.*/",
+      "explanation": "simple regex prefix match"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x402F40",
+      "feature": "substring: practicalmalwareanalysis.com"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x44EDEF",
+      "feature": "string: INPUTEVENT",
+      "explanation": "string referenced via a pointer"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x46D6CE",
+      "feature": "string: (null)",
+      "explanation": "string referenced via direct memory reference"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401517",
+      "feature": "bytes: CA 3B 0E 00 00 00 F8 AF 47",
+      "explanation": "basic bytes"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x404414",
+      "feature": "bytes: 01 80 00 00 40 EA 47 00",
+      "explanation": "basic bytes, which are a pointer"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "bytes: 53 00 43 00 61 00 72 00 64 00 43 00 6F 00 6E 00 74 00 72 00 6F 00 6C 00",
+      "expected": false,
+      "explanation": "should not extract bytes feature for an obvious string (here: UTF-16LE 'SCardControl')"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "bytes: FD FF 59 F6 47",
+      "expected": false,
+      "explanation": "push offset aAcsAcr1220 ('ACS...') where ACS == 41 00 43 00 happens to be a valid pointer to the middle of an instruction; should not be misinterpreted as bytes feature"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x44570F",
+      "feature": "bytes: FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF",
+      "expected": false,
+      "explanation": "regression test for issue #409: should not extract bytes feature from byte sequences read from invalid memory"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x44EDEF",
+      "feature": "bytes: 49 00 4E 00 50 00 55 00 54 00 45 00 56 00 45 00 4E 00 54 00",
+      "expected": false,
+      "explanation": "should not extract bytes feature when instruction references it as a pointer to string bytes (here: UTF-16LE 'INPUTEVENT')"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x410DFC",
+      "feature": "characteristic: nzxor",
+      "explanation": "should extract nzxor characteristic, including from xorps SSE instructions"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "characteristic: nzxor",
+      "expected": false,
+      "explanation": "non-existant nzxor"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x46D534",
+      "feature": "characteristic: nzxor",
+      "expected": false,
+      "explanation": "should not extract nzxor characteristic for security cookie xors"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800017D0",
+      "feature": "characteristic: peb access"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: peb access",
+      "expected": false
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068",
+      "feature": "characteristic: gs access"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: gs access",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x410DFC,bb=0x410F05,insn=0x410F0B",
+      "feature": "characteristic: nzxor"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x410DFC,bb=0x410F05,insn=0x410F12",
+      "feature": "characteristic: nzxor"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800017D0,bb=0x1800018AD,insn=0x1800018AD",
+      "feature": "characteristic: peb access"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068,bb=0x18000118D,insn=0x180001197",
+      "feature": "characteristic: gs access"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068,bb=0x180001269,insn=0x18000127F",
+      "feature": "characteristic: gs access"
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7DD70E00,bb=0x7DD70E00,insn=0x7DD70E05",
+      "feature": "characteristic: fs access"
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7DD70E00,bb=0x7DD70E25,insn=0x7DD70E2D",
+      "feature": "characteristic: fs access"
+    },
+    {
+      "file": "kernel32",
+      "location": "function=0x7DD70E00,bb=0x7DD70FCB,insn=0x7DD70FCB",
+      "feature": "characteristic: fs access"
+    },
+    {
+      "file": "a1982",
+      "location": "function=0x4014D0",
+      "feature": "characteristic: cross section flow"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180001068",
+      "feature": "characteristic: cross section flow",
+      "expected": false,
+      "explanation": "should not extract cross section flow characteristic for control transfers to imports"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: cross section flow",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40640e",
+      "feature": "characteristic: recursive call"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4175FF",
+      "feature": "characteristic: recursive call",
+      "expected": false,
+      "explanation": "issue #386: 0x4175FF makes indirect calls (via dword_4B821C) but never calls itself, directly or via callback"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4175FF",
+      "feature": "characteristic: indirect call"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: indirect call",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "characteristic: calls from"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4702FD",
+      "feature": "characteristic: calls from",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D",
+      "feature": "characteristic: calls to"
+    },
+    {
+      "file": "ea2876",
+      "location": "file",
+      "feature": "characteristic: forwarded export"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x456BB9",
+      "feature": "characteristic: calls to",
+      "expected": false,
+      "explanation": "issue #386: 0x456BB9 is only referenced from a function-pointer table at 0x475834, never via a direct call instruction"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40105D,bb=0x401089,insn=0x40108E",
+      "feature": "characteristic: calls from"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4175FF,bb=0x41761B,insn=0x417620",
+      "feature": "characteristic: indirect call"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "function-name: __aulldiv",
+      "explanation": "recognize function name via FLIRT signatures"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "os: windows"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "os: linux",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "os: windows"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100",
+      "feature": "os: windows",
+      "explanation": "OS available at function scope"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100,bb=0x401130",
+      "feature": "os: windows",
+      "explanation": "OS available at basic block scope"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "arch: i386"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "arch: i386"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100",
+      "feature": "arch: i386",
+      "explanation": "arch available at function scope"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100,bb=0x401130",
+      "feature": "arch: i386",
+      "explanation": "arch available at basic blockscope"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "format: pe"
+    },
+    {
+      "file": "pma16-01",
+      "location": "file",
+      "feature": "format: elf",
+      "expected": false
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "format: pe"
+    },
+    {
+      "file": "pma16-01",
+      "location": "function=0x401100",
+      "feature": "format: pe",
+      "explanation": "format available at function scope"
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "os: linux"
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "os: windows",
+      "expected": false
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "format: elf"
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "format: pe",
+      "expected": false
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": false
+    },
+    {
+      "file": "7351f.elf",
+      "location": "file",
+      "feature": "arch: amd64"
+    },
+    {
+      "file": "7351f.elf",
+      "location": "function=0x408753",
+      "feature": "string: /dev/null"
+    },
+    {
+      "file": "7351f.elf",
+      "location": "function=0x408753,bb=0x408781",
+      "feature": "api: open",
+      "explanation": "API from ELF import"
+    },
+    {
+      "file": "055da8e6.elf",
+      "location": "file",
+      "feature": "import: puts",
+      "explanation": "ELF import promoted from elffile feature tests"
+    },
+    {
+      "file": "055da8e6.elf",
+      "location": "file",
+      "feature": "section: .text",
+      "explanation": "ELF section promoted from primary presence fixture"
+    },
+    {
+      "file": "bb38149.elf",
+      "location": "file",
+      "feature": "import: __android_log_print",
+      "explanation": "stripped ELF import promoted from elffile feature tests"
+    },
+    {
+      "file": "bb38149.elf",
+      "location": "file",
+      "feature": "export: Java_o_ac_a",
+      "explanation": "stripped ELF export promoted from elffile feature tests"
+    },
+    {
+      "file": "bb38149.elf",
+      "location": "file",
+      "feature": "section: .dynamic",
+      "explanation": "stripped ELF section promoted into the shared presence fixture",
+      "marks": [
+        {
+          "backend": "idalib",
+          "mark": "xfail",
+          "reason": "IDA maps this stripped ELF from program headers, not section headers, so .dynamic is subsumed into a LOAD segment"
+        }
+      ]
+    },
+    {
+      "file": "79abd",
+      "location": "function=0x10002385,bb=0x10002385",
+      "feature": "characteristic: call $+5"
+    },
+    {
+      "file": "946a9",
+      "location": "function=0x10001510,bb=0x100015c0",
+      "feature": "characteristic: call $+5"
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
+      "feature": "api: __GI_connect",
+      "explanation": "API from ELF symbol table alternative name"
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
+      "feature": "api: connect",
+      "explanation": "API from ELF symbol table alternative name"
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
+      "feature": "api: __libc_connect",
+      "explanation": "API from ELF symbol table alternative name"
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4088a4",
+      "feature": "function-name: __GI_connect",
+      "explanation": "function name from ELF symbol table alternative name"
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4088a4",
+      "feature": "function-name: connect",
+      "explanation": "function name from ELF symbol table alternative name"
+    },
+    {
+      "file": "2bf18d",
+      "location": "function=0x4088a4",
+      "feature": "function-name: __libc_connect",
+      "explanation": "function name from ELF symbol table alternative name"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000,bb=0x401000",
+      "feature": "basic blocks: x",
+      "explanation": "basic block feature emitted"
+    },
+    {
+      "file": "mimikatz",
+      "location": "file",
+      "feature": "basic blocks: 1",
+      "expected": false,
+      "explanation": "non-existant basic block feature"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40E5C2",
+      "feature": "count(basic blocks): 7",
+      "explanation": "7 basic blocks in function",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4702FD",
+      "feature": "count(characteristic(calls from)): 0",
+      "explanation": "function has no calls"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40E5C2",
+      "feature": "count(characteristic(calls from)): 3",
+      "explanation": "function has 3 calls",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4556E5",
+      "feature": "count(characteristic(calls to)): 0",
+      "explanation": "function has no callers",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40B1F1",
+      "feature": "count(characteristic(calls to)): 3",
+      "explanation": "function has 3 callers",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x4702FD",
+      "feature": "count(characteristic(calls from)): 0",
+      "explanation": "Ghidra: function has no calls"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401bf1",
+      "feature": "count(characteristic(calls to)): 2",
+      "explanation": "Ghidra: function has 2 callers"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401000",
+      "feature": "count(basic blocks): 3",
+      "explanation": "Ghidra: 3 basic blocks in function"
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "arch: i386",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "mixed-mode-64",
+      "location": "file",
+      "feature": "arch: amd64",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "mixed-mode-64",
+      "location": "file",
+      "feature": "arch: i386",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "mixed-mode-64",
+      "location": "file",
+      "feature": "characteristic: mixed mode",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "characteristic: mixed mode",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "os: any",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "format: pe",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "b9f5b",
+      "location": "file",
+      "feature": "format: dotnet",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "function-name: HelloWorld::Main",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "function-name: HelloWorld::ctor",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "function-name: HelloWorld::cctor",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "string: Hello World!",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "class: HelloWorld",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "class: System.Console",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "namespace: System.Diagnostics",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250",
+      "feature": "string: Hello World!",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250,bb=0x250,insn=0x252",
+      "feature": "string: Hello World!",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250,bb=0x250,insn=0x257",
+      "feature": "class: System.Console",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250,bb=0x250,insn=0x257",
+      "feature": "namespace: System",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "function=0x250",
+      "feature": "api: System.Console::WriteLine",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "hello-world",
+      "location": "file",
+      "feature": "import: System.Console::WriteLine",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "string: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "string: get_IsAlive",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "import: gdi32.CreateCompatibleBitmap",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "import: CreateCompatibleBitmap",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "file",
+      "feature": "import: gdi32::CreateCompatibleBitmap",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "api: GetWindowDC",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "number: 0xCC0020",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "characteristic: calls to",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000018",
+      "feature": "characteristic: calls to",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "characteristic: calls from",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600000F",
+      "feature": "characteristic: calls from",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "number: 0x0",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68",
+      "feature": "number: 0x1",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "api: System.Linq.Enumerable::First",
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "property: System.Linq.Enumerable::First",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "namespace: System.Linq",
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000004",
+      "feature": "class: System.Linq.Enumerable",
+      "tags": ["dotnet"],
+      "explanation": "generic method"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000020",
+      "feature": "namespace: Reqss",
+      "tags": ["dotnet"],
+      "explanation": "ldftn"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000020",
+      "feature": "class: Reqss.Reqss",
+      "tags": ["dotnet"],
+      "explanation": "ldftn"
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F59,bb=0x1F59,insn=0x1F5B",
+      "feature": "characteristic: unmanaged call",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x2544",
+      "feature": "characteristic: unmanaged call",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000088",
+      "feature": "characteristic: unmanaged call",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "same as above but using token instead of function"
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
+      "feature": "api: System.Drawing.Image::FromHbitmap",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "function=0x1F68,bb=0x1F68,insn=0x1FF9",
+      "feature": "api: FromHbitmap",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600002B",
+      "feature": "property/read: System.IO.FileInfo::Length",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600002B",
+      "feature": "property: System.IO.FileInfo::Length",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "api: System.Diagnostics.Process::Start",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "property/write: System.Diagnostics.ProcessStartInfo::UseShellExecute",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "property/write: System.Diagnostics.ProcessStartInfo::WorkingDirectory",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000081",
+      "feature": "property/write: System.Diagnostics.ProcessStartInfo::FileName",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x6000087",
+      "feature": "property/write: Sockets.MySocket::reConnectionDelay",
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "property/write: Sockets.MySocket::isConnected",
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "class: Sockets.MySocket",
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "namespace: Sockets",
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600008A",
+      "feature": "property/read: Sockets.MySocket::onConnected",
+      "tags": ["dotnet"],
+      "explanation": "Field property access"
+    },
+    {
+      "file": "_0953c",
+      "location": "token=0x6000004",
+      "feature": "property/read: System.Diagnostics.Debugger::IsAttached",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_0953c",
+      "location": "token=0x6000004",
+      "feature": "class: System.Diagnostics.Debugger",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_0953c",
+      "location": "token=0x6000004",
+      "feature": "namespace: System.Diagnostics",
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_692f",
+      "location": "token=0x6000006",
+      "feature": "property/read: System.Management.Automation.PowerShell::Streams",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef property access"
+    },
+    {
+      "file": "_387f15",
+      "location": "token=0x600009E",
+      "feature": "property/read: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE::geoplugin_countryCode",
+      "tags": ["dotnet"],
+      "explanation": "MethodDef property access"
+    },
+    {
+      "file": "_387f15",
+      "location": "token=0x600009E",
+      "feature": "class: Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE",
+      "tags": ["dotnet"],
+      "explanation": "MethodDef property access"
+    },
+    {
+      "file": "_387f15",
+      "location": "token=0x600009E",
+      "feature": "namespace: Modulo",
+      "tags": ["dotnet"],
+      "explanation": "MethodDef property access"
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x6000007",
+      "feature": "api: System.Reflection.Assembly::Load",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x600001D",
+      "feature": "property/read: StagelessHollow.Arac::Marka",
+      "tags": ["dotnet"],
+      "explanation": "MethodDef method"
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x600001C",
+      "feature": "property/read: StagelessHollow.Arac::Marka",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "MethodDef method"
+    },
+    {
+      "file": "_039a6",
+      "location": "token=0x6000023",
+      "feature": "property/read: System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task",
+      "expected": false,
+      "tags": ["dotnet"],
+      "explanation": "MemberRef method"
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer0",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer0/myclass_inner0_0",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer0/myclass_inner0_1",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1/myclass_inner1_1",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner_inner",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner1_0",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner1_1",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner0_0",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typedef",
+      "location": "file",
+      "feature": "class: myclass_inner0_1",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.OS.Build/VERSION::SdkInt",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.Media.Image/Plane::Buffer",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.Provider.Telephony/Sent/Sent::ContentUri",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Android.OS.Build::SdkInt",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Plane::Buffer",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "nested_typeref",
+      "location": "file",
+      "feature": "import: Sent::ContentUri",
+      "expected": false,
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "count(characteristic(calls to)): 1",
+      "tags": ["dotnet"]
+    },
+    {
+      "file": "_1c444",
+      "location": "token=0x600001D",
+      "feature": "count(characteristic(calls from)): 9",
+      "tags": ["dotnet"]
+    }
+  ]
+}

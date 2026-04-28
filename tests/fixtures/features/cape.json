@@ -1,0 +1,210 @@
+{
+  "files": [
+    {
+      "key": "0000a657",
+      "path": "data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz",
+      "tags": ["dynamic", "cape"]
+    }
+  ],
+  "features": [
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "string: T_Ba?.BcRJa"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "string: GetNamedPipeClientSessionId"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "string: nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "section: .rdata"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "section: .nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "import: NdrSimpleTypeUnmarshall"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "import: Nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "export: Nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(1180:3052)",
+      "feature": "string: C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(1180:3052)",
+      "feature": "string: nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2900:2852),thread=2904",
+      "feature": "api: RegQueryValueExA"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2900:2852),thread=2904",
+      "feature": "api: RegQueryValueEx"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "api: NtQueryValueKey"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "api: GetActiveWindow",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "number: 0xEC"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "number: 110173",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "string: SetThreadUILanguage"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "string: nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804,call=56",
+      "feature": "api: NtQueryValueKey"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804,call=1958",
+      "feature": "api: nope",
+      "expected": false
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(string(T_Ba?.BcRJa)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(string(GetNamedPipeClientSessionId)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(string(nope)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(section(.rdata)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(section(.nope)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(import(NdrSimpleTypeUnmarshall)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(import(Nope)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "file",
+      "feature": "count(export(Nope)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(1180:3052)",
+      "feature": "count(string(C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe)): 2"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(1180:3052)",
+      "feature": "count(string(nope)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "count(api(NtQueryValueKey)): 7"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "count(api(GetActiveWindow)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "count(number(0xEC)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "count(number(110173)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "count(string(SetThreadUILanguage)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804",
+      "feature": "count(string(nope)): 0"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804,call=56",
+      "feature": "count(api(NtQueryValueKey)): 1"
+    },
+    {
+      "file": "0000a657",
+      "location": "process=(2852:3052),thread=2804,call=1958",
+      "feature": "count(api(nope)): 0"
+    }
+  ]
+}

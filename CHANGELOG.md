@@ -125,6 +125,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 - rules: pre-filter extracted bytes with 4-byte prefixes for faster candidate selection instead of linear scan #2128
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
 - ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
+- tests: use data-driven fixtures to declare feature tests @williballenthin #2743
 
 ### Raw diffs
 - [capa v9.3.1...v9.4.0](https://github.com/mandiant/capa/compare/v9.3.1...v9.4.0)

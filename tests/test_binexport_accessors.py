@@ -20,6 +20,8 @@ from pathlib import Path
 
 import pytest
 import fixtures
+
+CD = Path(__file__).resolve().parent
 from google.protobuf.json_format import ParseDict
 
 import capa.features.extractors.binexport2.helpers
@@ -38,8 +40,6 @@ from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
 
 logger = logging.getLogger(__name__)
-
-CD = Path(__file__).resolve().parent
 
 
 # found via https://www.virustotal.com/gui/search/type%253Aelf%2520and%2520size%253A1.2kb%252B%2520and%2520size%253A1.4kb-%2520and%2520tag%253Aarm%2520and%2520not%2520tag%253Arelocatable%2520and%2520tag%253A64bits/files
@@ -583,7 +583,9 @@ def test_pattern_matching_not_stack():
     assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918) is None
 
 
-BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
+BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(
+    fixtures.CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport"
+)
 
 
 def test_pattern_matching_x86():

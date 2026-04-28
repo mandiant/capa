@@ -12,37 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
+import functools
 import contextlib
 import collections
+from typing import Union, Literal, Optional
 from pathlib import Path
-from functools import lru_cache
+from dataclasses import field, dataclass
 
 import pytest
 
+import capa.rules
+import capa.engine as ceng
 import capa.loader
-import capa.features.file
-import capa.features.insn
-import capa.features.common
-import capa.features.basicblock
 import capa.render.result_document
-from capa.features.common import (
-    OS,
-    OS_ANY,
-    OS_AUTO,
-    OS_LINUX,
-    ARCH_I386,
-    FORMAT_PE,
-    ARCH_AMD64,
-    FORMAT_ELF,
-    OS_WINDOWS,
-    FORMAT_AUTO,
-    FORMAT_DOTNET,
-    Arch,
-    Format,
-    Feature,
-    FeatureAccess,
-)
+from capa.features.common import OS_AUTO, FORMAT_AUTO, Feature
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import (
     BBHandle,
@@ -51,295 +36,332 @@ from capa.features.extractors.base_extractor import (
     ThreadHandle,
     ProcessHandle,
     FunctionHandle,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
 )
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
-DOTNET_DIR = CD / "data" / "dotnet"
-DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
+FIXTURE_MANIFEST_DIR = CD / "fixtures" / "features"
+DNFILE_TESTFILES = CD / "data" / "dotnet" / "dnfile-testfiles"
 
 
-@contextlib.contextmanager
-def xfail(condition, reason: str = ""):
+def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
     """
-    context manager that wraps a block that is expected to fail in some cases.
-    when it does fail (and is expected), then mark this as pytest.xfail.
-    if its unexpected, raise an exception, so the test fails.
+    parse a feature from a single string
+    no extra description is assigned.
 
-    example::
+    examples:
+        "mnemonic: mov"
+        "string: /foo/"
+        "count(basic blocks): 7"
 
-        # this test:
-        #  - passes on Linux if foo() works
-        #  - fails  on Linux if foo() fails
-        #  - xfails on Windows if foo() fails
-        #  - fails  on Windows if foo() works
-        with xfail(sys.platform == "win32", reason="doesn't work on Windows"):
-            foo()
+    returns: Range if the feature is a count, and generated Statement for COM features, otherwise Feature.
     """
-    try:
-        # do the block
-        yield
-    except Exception:
-        if condition:
-            # we expected the test to fail, so raise and register this via pytest
-            pytest.xfail(reason)
-        else:
-            # we don't expect an exception, so the test should fail
-            raise
-    else:
-        if not condition:
-            # here we expect the block to run successfully,
-            # and we've received no exception,
-            # so this is good
-            pass
-        else:
-            # we expected an exception, but didn't find one. that's an error.
-            raise RuntimeError("expected to fail, but didn't")
+    key, _, value = s.partition(": ")
+    return capa.rules.build_feature(key, value, initial_description=None)
 
 
-# need to limit cache size so GitHub Actions doesn't run out of memory, see #545
-@lru_cache(maxsize=1)
-def get_viv_extractor(path: Path):
-    import capa.main
-    import capa.loader
-    import capa.features.extractors.viv.extractor
+KNOWN_FEATURE_NAMES = {
+    "api",
+    "arch",
+    "basic blocks",
+    "bytes",
+    "characteristic",
+    "class",
+    "export",
+    "format",
+    "function-name",
+    "import",
+    "mnemonic",
+    "namespace",
+    "number",
+    "offset",
+    "operand[0].number",
+    "operand[0].offset",
+    "operand[1].number",
+    "operand[1].offset",
+    "operand[2].offset",
+    "os",
+    "property",
+    "property/read",
+    "property/write",
+    "section",
+    "string",
+    "substring",
+}
 
-    sigpaths = [
-        CD / "data" / "sigs" / "test_aulldiv.pat",
-        CD / "data" / "sigs" / "test_aullrem.pat.gz",
-        CD.parent / "sigs" / "1_flare_msvc_rtf_32_64.sig",
-        CD.parent / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
-        CD.parent / "sigs" / "3_flare_common_libs.sig",
-    ]
+KNOWN_SCOPE_NAMES = capa.rules.STATIC_SCOPES | capa.rules.DYNAMIC_SCOPES
 
-    if "raw32" in path.name:
-        vw = capa.loader.get_workspace(path, "sc32", sigpaths=sigpaths)
-    elif "raw64" in path.name:
-        vw = capa.loader.get_workspace(path, "sc64", sigpaths=sigpaths)
-    else:
-        vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
-    vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
-    fixup_viv(path, extractor)
-    return extractor
+KNOWN_FIXTURE_TAGS: set[str] = (
+    {
+        "static",  # static analysis test, PE/ELF format.
+        "dynamic",  # dynamic analysis test
+        "dotnet",  # .NET format
+        "elf",  # ELF format
+        "flirt",  # requires FLIRT signature matching
+        "binja-db",  # Binary Ninja database format
+        "binexport",  # BinExport2 format
+        "aarch64",  # AArch64 architecture
+        "cape",  # CAPE analysis
+        "drakvuf",  # Drakvuf analysis
+        "vmray",  # VMRay analysis
+    }
+    | KNOWN_SCOPE_NAMES
+    | KNOWN_FEATURE_NAMES
+)
 
 
-def fixup_viv(path: Path, extractor):
+def get_scope_from_location(location: str) -> capa.rules.Scope:
     """
-    vivisect fixups to overcome differences between backends
+    classify a fixture location string into a scope kind.
+
+    reuses the same location grammar handled by `resolve_scope()`.
     """
-    if "3b13b" in path.name:
-        # vivisect only recognizes calling thunk function at 0x10001573
-        extractor.vw.makeFunction(0x10006860)
-    if "294b8d" in path.name:
-        # see vivisect/#561
-        extractor.vw.makeFunction(0x404970)
+    if location == "file":
+        return capa.rules.Scope.FILE
+    if "insn=" in location:
+        return capa.rules.Scope.INSTRUCTION
+    if "bb=" in location:
+        return capa.rules.Scope.BASIC_BLOCK
+    if "call=" in location:
+        return capa.rules.Scope.CALL
+    if "thread=" in location:
+        return capa.rules.Scope.THREAD
+    if "process=" in location:
+        return capa.rules.Scope.PROCESS
+    if location.startswith(("function", "token")):
+        return capa.rules.Scope.FUNCTION
+    raise ValueError(f"unexpected scope location: {location}")
 
 
-@lru_cache(maxsize=1)
-def get_pefile_extractor(path: Path):
-    import capa.features.extractors.pefile
-
-    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_dnfile_extractor(path: Path):
-    import capa.features.extractors.dnfile.extractor
-
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_dotnetfile_extractor(path: Path):
-    import capa.features.extractors.dotnetfile
-
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-@lru_cache(maxsize=1)
-def get_binja_extractor(path: Path):
-    import binaryninja
-    from binaryninja import Settings
-
-    import capa.features.extractors.binja.extractor
-
-    # Workaround for a BN bug: https://github.com/Vector35/binaryninja-api/issues/4051
-    settings = Settings()
-    if path.name.endswith("kernel32-64.dll_"):
-        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
-        settings.set_bool("pdb.loadGlobalSymbols", False)
-        bv = binaryninja.load(str(path))
-        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
-    else:
-        bv = binaryninja.load(str(path))
-
-    # TODO(xusheng6): Temporary fix for https://github.com/mandiant/capa/issues/2507. Remove this once it is fixed in
-    # binja
-    if "al-khaser_x64.exe_" in path.name:
-        bv.create_user_function(0x14004B4F0)
-        bv.update_analysis_and_wait()
-
-    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
-
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
-# we can't easily cache this because the extractor relies on global state (the opened database)
-# which also has to be closed elsewhere. so, the idalib tests will just take a little bit to run.
-def get_idalib_extractor(path: Path):
-    import capa.features.extractors.ida.idalib as idalib
-
-    if not idalib.has_idalib():
-        raise RuntimeError("cannot find IDA idalib module.")
-
-    if not idalib.load_idalib():
-        raise RuntimeError("failed to load IDA idalib module.")
-
-    import idapro
-    import ida_auto
-
-    import capa.features.extractors.ida.extractor
-
-    logger.debug("idalib: opening database...")
-
-    idapro.enable_console_messages(False)
-
-    # we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
-    # which sometimes provides bad names, including overwriting names from debug info.
-    #
-    # use -R to load resources, which can help us embedded PE files.
-    #
-    # return values from open_database:
-    #   0 - Success
-    #   2 - User cancelled or 32-64 bit conversion failed
-    #   4 - Database initialization failed
-    #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
-    #   -2 - User cancelled operation
-    ret = idapro.open_database(
-        str(path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+@dataclass(frozen=True)
+class FixtureMark:
+    backend: (
+        Literal["vivisect"]
+        | Literal["dotnet"]
+        | Literal["binja"]
+        | Literal["pefile"]
+        | Literal["cape"]
+        | Literal["drakvuf"]
+        | Literal["vmray"]
+        | Literal["freeze"]
+        | Literal["binexport2"]
+        | Literal["ida"]
+        | Literal["ghidra"]
     )
-    if ret != 0:
-        raise RuntimeError("failed to analyze input file")
-
-    logger.debug("idalib: waiting for analysis...")
-    ida_auto.auto_wait()
-    logger.debug("idalib: opened database.")
-
-    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
-    fixup_idalib(path, extractor)
-    return extractor
+    mark: Literal["skip"] | Literal["xfail"]
+    reason: str
 
 
-def fixup_idalib(path: Path, extractor):
+@dataclass(frozen=True)
+class FixtureFile:
+    key: str
+    path: Path
+    tags: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class FeatureFixture:
+    sample_key: str
+    sample_path: Path
+    location: str
+    scope: capa.rules.Scope
+    statement: Union[Feature, ceng.Range, ceng.Statement]
+    expected: bool = True
+    tags: frozenset[str] = frozenset()
+    marks: tuple[FixtureMark, ...] = ()
+    explanation: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class BackendFeaturePolicy:
+    name: str
+    include_tags: set[str] = field(default_factory=set)
+    exclude_tags: set[str] = field(default_factory=set)
+
+
+def get_fixture_files() -> tuple[tuple[Path, dict], ...]:
+    manifests = []
+    for path in sorted(FIXTURE_MANIFEST_DIR.glob("*.json")):
+        with path.open("r") as f:
+            manifests.append((path, json.load(f)))
+    if not manifests:
+        raise ValueError(f"no fixture manifests found in {FIXTURE_MANIFEST_DIR}")
+    return tuple(manifests)
+
+
+def load_fixture_file_references() -> dict[str, FixtureFile]:
     """
-    IDA fixups to overcome differences between backends
+    load the combined `files` tables from `tests/fixtures/features/*.json`.
+
+    file entries may include a `tags` list that will be inherited
+    by feature fixtures that reference the file.
     """
-    import idaapi
-    import ida_funcs
+    files: dict[str, FixtureFile] = {}
+    file_sources: dict[str, Path] = {}
+    for manifest_path, data in get_fixture_files():
+        for entry in data["files"]:
+            key = entry["key"]
+            if key in files:
+                raise ValueError(f"duplicate fixture file key {key!r} in {file_sources[key]} and {manifest_path}")
 
-    def remove_library_id_flag(fva):
-        f = idaapi.get_func(fva)
-        f.flags &= ~ida_funcs.FUNC_LIB
-        ida_funcs.update_func(f)
-
-    if "kernel32-64" in path.name:
-        # remove (correct) library function id, so we can test x64 thunk
-        remove_library_id_flag(0x1800202B0)
-
-    if "al-khaser_x64" in path.name:
-        # remove (correct) library function id, so we can test x64 nested thunk
-        remove_library_id_flag(0x14004B4F0)
-
-
-@lru_cache(maxsize=1)
-def get_cape_extractor(path):
-    from capa.helpers import load_json_from_path
-    from capa.features.extractors.cape.extractor import CapeExtractor
-
-    report = load_json_from_path(path)
-
-    return CapeExtractor.from_report(report)
+            tags = frozenset(entry.get("tags", []))
+            unknown = tags - KNOWN_FIXTURE_TAGS
+            if unknown:
+                raise ValueError(f"unknown fixture tag(s) on file {key!r} in {manifest_path}: {sorted(unknown)}")
+            files[key] = FixtureFile(
+                key=key,
+                path=CD / entry["path"],
+                tags=tags,
+            )
+            file_sources[key] = manifest_path
+    return files
 
 
-@lru_cache(maxsize=1)
-def get_drakvuf_extractor(path):
-    from capa.helpers import load_jsonl_from_path
-    from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
+def load_feature_fixtures() -> tuple[FeatureFixture, ...]:
+    """
+    load the full list of feature fixtures from `tests/fixtures/features/*.json`.
 
-    report = load_jsonl_from_path(path)
+    merges file-level tags into feature-level tags, validates tags against
+    the known registry, parses the statement (including `count(...)`), and
+    defaults `expected` to True.
+    """
+    fixture_file_references = load_fixture_file_references()
+    fixtures_: list[FeatureFixture] = []
+    for fixture_file_path, fixture_file_data in get_fixture_files():
+        for fixture_file_entry in fixture_file_data["features"]:
+            fixture_file_reference = fixture_file_entry["file"]
+            if fixture_file_reference not in fixture_file_references:
+                raise ValueError(
+                    f"unknown fixture file key referenced by feature in {fixture_file_path}: {fixture_file_reference!r}"
+                )
+            fixture_file = fixture_file_references[fixture_file_reference]
 
-    return DrakvufExtractor.from_report(report)
+            feature_str: str = fixture_file_entry["feature"]
+            tags = frozenset(fixture_file_entry.get("tags", [])) | fixture_file.tags
+            unknown = tags - KNOWN_FIXTURE_TAGS
+            if unknown:
+                raise ValueError(
+                    f"unknown fixture tag(s) on feature {feature_str!r} for file {fixture_file_reference!r} in {fixture_file_path}: {sorted(unknown)}"
+                )
+
+            location = fixture_file_entry["location"]
+            statement = parse_feature_string(feature_str)
+            scope = get_scope_from_location(location)
+            # scope-kind and feature-type tags are auto-derived so that
+            # backend policies can include/exclude scopes and feature types
+            # purely via `include_tags`/`exclude_tags`. they're drawn from
+            # the known-tag registry so no re-validation is needed here.
+            tags = tags | {scope.value}
+            if isinstance(statement, Feature):
+                tags = tags | {statement.name}
+                # technically we're not extracting the feature name for COM and count features
+                # but i think thats ok for now, since no tests rely on include/excluding those.
+
+            expected = fixture_file_entry.get("expected", True)
+            marks = tuple(
+                FixtureMark(backend=m["backend"], mark=m["mark"], reason=m["reason"])
+                for m in fixture_file_entry.get("marks", [])
+            )
+
+            fixtures_.append(
+                FeatureFixture(
+                    sample_key=fixture_file_reference,
+                    sample_path=fixture_file.path,
+                    location=location,
+                    scope=scope,
+                    statement=statement,
+                    expected=expected,
+                    tags=tags,
+                    marks=marks,
+                    explanation=fixture_file_entry.get("explanation"),
+                )
+            )
+
+    fixtures_.sort(key=lambda f: (f.sample_key, f.location))
+    return tuple(fixtures_)
 
 
-@lru_cache(maxsize=1)
-def get_vmray_extractor(path):
-    from capa.features.extractors.vmray.extractor import VMRayExtractor
-
-    return VMRayExtractor.from_zipfile(path)
-
-
-GHIDRA_CACHE: dict[Path, tuple] = {}
-
-
-def get_ghidra_extractor(path: Path):
-    # we need to start PyGhidra before importing the extractor
-    # because the extractor imports Ghidra modules that are only available after PyGhidra is started
-    import pyghidra
-
-    if not pyghidra.started():
-        pyghidra.start()
-
-    import capa.loader
-    import capa.features.extractors.ghidra.context
-    import capa.features.extractors.ghidra.extractor
-
-    if path in GHIDRA_CACHE:
-        extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
-        capa.features.extractors.ghidra.context.set_context(program, flat_api, monitor)
-        return extractor
-
-    # We use a larger cache size to avoid re-opening the same file multiple times
-    # which is very slow with Ghidra.
-    extractor = capa.loader.get_extractor(
-        path, FORMAT_AUTO, OS_AUTO, capa.loader.BACKEND_GHIDRA, [], disable_progress=True
-    )
-
-    ctx = capa.features.extractors.ghidra.context.get_context()
-    GHIDRA_CACHE[path] = (extractor, ctx.program, ctx.flat_api, ctx.monitor)
-    return extractor
+def _fixture_is_included(policy: BackendFeaturePolicy, fixture: FeatureFixture) -> bool:
+    """decide whether a fixture is selected by a policy."""
+    if policy.include_tags and not (fixture.tags & policy.include_tags):
+        return False
+    if fixture.tags & policy.exclude_tags:
+        return False
+    return True
 
 
-@lru_cache(maxsize=1)
-def get_binexport_extractor(path):
-    import capa.features.extractors.binexport2
-    import capa.features.extractors.binexport2.extractor
+def select_feature_fixtures(policy: BackendFeaturePolicy) -> list[FeatureFixture]:
+    """
+    select fixtures matching a backend policy.
 
-    be2 = capa.features.extractors.binexport2.get_binexport2(path)
-    search_paths = [CD / "data", CD / "data" / "aarch64"]
-    path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
-    buf = path.read_bytes()
+    rules (applied in order):
+      1. start from all fixtures
+      2. if `include_tags` is non-empty, keep fixtures whose tags intersect it
+      3. drop fixtures whose tags intersect `exclude_tags`
 
-    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+    scope kinds and feature types are exposed as auto-derived tags, so
+    a policy can restrict scope or feature type via `exclude_tags` too.
+    """
+    return [f for f in load_feature_fixtures() if _fixture_is_included(policy, f)]
+
+
+def _fixture_test_id(fixture: FeatureFixture) -> str:
+    """
+    build a readable pytest parameter id for a fixture.
+
+    mirrors the legacy `make_test_id` shape: sample-location-statement-expected.
+    """
+    return "-".join([
+        fixture.sample_key,
+        fixture.location,
+        str(fixture.statement),
+        str(fixture.expected),
+    ])
+
+
+def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
+    """
+    build a pytest parametrize decorator for a backend's selected fixtures.
+
+    applies JSON marks matching `policy.name` to the parameter set, so
+    backend-specific skip/xfail behavior stays in the JSON data file.
+    """
+    selected = select_feature_fixtures(policy)
+    params = []
+    for fixture in selected:
+        marks = []
+        for mark in fixture.marks:
+            if mark.backend != policy.name:
+                continue
+            if mark.mark == "skip":
+                marks.append(pytest.mark.skip(reason=mark.reason))
+            elif mark.mark == "xfail":
+                marks.append(pytest.mark.xfail(reason=mark.reason))
+            else:
+                raise ValueError(f"unknown mark {mark.mark!r} for backend {policy.name!r}")
+        params.append(pytest.param(fixture, marks=marks, id=_fixture_test_id(fixture)))
+    return pytest.mark.parametrize("feature_fixture", params)
+
+
+def run_feature_fixture(
+    extractor: StaticFeatureExtractor | DynamicFeatureExtractor,
+    fixture: FeatureFixture,
+) -> None:
+    """
+    generic runner that evaluates a feature fixture against a backend.
+    """
+    scope = resolve_scope(fixture.location)
+    features = scope(extractor)
+    result = fixture.statement.evaluate(features)
+    actual = bool(result)
+    if fixture.expected:
+        msg = f"{fixture.statement} should match in {fixture.location}"
+    else:
+        msg = f"{fixture.statement} should not match in {fixture.location}"
+    assert actual == fixture.expected, msg
 
 
 def extract_global_features(extractor):
@@ -349,7 +371,7 @@ def extract_global_features(extractor):
     return features
 
 
-@lru_cache
+@functools.lru_cache
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
@@ -387,7 +409,7 @@ def extract_call_features(extractor, ph, th, ch):
     return features
 
 
-# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+# f may not be hashable (e.g. ida func_t) so cannot @functools.lru_cache this
 def extract_function_features(extractor, fh):
     features = collections.defaultdict(set)
     for bb in extractor.get_basic_blocks(fh):
@@ -401,7 +423,7 @@ def extract_function_features(extractor, fh):
     return features
 
 
-# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+# f may not be hashable (e.g. ida func_t) so cannot @functools.lru_cache this
 def extract_basic_block_features(extractor, fh, bbh):
     features = collections.defaultdict(set)
     for insn in extractor.get_instructions(fh, bbh):
@@ -412,243 +434,12 @@ def extract_basic_block_features(extractor, fh, bbh):
     return features
 
 
-# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+# f may not be hashable (e.g. ida func_t) so cannot @functools.lru_cache this
 def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Address]]:
     features = collections.defaultdict(set)
     for feature, addr in extractor.extract_insn_features(fh, bbh, ih):
         features[feature].add(addr)
     return features
-
-
-# note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
-def get_data_path_by_name(name) -> Path:
-    if name == "mimikatz":
-        return CD / "data" / "mimikatz.exe_"
-    elif name == "kernel32":
-        return CD / "data" / "kernel32.dll_"
-    elif name == "kernel32-64":
-        return CD / "data" / "kernel32-64.dll_"
-    elif name == "pma01-01":
-        return CD / "data" / "Practical Malware Analysis Lab 01-01.dll_"
-    elif name == "pma01-01-rd":
-        return CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
-    elif name == "pma12-04":
-        return CD / "data" / "Practical Malware Analysis Lab 12-04.exe_"
-    elif name == "pma16-01":
-        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
-    elif name == "pma16-01_binja_db":
-        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_.bndb"
-    elif name == "pma21-01":
-        return CD / "data" / "Practical Malware Analysis Lab 21-01.exe_"
-    elif name == "al-khaser x86":
-        return CD / "data" / "al-khaser_x86.exe_"
-    elif name == "al-khaser x64":
-        return CD / "data" / "al-khaser_x64.exe_"
-    elif name.startswith("39c05"):
-        return CD / "data" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
-    elif name.startswith("499c2"):
-        return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
-    elif name.startswith("9324d"):
-        return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
-    elif name.startswith("395eb"):
-        return CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
-    elif name.startswith("a1982"):
-        return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
-    elif name.startswith("a933a"):
-        return CD / "data" / "a933a1a402775cfa94b6bee0963f4b46.dll_"
-    elif name.startswith("bfb9b"):
-        return CD / "data" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_"
-    elif name.startswith("c9188"):
-        return CD / "data" / "c91887d861d9bd4a5872249b641bc9f9.exe_"
-    elif name.startswith("64d9f"):
-        return CD / "data" / "64d9f7d96b99467f36e22fada623c3bb.dll_"
-    elif name.startswith("82bf6"):
-        return CD / "data" / "82BF6347ACF15E5D883715DC289D8A2B.exe_"
-    elif name.startswith("pingtaest"):
-        return CD / "data" / "ping_täst.exe_"
-    elif name.startswith("77329"):
-        return CD / "data" / "773290480d5445f11d3dc1b800728966.exe_"
-    elif name.startswith("3b13b"):
-        return CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
-    elif name == "7351f.elf":
-        return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
-    elif name.startswith("79abd"):
-        return CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_"
-    elif name.startswith("946a9"):
-        return CD / "data" / "946a99f36a46d335dec080d9a4371940.dll_"
-    elif name.startswith("2f7f5f"):
-        return CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
-    elif name.startswith("b9f5b"):
-        return CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
-    elif name.startswith("mixed-mode-64"):
-        return DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
-    elif name.startswith("hello-world"):
-        return DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
-    elif name.startswith("_1c444"):
-        return DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
-    elif name.startswith("_387f15"):
-        return DOTNET_DIR / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
-    elif name.startswith("_692f"):
-        return DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_"
-    elif name.startswith("_0953c"):
-        return CD / "data" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
-    elif name.startswith("_039a6"):
-        return CD / "data" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
-    elif name.startswith("b5f052"):
-        return CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
-    elif name.startswith("bf7a9c"):
-        return CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
-    elif name.startswith("294b8d"):
-        return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
-    elif name.startswith("2bf18d"):
-        return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
-    elif name.startswith("0000a657"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "cape"
-            / "v2.2"
-            / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
-        )
-    elif name.startswith("d46900"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "cape"
-            / "v2.2"
-            / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
-        )
-    elif name.startswith("93b2d1-drakvuf"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "drakvuf"
-            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
-        )
-    elif name.startswith("93b2d1-vmray"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "vmray"
-            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip"
-        )
-    elif name.startswith("2f8a79-vmray"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "vmray"
-            / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
-        )
-    elif name.startswith("eb1287-vmray"):
-        return (
-            CD
-            / "data"
-            / "dynamic"
-            / "vmray"
-            / "eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip"
-        )
-    elif name.startswith("ea2876"):
-        return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
-    elif name.startswith("1038a2"):
-        return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
-    elif name.startswith("3da7c"):
-        return CD / "data" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
-    elif name.startswith("nested_typedef"):
-        return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
-    elif name.startswith("nested_typeref"):
-        return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
-    elif name.startswith("687e79.ghidra.be2"):
-        return (
-            CD
-            / "data"
-            / "binexport2"
-            / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
-        )
-    elif name.startswith("d1e650.ghidra.be2"):
-        return (
-            CD
-            / "data"
-            / "binexport2"
-            / "d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8.elf_.ghidra.BinExport"
-        )
-    else:
-        raise ValueError(f"unexpected sample fixture: {name}")
-
-
-def get_sample_md5_by_name(name):
-    """used by IDA tests to ensure the correct IDB is loaded"""
-    if name == "mimikatz":
-        return "5f66b82558ca92e54e77f216ef4c066c"
-    elif name == "kernel32":
-        return "e80758cf485db142fca1ee03a34ead05"
-    elif name == "kernel32-64":
-        return "a8565440629ac87f6fef7d588fe3ff0f"
-    elif name == "pma12-04":
-        return "56bed8249e7c2982a90e54e1e55391a2"
-    elif name == "pma16-01":
-        return "7faafc7e4a5c736ebfee6abbbc812d80"
-    elif name == "pma01-01":
-        return "290934c61de9176ad682ffdd65f0a669"
-    elif name == "pma21-01":
-        return "c8403fb05244e23a7931c766409b5e22"
-    elif name == "al-khaser x86":
-        return "db648cd247281954344f1d810c6fd590"
-    elif name == "al-khaser x64":
-        return "3cb21ae76ff3da4b7e02d77ff76e82be"
-    elif name.startswith("39c05"):
-        return "b7841b9d5dc1f511a93cc7576672ec0c"
-    elif name.startswith("499c2"):
-        return "499c2a85f6e8142c3f48d4251c9c7cd6"
-    elif name.startswith("9324d"):
-        return "9324d1a8ae37a36ae560c37448c9705a"
-    elif name.startswith("a1982"):
-        return "a198216798ca38f280dc413f8c57f2c2"
-    elif name.startswith("a933a"):
-        return "a933a1a402775cfa94b6bee0963f4b46"
-    elif name.startswith("bfb9b"):
-        return "bfb9b5391a13d0afd787e87ab90f14f5"
-    elif name.startswith("c9188"):
-        return "c91887d861d9bd4a5872249b641bc9f9"
-    elif name.startswith("64d9f"):
-        return "64d9f7d96b99467f36e22fada623c3bb"
-    elif name.startswith("82bf6"):
-        return "82bf6347acf15e5d883715dc289d8a2b"
-    elif name.startswith("77329"):
-        return "773290480d5445f11d3dc1b800728966"
-    elif name.startswith("3b13b"):
-        # file name is SHA256 hash
-        return "56a6ffe6a02941028cc8235204eef31d"
-    elif name.startswith("7351f"):
-        return "7351f8a40c5450557b24622417fc478d"
-    elif name.startswith("79abd"):
-        return "79abd17391adc6251ecdc58d13d76baf"
-    elif name.startswith("946a9"):
-        return "946a99f36a46d335dec080d9a4371940"
-    elif name.startswith("b9f5b"):
-        return "b9f5bd514485fb06da39beff051b9fdc"
-    elif name.startswith("294b8d"):
-        # file name is SHA256 hash
-        return "3db3e55b16a7b1b1afb970d5e77c5d98"
-    elif name.startswith("2bf18d"):
-        return "2bf18d0403677378adad9001b1243211"
-    elif name.startswith("ea2876"):
-        return "76fa734236daa023444dec26863401dc"
-    else:
-        raise ValueError(f"unexpected sample fixture: {name}")
-
-
-def resolve_sample(sample):
-    return get_data_path_by_name(sample)
-
-
-@pytest.fixture
-def sample(request):
-    return resolve_sample(request.param)
 
 
 def get_process(extractor, ppid: int, pid: int) -> ProcessHandle:
@@ -840,11 +631,6 @@ def resolve_scope(scope):
         raise ValueError("unexpected scope fixture")
 
 
-@pytest.fixture
-def scope(request):
-    return resolve_scope(request.param)
-
-
 def make_test_id(values):
     return "-".join(map(str, values))
 
@@ -861,873 +647,275 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-FEATURE_PRESENCE_TESTS = sorted(
-    [
-        # file/characteristic("embedded pe")
-        ("pma12-04", "file", capa.features.common.Characteristic("embedded pe"), True),
-        # file/string
-        ("mimikatz", "file", capa.features.common.String("SCardControl"), True),
-        ("mimikatz", "file", capa.features.common.String("SCardTransmit"), True),
-        ("mimikatz", "file", capa.features.common.String("ACR  > "), True),
-        ("mimikatz", "file", capa.features.common.String("nope"), False),
-        # file/sections
-        ("mimikatz", "file", capa.features.file.Section(".text"), True),
-        ("mimikatz", "file", capa.features.file.Section(".nope"), False),
-        # IDA doesn't extract unmapped sections by default
-        # ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
-        # file/exports
-        ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
-        ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
-        ("kernel32", "file", capa.features.file.Export("nope"), False),
-        # forwarded export
-        ("ea2876", "file", capa.features.file.Export("vresion.GetFileVersionInfoA"), True),
-        # file/imports
-        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
-        ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
-        ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
-        ("mimikatz", "file", capa.features.file.Import("IsWow64Process"), True),
-        ("mimikatz", "file", capa.features.file.Import("msvcrt.exit"), True),
-        ("mimikatz", "file", capa.features.file.Import("cabinet.#11"), True),
-        ("mimikatz", "file", capa.features.file.Import("#11"), False),
-        ("mimikatz", "file", capa.features.file.Import("#nope"), False),
-        ("mimikatz", "file", capa.features.file.Import("nope"), False),
-        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), True),
-        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), True),
-        ("mimikatz", "file", capa.features.file.Import("CryptAcquireContextW"), True),
-        ("mimikatz", "file", capa.features.file.Import("CryptAcquireContext"), True),
-        # function/characteristic(loop)
-        ("mimikatz", "function=0x401517", capa.features.common.Characteristic("loop"), True),
-        ("mimikatz", "function=0x401000", capa.features.common.Characteristic("loop"), False),
-        # bb/characteristic(tight loop)
-        ("mimikatz", "function=0x402EC4", capa.features.common.Characteristic("tight loop"), True),
-        ("mimikatz", "function=0x401000", capa.features.common.Characteristic("tight loop"), False),
-        # bb/characteristic(stack string)
-        ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("stack string"), True),
-        ("mimikatz", "function=0x401000", capa.features.common.Characteristic("stack string"), False),
-        # bb/characteristic(tight loop)
-        ("mimikatz", "function=0x402EC4,bb=0x402F8E", capa.features.common.Characteristic("tight loop"), True),
-        ("mimikatz", "function=0x401000,bb=0x401000", capa.features.common.Characteristic("tight loop"), False),
-        # insn/mnemonic
-        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("push"), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("movzx"), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("xor"), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("in"), False),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("out"), False),
-        # insn/operand.number
-        ("mimikatz", "function=0x40105D,bb=0x401073", capa.features.insn.OperandNumber(1, 0xFF), True),
-        ("mimikatz", "function=0x40105D,bb=0x401073", capa.features.insn.OperandNumber(0, 0xFF), False),
-        # insn/operand.offset
-        ("mimikatz", "function=0x40105D,bb=0x4010B0", capa.features.insn.OperandOffset(0, 4), True),
-        ("mimikatz", "function=0x40105D,bb=0x4010B0", capa.features.insn.OperandOffset(1, 4), False),
-        # insn/number
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
-        ("mimikatz", "function=0x401000", capa.features.insn.Number(0x0), True),
-        # insn/number: stack adjustments
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
-        # insn/number: negative
-        ("mimikatz", "function=0x401553", capa.features.insn.Number(0xFFFFFFFF), True),
-        ("mimikatz", "function=0x43e543", capa.features.insn.Number(0xFFFFFFF0), True),
-        # insn/offset
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0xC), True),
-        # insn/offset, issue #276
-        ("64d9f", "function=0x10001510,bb=0x100015B0", capa.features.insn.Offset(0x4000), True),
-        # insn/offset: stack references
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
-        # insn/offset: negative
-        # 0x4012b4  MOVZX       ECX, [EAX+0xFFFFFFFFFFFFFFFF]
-        ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
-        # 0x4012b8  MOVZX       EAX, [EAX+0xFFFFFFFFFFFFFFFE]
-        ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
-        #
-        # insn/offset from mnemonic: add
-        #
-        # should not be considered, too big for an offset:
-        #    .text:00401D85 81 C1 00 00 00 80       add     ecx, 80000000h
-        ("mimikatz", "function=0x401D64,bb=0x401D73,insn=0x401D85", capa.features.insn.Offset(0x80000000), False),
-        # should not be considered, relative to stack:
-        #    .text:00401CF6 83 C4 10                add     esp, 10h
-        ("mimikatz", "function=0x401CC7,bb=0x401CDE,insn=0x401CF6", capa.features.insn.Offset(0x10), False),
-        # yes, this is also a offset (imagine eax is a pointer):
-        #    .text:0040223C 83 C0 04                add     eax, 4
-        ("mimikatz", "function=0x402203,bb=0x402221,insn=0x40223C", capa.features.insn.Offset(0x4), True),
-        #
-        # insn/number from mnemonic: lea
-        #
-        # should not be considered, lea operand invalid encoding
-        #    .text:00471EE6 8D 1C 81                lea     ebx, [ecx+eax*4]
-        ("mimikatz", "function=0x471EAB,bb=0x471ED8,insn=0x471EE6", capa.features.insn.Number(0x4), False),
-        # should not be considered, lea operand invalid encoding
-        #    .text:004717B1 8D 4C 31 D0             lea     ecx, [ecx+esi-30h]
-        ("mimikatz", "function=0x47153B,bb=0x4717AB,insn=0x4717B1", capa.features.insn.Number(-0x30), False),
-        # yes, this is also a number (imagine ebx is zero):
-        #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
-        ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
-        # insn/api
-        # not extracting dll anymore
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), False),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), False),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), False),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), False),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), False),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContextW"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContext"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptGenKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptImportKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptDestroyKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
-        # insn/api: thunk
-        # not extracting dll anymore
-        ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), False),
-        ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
-        # insn/api: x64
-        ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
-        # insn/api: x64 thunk
-        ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
-        # insn/api: x64 nested thunk
-        ("al-khaser x64", "function=0x14004B4F0", capa.features.insn.API("__vcrt_GetModuleHandle"), True),
-        # insn/api: call via jmp
-        ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
-        ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
-        # insn/api: resolve indirect calls
-        # not extracting dll anymore
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), False),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), False),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), False),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), False),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("CreatePipe"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("SetHandleInformation"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("CloseHandle"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("WriteFile"), True),
-        # insn/string
-        ("mimikatz", "function=0x40105D", capa.features.common.String("SCardControl"), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.String("SCardTransmit"), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.String("ACR  > "), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.String("nope"), False),
-        ("773290...", "function=0x140001140", capa.features.common.String(r"%s:\\OfficePackagesForWDAG"), True),
-        # overlapping string, see #1271
-        ("294b8d...", "function=0x404970,bb=0x404970,insn=0x40499F", capa.features.common.String("\r\n\x00:ht"), False),
-        # insn/regex
-        ("pma16-01", "function=0x4021B0", capa.features.common.Regex("HTTP/1.0"), True),
-        ("pma16-01", "function=0x402F40", capa.features.common.Regex("www.practicalmalwareanalysis.com"), True),
-        ("pma16-01", "function=0x402F40", capa.features.common.Substring("practicalmalwareanalysis.com"), True),
-        # insn/string, pointer to string
-        ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
-        # insn/string, direct memory reference
-        ("mimikatz", "function=0x46D6CE", capa.features.common.String("(null)"), True),
-        # insn/bytes
-        ("mimikatz", "function=0x401517", capa.features.common.Bytes(bytes.fromhex("CA3B0E000000F8AF47")), True),
-        ("mimikatz", "function=0x404414", capa.features.common.Bytes(bytes.fromhex("0180000040EA4700")), True),
-        # don't extract byte features for obvious strings
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), False),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("nope".encode("ascii")), False),
-        # push    offset aAcsAcr1220 ; "ACS..." -> where ACS == 41 00 43 00 == valid pointer to middle of instruction
-        ("mimikatz", "function=0x401000", capa.features.common.Bytes(bytes.fromhex("FDFF59F647")), False),
-        # IDA features included byte sequences read from invalid memory, fixed in #409
-        ("mimikatz", "function=0x44570F", capa.features.common.Bytes(bytes.fromhex("FF" * 256)), False),
-        # insn/bytes, pointer to string bytes
-        ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
-        # insn/characteristic(nzxor)
-        ("mimikatz", "function=0x410DFC", capa.features.common.Characteristic("nzxor"), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("nzxor"), False),
-        # insn/characteristic(nzxor): no security cookies
-        ("mimikatz", "function=0x46D534", capa.features.common.Characteristic("nzxor"), False),
-        # insn/characteristic(nzxor): xorps
-        # viv needs fixup to recognize function, see above
-        ("mimikatz", "function=0x410dfc", capa.features.common.Characteristic("nzxor"), True),
-        # insn/characteristic(peb access)
-        ("kernel32-64", "function=0x1800017D0", capa.features.common.Characteristic("peb access"), True),
-        ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("peb access"), False),
-        # insn/characteristic(gs access)
-        ("kernel32-64", "function=0x180001068", capa.features.common.Characteristic("gs access"), True),
-        ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("gs access"), False),
-        # insn/characteristic(cross section flow)
-        ("a1982...", "function=0x4014D0", capa.features.common.Characteristic("cross section flow"), True),
-        # insn/characteristic(cross section flow): imports don't count
-        ("kernel32-64", "function=0x180001068", capa.features.common.Characteristic("cross section flow"), False),
-        ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("cross section flow"), False),
-        # insn/characteristic(recursive call)
-        ("mimikatz", "function=0x40640e", capa.features.common.Characteristic("recursive call"), True),
-        # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
-        ("mimikatz", "function=0x4175FF", capa.features.common.Characteristic("recursive call"), False),
-        # insn/characteristic(indirect call)
-        ("mimikatz", "function=0x4175FF", capa.features.common.Characteristic("indirect call"), True),
-        ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("indirect call"), False),
-        # insn/characteristic(calls from)
-        ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls from"), True),
-        ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), False),
-        # function/characteristic(calls to)
-        ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("calls to"), True),
-        # function/characteristic(forwarded export)
-        ("ea2876", "file", capa.features.common.Characteristic("forwarded export"), True),
-        # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
-        ("mimikatz", "function=0x456BB9", capa.features.common.Characteristic("calls to"), False),
-        # file/function-name
-        ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
-        # os & format & arch
-        ("pma16-01", "file", OS(OS_WINDOWS), True),
-        ("pma16-01", "file", OS(OS_LINUX), False),
-        ("mimikatz", "file", OS(OS_WINDOWS), True),
-        ("pma16-01", "function=0x401100", OS(OS_WINDOWS), True),
-        ("pma16-01", "function=0x401100,bb=0x401130", OS(OS_WINDOWS), True),
-        ("mimikatz", "function=0x40105D", OS(OS_WINDOWS), True),
-        ("pma16-01", "file", Arch(ARCH_I386), True),
-        ("pma16-01", "file", Arch(ARCH_AMD64), False),
-        ("mimikatz", "file", Arch(ARCH_I386), True),
-        ("pma16-01", "function=0x401100", Arch(ARCH_I386), True),
-        ("pma16-01", "function=0x401100,bb=0x401130", Arch(ARCH_I386), True),
-        ("mimikatz", "function=0x40105D", Arch(ARCH_I386), True),
-        ("pma16-01", "file", Format(FORMAT_PE), True),
-        ("pma16-01", "file", Format(FORMAT_ELF), False),
-        ("mimikatz", "file", Format(FORMAT_PE), True),
-        # format is also a global feature
-        ("pma16-01", "function=0x401100", Format(FORMAT_PE), True),
-        ("mimikatz", "function=0x456BB9", Format(FORMAT_PE), True),
-        # elf support
-        ("7351f.elf", "file", OS(OS_LINUX), True),
-        ("7351f.elf", "file", OS(OS_WINDOWS), False),
-        ("7351f.elf", "file", Format(FORMAT_ELF), True),
-        ("7351f.elf", "file", Format(FORMAT_PE), False),
-        ("7351f.elf", "file", Arch(ARCH_I386), False),
-        ("7351f.elf", "file", Arch(ARCH_AMD64), True),
-        ("7351f.elf", "function=0x408753", capa.features.common.String("/dev/null"), True),
-        ("7351f.elf", "function=0x408753,bb=0x408781", capa.features.insn.API("open"), True),
-        ("79abd...", "function=0x10002385,bb=0x10002385", capa.features.common.Characteristic("call $+5"), True),
-        ("946a9...", "function=0x10001510,bb=0x100015c0", capa.features.common.Characteristic("call $+5"), True),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
-
-# this list should be merged into the one above (FEATURE_PRESENSE_TESTS)
-# once the debug symbol functionality has been added to all backends
-FEATURE_SYMTAB_FUNC_TESTS = [
-    (
-        "2bf18d",
-        "function=0x4027b3,bb=0x402861,insn=0x40286d",
-        capa.features.insn.API("__GI_connect"),
-        True,
-    ),
-    (
-        "2bf18d",
-        "function=0x4027b3,bb=0x402861,insn=0x40286d",
-        capa.features.insn.API("connect"),
-        True,
-    ),
-    (
-        "2bf18d",
-        "function=0x4027b3,bb=0x402861,insn=0x40286d",
-        capa.features.insn.API("__libc_connect"),
-        True,
-    ),
-    (
-        "2bf18d",
-        "function=0x4088a4",
-        capa.features.file.FunctionName("__GI_connect"),
-        True,
-    ),
-    (
-        "2bf18d",
-        "function=0x4088a4",
-        capa.features.file.FunctionName("connect"),
-        True,
-    ),
-    (
-        "2bf18d",
-        "function=0x4088a4",
-        capa.features.file.FunctionName("__libc_connect"),
-        True,
-    ),
-]
-
-FEATURE_PRESENCE_TESTS_DOTNET = sorted(
-    [
-        ("b9f5b", "file", Arch(ARCH_I386), True),
-        ("b9f5b", "file", Arch(ARCH_AMD64), False),
-        ("mixed-mode-64", "file", Arch(ARCH_AMD64), True),
-        ("mixed-mode-64", "file", Arch(ARCH_I386), False),
-        ("mixed-mode-64", "file", capa.features.common.Characteristic("mixed mode"), True),
-        ("hello-world", "file", capa.features.common.Characteristic("mixed mode"), False),
-        ("b9f5b", "file", OS(OS_ANY), True),
-        ("b9f5b", "file", Format(FORMAT_PE), True),
-        ("b9f5b", "file", Format(FORMAT_DOTNET), True),
-        ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::Main"), True),
-        ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::ctor"), True),
-        ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::cctor"), False),
-        ("hello-world", "file", capa.features.common.String("Hello World!"), True),
-        ("hello-world", "file", capa.features.common.Class("HelloWorld"), True),
-        ("hello-world", "file", capa.features.common.Class("System.Console"), True),
-        ("hello-world", "file", capa.features.common.Namespace("System.Diagnostics"), True),
-        ("hello-world", "function=0x250", capa.features.common.String("Hello World!"), True),
-        ("hello-world", "function=0x250, bb=0x250, insn=0x252", capa.features.common.String("Hello World!"), True),
-        ("hello-world", "function=0x250, bb=0x250, insn=0x257", capa.features.common.Class("System.Console"), True),
-        ("hello-world", "function=0x250, bb=0x250, insn=0x257", capa.features.common.Namespace("System"), True),
-        ("hello-world", "function=0x250", capa.features.insn.API("System.Console::WriteLine"), True),
-        ("hello-world", "file", capa.features.file.Import("System.Console::WriteLine"), True),
-        ("_1c444", "file", capa.features.common.String(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"), True),
-        ("_1c444", "file", capa.features.common.String("get_IsAlive"), True),
-        ("_1c444", "file", capa.features.file.Import("gdi32.CreateCompatibleBitmap"), True),
-        ("_1c444", "file", capa.features.file.Import("CreateCompatibleBitmap"), True),
-        ("_1c444", "file", capa.features.file.Import("gdi32::CreateCompatibleBitmap"), False),
-        ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
-        # not extracting dll anymore
-        ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), False),
-        ("_1c444", "function=0x1F68", capa.features.insn.Number(0xCC0020), True),
-        ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), True),
-        ("_1c444", "token=0x6000018", capa.features.common.Characteristic("calls to"), False),
-        ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), True),
-        ("_1c444", "token=0x600000F", capa.features.common.Characteristic("calls from"), False),
-        ("_1c444", "function=0x1F68", capa.features.insn.Number(0x0), True),
-        ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
-        ("_692f", "token=0x6000004", capa.features.insn.API("System.Linq.Enumerable::First"), True),  # generic method
-        (
-            "_692f",
-            "token=0x6000004",
-            capa.features.insn.Property("System.Linq.Enumerable::First"),
-            False,
-        ),  # generic method
-        ("_692f", "token=0x6000004", capa.features.common.Namespace("System.Linq"), True),  # generic method
-        ("_692f", "token=0x6000004", capa.features.common.Class("System.Linq.Enumerable"), True),  # generic method
-        ("_1c444", "token=0x6000020", capa.features.common.Namespace("Reqss"), True),  # ldftn
-        ("_1c444", "token=0x6000020", capa.features.common.Class("Reqss.Reqss"), True),  # ldftn
-        (
-            "_1c444",
-            "function=0x1F59, bb=0x1F59, insn=0x1F5B",
-            capa.features.common.Characteristic("unmanaged call"),
-            True,
-        ),
-        ("_1c444", "function=0x2544", capa.features.common.Characteristic("unmanaged call"), False),
-        # same as above but using token instead of function
-        ("_1c444", "token=0x6000088", capa.features.common.Characteristic("unmanaged call"), False),
-        (
-            "_1c444",
-            "function=0x1F68, bb=0x1F68, insn=0x1FF9",
-            capa.features.insn.API("System.Drawing.Image::FromHbitmap"),
-            True,
-        ),
-        ("_1c444", "function=0x1F68, bb=0x1F68, insn=0x1FF9", capa.features.insn.API("FromHbitmap"), False),
-        (
-            "_1c444",
-            "token=0x600002B",
-            capa.features.insn.Property("System.IO.FileInfo::Length", access=FeatureAccess.READ),
-            True,
-        ),  # MemberRef property access
-        (
-            "_1c444",
-            "token=0x600002B",
-            capa.features.insn.Property("System.IO.FileInfo::Length"),
-            True,
-        ),  # MemberRef property access
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.API("System.Diagnostics.Process::Start"),
-            True,
-        ),  # MemberRef property access
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::UseShellExecute", access=FeatureAccess.WRITE
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::WorkingDirectory", access=FeatureAccess.WRITE
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000081",
-            capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::FileName", access=FeatureAccess.WRITE
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x6000087",
-            capa.features.insn.Property(
-                "Sockets.MySocket::reConnectionDelay", access=FeatureAccess.WRITE
-            ),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.insn.Property(
-                "Sockets.MySocket::isConnected", access=FeatureAccess.WRITE
-            ),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.common.Class("Sockets.MySocket"),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.common.Namespace("Sockets"),  # Field property access
-            True,
-        ),
-        (
-            "_1c444",
-            "token=0x600008A",
-            capa.features.insn.Property(
-                "Sockets.MySocket::onConnected", access=FeatureAccess.READ
-            ),  # Field property access
-            True,
-        ),
-        (
-            "_0953c",
-            "token=0x6000004",
-            capa.features.insn.Property(
-                "System.Diagnostics.Debugger::IsAttached", access=FeatureAccess.READ
-            ),  # MemberRef property access
-            True,
-        ),
-        (
-            "_0953c",
-            "token=0x6000004",
-            capa.features.common.Class("System.Diagnostics.Debugger"),  # MemberRef property access
-            True,
-        ),
-        (
-            "_0953c",
-            "token=0x6000004",
-            capa.features.common.Namespace("System.Diagnostics"),  # MemberRef property access
-            True,
-        ),
-        (
-            "_692f",
-            "token=0x6000006",
-            capa.features.insn.Property(
-                "System.Management.Automation.PowerShell::Streams", access=FeatureAccess.READ
-            ),  # MemberRef property access
-            False,
-        ),
-        (
-            "_387f15",
-            "token=0x600009E",
-            capa.features.insn.Property(
-                "Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE::geoplugin_countryCode",
-                access=FeatureAccess.READ,
-            ),  # MethodDef property access
-            True,
-        ),
-        (
-            "_387f15",
-            "token=0x600009E",
-            capa.features.common.Class(
-                "Modulo.IqQzcRDvSTulAhyLtZHqyeYGgaXGbuLwhxUKXYmhtnOmgpnPJDTSIPhYPpnE"
-            ),  # MethodDef property access
-            True,
-        ),
-        (
-            "_387f15",
-            "token=0x600009E",
-            capa.features.common.Namespace("Modulo"),  # MethodDef property access
-            True,
-        ),
-        (
-            "_039a6",
-            "token=0x6000007",
-            capa.features.insn.API("System.Reflection.Assembly::Load"),
-            True,
-        ),
-        (
-            "_039a6",
-            "token=0x600001D",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
-            True,
-        ),
-        (
-            "_039a6",
-            "token=0x600001C",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
-            False,
-        ),
-        (
-            "_039a6",
-            "token=0x6000023",
-            capa.features.insn.Property(
-                "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task", access=FeatureAccess.READ
-            ),  # MemberRef method
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer0"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_0"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_1"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_1"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner"),
-            True,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner_inner"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner1_0"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner1_1"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner0_0"),
-            False,
-        ),
-        (
-            "nested_typedef",
-            "file",
-            capa.features.common.Class("myclass_inner0_1"),
-            False,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.OS.Build/VERSION::SdkInt"),
-            True,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.Media.Image/Plane::Buffer"),
-            True,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.Provider.Telephony/Sent/Sent::ContentUri"),
-            True,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Android.OS.Build::SdkInt"),
-            False,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Plane::Buffer"),
-            False,
-        ),
-        (
-            "nested_typeref",
-            "file",
-            capa.features.file.Import("Sent::ContentUri"),
-            False,
-        ),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
-
-FEATURE_PRESENCE_TESTS_IDA = [
-    # file/imports
-    # IDA can recover more names of APIs imported by ordinal
-    ("mimikatz", "file", capa.features.file.Import("cabinet.FCIAddFile"), True),
-]
-
-FEATURE_BINJA_DATABASE_TESTS = sorted(
-    [
-        # insn/regex
-        ("pma16-01_binja_db", "function=0x4021B0", capa.features.common.Regex("HTTP/1.0"), True),
-        (
-            "pma16-01_binja_db",
-            "function=0x402F40",
-            capa.features.common.Regex("www.practicalmalwareanalysis.com"),
-            True,
-        ),
-        (
-            "pma16-01_binja_db",
-            "function=0x402F40",
-            capa.features.common.Substring("practicalmalwareanalysis.com"),
-            True,
-        ),
-        ("pma16-01_binja_db", "file", capa.features.file.FunctionName("__aulldiv"), True),
-        # os & format & arch
-        ("pma16-01_binja_db", "file", OS(OS_WINDOWS), True),
-        ("pma16-01_binja_db", "file", OS(OS_LINUX), False),
-        ("pma16-01_binja_db", "function=0x404356", OS(OS_WINDOWS), True),
-        ("pma16-01_binja_db", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
-        ("pma16-01_binja_db", "file", Arch(ARCH_I386), True),
-        ("pma16-01_binja_db", "file", Arch(ARCH_AMD64), False),
-        ("pma16-01_binja_db", "function=0x404356", Arch(ARCH_I386), True),
-        ("pma16-01_binja_db", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
-        ("pma16-01_binja_db", "file", Format(FORMAT_PE), True),
-        ("pma16-01_binja_db", "file", Format(FORMAT_ELF), False),
-        # format is also a global feature
-        ("pma16-01_binja_db", "function=0x404356", Format(FORMAT_PE), True),
-    ],
-    # order tests by (file, item)
-    # so that our LRU cache is most effective.
-    key=lambda t: (t[0], t[1]),
-)
+PMA1601 = CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
 
 
-FEATURE_COUNT_TESTS = [
-    ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
-    ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
-    ("mimikatz", "function=0x40E5C2", capa.features.common.Characteristic("calls from"), 3),
-    ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
-    ("mimikatz", "function=0x40B1F1", capa.features.common.Characteristic("calls to"), 3),
-]
+# used by test_viv_features
+# as well as some fixtures below
+@functools.lru_cache(maxsize=1)
+def get_viv_extractor(path: Path):
+    import capa.main
+    import capa.features.extractors.viv.extractor
 
+    sigpaths = [
+        CD / "data" / "sigs" / "test_aulldiv.pat",
+        CD / "data" / "sigs" / "test_aullrem.pat.gz",
+        CD.parent / "sigs" / "1_flare_msvc_rtf_32_64.sig",
+        CD.parent / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
+        CD.parent / "sigs" / "3_flare_common_libs.sig",
+    ]
 
-FEATURE_COUNT_TESTS_DOTNET = [
-    ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), 1),
-    ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), 9),
-]
-
-
-FEATURE_COUNT_TESTS_GHIDRA = [
-    # Ghidra may render functions as labels, as well as provide differing amounts of call references
-    ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
-    ("mimikatz", "function=0x401bf1", capa.features.common.Characteristic("calls to"), 2),
-    ("mimikatz", "function=0x401000", capa.features.basicblock.BasicBlock(), 3),
-]
-
-
-def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
-    extractor = get_extractor(sample)
-    features = scope(extractor)
-    if expected:
-        msg = f"{str(feature)} should be found in {scope.__name__}"
+    if "raw32" in path.name:
+        vw = capa.loader.get_workspace(path, "sc32", sigpaths=sigpaths)
+    elif "raw64" in path.name:
+        vw = capa.loader.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
-        msg = f"{str(feature)} should not be found in {scope.__name__}"
-    assert feature.evaluate(features) == expected, msg
+        vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
+    vw.saveWorkspace()
 
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
 
-def do_test_feature_count(get_extractor, sample, scope, feature, expected):
-    extractor = get_extractor(sample)
-    features = scope(extractor)
-    msg = f"{str(feature)} should be found {expected} times in {scope.__name__}, found: {len(features[feature])}"
-    assert len(features[feature]) == expected, msg
+    #
+    # fixups to overcome differences between backends
+    #
+    if "3b13b" in path.name:
+        # vivisect only recognizes calling thunk function at 0x10001573
+        extractor.vw.makeFunction(0x10006860)
+    if "294b8d" in path.name:
+        # see vivisect/#561
+        extractor.vw.makeFunction(0x404970)
 
-
-def get_extractor(path: Path):
-    extractor = get_viv_extractor(path)
-    # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path.as_posix())
     return extractor
 
 
 @pytest.fixture
-def mimikatz_extractor():
-    return get_extractor(get_data_path_by_name("mimikatz"))
-
-
-@pytest.fixture
-def a933a_extractor():
-    return get_extractor(get_data_path_by_name("a933a..."))
-
-
-@pytest.fixture
-def kernel32_extractor():
-    return get_extractor(get_data_path_by_name("kernel32"))
-
-
-@pytest.fixture
-def a1982_extractor():
-    return get_extractor(get_data_path_by_name("a1982..."))
-
-
-@pytest.fixture
 def z9324d_extractor():
-    return get_extractor(get_data_path_by_name("9324d..."))
-
-
-@pytest.fixture
-def z395eb_extractor():
-    return get_extractor(get_data_path_by_name("395eb..."))
-
-
-@pytest.fixture
-def pma12_04_extractor():
-    return get_extractor(get_data_path_by_name("pma12-04"))
+    return get_viv_extractor(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 @pytest.fixture
 def pma16_01_extractor():
-    return get_extractor(get_data_path_by_name("pma16-01"))
+    return get_viv_extractor(PMA1601)
 
 
-@pytest.fixture
-def bfb9b_extractor():
-    return get_extractor(get_data_path_by_name("bfb9b..."))
+@functools.lru_cache(maxsize=1)
+def get_pefile_extractor(path: Path):
+    import capa.features.extractors.pefile
+
+    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
 
 
-@pytest.fixture
-def pma21_01_extractor():
-    return get_extractor(get_data_path_by_name("pma21-01"))
+@functools.lru_cache(maxsize=1)
+def get_dnfile_extractor(path: Path):
+    extractor = DnfileFeatureExtractor(path)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
 
 
-@pytest.fixture
-def c9188_extractor():
-    return get_extractor(get_data_path_by_name("c9188..."))
+@functools.lru_cache(maxsize=1)
+def get_dotnetfile_extractor(path: Path):
+    import capa.features.extractors.dotnetfile
+
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
 
 
-@pytest.fixture
-def z39c05_extractor():
-    return get_extractor(get_data_path_by_name("39c05..."))
+@functools.lru_cache(maxsize=1)
+def get_cape_extractor(path):
+    from capa.helpers import load_json_from_path
+    from capa.features.extractors.cape.extractor import CapeExtractor
+
+    report = load_json_from_path(path)
+    return CapeExtractor.from_report(report)
 
 
-@pytest.fixture
-def z499c2_extractor():
-    return get_extractor(get_data_path_by_name("499c2..."))
+@functools.lru_cache(maxsize=1)
+def get_drakvuf_extractor(path):
+    from capa.helpers import load_jsonl_from_path
+    from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
+
+    report = load_jsonl_from_path(path)
+    return DrakvufExtractor.from_report(report)
 
 
-@pytest.fixture
-def al_khaser_x86_extractor():
-    return get_extractor(get_data_path_by_name("al-khaser x86"))
+@functools.lru_cache(maxsize=1)
+def get_vmray_extractor(path):
+    from capa.features.extractors.vmray.extractor import VMRayExtractor
+
+    return VMRayExtractor.from_zipfile(path)
 
 
-@pytest.fixture
-def pingtaest_extractor():
-    return get_extractor(get_data_path_by_name("pingtaest"))
+@functools.lru_cache(maxsize=1)
+def get_binja_extractor(path: Path):
+    import binaryninja
+    from binaryninja import Settings
+
+    import capa.features.extractors.binja.extractor
+
+    settings = Settings()
+    if path.name.endswith("kernel32-64.dll_"):
+        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
+        settings.set_bool("pdb.loadGlobalSymbols", False)
+    else:
+        old_pdb = False
+    bv = binaryninja.load(str(path))
+    if path.name.endswith("kernel32-64.dll_"):
+        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+
+    if "al-khaser_x64.exe_" in path.name:
+        bv.create_user_function(0x14004B4F0)
+        bv.update_analysis_and_wait()
+
+    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+    setattr(extractor, "path", path.as_posix())
+    return extractor
 
 
-@pytest.fixture
-def b9f5b_dotnetfile_extractor():
-    return get_dotnetfile_extractor(get_data_path_by_name("b9f5b"))
+GHIDRA_CACHE: dict[Path, tuple] = {}
 
 
-@pytest.fixture
-def mixed_mode_64_dotnetfile_extractor():
-    return get_dotnetfile_extractor(get_data_path_by_name("mixed-mode-64"))
+def get_ghidra_extractor(path: Path):
+    import pyghidra
 
+    if not pyghidra.started():
+        pyghidra.start()
 
-@pytest.fixture
-def hello_world_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("hello-world"))
+    import capa.features.extractors.ghidra.context
+    import capa.features.extractors.ghidra.extractor
 
+    if path in GHIDRA_CACHE:
+        extractor, program, flat_api, monitor = GHIDRA_CACHE[path]
+        capa.features.extractors.ghidra.context.set_context(program, flat_api, monitor)
+        return extractor
 
-@pytest.fixture
-def _1c444_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_1c444"))
-
-
-@pytest.fixture
-def _692f_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_692f"))
-
-
-@pytest.fixture
-def _0953c_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_0953c"))
-
-
-@pytest.fixture
-def _039a6_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("_039a6"))
-
-
-def get_result_doc(path: Path):
-    return capa.render.result_document.ResultDocument.from_file(path)
-
-
-@pytest.fixture
-def pma0101_rd():
-    # python -m capa.main tests/data/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ --json > tests/data/rd/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_.json
-    return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
-
-
-@pytest.fixture
-def dotnet_1c444e_rd():
-    # .NET sample
-    # python -m capa.main tests/data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_ --json > tests/data/rd/1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
-
-
-@pytest.fixture
-def a3f3bbc_rd():
-    # python -m capa.main tests/data/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_ --json > tests/data/rd/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
-
-
-@pytest.fixture
-def al_khaserx86_rd():
-    # python -m capa.main tests/data/al-khaser_x86.exe_ --json > tests/data/rd/al-khaser_x86.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "al-khaser_x86.exe_.json")
-
-
-@pytest.fixture
-def al_khaserx64_rd():
-    # python -m capa.main tests/data/al-khaser_x64.exe_ --json > tests/data/rd/al-khaser_x64.exe_.json
-    return get_result_doc(CD / "data" / "rd" / "al-khaser_x64.exe_.json")
-
-
-@pytest.fixture
-def a076114_rd():
-    # python -m capa.main tests/data/0761142efbda6c4b1e801223de723578.dll_ --json > tests/data/rd/0761142efbda6c4b1e801223de723578.dll_.json
-    return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")
-
-
-@pytest.fixture
-def dynamic_a0000a6_rd():
-    # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
-    # gzip tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
-    return get_result_doc(
-        CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    extractor = capa.loader.get_extractor(
+        path,
+        FORMAT_AUTO,
+        OS_AUTO,
+        capa.loader.BACKEND_GHIDRA,
+        [],
+        disable_progress=True,
     )
+
+    ctx = capa.features.extractors.ghidra.context.get_context()
+    GHIDRA_CACHE[path] = (extractor, ctx.program, ctx.flat_api, ctx.monitor)
+    return extractor
+
+
+def _fixup_idalib(path: Path, extractor):
+    import idaapi
+    import ida_funcs
+
+    def remove_library_id_flag(fva):
+        f = idaapi.get_func(fva)
+        f.flags &= ~ida_funcs.FUNC_LIB
+        ida_funcs.update_func(f)
+
+    if "kernel32-64" in path.name:
+        remove_library_id_flag(0x1800202B0)
+
+    if "al-khaser_x64" in path.name:
+        remove_library_id_flag(0x14004B4F0)
+
+
+IDA_UNPACKED_EXTENSIONS = (".id0", ".id1", ".id2", ".nam", ".til")
+
+
+def _check_stale_idalib_files(path: Path):
+    i64_path = Path(str(path) + ".i64")
+    for ext in IDA_UNPACKED_EXTENSIONS:
+        component = i64_path.with_suffix(ext)
+        if component.exists():
+            stale = ", ".join(i64_path.with_suffix(e).name for e in IDA_UNPACKED_EXTENSIONS)
+            raise RuntimeError(
+                f"stale IDA database component files detected (e.g., {component.name}). "
+                f"a previous analysis was likely interrupted. "
+                f"remove files like {stale} from {path.parent} before re-running tests."
+            )
+
+
+@contextlib.contextmanager
+def get_idalib_extractor(path: Path):
+    import shutil
+    import tempfile
+
+    import capa.features.extractors.ida.idalib as idalib
+    import capa.features.extractors.ida.extractor
+
+    if not idalib.has_idalib():
+        raise RuntimeError("cannot find IDA idalib module.")
+
+    if not idalib.load_idalib():
+        raise RuntimeError("failed to load IDA idalib module.")
+
+    _check_stale_idalib_files(path)
+
+    import idapro
+    import ida_auto
+
+    i64_path = Path(str(path) + ".i64")
+    had_i64 = i64_path.exists()
+
+    with tempfile.TemporaryDirectory(prefix="capa-idalib-") as tmp:
+        tmp_dir = Path(tmp)
+        tmp_sample = tmp_dir / path.name
+        shutil.copy2(path, tmp_sample)
+
+        if had_i64:
+            shutil.copy2(i64_path, tmp_dir / i64_path.name)
+
+        logger.debug("idalib: opening database...")
+        idapro.enable_console_messages(False)
+
+        # -R (load resources) is only valid when creating a new database.
+        # when reopening an existing .i64, IDA rejects it.
+        if had_i64:
+            args = "-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0"
+        else:
+            args = "-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+
+        ret = idapro.open_database(
+            str(tmp_sample),
+            run_auto_analysis=True,
+            args=args,
+        )
+        if ret != 0:
+            raise RuntimeError("failed to analyze input file")
+
+        logger.debug("idalib: waiting for analysis...")
+        ida_auto.auto_wait()
+        logger.debug("idalib: opened database.")
+
+        extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
+        _fixup_idalib(path, extractor)
+
+        try:
+            yield extractor
+        finally:
+            logger.debug("closing database...")
+            idapro.close_database(save=(not had_i64))
+            logger.debug("closed database.")
+
+            if not had_i64:
+                tmp_i64 = tmp_dir / i64_path.name
+                if tmp_i64.exists():
+                    shutil.copy2(tmp_i64, i64_path)
+
+
+# used by both:
+# - test_binexport_features
+# - test_binexport_accessors
+@functools.lru_cache(maxsize=1)
+def get_binexport_extractor(path):
+    import capa.features.extractors.binexport2
+    import capa.features.extractors.binexport2.extractor
+
+    be2 = capa.features.extractors.binexport2.get_binexport2(path)
+    search_paths = [CD / "data", CD / "data" / "aarch64"]
+    path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
+    buf = path.read_bytes()
+
+    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)

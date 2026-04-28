@@ -1,0 +1,219 @@
+{
+  "files": [
+    {
+      "key": "93b2d1-vmray",
+      "path": "data/dynamic/vmray/93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip",
+      "tags": ["dynamic", "vmray"]
+    },
+    {
+      "key": "eb1287-vmray",
+      "path": "data/dynamic/vmray/eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip",
+      "tags": ["dynamic", "vmray"]
+    }
+  ],
+  "features": [
+    {
+      "file": "93b2d1-vmray",
+      "location": "file",
+      "feature": "string: api.%x%x.%s"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "file",
+      "feature": "string: \\Program Files\\WindowsApps\\does_not_exist",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "file",
+      "feature": "import: GetAddrInfoW"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "file",
+      "feature": "import: GetAddrInfo"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2180",
+      "feature": "api: LoadLibraryExA"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2180",
+      "feature": "api: LoadLibraryEx"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420",
+      "feature": "api: GetAddrInfoW"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420",
+      "feature": "api: GetAddrInfo"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420",
+      "feature": "api: DoesNotExist",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=2361",
+      "feature": "api: GetAddrInfoW"
+    },
+    {
+      "file": "eb1287-vmray",
+      "location": "process=(4968:0),thread=5992,call=10981",
+      "feature": "api: CreateMutexW"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=10323",
+      "feature": "string: raw.githubusercontent.com"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2180,call=267",
+      "feature": "string: C:\\Users\\WhuOXYsD\\Desktop\\filename.exe",
+      "comment": "backslashes in paths; see #2428"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2180,call=267",
+      "feature": "string: C:\\\\Users\\\\WhuOXYsD\\\\Desktop\\\\filename.exe",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "string: Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "string: Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Policies\\\\System",
+      "expected": false
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=2358",
+      "feature": "number: 0x1000",
+      "comment": "VirtualAlloc(4096, 4)"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=2358",
+      "feature": "number: 0x4"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "number: 0x80000001",
+      "comment": "RegOpenKeyExW(Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System, 0, 131078); see #2"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "number: 0x0"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "number: 0x20006"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2397",
+      "feature": "number: 0x80000001",
+      "comment": "RegOpenKeyExW call 2397 (same parameters)"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2397",
+      "feature": "number: 0x0"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2397",
+      "feature": "number: 0x20006"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "file",
+      "feature": "count(import(GetAddrInfoW)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420",
+      "feature": "count(api(free)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420",
+      "feature": "count(api(GetAddrInfoW)): 5"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=2345",
+      "feature": "count(api(free)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=2345",
+      "feature": "count(api(GetAddrInfoW)): 0"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=2361",
+      "feature": "count(api(GetAddrInfoW)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=10323",
+      "feature": "count(string(raw.githubusercontent.com)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=10323",
+      "feature": "count(string(non_existant)): 0"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=10315",
+      "feature": "count(number(0x1000)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=10315",
+      "feature": "count(number(0x4)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2420,call=10315",
+      "feature": "count(number(0x194)): 0"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "count(number(0x80000001)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "count(number(0x0)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "count(number(0x20006)): 1"
+    },
+    {
+      "file": "93b2d1-vmray",
+      "location": "process=(2176:0),thread=2204,call=2395",
+      "feature": "count(number(0xf423f)): 0"
+    }
+  ]
+}
