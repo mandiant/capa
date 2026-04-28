@@ -101,7 +101,6 @@ KNOWN_FIXTURE_TAGS: set[str] = (
         "dotnet",  # .NET format
         "elf",  # ELF format
         "flirt",  # requires FLIRT signature matching
-        "symtab",  # requires ELF symbol table parsing  TODO: can we remove this?
         "binja-db",  # Binary Ninja database format
         "binexport",  # BinExport2 format
         "aarch64",  # AArch64 architecture

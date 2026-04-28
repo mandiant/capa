@@ -83,7 +83,7 @@
     {
       "key": "2bf18d",
       "path": "data/2bf18d0403677378adad9001b1243211.elf_",
-      "tags": ["elf", "static", "symtab"]
+      "tags": ["elf", "static"]
     },
     {
       "key": "2d3edc",
@@ -1146,37 +1146,37 @@
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: __GI_connect",
-      "explanation": "API from symbol table alternative name"
+      "explanation": "API from ELF symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: connect",
-      "explanation": "API from symbol table alternative name"
+      "explanation": "API from ELF symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: __libc_connect",
-      "explanation": "API from symbol table alternative name"
+      "explanation": "API from ELF symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: __GI_connect",
-      "explanation": "function name from symbol table alternative name"
+      "explanation": "function name from ELF symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: connect",
-      "explanation": "function name from symbol table alternative name"
+      "explanation": "function name from ELF symbol table alternative name"
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: __libc_connect",
-      "explanation": "function name from symbol table alternative name"
+      "explanation": "function name from ELF symbol table alternative name"
     },
     {
       "file": "mimikatz",

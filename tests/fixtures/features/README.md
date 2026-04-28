@@ -78,7 +78,6 @@ Examples include:
 - `elf`
 - `dynamic`
 - `flirt`
-- `symtab`
 - `binja-db`
 - `binexport`
 - `aarch64`
