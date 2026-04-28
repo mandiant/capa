@@ -19,6 +19,7 @@ import collections
 from dataclasses import dataclass
 
 import capa.perf
+import capa.engine
 import capa.helpers
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
@@ -149,7 +150,7 @@ def find_code_capabilities(ruleset: RuleSet, extractor: StaticFeatureExtractor, 
 
 
 def find_static_capabilities(
-    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress: bool = False
 ) -> Capabilities:
     all_function_matches: MatchResults = collections.defaultdict(list)
     all_bb_matches: MatchResults = collections.defaultdict(list)

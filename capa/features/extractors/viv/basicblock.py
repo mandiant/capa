@@ -107,7 +107,7 @@ def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
     if not dst.reg:
         return False
 
-    rname = dst._dis_regctx.getRegisterName(dst.reg)
+    rname = dst._dis_regctx.getRegisterName(dst.reg)  # type: ignore  # _dis_regctx set dynamically by i386 disassembler on each operand
     if rname not in ["ebp", "rbp", "esp", "rsp"]:
         return False
 
@@ -132,7 +132,7 @@ def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     if is_printable_ascii(chars):
         return oper.tsize
     elif is_printable_utf16le(chars):
-        return oper.tsize / 2
+        return oper.tsize // 2
     else:
         return 0
 

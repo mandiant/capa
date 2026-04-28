@@ -23,15 +23,21 @@ from rich.console import Console
 from typing_extensions import assert_never
 
 import capa.rules
+import capa.helpers
 import capa.version
 import capa.features.common
 import capa.features.freeze as frz
+import capa.features.address
 import capa.features.extractors
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import (
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+)
 from capa.features.common import (
     OS_AUTO,
     FORMAT_PE,
@@ -408,7 +414,9 @@ def get_extractor(
             #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
             #   -2 - User cancelled operation
             ret = idapro.open_database(
-                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+                str(input_path),
+                run_auto_analysis=True,
+                args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
             )
             if ret != 0:
                 raise RuntimeError("failed to analyze input file")
@@ -496,8 +504,7 @@ def _get_binexport2_file_extractors(input_file: Path) -> list[FeatureExtractor]:
         input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
     )
 
-    with sample_path.open("rb") as f:
-        taste = f.read()
+    taste = capa.helpers.get_file_taste(sample_path)
 
     if taste.startswith(capa.features.extractors.common.MATCH_PE):
         return get_file_extractors(sample_path, FORMAT_PE)

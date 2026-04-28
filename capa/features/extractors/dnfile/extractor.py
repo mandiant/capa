@@ -157,11 +157,11 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
     def extract_function_features(self, fh) -> Iterator[tuple[Feature, Address]]:
         yield from capa.features.extractors.dnfile.function.extract_features(fh)
 
-    def get_basic_blocks(self, f) -> Iterator[BBHandle]:
+    def get_basic_blocks(self, fh) -> Iterator[BBHandle]:
         # each dotnet method is considered 1 basic block
         yield BBHandle(
-            address=f.address,
-            inner=f.inner,
+            address=fh.address,
+            inner=fh.inner,
         )
 
     def extract_basic_block_features(self, fh, bbh):

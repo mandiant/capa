@@ -145,6 +145,7 @@ def test_freeze_str_roundtrip():
     load = capa.features.freeze.loads
     dump = capa.features.freeze.dumps
     reanimated = load(dump(EXTRACTOR))
+    assert isinstance(reanimated, DynamicFeatureExtractor)
     compare_extractors(EXTRACTOR, reanimated)
 
 
@@ -152,6 +153,7 @@ def test_freeze_bytes_roundtrip():
     load = capa.features.freeze.load
     dump = capa.features.freeze.dump
     reanimated = load(dump(EXTRACTOR))
+    assert isinstance(reanimated, DynamicFeatureExtractor)
     compare_extractors(EXTRACTOR, reanimated)
 
 
@@ -163,5 +165,6 @@ def test_freeze_load_sample(tmpdir):
     Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
 
     null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
+    assert isinstance(null_extractor, DynamicFeatureExtractor)
 
     compare_extractors(extractor, null_extractor)
