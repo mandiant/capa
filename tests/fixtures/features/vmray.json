@@ -3,26 +3,12 @@
     {
       "key": "93b2d1-vmray",
       "path": "data/dynamic/vmray/93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip",
-      "tags": [
-        "dynamic",
-        "vmray"
-      ]
-    },
-    {
-      "key": "2f8a79-vmray",
-      "path": "data/dynamic/vmray/2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip",
-      "tags": [
-        "dynamic",
-        "vmray"
-      ]
+      "tags": ["dynamic", "vmray"]
     },
     {
       "key": "eb1287-vmray",
       "path": "data/dynamic/vmray/eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip",
-      "tags": [
-        "dynamic",
-        "vmray"
-      ]
+      "tags": ["dynamic", "vmray"]
     }
   ],
   "features": [
