@@ -202,7 +202,7 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
         self.pe = pefile.PE(str(path))
 
     def get_base_address(self):
-        return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
+        return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)  # type: ignore[union-attr]  # pefile stubs type OPTIONAL_HEADER as Optional
 
     def extract_global_features(self):
         buf = Path(self.path).read_bytes()
@@ -217,23 +217,23 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
     def get_functions(self):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def extract_function_features(self, f):
+    def extract_function_features(self, fh):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def get_basic_blocks(self, f):
+    def get_basic_blocks(self, fh):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def extract_basic_block_features(self, f, bb):
+    def extract_basic_block_features(self, fh, bbh):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def get_instructions(self, f, bb):
+    def get_instructions(self, fh, bbh):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def extract_insn_features(self, f, bb, insn):
+    def extract_insn_features(self, fh, bbh, ih):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def is_library_function(self, va):
+    def is_library_function(self, addr):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
 
-    def get_function_name(self, va):
+    def get_function_name(self, addr):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")

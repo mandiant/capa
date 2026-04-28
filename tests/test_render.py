@@ -44,7 +44,12 @@ def test_render_offset():
 
 def test_render_property():
     assert (
-        str(capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ))
+        str(
+            capa.features.insn.Property(
+                "System.IO.FileInfo::Length",
+                access=capa.features.common.FeatureAccess.READ,
+            )
+        )
         == "property/read(System.IO.FileInfo::Length)"
     )
 
@@ -184,7 +189,10 @@ def test_render_meta_maec():
         (capa.features.common.Regex("^foo"), "regex: ^foo"),
         (capa.features.common.String("foo"), 'string: "foo" @ 0x401000'),
         (capa.features.common.Class("BeanFactory"), "class: BeanFactory @ 0x401000"),
-        (capa.features.common.Namespace("std::enterprise"), "namespace: std::enterprise @ 0x401000"),
+        (
+            capa.features.common.Namespace("std::enterprise"),
+            "namespace: std::enterprise @ 0x401000",
+        ),
         (capa.features.insn.API("CreateFileW"), "api: CreateFileW @ 0x401000"),
         (capa.features.insn.Property("foo"), "property: foo @ 0x401000"),
         (capa.features.insn.Property("foo", "read"), "property/read: foo @ 0x401000"),
@@ -245,3 +253,10 @@ def test_render_vverbose_feature(feature, expected):
 
     output = capture.get().strip()
     assert output == expected
+
+
+def test_render_default_returns_non_empty(pma0101_rd):
+    output = capa.render.default.render_default(pma0101_rd)
+    assert output != ""
+    assert "md5" in output
+    assert "290934c61de9176ad682ffdd65f0a669" in output

@@ -38,6 +38,7 @@ import capa.rules
 import capa.helpers
 import capa.render.utils as rutils
 import capa.features.freeze as frz
+import capa.features.address
 import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults

@@ -50,6 +50,8 @@ def extract_file_export_names(vw: vivisect.VivWorkspace, **kwargs) -> Iterator[t
 
     if vw.getMeta("Format") == "pe":
         pe = vw.parsedbin
+        assert pe is not None
+        assert pe.IMAGE_NT_HEADERS is not None
         baseaddr = pe.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
         for rva, _, forwarded_name in vw.getFileMeta(get_first_vw_filename(vw), "forwarders"):
             try:

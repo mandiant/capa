@@ -97,13 +97,13 @@ class Address(HashableModel):
             return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
 
         elif isinstance(a, capa.features.address.DynamicCallAddress):
-            return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
+            return cls(
+                type=AddressType.CALL,
+                value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id),
+            )
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
-
-        elif isinstance(a, capa.features.address.Address) and not issubclass(type(a), capa.features.address.Address):
-            raise ValueError("don't use an Address instance directly")
 
         elif isinstance(a, capa.features.address.Address):
             raise ValueError("don't use an Address instance directly")
@@ -149,7 +149,8 @@ class Address(HashableModel):
             assert isinstance(pid, int)
             assert isinstance(tid, int)
             return capa.features.address.ThreadAddress(
-                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid),
+                tid=tid,
             )
 
         elif self.type is AddressType.CALL:
@@ -157,7 +158,8 @@ class Address(HashableModel):
             ppid, pid, tid, id_ = self.value
             return capa.features.address.DynamicCallAddress(
                 thread=capa.features.address.ThreadAddress(
-                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid),
+                    tid=tid,
                 ),
                 id=id_,
             )
@@ -173,7 +175,7 @@ class Address(HashableModel):
             return self.type < other.type
 
         if self.type is AddressType.NO_ADDRESS:
-            return True
+            return False
 
         else:
             assert self.type == other.type
@@ -387,11 +389,10 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
             bbaddr = Address.from_capa(bb.address)
             bbfeatures = [
                 BasicBlockFeature(
-                    basic_block=bbaddr,
+                    basic_block=bbaddr,  # type: ignore[call-arg]  # pydantic alias "basic block" (with space) not recognized by type checkers
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
-                )  # type: ignore
-                # Mypy is unable to recognise `basic_block` as an argument due to alias
+                )
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
 
@@ -426,27 +427,25 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
             FunctionFeatures(
                 address=faddr,
                 features=tuple(ffeatures),
-                basic_blocks=basic_blocks,
-            )  # type: ignore
-            # Mypy is unable to recognise `basic_blocks` as an argument due to alias
+                basic_blocks=basic_blocks,  # type: ignore[call-arg]  # pydantic alias "basic blocks" not recognized by type checkers
+            )
         )
 
     features = StaticFeatures(
-        global_=global_features,
+        global_=global_features,  # type: ignore[call-arg]  # pydantic alias "global" not recognized by type checkers
         file=tuple(file_features),
         functions=tuple(function_features),
-    )  # type: ignore
-    # Mypy is unable to recognise `global_` as an argument due to alias
+    )
 
     freeze = Freeze(
         version=CURRENT_VERSION,
-        base_address=Address.from_capa(extractor.get_base_address()),
+        base_address=Address.from_capa(extractor.get_base_address()),  # type: ignore[call-arg]  # pydantic alias "base address" not recognized by type checkers
         sample_hashes=extractor.get_sample_hashes(),
         flavor="static",
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
-    )  # type: ignore
-    # Mypy is unable to recognise `base_address` as an argument due to alias
+    )
+    # type checkers are unable to recognise `base_address` as an argument due to alias
 
     return freeze.model_dump_json()
 
@@ -536,11 +535,10 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
         )
 
     features = DynamicFeatures(
-        global_=global_features,
+        global_=global_features,  # type: ignore[call-arg]  # pydantic alias "global" not recognized by type checkers
         file=tuple(file_features),
         processes=tuple(process_features),
-    )  # type: ignore
-    # Mypy is unable to recognise `global_` as an argument due to alias
+    )
 
     # workaround around mypy issue: https://github.com/python/mypy/issues/1424
     get_base_addr = getattr(extractor, "get_base_address", None)
@@ -548,13 +546,13 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
 
     freeze = Freeze(
         version=CURRENT_VERSION,
-        base_address=Address.from_capa(base_addr),
+        base_address=Address.from_capa(base_addr),  # type: ignore[call-arg]  # pydantic alias "base address" not recognized by type checkers
         sample_hashes=extractor.get_sample_hashes(),
         flavor="dynamic",
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
-    )  # type: ignore
-    # Mypy is unable to recognise `base_address` as an argument due to alias
+    )
+    # type checkers are unable to recognise `base_address` as an argument due to alias
 
     return freeze.model_dump_json()
 

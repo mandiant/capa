@@ -78,7 +78,7 @@ class Statement:
             yield child
 
         if hasattr(self, "children"):
-            for child in self.children:
+            for child in self.children:  # type: ignore  # children defined in subclasses, guarded by hasattr
                 assert isinstance(child, (Statement, Feature))
                 yield child
 
@@ -90,7 +90,7 @@ class Statement:
                 self.child = new
 
         if hasattr(self, "children"):
-            children = self.children
+            children = self.children  # type: ignore  # children defined in subclasses, guarded by hasattr
             for i, child in enumerate(children):
                 if child is existing:
                     children[i] = new

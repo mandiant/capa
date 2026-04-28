@@ -21,6 +21,7 @@ from typing import Union, Iterator, Optional
 from pathlib import Path
 
 import dnfile
+import dnfile.mdtable
 from dncil.cil.body import CilMethodBody
 from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
@@ -48,15 +49,15 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
         self.offset: int = self.pe.get_offset_from_rva(row.Rva)
 
     def read(self, n: int) -> bytes:
-        data: bytes = self.pe.get_data(self.pe.get_rva_from_offset(self.offset), n)
+        data: bytes = self.pe.get_data(self.pe.get_rva_from_offset(self.offset), n)  # type: ignore  # dnfile stubs return Unknown for get_data/get_rva_from_offset
         self.offset += n
         return data
 
     def tell(self) -> int:
         return self.offset
 
-    def seek(self, offset: int) -> int:
-        self.offset = offset
+    def seek(self, rva: int) -> int:
+        self.offset = rva
         return self.offset
 
 

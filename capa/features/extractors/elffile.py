@@ -17,12 +17,14 @@ import logging
 from typing import Iterator
 from pathlib import Path
 
-from elftools.elf.elffile import ELFFile, DynamicSegment, SymbolTableSection
+from elftools.elf.dynamic import DynamicSegment
+from elftools.elf.elffile import ELFFile
+from elftools.elf.sections import SymbolTableSection
 
 import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
-from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -37,7 +39,11 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
             logger.debug("Symbol table '%s' has a sh_entsize of zero!", section.name)
             continue
 
-        logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
+        logger.debug(
+            "Symbol table '%s' contains %s entries:",
+            section.name,
+            section.num_symbols(),
+        )
 
         for symbol in section.iter_symbols():
             # The following conditions are based on the following article
@@ -179,7 +185,7 @@ def extract_file_arch(elf: ELFFile, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
+def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -195,7 +201,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, int]]:
+def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[tuple[Feature, Address]]:
     for global_handler in GLOBAL_HANDLERS:
         for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, addr
@@ -214,18 +220,18 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
         self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
     def get_base_address(self):
-        # virtual address of the first segment with type LOAD
         for segment in self.elf.iter_segments():
             if segment.header.p_type == "PT_LOAD":
                 return AbsoluteVirtualAddress(segment.header.p_vaddr)
+        return NO_ADDRESS
 
-    def extract_global_features(self):
+    def extract_global_features(self) -> Iterator[tuple[Feature, Address]]:
         buf = self.path.read_bytes()
 
         for feature, addr in extract_global_features(self.elf, buf):
             yield feature, addr
 
-    def extract_file_features(self):
+    def extract_file_features(self) -> Iterator[tuple[Feature, Address]]:
         buf = self.path.read_bytes()
 
         for feature, addr in extract_file_features(self.elf, buf):
@@ -234,19 +240,19 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
     def get_functions(self):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def extract_function_features(self, f):
+    def extract_function_features(self, fh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def get_basic_blocks(self, f):
+    def get_basic_blocks(self, fh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def extract_basic_block_features(self, f, bb):
+    def extract_basic_block_features(self, fh, bbh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def get_instructions(self, f, bb):
+    def get_instructions(self, fh, bbh):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def extract_insn_features(self, f, bb, insn):
+    def extract_insn_features(self, fh, bbh, ih):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
     def is_library_function(self, addr):
