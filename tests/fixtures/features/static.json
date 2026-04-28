@@ -634,6 +634,13 @@
     },
     {
       "file": "pma16-01",
+      "location": "function=0x4021B0",
+      "feature": "substring: nope",
+      "expected": false,
+      "explanation": "substring not present"
+    },
+    {
+      "file": "pma16-01",
       "location": "function=0x402F40",
       "feature": "string: /PRACTICALmalwareANALYSIS/i",
       "explanation": "case-insensitive regex"
