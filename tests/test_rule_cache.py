@@ -23,8 +23,7 @@ import capa.helpers
 import capa.rules.cache
 
 R1 = capa.rules.Rule.from_yaml(
-    textwrap.dedent(
-        """
+    textwrap.dedent("""
     rule:
         meta:
             name: test rule
@@ -40,13 +39,11 @@ R1 = capa.rules.Rule.from_yaml(
             - and:
                 - number: 1
                 - number: 2
-    """
-    )
+    """)
 )
 
 R2 = capa.rules.Rule.from_yaml(
-    textwrap.dedent(
-        """
+    textwrap.dedent("""
     rule:
         meta:
             name: test rule 2
@@ -62,8 +59,7 @@ R2 = capa.rules.Rule.from_yaml(
             - and:
                 - number: 3
                 - number: 4
-    """
-    )
+    """)
 )
 
 

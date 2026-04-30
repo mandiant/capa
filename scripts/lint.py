@@ -593,20 +593,18 @@ class DuplicateFeatureUnderStatement(Lint):
     def check_rule(self, ctx: Context, rule: Rule) -> bool:
         self.violation = False
         self.recommendation = ""
-        STATEMENTS = frozenset(
-            {
-                "or",
-                "and",
-                "not",
-                "optional",
-                "some",
-                "basic block",
-                "function",
-                "instruction",
-                "call",
-                " or more",
-            }
-        )
+        STATEMENTS = frozenset({
+            "or",
+            "and",
+            "not",
+            "optional",
+            "some",
+            "basic block",
+            "function",
+            "instruction",
+            "call",
+            " or more",
+        })
         # rule.statement discards the duplicate features by default so
         # need to use the rule definition to check for duplicates
         data = rule._get_ruamel_yaml_parser().load(rule.definition)
@@ -1099,7 +1097,7 @@ def lint_rule(ctx: Context, rule: Rule):
         # and ends up just producing a lot of noise.
         if not (is_nursery_rule(rule) and len(violations) == 1 and violations[0].name == "missing examples"):
             print("")
-            print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
+            print(f"{'    (nursery) ' if is_nursery_rule(rule) else ''} {rule.name}")
 
             for violation in violations:
                 print(
@@ -1112,8 +1110,10 @@ def lint_rule(ctx: Context, rule: Rule):
         lints_failed = len(
             tuple(
                 filter(
-                    lambda v: v.level == Lint.FAIL
-                    and not (v.name == "missing examples" or v.name == "referenced example doesn't exist"),
+                    lambda v: (
+                        v.level == Lint.FAIL
+                        and not (v.name == "missing examples" or v.name == "referenced example doesn't exist")
+                    ),
                     violations,
                 )
             )
@@ -1121,8 +1121,9 @@ def lint_rule(ctx: Context, rule: Rule):
         lints_warned = len(
             tuple(
                 filter(
-                    lambda v: v.level == Lint.WARN
-                    or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist"),
+                    lambda v: (
+                        v.level == Lint.WARN or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist")
+                    ),
                     violations,
                 )
             )
@@ -1130,7 +1131,7 @@ def lint_rule(ctx: Context, rule: Rule):
 
         if (not lints_failed) and (not lints_warned) and has_examples:
             print("")
-            print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
+            print(f"{'    (nursery) ' if is_nursery_rule(rule) else ''} {rule.name}")
             print(f"      {Lint.WARN}: '[green]no lint failures[/green]': Graduate the rule")
             print("")
     else:

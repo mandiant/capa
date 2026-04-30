@@ -23,7 +23,13 @@ from dataclasses import dataclass
 
 import capa.features.address
 from capa.features.common import Feature
-from capa.features.address import Address, ThreadAddress, ProcessAddress, DynamicCallAddress, AbsoluteVirtualAddress
+from capa.features.address import (
+    Address,
+    ThreadAddress,
+    ProcessAddress,
+    DynamicCallAddress,
+    AbsoluteVirtualAddress,
+)
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
@@ -91,7 +97,7 @@ class InsnHandle:
     inner: Any
 
 
-class StaticFeatureExtractor:
+class StaticFeatureExtractor(abc.ABC):
     """
     StaticFeatureExtractor defines the interface for fetching features from a
     sample without running it; extractors that rely on the execution trace of
@@ -109,8 +115,6 @@ class StaticFeatureExtractor:
     This class is not instantiated directly; it is the base class for other implementations.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, hashes: SampleHashes):
         #
         # note: a subclass should define ctor parameters for its own use.
@@ -121,7 +125,9 @@ class StaticFeatureExtractor:
         self._sample_hashes = hashes
 
     @abc.abstractmethod
-    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
+    def get_base_address(
+        self,
+    ) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         """
         fetch the preferred load address at which the sample was analyzed.
 
@@ -214,7 +220,7 @@ class StaticFeatureExtractor:
         raise KeyError(addr)
 
     @abc.abstractmethod
-    def extract_function_features(self, f: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
         """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -227,7 +233,7 @@ class StaticFeatureExtractor:
                     print('0x%x: %s', address, feature)
 
         args:
-          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          fh [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
 
         yields:
           tuple[Feature, Address]: feature and its location
@@ -235,7 +241,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
+    def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         """
         enumerate the basic blocks in the given function and provide opaque values that will
          subsequently be provided to `.extract_basic_block_features()`, etc.
@@ -243,7 +249,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
         """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -257,8 +263,8 @@ class StaticFeatureExtractor:
                         print('0x%x: %s', address, feature)
 
         args:
-          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
-          bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
+          fh [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          bbh [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
 
         yields:
           tuple[Feature, Address]: feature and its location
@@ -266,7 +272,7 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
+    def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         """
         enumerate the instructions in the given basic block and provide opaque values that will
          subsequently be provided to `.extract_insn_features()`, etc.
@@ -275,7 +281,7 @@ class StaticFeatureExtractor:
 
     @abc.abstractmethod
     def extract_insn_features(
-        self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+        self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
     ) -> Iterator[tuple[Feature, Address]]:
         """
         extract instruction-scope features.
@@ -291,9 +297,9 @@ class StaticFeatureExtractor:
                             print('0x%x: %s', address, feature)
 
         args:
-          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
-          bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
-          insn [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
+          fh [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          bbh [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
+          ih [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
 
         yields:
           tuple[Feature, Address]: feature and its location
@@ -304,7 +310,7 @@ class StaticFeatureExtractor:
 def FunctionFilter(extractor: StaticFeatureExtractor, functions: set) -> StaticFeatureExtractor:
     original_get_functions = extractor.get_functions
 
-    def filtered_get_functions(self):
+    def filtered_get_functions(_self):
         yield from (f for f in original_get_functions() if f.address in functions)
 
     # we make a copy of the original extractor object and then update its get_functions() method with the decorated filter one.
@@ -359,7 +365,7 @@ class CallHandle:
     inner: Any
 
 
-class DynamicFeatureExtractor:
+class DynamicFeatureExtractor(abc.ABC):
     """
     DynamicFeatureExtractor defines the interface for fetching features from a
     sandbox' analysis of a sample; extractors that rely on statically analyzing
@@ -371,8 +377,6 @@ class DynamicFeatureExtractor:
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, hashes: SampleHashes):
         #
@@ -491,7 +495,7 @@ class DynamicFeatureExtractor:
 def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> DynamicFeatureExtractor:
     original_get_processes = extractor.get_processes
 
-    def filtered_get_processes(self):
+    def filtered_get_processes(_self):
         yield from (f for f in original_get_processes() if f.address.pid in pids)
 
     # we make a copy of the original extractor object and then update its get_processes() method with the decorated filter one.
@@ -507,7 +511,7 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, pids: set[int]) -> Dynamic
 def ThreadFilter(extractor: DynamicFeatureExtractor, threads: set[Address]) -> DynamicFeatureExtractor:
     original_get_threads = extractor.get_threads
 
-    def filtered_get_threads(self, ph: ProcessHandle):
+    def filtered_get_threads(_self, ph: ProcessHandle):
         yield from (t for t in original_get_threads(ph) if t.address in threads)
 
     new_extractor = copy(extractor)

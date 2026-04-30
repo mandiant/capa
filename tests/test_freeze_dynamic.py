@@ -106,11 +106,9 @@ def test_null_feature_extractor():
         DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2),
     ]
 
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: create file
@@ -120,11 +118,9 @@ def test_null_feature_extractor():
                         features:
                             - and:
                                 - api: CreateFile
-                    """
-                )
-            ),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "create file" in capabilities.matches
 
@@ -149,6 +145,7 @@ def test_freeze_str_roundtrip():
     load = capa.features.freeze.loads
     dump = capa.features.freeze.dumps
     reanimated = load(dump(EXTRACTOR))
+    assert isinstance(reanimated, DynamicFeatureExtractor)
     compare_extractors(EXTRACTOR, reanimated)
 
 
@@ -156,6 +153,7 @@ def test_freeze_bytes_roundtrip():
     load = capa.features.freeze.load
     dump = capa.features.freeze.dump
     reanimated = load(dump(EXTRACTOR))
+    assert isinstance(reanimated, DynamicFeatureExtractor)
     compare_extractors(EXTRACTOR, reanimated)
 
 
@@ -167,5 +165,6 @@ def test_freeze_load_sample(tmpdir):
     Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
 
     null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
+    assert isinstance(null_extractor, DynamicFeatureExtractor)
 
     compare_extractors(extractor, null_extractor)

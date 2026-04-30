@@ -18,7 +18,9 @@ from pathlib import Path
 
 import dnfile
 import pefile
+import dnfile.mdtable
 
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
 from capa.features.common import (
@@ -42,6 +44,7 @@ from capa.features.extractors.dnfile.types import DnType
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     iter_dotnet_table,
+    load_dotnet_image,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
@@ -111,7 +114,10 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Cla
         typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
 
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
-        yield Class(DnType.format_name(typedefname, namespace=typedefnamespace)), DNTokenAddress(token)
+        yield (
+            Class(DnType.format_name(typedefname, namespace=typedefnamespace)),
+            DNTokenAddress(token),
+        )
 
     for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         # emit external .NET classes
@@ -120,7 +126,10 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Cla
         typerefnamespace, typerefname = resolve_nested_typeref_name(typeref.ResolutionScope.row_index, typeref, pe)
 
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
-        yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
+        yield (
+            Class(DnType.format_name(typerefname, namespace=typerefnamespace)),
+            DNTokenAddress(token),
+        )
 
 
 def extract_file_os(**kwargs) -> Iterator[tuple[OS, Address]]:
@@ -142,7 +151,8 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[Arch, Address
 
 
 def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
+    if pe.__data__ is not None:
+        yield from capa.features.extractors.common.extract_file_strings(bytes(pe.__data__))
 
 
 def extract_file_mixed_mode_characteristic_features(
@@ -184,8 +194,8 @@ GLOBAL_HANDLERS = (
 class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
         super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
-        self.path: Path = path
-        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.path = path
+        self.pe = load_dotnet_image(path)
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -217,7 +227,10 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
         assert self.pe.net.struct.MajorRuntimeVersion is not None
         assert self.pe.net.struct.MinorRuntimeVersion is not None
 
-        return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
+        return (
+            self.pe.net.struct.MajorRuntimeVersion,
+            self.pe.net.struct.MinorRuntimeVersion,
+        )
 
     def get_meta_version_string(self) -> str:
         assert self.pe.net is not None
@@ -233,23 +246,23 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def get_functions(self):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def extract_function_features(self, f):
+    def extract_function_features(self, fh):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def get_basic_blocks(self, f):
+    def get_basic_blocks(self, fh):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def extract_basic_block_features(self, f, bb):
+    def extract_basic_block_features(self, fh, bbh):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def get_instructions(self, f, bb):
+    def get_instructions(self, fh, bbh):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def extract_insn_features(self, f, bb, insn):
+    def extract_insn_features(self, fh, bbh, ih):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def is_library_function(self, va):
+    def is_library_function(self, addr):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
-    def get_function_name(self, va):
+    def get_function_name(self, addr):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")

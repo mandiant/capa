@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout capa-rules
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: mandiant/capa-rules
         token: ${{ secrets.CAPA_TOKEN }}
@@ -21,8 +21,10 @@ jobs:
         # user information is needed to create annotated tags (with a message)
         git config user.email 'capa-dev@mandiant.com'
         git config user.name 'Capa Bot'
-        name=${{ github.event.release.tag_name }}
+        name=${GITHUB_EVENT_RELEASE_TAG_NAME}
         git tag $name -m "https://github.com/mandiant/capa/releases/$name"
+      env:
+        GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         # TODO update branch name-major=${name%%.*}
     - name: Push tag to capa-rules
       uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0

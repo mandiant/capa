@@ -639,7 +639,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
 
             def on_load_rule(_, i, total):
-                update_wait_box(f"loading capa rules from {rule_path} ({i+1} of {total})")
+                update_wait_box(f"loading capa rules from {rule_path} ({i + 1} of {total})")
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 

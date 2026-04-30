@@ -34,17 +34,14 @@ from capa.features.extractors.binexport2.arch.intel.helpers import SECURITY_COOK
 logger = logging.getLogger(__name__)
 
 
-IGNORE_NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+IGNORE_NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     ret  #int
     retn #int
     add  reg(stack), #int
     sub  reg(stack), #int
-    """
-)
+    """)
 
-NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     push #int0            ; capture #int0
 
     # its a little tedious to enumerate all the address forms
@@ -64,8 +61,7 @@ NUMBER_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
     # imagine reg is zero'd out, then this is like `mov reg, #int`
     # which is not uncommon.
     lea reg, [reg + #int]  ; capture #int
-    """
-)
+    """)
 
 
 def extract_insn_number_features(
@@ -100,8 +96,7 @@ def extract_insn_number_features(
             yield OperandOffset(match.operand_index, value), ih.address
 
 
-OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     mov|movzx|movsb|cmp [reg            +  reg * #int + #int0], #int  ; capture #int0
     mov|movzx|movsb|cmp [reg            * #int + #int0],        #int  ; capture #int0
     mov|movzx|movsb|cmp [reg            +  reg + #int0],        #int  ; capture #int0
@@ -114,18 +109,15 @@ OFFSET_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
     mov|movzx|movsb|cmp|lea reg, [reg            * #int + #int0]         ; capture #int0
     mov|movzx|movsb|cmp|lea reg, [reg            +  reg + #int0]         ; capture #int0
     mov|movzx|movsb|cmp|lea reg, [reg(not-stack) + #int0]                ; capture #int0
-    """
-)
+    """)
 
 # these are patterns that access offset 0 from some pointer
 # (pointer is not the stack pointer).
-OFFSET_ZERO_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+OFFSET_ZERO_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     mov|movzx|movsb [reg(not-stack)], reg
     mov|movzx|movsb [reg(not-stack)], #int
     lea             reg,              [reg(not-stack)]
-    """
-)
+    """)
 
 
 def extract_insn_offset_features(
@@ -178,23 +170,21 @@ def is_security_cookie(
     basic_block_index: int = bbi.basic_block_index
     bb: BinExport2.BasicBlock = be2.basic_block[basic_block_index]
     if flow_graph.entry_basic_block_index == basic_block_index:
-        first_addr: int = min((idx.insn_address_by_index[ir.begin_index] for ir in bb.instruction_index))
+        first_addr: int = min(idx.insn_address_by_index[ir.begin_index] for ir in bb.instruction_index)
         if instruction_address < first_addr + SECURITY_COOKIE_BYTES_DELTA:
             return True
     # or insn falls at the end before return in a terminal basic block.
     if basic_block_index not in (e.source_basic_block_index for e in flow_graph.edge):
-        last_addr: int = max((idx.insn_address_by_index[ir.end_index - 1] for ir in bb.instruction_index))
+        last_addr: int = max(idx.insn_address_by_index[ir.end_index - 1] for ir in bb.instruction_index)
         if instruction_address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
             return True
     return False
 
 
-NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+NZXOR_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     xor|xorpd|xorps|pxor reg, reg
     xor|xorpd|xorps|pxor reg, #int
-    """
-)
+    """)
 
 
 def extract_insn_nzxor_characteristic_features(
@@ -228,8 +218,7 @@ def extract_insn_nzxor_characteristic_features(
     yield Characteristic("nzxor"), ih.address
 
 
-INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
-    """
+INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
     call|jmp reg0
     call|jmp [reg + reg * #int + #int]
     call|jmp [reg + reg * #int]
@@ -237,8 +226,7 @@ INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str(
     call|jmp [reg + reg + #int]
     call|jmp [reg + #int]
     call|jmp [reg]
-    """
-)
+    """)
 
 
 def extract_function_indirect_call_characteristic_features(

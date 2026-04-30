@@ -575,6 +575,9 @@ class BinExport2InstructionPattern:
         if len(self.operands) != len(operand_expressions):
             return None
 
+        if not operand_expressions:
+            return None
+
         captured = None
 
         for operand_index, found_expressions in enumerate(operand_expressions):
@@ -645,7 +648,7 @@ class BinExport2InstructionPattern:
         else:
             # There were no captures, so
             # return arbitrary non-None expression
-            return BinExport2InstructionPattern.MatchResult(operand_index, expression_index, found_expression)
+            return BinExport2InstructionPattern.MatchResult(operand_index, expression_index, found_expression)  # type: ignore  # loops always run: operand_expressions non-empty (guarded) and expressions are validated non-empty
 
 
 class BinExport2InstructionPatternMatcher:
@@ -662,14 +665,10 @@ class BinExport2InstructionPatternMatcher:
 
     @classmethod
     def from_str(cls, patterns: str):
-        return cls(
-            [
-                BinExport2InstructionPattern.from_str(line)
-                for line in filter(
-                    lambda line: not line.startswith("#"), (line.strip() for line in patterns.split("\n"))
-                )
-            ]
-        )
+        return cls([
+            BinExport2InstructionPattern.from_str(line)
+            for line in filter(lambda line: not line.startswith("#"), (line.strip() for line in patterns.split("\n")))
+        ])
 
     def match(
         self, mnemonic: str, operand_expressions: list[list[BinExport2.Expression]]

@@ -26,14 +26,14 @@ from capa.features.extractors.base_extractor import FunctionHandle
 
 def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""
-    f: "ghidra.program.database.function.FunctionDB" = fh.inner
+    f: ghidra.program.database.function.FunctionDB = fh.inner
     for ref in f.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
             yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
 
 
 def extract_function_loop(fh: FunctionHandle):
-    f: "ghidra.program.database.function.FunctionDB" = fh.inner
+    f: ghidra.program.database.function.FunctionDB = fh.inner
 
     edges = []
     for block in SimpleBlockIterator(
@@ -53,7 +53,7 @@ def extract_function_loop(fh: FunctionHandle):
 
 
 def extract_recursive_call(fh: FunctionHandle):
-    f: "ghidra.program.database.function.FunctionDB" = fh.inner
+    f: ghidra.program.database.function.FunctionDB = fh.inner
 
     for func in f.getCalledFunctions(capa.features.extractors.ghidra.helpers.get_monitor()):
         if func.getEntryPoint().getOffset() == f.getEntryPoint().getOffset():

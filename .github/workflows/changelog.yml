@@ -7,11 +7,10 @@ on:
   pull_request_target:
     types: [opened, edited, synchronize]
 
-permissions:
-  pull-requests: write
-
 jobs:
   check_changelog:
+    permissions:
+      pull-requests: write
     # no need to check for dependency updates via dependabot
     # github.event.pull_request.user.login refers to PR author
     if: |

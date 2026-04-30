@@ -40,7 +40,7 @@ logger = logging.getLogger("show-unused-features")
 
 
 def format_address(addr: capa.features.address.Address) -> str:
-    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
+    return v.format_address(capa.features.freeze.Address.from_capa(addr))
 
 
 def get_rules_feature_set(rules: capa.rules.RuleSet) -> set[Feature]:

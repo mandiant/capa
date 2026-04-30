@@ -123,6 +123,7 @@ def get_file_imports() -> dict[int, list[str]]:
     import_dict: dict[int, list[str]] = {}
 
     for f in get_current_program().getFunctionManager().getExternalFunctions():
+        addr: int = 0
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr

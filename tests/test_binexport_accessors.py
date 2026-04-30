@@ -459,8 +459,7 @@ def test_pattern_parsing():
     )
 
     assert (
-        BinExport2InstructionPatternMatcher.from_str(
-            """
+        BinExport2InstructionPatternMatcher.from_str("""
             # comment
             br      reg
             br      reg(not-stack)
@@ -481,8 +480,7 @@ def test_pattern_parsing():
             call    [reg * #int + #int]
             call    [reg + reg + #int]
             call    [reg + #int]
-            """
-        ).queries
+            """).queries
         is not None
     )
 
@@ -507,8 +505,7 @@ def match_address_with_be2(
 
 
 def test_pattern_matching():
-    queries = BinExport2InstructionPatternMatcher.from_str(
-        """
+    queries = BinExport2InstructionPatternMatcher.from_str("""
         br      reg(stack)                     ; capture reg
         br      reg(not-stack)                 ; capture reg
         mov     reg0, reg1                     ; capture reg0
@@ -522,23 +519,22 @@ def test_pattern_matching():
         ldp|stp reg, reg, [reg, #int]!         ; capture #int
         ldp|stp reg, reg, [reg], #int          ; capture #int
         ldrb    reg0, [reg1(not-stack), reg2]  ; capture reg2
-        """
-    )
+        """)
 
     # 0x210184: ldrb      w2, [x0,                x1]
     # query:    ldrb    reg0, [reg1(not-stack), reg2]      ; capture reg2"
-    assert match_address(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
-    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
+    assert match_address(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
     # 0x210198:  mov         x2, x1
     # query:     mov       reg0, reg1           ; capture reg0"),
-    assert match_address(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
-    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
+    assert match_address(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
     # 0x210190:  add         x1, x1,  0x1
     # query:     add        reg, reg, #int      ; capture #int
-    assert match_address(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
-    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
+    assert match_address(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
 
 BE2_EXTRACTOR_687 = fixtures.get_binexport_extractor(
@@ -550,40 +546,34 @@ BE2_EXTRACTOR_687 = fixtures.get_binexport_extractor(
 
 
 def test_pattern_matching_exclamation():
-    queries = BinExport2InstructionPatternMatcher.from_str(
-        """
+    queries = BinExport2InstructionPatternMatcher.from_str("""
         stp  reg, reg, [reg, #int]!  ; capture #int
-        """
-    )
+        """)
 
     # note this captures the sp
     # 0x107918:  stp  x20, x19, [sp,0xFFFFFFFFFFFFFFE0]!
     # query:     stp  reg, reg, [reg, #int]!  ; capture #int
-    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
-    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
 
 def test_pattern_matching_stack():
-    queries = BinExport2InstructionPatternMatcher.from_str(
-        """
+    queries = BinExport2InstructionPatternMatcher.from_str("""
         stp  reg, reg, [reg(stack), #int]!  ; capture #int
-        """
-    )
+        """)
 
     # note this does capture the sp
     # compare this with the test above (exclamation)
     # 0x107918:  stp  x20, x19, [sp,         0xFFFFFFFFFFFFFFE0]!
     # query:     stp  reg, reg, [reg(stack), #int]!  ; capture #int
-    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
-    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
 
 def test_pattern_matching_not_stack():
-    queries = BinExport2InstructionPatternMatcher.from_str(
-        """
+    queries = BinExport2InstructionPatternMatcher.from_str("""
         stp  reg, reg, [reg(not-stack), #int]!  ; capture #int
-        """
-    )
+        """)
 
     # note this does not capture the sp
     # compare this with the test above (exclamation)
@@ -597,13 +587,11 @@ BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(CD / "data" / "binexport2"
 
 
 def test_pattern_matching_x86():
-    queries = BinExport2InstructionPatternMatcher.from_str(
-        """
+    queries = BinExport2InstructionPatternMatcher.from_str("""
         cmp|lea reg, [reg(not-stack) + #int0]  ; capture #int0
-        """
-    )
+        """)
 
     # 0x4018c0:  LEA         ECX, [EBX+0x2]
     # query:     cmp|lea     reg, [reg(not-stack) + #int0]  ; capture #int0
-    assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
-    assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
+    assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses

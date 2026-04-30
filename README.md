@@ -87,6 +87,8 @@ Download stable releases of the standalone capa binaries [here](https://github.c
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
+**Documentation:** [Usage and tips](doc/usage.md) · [Installation](doc/installation.md) · [Limitations](doc/limitations.md) · [FAQ](doc/faq.md)
+
 # capa Explorer Web
 The [capa Explorer Web](https://mandiant.github.io/capa/explorer/) enables you to interactively explore capa results in your web browser. Besides the online version you can download a standalone HTML file for local offline usage.
 
@@ -148,6 +150,7 @@ function @ 0x4011C0
 ...
 ```
 
+# dynamic capa
 capa also supports dynamic capabilities detection for multiple sandboxes including:
 * [CAPE](https://github.com/kevoreilly/CAPEv2) (supported report formats: `.json`, `.json_`, `.json.gz`)
 * [DRAKVUF](https://github.com/CERT-Polska/drakvuf-sandbox/) (supported report formats: `.log`, `.log.gz`)

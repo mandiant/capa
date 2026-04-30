@@ -18,6 +18,7 @@ detect-elf-os
 
 Attempt to detect the underlying OS that the given ELF file targets.
 """
+
 import sys
 import logging
 import argparse

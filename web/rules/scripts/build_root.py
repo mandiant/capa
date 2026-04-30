@@ -268,9 +268,9 @@ def generate_html(categories_data, color_map):
                     <div class="card">
                         <div class="thin-rectangle" style="background-color: {rectangle_color};"></div>
                         <div class="card-body">
-                            <div class="namespace">{card['namespace']}</div>
-                            <div class="rule-name"><a href="./{card['name']}/">{card['name']}</a></div>
-                            <div class="authors">{', '.join(card['authors'])}</div>
+                            <div class="namespace">{card["namespace"]}</div>
+                            <div class="rule-name"><a href="./{card["name"]}/">{card["name"]}</a></div>
+                            <div class="authors">{", ".join(card["authors"])}</div>
                         </div>
                     </div>
                 </div>"""

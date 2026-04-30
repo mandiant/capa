@@ -155,12 +155,12 @@ class Metadata(Model):
 
 class StaticMetadata(Metadata):
     flavor: Flavor = Flavor.STATIC
-    analysis: StaticAnalysis
+    analysis: StaticAnalysis  # type: ignore  # narrows Analysis union to StaticAnalysis in Pydantic subclass
 
 
 class DynamicMetadata(Metadata):
     flavor: Flavor = Flavor.DYNAMIC
-    analysis: DynamicAnalysis
+    analysis: DynamicAnalysis  # type: ignore  # narrows Analysis union to DynamicAnalysis in Pydantic subclass
 
 
 class CompoundStatementType:
@@ -386,14 +386,15 @@ class Match(FrozenModel):
                     # note! replace `node`
                     # subscopes cannot have both a static and dynamic scope set
                     assert None in (rule.scopes.static, rule.scopes.dynamic)
+                    scope = rule.scopes.static or rule.scopes.dynamic
+                    assert scope is not None
                     node = StatementNode(
                         statement=SubscopeStatement(
-                            scope=rule.scopes.static or rule.scopes.dynamic,
+                            scope=scope,
                         )
                     )
 
                 for location in result.locations:
-
                     # keep this in sync with the copy below
                     if isinstance(location, DynamicCallAddress):
                         if location in rule_matches:
@@ -409,15 +410,13 @@ class Match(FrozenModel):
                             #
                             # Despite the edge cases (like API hammering), this turns out to be pretty easy:
                             #  collect the most recent match (with the given name) prior to the wanted location.
-                            matches_in_thread = sorted(
-                                [
-                                    (a.id, m)
-                                    for a, m in rule_matches.items()
-                                    if isinstance(a, DynamicCallAddress)
-                                    and a.thread == location.thread
-                                    and a.id <= location.id
-                                ]
-                            )
+                            matches_in_thread = sorted([
+                                (a.id, m)
+                                for a, m in rule_matches.items()
+                                if isinstance(a, DynamicCallAddress)
+                                and a.thread == location.thread
+                                and a.id <= location.id
+                            ])
                             if matches_in_thread:
                                 _, most_recent_match = matches_in_thread[-1]
                                 children.append(Match.from_capa(rules, capabilities, most_recent_match))
@@ -470,15 +469,13 @@ class Match(FrozenModel):
                                 if location in rule_matches:
                                     children.append(Match.from_capa(rules, capabilities, rule_matches[location]))
                                 else:
-                                    matches_in_thread = sorted(
-                                        [
-                                            (a.id, m)
-                                            for a, m in rule_matches.items()
-                                            if isinstance(a, DynamicCallAddress)
-                                            and a.thread == location.thread
-                                            and a.id <= location.id
-                                        ]
-                                    )
+                                    matches_in_thread = sorted([
+                                        (a.id, m)
+                                        for a, m in rule_matches.items()
+                                        if isinstance(a, DynamicCallAddress)
+                                        and a.thread == location.thread
+                                        and a.id <= location.id
+                                    ])
                                     # namespace matches may not occur within the same thread as the result, so only
                                     # proceed if a match within the same thread is found
                                     if matches_in_thread:
@@ -673,23 +670,21 @@ class RuleMetadata(FrozenModel):
             namespace=rule.meta.get("namespace"),
             authors=rule.meta.get("authors"),
             scopes=capa.rules.Scopes.from_dict(rule.meta.get("scopes")),
-            attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),
+            attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),  # type: ignore  # Pydantic alias att&ck; populate_by_name=True
             mbc=tuple(map(MBCSpec.from_str, rule.meta.get("mbc", []))),
             references=rule.meta.get("references", []),
             examples=rule.meta.get("examples", []),
             description=rule.meta.get("description", ""),
             lib=rule.meta.get("lib", False),
-            is_subscope_rule=rule.meta.get("capa/subscope", False),
+            is_subscope_rule=rule.meta.get("capa/subscope", False),  # type: ignore  # Pydantic alias capa/subscope; populate_by_name=True
             maec=MaecMetadata(
-                analysis_conclusion=rule.meta.get("maec/analysis-conclusion"),
-                analysis_conclusion_ov=rule.meta.get("maec/analysis-conclusion-ov"),
-                malware_family=rule.meta.get("maec/malware-family"),
-                malware_category=rule.meta.get("maec/malware-category"),
-                malware_category_ov=rule.meta.get("maec/malware-category-ov"),
-            ),  # type: ignore
-            # Mypy is unable to recognise arguments due to alias
-        )  # type: ignore
-        # Mypy is unable to recognise arguments due to alias
+                analysis_conclusion=rule.meta.get("maec/analysis-conclusion"),  # type: ignore  # Pydantic alias analysis-conclusion
+                analysis_conclusion_ov=rule.meta.get("maec/analysis-conclusion-ov"),  # type: ignore  # Pydantic alias
+                malware_family=rule.meta.get("maec/malware-family"),  # type: ignore  # Pydantic alias malware-family
+                malware_category=rule.meta.get("maec/malware-category"),  # type: ignore  # Pydantic alias malware-category
+                malware_category_ov=rule.meta.get("maec/malware-category-ov"),  # type: ignore  # Pydantic alias
+            ),
+        )
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
@@ -754,6 +749,8 @@ class ResultDocument(FrozenModel):
             )
         elif isinstance(self.meta.analysis, DynamicAnalysis):
             capabilities = Capabilities(matches, self.meta.analysis.feature_counts)
+        else:
+            assert_never(self.meta.analysis)
 
         return self.meta, capabilities
 

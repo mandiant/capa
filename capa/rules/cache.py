@@ -59,7 +59,7 @@ def get_default_cache_directory() -> Path:
     # MacOS:   ~/Library/Caches/capa
 
     # ref: https://stackoverflow.com/a/8220141/87207
-    if sys.platform == "linux" or sys.platform == "linux2":
+    if sys.platform.startswith(("linux", "freebsd", "openbsd", "netbsd", "dragonfly")):
         directory = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache" / "capa"))
     elif sys.platform == "darwin":
         directory = Path.home() / "Library" / "Caches" / "capa"
@@ -164,8 +164,8 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional
         # delete the cache that seems to be invalid.
         path.unlink()
         return None
-    else:
-        return cache.ruleset
+
+    return cache.ruleset
 
 
 def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
@@ -180,9 +180,9 @@ def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
         logger.error("%s", str(e))
         return False
 
-    content = capa.rules.cache.get_ruleset_content(rules)
-    id = capa.rules.cache.compute_cache_identifier(content)
-    path = capa.rules.cache.get_cache_path(cache_dir, id)
+    content = get_ruleset_content(rules)
+    id = compute_cache_identifier(content)
+    path = get_cache_path(cache_dir, id)
 
     assert path.exists()
     logger.info("rules cache saved to: %s", path)

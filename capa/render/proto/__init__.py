@@ -31,6 +31,7 @@ $ protoc.exe --python_out=. --mypy_out=. <path_to_proto> (e.g. capa/render/proto
 
 Alternatively, --pyi_out=. can be used to generate a Python Interface file that supports development
 """
+
 import datetime
 from typing import Any, Union
 
@@ -690,30 +691,26 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
         rules=tuple(analysis.rules),
         base_address=addr_from_pb2(analysis.base_address),
         layout=rd.StaticLayout(
-            functions=tuple(
-                [
-                    rd.FunctionLayout(
-                        address=addr_from_pb2(f.address),
-                        matched_basic_blocks=tuple(
-                            [rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks]
-                        ),
-                    )
-                    for f in analysis.layout.functions
-                ]
-            )
+            functions=tuple([
+                rd.FunctionLayout(
+                    address=addr_from_pb2(f.address),
+                    matched_basic_blocks=tuple([
+                        rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks
+                    ]),
+                )
+                for f in analysis.layout.functions
+            ])
         ),
         feature_counts=rd.StaticFeatureCounts(
             file=analysis.feature_counts.file,
-            functions=tuple(
-                [
-                    rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
-                    for f in analysis.feature_counts.functions
-                ]
-            ),
+            functions=tuple([
+                rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
+                for f in analysis.feature_counts.functions
+            ]),
         ),
-        library_functions=tuple(
-            [rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions]
-        ),
+        library_functions=tuple([
+            rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions
+        ]),
     )
 
 
@@ -725,38 +722,29 @@ def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicA
         extractor=analysis.extractor,
         rules=tuple(analysis.rules),
         layout=rd.DynamicLayout(
-            processes=tuple(
-                [
-                    rd.ProcessLayout(
-                        address=addr_from_pb2(p.address),
-                        name=p.name,
-                        matched_threads=tuple(
-                            [
-                                rd.ThreadLayout(
-                                    address=addr_from_pb2(t.address),
-                                    matched_calls=tuple(
-                                        [
-                                            rd.CallLayout(address=addr_from_pb2(c.address), name=c.name)
-                                            for c in t.matched_calls
-                                        ]
-                                    ),
-                                )
-                                for t in p.matched_threads
-                            ]
-                        ),
-                    )
-                    for p in analysis.layout.processes
-                ]
-            )
+            processes=tuple([
+                rd.ProcessLayout(
+                    address=addr_from_pb2(p.address),
+                    name=p.name,
+                    matched_threads=tuple([
+                        rd.ThreadLayout(
+                            address=addr_from_pb2(t.address),
+                            matched_calls=tuple([
+                                rd.CallLayout(address=addr_from_pb2(c.address), name=c.name) for c in t.matched_calls
+                            ]),
+                        )
+                        for t in p.matched_threads
+                    ]),
+                )
+                for p in analysis.layout.processes
+            ])
         ),
         feature_counts=rd.DynamicFeatureCounts(
             file=analysis.feature_counts.file,
-            processes=tuple(
-                [
-                    rd.ProcessFeatureCount(address=addr_from_pb2(p.address), count=p.count)
-                    for p in analysis.feature_counts.processes
-                ]
-            ),
+            processes=tuple([
+                rd.ProcessFeatureCount(address=addr_from_pb2(p.address), count=p.count)
+                for p in analysis.feature_counts.processes
+            ]),
         ),
     )
 
@@ -898,14 +886,17 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
     elif type_ == "operand_number":
         ff = f.operand_number
         return frzf.OperandNumberFeature(
-            index=ff.index, operand_number=number_from_pb2(ff.operand_number), description=ff.description or None
-        )  # type: ignore
+            index=ff.index,
+            operand_number=number_from_pb2(ff.operand_number),
+            description=ff.description or None,  # type: ignore  # Pydantic alias operand-number
+        )
     elif type_ == "operand_offset":
         ff = f.operand_offset
         return frzf.OperandOffsetFeature(
-            index=ff.index, operand_offset=int_from_pb2(ff.operand_offset), description=ff.description or None
-        )  # type: ignore
-        # Mypy is unable to recognize `operand_offset` as an argument due to aliasing
+            index=ff.index,
+            operand_offset=int_from_pb2(ff.operand_offset),
+            description=ff.description or None,  # type: ignore  # Pydantic alias operand-offset
+        )
     elif type_ == "basic_block":
         ff = f.basic_block
         return frzf.BasicBlockFeature(description=ff.description or None)
@@ -960,13 +951,12 @@ def mbc_from_pb2(pb: capa_pb2.MBCSpec) -> rd.MBCSpec:
 
 def maec_from_pb2(pb: capa_pb2.MaecMetadata) -> rd.MaecMetadata:
     return rd.MaecMetadata(
-        analysis_conclusion=pb.analysis_conclusion or None,
-        analysis_conclusion_ov=pb.analysis_conclusion_ov or None,
-        malware_family=pb.malware_family or None,
-        malware_category=pb.malware_category or None,
-        malware_category_ov=pb.malware_category_ov or None,
-    )  # type: ignore
-    # Mypy is unable to recognise arguments due to alias
+        analysis_conclusion=pb.analysis_conclusion or None,  # type: ignore  # Pydantic alias analysis-conclusion
+        analysis_conclusion_ov=pb.analysis_conclusion_ov or None,  # type: ignore  # Pydantic alias analysis-conclusion-ov
+        malware_family=pb.malware_family or None,  # type: ignore  # Pydantic alias malware-family
+        malware_category=pb.malware_category or None,  # type: ignore  # Pydantic alias malware-category
+        malware_category_ov=pb.malware_category_ov or None,  # type: ignore  # Pydantic alias malware-category-ov
+    )
 
 
 def rule_metadata_from_pb2(pb: capa_pb2.RuleMetadata) -> rd.RuleMetadata:
@@ -975,16 +965,15 @@ def rule_metadata_from_pb2(pb: capa_pb2.RuleMetadata) -> rd.RuleMetadata:
         namespace=pb.namespace or None,
         authors=tuple(pb.authors),
         scopes=scopes_from_pb2(pb.scopes),
-        attack=tuple([attack_from_pb2(attack) for attack in pb.attack]),
+        attack=tuple([attack_from_pb2(attack) for attack in pb.attack]),  # type: ignore  # Pydantic alias att&ck; populate_by_name=True
         mbc=tuple([mbc_from_pb2(mbc) for mbc in pb.mbc]),
         references=tuple(pb.references),
         examples=tuple(pb.examples),
         description=pb.description,
         lib=pb.lib,
-        is_subscope_rule=pb.is_subscope_rule,
+        is_subscope_rule=pb.is_subscope_rule,  # type: ignore  # Pydantic alias capa/subscope; populate_by_name=True
         maec=maec_from_pb2(pb.maec),
-    )  # type: ignore
-    # Mypy is unable to recognise `attack` and `is_subscope_rule` as arguments due to alias
+    )
 
 
 def doc_from_pb2(doc: capa_pb2.ResultDocument) -> rd.ResultDocument:

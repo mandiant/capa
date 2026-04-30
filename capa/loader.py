@@ -23,15 +23,21 @@ from rich.console import Console
 from typing_extensions import assert_never
 
 import capa.rules
+import capa.helpers
 import capa.version
 import capa.features.common
 import capa.features.freeze as frz
+import capa.features.address
 import capa.features.extractors
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import (
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+)
 from capa.features.common import (
     OS_AUTO,
     FORMAT_PE,
@@ -126,6 +132,57 @@ def get_meta_str(vw):
     return f"{', '.join(meta)}, number of functions: {len(vw.getFunctions())}"
 
 
+def _is_probably_corrupt_pe(path: Path) -> bool:
+    """
+    Heuristic check for obviously malformed PE samples that provoke
+    pathological behavior in vivisect (see GH-1989).
+
+    We treat a PE as "probably corrupt" when any section declares an
+    unrealistically large virtual size compared to the file size, e.g.
+    hundreds of megabytes in a tiny file. Such cases lead vivisect to
+    try to map enormous regions and can exhaust CPU/memory.
+    """
+    try:
+        import pefile
+    except Exception:
+        # If pefile is unavailable, fall back to existing behavior.
+        return False
+
+    try:
+        pe = pefile.PE(str(path), fast_load=True)
+    except pefile.PEFormatError:
+        # Not a PE file (or badly formed); let existing checks handle it.
+        return False
+    except Exception:
+        return False
+
+    try:
+        file_size = path.stat().st_size
+    except OSError:
+        return False
+
+    if file_size <= 0:
+        return False
+
+    # Flag sections whose declared virtual size is wildly disproportionate
+    # to the file size (e.g. 900MB section in a ~400KB sample).
+    _VSIZE_FILE_RATIO = 128
+    _MAX_REASONABLE_VSIZE = 512 * 1024 * 1024  # 512 MB
+    max_reasonable = max(file_size * _VSIZE_FILE_RATIO, _MAX_REASONABLE_VSIZE)
+
+    for section in getattr(pe, "sections", []):
+        vsize = getattr(section, "Misc_VirtualSize", 0) or 0
+        if vsize > max_reasonable:
+            logger.debug(
+                "detected unrealistic PE section virtual size: 0x%x (file size: 0x%x), treating as corrupt",
+                vsize,
+                file_size,
+            )
+            return True
+
+    return False
+
+
 def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     """
     load the program at the given path into a vivisect workspace using the given format.
@@ -143,10 +200,17 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     """
 
     # lazy import enables us to not require viv if user wants another backend.
+    import envi.exc
     import viv_utils
     import viv_utils.flirt
 
     logger.debug("generating vivisect workspace for: %s", path)
+
+    if input_format in (FORMAT_PE, FORMAT_AUTO) and _is_probably_corrupt_pe(path):
+        raise CorruptFile(
+            "PE file appears to contain unrealistically large sections and is likely corrupt"
+            + " - skipping analysis to avoid excessive resource usage."
+        )
 
     try:
         if input_format == FORMAT_AUTO:
@@ -164,6 +228,8 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
             vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
         else:
             raise ValueError("unexpected format: " + input_format)
+    except envi.exc.SegmentationViolation as e:
+        raise CorruptFile(f"Invalid memory access during binary parsing: {e}") from e
     except Exception as e:
         # vivisect raises raw Exception instances, and we don't want
         # to do a subclass check via isinstance.
@@ -349,7 +415,9 @@ def get_extractor(
             #   -1 - Generic errors (database already open, auto-analysis failed, etc.)
             #   -2 - User cancelled operation
             ret = idapro.open_database(
-                str(input_path), run_auto_analysis=True, args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+                str(input_path),
+                run_auto_analysis=True,
+                args="-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R",
             )
             if ret != 0:
                 raise RuntimeError("failed to analyze input file")
@@ -448,8 +516,7 @@ def _get_binexport2_file_extractors(input_file: Path) -> list[FeatureExtractor]:
         input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
     )
 
-    with sample_path.open("rb") as f:
-        taste = f.read()
+    taste = capa.helpers.get_file_taste(sample_path)
 
     if taste.startswith(capa.features.extractors.common.MATCH_PE):
         return get_file_extractors(sample_path, FORMAT_PE)

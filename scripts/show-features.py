@@ -70,6 +70,7 @@ Example::
     insn: 0x10001027: mnemonic(shl)
     ...
 """
+
 import sys
 import logging
 import argparse
@@ -94,7 +95,7 @@ logger = logging.getLogger("capa.show-features")
 
 
 def format_address(addr: capa.features.address.Address) -> str:
-    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
+    return v.format_address(capa.features.freeze.Address.from_capa(addr))
 
 
 def main(argv=None):

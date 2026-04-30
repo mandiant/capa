@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,8 +38,7 @@ def test_main(z9324d_extractor):
 
 def test_main_single_rule(z9324d_extractor, tmpdir):
     # tests a single rule can be loaded successfully
-    RULE_CONTENT = textwrap.dedent(
-        """
+    RULE_CONTENT = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -51,20 +49,17 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
                   - test
             features:
               - string: test
-        """
-    )
+        """)
     path = z9324d_extractor.path
     rule_file = tmpdir.mkdir("capa").join("rule.yml")
     rule_file.write(RULE_CONTENT)
     assert (
-        capa.main.main(
-            [
-                path,
-                "-v",
-                "-r",
-                rule_file.strpath,
-            ]
-        )
+        capa.main.main([
+            path,
+            "-v",
+            "-r",
+            rule_file.strpath,
+        ])
         == 0
     )
 
@@ -99,11 +94,9 @@ def test_main_shellcode(z499c2_extractor):
 
 
 def test_ruleset():
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: file rule
@@ -112,12 +105,10 @@ def test_ruleset():
                                 dynamic: process
                         features:
                           - characteristic: embedded pe
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: function rule
@@ -126,12 +117,10 @@ def test_ruleset():
                                 dynamic: process
                         features:
                           - characteristic: tight loop
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: basic block rule
@@ -140,12 +129,10 @@ def test_ruleset():
                                 dynamic: process
                         features:
                           - characteristic: nzxor
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: process rule
@@ -154,12 +141,10 @@ def test_ruleset():
                                 dynamic: process
                         features:
                           - string: "explorer.exe"
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                         rule:
                             meta:
                                 name: thread rule
@@ -168,12 +153,10 @@ def test_ruleset():
                                     dynamic: thread
                             features:
                               - api: RegDeleteKey
-                        """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                        """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: test call subscope
@@ -185,12 +168,10 @@ def test_ruleset():
                             - string: "explorer.exe"
                             - call:
                               - api: HttpOpenRequestW
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: test rule
@@ -208,11 +189,9 @@ def test_ruleset():
                             - number: 6 = IPPROTO_TCP
                             - number: 1 = SOCK_STREAM
                             - number: 2 = AF_INET
-                    """
-                )
-            ),
-        ]
-    )
+                    """)
+        ),
+    ])
     assert len(rules.file_rules) == 2
     assert len(rules.function_rules) == 2
     assert len(rules.basic_block_rules) == 2
@@ -324,8 +303,7 @@ def test_main_cape1(tmp_path):
     rules = tmp_path / "rules"
     rules.mkdir()
     (rules / "create-or-open-registry-key.yml").write_text(
-        textwrap.dedent(
-            """
+        textwrap.dedent("""
         rule:
           meta:
             name: create or open registry key
@@ -355,8 +333,7 @@ def test_main_cape1(tmp_path):
               - api: SHRegOpenUSKey
               - api: SHRegCreateUSKey
               - api: RtlCreateRegistryKey
-    """
-        )
+    """)
     )
 
     assert capa.main.main([str(path), "-r", str(rules)]) == 0

@@ -25,6 +25,7 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
+import capa.render.result_document
 from capa.features.common import (
     OS,
     OS_ANY,
@@ -60,7 +61,7 @@ DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
 
 
 @contextlib.contextmanager
-def xfail(condition, reason=None):
+def xfail(condition, reason: str = ""):
     """
     context manager that wraps a block that is expected to fail in some cases.
     when it does fail (and is expected), then mark this as pytest.xfail.
@@ -101,6 +102,7 @@ def xfail(condition, reason=None):
 @lru_cache(maxsize=1)
 def get_viv_extractor(path: Path):
     import capa.main
+    import capa.loader
     import capa.features.extractors.viv.extractor
 
     sigpaths = [
@@ -183,9 +185,10 @@ def get_binja_extractor(path: Path):
     if path.name.endswith("kernel32-64.dll_"):
         old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
         settings.set_bool("pdb.loadGlobalSymbols", False)
-    bv = binaryninja.load(str(path))
-    if path.name.endswith("kernel32-64.dll_"):
+        bv = binaryninja.load(str(path))
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+    else:
+        bv = binaryninja.load(str(path))
 
     # TODO(xusheng6): Temporary fix for https://github.com/mandiant/capa/issues/2507. Remove this once it is fixed in
     # binja
@@ -306,6 +309,7 @@ def get_ghidra_extractor(path: Path):
     if not pyghidra.started():
         pyghidra.start()
 
+    import capa.loader
     import capa.features.extractors.ghidra.context
     import capa.features.extractors.ghidra.extractor
 
@@ -345,7 +349,7 @@ def extract_global_features(extractor):
     return features
 
 
-@lru_cache()
+@lru_cache
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():

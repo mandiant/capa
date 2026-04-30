@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +14,19 @@
 
 import textwrap
 
+import capa.rules
+import capa.features.common
 import capa.capabilities.common
-from capa.features.extractors.base_extractor import FunctionFilter
+import capa.features.extractors.null
+from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import SampleHashes, FunctionFilter
 
 
 def test_match_across_scopes_file_function(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            # this rule should match on a function (0x4073F0)
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        # this rule should match on a function (0x4073F0)
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: install service
@@ -39,13 +40,11 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                                 - api: advapi32.OpenSCManagerA
                                 - api: advapi32.CreateServiceA
                                 - api: advapi32.StartServiceA
-                    """
-                )
-            ),
-            # this rule should match on a file feature
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        # this rule should match on a file feature
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: .text section
@@ -56,15 +55,13 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
                             - section: .text
-                    """
-                )
-            ),
-            # this rule should match on earlier rule matches:
-            #  - install service, with function scope
-            #  - .text section, with file scope
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        # this rule should match on earlier rule matches:
+        #  - install service, with function scope
+        #  - .text section, with file scope
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: .text section and install service
@@ -77,11 +74,9 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                             - and:
                               - match: install service
                               - match: .text section
-                    """
-                )
-            ),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "install service" in capabilities.matches
     assert ".text section" in capabilities.matches
@@ -89,12 +84,10 @@ def test_match_across_scopes_file_function(z9324d_extractor):
 
 
 def test_match_across_scopes(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            # this rule should match on a basic block (including at least 0x403685)
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        # this rule should match on a basic block (including at least 0x403685)
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: tight loop
@@ -105,14 +98,12 @@ def test_match_across_scopes(z9324d_extractor):
                               - 9324d1a8ae37a36ae560c37448c9705a:0x403685
                         features:
                           - characteristic: tight loop
-                    """
-                )
-            ),
-            # this rule should match on a function (0x403660)
-            # based on API, as well as prior basic block rule match
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        # this rule should match on a function (0x403660)
+        # based on API, as well as prior basic block rule match
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: kill thread loop
@@ -126,13 +117,11 @@ def test_match_across_scopes(z9324d_extractor):
                             - api: kernel32.TerminateThread
                             - api: kernel32.CloseHandle
                             - match: tight loop
-                    """
-                )
-            ),
-            # this rule should match on a file feature and a prior function rule match
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                    """)
+        ),
+        # this rule should match on a file feature and a prior function rule match
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: kill thread program
@@ -145,11 +134,9 @@ def test_match_across_scopes(z9324d_extractor):
                           - and:
                             - section: .text
                             - match: kill thread loop
-                    """
-                )
-            ),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "tight loop" in capabilities.matches
     assert "kill thread loop" in capabilities.matches
@@ -157,11 +144,9 @@ def test_match_across_scopes(z9324d_extractor):
 
 
 def test_subscope_bb_rules(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: test rule
@@ -172,22 +157,18 @@ def test_subscope_bb_rules(z9324d_extractor):
                             - and:
                                 - basic block:
                                     - characteristic: tight loop
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     # tight loop at 0x403685
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "test rule" in capabilities.matches
 
 
 def test_match_specific_functions(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: receive data
@@ -199,11 +180,9 @@ def test_match_specific_functions(z9324d_extractor):
                         features:
                             - or:
                                 - api: recv
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     extractor = FunctionFilter(z9324d_extractor, {0x4019C0})
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
     matches = capabilities.matches["receive data"]
@@ -214,11 +193,9 @@ def test_match_specific_functions(z9324d_extractor):
 
 
 def test_byte_matching(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: byte match test
@@ -228,21 +205,17 @@ def test_byte_matching(z9324d_extractor):
                         features:
                             - and:
                                 - bytes: ED 24 9E F4 52 A9 07 47 55 8E E1 AB 30 8E 23 61
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "byte match test" in capabilities.matches
 
 
 def test_com_feature_matching(z395eb_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: initialize IWebBrowser2
@@ -254,21 +227,17 @@ def test_com_feature_matching(z395eb_extractor):
                                 - api: ole32.CoCreateInstance
                                 - com/class: InternetExplorer #bytes: 01 DF 02 00 00 00 00 00 C0 00 00 00 00 00 00 46 = CLSID_InternetExplorer
                                 - com/interface: IWebBrowser2 #bytes: 61 16 0C D3 AF CD D0 11 8A 3E 00 C0 4F C9 E2 6E = IID_IWebBrowser2
-                    """
-                )
-            )
-        ]
-    )
-    capabilities = capa.main.find_capabilities(rules, z395eb_extractor)
+                    """)
+        )
+    ])
+    capabilities = capa.capabilities.common.find_capabilities(rules, z395eb_extractor)
     assert "initialize IWebBrowser2" in capabilities.matches
 
 
 def test_count_bb(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                       meta:
                         name: count bb
@@ -279,22 +248,18 @@ def test_count_bb(z9324d_extractor):
                       features:
                         - and:
                           - count(basic blocks): 1 or more
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "count bb" in capabilities.matches
 
 
 def test_instruction_scope(z9324d_extractor):
     # .text:004071A4 68 E8 03 00 00          push    3E8h
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                       meta:
                         name: push 1000
@@ -306,11 +271,9 @@ def test_instruction_scope(z9324d_extractor):
                         - and:
                           - mnemonic: push
                           - number: 1000
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000" in capabilities.matches
     assert 0x4071A4 in {result[0] for result in capabilities.matches["push 1000"]}
@@ -320,11 +283,9 @@ def test_instruction_subscope(z9324d_extractor):
     # .text:00406F60                         sub_406F60 proc near
     # [...]
     # .text:004071A4 68 E8 03 00 00          push    3E8h
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                       meta:
                         name: push 1000 on i386
@@ -338,11 +299,38 @@ def test_instruction_subscope(z9324d_extractor):
                           - instruction:
                             - mnemonic: push
                             - number: 1000
-                    """
-                )
-            )
-        ]
-    )
+                    """)
+        )
+    ])
     capabilities = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000 on i386" in capabilities.matches
     assert 0x406F60 in {result[0] for result in capabilities.matches["push 1000 on i386"]}
+
+
+def test_find_file_capabilities_preserves_address_zero():
+    feature = capa.features.common.Characteristic("embedded pe")
+    addr = AbsoluteVirtualAddress(0)
+    extractor = capa.features.extractors.null.NullStaticFeatureExtractor(
+        base_address=AbsoluteVirtualAddress(0),
+        sample_hashes=SampleHashes(md5="a" * 32, sha1="b" * 40, sha256="c" * 64),
+        global_features=[],
+        file_features=[(addr, feature)],
+        functions={},
+    )
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: embedded pe
+                        scopes:
+                            static: file
+                            dynamic: process
+                    features:
+                        - characteristic: embedded pe
+            """)
+        )
+    ])
+    caps = capa.capabilities.common.find_file_capabilities(rules, extractor, {})
+    assert feature in caps.features
+    assert addr in caps.features[feature]

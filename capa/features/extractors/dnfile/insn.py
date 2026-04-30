@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
 
 import dnfile
+import dnfile.mdtable
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 

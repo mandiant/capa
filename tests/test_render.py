@@ -22,6 +22,7 @@ import capa.rules
 import capa.render.utils
 import capa.features.file
 import capa.features.insn
+import capa.render.default
 import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
@@ -43,7 +44,12 @@ def test_render_offset():
 
 def test_render_property():
     assert (
-        str(capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ))
+        str(
+            capa.features.insn.Property(
+                "System.IO.FileInfo::Length",
+                access=capa.features.common.FeatureAccess.READ,
+            )
+        )
         == "property/read(System.IO.FileInfo::Length)"
     )
 
@@ -70,9 +76,7 @@ def test_render_meta_attack():
               - {:s}
           features:
             - number: 1
-        """.format(
-            canonical
-        )
+        """.format(canonical)
     )
     r = capa.rules.Rule.from_yaml(rule)
     rule_meta = capa.render.result_document.RuleMetadata.from_capa(r)
@@ -108,9 +112,7 @@ def test_render_meta_mbc():
               - {:s}
           features:
             - number: 1
-        """.format(
-            canonical
-        )
+        """.format(canonical)
     )
     r = capa.rules.Rule.from_yaml(rule)
     rule_meta = capa.render.result_document.RuleMetadata.from_capa(r)
@@ -144,9 +146,7 @@ def test_render_meta_maec():
             maec/analysis-conclusion: {:s}
           features:
             - number: 1
-        """.format(
-            malware_family, malware_category, analysis_conclusion
-        )
+        """.format(malware_family, malware_category, analysis_conclusion)
     )
     rule = capa.rules.Rule.from_yaml(rule_yaml)
     rm = capa.render.result_document.RuleMatches(
@@ -189,7 +189,10 @@ def test_render_meta_maec():
         (capa.features.common.Regex("^foo"), "regex: ^foo"),
         (capa.features.common.String("foo"), 'string: "foo" @ 0x401000'),
         (capa.features.common.Class("BeanFactory"), "class: BeanFactory @ 0x401000"),
-        (capa.features.common.Namespace("std::enterprise"), "namespace: std::enterprise @ 0x401000"),
+        (
+            capa.features.common.Namespace("std::enterprise"),
+            "namespace: std::enterprise @ 0x401000",
+        ),
         (capa.features.insn.API("CreateFileW"), "api: CreateFileW @ 0x401000"),
         (capa.features.insn.Property("foo"), "property: foo @ 0x401000"),
         (capa.features.insn.Property("foo", "read"), "property/read: foo @ 0x401000"),
@@ -220,8 +223,7 @@ def test_render_vverbose_feature(feature, expected):
 
     layout = capa.render.result_document.StaticLayout(functions=())
 
-    src = textwrap.dedent(
-        """
+    src = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -237,8 +239,7 @@ def test_render_vverbose_feature(feature, expected):
                 - and:
                     - number: 1
                     - number: 2
-        """
-    )
+        """)
     rule = capa.rules.Rule.from_yaml(src)
 
     rm = capa.render.result_document.RuleMatches(
@@ -252,3 +253,10 @@ def test_render_vverbose_feature(feature, expected):
 
     output = capture.get().strip()
     assert output == expected
+
+
+def test_render_default_returns_non_empty(pma0101_rd):
+    output = capa.render.default.render_default(pma0101_rd)
+    assert output != ""
+    assert "md5" in output
+    assert "290934c61de9176ad682ffdd65f0a669" in output

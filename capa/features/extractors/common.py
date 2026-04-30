@@ -30,9 +30,11 @@ from capa.features.common import (
     OS_ANY,
     OS_AUTO,
     ARCH_ANY,
+    VALID_OS,
     FORMAT_PE,
     FORMAT_ELF,
     OS_WINDOWS,
+    VALID_ARCH,
     FORMAT_FREEZE,
     FORMAT_RESULT,
     Arch,
@@ -52,7 +54,7 @@ MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
 
-def extract_file_strings(buf: bytes, **kwargs) -> Iterator[tuple[String, Address]]:
+def extract_file_strings(buf: bytes) -> Iterator[tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
@@ -97,7 +99,7 @@ def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
         with contextlib.closing(io.BytesIO(buf)) as f:
             arch = capa.features.extractors.elf.detect_elf_arch(f)
 
-        if arch not in capa.features.common.VALID_ARCH:
+        if arch not in VALID_ARCH:
             logger.debug("unsupported arch: %s", arch)
             return
 
@@ -114,13 +116,17 @@ def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
         # rules that rely on arch conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s, will not guess Arch", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug(
+            "unsupported file format: %s, will not guess Arch",
+            binascii.hexlify(buf[:4]).decode("ascii"),
+        )
         return
 
 
 def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
     if os != OS_AUTO:
         yield OS(os), NO_ADDRESS
+        return
 
     if buf.startswith(MATCH_PE):
         yield OS(OS_WINDOWS), NO_ADDRESS
@@ -130,7 +136,7 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
 
-        if os not in capa.features.common.VALID_OS:
+        if os not in VALID_OS:
             logger.debug("unsupported os: %s", os)
             return
 
@@ -145,5 +151,8 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
         # rules that rely on OS conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s, will not guess OS", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug(
+            "unsupported file format: %s, will not guess OS",
+            binascii.hexlify(buf[:4]).decode("ascii"),
+        )
         return
