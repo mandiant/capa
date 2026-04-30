@@ -5,6 +5,7 @@
 ### New Features
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
+- ghidra: support analyzing existing Ghidra projects via .gpr:program input syntax @saniyafatima07 #3066
 
 ### Breaking Changes
 
