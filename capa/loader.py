@@ -207,6 +207,7 @@ def get_extractor(
     should_save_workspace=False,
     disable_progress=False,
     sample_path: Optional[Path] = None,
+    ghidra_program_path: Optional[str] = None,
 ) -> FeatureExtractor:
     """
     raises:
@@ -373,25 +374,35 @@ def get_extractor(
 
             import tempfile
 
-            tmpdir = tempfile.TemporaryDirectory()
-
-            project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
+            tmpdir = None
+            if ghidra_program_path:
+                project_path = input_path
+                project_cm = pyghidra.open_project(str(project_path.parent), project_path.stem, create=False)
+            else:
+                tmpdir = tempfile.TemporaryDirectory()
+                project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
             project = project_cm.__enter__()
             try:
                 from ghidra.util.task import TaskMonitor
 
                 monitor = TaskMonitor.DUMMY
 
-                # Import file
-                loader = pyghidra.program_loader().project(project).source(str(input_path)).name(input_path.name)
-                with loader.load() as load_results:
-                    load_results.save(monitor)
+                if ghidra_program_path:
+                    program_name = (
+                        ghidra_program_path if ghidra_program_path.startswith("/") else f"/{ghidra_program_path}"
+                    )
+                    program, consumer = pyghidra.consume_program(project, program_name)
+                else:
+                    # Import file
+                    loader = pyghidra.program_loader().project(project).source(str(input_path)).name(input_path.name)
+                    with loader.load() as load_results:
+                        load_results.save(monitor)
 
-                # Open program
-                program, consumer = pyghidra.consume_program(project, "/" + input_path.name)
+                    # Open program
+                    program, consumer = pyghidra.consume_program(project, "/" + input_path.name)
 
-                # Analyze
-                pyghidra.analyze(program, monitor)
+                    # Analyze
+                    pyghidra.analyze(program, monitor)
 
                 from ghidra.program.flatapi import FlatProgramAPI
 
@@ -416,7 +427,8 @@ def get_extractor(
 
             except Exception:
                 project_cm.__exit__(None, None, None)
-                tmpdir.cleanup()
+                if tmpdir:
+                    tmpdir.cleanup()
                 raise
 
         import capa.features.extractors.ghidra.extractor
