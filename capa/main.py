@@ -22,7 +22,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Optional, TypedDict
+from typing import Tuple, Optional, TypedDict
 from pathlib import Path
 
 import colorama
@@ -398,6 +398,40 @@ class ShouldExitError(Exception):
     def __init__(self, status_code: int):
         super().__init__(status_code)
         self.status_code = status_code
+
+
+def parse_ghidra_project_path(input_path: Path | str) -> Optional[Tuple[Path, str]]:
+    """
+    Parse Ghidra project syntax: /path/to/project.gpr:folder/program
+
+    Detects existing Ghidra project format in a case-insensitive manner.
+
+    Returns:
+        tuple of (project_path: Path, program_path: str) if format is detected
+        None if not in Ghidra project format
+
+    Raises:
+        ValueError: if format is malformed (for example, empty project or program path)
+    """
+    input_str = str(input_path)
+
+    idx = input_str.lower().find(".gpr:")
+    if idx == -1:
+        return None
+
+    project_path_str = input_str[: idx + 4]
+    program_path = input_str[idx + 5 :].strip()
+
+    if not project_path_str or not program_path:
+        raise ValueError(
+            f"Invalid Ghidra project syntax: {input_str}\nExpected format: /path/to/project.gpr:folder/program"
+        )
+
+    project_path = Path(project_path_str)
+    if project_path.suffix.lower() != ".gpr":
+        raise ValueError(f"Project path must end with .gpr: {project_path}")
+
+    return project_path, program_path
 
 
 def handle_common_args(args):
@@ -851,7 +885,12 @@ def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]
         raise ShouldExitError(E_INVALID_SIG) from e
 
 
-def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtractor:
+def get_extractor_from_cli(
+    args,
+    input_format: str,
+    backend: str,
+    ghidra_program_path: Optional[str] = None,
+) -> FeatureExtractor:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -873,7 +912,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
-    extractor_filters = get_extractor_filters_from_cli(args, input_format)
+    extractor_filters = get_extractor_filters_from_cli(args, input_format, backend)
 
     logger.debug("format:  %s", input_format)
     logger.debug("backend: %s", backend)
@@ -888,6 +927,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             should_save_workspace=should_save_workspace,
             disable_progress=args.quiet or args.debug,
             sample_path=sample_path,
+            ghidra_program_path=ghidra_program_path,
         )
         return apply_extractor_filters(extractor, extractor_filters)
     except UnsupportedFormatError as e:
@@ -911,12 +951,12 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_CORRUPT_FILE) from e
 
 
-def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
+def get_extractor_filters_from_cli(args, input_format, backend: Optional[str] = None) -> FilterConfig:
     if not hasattr(args, "restrict_to_processes") and not hasattr(args, "restrict_to_functions"):
         # no processes or function filters were installed in the args
         return {}
 
-    if input_format in STATIC_FORMATS:
+    if backend == BACKEND_GHIDRA or input_format in STATIC_FORMATS:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
         return {"functions": {int(addr, 0) for addr in args.restrict_to_functions}}
@@ -1003,8 +1043,22 @@ def main(argv: Optional[list[str]] = None):
 
     try:
         handle_common_args(args)
+        ghidra_info = parse_ghidra_project_path(args.input_file)
+        if ghidra_info:
+            project_path, program_path = ghidra_info
+
+            if args.backend not in (BACKEND_AUTO, BACKEND_GHIDRA):
+                raise ShouldExitError(E_INVALID_INPUT_FORMAT)
+
+            args.input_file = project_path
+            args.ghidra_program = program_path
+            args.backend = BACKEND_GHIDRA
+
         ensure_input_exists_from_cli(args)
-        input_format = get_input_format_from_cli(args)
+        if ghidra_info:
+            input_format = FORMAT_AUTO
+        else:
+            input_format = get_input_format_from_cli(args)
     except ShouldExitError as e:
         return e.status_code
 
@@ -1027,20 +1081,31 @@ def main(argv: Optional[list[str]] = None):
         rules: RuleSet = get_rules_from_cli(args)
 
         found_limitation = False
-        file_extractors = get_file_extractors_from_cli(args, input_format)
-        if input_format in STATIC_FORMATS:
-            # only static extractors have file limitations
-            found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
-        if input_format in DYNAMIC_FORMATS:
-            found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
+        if ghidra_info:
+            file_extractors = []
+        else:
+            file_extractors = get_file_extractors_from_cli(args, input_format)
+            if input_format in STATIC_FORMATS:
+                # only static extractors have file limitations
+                found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
+            if input_format in DYNAMIC_FORMATS:
+                found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
 
         backend = get_backend_from_cli(args, input_format)
-        sample_path = get_sample_path_from_cli(args, backend)
-        if sample_path is None:
+        if ghidra_info:
             os_ = "unknown"
         else:
-            os_ = capa.loader.get_os(sample_path)
-        extractor: FeatureExtractor = get_extractor_from_cli(args, input_format, backend)
+            sample_path = get_sample_path_from_cli(args, backend)
+            if sample_path is None:
+                os_ = "unknown"
+            else:
+                os_ = capa.loader.get_os(sample_path)
+        extractor: FeatureExtractor = get_extractor_from_cli(
+            args,
+            input_format,
+            backend,
+            ghidra_program_path=getattr(args, "ghidra_program", None),
+        )
     except ShouldExitError as e:
         return e.status_code
 
