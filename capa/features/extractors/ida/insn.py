@@ -391,6 +391,8 @@ def extract_insn_nzxor_characteristic_features(
     if insn.itype not in (idaapi.NN_xor, idaapi.NN_xorpd, idaapi.NN_xorps, idaapi.NN_pxor):
         return
     if capa.features.extractors.ida.helpers.is_operand_equal(insn.Op1, insn.Op2):
+        # xor eax, eax and similar zero a register; emit Number(0) instead of nzxor.
+        yield Number(0), ih.address
         return
     if is_nzxor_stack_cookie(fh.inner, bbh.inner, insn):
         return

@@ -136,8 +136,13 @@ def extract_insn_nzxor_characteristic_features(
     # so we don't have to realize the tree/list.
     operands: list[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
 
-    if operands[1] != operands[2]:
-        yield Characteristic("nzxor"), ih.address
+    if operands[1] == operands[2]:
+        # eor rd, rn, rn zeros the destination register.
+        # emit Number(0) to let rules match on the produced value.
+        yield Number(0), ih.address
+        return
+
+    yield Characteristic("nzxor"), ih.address
 
 
 INDIRECT_CALL_PATTERNS = BinExport2InstructionPatternMatcher.from_str("""
