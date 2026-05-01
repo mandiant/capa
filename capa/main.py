@@ -1035,11 +1035,6 @@ def main(argv: Optional[list[str]] = None):
             found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
 
         backend = get_backend_from_cli(args, input_format)
-        sample_path = get_sample_path_from_cli(args, backend)
-        if sample_path is None:
-            os_ = "unknown"
-        else:
-            os_ = capa.loader.get_os(sample_path)
         extractor: FeatureExtractor = get_extractor_from_cli(args, input_format, backend)
     except ShouldExitError as e:
         return e.status_code
@@ -1047,7 +1042,7 @@ def main(argv: Optional[list[str]] = None):
     capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
     meta: rdoc.Metadata = capa.loader.collect_metadata(
-        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+        argv, args.input_file, input_format, args.rules, extractor, capabilities
     )
     layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
     if isinstance(meta, rdoc.StaticMetadata):
