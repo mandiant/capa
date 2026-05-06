@@ -65,11 +65,19 @@ class RuleSummary:
 
 
 @dataclass
+class FileScopeFeature:
+    feature_type: str
+    feature_value: str
+    rule_name: str
+
+
+@dataclass
 class FunctionAnnotations:
     address: int
     name: str
     annotations: list[Annotation]
     rules: list[RuleSummary]
+    file_scope_features: list[FileScopeFeature] = field(default_factory=list)
 
 
 @dataclass
@@ -78,12 +86,16 @@ class DisasmLine:
     text: str
 
 
+FILE_SCOPE_FEATURE_TYPES = frozenset({"import", "export", "section", "function-name"})
+
+
 def collect_annotations_from_match(
     match: "rd.Match",
     rule_name: str,
     rule_namespace: Optional[str],
     attack_ids: list[str],
     annotations: list[Annotation],
+    file_scope_features: Optional[list[FileScopeFeature]] = None,
     mode: str = "success",
 ):
     """Recursively walk a Match tree, collecting leaf feature annotations."""
@@ -112,7 +124,10 @@ def collect_annotations_from_match(
         ]
 
         if not locations:
-            pass
+            if file_scope_features is not None:
+                feat_type, feat_value, _ = format_feature(feature)
+                if feat_type in FILE_SCOPE_FEATURE_TYPES:
+                    file_scope_features.append(FileScopeFeature(feat_type, feat_value, rule_name))
         elif isinstance(feature, frzf.MatchFeature):
             # match features are logical references to sub-rules,
             # not instruction-level evidence. skip them — the sub-rule's
@@ -175,7 +190,9 @@ def collect_annotations_from_match(
             )
 
     for child in match.children:
-        collect_annotations_from_match(child, rule_name, rule_namespace, attack_ids, annotations, mode=child_mode)
+        collect_annotations_from_match(
+            child, rule_name, rule_namespace, attack_ids, annotations, file_scope_features, mode=child_mode
+        )
 
 
 def format_feature(feature) -> tuple[str, str, str]:
@@ -212,7 +229,9 @@ def format_feature(feature) -> tuple[str, str, str]:
     elif isinstance(feature, frzf.FunctionNameFeature):
         return "function-name", feature.function_name, desc
     elif isinstance(feature, frzf.BytesFeature):
-        return "bytes", feature.bytes, desc
+        raw = feature.bytes
+        spaced = " ".join(raw[i : i + 2] for i in range(0, len(raw), 2)) if len(raw) > 2 else raw
+        return "bytes", spaced, desc
     elif isinstance(feature, frzf.MatchFeature):
         return "match", feature.match, desc
     elif isinstance(feature, frzf.OSFeature):
@@ -269,6 +288,7 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
                     functions_by_bb[bb.address.value] = faddr
 
     all_annotations: dict[int, list[Annotation]] = collections.defaultdict(list)
+    all_file_scope: dict[int, list[FileScopeFeature]] = collections.defaultdict(list)
     function_rules: dict[int, list[RuleSummary]] = collections.defaultdict(list)
 
     for rule in rutils.capability_rules(doc):
@@ -291,8 +311,12 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
                 func_addr = functions_by_bb.get(match_addr.value, match_addr.value)
 
             annotations: list[Annotation] = []
-            collect_annotations_from_match(match, rule.meta.name, rule.meta.namespace, attack_ids, annotations)
+            file_scope_features: list[FileScopeFeature] = []
+            collect_annotations_from_match(
+                match, rule.meta.name, rule.meta.namespace, attack_ids, annotations, file_scope_features
+            )
             all_annotations[func_addr].extend(annotations)
+            all_file_scope[func_addr].extend(file_scope_features)
 
             if summary not in function_rules[func_addr]:
                 function_rules[func_addr].append(summary)
@@ -307,6 +331,15 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
             if key not in seen:
                 seen.add(key)
                 deduped.append(ann)
+
+        fs_seen: set[tuple[str, str, str]] = set()
+        fs_deduped = []
+        for fs in all_file_scope.get(faddr, []):
+            key_fs = (fs.feature_type, fs.feature_value, fs.rule_name)
+            if key_fs not in fs_seen:
+                fs_seen.add(key_fs)
+                fs_deduped.append(fs)
+
         rules = function_rules.get(faddr, [])
         result.append(
             FunctionAnnotations(
@@ -314,6 +347,7 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
                 name="",
                 annotations=deduped,
                 rules=rules,
+                file_scope_features=fs_deduped,
             )
         )
 
@@ -433,9 +467,20 @@ def render_function_header(
             line.append(f" {rule.name}", style="bold")
             if rule.namespace:
                 line.append(f"  ({rule.namespace})", style="dim")
-            if rule.attack_ids:
-                line.append(f"  {', '.join(rule.attack_ids)}", style="dim italic")
+            ids = rule.attack_ids + rule.mbc_ids
+            if ids:
+                line.append(f"  {', '.join(ids)}", style="dim italic")
             console.print(line)
+
+        if func.file_scope_features:
+            console.print(rich.text.Text("║", style="dim"))
+            for fs in func.file_scope_features:
+                tag, color = rule_tag_map.get(fs.rule_name, ("?", "white"))
+                line = rich.text.Text("║  ", style="dim")
+                line.append(f"[{tag}]", style=f"bold {color}")
+                line.append(f" {fs.feature_type}: {fs.feature_value}", style="dim")
+                console.print(line)
+
         console.print(rich.text.Text("║", style="dim"))
 
 
@@ -487,11 +532,20 @@ def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tu
             num = int(fv, 0)
         except (ValueError, TypeError):
             return None
-        patterns = [f"{num:X}h", f"0{num:X}h", f"0x{num:X}", f"0x{num:x}", f"+{num:X}h", f"+0x{num:X}"]
+        abs_num = abs(num)
+        sign = "-" if num < 0 else "+"
+        patterns = [
+            f"{sign}{abs_num:X}h",
+            f"{sign}0{abs_num:X}h",
+            f"{sign}0x{abs_num:X}",
+            f"{sign}0x{abs_num:x}",
+            f"{abs_num:X}h",
+            f"0x{abs_num:X}",
+        ]
         for pat in patterns:
-            idx = line_text.find(pat)
-            if idx >= 0:
-                return (idx, idx + len(pat))
+            m = re.search(r"(?<![0-9A-Fa-fx])" + re.escape(pat) + r"(?![0-9A-Fa-fxh])", line_text)
+            if m:
+                return (m.start(), m.end())
 
     elif ft == "string" or ft == "regex" or ft == "substring":
         clean = fv.strip('"')
@@ -737,8 +791,8 @@ def render_disassembly(
                 line_text.append(line.text, style="dim")
 
             annots = annotations_by_addr.get(addr, [])
-            if annots:
-                grouped = group_annotations_for_display(annots, rule_tag_map)
+            grouped = group_annotations_for_display(annots, rule_tag_map) if annots else []
+            if grouped:
                 all_tags: list[tuple[str, str]] = []
                 for group in grouped:
                     for tp in group.tag_pairs:
@@ -750,9 +804,8 @@ def render_disassembly(
 
             console.print(line_text)
 
-            if is_annotated:
+            if is_annotated and grouped:
                 gutter = " " * 12 + "│ "
-                grouped = group_annotations_for_display(annots, rule_tag_map)
                 render_annotations_block(console, gutter, grouped, line.text)
 
         prev_end = win_end
@@ -825,8 +878,8 @@ def render_pseudocode(
                 line_text.append(text, style="dim")
 
             annots = annotations_by_line.get(line_no, [])
-            if annots:
-                grouped = group_annotations_for_display(annots, rule_tag_map)
+            grouped = group_annotations_for_display(annots, rule_tag_map) if annots else []
+            if grouped:
                 all_tags: list[tuple[str, str]] = []
                 for group in grouped:
                     for tp in group.tag_pairs:
@@ -838,9 +891,8 @@ def render_pseudocode(
 
             console.print(line_text)
 
-            if is_annotated:
+            if is_annotated and grouped:
                 gutter = " " * 7 + "│ "
-                grouped = group_annotations_for_display(annots, rule_tag_map)
                 render_annotations_block(console, gutter, grouped, text)
 
         prev_end = win_end
@@ -925,7 +977,7 @@ def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
         feat = feats[0] if feats else None
         if feat:
             if feat.feature_type == "api":
-                api_name = feat.feature_value.split(":")[0].strip() if ":" in feat.feature_value else feat.feature_value
+                api_name = feat.feature_value.rsplit(".", 1)[-1] if "." in feat.feature_value else feat.feature_value
                 lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
             elif feat.feature_type.startswith("count(api("):
                 import re
@@ -1043,6 +1095,9 @@ def main(argv=None):
     parser.add_argument("--verbose", action="store_true", help="enable debug logging")
     args = parser.parse_args(args=argv)
 
+    if args.no_color:
+        STDERR_CONSOLE.no_color = True
+
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.WARNING,
         format="%(name)s - %(message)s",
@@ -1100,7 +1155,7 @@ def main(argv=None):
         filter_addrs = set()
         for addr_str in args.functions.split(","):
             addr_str = addr_str.strip()
-            filter_addrs.add(int(addr_str, 16) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
+            filter_addrs.add(int(addr_str, 0) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
         functions = [f for f in functions if f.address in filter_addrs]
 
     if not functions:
