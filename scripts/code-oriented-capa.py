@@ -442,33 +442,134 @@ def render_function_header(
         console.print(rich.text.Text("║", style="dim"))
 
 
-def render_annotation_line(
-    console: rich.console.Console,
-    annotation: Annotation,
-    rule_tag_map: dict[str, tuple[str, str]],
-    col_offset: int,
-    line_text: str,
-):
-    """Render an annotation line below a disassembly/pseudocode line."""
-    tag, color = rule_tag_map.get(annotation.rule_name, ("?", "white"))
+def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tuple[int, int]]:
+    """
+    Find the column range in line_text to underline for this annotation.
 
-    label_parts = []
-    label_parts.append(annotation.feature_type)
-    if annotation.feature_value:
-        label_parts.append(f": {annotation.feature_value}")
-    if annotation.description:
-        label_parts.append(f" = {annotation.description}")
+    Returns (start_col, end_col) or None if no target found.
+    """
+    import re
 
-    label = "".join(label_parts)
+    ft = annotation.feature_type
+    fv = annotation.feature_value
 
-    gutter_width = 12
-    prefix = " " * gutter_width + "│ "
+    if ft == "api":
+        api_short = fv.rsplit(".", 1)[-1] if "." in fv else fv
+        idx = line_text.find(api_short)
+        if idx >= 0:
+            return (idx, idx + len(api_short))
 
-    annot_line = rich.text.Text(prefix)
-    annot_line.append("╰── ", style=f"{color}")
-    annot_line.append(f"[{tag}] ", style=f"bold {color}")
-    annot_line.append(label, style=f"{color}")
-    console.print(annot_line)
+    elif ft == "mnemonic":
+        stripped = line_text.lstrip()
+        offset = len(line_text) - len(stripped)
+        if stripped.lower().startswith(fv.lower()):
+            return (offset, offset + len(fv))
+
+    elif ft in ("number", "operand[0].number", "operand[1].number", "operand[2].number"):
+        try:
+            num = int(fv, 0)
+        except (ValueError, TypeError):
+            return None
+        patterns = []
+        if num < 0x100:
+            patterns.append(str(num))
+        patterns.append(f"{num:X}h")
+        patterns.append(f"0{num:X}h")
+        patterns.append(f"0x{num:X}")
+        patterns.append(f"0x{num:x}")
+        for pat in patterns:
+            idx = line_text.find(pat)
+            if idx >= 0:
+                return (idx, idx + len(pat))
+
+    elif ft in ("offset", "operand[0].offset", "operand[1].offset", "operand[2].offset"):
+        try:
+            num = int(fv, 0)
+        except (ValueError, TypeError):
+            return None
+        patterns = [f"{num:X}h", f"0{num:X}h", f"0x{num:X}", f"0x{num:x}", f"+{num:X}h", f"+0x{num:X}"]
+        for pat in patterns:
+            idx = line_text.find(pat)
+            if idx >= 0:
+                return (idx, idx + len(pat))
+
+    elif ft == "string" or ft == "regex" or ft == "substring":
+        clean = fv.strip('"')
+        idx = line_text.find(clean)
+        if idx >= 0:
+            return (idx, idx + len(clean))
+        idx = line_text.find(f'"{clean}"')
+        if idx >= 0:
+            return (idx, idx + len(clean) + 2)
+
+    elif ft == "characteristic":
+        if fv == "nzxor":
+            stripped = line_text.lstrip()
+            offset = len(line_text) - len(stripped)
+            if stripped.lower().startswith("xor"):
+                return (offset, offset + 3)
+        elif fv == "indirect call":
+            m = re.search(r"call\s+(.+)", line_text, re.IGNORECASE)
+            if m:
+                return (m.start(), m.end())
+        elif fv == "tight loop":
+            stripped = line_text.lstrip()
+            offset = len(line_text) - len(stripped)
+            m = re.match(r"(jmp|loop)\b", stripped, re.IGNORECASE)
+            if m:
+                return (offset, offset + m.end())
+        elif "access" in fv:
+            for seg in ("fs:", "gs:", "large fs:", "large gs:"):
+                idx = line_text.lower().find(seg)
+                if idx >= 0:
+                    return (idx, idx + len(seg))
+
+    elif ft.startswith("count(api("):
+        m = re.search(r"count\(api\((.+?)\)\)", ft)
+        if m:
+            api_name = m.group(1)
+            api_short = api_name.rsplit(".", 1)[-1] if "." in api_name else api_name
+            idx = line_text.find(api_short)
+            if idx >= 0:
+                return (idx, idx + len(api_short))
+
+    return None
+
+
+def render_underline(
+    gutter_prefix: str,
+    target_start: int,
+    target_end: int,
+    label: str,
+    tag_pairs: list[tuple[str, str]],
+) -> tuple[rich.text.Text, rich.text.Text]:
+    """
+    Render an underline caret line pointing to columns [target_start, target_end)
+    in the line above, with the annotation label.
+
+    Produces something like:
+        gutter│     ^^^^^^^^^^^
+        gutter│     ╰── [A] api: CreateFile
+    """
+    first_color = tag_pairs[0][1]
+    width = max(1, target_end - target_start)
+
+    underline_line = rich.text.Text(gutter_prefix)
+    underline_line.append(" " * target_start, style="default")
+    underline_line.append("─" * width, style=first_color)
+
+    label_line = rich.text.Text(gutter_prefix)
+    label_line.append(" " * target_start, style="default")
+    label_line.append("╰── ", style=first_color)
+
+    tags_text = rich.text.Text()
+    for tag, color in tag_pairs:
+        tags_text.append(f"[{tag}]", style=f"bold {color}")
+    label_line.append_text(tags_text)
+    label_line.append(" ", style="default")
+    label_line.append(label, style=first_color)
+
+    return underline_line, label_line
 
 
 def compute_windows(
@@ -612,23 +713,40 @@ def render_disassembly(
             console.print(line_text)
 
             if is_annotated:
+                gutter = " " * 12 + "│ "
                 grouped = group_annotations_for_display(annots, rule_tag_map)
                 for label, tag_pairs in grouped:
-                    gutter = " " * 12 + "│ "
-                    annot_text = rich.text.Text(gutter)
-
-                    tags_text = rich.text.Text()
-                    for tag, color in tag_pairs:
-                        tags_text.append(f"[{tag}]", style=f"bold {color}")
-
-                    first_color = tag_pairs[0][1]
-                    annot_text.append("╰── ", style=first_color)
-                    annot_text.append_text(tags_text)
-                    annot_text.append(" ", style="default")
-                    annot_text.append(label, style=first_color)
-                    console.print(annot_text)
+                    target = find_underline_target_for_group(annots, label, line.text)
+                    if target:
+                        ul_line, lbl_line = render_underline(gutter, target[0], target[1], label, tag_pairs)
+                        console.print(ul_line)
+                        console.print(lbl_line)
+                    else:
+                        annot_text = rich.text.Text(gutter)
+                        tags_text = rich.text.Text()
+                        for tag, color in tag_pairs:
+                            tags_text.append(f"[{tag}]", style=f"bold {color}")
+                        first_color = tag_pairs[0][1]
+                        annot_text.append("╰── ", style=first_color)
+                        annot_text.append_text(tags_text)
+                        annot_text.append(" ", style="default")
+                        annot_text.append(label, style=first_color)
+                        console.print(annot_text)
 
         prev_end = win_end
+
+
+def find_underline_target_for_group(
+    annotations: list[Annotation],
+    label: str,
+    line_text: str,
+) -> Optional[tuple[int, int]]:
+    """Try to find an underline target for any annotation in this group."""
+    for ann in annotations:
+        target = find_underline_target(ann, line_text)
+        if target:
+            return target
+    return None
 
 
 def render_pseudocode(
@@ -712,21 +830,25 @@ def render_pseudocode(
             console.print(line_text)
 
             if is_annotated:
+                gutter = " " * 8 + "│ "
                 grouped = group_annotations_for_display(annots, rule_tag_map)
                 for label, tag_pairs in grouped:
-                    gutter = " " * 8 + "│ "
-                    annot_text = rich.text.Text(gutter)
-
-                    tags_text = rich.text.Text()
-                    for tag, color in tag_pairs:
-                        tags_text.append(f"[{tag}]", style=f"bold {color}")
-
-                    first_color = tag_pairs[0][1]
-                    annot_text.append("╰── ", style=first_color)
-                    annot_text.append_text(tags_text)
-                    annot_text.append(" ", style="default")
-                    annot_text.append(label, style=first_color)
-                    console.print(annot_text)
+                    target = find_underline_target_for_group(annots, label, text)
+                    if target:
+                        ul_line, lbl_line = render_underline(gutter, target[0], target[1], label, tag_pairs)
+                        console.print(ul_line)
+                        console.print(lbl_line)
+                    else:
+                        annot_text = rich.text.Text(gutter)
+                        tags_text = rich.text.Text()
+                        for tag, color in tag_pairs:
+                            tags_text.append(f"[{tag}]", style=f"bold {color}")
+                        first_color = tag_pairs[0][1]
+                        annot_text.append("╰── ", style=first_color)
+                        annot_text.append_text(tags_text)
+                        annot_text.append(" ", style="default")
+                        annot_text.append(label, style=first_color)
+                        console.print(annot_text)
 
         prev_end = win_end
 
