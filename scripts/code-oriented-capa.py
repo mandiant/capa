@@ -856,35 +856,34 @@ def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
 
 
 def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.ResultDocument":
-    """Run capa analysis using idalib backend."""
-    import idaapi
+    """
+    Run capa analysis using idalib backend.
+
+    idalib must be loaded before calling this function.
+    Opens the IDA database directly and creates the extractor.
+    """
     import idapro
+    import ida_auto
 
     import capa.main
     import capa.rules
     import capa.loader
     import capa.capabilities.common
     import capa.render.result_document as rd
+    import capa.features.extractors.ida.extractor
     from capa.features.common import OS_AUTO, FORMAT_AUTO
 
     with STDERR_CONSOLE.status("Opening database..."):
-        idapro.open_database(str(input_path), run_auto_analysis=True)
-        idaapi.auto_wait()
+        ret = idapro.open_database(str(input_path), run_auto_analysis=True)
+        if ret != 0:
+            raise RuntimeError(f"failed to open database: {ret}")
+        ida_auto.auto_wait()
+
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     rules_paths = [rules_path] if rules_path else [capa.main.get_default_root() / "rules"]
     with STDERR_CONSOLE.status("Loading rules..."):
         rules = capa.rules.get_rules(rules_paths)
-
-    with STDERR_CONSOLE.status("Extracting features..."):
-        extractor = capa.loader.get_extractor(
-            input_path,
-            FORMAT_AUTO,
-            OS_AUTO,
-            capa.main.BACKEND_IDALIB,
-            [],
-            should_save_workspace=False,
-            disable_progress=True,
-        )
 
     with STDERR_CONSOLE.status("Finding capabilities..."):
         capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
