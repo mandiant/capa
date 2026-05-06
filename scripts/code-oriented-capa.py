@@ -383,15 +383,14 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
     pseudocode = cfunc.get_pseudocode()
     boundaries = cfunc.get_boundaries()
 
-    addr_to_lines: dict[int, set[int]] = {}
+    line_to_addrs: dict[int, set[int]] = {}
     for citem, rangeset in boundaries.items():
         coords = cfunc.find_item_coords(citem)
         if coords:
             line_no = coords[1]
             for j in range(rangeset.nranges()):
                 r = rangeset.getrange(j)
-                for ea in range(r.start_ea, r.end_ea):
-                    addr_to_lines.setdefault(ea, set()).add(line_no)
+                line_to_addrs.setdefault(line_no, set()).update(range(r.start_ea, r.end_ea))
 
     lines = []
     for line_no in range(pseudocode.size()):
@@ -399,11 +398,7 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
         import ida_lines
 
         text = ida_lines.tag_remove(sl.line)
-        addrs_for_line: set[int] = set()
-        for ea, line_set in addr_to_lines.items():
-            if line_no in line_set:
-                addrs_for_line.add(ea)
-        lines.append((line_no, text, addrs_for_line))
+        lines.append((line_no, text, line_to_addrs.get(line_no, set())))
 
     return lines
 
@@ -418,12 +413,14 @@ def render_function_header(
     name = func.name or f"sub_{func.address:X}"
 
     console.print()
+    content = f"{name} @ {addr_str}"
+    padding = max(1, 78 - 4 - len(content) - 1)
     header = rich.text.Text()
     header.append("╔══ ", style="dim")
     header.append(f"{name}", style="bold bright_white")
     header.append(f" @ {addr_str}", style="bold")
     header.append(" ", style="dim")
-    header.append("═" * max(1, 72 - len(name) - len(addr_str) - 7), style="dim")
+    header.append("═" * padding, style="dim")
     header.append("╗", style="dim")
     console.print(header)
 
@@ -470,17 +467,20 @@ def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tu
             num = int(fv, 0)
         except (ValueError, TypeError):
             return None
+        abs_num = abs(num)
         patterns = []
-        if num < 0x100:
-            patterns.append(str(num))
-        patterns.append(f"{num:X}h")
-        patterns.append(f"0{num:X}h")
-        patterns.append(f"0x{num:X}")
-        patterns.append(f"0x{num:x}")
+        if abs_num < 0x100:
+            patterns.append(str(abs_num))
+        patterns.append(f"{abs_num:X}h")
+        patterns.append(f"0{abs_num:X}h")
+        patterns.append(f"0x{abs_num:X}")
+        patterns.append(f"0x{abs_num:x}")
+        if num < 0:
+            patterns = [f"-{p}" for p in patterns] + patterns
         for pat in patterns:
-            idx = line_text.find(pat)
-            if idx >= 0:
-                return (idx, idx + len(pat))
+            m = re.search(r"(?<![0-9A-Fa-fx])" + re.escape(pat) + r"(?![0-9A-Fa-fxh])", line_text)
+            if m:
+                return (m.start(), m.end())
 
     elif ft in ("offset", "operand[0].offset", "operand[1].offset", "operand[2].offset"):
         try:
@@ -615,33 +615,71 @@ def compute_windows(
     return result
 
 
+@dataclass
+class AnnotationGroup:
+    label: str
+    tag_pairs: list[tuple[str, str]]
+    source_annotations: list[Annotation]
+
+
 def group_annotations_for_display(
     annotations: list[Annotation],
     rule_tag_map: dict[str, tuple[str, str]],
-) -> list[tuple[str, list[tuple[str, str]]]]:
+) -> list[AnnotationGroup]:
     """
     Group annotations by (feature_type, feature_value, description) and collect
-    the rule tags for each group. Returns list of (label, [(tag, color), ...]).
+    the rule tags for each group.
     """
-    groups: dict[tuple[str, str, str], list[tuple[str, str]]] = collections.OrderedDict()
+    groups: dict[tuple[str, str, str], tuple[list[tuple[str, str]], list[Annotation]]] = collections.OrderedDict()
     for ann in annotations:
         key = (ann.feature_type, ann.feature_value, ann.description)
         tag, color = rule_tag_map.get(ann.rule_name, ("?", "white"))
         if key not in groups:
-            groups[key] = []
+            groups[key] = ([], [])
         tag_pair = (tag, color)
-        if tag_pair not in groups[key]:
-            groups[key].append(tag_pair)
+        if tag_pair not in groups[key][0]:
+            groups[key][0].append(tag_pair)
+        groups[key][1].append(ann)
 
     result = []
-    for (feat_type, feat_value, desc), tag_pairs in groups.items():
+    for (feat_type, feat_value, desc), (tag_pairs, source_anns) in groups.items():
         label_parts = [feat_type]
         if feat_value:
             label_parts.append(f": {feat_value}")
         if desc:
             label_parts.append(f" = {desc}")
-        result.append(("".join(label_parts), tag_pairs))
+        result.append(AnnotationGroup("".join(label_parts), tag_pairs, source_anns))
     return result
+
+
+def render_annotations_block(
+    console: rich.console.Console,
+    gutter: str,
+    groups: list[AnnotationGroup],
+    line_text: str,
+):
+    """Render underline carets and annotation labels for a set of grouped annotations."""
+    for group in groups:
+        target = None
+        for ann in group.source_annotations:
+            target = find_underline_target(ann, line_text)
+            if target:
+                break
+        if target:
+            ul_line, lbl_line = render_underline(gutter, target[0], target[1], group.label, group.tag_pairs)
+            console.print(ul_line)
+            console.print(lbl_line)
+        else:
+            annot_text = rich.text.Text(gutter)
+            tags_text = rich.text.Text()
+            for tag, color in group.tag_pairs:
+                tags_text.append(f"[{tag}]", style=f"bold {color}")
+            first_color = group.tag_pairs[0][1]
+            annot_text.append("╰── ", style=first_color)
+            annot_text.append_text(tags_text)
+            annot_text.append(" ", style="default")
+            annot_text.append(group.label, style=first_color)
+            console.print(annot_text)
 
 
 def render_disassembly(
@@ -702,8 +740,8 @@ def render_disassembly(
             if annots:
                 grouped = group_annotations_for_display(annots, rule_tag_map)
                 all_tags: list[tuple[str, str]] = []
-                for _, tag_pairs in grouped:
-                    for tp in tag_pairs:
+                for group in grouped:
+                    for tp in group.tag_pairs:
                         if tp not in all_tags:
                             all_tags.append(tp)
                 line_text.append("  ")
@@ -715,38 +753,9 @@ def render_disassembly(
             if is_annotated:
                 gutter = " " * 12 + "│ "
                 grouped = group_annotations_for_display(annots, rule_tag_map)
-                for label, tag_pairs in grouped:
-                    target = find_underline_target_for_group(annots, label, line.text)
-                    if target:
-                        ul_line, lbl_line = render_underline(gutter, target[0], target[1], label, tag_pairs)
-                        console.print(ul_line)
-                        console.print(lbl_line)
-                    else:
-                        annot_text = rich.text.Text(gutter)
-                        tags_text = rich.text.Text()
-                        for tag, color in tag_pairs:
-                            tags_text.append(f"[{tag}]", style=f"bold {color}")
-                        first_color = tag_pairs[0][1]
-                        annot_text.append("╰── ", style=first_color)
-                        annot_text.append_text(tags_text)
-                        annot_text.append(" ", style="default")
-                        annot_text.append(label, style=first_color)
-                        console.print(annot_text)
+                render_annotations_block(console, gutter, grouped, line.text)
 
         prev_end = win_end
-
-
-def find_underline_target_for_group(
-    annotations: list[Annotation],
-    label: str,
-    line_text: str,
-) -> Optional[tuple[int, int]]:
-    """Try to find an underline target for any annotation in this group."""
-    for ann in annotations:
-        target = find_underline_target(ann, line_text)
-        if target:
-            return target
-    return None
 
 
 def render_pseudocode(
@@ -794,7 +803,7 @@ def render_pseudocode(
     for win_start, win_end, win_annotated in windows:
         if prev_end >= 0 and win_start > prev_end + 1:
             gap = win_start - prev_end - 1
-            gap_line = rich.text.Text(" " * 8 + "│ ", style="dim")
+            gap_line = rich.text.Text(" " * 7 + "│ ", style="dim")
             gap_line.append(f"... {gap} lines omitted ...", style="dim italic")
             console.print(gap_line)
 
@@ -819,8 +828,8 @@ def render_pseudocode(
             if annots:
                 grouped = group_annotations_for_display(annots, rule_tag_map)
                 all_tags: list[tuple[str, str]] = []
-                for _, tag_pairs in grouped:
-                    for tp in tag_pairs:
+                for group in grouped:
+                    for tp in group.tag_pairs:
                         if tp not in all_tags:
                             all_tags.append(tp)
                 line_text.append("  ")
@@ -830,25 +839,9 @@ def render_pseudocode(
             console.print(line_text)
 
             if is_annotated:
-                gutter = " " * 8 + "│ "
+                gutter = " " * 7 + "│ "
                 grouped = group_annotations_for_display(annots, rule_tag_map)
-                for label, tag_pairs in grouped:
-                    target = find_underline_target_for_group(annots, label, text)
-                    if target:
-                        ul_line, lbl_line = render_underline(gutter, target[0], target[1], label, tag_pairs)
-                        console.print(ul_line)
-                        console.print(lbl_line)
-                    else:
-                        annot_text = rich.text.Text(gutter)
-                        tags_text = rich.text.Text()
-                        for tag, color in tag_pairs:
-                            tags_text.append(f"[{tag}]", style=f"bold {color}")
-                        first_color = tag_pairs[0][1]
-                        annot_text.append("╰── ", style=first_color)
-                        annot_text.append_text(tags_text)
-                        annot_text.append(" ", style="default")
-                        annot_text.append(label, style=first_color)
-                        console.print(annot_text)
+                render_annotations_block(console, gutter, grouped, text)
 
         prev_end = win_end
 
@@ -892,13 +885,15 @@ def render_all(
         console.print()
 
     for func in functions:
-        render_function_header(console, func, global_rule_tag_map)
-
         lines: list[DisasmLine] = []
         if use_ida:
             func_start, func_end = get_function_bounds(func.address)
             lines = get_disassembly_lines(func_start, func_end)
-            func.name = get_function_name(func.address)
+            if not func.name:
+                func.name = get_function_name(func.address)
+
+        render_function_header(console, func, global_rule_tag_map)
+
         if not lines:
             lines = generate_placeholder_disasm(func)
 
@@ -959,10 +954,8 @@ def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
                     lines.append(DisasmLine(address=addr, text="jmp     short $"))
                 else:
                     lines.append(DisasmLine(address=addr, text=f"; {feat.feature_value}"))
-            elif (
-                feat.feature_type == "offset"
-                or feat.feature_type.startswith("operand")
-                and "offset" in feat.feature_type
+            elif feat.feature_type == "offset" or (
+                feat.feature_type.startswith("operand") and "offset" in feat.feature_type
             ):
                 lines.append(DisasmLine(address=addr, text=f"mov     eax, [ecx+{feat.feature_value}]"))
             elif feat.feature_type == "bytes":
@@ -1068,14 +1061,16 @@ def main(argv=None):
             from capa.features.extractors.ida.idalib import load_idalib
 
             if load_idalib():
-                import idaapi
                 import idapro
+                import ida_auto
 
                 with STDERR_CONSOLE.status("Opening database in IDA..."):
-                    idapro.open_database(str(args.input_file), run_auto_analysis=True)
-                    idaapi.auto_wait()
+                    ret = idapro.open_database(str(args.input_file), run_auto_analysis=True)
+                    if ret != 0:
+                        raise RuntimeError(f"failed to open database: {ret}")
+                    ida_auto.auto_wait()
                 use_ida = True
-        except Exception:
+        except ImportError:
             logger.info("idalib not available, using placeholder disassembly")
     else:
         try:
@@ -1105,7 +1100,7 @@ def main(argv=None):
         filter_addrs = set()
         for addr_str in args.functions.split(","):
             addr_str = addr_str.strip()
-            filter_addrs.add(int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str))
+            filter_addrs.add(int(addr_str, 16) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
         functions = [f for f in functions if f.address in filter_addrs]
 
     if not functions:
@@ -1131,7 +1126,7 @@ def main(argv=None):
             import idapro
 
             idapro.close_database(save=False)
-        except Exception:
+        except (ImportError, RuntimeError):
             pass
 
     return 0
