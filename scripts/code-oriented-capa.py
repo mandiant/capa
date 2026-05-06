@@ -384,14 +384,12 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
     boundaries = cfunc.get_boundaries()
 
     addr_to_lines: dict[int, set[int]] = {}
-    for i in range(boundaries.size()):
-        citem = boundaries.at(i)
+    for citem, rangeset in boundaries.items():
         coords = cfunc.find_item_coords(citem)
         if coords:
-            _, line_no = coords
-            ea_ranges = boundaries[citem]
-            for j in range(ea_ranges.nranges()):
-                r = ea_ranges.getrange(j)
+            line_no = coords[1]
+            for j in range(rangeset.nranges()):
+                r = rangeset.getrange(j)
                 for ea in range(r.start_ea, r.end_ea):
                     addr_to_lines.setdefault(ea, set()).add(line_no)
 
@@ -701,30 +699,33 @@ def render_pseudocode(
 
             annots = annotations_by_line.get(line_no, [])
             if annots:
-                tags = []
-                for ann in annots:
-                    tag, color = rule_tag_map.get(ann.rule_name, ("?", "white"))
-                    tags.append(f"[{color}]\\[{tag}][/{color}]")
+                grouped = group_annotations_for_display(annots, rule_tag_map)
+                all_tags: list[tuple[str, str]] = []
+                for _, tag_pairs in grouped:
+                    for tp in tag_pairs:
+                        if tp not in all_tags:
+                            all_tags.append(tp)
                 line_text.append("  ")
-                line_text.append_text(rich.text.Text.from_markup("".join(set(tags))))
+                for tag, color in all_tags:
+                    line_text.append(f"[{tag}]", style=f"bold {color}")
 
             console.print(line_text)
 
             if is_annotated:
-                for ann in annots:
+                grouped = group_annotations_for_display(annots, rule_tag_map)
+                for label, tag_pairs in grouped:
                     gutter = " " * 8 + "│ "
-                    tag, color = rule_tag_map.get(ann.rule_name, ("?", "white"))
-                    label_parts = [ann.feature_type]
-                    if ann.feature_value:
-                        label_parts.append(f": {ann.feature_value}")
-                    if ann.description:
-                        label_parts.append(f" = {ann.description}")
-                    label = "".join(label_parts)
-
                     annot_text = rich.text.Text(gutter)
-                    annot_text.append("╰── ", style=color)
-                    annot_text.append(f"[{tag}] ", style=f"bold {color}")
-                    annot_text.append(label, style=color)
+
+                    tags_text = rich.text.Text()
+                    for tag, color in tag_pairs:
+                        tags_text.append(f"[{tag}]", style=f"bold {color}")
+
+                    first_color = tag_pairs[0][1]
+                    annot_text.append("╰── ", style=first_color)
+                    annot_text.append_text(tags_text)
+                    annot_text.append(" ", style="default")
+                    annot_text.append(label, style=first_color)
                     console.print(annot_text)
 
         prev_end = win_end
