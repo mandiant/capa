@@ -41,8 +41,21 @@ logger = logging.getLogger(__name__)
 
 STDERR_CONSOLE = rich.console.Console(stderr=True, highlight=False)
 
-RULE_COLORS = ["cyan", "yellow", "magenta", "green", "red", "blue", "bright_cyan", "bright_yellow", "bright_magenta"]
-RULE_SYMBOLS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+RULE_COLORS = [
+    "cyan",
+    "yellow",
+    "magenta",
+    "green",
+    "red",
+    "blue",
+    "bright_cyan",
+    "bright_yellow",
+    "bright_magenta",
+    "bright_green",
+    "bright_red",
+    "bright_blue",
+]
+RULE_SYMBOLS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 
 
 @dataclass
@@ -448,7 +461,7 @@ def render_function_header(
 
     console.print()
     content = f"{name} @ {addr_str}"
-    padding = max(1, 78 - 4 - len(content) - 1)
+    padding = max(1, 78 - 4 - len(content))
     header = rich.text.Text()
     header.append("╔══ ", style="dim")
     header.append(f"{name}", style="bold bright_white")
@@ -758,6 +771,12 @@ def render_disassembly(
     if not windows:
         return
 
+    max_addr = max(all_addresses) if all_addresses else 0
+    hex_digits = max(8, len(f"{max_addr:X}"))
+    addr_width = 2 + hex_digits  # "0x" + hex digits
+    gutter_width = 1 + addr_width  # leading space + address
+    gutter = " " * gutter_width + " │ "
+
     section_header = rich.text.Text("║  ", style="dim")
     section_header.append("disassembly", style="bold underline")
     console.print(section_header)
@@ -769,7 +788,7 @@ def render_disassembly(
     for win_start, win_end, win_annotated in windows:
         if prev_end >= 0 and win_start > prev_end + 1:
             gap = win_start - prev_end - 1
-            gap_line = rich.text.Text(" " * 12 + "│ ", style="dim")
+            gap_line = rich.text.Text(gutter, style="dim")
             gap_line.append(f"... {gap} lines omitted ...", style="dim italic")
             console.print(gap_line)
 
@@ -779,7 +798,7 @@ def render_disassembly(
             is_annotated = addr in win_annotated
 
             line_text = rich.text.Text()
-            addr_str = f"0x{addr:08X}"
+            addr_str = f"0x{addr:0{hex_digits}X}"
 
             if is_annotated:
                 line_text.append(f" {addr_str}", style="bold")
@@ -805,7 +824,6 @@ def render_disassembly(
             console.print(line_text)
 
             if is_annotated and grouped:
-                gutter = " " * 12 + "│ "
                 render_annotations_block(console, gutter, grouped, line.text)
 
         prev_end = win_end
