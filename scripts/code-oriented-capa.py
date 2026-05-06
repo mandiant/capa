@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """
 code-oriented-capa: render capa rule matches onto disassembly and pseudocode.
 
@@ -13,12 +26,16 @@ import sys
 import logging
 import argparse
 import collections
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import field, dataclass
 
 import rich.text
 import rich.console
+import rich.logging
+
+if TYPE_CHECKING:
+    import capa.render.result_document as rd
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +87,11 @@ def collect_annotations_from_match(
     mode: str = "success",
 ):
     """Recursively walk a Match tree, collecting leaf feature annotations."""
-    import capa.features.freeze.features as frzf
-    import capa.features.freeze as frz
-    import capa.features.common
     import capa.helpers
+    import capa.features.common
+    import capa.features.freeze as frz
     import capa.render.result_document as rd
+    import capa.features.freeze.features as frzf
 
     child_mode = mode
     if mode == "success":
@@ -90,7 +107,9 @@ def collect_annotations_from_match(
 
     if isinstance(match.node, rd.FeatureNode) and match.success:
         feature = match.node.feature
-        locations = [loc.value for loc in match.locations if loc.type == frz.AddressType.ABSOLUTE and isinstance(loc.value, int)]
+        locations = [
+            loc.value for loc in match.locations if loc.type == frz.AddressType.ABSOLUTE and isinstance(loc.value, int)
+        ]
 
         if not locations:
             pass
@@ -103,44 +122,57 @@ def collect_annotations_from_match(
             for capture, cap_locs in match.captures.items():
                 for loc in cap_locs:
                     if loc.type == frz.AddressType.ABSOLUTE and isinstance(loc.value, int):
-                        annotations.append(Annotation(
-                            address=loc.value,
-                            feature_type=feature.type,
-                            feature_value=f'"{capa.features.common.escape_string(capture)}"',
-                            description=feature.description or "",
-                            rule_name=rule_name,
-                            rule_namespace=rule_namespace,
-                            attack_ids=attack_ids,
-                        ))
+                        annotations.append(
+                            Annotation(
+                                address=loc.value,
+                                feature_type=feature.type,
+                                feature_value=f'"{capa.features.common.escape_string(capture)}"',
+                                description=feature.description or "",
+                                rule_name=rule_name,
+                                rule_namespace=rule_namespace,
+                                attack_ids=attack_ids,
+                            )
+                        )
         else:
             feat_type, feat_value, desc = format_feature(feature)
             for loc in locations:
-                annotations.append(Annotation(
-                    address=loc,
-                    feature_type=feat_type,
-                    feature_value=feat_value,
-                    description=desc,
-                    rule_name=rule_name,
-                    rule_namespace=rule_namespace,
-                    attack_ids=attack_ids,
-                ))
+                annotations.append(
+                    Annotation(
+                        address=loc,
+                        feature_type=feat_type,
+                        feature_value=feat_value,
+                        description=desc,
+                        rule_name=rule_name,
+                        rule_namespace=rule_namespace,
+                        attack_ids=attack_ids,
+                    )
+                )
 
-    if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.RangeStatement) and match.success:
-        locations = [loc.value for loc in match.locations if loc.type == frz.AddressType.ABSOLUTE and isinstance(loc.value, int)]
+    if (
+        isinstance(match.node, rd.StatementNode)
+        and isinstance(match.node.statement, rd.RangeStatement)
+        and match.success
+    ):
+        locations = [
+            loc.value for loc in match.locations if loc.type == frz.AddressType.ABSOLUTE and isinstance(loc.value, int)
+        ]
         stmt = match.node.statement
         child_feat = stmt.child
         feat_type, feat_value, desc = format_feature(child_feat)
         range_desc = format_range(stmt.min, stmt.max)
+        count_label = f"count({feat_type}({feat_value}))"
         for loc in locations:
-            annotations.append(Annotation(
-                address=loc,
-                feature_type=f"count({feat_type})",
-                feature_value=f"{feat_value}: {range_desc}",
-                description=stmt.description or desc,
-                rule_name=rule_name,
-                rule_namespace=rule_namespace,
-                attack_ids=attack_ids,
-            ))
+            annotations.append(
+                Annotation(
+                    address=loc,
+                    feature_type=count_label,
+                    feature_value=range_desc,
+                    description=stmt.description or desc,
+                    rule_name=rule_name,
+                    rule_namespace=rule_namespace,
+                    attack_ids=attack_ids,
+                )
+            )
 
     for child in match.children:
         collect_annotations_from_match(child, rule_name, rule_namespace, attack_ids, annotations, mode=child_mode)
@@ -148,9 +180,9 @@ def collect_annotations_from_match(
 
 def format_feature(feature) -> tuple[str, str, str]:
     """Extract (type_key, display_value, description) from a freeze Feature."""
-    import capa.features.freeze.features as frzf
-    import capa.features.common
     import capa.helpers
+    import capa.features.common
+    import capa.features.freeze.features as frzf
 
     key = str(feature.type)
     desc = feature.description or ""
@@ -211,7 +243,7 @@ def format_range(min_val: int, max_val: int) -> str:
         return str(min_val)
     elif min_val == 0:
         return f"{max_val} or fewer"
-    elif max_val == ((1 << 64) - 1):
+    elif max_val >= (1 << 63):
         return f"{min_val} or more"
     else:
         return f"between {min_val} and {max_val}"
@@ -221,8 +253,8 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
     """Invert rule-centric ResultDocument into function-centric annotation map."""
     import capa.rules
     import capa.render.utils as rutils
-    import capa.render.result_document as rd
     import capa.features.freeze as frz
+    import capa.render.result_document as rd
 
     assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
 
@@ -276,12 +308,14 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
                 seen.add(key)
                 deduped.append(ann)
         rules = function_rules.get(faddr, [])
-        result.append(FunctionAnnotations(
-            address=faddr,
-            name="",
-            annotations=deduped,
-            rules=rules,
-        ))
+        result.append(
+            FunctionAnnotations(
+                address=faddr,
+                name="",
+                annotations=deduped,
+                rules=rules,
+            )
+        )
 
     return result
 
@@ -301,8 +335,8 @@ def get_disassembly_lines(func_start: int, func_end: int) -> list[DisasmLine]:
 
 def get_function_name(ea: int) -> str:
     """Get function name from IDA."""
-    import ida_funcs
     import ida_name
+    import ida_funcs
 
     func = ida_funcs.get_func(ea)
     if func:
@@ -365,6 +399,7 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
     for line_no in range(pseudocode.size()):
         sl = pseudocode.at(line_no)
         import ida_lines
+
         text = ida_lines.tag_remove(sl.line)
         addrs_for_line: set[int] = set()
         for ea, line_set in addr_to_lines.items():
@@ -525,7 +560,7 @@ def render_disassembly(
     for ann in func.annotations:
         annotations_by_addr[ann.address].append(ann)
 
-    all_addresses = [l.address for l in lines]
+    all_addresses = [dl.address for dl in lines]
     annotated_addrs = set(annotations_by_addr.keys())
     windows = compute_windows(all_addresses, annotated_addrs, context)
 
@@ -537,7 +572,7 @@ def render_disassembly(
     console.print(section_header)
     console.print(rich.text.Text("║", style="dim"))
 
-    addr_to_line = {l.address: l for l in lines}
+    addr_to_line = {dl.address: dl for dl in lines}
     prev_end = -1
 
     for win_start, win_end, win_annotated in windows:
@@ -617,7 +652,7 @@ def render_pseudocode(
 
     annotated_line_nos: set[int] = set()
     annotations_by_line: dict[int, list[Annotation]] = collections.defaultdict(list)
-    for line_no, text, addrs in pseudo_lines:
+    for line_no, _text, addrs in pseudo_lines:
         overlapping = addrs & annotated_ea_set
         if overlapping:
             annotated_line_nos.add(line_no)
@@ -736,11 +771,12 @@ def render_all(
     for func in functions:
         render_function_header(console, func, global_rule_tag_map)
 
+        lines: list[DisasmLine] = []
         if use_ida:
             func_start, func_end = get_function_bounds(func.address)
             lines = get_disassembly_lines(func_start, func_end)
             func.name = get_function_name(func.address)
-        else:
+        if not lines:
             lines = generate_placeholder_disasm(func)
 
         render_disassembly(console, func, lines, global_rule_tag_map, context)
@@ -761,25 +797,57 @@ def render_all(
 
 def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
     """Generate placeholder disassembly lines when idalib is not available."""
-    annotated_addrs = sorted(set(a.address for a in func.annotations))
+    annotated_addrs = sorted({a.address for a in func.annotations})
     if not annotated_addrs:
         return []
 
     lines = []
     for addr in annotated_addrs:
         feats = [a for a in func.annotations if a.address == addr]
-        feat_summary = feats[0] if feats else None
-        if feat_summary:
-            if feat_summary.feature_type == "api":
-                lines.append(DisasmLine(address=addr, text=f"call    {feat_summary.feature_value}"))
-            elif feat_summary.feature_type in ("number", "operand[0].number", "operand[1].number", "operand[2].number"):
-                lines.append(DisasmLine(address=addr, text=f"mov     eax, {feat_summary.feature_value}"))
-            elif feat_summary.feature_type == "string":
-                lines.append(DisasmLine(address=addr, text=f"lea     eax, {feat_summary.feature_value}"))
-            elif feat_summary.feature_type == "mnemonic":
-                lines.append(DisasmLine(address=addr, text=f"{feat_summary.feature_value}     eax, ebx"))
+        feat = feats[0] if feats else None
+        if feat:
+            if feat.feature_type == "api":
+                api_name = feat.feature_value.split(":")[0].strip() if ":" in feat.feature_value else feat.feature_value
+                lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
+            elif feat.feature_type.startswith("count(api("):
+                import re
+
+                m = re.search(r"count\(api\((.+?)\)\)", feat.feature_type)
+                api_name = m.group(1) if m else feat.feature_value
+                lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
+            elif feat.feature_type in ("number", "operand[0].number", "operand[1].number", "operand[2].number"):
+                lines.append(DisasmLine(address=addr, text=f"push    {feat.feature_value}"))
+            elif feat.feature_type == "string" or feat.feature_type == "regex" or feat.feature_type == "substring":
+                lines.append(DisasmLine(address=addr, text=f"lea     eax, {feat.feature_value}"))
+            elif feat.feature_type == "mnemonic":
+                lines.append(DisasmLine(address=addr, text=f"{feat.feature_value}     eax, ebx"))
+            elif feat.feature_type == "characteristic":
+                if feat.feature_value == "indirect call":
+                    lines.append(DisasmLine(address=addr, text="call    dword ptr [eax]"))
+                elif feat.feature_value == "nzxor":
+                    lines.append(DisasmLine(address=addr, text="xor     eax, ebx"))
+                elif feat.feature_value in ("peb access", "fs access"):
+                    lines.append(DisasmLine(address=addr, text="mov     eax, large fs:30h"))
+                elif feat.feature_value == "gs access":
+                    lines.append(DisasmLine(address=addr, text="mov     rax, gs:60h"))
+                elif feat.feature_value == "cross section flow":
+                    lines.append(DisasmLine(address=addr, text="jmp     far_target"))
+                elif feat.feature_value == "tight loop":
+                    lines.append(DisasmLine(address=addr, text="jmp     short $"))
+                else:
+                    lines.append(DisasmLine(address=addr, text=f"; {feat.feature_value}"))
+            elif (
+                feat.feature_type == "offset"
+                or feat.feature_type.startswith("operand")
+                and "offset" in feat.feature_type
+            ):
+                lines.append(DisasmLine(address=addr, text=f"mov     eax, [ecx+{feat.feature_value}]"))
+            elif feat.feature_type == "bytes":
+                lines.append(DisasmLine(address=addr, text=f"db      {feat.feature_value}"))
+            elif feat.feature_type.startswith("count("):
+                lines.append(DisasmLine(address=addr, text=f"; {feat.feature_type}: {feat.feature_value}"))
             else:
-                lines.append(DisasmLine(address=addr, text=f"<{feat_summary.feature_type}: {feat_summary.feature_value}>"))
+                lines.append(DisasmLine(address=addr, text=f"; [{feat.feature_type}]"))
         else:
             lines.append(DisasmLine(address=addr, text="???"))
 
@@ -788,8 +856,8 @@ def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
 
 def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.ResultDocument":
     """Run capa analysis using idalib backend."""
-    import idapro
     import idaapi
+    import idapro
 
     import capa.main
     import capa.rules
@@ -808,8 +876,13 @@ def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.Resul
 
     with STDERR_CONSOLE.status("Extracting features..."):
         extractor = capa.loader.get_extractor(
-            input_path, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_IDALIB, [],
-            should_save_workspace=False, disable_progress=True,
+            input_path,
+            FORMAT_AUTO,
+            OS_AUTO,
+            capa.main.BACKEND_IDALIB,
+            [],
+            should_save_workspace=False,
+            disable_progress=True,
         )
 
     with STDERR_CONSOLE.status("Finding capabilities..."):
@@ -817,7 +890,13 @@ def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.Resul
 
     with STDERR_CONSOLE.status("Building result document..."):
         meta = capa.loader.collect_metadata(
-            [], input_path, FORMAT_AUTO, OS_AUTO, rules_paths, extractor, capabilities,
+            [],
+            input_path,
+            FORMAT_AUTO,
+            OS_AUTO,
+            rules_paths,
+            extractor,
+            capabilities,
         )
         meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
         doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)
@@ -828,6 +907,7 @@ def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.Resul
 def load_result_document(json_path: Path) -> "rd.ResultDocument":
     """Load a pre-computed capa result document from JSON."""
     import capa.render.result_document as rd
+
     return rd.ResultDocument.from_file(json_path)
 
 
@@ -864,9 +944,11 @@ def main(argv=None):
 
         try:
             from capa.features.extractors.ida.idalib import load_idalib
+
             if load_idalib():
-                import idapro
                 import idaapi
+                import idapro
+
                 with STDERR_CONSOLE.status("Opening database in IDA..."):
                     idapro.open_database(str(args.input_file), run_auto_analysis=True)
                     idaapi.auto_wait()
@@ -876,6 +958,7 @@ def main(argv=None):
     else:
         try:
             from capa.features.extractors.ida.idalib import load_idalib
+
             if not load_idalib():
                 print("error: idalib is required but not available", file=sys.stderr)
                 return 1
@@ -910,7 +993,7 @@ def main(argv=None):
     console = rich.console.Console(
         highlight=False,
         no_color=args.no_color,
-        force_terminal=not args.no_color,
+        soft_wrap=True,
     )
 
     render_all(
@@ -924,6 +1007,7 @@ def main(argv=None):
     if use_ida:
         try:
             import idapro
+
             idapro.close_database(save=False)
         except Exception:
             pass
@@ -932,5 +1016,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    import rich.logging
     sys.exit(main())
