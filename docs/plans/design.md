@@ -86,7 +86,8 @@ For each function (ordered by VA):
 
 Using Rich library for terminal output:
 
-- **Gutter**: right-aligned address column in dim style
+- **Gutter**: right-aligned address column in dim style, width computed
+  dynamically from the maximum address in each function (supports 64-bit)
 - **Dimmed lines**: `[dim]` style for context
 - **Highlighted lines**: full color syntax highlighting
 - **Annotations**: right-aligned in colored text, prefixed with rule tag
@@ -98,10 +99,15 @@ Using Rich library for terminal output:
 
 ### Color palette
 
-For rule tags, cycle through these colors (chosen for distinctness and
-colorblind safety):
-- A: cyan, B: yellow, C: magenta, D: green, E: red, F: blue
-- Beyond F: cycle with bold/dim variants
+For rule tags, cycle through 12 colors (chosen for distinctness and
+colorblind safety): cyan, yellow, magenta, green, red, blue, plus bright
+variants of each.
+
+### Rule tag assignment
+
+Single-character tags A-Z, a-z, 0-9 (62 unique). When more than 62 rules
+exist, overflow tags use two characters (AA, AB, AC...). Colors cycle
+independently of symbols.
 
 ### Feature-to-annotation mapping
 
@@ -120,8 +126,10 @@ The match tree walk extracts leaf features. For each leaf:
 - `FeatureNode` with `RegexFeature`/`SubstringFeature` → uses captures
 - `RangeStatement` → "count(<feature>): N"
 
-File-scope features (import, export, section, function-name) are noted in
-the function header but don't annotate specific instructions.
+File-scope features (import, export, section, function-name) are collected
+during match tree walking into `FileScopeFeature` objects and rendered in
+the function header area (below the rule legend, tagged with the
+contributing rule's symbol).
 
 ### idalib lifecycle
 

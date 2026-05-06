@@ -44,7 +44,9 @@ Each function block has:
 
 1. **Function header** — address, name (from IDA), rule match summary
 2. **Rule legend** — when multiple rules match, each gets a symbol (A, B, C...)
-   and a color. The legend maps symbols to rule names, namespaces, and ATT&CK IDs.
+   and a color. The legend maps symbols to rule names, namespaces, ATT&CK IDs,
+   and MBC IDs. File-scope features (import, export, section, function-name)
+   that contribute to matched rules are listed below the legend.
 3. **Disassembly listing** with annotations:
    - Contributing instructions are rendered with full syntax highlighting
    - Non-contributing instructions within the context window are dimmed
@@ -60,7 +62,7 @@ Each function block has:
 ### Multi-rule handling
 
 When multiple rules match the same function:
-- Each rule gets a unique single-letter tag (A, B, C...) and a distinct color
+- Each rule gets a unique tag (A-Z, a-z, 0-9, then AA, AB...) and a distinct color
 - The legend at the function header lists all rules with their tags
 - Annotations on instructions include the tag so the reader can identify
   which rule each feature contributes to
