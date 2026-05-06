@@ -934,8 +934,14 @@ def render_all(
         for rule in func.rules:
             if rule.name not in global_rule_tag_map:
                 idx = len(global_rule_tag_map)
-                symbol = RULE_SYMBOLS[idx % len(RULE_SYMBOLS)]
                 color = RULE_COLORS[idx % len(RULE_COLORS)]
+                if idx < len(RULE_SYMBOLS):
+                    symbol = RULE_SYMBOLS[idx]
+                else:
+                    overflow = idx - len(RULE_SYMBOLS)
+                    first = RULE_SYMBOLS[overflow // len(RULE_SYMBOLS) % len(RULE_SYMBOLS)]
+                    second = RULE_SYMBOLS[overflow % len(RULE_SYMBOLS)]
+                    symbol = f"{first}{second}"
                 global_rule_tag_map[rule.name] = (symbol, color)
                 all_rule_names.append(rule.name)
 
