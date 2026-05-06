@@ -125,12 +125,41 @@ the function header but don't annotate specific instructions.
 
 ### idalib lifecycle
 
+When running live analysis (no `--json`):
 ```
 load_idalib()
 idapro.open_database(path, run_auto_analysis=True)
-idaapi.auto_wait()
-# ... do all work ...
+ida_auto.auto_wait()
+extractor = IdaFeatureExtractor()   # direct construction, not via get_extractor
+# ... run capa, build result document ...
+# ... render disassembly + pseudocode using IDA APIs ...
 idapro.close_database(save=False)
 ```
 
+When using `--json` with a binary:
+```
+load_idalib()                       # optional, may not be available
+idapro.open_database(path, ...)     # opens for disassembly/pseudocode only
+# ... load result document from JSON ...
+# ... render using IDA APIs ...
+idapro.close_database(save=False)
+```
+
+Note: `capa.loader.get_extractor(BACKEND_IDA)` is NOT used because it
+passes `-R` to `open_database` which can hang on some binaries. Instead,
+the database is opened directly and `IdaFeatureExtractor()` is constructed
+manually.
+
 Single-threaded. One database per process.
+
+### Pseudocode address mapping
+
+To map instruction addresses to pseudocode line numbers:
+1. `cfunc = ida_hexrays.decompile(func_ea)`
+2. `boundaries = cfunc.get_boundaries()` — a `boundaries_t` (map from
+   `cinsn_t*` to `rangeset_t`)
+3. Iterate `boundaries.items()` (NOT index-based — it's a C++ map)
+4. For each `(citem, rangeset)`, call `cfunc.find_item_coords(citem)`
+   to get `(col, line_no)`
+5. Extract EA ranges from the rangeset
+6. Build reverse map: `addr → set[line_no]`
