@@ -60,6 +60,7 @@
 - fix: FeatureRegexRegistryControlSetMatchIncomplete now checks all Regex features instead of returning after the first @williballenthin (SURF-84)
 - fix: MissingStaticScope and MissingDynamicScope lint checks guard against absent scopes dict to prevent TypeError @williballenthin (SURF-83)
 - fix: MissingExampleOffset lint now reads scopes.static instead of obsolete scope key @williballenthin (SURF-82)
+- fix: extend MissingExampleOffset lint to validate dynamic examples using (pid:N,tid:N,call:N) format @williballenthin #3058
 - fix: invert scope filter in import-to-ida.py so function-scope rules are annotated instead of skipped @williballenthin (SURF-81)
 - fix: remove dead string literal in test_detect_duplicate_features @williballenthin (SURF-80)
 - fix: remove duplicate Rule.from_yaml call in test_scope_instruction_description @williballenthin (SURF-79)

@@ -247,17 +247,41 @@ class MissingExamples(Lint):
 
 class MissingExampleOffset(Lint):
     name = "missing example offset"
-    recommendation = "Add offset of example function"
+    recommendation = "Add offset of example (static: hash:0xADDR, dynamic: hash:(pid:N,tid:N,call:N))"
+
+    STATIC_SCOPES_NEEDING_OFFSET = ("function", "basic block")
+    DYNAMIC_SCOPES_NEEDING_OFFSET = ("process", "thread", "call", "span of calls")
 
     def check_rule(self, ctx: Context, rule: Rule):
-        static_scope = rule.meta.get("scopes", {}).get("static")
-        if static_scope in ("function", "basic block"):
-            examples = rule.meta.get("examples")
-            if isinstance(examples, list):
-                for example in examples:
-                    if example and ":" not in example:
-                        logger.debug("example: %s", example)
+        scopes = rule.meta.get("scopes", {})
+        static_scope = scopes.get("static")
+        dynamic_scope = scopes.get("dynamic")
+
+        examples = rule.meta.get("examples")
+        if not isinstance(examples, list):
+            return False
+
+        for example in examples:
+            if not example:
+                continue
+
+            example_id, _, offset = example.partition(":")
+
+            sample_path = ctx.samples.get(example_id)
+            is_dynamic_sample = sample_path is not None and "dynamic" in sample_path.parts
+
+            if is_dynamic_sample:
+                if dynamic_scope in self.DYNAMIC_SCOPES_NEEDING_OFFSET:
+                    if not offset or not offset.startswith("("):
+                        logger.debug("example: %s (missing dynamic offset)", example)
                         return True
+            else:
+                if static_scope in self.STATIC_SCOPES_NEEDING_OFFSET:
+                    if not offset:
+                        logger.debug("example: %s (missing static offset)", example)
+                        return True
+
+        return False
 
 
 class ExampleFileDNE(Lint):

@@ -282,7 +282,6 @@ def test_missing_example_offset_uses_scopes():
     import lint as lint_module
 
     lint_instance = lint_module.MissingExampleOffset()
-    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([]), is_thorough=False)
 
     function_scope_rule_missing_offset = capa.rules.Rule.from_yaml(
         textwrap.dedent("""
@@ -298,6 +297,10 @@ def test_missing_example_offset_uses_scopes():
                     - api: CreateFile
         """)
     )
+
+    rules = capa.rules.RuleSet([function_scope_rule_missing_offset])
+    ctx = lint_module.Context(samples={}, rules=rules, is_thorough=False)
+
     assert lint_instance.check_rule(ctx, function_scope_rule_missing_offset) is True
 
     function_scope_rule_with_offset = capa.rules.Rule.from_yaml(
@@ -331,6 +334,60 @@ def test_missing_example_offset_uses_scopes():
         """)
     )
     assert lint_instance.check_rule(ctx, file_scope_rule_no_offset) is not True
+
+    ctx_with_dynamic = lint_module.Context(
+        samples={"abc123_min_archive.zip": Path("tests/data/dynamic/vmray/abc123_min_archive.zip")},
+        rules=rules,
+        is_thorough=False,
+    )
+
+    dynamic_example_missing_offset = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule dynamic example missing offset
+                    scopes:
+                        static: basic block
+                        dynamic: call
+                    examples:
+                        - abc123_min_archive.zip
+                features:
+                    - api: CreateFile
+        """)
+    )
+    assert lint_instance.check_rule(ctx_with_dynamic, dynamic_example_missing_offset) is True
+
+    dynamic_example_with_offset = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule dynamic example with offset
+                    scopes:
+                        static: basic block
+                        dynamic: call
+                    examples:
+                        - abc123_min_archive.zip:(pid:2932,tid:2928,call:354)
+                features:
+                    - api: CreateFile
+        """)
+    )
+    assert lint_instance.check_rule(ctx_with_dynamic, dynamic_example_with_offset) is not True
+
+    dynamic_file_scope_no_offset = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule dynamic file scope no offset
+                    scopes:
+                        static: file
+                        dynamic: file
+                    examples:
+                        - abc123_min_archive.zip
+                features:
+                    - string: test
+        """)
+    )
+    assert lint_instance.check_rule(ctx_with_dynamic, dynamic_file_scope_no_offset) is not True
 
 
 def test_feature_regex_registry_control_set_checks_all_features():
