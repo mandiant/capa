@@ -15,13 +15,14 @@
 """
 code-oriented-capa: render capa rule matches onto disassembly and pseudocode.
 
-Inverts capa's rule-centric output into a code-centric view:
-instead of "rule X matched at addresses A, B, C," shows
-"function at address F has these behavioral annotations on its instructions."
+For each rule match, shows the contributing instructions annotated on the
+disassembly and pseudocode of the matching function. A connecting spine
+on the right margin links annotations back to the rule header.
 
 Requires idalib (IDA Pro 9.0+) for disassembly and pseudocode rendering.
 """
 
+import re
 import sys
 import logging
 import argparse
@@ -41,21 +42,23 @@ logger = logging.getLogger(__name__)
 
 STDERR_CONSOLE = rich.console.Console(stderr=True, highlight=False)
 
-RULE_COLORS = [
-    "cyan",
-    "yellow",
-    "magenta",
-    "green",
-    "red",
-    "blue",
-    "bright_cyan",
-    "bright_yellow",
-    "bright_magenta",
-    "bright_green",
-    "bright_red",
-    "bright_blue",
-]
-RULE_SYMBOLS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+ANNOTATION_COLOR = "cyan"
+SPINE_COLOR = "dim cyan"
+
+IDA_COLOR_MAP: dict[int, str] = {
+    0x01: "default",
+    0x02: "bright_white",
+    0x03: "default",
+    0x04: "dim",
+    0x05: "bold",
+    0x06: "cyan",
+    0x07: "bright_yellow",
+    0x08: "default",
+    0x09: "magenta",
+    0x0D: "bright_black",
+    0x0E: "bright_black",
+    0x14: "green",
+}
 
 
 @dataclass
@@ -97,6 +100,13 @@ class FunctionAnnotations:
 class DisasmLine:
     address: int
     text: str
+    tagged_text: str = ""
+
+
+@dataclass
+class BufferedLine:
+    text: rich.text.Text
+    kind: str  # "rule_header", "annotation_label", "normal"
 
 
 FILE_SCOPE_FEATURE_TYPES = frozenset({"import", "export", "section", "function-name"})
@@ -142,9 +152,6 @@ def collect_annotations_from_match(
                 if feat_type in FILE_SCOPE_FEATURE_TYPES:
                     file_scope_features.append(FileScopeFeature(feat_type, feat_value, rule_name))
         elif isinstance(feature, frzf.MatchFeature):
-            # match features are logical references to sub-rules,
-            # not instruction-level evidence. skip them — the sub-rule's
-            # own features will be collected when we recurse into children.
             pass
         elif isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
             for capture, cap_locs in match.captures.items():
@@ -281,8 +288,11 @@ def format_range(min_val: int, max_val: int) -> str:
         return f"between {min_val} and {max_val}"
 
 
-def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations]:
-    """Invert rule-centric ResultDocument into function-centric annotation map."""
+def invert_result_document(doc: "rd.ResultDocument") -> tuple[list[FunctionAnnotations], list[RuleSummary]]:
+    """Invert rule-centric ResultDocument into function-centric annotation map.
+
+    Returns (functions sorted by VA, rules in document order).
+    """
     import capa.rules
     import capa.render.utils as rutils
     import capa.features.freeze as frz
@@ -303,6 +313,8 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
     all_annotations: dict[int, list[Annotation]] = collections.defaultdict(list)
     all_file_scope: dict[int, list[FileScopeFeature]] = collections.defaultdict(list)
     function_rules: dict[int, list[RuleSummary]] = collections.defaultdict(list)
+    doc_rule_order: list[RuleSummary] = []
+    seen_rules: set[str] = set()
 
     for rule in rutils.capability_rules(doc):
         attack_ids = [spec.id for spec in rule.meta.attack]
@@ -313,6 +325,10 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
             attack_ids=attack_ids,
             mbc_ids=mbc_ids,
         )
+
+        if rule.meta.name not in seen_rules:
+            seen_rules.add(rule.meta.name)
+            doc_rule_order.append(summary)
 
         for match_addr, match in rule.matches:
             if match_addr.type != frz.AddressType.ABSOLUTE:
@@ -364,7 +380,12 @@ def invert_result_document(doc: "rd.ResultDocument") -> list[FunctionAnnotations
             )
         )
 
-    return result
+    return result, doc_rule_order
+
+
+# ---------------------------------------------------------------------------
+# IDA utility functions
+# ---------------------------------------------------------------------------
 
 
 def get_disassembly_lines(func_start: int, func_end: int) -> list[DisasmLine]:
@@ -374,9 +395,10 @@ def get_disassembly_lines(func_start: int, func_end: int) -> list[DisasmLine]:
 
     lines = []
     for ea in idautils.Heads(func_start, func_end):
-        text = ida_lines.generate_disasm_line(ea, ida_lines.GENDSM_REMOVE_TAGS)
-        if text:
-            lines.append(DisasmLine(address=ea, text=text))
+        tagged = ida_lines.generate_disasm_line(ea, 0)
+        plain = ida_lines.tag_remove(tagged) if tagged else ""
+        if plain:
+            lines.append(DisasmLine(address=ea, text=plain, tagged_text=tagged or ""))
     return lines
 
 
@@ -403,12 +425,41 @@ def get_function_bounds(ea: int) -> tuple[int, int]:
     return ea, ea + 1
 
 
+def get_basic_block_ranges(func_ea: int) -> list[tuple[int, int]]:
+    """Get basic block ranges for a function from IDA."""
+    try:
+        import ida_gdl
+        import ida_funcs
+
+        func = ida_funcs.get_func(func_ea)
+        if not func:
+            return []
+        return sorted((bb.start_ea, bb.end_ea) for bb in ida_gdl.FlowChart(func))
+    except ImportError:
+        return []
+
+
+def get_function_comment(func_ea: int) -> Optional[str]:
+    """Get function comment from IDA."""
+    try:
+        import ida_funcs
+
+        func = ida_funcs.get_func(func_ea)
+        if not func:
+            return None
+        cmt = ida_funcs.get_func_cmt(func, False)
+        if not cmt:
+            cmt = ida_funcs.get_func_cmt(func, True)
+        return cmt or None
+    except ImportError:
+        return None
+
+
 def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]]]]:
     """
     Fetch pseudocode for a function.
 
     Returns list of (line_number, text, set_of_addresses) or None if decompiler unavailable.
-    Each line has the set of addresses that map to it via get_boundaries().
     """
     try:
         import ida_hexrays
@@ -439,62 +490,74 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
                 r = rangeset.getrange(j)
                 line_to_addrs.setdefault(line_no, set()).update(range(r.start_ea, r.end_ea))
 
+    import ida_lines
+
     lines = []
     for line_no in range(pseudocode.size()):
         sl = pseudocode.at(line_no)
-        import ida_lines
-
         text = ida_lines.tag_remove(sl.line)
         lines.append((line_no, text, line_to_addrs.get(line_no, set())))
 
     return lines
 
 
-def render_function_header(
-    console: rich.console.Console,
-    func: FunctionAnnotations,
-    rule_tag_map: dict[str, tuple[str, str]],
-):
-    """Render the function header with rule legend."""
-    addr_str = f"0x{func.address:X}"
-    name = func.name or f"sub_{func.address:X}"
+# ---------------------------------------------------------------------------
+# IDA syntax highlighting
+# ---------------------------------------------------------------------------
 
-    console.print()
-    content = f"{name} @ {addr_str}"
-    padding = max(1, 78 - 4 - len(content))
-    header = rich.text.Text()
-    header.append("╔══ ", style="dim")
-    header.append(f"{name}", style="bold bright_white")
-    header.append(f" @ {addr_str}", style="bold")
-    header.append(" ", style="dim")
-    header.append("═" * padding, style="dim")
-    header.append("╗", style="dim")
-    console.print(header)
 
-    if func.rules:
-        console.print(rich.text.Text("║", style="dim"))
-        for rule in func.rules:
-            tag, color = rule_tag_map.get(rule.name, ("?", "white"))
-            line = rich.text.Text("║  ", style="dim")
-            line.append(f"[{tag}]", style=f"bold {color}")
-            line.append(f" {rule.name}", style="bold")
-            if rule.namespace:
-                line.append(f"  ({rule.namespace})", style="dim")
-            ids = rule.attack_ids + rule.mbc_ids
-            if ids:
-                line.append(f"  {', '.join(ids)}", style="dim italic")
-            console.print(line)
+def parse_ida_colors(tagged_text: str, dimmed: bool = False) -> rich.text.Text:
+    """Parse IDA-style color tags into a Rich Text object with syntax highlighting."""
+    result = rich.text.Text()
+    current_style = "default"
+    buf: list[str] = []
+    i = 0
 
-        if func.file_scope_features:
-            console.print(rich.text.Text("║", style="dim"))
-            for fs in func.file_scope_features:
-                tag, color = rule_tag_map.get(fs.rule_name, ("?", "white"))
-                line = rich.text.Text("║  ", style="dim")
-                line.append(f"[{tag}]", style=f"bold {color}")
-                line.append(f" {fs.feature_type}: {fs.feature_value}", style="dim")
-                console.print(line)
+    while i < len(tagged_text):
+        ch = tagged_text[i]
+        if ch == "\x01" and i + 1 < len(tagged_text):
+            if buf:
+                result.append("".join(buf), style="dim" if dimmed else current_style)
+                buf = []
+            color_id = ord(tagged_text[i + 1])
+            current_style = IDA_COLOR_MAP.get(color_id, "default")
+            i += 2
+        elif ch == "\x02" and i + 1 < len(tagged_text):
+            if buf:
+                result.append("".join(buf), style="dim" if dimmed else current_style)
+                buf = []
+            current_style = "default"
+            i += 2
+        elif ch == "\x03" and i + 1 < len(tagged_text):
+            buf.append(tagged_text[i + 1])
+            i += 2
+        elif ch == "\x04":
+            i += 1
+        elif ord(ch) < 0x09 and ch not in ("\t",):
+            i += 1
+        else:
+            buf.append(ch)
+            i += 1
 
-        console.print(rich.text.Text("║", style="dim"))
+    if buf:
+        result.append("".join(buf), style="dim" if dimmed else current_style)
+
+    return result
+
+
+def format_disasm_rich(line: DisasmLine, is_annotated: bool) -> rich.text.Text:
+    """Format a disassembly line as Rich Text with optional syntax highlighting."""
+    if line.tagged_text:
+        return parse_ida_colors(line.tagged_text, dimmed=not is_annotated)
+    elif is_annotated:
+        return rich.text.Text(line.text)
+    else:
+        return rich.text.Text(line.text, style="dim")
+
+
+# ---------------------------------------------------------------------------
+# Underline target finding
+# ---------------------------------------------------------------------------
 
 
 def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tuple[int, int]]:
@@ -503,8 +566,6 @@ def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tu
 
     Returns (start_col, end_col) or None if no target found.
     """
-    import re
-
     ft = annotation.feature_type
     fv = annotation.feature_value
 
@@ -591,64 +652,41 @@ def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tu
                 if idx >= 0:
                     return (idx, idx + len(seg))
 
-    elif ft.startswith("count(api("):
-        m = re.search(r"count\(api\((.+?)\)\)", ft)
+    elif ft.startswith("count("):
+        m = re.match(r"count\((\w+(?:\[\d+\]\.\w+)?)\((.+?)\)\)", ft)
         if m:
-            api_name = m.group(1)
-            api_short = api_name.rsplit(".", 1)[-1] if "." in api_name else api_name
-            idx = line_text.find(api_short)
-            if idx >= 0:
-                return (idx, idx + len(api_short))
+            inner_type, inner_value = m.group(1), m.group(2)
+            inner_ann = Annotation(
+                address=annotation.address,
+                feature_type=inner_type,
+                feature_value=inner_value,
+                description="",
+                rule_name=annotation.rule_name,
+                rule_namespace=annotation.rule_namespace,
+                attack_ids=annotation.attack_ids,
+            )
+            return find_underline_target(inner_ann, line_text)
 
     return None
 
 
-def render_underline(
-    gutter_prefix: str,
-    target_start: int,
-    target_end: int,
-    label: str,
-    tag_pairs: list[tuple[str, str]],
-) -> tuple[rich.text.Text, rich.text.Text]:
-    """
-    Render an underline caret line pointing to columns [target_start, target_end)
-    in the line above, with the annotation label.
-
-    Produces something like:
-        gutter│     ^^^^^^^^^^^
-        gutter│     ╰── [A] api: CreateFile
-    """
-    first_color = tag_pairs[0][1]
-    width = max(1, target_end - target_start)
-
-    underline_line = rich.text.Text(gutter_prefix)
-    underline_line.append(" " * target_start, style="default")
-    underline_line.append("─" * width, style=first_color)
-
-    label_line = rich.text.Text(gutter_prefix)
-    label_line.append(" " * target_start, style="default")
-    label_line.append("╰── ", style=first_color)
-
-    tags_text = rich.text.Text()
-    for tag, color in tag_pairs:
-        tags_text.append(f"[{tag}]", style=f"bold {color}")
-    label_line.append_text(tags_text)
-    label_line.append(" ", style="default")
-    label_line.append(label, style=first_color)
-
-    return underline_line, label_line
+# ---------------------------------------------------------------------------
+# Windowing
+# ---------------------------------------------------------------------------
 
 
 def compute_windows(
     all_addresses: list[int],
     annotated_addresses: set[int],
     context: int,
+    bb_ranges: Optional[list[tuple[int, int]]] = None,
+    full_function_threshold: float = 0.5,
 ) -> list[tuple[int, int, set[int]]]:
     """
     Compute display windows around annotated addresses.
 
-    Returns list of (start_idx, end_idx, annotated_indices) for each window.
-    Indices are into all_addresses list.
+    When bb_ranges is provided, expands windows to include complete basic blocks.
+    When total shown lines exceed full_function_threshold, shows the entire function.
     """
     if not annotated_addresses:
         return []
@@ -659,12 +697,34 @@ def compute_windows(
     if not annotated_indices:
         return []
 
+    expanded_indices: set[int] = set()
+    if bb_ranges:
+        for ann_idx in annotated_indices:
+            ann_addr = all_addresses[ann_idx]
+            found_bb = False
+            for bb_start, bb_end in bb_ranges:
+                if bb_start <= ann_addr < bb_end:
+                    for i, addr in enumerate(all_addresses):
+                        if bb_start <= addr < bb_end:
+                            expanded_indices.add(i)
+                    found_bb = True
+                    break
+            if not found_bb:
+                expanded_indices.add(ann_idx)
+    else:
+        expanded_indices = set(annotated_indices)
+
+    all_relevant = sorted(expanded_indices | set(annotated_indices))
     windows = []
-    for idx in annotated_indices:
+    for idx in all_relevant:
         start = max(0, idx - context)
         end = min(len(all_addresses) - 1, idx + context)
         windows.append((start, end))
 
+    if not windows:
+        return []
+
+    windows.sort()
     merged = [windows[0]]
     for start, end in windows[1:]:
         prev_start, prev_end = merged[-1]
@@ -673,8 +733,12 @@ def compute_windows(
         else:
             merged.append((start, end))
 
-    result = []
+    total_shown = sum(end - start + 1 for start, end in merged)
+    if len(all_addresses) > 0 and total_shown / len(all_addresses) > full_function_threshold:
+        merged = [(0, len(all_addresses) - 1)]
+
     ann_idx_set = set(annotated_indices)
+    result = []
     for start, end in merged:
         window_annotated = {all_addresses[i] for i in range(start, end + 1) if i in ann_idx_set}
         result.append((start, end, window_annotated))
@@ -682,105 +746,181 @@ def compute_windows(
     return result
 
 
-@dataclass
-class AnnotationGroup:
-    label: str
-    tag_pairs: list[tuple[str, str]]
-    source_annotations: list[Annotation]
+# ---------------------------------------------------------------------------
+# Annotation grouping and rendering
+# ---------------------------------------------------------------------------
 
 
-def group_annotations_for_display(
-    annotations: list[Annotation],
-    rule_tag_map: dict[str, tuple[str, str]],
-) -> list[AnnotationGroup]:
-    """
-    Group annotations by (feature_type, feature_value, description) and collect
-    the rule tags for each group.
-    """
-    groups: dict[tuple[str, str, str], tuple[list[tuple[str, str]], list[Annotation]]] = collections.OrderedDict()
+def group_annotations(annotations: list[Annotation]) -> list[tuple[str, list[Annotation]]]:
+    """Group annotations by (feature_type, feature_value, description)."""
+    groups: collections.OrderedDict[tuple[str, str, str], tuple[str, list[Annotation]]] = collections.OrderedDict()
     for ann in annotations:
         key = (ann.feature_type, ann.feature_value, ann.description)
-        tag, color = rule_tag_map.get(ann.rule_name, ("?", "white"))
         if key not in groups:
-            groups[key] = ([], [])
-        tag_pair = (tag, color)
-        if tag_pair not in groups[key][0]:
-            groups[key][0].append(tag_pair)
+            label_parts = [ann.feature_type]
+            if ann.feature_value:
+                label_parts.append(f": {ann.feature_value}")
+            if ann.description:
+                label_parts.append(f" = {ann.description}")
+            groups[key] = ("".join(label_parts), [])
         groups[key][1].append(ann)
-
-    result = []
-    for (feat_type, feat_value, desc), (tag_pairs, source_anns) in groups.items():
-        label_parts = [feat_type]
-        if feat_value:
-            label_parts.append(f": {feat_value}")
-        if desc:
-            label_parts.append(f" = {desc}")
-        result.append(AnnotationGroup("".join(label_parts), tag_pairs, source_anns))
-    return result
+    return [(label, anns) for label, anns in groups.values()]
 
 
-def render_annotations_block(
-    console: rich.console.Console,
+def render_annotation_lines(
     gutter: str,
-    groups: list[AnnotationGroup],
+    annotations: list[Annotation],
     line_text: str,
-):
-    """Render underline carets and annotation labels for a set of grouped annotations."""
-    for group in groups:
+) -> list[BufferedLine]:
+    """Render underline carets and annotation labels for one source line.
+
+    When multiple annotations target the same line, renders a single combined
+    underline row with vertical pipe stacking (rustc-style): all underlines
+    sit directly under their tokens, then labels peel off right-to-left so
+    pipes never cross.
+    """
+    result: list[BufferedLine] = []
+    groups = group_annotations(annotations)
+
+    targeted: list[tuple[int, int, str]] = []
+    untargeted: list[str] = []
+
+    for label, source_anns in groups:
         target = None
-        for ann in group.source_annotations:
+        for ann in source_anns:
             target = find_underline_target(ann, line_text)
             if target:
                 break
         if target:
-            ul_line, lbl_line = render_underline(gutter, target[0], target[1], group.label, group.tag_pairs)
-            console.print(ul_line)
-            console.print(lbl_line)
+            targeted.append((target[0], target[1], label))
         else:
-            annot_text = rich.text.Text(gutter)
-            tags_text = rich.text.Text()
-            for tag, color in group.tag_pairs:
-                tags_text.append(f"[{tag}]", style=f"bold {color}")
-            first_color = group.tag_pairs[0][1]
-            annot_text.append("╰── ", style=first_color)
-            annot_text.append_text(tags_text)
-            annot_text.append(" ", style="default")
-            annot_text.append(group.label, style=first_color)
-            console.print(annot_text)
+            untargeted.append(label)
+
+    if targeted:
+        targeted.sort(key=lambda t: t[0])
+
+        underline = rich.text.Text(gutter)
+        cursor = 0
+        for col_start, col_end, _ in targeted:
+            effective_start = max(col_start, cursor)
+            if effective_start > cursor:
+                underline.append(" " * (effective_start - cursor), style="default")
+            width = max(1, col_end - effective_start)
+            underline.append("─" * width, style=ANNOTATION_COLOR)
+            cursor = effective_start + width
+        result.append(BufferedLine(underline, "normal"))
+
+        for i in range(len(targeted) - 1, -1, -1):
+            col_start_i = targeted[i][0]
+            label_text = targeted[i][2]
+
+            label_line = rich.text.Text(gutter)
+            cursor = 0
+            for j in range(i):
+                pipe_col = targeted[j][0]
+                if pipe_col >= cursor:
+                    if pipe_col > cursor:
+                        label_line.append(" " * (pipe_col - cursor), style="default")
+                    label_line.append("│", style=ANNOTATION_COLOR)
+                    cursor = pipe_col + 1
+
+            if col_start_i > cursor:
+                label_line.append(" " * (col_start_i - cursor), style="default")
+
+            label_line.append("╰── ", style=ANNOTATION_COLOR)
+            label_line.append(label_text, style=ANNOTATION_COLOR)
+            result.append(BufferedLine(label_line, "annotation_label"))
+
+    for label in untargeted:
+        label_line = rich.text.Text(gutter)
+        label_line.append("╰── ", style=ANNOTATION_COLOR)
+        label_line.append(label, style=ANNOTATION_COLOR)
+        result.append(BufferedLine(label_line, "annotation_label"))
+
+    return result
 
 
-def render_disassembly(
-    console: rich.console.Console,
-    func: FunctionAnnotations,
+# ---------------------------------------------------------------------------
+# Spine rendering
+# ---------------------------------------------------------------------------
+
+
+def add_spine(buffer: list[BufferedLine]):
+    """Add connecting spine column from rule header to last annotation label."""
+    header_idx = None
+    last_ann_idx = None
+    for i, line in enumerate(buffer):
+        if line.kind == "rule_header" and header_idx is None:
+            header_idx = i
+        if line.kind == "annotation_label":
+            last_ann_idx = i
+
+    if header_idx is None or last_ann_idx is None:
+        return
+
+    max_width = 0
+    for i in range(header_idx, last_ann_idx + 1):
+        w = len(buffer[i].text.plain)
+        if w > max_width:
+            max_width = w
+
+    spine_col = max(max_width + 2, 78)
+
+    for i in range(header_idx, last_ann_idx + 1):
+        line = buffer[i]
+        current_width = len(line.text.plain)
+        pad_needed = max(1, spine_col - current_width)
+
+        if line.kind == "rule_header":
+            line.text.append(" ", style="default")
+            line.text.append("─" * max(0, pad_needed - 1), style=SPINE_COLOR)
+            line.text.append("┐", style=SPINE_COLOR)
+        elif line.kind == "annotation_label":
+            connector = "┘" if i == last_ann_idx else "┤"
+            line.text.append(" ", style="default")
+            line.text.append("─" * max(0, pad_needed - 1), style=ANNOTATION_COLOR)
+            line.text.append(connector, style=ANNOTATION_COLOR)
+        else:
+            line.text.append(" " * pad_needed, style="default")
+            line.text.append("│", style=SPINE_COLOR)
+
+
+# ---------------------------------------------------------------------------
+# Disassembly and pseudocode rendering (buffered)
+# ---------------------------------------------------------------------------
+
+
+def render_disassembly_to_buffer(
+    buffer: list[BufferedLine],
+    annotations: list[Annotation],
     lines: list[DisasmLine],
-    rule_tag_map: dict[str, tuple[str, str]],
     context: int,
+    bb_ranges: Optional[list[tuple[int, int]]] = None,
 ):
-    """Render annotated disassembly listing for a function."""
+    """Render annotated disassembly into buffer."""
     if not lines:
         return
 
     annotations_by_addr: dict[int, list[Annotation]] = collections.defaultdict(list)
-    for ann in func.annotations:
+    for ann in annotations:
         annotations_by_addr[ann.address].append(ann)
 
     all_addresses = [dl.address for dl in lines]
     annotated_addrs = set(annotations_by_addr.keys())
-    windows = compute_windows(all_addresses, annotated_addrs, context)
+    windows = compute_windows(all_addresses, annotated_addrs, context, bb_ranges)
 
     if not windows:
         return
 
-    max_addr = max(all_addresses) if all_addresses else 0
+    max_addr = max(all_addresses)
     hex_digits = max(8, len(f"{max_addr:X}"))
-    addr_width = 2 + hex_digits  # "0x" + hex digits
-    gutter_width = 1 + addr_width  # leading space + address
+    gutter_width = 1 + 2 + hex_digits
     gutter = " " * gutter_width + " │ "
 
-    section_header = rich.text.Text("║  ", style="dim")
-    section_header.append("disassembly", style="bold underline")
-    console.print(section_header)
-    console.print(rich.text.Text("║", style="dim"))
+    section_line = rich.text.Text("     ")
+    section_line.append("disassembly", style="bold underline")
+    buffer.append(BufferedLine(section_line, "normal"))
+    buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
     addr_to_line = {dl.address: dl for dl in lines}
     prev_end = -1
@@ -790,7 +930,7 @@ def render_disassembly(
             gap = win_start - prev_end - 1
             gap_line = rich.text.Text(gutter, style="dim")
             gap_line.append(f"... {gap} lines omitted ...", style="dim italic")
-            console.print(gap_line)
+            buffer.append(BufferedLine(gap_line, "normal"))
 
         for idx in range(win_start, win_end + 1):
             addr = all_addresses[idx]
@@ -803,45 +943,34 @@ def render_disassembly(
             if is_annotated:
                 line_text.append(f" {addr_str}", style="bold")
                 line_text.append(" │ ", style="dim")
-                line_text.append(line.text)
+                line_text.append_text(format_disasm_rich(line, True))
             else:
                 line_text.append(f" {addr_str}", style="dim")
                 line_text.append(" │ ", style="dim")
-                line_text.append(line.text, style="dim")
+                line_text.append_text(format_disasm_rich(line, False))
+
+            buffer.append(BufferedLine(line_text, "normal"))
 
             annots = annotations_by_addr.get(addr, [])
-            grouped = group_annotations_for_display(annots, rule_tag_map) if annots else []
-            if grouped:
-                all_tags: list[tuple[str, str]] = []
-                for group in grouped:
-                    for tp in group.tag_pairs:
-                        if tp not in all_tags:
-                            all_tags.append(tp)
-                line_text.append("  ")
-                for tag, color in all_tags:
-                    line_text.append(f"[{tag}]", style=f"bold {color}")
-
-            console.print(line_text)
-
-            if is_annotated and grouped:
-                render_annotations_block(console, gutter, grouped, line.text)
+            if is_annotated and annots:
+                ann_lines = render_annotation_lines(gutter, annots, line.text)
+                buffer.extend(ann_lines)
 
         prev_end = win_end
 
 
-def render_pseudocode(
-    console: rich.console.Console,
-    func: FunctionAnnotations,
+def render_pseudocode_to_buffer(
+    buffer: list[BufferedLine],
+    annotations: list[Annotation],
     pseudo_lines: list[tuple[int, str, set[int]]],
-    rule_tag_map: dict[str, tuple[str, str]],
     context: int,
 ):
-    """Render annotated pseudocode listing for a function."""
+    """Render annotated pseudocode into buffer."""
     if not pseudo_lines:
         return
 
     annotations_by_addr: dict[int, list[Annotation]] = collections.defaultdict(list)
-    for ann in func.annotations:
+    for ann in annotations:
         annotations_by_addr[ann.address].append(ann)
 
     annotated_ea_set = set(annotations_by_addr.keys())
@@ -860,10 +989,10 @@ def render_pseudocode(
     if not annotated_line_nos:
         return
 
-    section_header = rich.text.Text("║  ", style="dim")
-    section_header.append("pseudocode", style="bold underline")
-    console.print(section_header)
-    console.print(rich.text.Text("║", style="dim"))
+    section_line = rich.text.Text("     ")
+    section_line.append("pseudocode", style="bold underline")
+    buffer.append(BufferedLine(section_line, "normal"))
+    buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
     all_line_nos = [ln for ln, _, _ in pseudo_lines]
     windows = compute_windows(all_line_nos, annotated_line_nos, context)
@@ -876,7 +1005,7 @@ def render_pseudocode(
             gap = win_start - prev_end - 1
             gap_line = rich.text.Text(" " * 7 + "│ ", style="dim")
             gap_line.append(f"... {gap} lines omitted ...", style="dim italic")
-            console.print(gap_line)
+            buffer.append(BufferedLine(gap_line, "normal"))
 
         for idx in range(win_start, win_end + 1):
             line_no = all_line_nos[idx]
@@ -895,117 +1024,175 @@ def render_pseudocode(
                 line_text.append(" │ ", style="dim")
                 line_text.append(text, style="dim")
 
+            buffer.append(BufferedLine(line_text, "normal"))
+
             annots = annotations_by_line.get(line_no, [])
-            grouped = group_annotations_for_display(annots, rule_tag_map) if annots else []
-            if grouped:
-                all_tags: list[tuple[str, str]] = []
-                for group in grouped:
-                    for tp in group.tag_pairs:
-                        if tp not in all_tags:
-                            all_tags.append(tp)
-                line_text.append("  ")
-                for tag, color in all_tags:
-                    line_text.append(f"[{tag}]", style=f"bold {color}")
-
-            console.print(line_text)
-
-            if is_annotated and grouped:
-                gutter = " " * 7 + "│ "
-                render_annotations_block(console, gutter, grouped, text)
+            if is_annotated and annots:
+                pc_gutter = " " * 7 + "│ "
+                ann_lines = render_annotation_lines(pc_gutter, annots, text)
+                buffer.extend(ann_lines)
 
         prev_end = win_end
 
 
-def render_function_footer(console: rich.console.Console):
-    console.print(rich.text.Text("╚" + "═" * 78 + "╝", style="dim"))
+# ---------------------------------------------------------------------------
+# Top-level rendering
+# ---------------------------------------------------------------------------
 
 
 def render_all(
     console: rich.console.Console,
     functions: list[FunctionAnnotations],
+    doc_rule_order: list[RuleSummary],
     context: int,
     use_ida: bool = False,
     show_pseudocode: bool = True,
 ):
-    """Render all annotated functions."""
-    global_rule_tag_map: dict[str, tuple[str, str]] = {}
-    all_rule_names: list[str] = []
+    """Render all rule matches: rule-first, then functions within each rule."""
+    rule_functions: dict[str, list[FunctionAnnotations]] = {}
+    func_addrs_per_rule: dict[str, set[int]] = {}
+
     for func in functions:
         for rule in func.rules:
-            if rule.name not in global_rule_tag_map:
-                idx = len(global_rule_tag_map)
-                color = RULE_COLORS[idx % len(RULE_COLORS)]
-                if idx < len(RULE_SYMBOLS):
-                    symbol = RULE_SYMBOLS[idx]
-                else:
-                    overflow = idx - len(RULE_SYMBOLS)
-                    first = RULE_SYMBOLS[overflow // len(RULE_SYMBOLS) % len(RULE_SYMBOLS)]
-                    second = RULE_SYMBOLS[overflow % len(RULE_SYMBOLS)]
-                    symbol = f"{first}{second}"
-                global_rule_tag_map[rule.name] = (symbol, color)
-                all_rule_names.append(rule.name)
+            if rule.name not in rule_functions:
+                rule_functions[rule.name] = []
+                func_addrs_per_rule[rule.name] = set()
+            if func.address not in func_addrs_per_rule[rule.name]:
+                func_addrs_per_rule[rule.name].add(func.address)
+                rule_functions[rule.name].append(func)
 
+    all_rules = [r for r in doc_rule_order if r.name in rule_functions]
+
+    total_blocks = sum(len(funcs) for funcs in rule_functions.values())
+    unique_funcs = len({f.address for f in functions})
     title = rich.text.Text()
     title.append("capa code-oriented output", style="bold bright_white")
-    title.append(f"  ({len(functions)} functions, {len(global_rule_tag_map)} rules)", style="dim")
+    title.append(f"  ({len(all_rules)} rules, {unique_funcs} functions, {total_blocks} matches)", style="dim")
     console.print(title)
-    console.print()
 
-    if len(global_rule_tag_map) > 0:
-        console.print(rich.text.Text("Rule Legend:", style="bold"))
-        for rule_name in all_rule_names:
-            tag, color = global_rule_tag_map[rule_name]
-            legend = rich.text.Text(f"  [{tag}] ", style=f"bold {color}")
-            legend.append(rule_name)
-            console.print(legend)
-        console.print()
+    disasm_cache: dict[int, list[DisasmLine]] = {}
+    bb_cache: dict[int, Optional[list[tuple[int, int]]]] = {}
+    comment_cache: dict[int, Optional[str]] = {}
+    pseudo_cache: dict[int, Optional[list[tuple[int, str, set[int]]]]] = {}
 
     for func in functions:
-        lines: list[DisasmLine] = []
+        if func.address in disasm_cache:
+            continue
         if use_ida:
             func_start, func_end = get_function_bounds(func.address)
-            lines = get_disassembly_lines(func_start, func_end)
+            disasm_cache[func.address] = get_disassembly_lines(func_start, func_end)
+            bb_cache[func.address] = get_basic_block_ranges(func.address) or None
+            comment_cache[func.address] = get_function_comment(func.address)
             if not func.name:
                 func.name = get_function_name(func.address)
+        else:
+            disasm_cache[func.address] = []
+            bb_cache[func.address] = None
+            comment_cache[func.address] = None
 
-        render_function_header(console, func, global_rule_tag_map)
+    for rule in all_rules:
+        for func in rule_functions[rule.name]:
+            rule_annots = [a for a in func.annotations if a.rule_name == rule.name]
+            rule_fs = [fs for fs in func.file_scope_features if fs.rule_name == rule.name]
 
-        if not lines:
-            lines = generate_placeholder_disasm(func)
+            buffer: list[BufferedLine] = []
 
-        render_disassembly(console, func, lines, global_rule_tag_map, context)
+            addr_str = f"0x{func.address:X}"
+            name = func.name or f"sub_{func.address:X}"
+            content = f"{name} @ {addr_str}"
+            box_width = max(80, 4 + len(content) + 4)
+            padding = box_width - 4 - len(content) - 2
+            header = rich.text.Text()
+            header.append("╔══ ", style="dim")
+            header.append(name, style="bold bright_white")
+            header.append(f" @ {addr_str}", style="bold")
+            header.append(" ", style="dim")
+            header.append("═" * padding, style="dim")
+            header.append("╗", style="dim")
 
-        if show_pseudocode and use_ida:
-            pseudo = get_pseudocode_lines(func.address)
-            if pseudo:
-                console.print(rich.text.Text("║", style="dim"))
-                render_pseudocode(console, func, pseudo, global_rule_tag_map, context)
-            else:
-                console.print(rich.text.Text("║", style="dim"))
-                note = rich.text.Text("║  ", style="dim")
-                note.append("(pseudocode not available)", style="dim italic")
-                console.print(note)
+            console.print()
+            console.print(header)
 
-        render_function_footer(console)
+            buffer.append(BufferedLine(rich.text.Text(), "normal"))
+
+            rule_line = rich.text.Text("     ")
+            rule_line.append(rule.name, style="bold bright_white")
+            if rule.namespace:
+                rule_line.append(f"  ({rule.namespace})", style="dim")
+            ids = rule.attack_ids + rule.mbc_ids
+            if ids:
+                rule_line.append(f"  {', '.join(ids)}", style="dim italic")
+            buffer.append(BufferedLine(rule_line, "rule_header"))
+
+            if rule_fs:
+                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                for fs in rule_fs:
+                    fs_line = rich.text.Text("     ")
+                    fs_line.append(f"{fs.feature_type}: {fs.feature_value}", style="dim")
+                    buffer.append(BufferedLine(fs_line, "normal"))
+
+            func_comment = comment_cache.get(func.address)
+            if func_comment:
+                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                cmt_line = rich.text.Text("     ")
+                cmt_line.append(f"; {func_comment}", style="dim italic")
+                buffer.append(BufferedLine(cmt_line, "normal"))
+
+            buffer.append(BufferedLine(rich.text.Text(), "normal"))
+
+            lines = disasm_cache.get(func.address, [])
+            if not lines:
+                lines = generate_placeholder_disasm(rule_annots)
+            bb_ranges = bb_cache.get(func.address)
+            render_disassembly_to_buffer(buffer, rule_annots, lines, context, bb_ranges)
+
+            if show_pseudocode:
+                if use_ida:
+                    if func.address not in pseudo_cache:
+                        pseudo_cache[func.address] = get_pseudocode_lines(func.address)
+                    pseudo = pseudo_cache[func.address]
+                    if pseudo:
+                        buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                        render_pseudocode_to_buffer(buffer, rule_annots, pseudo, context)
+                    else:
+                        buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                        note = rich.text.Text("     ")
+                        note.append("(pseudocode not available)", style="dim italic")
+                        buffer.append(BufferedLine(note, "normal"))
+                else:
+                    buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                    note = rich.text.Text("     ")
+                    note.append("(pseudocode not available)", style="dim italic")
+                    buffer.append(BufferedLine(note, "normal"))
+
+            add_spine(buffer)
+
+            for bline in buffer:
+                console.print(bline.text)
+
+            console.print(rich.text.Text("╚" + "═" * (box_width - 2) + "╝", style="dim"))
 
 
-def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
+# ---------------------------------------------------------------------------
+# Placeholder disassembly
+# ---------------------------------------------------------------------------
+
+
+def generate_placeholder_disasm(annotations: list[Annotation]) -> list[DisasmLine]:
     """Generate placeholder disassembly lines when idalib is not available."""
-    annotated_addrs = sorted({a.address for a in func.annotations})
+    annotated_addrs = sorted({a.address for a in annotations})
     if not annotated_addrs:
         return []
 
     lines = []
     for addr in annotated_addrs:
-        feats = [a for a in func.annotations if a.address == addr]
+        feats = [a for a in annotations if a.address == addr]
         feat = feats[0] if feats else None
         if feat:
             if feat.feature_type == "api":
                 api_name = feat.feature_value.rsplit(".", 1)[-1] if "." in feat.feature_value else feat.feature_value
                 lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
             elif feat.feature_type.startswith("count(api("):
-                import re
-
                 m = re.search(r"count\(api\((.+?)\)\)", feat.feature_type)
                 api_name = m.group(1) if m else feat.feature_value
                 lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
@@ -1044,6 +1231,11 @@ def generate_placeholder_disasm(func: FunctionAnnotations) -> list[DisasmLine]:
             lines.append(DisasmLine(address=addr, text="???"))
 
     return lines
+
+
+# ---------------------------------------------------------------------------
+# Analysis
+# ---------------------------------------------------------------------------
 
 
 def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.ResultDocument":
@@ -1102,6 +1294,11 @@ def load_result_document(json_path: Path) -> "rd.ResultDocument":
     return rd.ResultDocument.from_file(json_path)
 
 
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -1149,8 +1346,10 @@ def main(argv=None):
                         raise RuntimeError(f"failed to open database: {ret}")
                     ida_auto.auto_wait()
                 use_ida = True
-        except ImportError:
-            logger.info("idalib not available, using placeholder disassembly")
+            else:
+                logger.info("idalib initialization failed, using placeholder disassembly")
+        except (ImportError, RuntimeError) as e:
+            logger.info("idalib not available (%s), using placeholder disassembly", e)
     else:
         try:
             from capa.features.extractors.ida.idalib import load_idalib
@@ -1169,7 +1368,7 @@ def main(argv=None):
         return 1
 
     with STDERR_CONSOLE.status("Inverting result document..."):
-        functions = invert_result_document(doc)
+        functions, doc_rule_order = invert_result_document(doc)
 
     if use_ida:
         for func in functions:
@@ -1195,6 +1394,7 @@ def main(argv=None):
     render_all(
         console,
         functions,
+        doc_rule_order=doc_rule_order,
         context=args.context,
         use_ida=use_ida,
         show_pseudocode=not args.no_pseudocode,

@@ -5,8 +5,8 @@
 `code-oriented-capa.py` is a standalone script that renders capa rule matches
 directly onto disassembly and pseudocode listings, producing terminal-friendly
 annotated output. It inverts capa's default rule-centric view ("rule X matched
-at addresses A, B, C") into a code-centric view ("function at address F has
-these behavioral annotations on its instructions").
+at addresses A, B, C") into a code-centric view showing the contributing
+instructions annotated on the disassembly and pseudocode of matching functions.
 
 ## Invocation
 
@@ -28,45 +28,95 @@ python scripts/code-oriented-capa.py <binary> [options]
 - `--context N` — number of context lines around contributing instructions
   (default: 3). Lines within this window are shown but dimmed.
 - `--no-pseudocode` — skip pseudocode rendering (disassembly only)
-- `--functions ADDR[,ADDR,...]` — only render the specified functions
+- `--functions ADDR[,ADDR,...]` — only render the specified functions (hex)
 - `--verbose` — enable debug logging to stderr
 
 ## Output Structure
 
 Output goes to stdout. Logging and status spinners go to stderr.
 
-### Per-function output
+### Iteration order: rule-first
 
-Functions are rendered in ascending virtual address order. Only functions with
-at least one rule match are shown.
+The output iterates **rules first**, then functions within each rule. Each
+output block shows exactly one rule's annotations on one function. The same
+function may appear in multiple blocks if it matches multiple rules. This
+avoids the complexity of multi-rule tagging and makes each block
+self-contained and easy to read.
 
-Each function block has:
+Within a rule, functions are ordered by ascending virtual address.
 
-1. **Function header** — address, name (from IDA), rule match summary
-2. **Rule legend** — when multiple rules match, each gets a symbol (A, B, C...)
-   and a color. The legend maps symbols to rule names, namespaces, ATT&CK IDs,
-   and MBC IDs. File-scope features (import, export, section, function-name)
-   that contribute to matched rules are listed below the legend.
-3. **Disassembly listing** with annotations:
-   - Contributing instructions are rendered with full syntax highlighting
-   - Non-contributing instructions within the context window are dimmed
+### Per-block output
+
+Each block has:
+
+1. **Function header** — box-drawing top border with function name and address.
+2. **Rule header** — rule name, namespace, ATT&CK IDs, MBC IDs. This is the
+   top of the connecting spine.
+3. **File-scope features** — any import/export/section/function-name features
+   from this rule that contributed to the match.
+4. **Function comment** — IDA function comment if available.
+5. **Disassembly listing** with annotations:
+   - Syntax-highlighted lines (via IDA's color tags) for annotated lines
+   - Dimmed lines for context
    - Gaps between windows show `... N lines omitted ...`
-   - Each contributing instruction has a right-side annotation showing:
-     feature type, value, description, and contributing rule symbol
-   - When an operand is specifically relevant (e.g., a number match on an
-     immediate operand), an underline caret points to that operand
-4. **Pseudocode listing** (when decompiler is available) with annotations:
-   - Same annotation style as disassembly, mapped via address-to-pseudocode-line
-   - Underlines on specific tokens (API calls, constants, strings)
+   - Operand-level underline carets pointing to matched operands
+   - Annotation labels showing feature type, value, and description
+   - When multiple features target the same line, a single combined
+     underline row with pipe stacking (rustc-style): pipes descend from
+     each underline, labels peel off right-to-left so pipes never cross
+6. **Connecting spine** — vertical ASCII art on the right margin connecting
+   each annotation label back to the rule header, forming a visual tree.
+7. **Pseudocode listing** (when decompiler available) with same annotation
+   style, mapped via address-to-pseudocode-line.
+8. **Function footer** — box-drawing bottom border.
 
-### Multi-rule handling
+### Connecting spine
 
-When multiple rules match the same function:
-- Each rule gets a unique tag (A-Z, a-z, 0-9, then AA, AB...) and a distinct color
-- The legend at the function header lists all rules with their tags
-- Annotations on instructions include the tag so the reader can identify
-  which rule each feature contributes to
-- Instructions contributing to multiple rules show multiple tags
+A vertical spine on the right side of the output connects annotation labels
+to the rule name at the top of the block. This makes it visually clear which
+rule each feature contributes to:
+
+```
+     rule name  (namespace)  T1234 ─────────────────────────────────────────┐
+                                                                             │
+     disassembly                                                             │
+                                                                             │
+ 0x10001074 │ lea    ecx, [esp+1208h+WSAData]                               │
+ 0x1000107E │ call   ds:WSAStartup                                          │
+            │        ──────────                                              │
+            │        ╰── api: WSAStartup ───────────────────────────────────┤
+ 0x1000108C │ push   6; protocol                                            │
+            │        ─                                                       │
+            │        ╰── number: 0x6 = IPPROTO_TCP ─────────────────────────┤
+ 0x10001092 │ call   ds:socket                                              │
+            │        ──────                                                  │
+            │        ╰── api: socket ───────────────────────────────────────┘
+```
+
+Characters: `┐` at top (rule header), `│` for trunk, `┤` for intermediate
+annotation, `┘` for last annotation. Horizontal `─` connectors pad from
+content to the spine column.
+
+### Basic block-aligned windows
+
+When IDA is available, the windowing system respects basic block boundaries.
+If an annotated address falls within a basic block, the entire basic block is
+included in the display window. Truncation only occurs between basic blocks,
+never mid-block. This preserves the control flow context around contributing
+instructions.
+
+If more than 50% of a function's instructions would already be shown after
+windowing, the entire function is displayed instead. This avoids excessive
+`... N lines omitted ...` gaps when most of the function is relevant.
+
+### Syntax highlighting
+
+When IDA is available, disassembly lines are syntax-highlighted using IDA's
+color tag system. Mnemonics, registers, numbers, addresses, keywords, and
+comments each get distinct colors. Annotated lines use bright colors; context
+lines use dimmed versions.
+
+Without IDA (placeholder mode), plain monochrome text is used.
 
 ### Feature rendering
 
@@ -80,28 +130,35 @@ Each feature type has a specific rendering style:
 | `mnemonic` | `mnemonic: xor` | the mnemonic column |
 | `offset` | `offset: 0x10` | the displacement operand |
 | `bytes` | `bytes: aa bb cc dd` | the data reference |
-| `characteristic: nzxor` | `nzxor` | the xor instruction |
-| `characteristic: tight loop` | `tight loop` | the back-edge jump |
-| `characteristic: indirect call` | `indirect call` | the call operand |
-| `match: <rule>` | `match: <rule-name>` | (no underline — it's a logical reference) |
+| `characteristic: nzxor` | `characteristic: nzxor` | the xor instruction |
+| `characteristic: tight loop` | `characteristic: tight loop` | the back-edge jump |
+| `characteristic: indirect call` | `characteristic: indirect call` | the call operand |
 | `regex`/`substring` | the matched capture string | the string reference |
 
 ### Degradation
 
-- Without color: symbols and text labels remain readable
+- Without color: box-drawing and text labels remain readable
 - Without decompiler: pseudocode section is skipped with a note
-- Without idalib: error message, cannot proceed (idalib is required)
+- Without idalib: placeholder disassembly (synthetic lines from features)
 
 ## Decisions
 
 - **Terminal text only.** No HTML, JSON, SARIF, or structured output formats.
-  The goal is a human-readable annotated listing.
-- **idalib is required.** The script depends on IDA Pro's idalib for both
-  analysis (capa backend) and disassembly/pseudocode rendering.
+- **idalib is required for full output.** Placeholder mode provides basic
+  output when idalib is not available, but loses disassembly, pseudocode,
+  syntax highlighting, and BB alignment.
+- **Rule-first iteration.** Each block is one rule × one function. This
+  eliminates the complexity of multi-rule tagging (the old [A]/[B]/[C] system)
+  and makes each block independently readable. The same function may appear
+  multiple times if it matches multiple rules.
+- **Connecting spine replaces rule tags.** Instead of inline letter tags,
+  a vertical ASCII art spine visually connects annotations to the rule header.
+- **BB-aligned windows.** Never truncate within a basic block. Show complete
+  BBs, with truncation only between blocks.
+- **Threshold-based full display.** If >50% of a function's instructions
+  would be shown, display the entire function instead of using windows.
 - **No rule-tree rendering.** We don't reconstruct the and/or/not logic tree
   in the output. The focus is on which instructions contribute to which
   behaviors, not on the rule structure.
-- **Context windows, not full listings.** Large functions are abbreviated to
-  show only the regions around contributing instructions.
-- **Ordered by VA.** Functions are output in address order, not grouped by
-  rule or namespace.
+- **Ordered by VA within each rule.** Functions within a rule are sorted by
+  address. Rules are ordered by first appearance in the ResultDocument.
