@@ -45,19 +45,59 @@ STDERR_CONSOLE = rich.console.Console(stderr=True, highlight=False)
 ANNOTATION_COLOR = "cyan"
 SPINE_COLOR = "dim cyan"
 
-IDA_COLOR_MAP: dict[int, str] = {
-    0x01: "default",
-    0x02: "bright_white",
-    0x03: "default",
-    0x04: "dim",
-    0x05: "bold",
-    0x06: "cyan",
-    0x07: "bright_yellow",
-    0x08: "default",
-    0x09: "magenta",
-    0x0D: "bright_black",
-    0x0E: "bright_black",
-    0x14: "green",
+IDA_TAG_ON = 0x01
+IDA_TAG_OFF = 0x02
+IDA_TAG_ESC = 0x03
+IDA_TAG_INV = 0x04
+IDA_TAG_ADDR = 0x28
+
+IDA_THEME: dict[int, str] = {
+    0x01: "",  # COLOR_DEFAULT
+    0x02: "bright_black italic",  # COLOR_REGCMT
+    0x03: "bright_black italic",  # COLOR_RPTCMT
+    0x04: "bright_black italic",  # COLOR_AUTOCMT
+    0x05: "bold bright_blue",  # COLOR_INSN
+    0x06: "yellow",  # COLOR_DATNAME
+    0x07: "yellow",  # COLOR_DNAME
+    0x08: "yellow",  # COLOR_DEMNAME
+    0x09: "",  # COLOR_SYMBOL
+    0x0A: "green",  # COLOR_CHAR
+    0x0B: "green",  # COLOR_STRING
+    0x0C: "bright_red",  # COLOR_NUMBER
+    0x0D: "bright_black",  # COLOR_VOIDOP
+    0x0E: "yellow",  # COLOR_CREF
+    0x0F: "yellow",  # COLOR_DREF
+    0x10: "yellow",  # COLOR_CREFTAIL
+    0x11: "yellow",  # COLOR_DREFTAIL
+    0x12: "bold red",  # COLOR_ERROR
+    0x13: "bright_black",  # COLOR_PREFIX
+    0x14: "bright_black",  # COLOR_BINPREF
+    0x15: "bright_black",  # COLOR_EXTRA
+    0x16: "",  # COLOR_ALTOP
+    0x17: "bright_black",  # COLOR_HIDNAME
+    0x18: "bright_cyan",  # COLOR_LIBNAME
+    0x19: "bright_white",  # COLOR_LOCNAME
+    0x1A: "yellow",  # COLOR_CODNAME
+    0x1B: "magenta",  # COLOR_ASMDIR
+    0x1C: "magenta",  # COLOR_MACRO
+    0x1D: "green",  # COLOR_DSTR
+    0x1E: "green",  # COLOR_DCHAR
+    0x1F: "bright_red",  # COLOR_DNUM
+    0x20: "magenta bold",  # COLOR_KEYWORD
+    0x21: "cyan",  # COLOR_REG
+    0x22: "bright_cyan",  # COLOR_IMPNAME
+    0x23: "magenta",  # COLOR_SEGNAME
+    0x24: "yellow",  # COLOR_UNKNAME
+    0x25: "yellow",  # COLOR_CNAME
+    0x26: "yellow",  # COLOR_UNAME
+    0x27: "",  # COLOR_COLLAPSED
+    0x29: "",  # COLOR_OPND1
+    0x2A: "",  # COLOR_OPND2
+    0x2B: "",  # COLOR_OPND3
+    0x2C: "",  # COLOR_OPND4
+    0x2D: "",  # COLOR_OPND5
+    0x2E: "",  # COLOR_OPND6
+    0x32: "",  # COLOR_UTF8
 }
 
 
@@ -455,11 +495,12 @@ def get_function_comment(func_ea: int) -> Optional[str]:
         return None
 
 
-def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]]]]:
+def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, str, set[int]]]]:
     """
     Fetch pseudocode for a function.
 
-    Returns list of (line_number, text, set_of_addresses) or None if decompiler unavailable.
+    Returns list of (line_number, plain_text, tagged_text, set_of_addresses)
+    or None if decompiler unavailable.
     """
     try:
         import ida_hexrays
@@ -495,8 +536,9 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
     lines = []
     for line_no in range(pseudocode.size()):
         sl = pseudocode.at(line_no)
-        text = ida_lines.tag_remove(sl.line)
-        lines.append((line_no, text, line_to_addrs.get(line_no, set())))
+        tagged = sl.line
+        text = ida_lines.tag_remove(tagged)
+        lines.append((line_no, text, tagged, line_to_addrs.get(line_no, set())))
 
     return lines
 
@@ -506,49 +548,66 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, set[int]
 # ---------------------------------------------------------------------------
 
 
-def parse_ida_colors(tagged_text: str, dimmed: bool = False) -> rich.text.Text:
-    """Parse IDA-style color tags into a Rich Text object with syntax highlighting."""
-    result = rich.text.Text()
-    current_style = "default"
-    buf: list[str] = []
-    i = 0
+def render_tagged_line(tagged_text: str, dimmed: bool = False, addr_width: int = 16) -> rich.text.Text:
+    """Parse IDA-style color tags into a Rich Text with syntax highlighting.
 
-    while i < len(tagged_text):
-        ch = tagged_text[i]
-        if ch == "\x01" and i + 1 < len(tagged_text):
-            if buf:
-                result.append("".join(buf), style="dim" if dimmed else current_style)
-                buf = []
-            color_id = ord(tagged_text[i + 1])
-            current_style = IDA_COLOR_MAP.get(color_id, "default")
+    Uses a style stack to handle nested color tags. When dimmed=True, all
+    styles are overridden with "dim" for context lines.
+    """
+    text = rich.text.Text()
+    style_stack: list[str] = []
+    buf: list[str] = []
+    cur_style = ""
+    i = 0
+    n = len(tagged_text)
+
+    def _flush() -> None:
+        nonlocal buf
+        if buf:
+            text.append("".join(buf), style="dim" if dimmed else (cur_style or "default"))
+            buf = []
+
+    while i < n:
+        ch = ord(tagged_text[i])
+
+        if ch == IDA_TAG_ON:
+            if i + 1 >= n:
+                break
+            tag = ord(tagged_text[i + 1])
             i += 2
-        elif ch == "\x02" and i + 1 < len(tagged_text):
-            if buf:
-                result.append("".join(buf), style="dim" if dimmed else current_style)
-                buf = []
-            current_style = "default"
+            if tag == IDA_TAG_ADDR:
+                i += min(addr_width, n - i)
+            else:
+                _flush()
+                style_stack.append(IDA_THEME.get(tag, ""))
+                cur_style = style_stack[-1]
+        elif ch == IDA_TAG_OFF:
+            if i + 1 >= n:
+                break
             i += 2
-        elif ch == "\x03" and i + 1 < len(tagged_text):
+            _flush()
+            if style_stack:
+                style_stack.pop()
+            cur_style = style_stack[-1] if style_stack else ""
+        elif ch == IDA_TAG_ESC:
+            if i + 1 >= n:
+                break
             buf.append(tagged_text[i + 1])
             i += 2
-        elif ch == "\x04":
-            i += 1
-        elif ord(ch) < 0x09 and ch not in ("\t",):
+        elif ch == IDA_TAG_INV:
             i += 1
         else:
-            buf.append(ch)
+            buf.append(tagged_text[i])
             i += 1
 
-    if buf:
-        result.append("".join(buf), style="dim" if dimmed else current_style)
-
-    return result
+    _flush()
+    return text
 
 
-def format_disasm_rich(line: DisasmLine, is_annotated: bool) -> rich.text.Text:
+def format_disasm_rich(line: DisasmLine, is_annotated: bool, addr_width: int = 16) -> rich.text.Text:
     """Format a disassembly line as Rich Text with optional syntax highlighting."""
     if line.tagged_text:
-        return parse_ida_colors(line.tagged_text, dimmed=not is_annotated)
+        return render_tagged_line(line.tagged_text, dimmed=not is_annotated, addr_width=addr_width)
     elif is_annotated:
         return rich.text.Text(line.text)
     else:
@@ -896,6 +955,7 @@ def render_disassembly_to_buffer(
     lines: list[DisasmLine],
     context: int,
     bb_ranges: Optional[list[tuple[int, int]]] = None,
+    addr_width: int = 16,
 ):
     """Render annotated disassembly into buffer."""
     if not lines:
@@ -943,11 +1003,11 @@ def render_disassembly_to_buffer(
             if is_annotated:
                 line_text.append(f" {addr_str}", style="bold")
                 line_text.append(" │ ", style="dim")
-                line_text.append_text(format_disasm_rich(line, True))
+                line_text.append_text(format_disasm_rich(line, True, addr_width=addr_width))
             else:
                 line_text.append(f" {addr_str}", style="dim")
                 line_text.append(" │ ", style="dim")
-                line_text.append_text(format_disasm_rich(line, False))
+                line_text.append_text(format_disasm_rich(line, False, addr_width=addr_width))
 
             buffer.append(BufferedLine(line_text, "normal"))
 
@@ -962,8 +1022,9 @@ def render_disassembly_to_buffer(
 def render_pseudocode_to_buffer(
     buffer: list[BufferedLine],
     annotations: list[Annotation],
-    pseudo_lines: list[tuple[int, str, set[int]]],
+    pseudo_lines: list[tuple[int, str, str, set[int]]],
     context: int,
+    addr_width: int = 16,
 ):
     """Render annotated pseudocode into buffer."""
     if not pseudo_lines:
@@ -977,7 +1038,7 @@ def render_pseudocode_to_buffer(
 
     annotated_line_nos: set[int] = set()
     annotations_by_line: dict[int, list[Annotation]] = collections.defaultdict(list)
-    for line_no, _text, addrs in pseudo_lines:
+    for line_no, _text, _tagged, addrs in pseudo_lines:
         overlapping = addrs & annotated_ea_set
         if overlapping:
             annotated_line_nos.add(line_no)
@@ -994,10 +1055,10 @@ def render_pseudocode_to_buffer(
     buffer.append(BufferedLine(section_line, "normal"))
     buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
-    all_line_nos = [ln for ln, _, _ in pseudo_lines]
+    all_line_nos = [ln for ln, _, _, _ in pseudo_lines]
     windows = compute_windows(all_line_nos, annotated_line_nos, context)
 
-    line_map = {ln: (text, addrs) for ln, text, addrs in pseudo_lines}
+    line_map = {ln: (text, tagged, addrs) for ln, text, tagged, addrs in pseudo_lines}
     prev_end = -1
 
     for win_start, win_end, win_annotated in windows:
@@ -1009,7 +1070,7 @@ def render_pseudocode_to_buffer(
 
         for idx in range(win_start, win_end + 1):
             line_no = all_line_nos[idx]
-            text, _ = line_map[line_no]
+            text, tagged, _ = line_map[line_no]
             is_annotated = line_no in win_annotated
 
             line_text = rich.text.Text()
@@ -1018,11 +1079,17 @@ def render_pseudocode_to_buffer(
             if is_annotated:
                 line_text.append(f"  {ln_str}", style="bold")
                 line_text.append(" │ ", style="dim")
-                line_text.append(text)
+                if tagged:
+                    line_text.append_text(render_tagged_line(tagged, dimmed=False, addr_width=addr_width))
+                else:
+                    line_text.append(text)
             else:
                 line_text.append(f"  {ln_str}", style="dim")
                 line_text.append(" │ ", style="dim")
-                line_text.append(text, style="dim")
+                if tagged:
+                    line_text.append_text(render_tagged_line(tagged, dimmed=True, addr_width=addr_width))
+                else:
+                    line_text.append(text, style="dim")
 
             buffer.append(BufferedLine(line_text, "normal"))
 
@@ -1073,7 +1140,7 @@ def render_all(
     disasm_cache: dict[int, list[DisasmLine]] = {}
     bb_cache: dict[int, Optional[list[tuple[int, int]]]] = {}
     comment_cache: dict[int, Optional[str]] = {}
-    pseudo_cache: dict[int, Optional[list[tuple[int, str, set[int]]]]] = {}
+    pseudo_cache: dict[int, Optional[list[tuple[int, str, str, set[int]]]]] = {}
 
     for func in functions:
         if func.address in disasm_cache:
@@ -1089,6 +1156,9 @@ def render_all(
             disasm_cache[func.address] = []
             bb_cache[func.address] = None
             comment_cache[func.address] = None
+
+    max_func_addr = max(f.address for f in functions) if functions else 0
+    ida_addr_width = 16 if max_func_addr > 0xFFFFFFFF else 8
 
     for rule in all_rules:
         for func in rule_functions[rule.name]:
@@ -1144,7 +1214,7 @@ def render_all(
             if not lines:
                 lines = generate_placeholder_disasm(rule_annots)
             bb_ranges = bb_cache.get(func.address)
-            render_disassembly_to_buffer(buffer, rule_annots, lines, context, bb_ranges)
+            render_disassembly_to_buffer(buffer, rule_annots, lines, context, bb_ranges, addr_width=ida_addr_width)
 
             if show_pseudocode:
                 if use_ida:
@@ -1153,7 +1223,7 @@ def render_all(
                     pseudo = pseudo_cache[func.address]
                     if pseudo:
                         buffer.append(BufferedLine(rich.text.Text(), "normal"))
-                        render_pseudocode_to_buffer(buffer, rule_annots, pseudo, context)
+                        render_pseudocode_to_buffer(buffer, rule_annots, pseudo, context, addr_width=ida_addr_width)
                     else:
                         buffer.append(BufferedLine(rich.text.Text(), "normal"))
                         note = rich.text.Text("     ")

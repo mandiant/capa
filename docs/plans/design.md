@@ -119,21 +119,28 @@ Two-pass buffered rendering with connecting spine.
 
 ### IDA syntax highlighting
 
-Disassembly lines from IDA contain embedded color tags:
-- `\x01` + color_byte = start of colored span
-- `\x02` + color_byte = end of colored span
+Both disassembly and pseudocode lines from IDA contain embedded color tags:
+- `\x01` (TAG_ON) + color_byte = push style onto stack
+- `\x02` (TAG_OFF) + color_byte = pop style from stack
+- `\x03` (TAG_ESC) + byte = escaped literal character
+- `\x04` (TAG_INV) = invisible marker (skipped)
+- `\x28` (TAG_ADDR) after TAG_ON = hidden address data (8 or 16 bytes)
 
-`parse_ida_colors()` translates these to Rich styles:
-- SCOLOR_INSN → bold (instruction mnemonic)
-- SCOLOR_NUMBER → bright_yellow
-- SCOLOR_ADDR → cyan
-- SCOLOR_REG → bright_white
-- SCOLOR_KEYWORD → magenta (ptr, offset, etc.)
-- SCOLOR_RPTCMT/AUTOCMT → bright_black (comments)
-- SCOLOR_STRING → green
+`render_tagged_line()` uses a style stack to handle nested tags and
+translates IDA color constants to Rich styles via `IDA_THEME` (40+ color
+mappings). Key mappings:
+- COLOR_INSN → bold bright_blue (mnemonics)
+- COLOR_NUMBER/DNUM → bright_red (immediates)
+- COLOR_REG → cyan (registers)
+- COLOR_KEYWORD → magenta bold (ptr, offset, etc.)
+- COLOR_REGCMT/RPTCMT/AUTOCMT → bright_black italic (comments)
+- COLOR_STRING/CHAR → green (string literals)
+- COLOR_LIBNAME/IMPNAME → bright_cyan (API names)
+- COLOR_DATNAME/DNAME/CREF/DREF → yellow (data/code references)
 
 For annotated lines, full-brightness styles are used. For dimmed context
-lines, all styles are overridden with "dim".
+lines, all styles are overridden with "dim". Pseudocode lines use the same
+tag parser and theme, since IDA's decompiler output uses the same tagging.
 
 ### Basic block-aligned windows
 
