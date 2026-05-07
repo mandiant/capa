@@ -265,13 +265,20 @@ def test_missing_static_dynamic_scope_no_crash_when_scopes_absent():
     sys.path.insert(0, str(CD / ".." / "scripts"))
     import lint as lint_module
 
-    import capa.engine
+    rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule no scopes
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - api: CreateFile
+        """)
+    )
 
-    scopes = capa.rules.Scopes(static=capa.rules.Scope.FUNCTION, dynamic=capa.rules.Scope.PROCESS)
-    statement = capa.engine.And([])
-    rule = capa.rules.Rule("test rule no scopes", scopes, statement, {"name": "test rule no scopes"})
-
-    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([]), is_thorough=False)
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([rule]), is_thorough=False)
     assert lint_module.MissingStaticScope().check_rule(ctx, rule) is False
     assert lint_module.MissingDynamicScope().check_rule(ctx, rule) is False
 
@@ -396,7 +403,19 @@ def test_feature_regex_registry_control_set_checks_all_features():
     from capa.features.common import Regex
 
     lint_instance = lint_module.FeatureRegexRegistryControlSetMatchIncomplete()
-    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([]), is_thorough=False)
+    placeholder_rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: placeholder
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - api: CreateFile
+        """)
+    )
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([placeholder_rule]), is_thorough=False)
 
     ok_regex = Regex("unrelated-pattern")
     bad_regex = Regex("system\\\\CurrentControlSet\\\\Services")
