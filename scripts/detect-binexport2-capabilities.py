@@ -38,12 +38,8 @@ import logging
 import argparse
 
 import capa.main
-import capa.rules
 import capa.loader
-import capa.exceptions
 import capa.render.proto
-import capa.render.verbose
-import capa.features.freeze
 import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.loader import FORMAT_BINEXPORT2, BACKEND_BINEXPORT2

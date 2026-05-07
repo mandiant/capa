@@ -30,9 +30,7 @@ from pefile import PEFormatError
 from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
-import capa.perf
 import capa.rules
-import capa.engine
 import capa.loader
 import capa.helpers
 import capa.version

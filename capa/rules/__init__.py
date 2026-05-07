@@ -34,7 +34,6 @@ import yaml.parser
 
 import capa.perf
 import capa.engine as ceng
-import capa.features
 import capa.optimizer
 import capa.features.com
 import capa.features.file

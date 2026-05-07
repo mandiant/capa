@@ -833,7 +833,6 @@ def test_arm_add_two_operand_does_not_crash():
         ],
         "operand_indices": [0, 1],
     })
-    from capa.features.insn import Number
 
     features = list(extract_insn_number_features(fh, bbh, ih))
     values = {f.value for f, _ in features}

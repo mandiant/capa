@@ -81,9 +81,6 @@ lint.ignore = [
     "B904", # Raise exceptions within except clause using raise from
     "UP028", # Replace yield over for loop with yield from
     "C409", # Unnecessary list comprehension passed to tuple()
-    # TODO(mike-hunhoff): address circular dependencies
-    # https://github.com/mandiant/capa/issues/2996
-    "F401", # Unused imports
 ]
 
 [lint.per-file-ignores]

@@ -266,7 +266,6 @@ def test_missing_static_dynamic_scope_no_crash_when_scopes_absent():
     import lint as lint_module
 
     import capa.engine
-    import capa.features.common
 
     scopes = capa.rules.Scopes(static=capa.rules.Scope.FUNCTION, dynamic=capa.rules.Scope.PROCESS)
     statement = capa.engine.And([])

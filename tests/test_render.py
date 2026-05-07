@@ -27,7 +27,6 @@ import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
 import capa.features.address
-import capa.features.basicblock
 import capa.render.result_document
 import capa.render.result_document as rd
 import capa.features.freeze.features

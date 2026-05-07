@@ -18,9 +18,7 @@ from typing import Any
 import pytest
 
 import capa.rules
-import capa.render
 import capa.render.proto
-import capa.render.utils
 import capa.features.freeze
 import capa.features.address
 import capa.render.proto.capa_pb2 as capa_pb2

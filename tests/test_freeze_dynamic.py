@@ -19,7 +19,6 @@ import fixtures
 
 import capa.main
 import capa.rules
-import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.freeze

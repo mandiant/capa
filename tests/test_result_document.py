@@ -18,7 +18,6 @@ import textwrap
 import pytest
 import fixtures
 
-import capa
 import capa.rules
 import capa.engine as ceng
 import capa.features.file

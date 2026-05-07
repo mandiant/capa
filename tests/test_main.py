@@ -21,8 +21,6 @@ import fixtures
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.features
 
 
 def test_main(z9324d_extractor):

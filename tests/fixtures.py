@@ -20,7 +20,6 @@ from functools import lru_cache
 
 import pytest
 
-import capa.loader
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -101,7 +100,6 @@ def xfail(condition, reason: str = ""):
 # need to limit cache size so GitHub Actions doesn't run out of memory, see #545
 @lru_cache(maxsize=1)
 def get_viv_extractor(path: Path):
-    import capa.main
     import capa.loader
     import capa.features.extractors.viv.extractor
 
@@ -311,7 +309,6 @@ def get_ghidra_extractor(path: Path):
 
     import capa.loader
     import capa.features.extractors.ghidra.context
-    import capa.features.extractors.ghidra.extractor
 
     if path in GHIDRA_CACHE:
         extractor, program, flat_api, monitor = GHIDRA_CACHE[path]

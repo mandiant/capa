@@ -70,11 +70,8 @@ import multiprocessing
 import multiprocessing.pool
 from pathlib import Path
 
-import capa
 import capa.main
-import capa.rules
 import capa.loader
-import capa.render.json
 import capa.capabilities.common
 import capa.render.result_document as rd
 

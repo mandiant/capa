@@ -17,7 +17,6 @@ import itertools
 import collections
 from dataclasses import dataclass
 
-import capa.perf
 import capa.engine
 import capa.helpers
 import capa.features.freeze as frz

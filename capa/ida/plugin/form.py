@@ -25,7 +25,6 @@ import ida_kernwin
 import ida_settings
 
 import capa.rules
-import capa.engine
 import capa.loader
 import capa.version
 import capa.ida.helpers
