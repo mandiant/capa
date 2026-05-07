@@ -584,11 +584,15 @@ def render_tagged_line(tagged_text: str, dimmed: bool = False, addr_width: int =
         elif ch == IDA_TAG_OFF:
             if i + 1 >= n:
                 break
+            tag = ord(tagged_text[i + 1])
             i += 2
-            _flush()
-            if style_stack:
-                style_stack.pop()
-            cur_style = style_stack[-1] if style_stack else ""
+            if tag == IDA_TAG_ADDR:
+                i += min(addr_width, n - i)
+            else:
+                _flush()
+                if style_stack:
+                    style_stack.pop()
+                cur_style = style_stack[-1] if style_stack else ""
         elif ch == IDA_TAG_ESC:
             if i + 1 >= n:
                 break
