@@ -130,3 +130,5 @@ uv.lock
 justfile
 data/
 CLAUDE.local.md
+unsupported_capa_rules.txt
+unsupported_capa_rules.yml
