@@ -46,7 +46,8 @@ def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[tuple[Feature
     buf = bv.read(seg.start, seg.length)
 
     for offset, _ in capa.features.extractors.helpers.carve_pe(buf, start):
-        yield Characteristic("embedded pe"), AbsoluteVirtualAddress(seg.start + offset)
+        if offset < seg.data_length:
+            yield Characteristic("embedded pe"), FileOffsetAddress(seg.data_offset + offset)
 
 
 def extract_file_embedded_pe(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
