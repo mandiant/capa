@@ -20,6 +20,7 @@ import idc
 import idaapi
 import idautils
 import ida_entry
+import ida_loader
 
 import capa.ida.helpers
 import capa.features.extractors.common
@@ -28,7 +29,7 @@ import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
@@ -87,7 +88,9 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         for ea, _ in check_segment_for_pe(seg):
-            yield Characteristic("embedded pe"), AbsoluteVirtualAddress(ea)
+            file_offset = ida_loader.get_fileregion_offset(ea)
+            if file_offset != -1:
+                yield Characteristic("embedded pe"), FileOffsetAddress(file_offset)
 
 
 def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
@@ -159,12 +162,17 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
     for seg in capa.features.extractors.ida.helpers.get_segments():
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
 
-        # differing to common string extractor factor in segment offset here
         for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
-            yield String(s.s), AbsoluteVirtualAddress(seg.start_ea + s.offset)
+            ea = seg.start_ea + s.offset
+            file_offset = ida_loader.get_fileregion_offset(ea)
+            if file_offset != -1:
+                yield String(s.s), FileOffsetAddress(file_offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff):
-            yield String(s.s), AbsoluteVirtualAddress(seg.start_ea + s.offset)
+            ea = seg.start_ea + s.offset
+            file_offset = ida_loader.get_fileregion_offset(ea)
+            if file_offset != -1:
+                yield String(s.s), FileOffsetAddress(file_offset)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
