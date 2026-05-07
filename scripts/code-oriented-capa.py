@@ -531,13 +531,11 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, str, set
                 r = rangeset.getrange(j)
                 line_to_addrs.setdefault(line_no, set()).update(range(r.start_ea, r.end_ea))
 
-    import ida_lines
-
     lines = []
     for line_no in range(pseudocode.size()):
         sl = pseudocode.at(line_no)
         tagged = sl.line
-        text = ida_lines.tag_remove(tagged)
+        text = strip_tags(tagged)
         lines.append((line_no, text, tagged, line_to_addrs.get(line_no, set())))
 
     return lines
@@ -548,12 +546,70 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, str, set
 # ---------------------------------------------------------------------------
 
 
-def render_tagged_line(tagged_text: str, dimmed: bool = False, addr_width: int = 16) -> rich.text.Text:
+def strip_tags(tagged_text: str, addr_width: int = 16) -> str:
+    """Remove all IDA color tags, returning only the visible text.
+
+    Raises:
+        ValueError: If addr_width is not 8 or 16.
+    """
+    if addr_width not in (8, 16):
+        raise ValueError(f"addr_width must be 8 or 16, got {addr_width}")
+
+    parts: list[str] = []
+    i = 0
+    n = len(tagged_text)
+
+    while i < n:
+        ch = ord(tagged_text[i])
+
+        if ch == IDA_TAG_ON:
+            if i + 1 >= n:
+                break
+            tag = ord(tagged_text[i + 1])
+            i += 2
+            if tag == IDA_TAG_ADDR:
+                i += min(addr_width, n - i)
+        elif ch == IDA_TAG_OFF:
+            if i + 1 >= n:
+                break
+            tag = ord(tagged_text[i + 1])
+            i += 2
+            if tag == IDA_TAG_ADDR:
+                i += min(addr_width, n - i)
+        elif ch == IDA_TAG_ESC:
+            if i + 1 >= n:
+                break
+            parts.append(tagged_text[i + 1])
+            i += 2
+        elif ch == IDA_TAG_INV:
+            i += 1
+        else:
+            parts.append(tagged_text[i])
+            i += 1
+
+    return "".join(parts)
+
+
+def render_tagged_line(
+    tagged_text: str,
+    dimmed: bool = False,
+    addr_width: int = 16,
+    theme: Optional[dict[int, str]] = None,
+) -> rich.text.Text:
     """Parse IDA-style color tags into a Rich Text with syntax highlighting.
 
     Uses a style stack to handle nested color tags. When dimmed=True, all
     styles are overridden with "dim" for context lines.
+
+    Raises:
+        ValueError: If addr_width is not 8 or 16.
     """
+    if addr_width not in (8, 16):
+        raise ValueError(f"addr_width must be 8 or 16, got {addr_width}")
+
+    if theme is None:
+        theme = IDA_THEME
+
     text = rich.text.Text()
     style_stack: list[str] = []
     buf: list[str] = []
@@ -579,7 +635,7 @@ def render_tagged_line(tagged_text: str, dimmed: bool = False, addr_width: int =
                 i += min(addr_width, n - i)
             else:
                 _flush()
-                style_stack.append(IDA_THEME.get(tag, ""))
+                style_stack.append(theme.get(tag, ""))
                 cur_style = style_stack[-1]
         elif ch == IDA_TAG_OFF:
             if i + 1 >= n:
