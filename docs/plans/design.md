@@ -124,7 +124,9 @@ Both disassembly and pseudocode lines from IDA contain embedded color tags:
 - `\x02` (TAG_OFF) + color_byte = pop style from stack
 - `\x03` (TAG_ESC) + byte = escaped literal character
 - `\x04` (TAG_INV) = invisible marker (skipped)
-- `\x28` (TAG_ADDR) after TAG_ON = hidden address data (8 or 16 bytes)
+- `\x28` (TAG_ADDR) after TAG_ON or TAG_OFF = hidden address data (always
+  16 chars with idalib, even for 32-bit binaries, since IDA 9.0+ uses
+  64-bit internal addressing)
 
 `render_tagged_line()` uses a style stack to handle nested tags and
 translates IDA color constants to Rich styles via `IDA_THEME` (40+ color

@@ -1218,7 +1218,9 @@ def render_all(
             comment_cache[func.address] = None
 
     max_func_addr = max(f.address for f in functions) if functions else 0
-    ida_addr_width = 16 if max_func_addr > 0xFFFFFFFF else 8
+    # idalib always uses 64-bit internal addressing, so tagged text
+    # embeds 16-char hex addresses even for 32-bit binaries.
+    ida_addr_width = 16
 
     for rule in all_rules:
         for func in rule_functions[rule.name]:
