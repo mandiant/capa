@@ -182,12 +182,16 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
         p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
-            offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), AbsoluteVirtualAddress(offset)
+            ea_addr = block.getStart().add(s.offset)
+            f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
+            if f_offset != -1:
+                yield String(s.s), FileOffsetAddress(f_offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(p_bytes):
-            offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), AbsoluteVirtualAddress(offset)
+            ea_addr = block.getStart().add(s.offset)
+            f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
+            if f_offset != -1:
+                yield String(s.s), FileOffsetAddress(f_offset)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
