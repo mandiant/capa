@@ -123,14 +123,10 @@ def get_file_imports() -> dict[int, list[str]]:
     import_dict: dict[int, list[str]] = {}
 
     for f in get_current_program().getFunctionManager().getExternalFunctions():
-        addr = None
+        addrs: list[int] = []
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
-                addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
-                break
-
-        if addr is None:
-            continue
+                addrs.append(r.getFromAddress().getOffset())
 
         ex_loc = f.getExternalLocation().getAddress()  # map external locations as well (offset into module files)
 
@@ -142,7 +138,8 @@ def get_file_imports() -> dict[int, list[str]]:
         fstr[0] = "*" if "<EXTERNAL>" in fstr[0] else fstr[0][:-4]
 
         for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
-            import_dict.setdefault(addr, []).append(name)
+            for addr in addrs:
+                import_dict.setdefault(addr, []).append(name)
             if ex_loc:
                 import_dict.setdefault(ex_loc.getOffset(), []).append(name)
 
