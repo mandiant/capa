@@ -98,12 +98,18 @@ Two-pass buffered rendering with connecting spine.
 
 **Per-block content:**
 
-1. **Function box header**: `╔══ name @ 0xADDR ═══...═══╗`
+1. **Block heading** (printed before buffer): rule name in bold bright_yellow
+   underline, "found in" dim, function name in bold bright_yellow.
 
-2. **Rule header** (spine_role="rule_header"):
-   Rule name, namespace, ATT&CK/MBC IDs.
+2. **Rule underline + connector** (two buffered lines): a `┬───` underline
+   row (kind="normal") matching the rule name width, then a `└` connector
+   row (kind="rule_header") that `add_spine` extends with `─` to the spine
+   column `┐`.
 
-3. **Disassembly section**:
+3. **Function signature**: prototype from `idc.get_type()`, shown when
+   available.
+
+4. **Disassembly section** (bright blue subheading):
    - Fetch lines via `idautils.Heads()` + `ida_lines.generate_disasm_line()`
    - Fetch both tagged (syntax colors) and plain (for underline matching) text
    - Get BB boundaries via `ida_gdl.FlowChart(func)`
@@ -112,10 +118,8 @@ Two-pass buffered rendering with connecting spine.
      underline carets, annotation labels (spine_role="annotation_label")
    - Between windows: `... N lines omitted ...`
 
-4. **Pseudocode section**: Same approach via `ida_hexrays.decompile()`,
-   `cfunc.get_boundaries()` for address mapping.
-
-5. **Function footer**: `╚═══...═══╝`
+5. **Pseudocode section** (bright blue subheading): Same approach via
+   `ida_hexrays.decompile()`, `cfunc.get_boundaries()` for address mapping.
 
 ### IDA syntax highlighting
 
@@ -165,13 +169,14 @@ Using Rich library for terminal output:
   from the maximum address (supports both 32-bit and 64-bit)
 - **Syntax-highlighted lines**: IDA color tags → Rich styles
 - **Dimmed lines**: `dim` style for context
-- **Underline carets**: `─` pointing to matched operands, `╰──` labels.
+- **Underline carets**: `┬───` pointing to matched operands, `└──` labels.
   When multiple annotations target the same source line, a single combined
   underline row is rendered with all `─` segments, then label rows peel off
   right-to-left using `│` pipe connectors (rustc-style). This ensures all
   underlines sit directly under their target tokens. Rightmost labels
   appear first (closest to the source) so pipes never cross.
-- **Spine**: vertical `│` trunk, `┐` top, `┤` branch, `┘` end
+- **Spine**: yellow connectors — `│` trunk (dim yellow), `┐` top, `┤` branch,
+  `┘` end. Annotation connectors and underline carets also yellow.
 - **Omission markers**: `... N lines omitted ...` in dim italic
 
 ### Feature-to-annotation mapping

@@ -49,13 +49,18 @@ Within a rule, functions are ordered by ascending virtual address.
 
 Each block has:
 
-1. **Function header** — box-drawing top border with function name and address.
-2. **Rule header** — rule name, namespace, ATT&CK IDs, MBC IDs. This is the
-   top of the connecting spine.
-3. **File-scope features** — any import/export/section/function-name features
+1. **Block heading** — bold bright yellow rule name, dim "found in",
+   bold bright yellow function name and address.
+2. **Rule underline + connector** — two lines of yellow box-drawing characters
+   (same style as disassembly token underlines): a `┬───` underline under the
+   rule name, then a `└───...───┐` connector flowing right to the spine column.
+   This is the top of the connecting spine.
+3. **Function signature** — function prototype from IDA's type system (via
+   `idc.get_type()`), shown when available.
+4. **File-scope features** — any import/export/section/function-name features
    from this rule that contributed to the match.
-4. **Function comment** — IDA function comment if available.
-5. **Disassembly listing** with annotations:
+5. **Function comment** — IDA function comment if available.
+6. **Disassembly listing** (bright blue subheading) with annotations:
    - Syntax-highlighted lines (via IDA's color tags) for annotated lines
    - Dimmed lines for context
    - Gaps between windows show `... N lines omitted ...`
@@ -64,11 +69,10 @@ Each block has:
    - When multiple features target the same line, a single combined
      underline row with pipe stacking (rustc-style): pipes descend from
      each underline, labels peel off right-to-left so pipes never cross
-6. **Connecting spine** — vertical ASCII art on the right margin connecting
+7. **Connecting spine** — vertical ASCII art on the right margin connecting
    each annotation label back to the rule header, forming a visual tree.
-7. **Pseudocode listing** (when decompiler available) with same annotation
-   style, mapped via address-to-pseudocode-line.
-8. **Function footer** — box-drawing bottom border.
+8. **Pseudocode listing** (bright blue subheading, when decompiler available)
+   with same annotation style, mapped via address-to-pseudocode-line.
 
 ### Connecting spine
 
@@ -77,25 +81,27 @@ to the rule name at the top of the block. This makes it visually clear which
 rule each feature contributes to:
 
 ```
-     rule name  (namespace)  T1234 ─────────────────────────────────────────┐
+ rule name found in sub_10001060 @ 0x10001060
+ ┬────────
+ └───────────────────────────────────────────────────────────────────────────┐
                                                                              │
      disassembly                                                             │
                                                                              │
  0x10001074 │ lea    ecx, [esp+1208h+WSAData]                               │
  0x1000107E │ call   ds:WSAStartup                                          │
-            │        ──────────                                              │
-            │        ╰── api: WSAStartup ───────────────────────────────────┤
+            │        ┬─────────                                              │
+            │        └── api: WSAStartup ───────────────────────────────────┤
  0x1000108C │ push   6; protocol                                            │
-            │        ─                                                       │
-            │        ╰── number: 0x6 = IPPROTO_TCP ─────────────────────────┤
+            │        ┬                                                       │
+            │        └── number: 0x6 = IPPROTO_TCP ─────────────────────────┤
  0x10001092 │ call   ds:socket                                              │
-            │        ──────                                                  │
-            │        ╰── api: socket ───────────────────────────────────────┘
+            │        ┬─────                                                  │
+            │        └── api: socket ───────────────────────────────────────┘
 ```
 
-Characters: `┐` at top (rule header), `│` for trunk, `┤` for intermediate
-annotation, `┘` for last annotation. Horizontal `─` connectors pad from
-content to the spine column.
+All spine and annotation connectors are yellow. The `┬───` underline and
+`└───┐` connector visually link the rule name to the spine. Characters:
+`┐` at top, `│` for trunk, `┤` for intermediate, `┘` for last annotation.
 
 ### Basic block-aligned windows
 

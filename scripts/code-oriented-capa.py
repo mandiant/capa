@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 
 STDERR_CONSOLE = rich.console.Console(stderr=True, highlight=False)
 
-ANNOTATION_COLOR = "cyan"
-SPINE_COLOR = "dim cyan"
+ANNOTATION_COLOR = "yellow"
+SPINE_COLOR = "dim yellow"
 
 IDA_TAG_ON = 0x01
 IDA_TAG_OFF = 0x02
@@ -479,6 +479,17 @@ def get_basic_block_ranges(func_ea: int) -> list[tuple[int, int]]:
         return []
 
 
+def get_function_type(func_ea: int) -> Optional[str]:
+    """Get function prototype/signature from IDA."""
+    try:
+        import idc
+
+        t = idc.get_type(func_ea)
+        return t or None
+    except ImportError:
+        return None
+
+
 def get_function_comment(func_ea: int) -> Optional[str]:
     """Get function comment from IDA."""
     try:
@@ -595,11 +606,13 @@ def render_tagged_line(
     dimmed: bool = False,
     addr_width: int = 16,
     theme: Optional[dict[int, str]] = None,
+    skip_chars: int = 0,
 ) -> rich.text.Text:
     """Parse IDA-style color tags into a Rich Text with syntax highlighting.
 
     Uses a style stack to handle nested color tags. When dimmed=True, all
-    styles are overridden with "dim" for context lines.
+    styles are overridden with "dim" for context lines. skip_chars drops
+    the first N visible characters (for dedenting).
 
     Raises:
         ValueError: If addr_width is not 8 or 16.
@@ -616,6 +629,7 @@ def render_tagged_line(
     cur_style = ""
     i = 0
     n = len(tagged_text)
+    visible_count = 0
 
     def _flush() -> None:
         nonlocal buf
@@ -652,12 +666,16 @@ def render_tagged_line(
         elif ch == IDA_TAG_ESC:
             if i + 1 >= n:
                 break
-            buf.append(tagged_text[i + 1])
+            visible_count += 1
+            if visible_count > skip_chars:
+                buf.append(tagged_text[i + 1])
             i += 2
         elif ch == IDA_TAG_INV:
             i += 1
         else:
-            buf.append(tagged_text[i])
+            visible_count += 1
+            if visible_count > skip_chars:
+                buf.append(tagged_text[i])
             i += 1
 
     _flush()
@@ -925,7 +943,12 @@ def render_annotation_lines(
             if effective_start > cursor:
                 underline.append(" " * (effective_start - cursor), style="default")
             width = max(1, col_end - effective_start)
-            underline.append("─" * width, style=ANNOTATION_COLOR)
+            if effective_start == col_start:
+                underline.append("┬", style=ANNOTATION_COLOR)
+                if width > 1:
+                    underline.append("─" * (width - 1), style=ANNOTATION_COLOR)
+            else:
+                underline.append("─" * width, style=ANNOTATION_COLOR)
             cursor = effective_start + width
         result.append(BufferedLine(underline, "normal"))
 
@@ -946,13 +969,13 @@ def render_annotation_lines(
             if col_start_i > cursor:
                 label_line.append(" " * (col_start_i - cursor), style="default")
 
-            label_line.append("╰── ", style=ANNOTATION_COLOR)
+            label_line.append("└── ", style=ANNOTATION_COLOR)
             label_line.append(label_text, style=ANNOTATION_COLOR)
             result.append(BufferedLine(label_line, "annotation_label"))
 
     for label in untargeted:
         label_line = rich.text.Text(gutter)
-        label_line.append("╰── ", style=ANNOTATION_COLOR)
+        label_line.append("└── ", style=ANNOTATION_COLOR)
         label_line.append(label, style=ANNOTATION_COLOR)
         result.append(BufferedLine(label_line, "annotation_label"))
 
@@ -991,8 +1014,7 @@ def add_spine(buffer: list[BufferedLine]):
         pad_needed = max(1, spine_col - current_width)
 
         if line.kind == "rule_header":
-            line.text.append(" ", style="default")
-            line.text.append("─" * max(0, pad_needed - 1), style=SPINE_COLOR)
+            line.text.append("─" * pad_needed, style=SPINE_COLOR)
             line.text.append("┐", style=SPINE_COLOR)
         elif line.kind == "annotation_label":
             connector = "┘" if i == last_ann_idx else "┤"
@@ -1017,9 +1039,13 @@ def render_disassembly_to_buffer(
     bb_ranges: Optional[list[tuple[int, int]]] = None,
     addr_width: int = 16,
 ):
-    """Render annotated disassembly into buffer."""
+    """Render annotated disassembly into buffer.
+
+    Returns:
+        The gutter width (chars before the │ separator), or 0 if nothing rendered.
+    """
     if not lines:
-        return
+        return 0
 
     annotations_by_addr: dict[int, list[Annotation]] = collections.defaultdict(list)
     for ann in annotations:
@@ -1030,7 +1056,7 @@ def render_disassembly_to_buffer(
     windows = compute_windows(all_addresses, annotated_addrs, context, bb_ranges)
 
     if not windows:
-        return
+        return 0
 
     max_addr = max(all_addresses)
     hex_digits = max(8, len(f"{max_addr:X}"))
@@ -1038,7 +1064,7 @@ def render_disassembly_to_buffer(
     gutter = " " * gutter_width + " │ "
 
     section_line = rich.text.Text("     ")
-    section_line.append("disassembly", style="bold underline")
+    section_line.append("disassembly", style="bold bright_blue")
     buffer.append(BufferedLine(section_line, "normal"))
     buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
@@ -1078,6 +1104,8 @@ def render_disassembly_to_buffer(
 
         prev_end = win_end
 
+    return gutter_width
+
 
 def render_pseudocode_to_buffer(
     buffer: list[BufferedLine],
@@ -1085,6 +1113,7 @@ def render_pseudocode_to_buffer(
     pseudo_lines: list[tuple[int, str, str, set[int]]],
     context: int,
     addr_width: int = 16,
+    gutter_width: int = 0,
 ):
     """Render annotated pseudocode into buffer."""
     if not pseudo_lines:
@@ -1110,8 +1139,20 @@ def render_pseudocode_to_buffer(
     if not annotated_line_nos:
         return
 
+    plain_texts = [text for _, text, _, _ in pseudo_lines]
+    common_indent = min((len(t) - len(t.lstrip()) for t in plain_texts if t.strip()), default=0)
+
+    max_line_no = max(ln for ln, _, _, _ in pseudo_lines) + 1
+    ln_digits = max(4, len(str(max_line_no)))
+    # pad line number column so │ aligns with disassembly gutter
+    # disassembly gutter: " 0x" + hex_digits = 1 + 2 + hex_digits = gutter_width
+    # pseudocode gutter: padding + ln_digits
+    ln_padding = max(1, gutter_width - ln_digits) if gutter_width > 0 else 2
+    pc_gutter_width = ln_padding + ln_digits
+    pc_gutter = " " * pc_gutter_width + " │ "
+
     section_line = rich.text.Text("     ")
-    section_line.append("pseudocode", style="bold underline")
+    section_line.append("pseudocode", style="bold bright_blue")
     buffer.append(BufferedLine(section_line, "normal"))
     buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
@@ -1124,7 +1165,7 @@ def render_pseudocode_to_buffer(
     for win_start, win_end, win_annotated in windows:
         if prev_end >= 0 and win_start > prev_end + 1:
             gap = win_start - prev_end - 1
-            gap_line = rich.text.Text(" " * 7 + "│ ", style="dim")
+            gap_line = rich.text.Text(pc_gutter, style="dim")
             gap_line.append(f"... {gap} lines omitted ...", style="dim italic")
             buffer.append(BufferedLine(gap_line, "normal"))
 
@@ -1133,30 +1174,31 @@ def render_pseudocode_to_buffer(
             text, tagged, _ = line_map[line_no]
             is_annotated = line_no in win_annotated
 
+            dedented_text = text[common_indent:] if len(text) > common_indent else text
+
             line_text = rich.text.Text()
-            ln_str = f"{line_no + 1:4d}"
+            ln_str = f"{line_no + 1:{ln_digits}d}"
 
             if is_annotated:
-                line_text.append(f"  {ln_str}", style="bold")
+                line_text.append(f"{' ' * ln_padding}{ln_str}", style="bold")
                 line_text.append(" │ ", style="dim")
                 if tagged:
-                    line_text.append_text(render_tagged_line(tagged, dimmed=False, addr_width=addr_width))
+                    line_text.append_text(render_tagged_line(tagged, dimmed=False, addr_width=addr_width, skip_chars=common_indent))
                 else:
-                    line_text.append(text)
+                    line_text.append(dedented_text)
             else:
-                line_text.append(f"  {ln_str}", style="dim")
+                line_text.append(f"{' ' * ln_padding}{ln_str}", style="dim")
                 line_text.append(" │ ", style="dim")
                 if tagged:
-                    line_text.append_text(render_tagged_line(tagged, dimmed=True, addr_width=addr_width))
+                    line_text.append_text(render_tagged_line(tagged, dimmed=True, addr_width=addr_width, skip_chars=common_indent))
                 else:
-                    line_text.append(text, style="dim")
+                    line_text.append(dedented_text, style="dim")
 
             buffer.append(BufferedLine(line_text, "normal"))
 
             annots = annotations_by_line.get(line_no, [])
             if is_annotated and annots:
-                pc_gutter = " " * 7 + "│ "
-                ann_lines = render_annotation_lines(pc_gutter, annots, text)
+                ann_lines = render_annotation_lines(pc_gutter, annots, dedented_text)
                 buffer.extend(ann_lines)
 
         prev_end = win_end
@@ -1200,6 +1242,7 @@ def render_all(
     disasm_cache: dict[int, list[DisasmLine]] = {}
     bb_cache: dict[int, Optional[list[tuple[int, int]]]] = {}
     comment_cache: dict[int, Optional[str]] = {}
+    type_cache: dict[int, Optional[str]] = {}
     pseudo_cache: dict[int, Optional[list[tuple[int, str, str, set[int]]]]] = {}
 
     for func in functions:
@@ -1210,12 +1253,14 @@ def render_all(
             disasm_cache[func.address] = get_disassembly_lines(func_start, func_end)
             bb_cache[func.address] = get_basic_block_ranges(func.address) or None
             comment_cache[func.address] = get_function_comment(func.address)
+            type_cache[func.address] = get_function_type(func.address)
             if not func.name:
                 func.name = get_function_name(func.address)
         else:
             disasm_cache[func.address] = []
             bb_cache[func.address] = None
             comment_cache[func.address] = None
+            type_cache[func.address] = None
 
     max_func_addr = max(f.address for f in functions) if functions else 0
     # idalib always uses 64-bit internal addressing, so tagged text
@@ -1231,30 +1276,32 @@ def render_all(
 
             addr_str = f"0x{func.address:X}"
             name = func.name or f"sub_{func.address:X}"
-            content = f"{name} @ {addr_str}"
-            box_width = max(80, 4 + len(content) + 4)
-            padding = box_width - 4 - len(content) - 2
-            header = rich.text.Text()
-            header.append("╔══ ", style="dim")
-            header.append(name, style="bold bright_white")
-            header.append(f" @ {addr_str}", style="bold")
-            header.append(" ", style="dim")
-            header.append("═" * padding, style="dim")
-            header.append("╗", style="dim")
 
             console.print()
-            console.print(header)
 
-            buffer.append(BufferedLine(rich.text.Text(), "normal"))
+            heading = rich.text.Text(" ")
+            heading.append(rule.name, style="bold bright_yellow")
+            heading.append(" found in ", style="dim")
+            heading.append(name, style="bold bright_yellow")
+            heading.append(f" @ {addr_str}", style="bright_yellow")
+            console.print(heading)
 
-            rule_line = rich.text.Text("     ")
-            rule_line.append(rule.name, style="bold bright_white")
-            if rule.namespace:
-                rule_line.append(f"  ({rule.namespace})", style="dim")
-            ids = rule.attack_ids + rule.mbc_ids
-            if ids:
-                rule_line.append(f"  {', '.join(ids)}", style="dim italic")
-            buffer.append(BufferedLine(rule_line, "rule_header"))
+            underline_line = rich.text.Text(" ")
+            underline_line.append("┬", style=SPINE_COLOR)
+            if len(rule.name) > 1:
+                underline_line.append("─" * (len(rule.name) - 1), style=SPINE_COLOR)
+            buffer.append(BufferedLine(underline_line, "normal"))
+
+            connector_line = rich.text.Text(" ")
+            connector_line.append("└", style=SPINE_COLOR)
+            buffer.append(BufferedLine(connector_line, "rule_header"))
+
+            func_type = type_cache.get(func.address)
+            if func_type:
+                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                type_line = rich.text.Text("     ")
+                type_line.append(func_type, style="dim")
+                buffer.append(BufferedLine(type_line, "normal"))
 
             if rule_fs:
                 buffer.append(BufferedLine(rich.text.Text(), "normal"))
@@ -1276,7 +1323,7 @@ def render_all(
             if not lines:
                 lines = generate_placeholder_disasm(rule_annots)
             bb_ranges = bb_cache.get(func.address)
-            render_disassembly_to_buffer(buffer, rule_annots, lines, context, bb_ranges, addr_width=ida_addr_width)
+            disasm_gutter_width = render_disassembly_to_buffer(buffer, rule_annots, lines, context, bb_ranges, addr_width=ida_addr_width)
 
             if show_pseudocode:
                 if use_ida:
@@ -1285,7 +1332,7 @@ def render_all(
                     pseudo = pseudo_cache[func.address]
                     if pseudo:
                         buffer.append(BufferedLine(rich.text.Text(), "normal"))
-                        render_pseudocode_to_buffer(buffer, rule_annots, pseudo, context, addr_width=ida_addr_width)
+                        render_pseudocode_to_buffer(buffer, rule_annots, pseudo, context, addr_width=ida_addr_width, gutter_width=disasm_gutter_width)
                     else:
                         buffer.append(BufferedLine(rich.text.Text(), "normal"))
                         note = rich.text.Text("     ")
@@ -1301,8 +1348,6 @@ def render_all(
 
             for bline in buffer:
                 console.print(bline.text)
-
-            console.print(rich.text.Text("╚" + "═" * (box_width - 2) + "╝", style="dim"))
 
 
 # ---------------------------------------------------------------------------
