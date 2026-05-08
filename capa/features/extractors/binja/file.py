@@ -121,10 +121,9 @@ def extract_file_section_names(bv: BinaryView) -> Iterator[tuple[Feature, Addres
 def extract_file_strings(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
     for s in bv.strings:
-        for seg in bv.get_segments_at(s.start):
-            if s.start - seg.start < seg.data_length:
-                yield String(s.value), FileOffsetAddress(seg.data_offset + (s.start - seg.start))
-                break
+        seg = bv.get_segment_at(s.start)
+        if seg is not None and s.start - seg.start < seg.data_length:
+            yield String(s.value), FileOffsetAddress(seg.data_offset + (s.start - seg.start))
 
 
 def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
