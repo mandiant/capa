@@ -78,7 +78,7 @@ def get_cache_path(cache_dir: Path, id: CacheIdentifier) -> Path:
 
 
 MAGIC = b"capa"
-VERSION = b"\x00\x00\x00\x01"
+VERSION = b"\x00\x00\x00\x02"
 
 
 @dataclass
@@ -158,7 +158,7 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional
 
     try:
         cache = RuleCache.load(buf)
-    except AssertionError:
+    except (AssertionError, EOFError, pickle.UnpicklingError, zlib.error, AttributeError, TypeError, ValueError):
         logger.debug("rule set cache is invalid: %s", path)
         # delete the cache that seems to be invalid.
         path.unlink()
