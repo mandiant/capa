@@ -51,6 +51,8 @@ IDA_TAG_ESC = 0x03
 IDA_TAG_INV = 0x04
 IDA_TAG_ADDR = 0x28
 
+IDA_COMMENT_COLORS = frozenset({0x02, 0x03, 0x04})
+
 IDA_THEME: dict[int, str] = {
     0x01: "",  # COLOR_DEFAULT
     0x02: "bright_black italic",  # COLOR_REGCMT
@@ -436,7 +438,7 @@ def get_disassembly_lines(func_start: int, func_end: int) -> list[DisasmLine]:
     lines = []
     for ea in idautils.Heads(func_start, func_end):
         tagged = ida_lines.generate_disasm_line(ea, 0)
-        plain = ida_lines.tag_remove(tagged) if tagged else ""
+        plain = strip_tags(tagged) if tagged else ""
         if plain:
             lines.append(DisasmLine(address=ea, text=plain, tagged_text=tagged or ""))
     return lines
@@ -483,8 +485,12 @@ def get_function_type(func_ea: int) -> Optional[str]:
     """Get function prototype/signature from IDA."""
     try:
         import idc
+        import ida_funcs
 
-        t = idc.get_type(func_ea)
+        func = ida_funcs.get_func(func_ea)
+        if not func:
+            return None
+        t = idc.get_type(func.start_ea)
         return t or None
     except ImportError:
         return None
@@ -580,6 +586,9 @@ def strip_tags(tagged_text: str, addr_width: int = 16) -> str:
             i += 2
             if tag == IDA_TAG_ADDR:
                 i += min(addr_width, n - i)
+            elif tag in IDA_COMMENT_COLORS:
+                if parts and not parts[-1].isspace():
+                    parts.append(" ")
         elif ch == IDA_TAG_OFF:
             if i + 1 >= n:
                 break
@@ -649,6 +658,10 @@ def render_tagged_line(
                 i += min(addr_width, n - i)
             else:
                 _flush()
+                if tag in IDA_COMMENT_COLORS:
+                    plain = text.plain
+                    if plain and not plain[-1].isspace():
+                        text.append(" ", style="default")
                 style_stack.append(theme.get(tag, ""))
                 cur_style = style_stack[-1]
         elif ch == IDA_TAG_OFF:
@@ -812,6 +825,60 @@ def find_underline_target(annotation: Annotation, line_text: str) -> Optional[tu
 # ---------------------------------------------------------------------------
 
 
+def _is_label_line(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped or not stripped.endswith(":"):
+        return False
+    label = stripped[:-1]
+    return bool(label) and all(c.isalnum() or c == "_" for c in label)
+
+
+def expand_paren_regions(
+    annotated_line_nos: set[int],
+    plain_texts_by_line: dict[int, str],
+    all_line_nos: list[int],
+) -> set[int]:
+    """Expand annotated pseudocode lines to cover complete paren-balanced expressions.
+
+    When an annotated line is inside a multi-line function call (unbalanced
+    parens), walks up/down to find the matching open/close parens and marks
+    all lines in that range as annotated.
+    """
+    if not annotated_line_nos:
+        return annotated_line_nos
+
+    depth_before: dict[int, int] = {}
+    depth_after: dict[int, int] = {}
+    cumulative = 0
+    for ln in all_line_nos:
+        depth_before[ln] = cumulative
+        for ch in plain_texts_by_line.get(ln, ""):
+            if ch == "(":
+                cumulative += 1
+            elif ch == ")":
+                cumulative -= 1
+        depth_after[ln] = cumulative
+
+    idx_of = {ln: i for i, ln in enumerate(all_line_nos)}
+    expanded = set(annotated_line_nos)
+
+    for ln in sorted(annotated_line_nos):
+        if depth_before[ln] <= 0 and depth_after[ln] <= 0:
+            continue
+
+        for i in range(idx_of[ln], -1, -1):
+            expanded.add(all_line_nos[i])
+            if depth_before[all_line_nos[i]] <= 0:
+                break
+
+        for i in range(idx_of[ln], len(all_line_nos)):
+            expanded.add(all_line_nos[i])
+            if depth_after[all_line_nos[i]] <= 0:
+                break
+
+    return expanded
+
+
 def compute_windows(
     all_addresses: list[int],
     annotated_addresses: set[int],
@@ -917,6 +984,17 @@ def render_annotation_lines(
     pipes never cross.
     """
     result: list[BufferedLine] = []
+
+    sep_idx = gutter.index("│")
+    gutter_prefix = gutter[:sep_idx]
+    gutter_suffix = gutter[sep_idx + 1:]
+
+    def _gutter_text() -> rich.text.Text:
+        t = rich.text.Text(gutter_prefix)
+        t.append("│", style="dim")
+        t.append(gutter_suffix)
+        return t
+
     groups = group_annotations(annotations)
 
     targeted: list[tuple[int, int, str]] = []
@@ -936,7 +1014,7 @@ def render_annotation_lines(
     if targeted:
         targeted.sort(key=lambda t: t[0])
 
-        underline = rich.text.Text(gutter)
+        underline = _gutter_text()
         cursor = 0
         for col_start, col_end, _ in targeted:
             effective_start = max(col_start, cursor)
@@ -956,7 +1034,7 @@ def render_annotation_lines(
             col_start_i = targeted[i][0]
             label_text = targeted[i][2]
 
-            label_line = rich.text.Text(gutter)
+            label_line = _gutter_text()
             cursor = 0
             for j in range(i):
                 pipe_col = targeted[j][0]
@@ -974,7 +1052,7 @@ def render_annotation_lines(
             result.append(BufferedLine(label_line, "annotation_label"))
 
     for label in untargeted:
-        label_line = rich.text.Text(gutter)
+        label_line = _gutter_text()
         label_line.append("└── ", style=ANNOTATION_COLOR)
         label_line.append(label, style=ANNOTATION_COLOR)
         result.append(BufferedLine(label_line, "annotation_label"))
@@ -1071,6 +1149,12 @@ def render_disassembly_to_buffer(
     addr_to_line = {dl.address: dl for dl in lines}
     prev_end = -1
 
+    if windows and windows[0][0] > 0:
+        above = windows[0][0]
+        above_line = rich.text.Text(gutter, style="dim")
+        above_line.append(f"... {above} lines above ...", style="dim italic")
+        buffer.append(BufferedLine(above_line, "normal"))
+
     for win_start, win_end, win_annotated in windows:
         if prev_end >= 0 and win_start > prev_end + 1:
             gap = win_start - prev_end - 1
@@ -1103,6 +1187,12 @@ def render_disassembly_to_buffer(
                 buffer.extend(ann_lines)
 
         prev_end = win_end
+
+    if windows and windows[-1][1] < len(all_addresses) - 1:
+        below = len(all_addresses) - 1 - windows[-1][1]
+        below_line = rich.text.Text(gutter, style="dim")
+        below_line.append(f"... {below} lines below ...", style="dim italic")
+        buffer.append(BufferedLine(below_line, "normal"))
 
     return gutter_width
 
@@ -1139,8 +1229,24 @@ def render_pseudocode_to_buffer(
     if not annotated_line_nos:
         return
 
-    plain_texts = [text for _, text, _, _ in pseudo_lines]
-    common_indent = min((len(t) - len(t.lstrip()) for t in plain_texts if t.strip()), default=0)
+    all_line_nos = [ln for ln, _, _, _ in pseudo_lines]
+    plain_texts_by_line = {ln: text for ln, text, _, _ in pseudo_lines}
+    annotated_line_nos = expand_paren_regions(annotated_line_nos, plain_texts_by_line, all_line_nos)
+
+    windows = compute_windows(all_line_nos, annotated_line_nos, context)
+
+    displayed_line_nos = set()
+    for win_start, win_end, _ in windows:
+        for idx in range(win_start, win_end + 1):
+            displayed_line_nos.add(all_line_nos[idx])
+    common_indent = min(
+        (
+            len(t) - len(t.lstrip())
+            for ln, t in plain_texts_by_line.items()
+            if ln in displayed_line_nos and t.strip() and not _is_label_line(t)
+        ),
+        default=0,
+    )
 
     max_line_no = max(ln for ln, _, _, _ in pseudo_lines) + 1
     ln_digits = max(4, len(str(max_line_no)))
@@ -1156,11 +1262,14 @@ def render_pseudocode_to_buffer(
     buffer.append(BufferedLine(section_line, "normal"))
     buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
-    all_line_nos = [ln for ln, _, _, _ in pseudo_lines]
-    windows = compute_windows(all_line_nos, annotated_line_nos, context)
-
     line_map = {ln: (text, tagged, addrs) for ln, text, tagged, addrs in pseudo_lines}
     prev_end = -1
+
+    if windows and windows[0][0] > 0:
+        above = windows[0][0]
+        above_line = rich.text.Text(pc_gutter, style="dim")
+        above_line.append(f"... {above} lines above ...", style="dim italic")
+        buffer.append(BufferedLine(above_line, "normal"))
 
     for win_start, win_end, win_annotated in windows:
         if prev_end >= 0 and win_start > prev_end + 1:
@@ -1174,7 +1283,9 @@ def render_pseudocode_to_buffer(
             text, tagged, _ = line_map[line_no]
             is_annotated = line_no in win_annotated
 
-            dedented_text = text[common_indent:] if len(text) > common_indent else text
+            is_label = _is_label_line(text)
+            skip = 0 if is_label else common_indent
+            dedented_text = text[skip:] if len(text) > skip else text
 
             line_text = rich.text.Text()
             ln_str = f"{line_no + 1:{ln_digits}d}"
@@ -1183,14 +1294,14 @@ def render_pseudocode_to_buffer(
                 line_text.append(f"{' ' * ln_padding}{ln_str}", style="bold")
                 line_text.append(" │ ", style="dim")
                 if tagged:
-                    line_text.append_text(render_tagged_line(tagged, dimmed=False, addr_width=addr_width, skip_chars=common_indent))
+                    line_text.append_text(render_tagged_line(tagged, dimmed=False, addr_width=addr_width, skip_chars=skip))
                 else:
                     line_text.append(dedented_text)
             else:
                 line_text.append(f"{' ' * ln_padding}{ln_str}", style="dim")
                 line_text.append(" │ ", style="dim")
                 if tagged:
-                    line_text.append_text(render_tagged_line(tagged, dimmed=True, addr_width=addr_width, skip_chars=common_indent))
+                    line_text.append_text(render_tagged_line(tagged, dimmed=True, addr_width=addr_width, skip_chars=skip))
                 else:
                     line_text.append(dedented_text, style="dim")
 
@@ -1202,6 +1313,12 @@ def render_pseudocode_to_buffer(
                 buffer.extend(ann_lines)
 
         prev_end = win_end
+
+    if windows and windows[-1][1] < len(all_line_nos) - 1:
+        below = len(all_line_nos) - 1 - windows[-1][1]
+        below_line = rich.text.Text(pc_gutter, style="dim")
+        below_line.append(f"... {below} lines below ...", style="dim italic")
+        buffer.append(BufferedLine(below_line, "normal"))
 
 
 # ---------------------------------------------------------------------------
