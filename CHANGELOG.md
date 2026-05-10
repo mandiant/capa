@@ -4,6 +4,8 @@
 
 ### New Features
 
+- features: emit `number(0)` for xor-zeroing idioms like `xor eax, eax` across all backends #2622
+
 ### Breaking Changes
 
 ### New Rules (0)
