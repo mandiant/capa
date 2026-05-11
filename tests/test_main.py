@@ -70,7 +70,7 @@ def test_main_non_ascii_filename(tmpdir, capsys):
     std = capsys.readouterr()
     # but here, we have to use a unicode instance,
     # because capsys has decoded the output for us.
-    assert path in std.out
+    assert Path(path).as_posix() in std.out
 
 
 def test_main_non_ascii_filename_nonexistent(tmpdir, caplog):
