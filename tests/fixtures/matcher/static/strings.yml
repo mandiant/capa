@@ -1,0 +1,77 @@
+- name: exact-string
+  description: string feature matches only the exact value
+  rules:
+    - name: exact-string-match
+      scopes:
+        static: function
+      features:
+        - string: hello world
+  features: |
+    func: 0x500000
+     func: 0x500000: string(hello world)
+  expect:
+    matches:
+      exact-string-match:
+        - 0x500000
+
+- name: substring
+  description: substring feature matches when the value appears within a string
+  rules:
+    - name: substring-match
+      scopes:
+        static: function
+      features:
+        - substring: abc
+  features: |
+    func: 0x500000
+     func: 0x500000: string(zabczz)
+  expect:
+    matches:
+      substring-match:
+        - 0x500000
+
+- name: regex-unanchored
+  description: regex feature matches when the pattern appears anywhere in a string
+  rules:
+    - name: regex-match
+      scopes:
+        static: function
+      features:
+        - string: /bbbb/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches:
+      regex-match:
+        - 0x500000
+
+- name: regex-case-insensitive
+  description: regex /i flag enables case-insensitive matching
+  rules:
+    - name: regex-ignorecase-match
+      scopes:
+        static: function
+      features:
+        - string: /BBBB/i
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches:
+      regex-ignorecase-match:
+        - 0x500000
+
+- name: regex-anchored-no-match
+  description: anchored regex does not match when the string does not start with the pattern
+  rules:
+    - name: regex-anchor-no-match
+      scopes:
+        static: function
+      features:
+        - string: /^bbbb/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches: {}

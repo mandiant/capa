@@ -1,0 +1,137 @@
+- name: and-both-present
+  description: and requires all children to match
+  rules:
+    - name: and-match
+      description: should match because the function contains both mov and number 0x10
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402000: number(0x10)
+  expect:
+    matches:
+      and-match:
+        - 0x402000
+
+- name: or-one-branch-present
+  description: or requires at least one child to match
+  rules:
+    - name: or-match
+      description: should match because one branch of the or is satisfied by number 0x10
+      scopes:
+        static: function
+      features:
+        - or:
+            - api: CreateFileW
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+  expect:
+    matches:
+      or-match:
+        - 0x402000
+
+- name: not-absent-feature
+  description: not succeeds when the child feature is absent
+  rules:
+    - name: not-match
+      description: should match because mov is present and number 0x20 is absent
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - number: 0x20
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches:
+      not-match:
+        - 0x402000
+
+- name: optional-absent-feature
+  description: optional does not prevent a match when the child feature is absent
+  rules:
+    - name: optional-match
+      description: should match even though the optional child is absent
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - optional:
+                - number: 0x30
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches:
+      optional-match:
+        - 0x402000
+
+- name: count-exact
+  description: count matches when the feature appears the exact number of times
+  rules:
+    - name: count-exact-match
+      description: should match because number 0x10 appears exactly twice
+      scopes:
+        static: function
+      features:
+        - count(number(0x10)): 2
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      count-exact-match:
+        - 0x402000
+
+- name: count-range
+  description: count matches when the feature count falls within the range
+  rules:
+    - name: count-range-match
+      description: should match because number 0x10 appears within the allowed range
+      scopes:
+        static: function
+      features:
+        - count(number(0x10)): (1, 2)
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      count-range-match:
+        - 0x402000
+
+- name: count-mismatch
+  description: count does not match when the feature count differs
+  rules:
+    - name: count-negative-no-match
+      description: should not match because number 0x10 does not appear three times
+      scopes:
+        static: function
+      features:
+        - count(number(0x10)): 3
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches: {}

@@ -1,0 +1,61 @@
+- name: function-scope-aggregates-basic-blocks
+  description: function scope sees features from all basic blocks in the function
+  rules:
+    - name: function-cross-basic-block
+      description: should match when function scope aggregates features from different basic blocks
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - mnemonic: add
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+     bb: 0x401010: basic block
+      insn: 0x401010: mnemonic(add)
+  expect:
+    matches:
+      function-cross-basic-block:
+        - 0x401000
+
+- name: basic-block-scope-does-not-aggregate
+  description: basic block scope only sees features within a single basic block
+  rules:
+    - name: basic-block-cross-basic-block
+      description: should not match because no single basic block contains both mnemonics
+      scopes:
+        static: basic block
+      features:
+        - and:
+            - mnemonic: mov
+            - mnemonic: add
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+     bb: 0x401010: basic block
+      insn: 0x401010: mnemonic(add)
+  expect:
+    matches: {}
+
+- name: instruction-scope-single-instruction
+  description: instruction scope matches at the single instruction containing the feature
+  rules:
+    - name: instruction-single-mnemonic
+      description: should match once at the instruction that contains mov
+      scopes:
+        static: instruction
+      features:
+        - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+     bb: 0x401010: basic block
+      insn: 0x401010: mnemonic(add)
+  expect:
+    matches:
+      instruction-single-mnemonic:
+        - 0x401000
