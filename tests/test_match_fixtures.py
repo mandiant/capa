@@ -386,7 +386,7 @@ def _get_fixture_flavor(path: Path, doc: dict[str, Any]) -> str:
 def _normalize_rule_doc(rule_doc: dict[str, Any], flavor: str) -> dict[str, Any]:
     if "meta" not in rule_doc:
         meta: dict[str, Any] = {}
-        for key in ("name", "description", "scopes", "authors", "att&ck", "mbc"):
+        for key in ("name", "namespace", "description", "scopes", "authors", "att&ck", "mbc", "lib"):
             if key in rule_doc:
                 meta[key] = rule_doc.pop(key)
         rule_doc["meta"] = meta
