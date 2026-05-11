@@ -224,3 +224,138 @@
     matches:
       os-any-goodbye:
         - 0x401000
+
+- name: os-any-matches-specific-os
+  description: rule with os any matches when extracted feature is a specific os
+  rules:
+    - name: os-any-wildcard
+      scopes:
+        static: function
+      features:
+        - and:
+            - os: any
+            - string: "Hello world"
+  features: |
+    func: 0x401000
+     func: 0x401000: string(Hello world)
+     bb: 0x401000: basic block
+      insn: 0x401000: os(windows)
+  expect:
+    matches:
+      os-any-wildcard:
+        - 0x401000
+
+- name: bytes-exact-match
+  description: bytes feature matches when extracted bytes are identical
+  rules:
+    - name: bytes-exact
+      scopes:
+        static: function
+      features:
+        - bytes: 90 90 90 90
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: bytes(90909090)
+  expect:
+    matches:
+      bytes-exact:
+        - 0x401000
+
+- name: bytes-prefix-match
+  description: bytes feature matches when extracted bytes start with the rule pattern
+  rules:
+    - name: bytes-prefix
+      scopes:
+        static: function
+      features:
+        - bytes: 90 90 90 90
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: bytes(9090909090909090)
+  expect:
+    matches:
+      bytes-prefix:
+        - 0x401000
+
+- name: bytes-no-match
+  description: bytes feature does not match when extracted bytes differ
+  rules:
+    - name: bytes-diff
+      scopes:
+        static: function
+      features:
+        - bytes: 90 90 90 90
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: bytes(00000000)
+  expect:
+    matches: {}
+
+- name: bytes-too-short
+  description: bytes feature does not match when extracted bytes are shorter than the pattern
+  rules:
+    - name: bytes-short
+      scopes:
+        static: function
+      features:
+        - bytes: 90 90 90 90
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: bytes(9090)
+  expect:
+    matches: {}
+
+- name: negative-number-match
+  description: negative number matches correctly
+  rules:
+    - name: negative-num
+      scopes:
+        static: function
+      features:
+        - number: -1
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(-1)
+  expect:
+    matches:
+      negative-num:
+        - 0x401000
+
+- name: number-zero-match
+  description: number zero matches correctly and is not confused with absence
+  rules:
+    - name: num-zero
+      scopes:
+        static: function
+      features:
+        - number: 0
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(0)
+  expect:
+    matches:
+      num-zero:
+        - 0x401000
+
+- name: characteristic-match
+  description: characteristic feature matches correctly
+  rules:
+    - name: char-nzxor
+      scopes:
+        static: function
+      features:
+        - characteristic: nzxor
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: characteristic(nzxor)
+  expect:
+    matches:
+      char-nzxor:
+        - 0x401000
