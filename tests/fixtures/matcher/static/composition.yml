@@ -54,6 +54,37 @@
       filesystem-any:
         - 0x401000
 
+- name: namespace-match-intermediate-prefix
+  description: namespace match at an intermediate level matches rules below it
+  rules:
+    - name: kernel32 CreateFile
+      namespace: file/create/kernel32
+      scopes:
+        static: function
+      features:
+        - api: CreateFile
+    - name: ntdll NtCreateFile
+      namespace: file/create/ntdll
+      scopes:
+        static: function
+      features:
+        - api: NtCreateFile
+    - name: any-file-create
+      scopes:
+        static: function
+      features:
+        - match: file/create
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFile)
+  expect:
+    matches:
+      kernel32 CreateFile:
+        - 0x401000
+      any-file-create:
+        - 0x401000
+
 - name: namespace-match-sibling-no-match
   description: namespace match does not match sibling namespaces
   rules:
