@@ -386,11 +386,8 @@ def get_extractor(
     elif backend == BACKEND_IDA:
         import capa.features.extractors.ida.idalib as idalib
 
-        if not idalib.has_idalib():
-            raise RuntimeError("cannot find IDA idalib module.")
-
-        if not idalib.load_idalib():
-            raise RuntimeError("failed to load IDA idalib module.")
+        if not idalib.is_idalib_installed():
+            raise RuntimeError("idalib not available.")
 
         import idapro
         import ida_auto

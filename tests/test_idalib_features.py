@@ -16,30 +16,26 @@ import logging
 import pytest
 import fixtures
 
-import capa.features.extractors.ida.idalib as idalib
 from capa.features.file import FunctionName
 from capa.features.insn import API
 from capa.features.common import Characteristic
 
 logger = logging.getLogger(__name__)
 
-idalib_present = idalib.has_idalib()
-if idalib_present:
-    try:
-        if True:
-            # in order to use idalib, we have to import the idapro package
-            # which manipulates the search path as a side effect.
-            # we have to do this before importing ida_* packages.
-            # but isort wants to put idapro after ida_kernwin, so we use
-            # this dumb branch to keep the ordering correct.
-            import idapro  # noqa: F401 [imported but unused]
-        import ida_kernwin
+try:
+    if True:
+        # in order to use idalib, we have to import the idapro package
+        # which manipulates the search path as a side effect.
+        # we have to do this before importing ida_* packages.
+        # but isort wants to put idapro after ida_kernwin, so we use
+        # this dumb branch to keep the ordering correct.
+        import idapro  # noqa: F401 [imported but unused]
+    import ida_kernwin
 
-        kernel_version: str = ida_kernwin.get_kernel_version()
-    except ImportError:
-        idalib_present = False
-        kernel_version = "0.0"
-else:
+    kernel_version: str = ida_kernwin.get_kernel_version()
+    idalib_present = True
+except ImportError:
+    idalib_present = False
     kernel_version = "0.0"
 
 

@@ -894,11 +894,8 @@ def get_idalib_extractor(path: Path):
     import capa.features.extractors.ida.idalib as idalib
     import capa.features.extractors.ida.extractor
 
-    if not idalib.has_idalib():
-        raise RuntimeError("cannot find IDA idalib module.")
-
-    if not idalib.load_idalib():
-        raise RuntimeError("failed to load IDA idalib module.")
+    if not idalib.is_idalib_installed():
+        raise RuntimeError("idalib is not available.")
 
     _check_stale_idalib_files(path)
 
