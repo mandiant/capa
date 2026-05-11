@@ -41,8 +41,9 @@ from capa.features.extractors.base_extractor import (
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 logger = logging.getLogger(__name__)
-CD = Path(__file__).resolve().parent
-FIXTURE_MANIFEST_DIR = CD / "fixtures" / "features"
+_FIXTURES_DIR = Path(__file__).resolve().parent
+CD = _FIXTURES_DIR.parent
+FIXTURE_MANIFEST_DIR = _FIXTURES_DIR / "features"
 DNFILE_TESTFILES = CD / "data" / "dotnet" / "dnfile-testfiles"
 
 
