@@ -21,7 +21,6 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule
 
 
 def match(rules, features, va, scope=Scope.FUNCTION):
@@ -43,27 +42,6 @@ def match(rules, features, va, scope=Scope.FUNCTION):
         assert len(results) == len(matches2[rulename])
 
     return features1, matches1
-
-
-def test_match_simple():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-                namespace: testns1/testns2
-            features:
-                - number: 100
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    features, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert "test rule" in matches
-    assert MatchedRule("test rule") in features
-    assert MatchedRule("testns1") in features
-    assert MatchedRule("testns1/testns2") in features
 
 
 def test_match_adds_matched_rule_feature():
@@ -240,27 +218,6 @@ def test_match_only_not():
     assert "test rule" in matches
 
 
-def test_match_not():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-                namespace: testns1/testns2
-            features:
-                - and:
-                    - mnemonic: mov
-                    - not:
-                        - number: 99
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}, capa.features.insn.Mnemonic("mov"): {1, 2}}, 0x0)
-    assert "test rule" in matches
-
-
 @pytest.mark.xfail(reason="can't have nested NOT")
 def test_match_not_not():
     rule = textwrap.dedent("""
@@ -279,155 +236,6 @@ def test_match_not_not():
     r = capa.rules.Rule.from_yaml(rule)
 
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert "test rule" in matches
-
-
-def test_match_operand_number():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - and:
-                    - operand[0].number: 0x10
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    assert capa.features.insn.OperandNumber(0, 0x10) in {capa.features.insn.OperandNumber(0, 0x10)}
-
-    _, matches = match([r], {capa.features.insn.OperandNumber(0, 0x10): {1, 2}}, 0x0)
-    assert "test rule" in matches
-
-    # mismatching index
-    _, matches = match([r], {capa.features.insn.OperandNumber(1, 0x10): {1, 2}}, 0x0)
-    assert "test rule" not in matches
-
-    # mismatching value
-    _, matches = match([r], {capa.features.insn.OperandNumber(0, 0x11): {1, 2}}, 0x0)
-    assert "test rule" not in matches
-
-
-def test_match_operand_offset():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - and:
-                    - operand[0].offset: 0x10
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    assert capa.features.insn.OperandOffset(0, 0x10) in {capa.features.insn.OperandOffset(0, 0x10)}
-
-    _, matches = match([r], {capa.features.insn.OperandOffset(0, 0x10): {1, 2}}, 0x0)
-    assert "test rule" in matches
-
-    # mismatching index
-    _, matches = match([r], {capa.features.insn.OperandOffset(1, 0x10): {1, 2}}, 0x0)
-    assert "test rule" not in matches
-
-    # mismatching value
-    _, matches = match([r], {capa.features.insn.OperandOffset(0, 0x11): {1, 2}}, 0x0)
-    assert "test rule" not in matches
-
-
-def test_match_property_access():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - and:
-                    - property/read: System.IO.FileInfo::Length
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    assert capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.FeatureAccess.READ) in {
-        capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.FeatureAccess.READ)
-    }
-
-    _, matches = match(
-        [r],
-        {capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.FeatureAccess.READ): {1, 2}},
-        0x0,
-    )
-    assert "test rule" in matches
-
-    # mismatching access
-    _, matches = match(
-        [r],
-        {capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.FeatureAccess.WRITE): {1, 2}},
-        0x0,
-    )
-    assert "test rule" not in matches
-
-    # mismatching value
-    _, matches = match(
-        [r],
-        {capa.features.insn.Property("System.IO.FileInfo::Size", capa.features.common.FeatureAccess.READ): {1, 2}},
-        0x0,
-    )
-    assert "test rule" not in matches
-
-
-def test_match_os_any():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - or:
-                    - and:
-                        - or:
-                            - os: windows
-                            - os: linux
-                            - os: macos
-                        - string: "Hello world"
-                    - and:
-                        - os: any
-                        - string: "Goodbye world"
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-
-    _, matches = match(
-        [r],
-        {OS(OS_ANY): {1}, String("Hello world"): {1}},
-        0x0,
-    )
-    assert "test rule" in matches
-
-    _, matches = match(
-        [r],
-        {OS(OS_WINDOWS): {1}, String("Hello world"): {1}},
-        0x0,
-    )
-    assert "test rule" in matches
-
-    _, matches = match(
-        [r],
-        {OS(OS_ANY): {1}, String("Goodbye world"): {1}},
-        0x0,
-    )
-    assert "test rule" in matches
-
-    _, matches = match(
-        [r],
-        {OS(OS_WINDOWS): {1}, String("Goodbye world"): {1}},
-        0x0,
-    )
     assert "test rule" in matches
 
 

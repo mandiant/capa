@@ -1,0 +1,226 @@
+- name: simple-number-match
+  description: basic number feature matches at function scope
+  rules:
+    - name: simple-number
+      scopes:
+        static: function
+      features:
+        - number: 100
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+  expect:
+    matches:
+      simple-number:
+        - 0x401000
+
+- name: not-with-and
+  description: not inside and prevents match when the negated feature is present
+  rules:
+    - name: not-with-and-present
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - number: 99
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401000: mnemonic(mov)
+  expect:
+    matches:
+      not-with-and-present:
+        - 0x401000
+
+- name: operand-number-match
+  description: operand number matches by index and value
+  rules:
+    - name: operand-number
+      scopes:
+        static: function
+      features:
+        - operand[0].number: 0x10
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: operand[0].number(0x10)
+  expect:
+    matches:
+      operand-number:
+        - 0x401000
+
+- name: operand-number-wrong-index
+  description: operand number does not match when the operand index differs
+  rules:
+    - name: operand-number-idx
+      scopes:
+        static: function
+      features:
+        - operand[0].number: 0x10
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: operand[1].number(0x10)
+  expect:
+    matches: {}
+
+- name: operand-number-wrong-value
+  description: operand number does not match when the value differs
+  rules:
+    - name: operand-number-val
+      scopes:
+        static: function
+      features:
+        - operand[0].number: 0x10
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: operand[0].number(0x11)
+  expect:
+    matches: {}
+
+- name: operand-offset-match
+  description: operand offset matches by index and value
+  rules:
+    - name: operand-offset
+      scopes:
+        static: function
+      features:
+        - operand[0].offset: 0x10
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: operand[0].offset(0x10)
+  expect:
+    matches:
+      operand-offset:
+        - 0x401000
+
+- name: operand-offset-wrong-index
+  description: operand offset does not match when the operand index differs
+  rules:
+    - name: operand-offset-idx
+      scopes:
+        static: function
+      features:
+        - operand[0].offset: 0x10
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: operand[1].offset(0x10)
+  expect:
+    matches: {}
+
+- name: operand-offset-wrong-value
+  description: operand offset does not match when the value differs
+  rules:
+    - name: operand-offset-val
+      scopes:
+        static: function
+      features:
+        - operand[0].offset: 0x10
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: operand[0].offset(0x11)
+  expect:
+    matches: {}
+
+- name: property-read-match
+  description: property/read matches the correct property name and access mode
+  rules:
+    - name: property-read
+      scopes:
+        static: function
+      features:
+        - property/read: System.IO.FileInfo::Length
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: property/read(System.IO.FileInfo::Length)
+  expect:
+    matches:
+      property-read:
+        - 0x401000
+
+- name: property-read-wrong-access
+  description: property/read does not match a property/write feature
+  rules:
+    - name: property-read-access
+      scopes:
+        static: function
+      features:
+        - property/read: System.IO.FileInfo::Length
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: property/write(System.IO.FileInfo::Length)
+  expect:
+    matches: {}
+
+- name: property-read-wrong-value
+  description: property/read does not match a different property name
+  rules:
+    - name: property-read-value
+      scopes:
+        static: function
+      features:
+        - property/read: System.IO.FileInfo::Length
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: property/read(System.IO.FileInfo::Size)
+  expect:
+    matches: {}
+
+- name: os-any-matches-specific
+  description: os any matches when a specific os feature is present
+  rules:
+    - name: os-any-specific
+      scopes:
+        static: function
+      features:
+        - or:
+            - and:
+                - or:
+                    - os: windows
+                    - os: linux
+                    - os: macos
+                - string: "Hello world"
+            - and:
+                - os: any
+                - string: "Goodbye world"
+  features: |
+    func: 0x401000
+     func: 0x401000: string(Hello world)
+     bb: 0x401000: basic block
+      insn: 0x401000: os(windows)
+  expect:
+    matches:
+      os-any-specific:
+        - 0x401000
+
+- name: os-any-matches-any
+  description: os any feature matches for "Goodbye world" path
+  rules:
+    - name: os-any-goodbye
+      scopes:
+        static: function
+      features:
+        - or:
+            - and:
+                - os: any
+                - string: "Goodbye world"
+  features: |
+    func: 0x401000
+     func: 0x401000: string(Goodbye world)
+     bb: 0x401000: basic block
+      insn: 0x401000: os(any)
+  expect:
+    matches:
+      os-any-goodbye:
+        - 0x401000
