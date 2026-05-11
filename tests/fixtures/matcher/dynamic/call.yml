@@ -1,0 +1,17 @@
+- name: call-scope-single-api
+  description: call scope matches a single API at the correct call
+  rules:
+    - name: call-api
+      scopes:
+        dynamic: call
+      features:
+        - api: GetSystemTimeAsFileTime
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+  expect:
+    matches:
+      call-api:
+        - 8

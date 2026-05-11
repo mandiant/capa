@@ -45,3 +45,228 @@
       call: 12: api(RtlAddVectoredExceptionHandler)
   expect:
     matches: {}
+
+- name: span-with-count
+  description: span matches when count constraint is satisfied within the window
+  rules:
+    - name: span-count
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - api: GetSystemTimeAsFileTime
+            - api: GetSystemInfo
+            - api: LdrGetDllHandle
+            - api: LdrGetProcedureAddress
+            - count(api(LdrGetDllHandle)): 2
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(LdrGetDllHandle)
+  expect:
+    matches:
+      span-count:
+        - 12
+
+- name: span-length-too-short
+  description: span does not match when features are outside the span window
+  options:
+    span size: 5
+  rules:
+    - name: span-length
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - api: GetSystemTimeAsFileTime
+            - api: RtlAddVectoredExceptionHandler
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 12: api(LdrGetDllHandle)
+      call: 13: api(LdrGetProcedureAddress)
+      call: 14: api(RtlAddVectoredExceptionHandler)
+  expect:
+    matches: {}
+
+- name: span-call-subscope
+  description: call subscope within span matches features at a single call
+  rules:
+    - name: span-call-sub
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - call:
+                - and:
+                    - api: LdrGetProcedureAddress
+                    - string: AddVectoredExceptionHandler
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(LdrGetDllHandle)
+  expect:
+    matches:
+      span-call-sub:
+        - 11
+
+- name: span-nested-span-subscopes
+  description: nested span subscopes match when each sub-span is satisfied
+  rules:
+    - name: span-nested
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - span of calls:
+                - description: resolve add VEH
+                - and:
+                    - api: LdrGetDllHandle
+                    - api: LdrGetProcedureAddress
+                    - string: AddVectoredExceptionHandler
+            - span of calls:
+                - description: resolve remove VEH
+                - and:
+                    - api: LdrGetDllHandle
+                    - api: LdrGetProcedureAddress
+                    - string: RemoveVectoredExceptionHandler
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(LdrGetDllHandle)
+      call: 13: api(LdrGetProcedureAddress)
+      call: 13: string(RemoveVectoredExceptionHandler)
+  expect:
+    matches:
+      span-nested:
+        - 13
+
+- name: span-example-practical
+  description: practical span pattern combining call subscopes with direct API feature
+  rules:
+    - name: span-practical
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - call:
+                - and:
+                    - api: LdrGetDllHandle
+                    - string: "kernel32.dll"
+            - call:
+                - and:
+                    - api: LdrGetProcedureAddress
+                    - string: "AddVectoredExceptionHandler"
+            - api: RtlAddVectoredExceptionHandler
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 10: string(kernel32.dll)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(LdrGetDllHandle)
+      call: 12: string(kernel32.dll)
+      call: 13: api(LdrGetProcedureAddress)
+      call: 13: string(RemoveVectoredExceptionHandler)
+      call: 14: api(RtlAddVectoredExceptionHandler)
+  expect:
+    matches:
+      span-practical:
+        - 14
+
+- name: span-overlapping-single-event
+  description: overlapping spans that match on a single event return only the first match
+  rules:
+    - name: span-overlap
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - call:
+                - and:
+                    - api: LdrGetProcedureAddress
+                    - string: "AddVectoredExceptionHandler"
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(LdrGetDllHandle)
+      call: 13: api(LdrGetProcedureAddress)
+      call: 13: string(RemoveVectoredExceptionHandler)
+  expect:
+    matches:
+      span-overlap:
+        - 11
+
+- name: span-match-statements
+  description: match statements work within span-of-calls rules including namespace matching
+  rules:
+    - name: resolve add VEH
+      namespace: linking/runtime-linking/veh
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - api: LdrGetDllHandle
+            - api: LdrGetProcedureAddress
+            - string: AddVectoredExceptionHandler
+    - name: resolve remove VEH
+      namespace: linking/runtime-linking/veh
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - api: LdrGetDllHandle
+            - api: LdrGetProcedureAddress
+            - string: RemoveVectoredExceptionHandler
+    - name: resolve add and remove VEH
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - match: resolve add VEH
+            - match: resolve remove VEH
+    - name: has VEH runtime linking
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - match: linking/runtime-linking/veh
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 11: string(AddVectoredExceptionHandler)
+      call: 12: api(LdrGetDllHandle)
+      call: 13: api(LdrGetProcedureAddress)
+      call: 13: string(RemoveVectoredExceptionHandler)
+  expect:
+    matches:
+      resolve add VEH:
+        - 11
+        - 13
+      resolve remove VEH:
+        - 13
+      resolve add and remove VEH:
+        - 13
+      has VEH runtime linking:
+        - 11
