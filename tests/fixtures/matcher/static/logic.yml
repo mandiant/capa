@@ -504,3 +504,209 @@
     matches:
       count-offset-more:
         - 0x401000
+
+- name: and-one-missing
+  description: and does not match when one operand is absent
+  rules:
+    - name: and-incomplete
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches: {}
+
+- name: or-no-branches-present
+  description: or does not match when no branches are satisfied
+  rules:
+    - name: or-none
+      scopes:
+        static: function
+      features:
+        - or:
+            - api: CreateFileW
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches: {}
+
+- name: not-present-prevents-match
+  description: not blocks a match when the negated feature is present
+  rules:
+    - name: not-blocks
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402000: number(0x10)
+  expect:
+    matches: {}
+
+- name: optional-present-still-matches
+  description: optional does not prevent a match when the child feature is present
+  rules:
+    - name: optional-present
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - optional:
+                - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      optional-present:
+        - 0x402000
+
+- name: count-inside-not
+  description: not negates a count that is satisfied
+  rules:
+    - name: count-not
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - count(number(100)): 2
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches: {}
+
+- name: count-inside-not-unsatisfied
+  description: not succeeds when the count is not satisfied
+  rules:
+    - name: count-not-ok
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - count(number(100)): 3
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches:
+      count-not-ok:
+        - 0x401000
+
+- name: deeply-nested-logic
+  description: three levels of nesting evaluate correctly
+  rules:
+    - name: deep-nest
+      scopes:
+        static: function
+      features:
+        - and:
+            - or:
+                - and:
+                    - number: 1
+                    - number: 2
+                - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401002: number(2)
+      insn: 0x401004: number(4)
+  expect:
+    matches:
+      deep-nest:
+        - 0x401000
+
+- name: deeply-nested-logic-inner-fail
+  description: deeply nested logic fails when inner and is not satisfied
+  rules:
+    - name: deep-nest-fail
+      scopes:
+        static: function
+      features:
+        - and:
+            - or:
+                - and:
+                    - number: 1
+                    - number: 2
+                - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401004: number(4)
+  expect:
+    matches: {}
+
+- name: three-or-more-at-threshold
+  description: N-or-more matches when exactly N children are satisfied
+  rules:
+    - name: three-or-more
+      scopes:
+        static: function
+      features:
+        - 3 or more:
+            - number: 1
+            - number: 2
+            - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401002: number(2)
+      insn: 0x401004: number(3)
+  expect:
+    matches:
+      three-or-more:
+        - 0x401000
+
+- name: three-or-more-below-threshold
+  description: N-or-more does not match when fewer than N children are satisfied
+  rules:
+    - name: three-or-more-fail
+      scopes:
+        static: function
+      features:
+        - 3 or more:
+            - number: 1
+            - number: 2
+            - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401002: number(2)
+  expect:
+    matches: {}
