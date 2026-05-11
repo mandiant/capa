@@ -21,6 +21,7 @@ import uuid
 import struct
 import logging
 import binascii
+import functools
 import collections
 from enum import Enum
 from typing import Any, Union, Callable, Iterator, Optional, cast
@@ -444,6 +445,12 @@ def parse_feature(key: str):
         return capa.features.common.Namespace
     elif key == "property":
         return capa.features.insn.Property
+    elif key.startswith("operand[") and key.endswith("].number"):
+        index = int(key[len("operand[") : -len("].number")])
+        return functools.partial(capa.features.insn.OperandNumber, index)
+    elif key.startswith("operand[") and key.endswith("].offset"):
+        index = int(key[len("operand[") : -len("].offset")])
+        return functools.partial(capa.features.insn.OperandOffset, index)
     else:
         raise InvalidRule(f"unexpected statement: {key}")
 
