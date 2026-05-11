@@ -135,3 +135,200 @@
       insn: 0x402002: number(0x10)
   expect:
     matches: {}
+
+- name: count-exact-not-enough
+  description: count does not match when there are fewer occurrences than required
+  rules:
+    - name: count-exact-not-enough
+      scopes:
+        static: function
+      features:
+        - count(number(100)): 2
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+  expect:
+    matches: {}
+
+- name: count-exact-too-many
+  description: count does not match when there are more occurrences than required
+  rules:
+    - name: count-exact-too-many
+      scopes:
+        static: function
+      features:
+        - count(number(100)): 2
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches: {}
+
+- name: count-range-at-lower-bound
+  description: count range matches at the lower bound
+  rules:
+    - name: count-range-lower
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+  expect:
+    matches:
+      count-range-lower:
+        - 0x401000
+
+- name: count-range-at-upper-bound
+  description: count range matches at the upper bound
+  rules:
+    - name: count-range-upper
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches:
+      count-range-upper:
+        - 0x401000
+
+- name: count-range-below-lower-bound
+  description: count range does not match when below the lower bound
+  rules:
+    - name: count-range-below
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+  expect:
+    matches: {}
+
+- name: count-range-above-upper-bound
+  description: count range does not match when above the upper bound
+  rules:
+    - name: count-range-above
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+      insn: 0x401006: number(100)
+  expect:
+    matches: {}
+
+- name: count-zero-absent
+  description: count zero matches when the feature is absent
+  rules:
+    - name: count-zero-absent
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): 0
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+  expect:
+    matches:
+      count-zero-absent:
+        - 0x401000
+
+- name: count-zero-present
+  description: count zero does not match when the feature is present
+  rules:
+    - name: count-zero-present
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): 0
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401000: number(100)
+  expect:
+    matches: {}
+
+- name: count-range-with-zero-absent
+  description: count range including zero matches when feature is absent
+  rules:
+    - name: count-range-zero
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): (0, 1)
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+  expect:
+    matches:
+      count-range-zero:
+        - 0x401000
+
+- name: count-range-with-zero-one-present
+  description: count range including zero matches when feature appears once
+  rules:
+    - name: count-range-zero-one
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): (0, 1)
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+  expect:
+    matches:
+      count-range-zero-one:
+        - 0x401000
+
+- name: count-range-with-zero-too-many
+  description: count range including zero does not match when feature appears too many times
+  rules:
+    - name: count-range-zero-many
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): (0, 1)
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches: {}
