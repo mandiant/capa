@@ -59,3 +59,83 @@
     matches:
       instruction-single-mnemonic:
         - 0x401000
+
+- name: function-scope-isolation
+  description: features from one function do not leak into another function's match
+  rules:
+    - name: both-features
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - mnemonic: add
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(add)
+  expect:
+    matches: {}
+
+- name: file-scope-basic
+  description: file scope matches features extracted at file level
+  rules:
+    - name: file-import
+      scopes:
+        static: file
+      features:
+        - import: kernel32.CreateFileW
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+    file: 0x401000: import(kernel32.CreateFileW)
+  expect:
+    matches:
+      file-import:
+        - "no address"
+
+- name: basic-block-scope-match
+  description: basic block scope matches when a single BB contains all required features
+  rules:
+    - name: bb-both
+      scopes:
+        static: basic block
+      features:
+        - and:
+            - mnemonic: mov
+            - mnemonic: add
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: mnemonic(add)
+     bb: 0x401010: basic block
+      insn: 0x401010: mnemonic(xor)
+  expect:
+    matches:
+      bb-both:
+        - 0x401000
+
+- name: instruction-scope-multiple-matches
+  description: instruction scope reports multiple matching instructions
+  rules:
+    - name: insn-multi
+      scopes:
+        static: instruction
+      features:
+        - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: mnemonic(add)
+      insn: 0x401004: mnemonic(mov)
+  expect:
+    matches:
+      insn-multi:
+        - 0x401000
+        - 0x401004
