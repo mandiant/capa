@@ -624,7 +624,14 @@
       "location": "function=0x404970,bb=0x404970,insn=0x40499F",
       "feature": "string: \r\n\u0000:ht",
       "expected": false,
-      "explanation": "regression test for issue #1271: should not extract overlapping string spanning a NUL byte"
+      "explanation": "regression test for issue #1271: should not extract overlapping string spanning a NUL byte",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "basic blocks do not align with Ghidra analysis"
+        }
+      ]
     },
     {
       "file": "pma16-01",
@@ -1048,37 +1055,79 @@
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: __GI_connect",
-      "explanation": "API from ELF symbol table alternative name"
+      "explanation": "API from ELF symbol table alternative name",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract ELF symbol table alternative names"
+        }
+      ]
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: connect",
-      "explanation": "API from ELF symbol table alternative name"
+      "explanation": "API from ELF symbol table alternative name",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract ELF symbol table alternative names"
+        }
+      ]
     },
     {
       "file": "2bf18d",
       "location": "function=0x4027b3,bb=0x402861,insn=0x40286d",
       "feature": "api: __libc_connect",
-      "explanation": "API from ELF symbol table alternative name"
+      "explanation": "API from ELF symbol table alternative name",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract ELF symbol table alternative names"
+        }
+      ]
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: __GI_connect",
-      "explanation": "function name from ELF symbol table alternative name"
+      "explanation": "function name from ELF symbol table alternative name",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract ELF symbol table alternative names"
+        }
+      ]
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: connect",
-      "explanation": "function name from ELF symbol table alternative name"
+      "explanation": "function name from ELF symbol table alternative name",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract ELF symbol table alternative names"
+        }
+      ]
     },
     {
       "file": "2bf18d",
       "location": "function=0x4088a4",
       "feature": "function-name: __libc_connect",
-      "explanation": "function name from ELF symbol table alternative name"
+      "explanation": "function name from ELF symbol table alternative name",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract ELF symbol table alternative names"
+        }
+      ]
     },
     {
       "file": "mimikatz",
