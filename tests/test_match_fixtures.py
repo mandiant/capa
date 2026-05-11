@@ -732,11 +732,22 @@ FIXTURES = [fixture for path in FIXTURE_PATHS for fixture in load_fixtures(path)
 FIXTURE_IDS = [f"{fixture.path.relative_to(FIXTURE_DIR)}[{fixture.index}]::{fixture.name}" for fixture in FIXTURES]
 
 
+def _enable_paranoid_matching(patch: pytest.MonkeyPatch, ruleset: capa.rules.RuleSet) -> None:
+    original_match = ruleset.match
+
+    def paranoid_match(scope, features, addr, paranoid=False):
+        return original_match(scope, features, addr, paranoid=True)
+
+    patch.setattr(ruleset, "match", paranoid_match)
+
+
 @pytest.mark.parametrize("fixture", FIXTURES, ids=FIXTURE_IDS)
 def test_match_fixture(fixture: MatchFixture):
     with pytest.MonkeyPatch.context() as patch:
         if fixture.span_size is not None:
             patch.setattr(capa.capabilities.dynamic, "SPAN_SIZE", fixture.span_size)
+
+        _enable_paranoid_matching(patch, fixture.ruleset)
 
         capabilities = capa.capabilities.common.find_capabilities(
             fixture.ruleset,
