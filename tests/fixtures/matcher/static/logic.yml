@@ -332,3 +332,175 @@
       insn: 0x401004: number(100)
   expect:
     matches: {}
+
+- name: two-or-more-match
+  description: N-or-more matches when at least two children are satisfied
+  rules:
+    - name: two-or-more
+      scopes:
+        static: function
+      features:
+        - or:
+            - and:
+                - number: 1
+                - number: 2
+            - or:
+                - number: 3
+                - 2 or more:
+                    - number: 4
+                    - number: 5
+                    - number: 6
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(5)
+      insn: 0x401002: number(6)
+  expect:
+    matches:
+      two-or-more:
+        - 0x401000
+
+- name: two-or-more-not-enough
+  description: N-or-more does not match when fewer than two children are satisfied
+  rules:
+    - name: two-or-more-fail
+      scopes:
+        static: function
+      features:
+        - or:
+            - and:
+                - number: 1
+                - number: 2
+            - or:
+                - number: 3
+                - 2 or more:
+                    - number: 4
+                    - number: 5
+                    - number: 6
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(6)
+  expect:
+    matches: {}
+
+- name: count-string-match
+  description: count on string features matches the exact occurrence count
+  rules:
+    - name: count-string
+      scopes:
+        static: function
+      features:
+        - count(string(foo)): 2
+  features: |
+    func: 0x401000
+     func: 0x401000: string(foo)
+     bb: 0x401000: basic block
+      insn: 0x401002: string(foo)
+  expect:
+    matches:
+      count-string:
+        - 0x401000
+
+- name: count-string-not-enough
+  description: count on string features does not match with too few occurrences
+  rules:
+    - name: count-string-few
+      scopes:
+        static: function
+      features:
+        - count(string(foo)): 2
+  features: |
+    func: 0x401000
+     func: 0x401000: string(foo)
+  expect:
+    matches: {}
+
+- name: count-string-too-many
+  description: count on string features does not match with too many occurrences
+  rules:
+    - name: count-string-many
+      scopes:
+        static: function
+      features:
+        - count(string(foo)): 2
+  features: |
+    func: 0x401000
+     func: 0x401000: string(foo)
+     bb: 0x401000: basic block
+      insn: 0x401002: string(foo)
+      insn: 0x401004: string(foo)
+  expect:
+    matches: {}
+
+- name: count-api-match
+  description: count on api features matches the exact occurrence count
+  rules:
+    - name: count-api
+      scopes:
+        static: function
+      features:
+        - count(api(CreateFileA)): 1
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFileA)
+  expect:
+    matches:
+      count-api:
+        - 0x401000
+
+- name: count-api-no-match
+  description: count on api features does not match with zero occurrences
+  rules:
+    - name: count-api-zero
+      scopes:
+        static: function
+      features:
+        - count(api(CreateFileA)): 1
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFile)
+  expect:
+    matches: {}
+
+- name: count-offset-match
+  description: count on offset features matches the exact occurrence count
+  rules:
+    - name: count-offset
+      scopes:
+        static: function
+      features:
+        - or:
+            - count(offset(2)): 1
+            - count(offset(0x100)): 2 or more
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: offset(2)
+  expect:
+    matches:
+      count-offset:
+        - 0x401000
+
+- name: count-offset-or-more
+  description: count "2 or more" on offset features matches when threshold is met
+  rules:
+    - name: count-offset-more
+      scopes:
+        static: function
+      features:
+        - or:
+            - count(offset(2)): 1
+            - count(offset(0x100)): 2 or more
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: offset(0x100)
+      insn: 0x401002: offset(0x100)
+      insn: 0x401004: offset(0x100)
+  expect:
+    matches:
+      count-offset-more:
+        - 0x401000

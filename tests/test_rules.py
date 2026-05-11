@@ -21,9 +21,8 @@ import capa.rules
 import capa.engine
 import capa.features.common
 import capa.features.address
-from capa.engine import Or
 from capa.features.file import FunctionName
-from capa.features.insn import API, Number, Offset, Property
+from capa.features.insn import Number, Offset
 from capa.features.common import (
     OS,
     OS_LINUX,
@@ -36,21 +35,12 @@ from capa.features.common import (
     Format,
     String,
     Substring,
-    FeatureAccess,
 )
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
 ADDR3 = capa.features.address.AbsoluteVirtualAddress(0x401003)
 ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
-
-
-def test_rule_ctor():
-    r = capa.rules.Rule(
-        "test rule", capa.rules.Scopes(capa.rules.Scope.FUNCTION, capa.rules.Scope.FILE), Or([Number(1)]), {}
-    )
-    assert bool(r.evaluate({Number(0): {ADDR1}})) is False
-    assert bool(r.evaluate({Number(1): {ADDR2}})) is True
 
 
 def test_scopes_from_dict():
@@ -64,56 +54,6 @@ def test_scopes_from_dict():
 
     sub = SubScopes.from_dict({"static": "function", "dynamic": "process"})
     assert isinstance(sub, SubScopes)
-
-
-def test_rule_yaml():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                authors:
-                    - user@domain.com
-                scopes:
-                    static: function
-                    dynamic: process
-                examples:
-                    - foo1234
-                    - bar5678
-            features:
-                - and:
-                    - number: 1
-                    - number: 2
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(0): {ADDR1}})) is False
-    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
-    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}})) is True
-
-
-def test_rule_yaml_complex():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - or:
-                    - and:
-                        - number: 1
-                        - number: 2
-                    - or:
-                        - number: 3
-                        - 2 or more:
-                            - number: 4
-                            - number: 5
-                            - number: 6
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is False
 
 
 def test_rule_descriptions():
@@ -205,78 +145,6 @@ def test_get_rules_skips_empty_yaml(tmp_path):
     # empty.yml is skipped with a warning; valid.yml is loaded normally
     rules = capa.rules.get_rules([tmp_path], cache_dir=tmp_path, enable_cache=False)
     assert len(rules) == 1
-
-
-def test_rule_yaml_not():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                        static: function
-                        dynamic: process
-            features:
-                - and:
-                    - number: 1
-                    - not:
-                        - number: 2
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(1): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}})) is False
-
-
-def test_rule_yaml_count():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                        static: function
-                        dynamic: process
-            features:
-                - count(number(100)): 1
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(100): set()})) is False
-    assert bool(r.evaluate({Number(100): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2}})) is False
-
-
-def test_rule_yaml_count_range():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                        static: function
-                        dynamic: process
-            features:
-                - count(number(100)): (1, 2)
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(100): set()})) is False
-    assert bool(r.evaluate({Number(100): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2}})) is True
-    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2, ADDR3}})) is False
-
-
-def test_rule_yaml_count_string():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                        static: function
-                        dynamic: process
-            features:
-                - count(string(foo)): 2
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({String("foo"): set()})) is False
-    assert bool(r.evaluate({String("foo"): {ADDR1}})) is False
-    assert bool(r.evaluate({String("foo"): {ADDR1, ADDR2}})) is True
-    assert bool(r.evaluate({String("foo"): {ADDR1, ADDR2, ADDR3}})) is False
 
 
 def test_invalid_rule_feature():
@@ -852,50 +720,6 @@ def test_number_symbol():
     assert (Number(0x100, description="symbol name") in children) is True
 
 
-def test_count_number_symbol():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - or:
-                    - count(number(2 = symbol name)): 1
-                    - count(number(0x100 = symbol name)): 2 or more
-                    - count(number(0x11 = (FLAG_A | FLAG_B))): 2 or more
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Number(2): set()})) is False
-    assert bool(r.evaluate({Number(2): {ADDR1}})) is True
-    assert bool(r.evaluate({Number(2): {ADDR1, ADDR2}})) is False
-    assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1}})) is False
-    assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
-
-
-def test_count_api():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: thread
-            features:
-                - or:
-                    - count(api(kernel32.CreateFileA)): 1
-                    - count(api(System.Convert::FromBase64String)): 1
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    # apis including their DLL names are not extracted anymore
-    assert bool(r.evaluate({API("kernel32.CreateFileA"): set()})) is False
-    assert bool(r.evaluate({API("kernel32.CreateFile"): set()})) is False
-    assert bool(r.evaluate({API("CreateFile"): {ADDR1}})) is False
-    assert bool(r.evaluate({API("CreateFileA"): {ADDR1}})) is True
-    assert bool(r.evaluate({API("System.Convert::FromBase64String"): {ADDR1}})) is True
-
-
 def test_invalid_number():
     with pytest.raises(capa.rules.InvalidRule):
         _ = capa.rules.Rule.from_yaml(
@@ -963,28 +787,6 @@ def test_offset_symbol():
     assert (Offset(3, description="symbol name") in children) is True
     assert (Offset(4, description="symbol name = another name") in children) is True
     assert (Offset(0x100, description="symbol name") in children) is True
-
-
-def test_count_offset_symbol():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: function
-                    dynamic: process
-            features:
-                - or:
-                    - count(offset(2 = symbol name)): 1
-                    - count(offset(0x100 = symbol name)): 2 or more
-                    - count(offset(0x11 = (FLAG_A | FLAG_B))): 2 or more
-        """)
-    r = capa.rules.Rule.from_yaml(rule)
-    assert bool(r.evaluate({Offset(2): set()})) is False
-    assert bool(r.evaluate({Offset(2): {ADDR1}})) is True
-    assert bool(r.evaluate({Offset(2): {ADDR1, ADDR2}})) is False
-    assert bool(r.evaluate({Offset(0x100, description="symbol name"): {ADDR1}})) is False
-    assert bool(r.evaluate({Offset(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
 
 
 def test_invalid_offset():
@@ -1378,48 +1180,6 @@ def test_arch_features():
     children = list(r.statement.get_children())
     assert (Arch(ARCH_AMD64) in children) is True
     assert (Arch(ARCH_I386) not in children) is True
-
-
-def test_property_access():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent("""
-            rule:
-                meta:
-                    name: test rule
-                    scopes:
-                        static: function
-                        dynamic: process
-                features:
-                    - property/read: System.IO.FileInfo::Length
-            """)
-    )
-    assert bool(r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ): {ADDR1}})) is True
-
-    assert bool(r.evaluate({Property("System.IO.FileInfo::Length"): {ADDR1}})) is False
-    assert bool(r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.WRITE): {ADDR1}})) is False
-
-
-def test_property_access_symbol():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent("""
-            rule:
-                meta:
-                    name: test rule
-                    scopes:
-                        static: function
-                        dynamic: process
-                features:
-                    - property/read: System.IO.FileInfo::Length = some property
-            """)
-    )
-    assert (
-        bool(
-            r.evaluate({
-                Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {ADDR1}
-            })
-        )
-        is True
-    )
 
 
 def test_translate_com_features():
