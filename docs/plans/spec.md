@@ -76,9 +76,12 @@ Each block has:
 
 ### Connecting spine
 
-A vertical spine on the right side of the output connects annotation labels
-to the rule name at the top of the block. This makes it visually clear which
-rule each feature contributes to:
+A vertical spine connects annotation labels to the rule name at the top of
+the block. This makes it visually clear which rule each feature contributes
+to.
+
+**Vertical layout** (narrow terminal, or no pseudocode): the spine runs on
+the right margin:
 
 ```
  rule name found in sub_10001060 @ 0x10001060
@@ -87,7 +90,6 @@ rule each feature contributes to:
                                                                              │
      disassembly                                                             │
                                                                              │
- 0x10001074 │ lea    ecx, [esp+1208h+WSAData]                               │
  0x1000107E │ call   ds:WSAStartup                                          │
             │        ┬─────────                                              │
             │        └── api: WSAStartup ───────────────────────────────────┤
@@ -99,8 +101,44 @@ rule each feature contributes to:
             │        └── api: socket ───────────────────────────────────────┘
 ```
 
-All spine and annotation connectors are yellow. The `┬───` underline and
-`└───┐` connector visually link the rule name to the spine. Characters:
+**Side-by-side layout** (wide terminal with pseudocode available): the spine
+runs down the center as a column divider between disassembly and pseudocode:
+
+```
+ rule name found in sub_10001060 @ 0x10001060
+ ┬────────
+ └──────────────────────────────────────────────────────────┐
+                                                            │
+     disassembly                                            │  pseudocode
+                                                            │
+ 0x1000107E │ call   ds:WSAStartup                         │     3 │ WSAStartup(0x202, &wsadata);
+            │        ┬─────────                             │       │ ─────────┬
+            │        └── api: WSAStartup ──────────────────┤── api: WSAStartup┘
+ 0x1000108C │ push   6                                     │     4 │ fd = socket(AF_INET, SOCK_STREAM, 6);
+            │        ┬                                      │       │        ─────┬ ┬  ┬  ┬
+            │        └── number: 0x6 = IPPROTO_TCP ────────┼────────────── api: socket┘ │  │  │
+ 0x10001090 │ push   1                                     ├──── number: 0x2 = AF_INET┘  │  │
+            │        ┬                                      ├───── number: 0x1 = SOCK_STREAM┘  │
+            │        └── number: 0x1 = SOCK_STREAM ────────┼──────── number: 0x6 = IPPROTO_TCP┘
+ 0x10001092 │ call   ds:socket                             │     5 │ ...
+            │        ┬─────                                 │
+            │        └── api: socket ──────────────────────┘
+                                                            │
+```
+
+Left-side annotation labels connect to the center spine with `─┤` (or `─┘`
+for the last). Right-side annotation labels are mirrored: `── label┘` with
+the label text shifted left into the gutter area so `┘` aligns with `┬` in
+the underline above. Labels peel off leftmost-first (opposite of the left
+side) so that unconsumed pipes descend to the right of each `┘` as trailing
+`│` characters, preventing crossing. Below the spine range, the column
+divider continues as a dim `│`.
+
+The layout is chosen per match block: if the combined width of both columns
+plus the spine fits in the terminal width, side-by-side is used. Otherwise it
+falls back to vertical.
+
+All spine and annotation connectors are yellow. Characters:
 `┐` at top, `│` for trunk, `┤` for intermediate, `┘` for last annotation.
 
 ### Basic block-aligned windows
@@ -144,8 +182,10 @@ Each feature type has a specific rendering style:
 ### Degradation
 
 - Without color: box-drawing and text labels remain readable
-- Without decompiler: pseudocode section is skipped with a note
+- Without decompiler: pseudocode section is skipped with a note; layout
+  is always vertical (no side-by-side without pseudocode)
 - Without idalib: placeholder disassembly (synthetic lines from features)
+- Narrow terminal: falls back to vertical layout automatically
 
 ## Decisions
 
@@ -168,3 +208,8 @@ Each feature type has a specific rendering style:
   behaviors, not on the rule structure.
 - **Ordered by VA within each rule.** Functions within a rule are sorted by
   address. Rules are ordered by first appearance in the ResultDocument.
+- **Adaptive side-by-side layout.** When pseudocode is available and the
+  terminal is wide enough, disassembly and pseudocode are laid out in
+  side-by-side columns with the spine as the center divider. This increases
+  information density on wide terminals. The decision is per-block based on
+  measured content widths. Narrow terminals get vertical layout automatically.

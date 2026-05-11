@@ -975,13 +975,22 @@ def render_annotation_lines(
     gutter: str,
     annotations: list[Annotation],
     line_text: str,
+    mirror: bool = False,
 ) -> list[BufferedLine]:
     """Render underline carets and annotation labels for one source line.
 
     When multiple annotations target the same line, renders a single combined
     underline row with vertical pipe stacking (rustc-style): all underlines
-    sit directly under their tokens, then labels peel off right-to-left so
-    pipes never cross.
+    sit directly under their tokens, then labels peel off so pipes never
+    cross.
+
+    Non-mirrored (left side): labels peel off rightmost-first with └── prefix
+    extending right, pipes descend on the left.
+
+    Mirrored (right side): labels peel off leftmost-first with ── prefix and
+    ┘ suffix at the target column, pipes descend on the right as trailing │
+    characters. This prevents label text from crossing unconsumed pipe
+    positions.
     """
     result: list[BufferedLine] = []
 
@@ -993,6 +1002,12 @@ def render_annotation_lines(
         t = rich.text.Text(gutter_prefix)
         t.append("│", style="dim")
         t.append(gutter_suffix)
+        return t
+
+    def _gutter_text_mirrored() -> rich.text.Text:
+        t = rich.text.Text("─" * len(gutter_prefix), style=ANNOTATION_COLOR)
+        t.append("─", style=ANNOTATION_COLOR)
+        t.append("─" * len(gutter_suffix), style=ANNOTATION_COLOR)
         return t
 
     groups = group_annotations(annotations)
@@ -1014,46 +1029,94 @@ def render_annotation_lines(
     if targeted:
         targeted.sort(key=lambda t: t[0])
 
-        underline = _gutter_text()
-        cursor = 0
-        for col_start, col_end, _ in targeted:
-            effective_start = max(col_start, cursor)
-            if effective_start > cursor:
-                underline.append(" " * (effective_start - cursor), style="default")
-            width = max(1, col_end - effective_start)
-            if effective_start == col_start:
-                underline.append("┬", style=ANNOTATION_COLOR)
+        if mirror:
+            underline = _gutter_text()
+            cursor = 0
+            for col_start, col_end, _ in targeted:
+                effective_start = max(col_start, cursor)
+                if effective_start > cursor:
+                    underline.append(" " * (effective_start - cursor), style="default")
+                width = max(1, col_end - effective_start)
                 if width > 1:
                     underline.append("─" * (width - 1), style=ANNOTATION_COLOR)
-            else:
-                underline.append("─" * width, style=ANNOTATION_COLOR)
-            cursor = effective_start + width
-        result.append(BufferedLine(underline, "normal"))
+                underline.append("┬", style=ANNOTATION_COLOR)
+                cursor = effective_start + width
+            result.append(BufferedLine(underline, "normal"))
 
-        for i in range(len(targeted) - 1, -1, -1):
-            col_start_i = targeted[i][0]
-            label_text = targeted[i][2]
+            gutter_w = len(gutter)
 
-            label_line = _gutter_text()
-            cursor = 0
-            for j in range(i):
-                pipe_col = targeted[j][0]
-                if pipe_col >= cursor:
-                    if pipe_col > cursor:
-                        label_line.append(" " * (pipe_col - cursor), style="default")
+            for i in range(len(targeted)):
+                col_end_i = targeted[i][1]
+                label_text = targeted[i][2]
+                target_col = col_end_i - 1
+
+                connector_abs = gutter_w + target_col
+                total_label = 3 + len(label_text)
+                label_start = max(0, connector_abs - total_label)
+
+                label_line = rich.text.Text()
+                if label_start > 0:
+                    label_line.append("─" * label_start, style=ANNOTATION_COLOR)
+                label_line.append("── ", style=ANNOTATION_COLOR)
+                label_line.append(label_text, style=ANNOTATION_COLOR)
+                label_line.append("┘", style=ANNOTATION_COLOR)
+
+                current_pos = len(label_line.plain)
+                for j in range(i + 1, len(targeted)):
+                    p = gutter_w + targeted[j][1] - 1
+                    if p < current_pos:
+                        continue
+                    if p > current_pos:
+                        label_line.append(" " * (p - current_pos))
                     label_line.append("│", style=ANNOTATION_COLOR)
-                    cursor = pipe_col + 1
+                    current_pos = p + 1
 
-            if col_start_i > cursor:
-                label_line.append(" " * (col_start_i - cursor), style="default")
+                result.append(BufferedLine(label_line, "annotation_label"))
+        else:
+            underline = _gutter_text()
+            cursor = 0
+            for col_start, col_end, _ in targeted:
+                effective_start = max(col_start, cursor)
+                if effective_start > cursor:
+                    underline.append(" " * (effective_start - cursor), style="default")
+                width = max(1, col_end - effective_start)
+                if effective_start == col_start:
+                    underline.append("┬", style=ANNOTATION_COLOR)
+                    if width > 1:
+                        underline.append("─" * (width - 1), style=ANNOTATION_COLOR)
+                else:
+                    underline.append("─" * width, style=ANNOTATION_COLOR)
+                cursor = effective_start + width
+            result.append(BufferedLine(underline, "normal"))
 
-            label_line.append("└── ", style=ANNOTATION_COLOR)
-            label_line.append(label_text, style=ANNOTATION_COLOR)
-            result.append(BufferedLine(label_line, "annotation_label"))
+            for i in range(len(targeted) - 1, -1, -1):
+                col_start_i = targeted[i][0]
+                label_text = targeted[i][2]
+
+                label_line = _gutter_text()
+                cursor = 0
+                for j in range(i):
+                    pipe_col = targeted[j][0]
+                    if pipe_col >= cursor:
+                        if pipe_col > cursor:
+                            label_line.append(" " * (pipe_col - cursor), style="default")
+                        label_line.append("│", style=ANNOTATION_COLOR)
+                        cursor = pipe_col + 1
+
+                if col_start_i > cursor:
+                    label_line.append(" " * (col_start_i - cursor), style="default")
+
+                label_line.append("└── ", style=ANNOTATION_COLOR)
+                label_line.append(label_text, style=ANNOTATION_COLOR)
+                result.append(BufferedLine(label_line, "annotation_label"))
 
     for label in untargeted:
-        label_line = _gutter_text()
-        label_line.append("└── ", style=ANNOTATION_COLOR)
+        if mirror:
+            label_line = _gutter_text_mirrored()
+            label_line.append("── ", style=ANNOTATION_COLOR)
+        else:
+            label_line = _gutter_text()
+            label_line.append("└── ", style=ANNOTATION_COLOR)
         label_line.append(label, style=ANNOTATION_COLOR)
         result.append(BufferedLine(label_line, "annotation_label"))
 
@@ -1102,6 +1165,97 @@ def add_spine(buffer: list[BufferedLine]):
         else:
             line.text.append(" " * pad_needed, style="default")
             line.text.append("│", style=SPINE_COLOR)
+
+
+# ---------------------------------------------------------------------------
+# Side-by-side layout
+# ---------------------------------------------------------------------------
+
+
+def render_side_by_side(
+    header: list[BufferedLine],
+    left: list[BufferedLine],
+    right: list[BufferedLine],
+) -> list[BufferedLine]:
+    """Merge header, disasm (left), and pseudocode (right) with a center spine.
+
+    The spine runs vertically between the two columns from the rule_header
+    to the last annotation on either side. Left annotations connect with
+    ─┤/─┘, right annotations (rendered mirrored) connect with ├/└. The
+    right-side annotation labels already contain ─ fill from mirrored
+    rendering, so they're appended directly after the spine character.
+    """
+    left_width = max(
+        max((len(bl.text.plain) for bl in header), default=0),
+        max((len(bl.text.plain) for bl in left), default=0),
+    )
+    left_width = max(left_width + 2, 40)
+
+    entries: list[tuple[str, BufferedLine, BufferedLine]] = []
+    for bl in header:
+        entries.append(("header", bl, BufferedLine(rich.text.Text(), "normal")))
+    n = max(len(left), len(right))
+    for i in range(n):
+        lb = left[i] if i < len(left) else BufferedLine(rich.text.Text(), "normal")
+        rb = right[i] if i < len(right) else BufferedLine(rich.text.Text(), "normal")
+        entries.append(("body", lb, rb))
+
+    header_idx: Optional[int] = None
+    last_ann_idx: Optional[int] = None
+    for i, (sec, lb, rb) in enumerate(entries):
+        if lb.kind == "rule_header" and header_idx is None:
+            header_idx = i
+        if lb.kind == "annotation_label" or rb.kind == "annotation_label":
+            last_ann_idx = i
+
+    result: list[BufferedLine] = []
+    for i, (sec, lb, rb) in enumerate(entries):
+        in_spine = (
+            header_idx is not None
+            and last_ann_idx is not None
+            and header_idx <= i <= last_ann_idx
+        )
+        is_last = (i == last_ann_idx)
+
+        merged = rich.text.Text()
+        merged.append_text(lb.text)
+        cur_w = len(lb.text.plain)
+        pad = max(0, left_width - cur_w)
+
+        left_ann = lb.kind == "annotation_label"
+        right_ann = rb.kind == "annotation_label"
+
+        if lb.kind == "rule_header" and in_spine:
+            merged.append("─" * pad, style=SPINE_COLOR)
+            merged.append("┐", style=SPINE_COLOR)
+        elif left_ann and right_ann and in_spine:
+            connector = "┴" if is_last else "┼"
+            merged.append(" ", style="default")
+            merged.append("─" * max(0, pad - 1), style=ANNOTATION_COLOR)
+            merged.append(connector, style=ANNOTATION_COLOR)
+        elif left_ann and in_spine:
+            connector = "┘" if is_last else "┤"
+            merged.append(" ", style="default")
+            merged.append("─" * max(0, pad - 1), style=ANNOTATION_COLOR)
+            merged.append(connector, style=ANNOTATION_COLOR)
+        elif right_ann and in_spine:
+            connector = "└" if is_last else "├"
+            merged.append(" " * pad, style="default")
+            merged.append(connector, style=ANNOTATION_COLOR)
+        elif in_spine:
+            merged.append(" " * pad, style="default")
+            merged.append("│", style=SPINE_COLOR)
+        elif sec == "body":
+            merged.append(" " * (pad + 1), style="default")
+        else:
+            merged.append(" " * (pad + 1), style="default")
+
+        if sec == "body":
+            merged.append_text(rb.text)
+
+        result.append(BufferedLine(merged, lb.kind))
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1204,6 +1358,7 @@ def render_pseudocode_to_buffer(
     context: int,
     addr_width: int = 16,
     gutter_width: int = 0,
+    mirror: bool = False,
 ):
     """Render annotated pseudocode into buffer."""
     if not pseudo_lines:
@@ -1309,7 +1464,7 @@ def render_pseudocode_to_buffer(
 
             annots = annotations_by_line.get(line_no, [])
             if is_annotated and annots:
-                ann_lines = render_annotation_lines(pc_gutter, annots, dedented_text)
+                ann_lines = render_annotation_lines(pc_gutter, annots, dedented_text, mirror=mirror)
                 buffer.extend(ann_lines)
 
         prev_end = win_end
@@ -1384,12 +1539,12 @@ def render_all(
     # embeds 16-char hex addresses even for 32-bit binaries.
     ida_addr_width = 16
 
+    terminal_width = console.width or 120
+
     for rule in all_rules:
         for func in rule_functions[rule.name]:
             rule_annots = [a for a in func.annotations if a.rule_name == rule.name]
             rule_fs = [fs for fs in func.file_scope_features if fs.rule_name == rule.name]
-
-            buffer: list[BufferedLine] = []
 
             addr_str = f"0x{func.address:X}"
             name = func.name or f"sub_{func.address:X}"
@@ -1403,65 +1558,96 @@ def render_all(
             heading.append(f" @ {addr_str}", style="bright_yellow")
             console.print(heading)
 
+            header_buffer: list[BufferedLine] = []
+
             underline_line = rich.text.Text(" ")
             underline_line.append("┬", style=SPINE_COLOR)
             if len(rule.name) > 1:
                 underline_line.append("─" * (len(rule.name) - 1), style=SPINE_COLOR)
-            buffer.append(BufferedLine(underline_line, "normal"))
+            header_buffer.append(BufferedLine(underline_line, "normal"))
 
             connector_line = rich.text.Text(" ")
             connector_line.append("└", style=SPINE_COLOR)
-            buffer.append(BufferedLine(connector_line, "rule_header"))
+            header_buffer.append(BufferedLine(connector_line, "rule_header"))
 
             func_type = type_cache.get(func.address)
             if func_type:
-                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                header_buffer.append(BufferedLine(rich.text.Text(), "normal"))
                 type_line = rich.text.Text("     ")
                 type_line.append(func_type, style="dim")
-                buffer.append(BufferedLine(type_line, "normal"))
+                header_buffer.append(BufferedLine(type_line, "normal"))
 
             if rule_fs:
-                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                header_buffer.append(BufferedLine(rich.text.Text(), "normal"))
                 for fs in rule_fs:
                     fs_line = rich.text.Text("     ")
                     fs_line.append(f"{fs.feature_type}: {fs.feature_value}", style="dim")
-                    buffer.append(BufferedLine(fs_line, "normal"))
+                    header_buffer.append(BufferedLine(fs_line, "normal"))
 
             func_comment = comment_cache.get(func.address)
             if func_comment:
-                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                header_buffer.append(BufferedLine(rich.text.Text(), "normal"))
                 cmt_line = rich.text.Text("     ")
                 cmt_line.append(f"; {func_comment}", style="dim italic")
-                buffer.append(BufferedLine(cmt_line, "normal"))
+                header_buffer.append(BufferedLine(cmt_line, "normal"))
 
-            buffer.append(BufferedLine(rich.text.Text(), "normal"))
+            header_buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
-            lines = disasm_cache.get(func.address, [])
-            if not lines:
-                lines = generate_placeholder_disasm(rule_annots)
+            disasm_lines = disasm_cache.get(func.address, [])
+            if not disasm_lines:
+                disasm_lines = generate_placeholder_disasm(rule_annots)
             bb_ranges = bb_cache.get(func.address)
-            disasm_gutter_width = render_disassembly_to_buffer(buffer, rule_annots, lines, context, bb_ranges, addr_width=ida_addr_width)
 
-            if show_pseudocode:
-                if use_ida:
-                    if func.address not in pseudo_cache:
-                        pseudo_cache[func.address] = get_pseudocode_lines(func.address)
-                    pseudo = pseudo_cache[func.address]
-                    if pseudo:
-                        buffer.append(BufferedLine(rich.text.Text(), "normal"))
-                        render_pseudocode_to_buffer(buffer, rule_annots, pseudo, context, addr_width=ida_addr_width, gutter_width=disasm_gutter_width)
-                    else:
-                        buffer.append(BufferedLine(rich.text.Text(), "normal"))
-                        note = rich.text.Text("     ")
-                        note.append("(pseudocode not available)", style="dim italic")
-                        buffer.append(BufferedLine(note, "normal"))
+            disasm_buffer: list[BufferedLine] = []
+            disasm_gutter_width = render_disassembly_to_buffer(
+                disasm_buffer, rule_annots, disasm_lines, context, bb_ranges, addr_width=ida_addr_width
+            )
+
+            pseudo: Optional[list[tuple[int, str, str, set[int]]]] = None
+            if show_pseudocode and use_ida:
+                if func.address not in pseudo_cache:
+                    pseudo_cache[func.address] = get_pseudocode_lines(func.address)
+                pseudo = pseudo_cache[func.address]
+
+            side_by_side = False
+            pseudo_buffer: list[BufferedLine] = []
+            if pseudo:
+                render_pseudocode_to_buffer(
+                    pseudo_buffer, rule_annots, pseudo, context,
+                    addr_width=ida_addr_width, gutter_width=disasm_gutter_width,
+                    mirror=True,
+                )
+                left_w = max(
+                    max((len(bl.text.plain) for bl in header_buffer), default=0),
+                    max((len(bl.text.plain) for bl in disasm_buffer), default=0),
+                )
+                right_w = max((len(bl.text.plain) for bl in pseudo_buffer), default=0)
+                needed = left_w + 3 + right_w
+
+                if needed <= terminal_width:
+                    side_by_side = True
                 else:
+                    pseudo_buffer = []
+                    render_pseudocode_to_buffer(
+                        pseudo_buffer, rule_annots, pseudo, context,
+                        addr_width=ida_addr_width, gutter_width=disasm_gutter_width,
+                    )
+
+            if side_by_side:
+                buffer = render_side_by_side(header_buffer, disasm_buffer, pseudo_buffer)
+            elif pseudo_buffer:
+                buffer = header_buffer + disasm_buffer
+                buffer.append(BufferedLine(rich.text.Text(), "normal"))
+                buffer.extend(pseudo_buffer)
+                add_spine(buffer)
+            else:
+                buffer = header_buffer + disasm_buffer
+                if show_pseudocode:
                     buffer.append(BufferedLine(rich.text.Text(), "normal"))
                     note = rich.text.Text("     ")
                     note.append("(pseudocode not available)", style="dim italic")
                     buffer.append(BufferedLine(note, "normal"))
-
-            add_spine(buffer)
+                add_spine(buffer)
 
             for bline in buffer:
                 console.print(bline.text)

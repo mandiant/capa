@@ -83,18 +83,28 @@ function) pair, it filters annotations to only those from that rule.
 
 ### Phase 3: Rendering
 
-Two-pass buffered rendering with connecting spine.
+Buffered rendering with connecting spine and adaptive layout.
 
 **Iteration order:** For each rule → for each matching function (by VA):
 
-1. **Build buffer**: Render all content lines into `BufferedLine` objects,
-   each tagged with a spine role (`rule_header`, `annotation_label`, `normal`).
+1. **Build separate buffers**: Render header metadata, disassembly, and
+   pseudocode into three independent `BufferedLine` lists. Each line is
+   tagged with a spine role (`rule_header`, `annotation_label`, `normal`).
 
-2. **Add spine**: Compute spine column from max line width. For each buffered
-   line between the rule header and last annotation label, append the
-   appropriate spine character (┐, │, ┤, ┘) at the spine column.
+2. **Choose layout**: Measure the max plain-text width of each buffer.
+   If pseudocode is available and `left_width + 3 + right_width` fits
+   within the terminal width, use side-by-side layout. Otherwise use
+   vertical layout.
 
-3. **Print**: Output all buffered lines.
+3. **Compose**:
+   - **Side-by-side**: `render_side_by_side()` merges header + left + right
+     with a center spine. The header spans above both columns, the spine
+     runs vertically between them. Left annotation labels connect to the
+     spine with `─┤`/`─┘`. Right-side annotations are independent.
+   - **Vertical**: Concatenate header + disasm + pseudo into one buffer,
+     then `add_spine()` appends a right-margin spine.
+
+4. **Print**: Output all buffered lines.
 
 **Per-block content:**
 
@@ -175,8 +185,25 @@ Using Rich library for terminal output:
   right-to-left using `│` pipe connectors (rustc-style). This ensures all
   underlines sit directly under their target tokens. Rightmost labels
   appear first (closest to the source) so pipes never cross.
+  In side-by-side mode, right-column annotations are mirrored: `┬` at the
+  right end of the underline, labels flow left-to-right from the spine
+  through the label text to `┘` at the underline position. Labels are
+  position-aware: each computes `label_start = max(0, connector_abs -
+  total_label)` so the `── label_text┘` block is placed with `┘` at
+  exactly the `┬` column. The label extends left into the gutter area
+  (filled with `─`). Labels peel off leftmost-first (opposite of the left
+  side) so that unconsumed pipe positions are always to the RIGHT of `┘`,
+  rendered as trailing `│` characters. This prevents label text from
+  crossing pipe descenders. When the label is wider than the available
+  space (label_start clamps to 0), `┘` is placed after the label text as
+  a fallback.
 - **Spine**: yellow connectors — `│` trunk (dim yellow), `┐` top, `┤` branch,
-  `┘` end. Annotation connectors and underline carets also yellow.
+  `┘` end. Annotation connectors and underline carets also yellow. In
+  side-by-side mode, the spine runs between columns from the rule_header to
+  the last annotation label on either side. Left annotations connect with
+  `─┤`/`─┘`, right annotations with `├`/`└`. When both sides have
+  annotations on the same row, `┼` or `┴` is used. No divider is drawn
+  outside the spine range.
 - **Omission markers**: `... N lines omitted ...` in dim italic
 
 ### Feature-to-annotation mapping
