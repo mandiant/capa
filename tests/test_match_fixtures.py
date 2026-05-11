@@ -1,7 +1,21 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import annotations
 
 import re
-from typing import Any, Iterable
+from typing import Any, Mapping, Iterable
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -303,6 +317,7 @@ def load_fixtures(path: Path) -> list[MatchFixture]:
         flavor = _get_fixture_flavor(path, fixture_doc)
         span_size = _load_span_size(fixture_doc)
 
+        extractor: FeatureExtractor
         if flavor == "static":
             static_parser = StaticFeatureParser(_parse_static_address(fixture_doc.get("base address", 0)))
             extractor = static_parser.parse(fixture_doc.get("features", ""))
@@ -337,7 +352,7 @@ def load_fixtures(path: Path) -> list[MatchFixture]:
     return fixtures
 
 
-def render_matches(fixture: MatchFixture, matches: dict[str, Any]) -> dict[str, list[Address]]:
+def render_matches(fixture: MatchFixture, matches: Mapping[str, Any]) -> dict[str, list[Address]]:
     return {
         rule_name: [address for address, _ in results]
         for rule_name, results in matches.items()
