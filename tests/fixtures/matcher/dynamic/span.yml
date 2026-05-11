@@ -73,6 +73,50 @@
       span-count:
         - 12
 
+- name: span-size-exactly-fits
+  description: span matches when features are exactly at the span window boundary
+  options:
+    span size: 3
+  rules:
+    - name: span-boundary
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - api: GetSystemTimeAsFileTime
+            - api: LdrGetDllHandle
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+      call: 10: api(LdrGetDllHandle)
+  expect:
+    matches:
+      span-boundary:
+        - 10
+
+- name: span-size-off-by-one
+  description: span does not match when features are just outside the window boundary
+  options:
+    span size: 2
+  rules:
+    - name: span-off-by-one
+      scopes:
+        dynamic: span of calls
+      features:
+        - and:
+            - api: GetSystemTimeAsFileTime
+            - api: LdrGetDllHandle
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+      call: 10: api(LdrGetDllHandle)
+  expect:
+    matches: {}
+
 - name: span-length-too-short
   description: span does not match when features are outside the span window
   options:
