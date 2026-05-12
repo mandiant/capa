@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- freeze: add `--reproducible` flag that zeros dynamic header metadata
 
 ### Breaking Changes
 
@@ -113,7 +114,7 @@
 - tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
-
+- tests: add snapshot tests for feature extraction @williballenthin #3069
 - ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
 
 ### Raw diffs
@@ -259,7 +260,6 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 - nursery/get-dotnet-assembly-entry-point mehunhoff@google.com
 
 ### Bug Fixes
-
 - binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
 
 ### capa Explorer Web
