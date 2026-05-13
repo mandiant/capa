@@ -82,7 +82,7 @@ unsupported = [
 # - it would be technically possible to get the "basic blocks" working, but the rules contain mostly other non supported statements in there => not worth the effort.
 
 # collect all converted rules to be able to check if we have needed sub rules for match:
-converted_rules = []
+converted_rules: list[str] = []
 
 default_tags = "CAPA "
 
@@ -91,7 +91,7 @@ min_rounds = 5
 
 unsupported_capa_rules = Path("unsupported_capa_rules.yml").open("wb")
 unsupported_capa_rules_names = Path("unsupported_capa_rules.txt").open("wb")
-unsupported_capa_rules_list = []
+unsupported_capa_rules_list: list[str] = []
 
 condition_header = """
     capa_pe_file and
