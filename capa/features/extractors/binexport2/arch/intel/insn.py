@@ -15,7 +15,6 @@
 import logging
 from typing import Iterator
 
-import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
 from capa.features.insn import MAX_STRUCTURE_SIZE, Number, Offset, OperandNumber, OperandOffset
 from capa.features.common import Feature, Characteristic
@@ -136,6 +135,7 @@ def extract_insn_offset_features(
 
         yield Offset(0), ih.address
         yield OperandOffset(match.operand_index, 0), ih.address
+        return
 
     value = mask_immediate(fhi.arch, match.expression.immediate)
     if is_address_mapped(be2, value):
@@ -175,7 +175,7 @@ def is_security_cookie(
             return True
     # or insn falls at the end before return in a terminal basic block.
     if basic_block_index not in (e.source_basic_block_index for e in flow_graph.edge):
-        last_addr: int = max(idx.insn_address_by_index[ir.end_index - 1] for ir in bb.instruction_index)
+        last_addr: int = max(idx.insn_address_by_index[i] for i in idx.instruction_indices(bb))
         if instruction_address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
             return True
     return False

@@ -53,9 +53,7 @@ def extract_insn_number_features(
 
     mnemonic: str = get_instruction_mnemonic(be2, instruction)
 
-    if mnemonic in ("add", "sub"):
-        assert len(instruction.operand_index) == 3
-
+    if mnemonic in ("add", "sub") and len(instruction.operand_index) == 3:
         operand1_expression: Optional[BinExport2.Expression] = get_operand_register_expression(
             be2, be2.operand[instruction.operand_index[1]]
         )

@@ -11,23 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import fixtures
 
 
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS,
-    indirect=["sample", "scope"],
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="viv",
+        include_tags={"static"},
+        exclude_tags={"dotnet", "ghidra"},
+    )
 )
-def test_viv_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_viv_extractor, sample, scope, feature, expected)
-
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_COUNT_TESTS,
-    indirect=["sample", "scope"],
-)
-def test_viv_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_count(fixtures.get_viv_extractor, sample, scope, feature, expected)
+def test_viv_features(feature_fixture):
+    extractor = fixtures.get_viv_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)

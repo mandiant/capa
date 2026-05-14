@@ -24,16 +24,13 @@ import idaapi
 import ida_kernwin
 import ida_settings
 
-import capa.main
 import capa.rules
-import capa.engine
+import capa.loader
 import capa.version
 import capa.ida.helpers
-import capa.render.json
 import capa.features.common
 import capa.capabilities.common
 import capa.render.result_document
-import capa.features.extractors.ida.extractor
 from capa.rules import Rule
 from capa.engine import FeatureSet
 from capa.rules.cache import compute_ruleset_cache_identifier
@@ -82,14 +79,6 @@ AnalyzeOptionsText = {
 def write_file(path: Path, data):
     """ """
     path.write_bytes(data)
-
-
-def trim_function_name(f, max_length=25):
-    """ """
-    n = idaapi.get_name(f.start_ea)
-    if len(n) > max_length:
-        n = f"{n[:max_length]}..."
-    return n
 
 
 def update_wait_box(text):
@@ -214,7 +203,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_search_bar: QtWidgets.QLineEdit
         self.view_tree: CapaExplorerQtreeView
         self.view_tabs: QtWidgets.QTabWidget
-        self.view_tab_rulegen = None
         self.view_status_label: QtWidgets.QLabel
         self.view_status_label_analysis_cache: str = ""
         self.view_status_label_rulegen_cache: str = ""
@@ -1011,12 +999,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         update_wait_box("extracting features")
 
         # resolve function selected in disassembly view
+        f = None
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f is not None:
                 self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
         except Exception as e:
-            logger.exception("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e)
+            addr = f.start_ea if f else idaapi.get_screen_ea()
+            logger.exception("Failed to resolve function at address 0x%X (error: %s)", addr, e)
             return False
 
         if ida_kernwin.user_cancelled():

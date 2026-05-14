@@ -102,7 +102,7 @@ def load_analysis(bv):
     for rule in doc["rules"].values():
         if rule["meta"].get("lib"):
             continue
-        if rule["meta"].get("capa/subscope"):
+        if rule["meta"].get("capa/subscope-rule"):
             continue
         if rule["meta"]["scopes"].get("static") != "function":
             continue

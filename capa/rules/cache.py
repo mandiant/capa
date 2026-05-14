@@ -23,7 +23,6 @@ from pathlib import Path
 from dataclasses import dataclass
 
 import capa.rules
-import capa.helpers
 import capa.version
 
 logger = logging.getLogger(__name__)

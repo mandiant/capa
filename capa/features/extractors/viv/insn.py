@@ -39,23 +39,6 @@ from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_i
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def interface_extract_instruction_XXX(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given instruction.
-
-    args:
-      fh: the function handle to process.
-      bbh: the basic block handle to process.
-      ih: the instruction handle to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
 def get_imports(vw):
     """
     caching accessor to vivisect workspace imports
@@ -156,10 +139,14 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 dll, symbol = imports[target]
                 for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
                     yield API(name), ih.address
+                break
 
             # if jump leads to an ENDBRANCH instruction, skip it
-            if f.vw.getByteDef(target)[1].startswith(b"\xf3\x0f\x1e"):
-                target += 4
+            byte_def = f.vw.getByteDef(target)
+            if byte_def:
+                _offset, _buf = byte_def
+                if _buf[_offset:].startswith(b"\xf3\x0f\x1e"):
+                    target += 4
 
             target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, target)
             if not target:
@@ -284,7 +271,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
 
     for oper in insn.opers:
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-            v = oper.getOperValue(oper)
+            v = oper.getOperValue(insn)
         elif isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
             # handle case like:
             #   movzx   ecx, ds:byte_423258[eax]
@@ -607,9 +594,9 @@ def extract_op_number_features(
         return
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-        v = oper.getOperValue(oper)
+        v = oper.getOperValue(insn)
     else:
-        v = oper.getOperAddr(oper)
+        v = oper.getOperAddr(insn)
 
     if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
         # this is a valid address
@@ -698,7 +685,7 @@ def extract_op_string_features(
     f: viv_utils.Function = fh.inner
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-        v = oper.getOperValue(oper)
+        v = oper.getOperValue(insn)
     elif isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper):
         # like 0x10056CB4 in `lea eax, dword [0x10056CB4]`
         v = oper.imm

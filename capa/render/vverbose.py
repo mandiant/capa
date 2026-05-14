@@ -30,6 +30,7 @@ import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.helpers import assert_never
 from capa.render.utils import Console
 
 logger = logging.getLogger(__name__)
@@ -193,7 +194,7 @@ def render_statement(
         console.writeln()
 
     else:
-        capa.helpers.assert_never(statement)
+        assert_never(statement)
 
 
 def render_string_value(s: str) -> str:
@@ -309,7 +310,7 @@ def render_node(
     elif isinstance(node, rd.FeatureNode):
         render_feature(console, layout, rule, match, node.feature, indent=indent)
     else:
-        capa.helpers.assert_never(node)
+        assert_never(node)
 
 
 # display nodes that successfully evaluated against the sample.
@@ -552,10 +553,10 @@ def render_rules(console: Console, doc: rd.ResultDocument):
                             )
                         )
                     else:
-                        capa.helpers.assert_never(rule.meta.scopes.dynamic)
+                        assert_never(rule.meta.scopes.dynamic)
 
                 else:
-                    capa.helpers.assert_never(doc.meta.flavor)
+                    assert_never(doc.meta.flavor)
 
                 console.writeln()
                 render_match(console, doc.meta.analysis.layout, rule, match, indent=1)

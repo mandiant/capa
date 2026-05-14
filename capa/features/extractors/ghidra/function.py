@@ -29,27 +29,32 @@ def extract_function_calls_to(fh: FunctionHandle):
     f: ghidra.program.database.function.FunctionDB = fh.inner
     for ref in f.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
-            yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
+            yield (
+                Characteristic("calls to"),
+                AbsoluteVirtualAddress(ref.getFromAddress().getOffset()),
+            )
 
 
 def extract_function_loop(fh: FunctionHandle):
     f: ghidra.program.database.function.FunctionDB = fh.inner
 
     edges = []
+    monitor = capa.features.extractors.ghidra.helpers.get_monitor()
     for block in SimpleBlockIterator(
         BasicBlockModel(capa.features.extractors.ghidra.helpers.get_current_program()),
         f.getBody(),
-        capa.features.extractors.ghidra.helpers.get_monitor(),
+        monitor,
     ):
-        dests = block.getDestinations(capa.features.extractors.ghidra.helpers.get_monitor())
-        s_addrs = block.getStartAddresses()
-
+        src = block.getFirstStartAddress().getOffset()
+        dests = block.getDestinations(monitor)
         while dests.hasNext():
-            for addr in s_addrs:
-                edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
+            edges.append((src, dests.next().getDestinationAddress().getOffset()))
 
     if loops.has_loop(edges):
-        yield Characteristic("loop"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
+        yield (
+            Characteristic("loop"),
+            AbsoluteVirtualAddress(f.getEntryPoint().getOffset()),
+        )
 
 
 def extract_recursive_call(fh: FunctionHandle):
@@ -57,7 +62,10 @@ def extract_recursive_call(fh: FunctionHandle):
 
     for func in f.getCalledFunctions(capa.features.extractors.ghidra.helpers.get_monitor()):
         if func.getEntryPoint().getOffset() == f.getEntryPoint().getOffset():
-            yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
+            yield (
+                Characteristic("recursive call"),
+                AbsoluteVirtualAddress(f.getEntryPoint().getOffset()),
+            )
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:

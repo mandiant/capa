@@ -13,11 +13,9 @@
 # limitations under the License.
 
 
-import os
 import sys
 import logging
 import urllib.parse
-from glob import glob
 from pathlib import Path
 
 import pygments
