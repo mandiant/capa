@@ -17,6 +17,7 @@ import json
 import textwrap
 from pathlib import Path
 
+import pytest
 import fixtures
 
 import capa.main
@@ -352,3 +353,27 @@ def test_main_cape_gzip():
         / "./data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     )
     assert capa.main.main([path]) == 0
+
+
+def test_parse_ghidra_project_path():
+    assert capa.main.parse_ghidra_project_path("/tmp/project.gpr:folder/program") == (
+        Path("/tmp/project.gpr"),
+        "folder/program",
+    )
+    assert capa.main.parse_ghidra_project_path("/tmp/project.GPR:folder/program") == (
+        Path("/tmp/project.GPR"),
+        "folder/program",
+    )
+    assert capa.main.parse_ghidra_project_path("/tmp/project.exe") is None
+
+
+def test_parse_ghidra_project_path_invalid():
+    with pytest.raises(ValueError):
+        capa.main.parse_ghidra_project_path("/tmp/project.gpr:")
+
+
+def test_main_ghidra_project_path_invalid_backend(tmp_path):
+    project = tmp_path / "project.gpr"
+    project.write_text("")
+
+    assert capa.main.main([f"{project}:folder/program", "-b", "vivisect"]) == capa.main.E_INVALID_INPUT_FORMAT
