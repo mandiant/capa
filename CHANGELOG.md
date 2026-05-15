@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
+
 ### New Rules (7)
 
 - nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
