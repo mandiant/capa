@@ -108,7 +108,11 @@ def reformat_forwarded_export_name(forwarded_name: str) -> str:
 
 
 def all_zeros(bytez: bytes) -> bool:
-    return all(b == 0 for b in builtins.bytes(bytez))
+    # Using `bytez == b'\x00' * len(bytez)` is much faster than `all(b == 0 for b in bytez)`
+    # because it relies on the optimized C implementation of bytes comparison.
+    # While it creates a temporary bytes object, the buffers passed here are small
+    # (typically capped at MAX_BYTES_FEATURE_SIZE = 256 bytes), so the memory overhead is negligible.
+    return bytez == b"\x00" * len(bytez)
 
 
 def twos_complement(val: int, bits: int) -> int:
