@@ -18,7 +18,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 import capa.features.extractors.helpers
-import capa.features.extractors.binexport2.helpers
 from capa.features.common import ARCH_I386, ARCH_AMD64, ARCH_AARCH64
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
@@ -333,6 +332,8 @@ def _fill_operand_expression_list(
 
 def get_operand_expressions(be2: BinExport2, op: BinExport2.Operand) -> list[BinExport2.Expression]:
     tree = _build_expression_tree(be2, op)
+    if not tree:
+        return []
 
     expressions: list[BinExport2.Expression] = []
     _fill_operand_expression_list(be2, op, tree, 0, expressions)

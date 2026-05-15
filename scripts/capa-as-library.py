@@ -21,9 +21,7 @@ from pathlib import Path
 
 import capa.main
 import capa.rules
-import capa.engine
 import capa.loader
-import capa.features
 import capa.render.json
 import capa.render.utils as rutils
 import capa.render.default

@@ -25,8 +25,6 @@ from rich.table import Table
 import capa.main
 import capa.rules
 import capa.helpers
-import capa.features
-import capa.exceptions
 import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze

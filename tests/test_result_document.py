@@ -13,11 +13,11 @@
 # limitations under the License.
 
 import copy
+import textwrap
 
 import pytest
 import fixtures
 
-import capa
 import capa.rules
 import capa.engine as ceng
 import capa.features.file
@@ -268,31 +268,58 @@ def assert_round_trip(rd: rdoc.ResultDocument):
 
 
 @pytest.mark.parametrize(
-    "rd_file",
+    "rd_path",
     [
-        pytest.param("a3f3bbc_rd"),
-        pytest.param("al_khaserx86_rd"),
-        pytest.param("al_khaserx64_rd"),
-        pytest.param("a076114_rd"),
-        pytest.param("pma0101_rd"),
-        pytest.param("dotnet_1c444e_rd"),
+        pytest.param(fixtures.CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json", id="a3f3bbc"),
+        pytest.param(fixtures.CD / "data" / "rd" / "al-khaser_x86.exe_.json", id="al_khaserx86"),
+        pytest.param(fixtures.CD / "data" / "rd" / "al-khaser_x64.exe_.json", id="al_khaserx64"),
+        pytest.param(fixtures.CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json", id="a076114"),
+        pytest.param(fixtures.CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json", id="pma0101"),
+        pytest.param(fixtures.CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json", id="dotnet_1c444e"),
     ],
 )
-def test_round_trip(request, rd_file):
-    rd: rdoc.ResultDocument = request.getfixturevalue(rd_file)
+def test_round_trip(rd_path):
+    rd = rdoc.ResultDocument.from_file(rd_path)
     assert_round_trip(rd)
 
 
 def test_json_to_rdoc():
-    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    path = fixtures.CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
     assert isinstance(rdoc.ResultDocument.from_file(path), rdoc.ResultDocument)
 
 
 def test_rdoc_to_capa():
-    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    path = fixtures.CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
 
     rd = rdoc.ResultDocument.from_file(path)
 
     meta, capabilites = rd.to_capa()
     assert isinstance(meta, rdoc.Metadata)
     assert isinstance(capabilites, Capabilities)
+
+
+def test_rule_metadata_is_subscope_rule_alias():
+    rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                    authors:
+                        - test
+                features:
+                    - api: CreateFile
+        """)
+    )
+    meta = rdoc.RuleMetadata.from_capa(rule)
+    assert meta.is_subscope_rule is False
+
+    raw = meta.model_dump(by_alias=True)
+    assert "capa/subscope-rule" in raw
+    assert raw["capa/subscope-rule"] is False
+
+    raw["capa/subscope-rule"] = True
+    meta_true = rdoc.RuleMetadata.model_validate(raw)
+    assert meta_true.is_subscope_rule is True

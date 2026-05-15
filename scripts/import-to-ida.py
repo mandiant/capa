@@ -96,7 +96,7 @@ def main():
             continue
         if rule.meta.is_subscope_rule:
             continue
-        if rule.meta.scopes.static == capa.rules.Scope.FUNCTION:
+        if rule.meta.scopes.static != capa.rules.Scope.FUNCTION:
             continue
 
         ns = rule.meta.namespace

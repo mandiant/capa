@@ -30,9 +30,7 @@ from pefile import PEFormatError
 from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
-import capa.perf
 import capa.rules
-import capa.engine
 import capa.loader
 import capa.helpers
 import capa.version
@@ -585,7 +583,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
-    if input_format == FORMAT_DRAKVUF:
+    elif input_format == FORMAT_DRAKVUF:
         return BACKEND_DRAKVUF
 
     elif input_format == FORMAT_VMRAY:

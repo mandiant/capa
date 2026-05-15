@@ -12,38 +12,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 import fixtures
 
-import capa.features.file
 
-
-@fixtures.parametrize(
-    "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
-    indirect=["sample", "scope"],
+@fixtures.parametrize_backend_feature_fixtures(
+    fixtures.BackendFeaturePolicy(
+        name="dotnetfile",
+        include_tags={"dotnet"},
+        exclude_tags={
+            # dotnetfile is a file-scope extractor; drop non-file scopes
+            "function",
+            "basic-block",
+            "instruction",
+            # and drop feature types dotnetfile doesn't produce
+            "function-name",
+        },
+    )
 )
-def test_dotnetfile_features(sample, scope, feature, expected):
-    if scope.__name__ != "file":
-        pytest.xfail("dotnetfile only extracts file scope features")
-
-    if isinstance(feature, capa.features.file.FunctionName):
-        pytest.xfail("dotnetfile doesn't extract function names")
-
-    fixtures.do_test_feature_presence(fixtures.get_dotnetfile_extractor, sample, scope, feature, expected)
+def test_dotnetfile_features(feature_fixture):
+    extractor = fixtures.get_dotnetfile_extractor(feature_fixture.sample_path)
+    fixtures.run_feature_fixture(extractor, feature_fixture)
 
 
-@fixtures.parametrize(
-    "extractor,function,expected",
-    [
-        ("b9f5b_dotnetfile_extractor", "is_dotnet_file", True),
-        ("b9f5b_dotnetfile_extractor", "is_mixed_mode", False),
-        ("mixed_mode_64_dotnetfile_extractor", "is_mixed_mode", True),
-        ("b9f5b_dotnetfile_extractor", "get_entry_point", 0x6000007),
-        ("b9f5b_dotnetfile_extractor", "get_runtime_version", (2, 5)),
-        ("b9f5b_dotnetfile_extractor", "get_meta_version_string", "v2.0.50727"),
-    ],
-)
-def test_dotnetfile_extractor(request, extractor, function, expected):
-    extractor_function = getattr(request.getfixturevalue(extractor), function)
-    assert extractor_function() == expected
+def test_dotnetfile_extractor_is_dotnet_file():
+    extractor = fixtures.get_dotnetfile_extractor(fixtures.CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    assert extractor.is_dotnet_file() is True
+
+
+def test_dotnetfile_extractor_is_not_mixed_mode():
+    extractor = fixtures.get_dotnetfile_extractor(fixtures.CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    assert extractor.is_mixed_mode() is False
+
+
+def test_dotnetfile_extractor_mixed_mode_64_is_mixed_mode():
+    extractor = fixtures.get_dotnetfile_extractor(
+        fixtures.DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
+    )
+    assert extractor.is_mixed_mode() is True
+
+
+def test_dotnetfile_extractor_get_entry_point():
+    extractor = fixtures.get_dotnetfile_extractor(fixtures.CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    assert extractor.get_entry_point() == 0x6000007
+
+
+def test_dotnetfile_extractor_get_runtime_version():
+    extractor = fixtures.get_dotnetfile_extractor(fixtures.CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    assert extractor.get_runtime_version() == (2, 5)
+
+
+def test_dotnetfile_extractor_get_meta_version_string():
+    extractor = fixtures.get_dotnetfile_extractor(fixtures.CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    assert extractor.get_meta_version_string() == "v2.0.50727"

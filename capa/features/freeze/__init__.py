@@ -24,13 +24,8 @@ from typing import Union, Literal, TypeAlias
 
 from pydantic import Field, BaseModel, ConfigDict
 
-import capa.helpers
 import capa.version
-import capa.features.file
-import capa.features.insn
-import capa.features.common
 import capa.features.address
-import capa.features.basicblock
 import capa.features.extractors.null as null
 from capa.helpers import assert_never
 from capa.features.freeze.features import Feature, feature_from_capa

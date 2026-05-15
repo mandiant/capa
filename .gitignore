@@ -129,3 +129,6 @@ uv.lock
 .github/binja/BinaryNinja-headless.zip
 justfile
 data/
+CLAUDE.local.md
+unsupported_capa_rules.txt
+unsupported_capa_rules.yml
