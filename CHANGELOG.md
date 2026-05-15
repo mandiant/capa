@@ -6,13 +6,15 @@
 
 ### Breaking Changes
 
-### New Rules (5)
+### New Rules (7)
 
 - nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
 - nursery/connect-to-websocket-server-in-dotnet mehunhoff@google.com
 - nursery/receive-data-on-websocket-in-dotnet mehunhoff@google.com
 - nursery/send-data-on-websocket-in-dotnet mehunhoff@google.com
 - nursery/upload-or-download-file-via-dropbox mehunhoff@google.com
+- host-interaction/network/connectivity/check-internet-connectivity-in-dotnet omurcankaya@protonmail.com
+- nursery/check-for-time-delay-in-dotnet @aryanyk
 -
 
 ### Bug Fixes
