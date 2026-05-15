@@ -57,7 +57,7 @@ def buf_filled_with(buf: bytes, character: int) -> bool:
         return all(b == character for b in buf)
 
     # single big allocation, re-used each loop
-    dupe_chunk = bytes(character) * SLICE_SIZE
+    dupe_chunk = bytes([character]) * SLICE_SIZE
 
     for offset in range(0, len(buf), SLICE_SIZE):
         # bytes objects are immutable, so the slices share the underlying array,
