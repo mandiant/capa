@@ -623,7 +623,6 @@ def collect_metadata(
     argv: list[str],
     input_path: Path,
     input_format: str,
-    os_: str,
     rules_path: list[Path],
     extractor: FeatureExtractor,
     capabilities: Capabilities,
@@ -642,7 +641,7 @@ def collect_metadata(
         str(extractor_format[0]) if extractor_format else "unknown" if input_format == FORMAT_AUTO else input_format
     )
     arch = str(extractor_arch[0]) if extractor_arch else "unknown"
-    os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
+    os_ = str(extractor_os[0]) if extractor_os else "unknown"
 
     if isinstance(extractor, StaticFeatureExtractor):
         meta_class: type = rdoc.StaticMetadata
