@@ -61,6 +61,15 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         super().__init__(parent)
         # root node does not have parent, contains header columns
         self.root_node = CapaExplorerDataItem(None, ["Rule Information", "Address", "Details"])
+        self.current_font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        self.current_ui_font = QtGui.QFont()
+
+    def update_font(self, font: QtGui.QFont, ui_font: Optional[QtGui.QFont] = None):
+        """update the font used to render items"""
+        self.beginResetModel()
+        self.current_font = font
+        self.current_ui_font = QtGui.QFont(self.current_ui_font if ui_font is None else ui_font)
+        self.endResetModel()
 
     def reset(self):
         """reset UI elements (e.g. checkboxes, IDA color highlights)
@@ -134,7 +143,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             CapaExplorerDataModel.COLUMN_INDEX_DETAILS,
         ):
             # set font for virtual address and details columns
-            font = QtGui.QFont("Courier", weight=QtGui.QFont.Medium)
+            font = QtGui.QFont(self.current_font)
+            font.setWeight(QtGui.QFont.Medium)
             if column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
                 font.setBold(True)
             return font
@@ -156,7 +166,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
         ):
             # set bold font for important items
-            font = QtGui.QFont()
+            font = QtGui.QFont(self.current_ui_font)
             font.setBold(True)
             return font
 
@@ -243,6 +253,15 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return QtCore.QModelIndex()
 
         return self.createIndex(parent.row(), 0, parent)
+
+    def index_from_item(self, item, column=0):
+        """return the model index for the given item"""
+        if item is None or item == self.root_node:
+            return QtCore.QModelIndex()
+
+        parent = item.parent()
+        parent_index = self.index_from_item(parent, 0)
+        return self.index(item.row(), column, parent_index)
 
     def iterateChildrenIndexFromRootIndex(self, model_index, ignore_root=True):
         """depth-first traversal of child nodes
