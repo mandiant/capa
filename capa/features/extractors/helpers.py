@@ -14,7 +14,6 @@
 
 
 import struct
-import builtins
 from typing import Iterator
 
 MIN_STACKSTRING_LEN = 8
@@ -112,6 +111,7 @@ def all_zeros(bytez: bytes) -> bool:
     # because it relies on the optimized C implementation of bytes comparison.
     # While it creates a temporary bytes object, the buffers passed here are small
     # (typically capped at MAX_BYTES_FEATURE_SIZE = 256 bytes), so the memory overhead is negligible.
+    bytez = bytes(bytez)
     return bytez == b"\x00" * len(bytez)
 
 
