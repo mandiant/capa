@@ -6,9 +6,13 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (5)
 
 - nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
+- nursery/connect-to-websocket-server-in-dotnet mehunhoff@google.com
+- nursery/receive-data-on-websocket-in-dotnet mehunhoff@google.com
+- nursery/send-data-on-websocket-in-dotnet mehunhoff@google.com
+- nursery/upload-or-download-file-via-dropbox mehunhoff@google.com
 -
 
 ### Bug Fixes
