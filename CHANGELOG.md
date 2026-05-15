@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
 -
 
 ### Bug Fixes
