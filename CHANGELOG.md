@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Add "loop" static characteristic in Extractors
+
 ### Breaking Changes
 
 ### New Rules (1)
