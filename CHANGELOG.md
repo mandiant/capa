@@ -109,6 +109,7 @@
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: assign ConfigDict to model_config in ConciseModel so extra="ignore" is actually applied @williballenthin (SURF-42)
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
+- fix: remove redundant code related to cli loading @mike-hunhoff #3076
 
 ### capa Explorer Web
 
@@ -118,7 +119,6 @@
 - tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
-
 - ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
 
 ### Raw diffs
