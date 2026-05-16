@@ -113,6 +113,7 @@
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
 - fix: assign ConfigDict to model_config in ConciseModel so extra="ignore" is actually applied @williballenthin (SURF-42)
 - fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
+- fix: incorrect bytes() constructor usage in buf_filled_with @mike-hunhoff #3077
 - fix: remove redundant code related to cli loading @mike-hunhoff #3076
 
 ### capa Explorer Web
