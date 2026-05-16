@@ -1,0 +1,53 @@
+- name: call-scope-single-api
+  description: call scope matches a single API at the correct call
+  rules:
+    - name: call-api
+      scopes:
+        dynamic: call
+      features:
+        - api: GetSystemTimeAsFileTime
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+  expect:
+    matches:
+      call-api:
+        - 8
+
+- name: call-scope-multiple-matches
+  description: call scope reports multiple matching calls
+  rules:
+    - name: call-multi
+      scopes:
+        dynamic: call
+      features:
+        - api: LdrGetDllHandle
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 10: api(LdrGetDllHandle)
+      call: 11: api(LdrGetProcedureAddress)
+      call: 12: api(LdrGetDllHandle)
+  expect:
+    matches:
+      call-multi:
+        - 10
+        - 12
+
+- name: call-scope-no-match
+  description: call scope does not match when no call has the required feature
+  rules:
+    - name: call-absent
+      scopes:
+        dynamic: call
+      features:
+        - api: CreateFileW
+  features: |
+    proc: sample.exe (ppid=2456, pid=3052)
+     thread: 3064
+      call: 8: api(GetSystemTimeAsFileTime)
+      call: 9: api(GetSystemInfo)
+  expect:
+    matches: {}

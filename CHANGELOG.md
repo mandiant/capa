@@ -200,6 +200,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 
 ### Development
 
+- tests: add data-driven rule matcher fixtures with a show-features-like DSL and authoring documentation #2985
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
