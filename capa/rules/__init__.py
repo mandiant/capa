@@ -2266,9 +2266,15 @@ class RuleSet:
                     new_features.append(capa.features.common.MatchedRule(namespace))
 
                 if new_features:
-                    new_candidates: list[str] = []
+                    new_candidates: set[str] = set()
                     for new_feature in new_features:
-                        new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
+                        for candidate_name in feature_index.rules_by_feature.get(new_feature, ()):
+                            # Deduplicate candidate rules at two levels:
+                            # 1. Globally: Ensure we don't re-queue rules already evaluated or waiting in `candidate_rule_names`.
+                            # 2. Locally: The `new_candidates` set prevents duplicates if a rule is triggered
+                            #    by both the matched rule name and its namespace in the same pass.
+                            if candidate_name not in candidate_rule_names:
+                                new_candidates.add(candidate_name)
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
