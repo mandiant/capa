@@ -36,6 +36,15 @@ def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[F
         yield Characteristic("tight loop"), AbsoluteVirtualAddress(basic_block_address)
 
 
+def extract_bb_inside_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
+    fhi: FunctionContext = fh.inner
+    bbi: BasicBlockContext = bbh.inner
+
+    if bbi.basic_block_index in fhi.looping_vertices:
+        basic_block_address: int = fhi.ctx.idx.get_basic_block_address(bbi.basic_block_index)
+        yield Characteristic("inside loop"), AbsoluteVirtualAddress(basic_block_address)
+
+
 def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Feature, Address]]:
     """extract basic block features"""
     for bb_handler in BASIC_BLOCK_HANDLERS:
@@ -44,4 +53,4 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[tuple[Featur
     yield BasicBlock(), bbh.address
 
 
-BASIC_BLOCK_HANDLERS = (extract_bb_tight_loop,)
+BASIC_BLOCK_HANDLERS = (extract_bb_tight_loop, extract_bb_inside_loop)
