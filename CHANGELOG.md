@@ -116,6 +116,7 @@
 - fix: incorrect bytes() constructor usage in buf_filled_with @mike-hunhoff #3077
 - fix: remove redundant code related to cli loading @mike-hunhoff #3076
 - fix: optimize all_zeros using fast bytes comparison @mike-hunhoff #3078
+- fix: duplicate rule candidate evaluation in optimized matching engine @mike-hunhoff #3080
 
 ### capa Explorer Web
 
