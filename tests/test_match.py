@@ -973,9 +973,9 @@ def test_match_no_duplicate_candidate_evaluations():
     """
     Ensure that when a rule has multiple candidate paths to trigger it,
     it is evaluated only once and does not create duplicate match results.
-    Covers both Case 1 (Global deduplication against already-queued/evaluated rules)
-    and Case 2 (Local deduplication when multiple features trigger the same candidate
-    within the same iteration).
+    Verifies both global deduplication (avoiding re-queuing rules already
+    evaluated/queued) and local deduplication (avoiding duplicate queueing when
+    multiple features trigger the same candidate in a single pass).
     """
     rules = [
         capa.rules.Rule.from_yaml(

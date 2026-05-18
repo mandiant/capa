@@ -2269,12 +2269,10 @@ class RuleSet:
                     new_candidates: set[str] = set()
                     for new_feature in new_features:
                         for candidate_name in feature_index.rules_by_feature.get(new_feature, ()):
-                            # Prevent duplicate candidate evaluation across two cases:
-                            # Case 1 (Global): Do not add rules already in `candidate_rule_names` (which tracks all
-                            # rule names ever seeded or evaluated in previous iterations of the loop).
-                            # Case 2 (Local): By using a `set` for `new_candidates`, we prevent a rule from being
-                            # added twice in the *same* iteration if it gets triggered by both the matched rule
-                            # name and its namespace.
+                            # Deduplicate candidate rules at two levels:
+                            # 1. Globally: Ensure we don't re-queue rules already evaluated or waiting in `candidate_rule_names`.
+                            # 2. Locally: The `new_candidates` set prevents duplicates if a rule is triggered
+                            #    by both the matched rule name and its namespace in the same pass.
                             if candidate_name not in candidate_rule_names:
                                 new_candidates.add(candidate_name)
 
