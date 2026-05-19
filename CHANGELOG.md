@@ -117,6 +117,7 @@
 - fix: remove redundant code related to cli loading @mike-hunhoff #3076
 - fix: optimize all_zeros using fast bytes comparison @mike-hunhoff #3078
 - fix: duplicate rule candidate evaluation in optimized matching engine @mike-hunhoff #3080
+- fix: correct Some statement short-circuit logic and add tests @mike-hunhoff #3083
 
 ### capa Explorer Web
 
