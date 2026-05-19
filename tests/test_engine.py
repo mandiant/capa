@@ -105,6 +105,25 @@ def test_some():
     assert bool(Some(0, [Number(1)]).evaluate({Number(0): {ADDR1}})) is True
     assert bool(Some(1, [Number(1)]).evaluate({Number(0): {ADDR1}})) is False
 
+    # Test Some(0, []) correctness (should evaluate to True in both short-circuit modes)
+    assert Some(0, []).evaluate({Number(0): {ADDR1}}, short_circuit=True).success is True
+    assert Some(0, []).evaluate({Number(0): {ADDR1}}, short_circuit=False).success is True
+
+    # Test Some(0, [Child]) optimization (child must not be evaluated when short-circuit is True)
+    class TrackingFeature(Number):
+        def __init__(self, value):
+            super().__init__(value)
+            self.evaluated = False
+
+        def evaluate(self, features, short_circuit=True):
+            self.evaluated = True
+            return super().evaluate(features, short_circuit)
+
+    tracker = TrackingFeature(1)
+    res = Some(0, [tracker]).evaluate({Number(0): {ADDR1}}, short_circuit=True)
+    assert res.success is True
+    assert tracker.evaluated is False  # Must not be evaluated!
+
     assert bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}})) is False
     assert bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
     assert (
