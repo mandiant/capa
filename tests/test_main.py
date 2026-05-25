@@ -15,6 +15,7 @@
 import gzip
 import json
 import textwrap
+from types import SimpleNamespace
 from pathlib import Path
 
 import fixtures
@@ -352,3 +353,16 @@ def test_main_cape_gzip():
         / "./data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     )
     assert capa.main.main([path]) == 0
+
+
+def test_gpr_uses_ghidra_backend(tmp_path):
+    args = SimpleNamespace(input_file=tmp_path / "sample.gpr", backend=capa.main.BACKEND_AUTO)
+
+    assert capa.main.get_backend_from_cli(args, FORMAT_AUTO) == capa.main.BACKEND_GHIDRA
+    assert capa.main.get_sample_path_from_cli(args, capa.main.BACKEND_GHIDRA) is None
+
+
+def test_gpr_skips_generic_file_extractor_probe(tmp_path):
+    args = SimpleNamespace(input_file=tmp_path / "sample.gpr")
+
+    assert capa.main.get_file_extractors_from_cli(args, FORMAT_AUTO) == []

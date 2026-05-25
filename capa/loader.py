@@ -32,6 +32,7 @@ from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
 from capa.exceptions import (
+    InvalidArgument,
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
@@ -434,24 +435,39 @@ def get_extractor(
             if not capa.ghidra.helpers.is_supported_ghidra_version():
                 raise RuntimeError("unsupported Ghidra version")
 
-            import tempfile
+            project_path = input_path
+            tmpdir = None
+            if input_path.suffix.lower() == ".gpr":
+                project_cm = pyghidra.open_project(str(project_path.parent), project_path.stem, create=False)
+            else:
+                import tempfile
 
-            tmpdir = tempfile.TemporaryDirectory()
+                tmpdir = tempfile.TemporaryDirectory()
+                project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
 
-            project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
             project = project_cm.__enter__()
             try:
                 from ghidra.util.task import TaskMonitor
 
                 monitor = TaskMonitor.DUMMY
 
-                # Import file
-                loader = pyghidra.program_loader().project(project).source(str(input_path)).name(input_path.name)
-                with loader.load() as load_results:
-                    load_results.save(monitor)
+                if input_path.suffix.lower() == ".gpr":
+                    try:
+                        selected_program = capa.ghidra.helpers.select_project_file(project)
+                    except ValueError as e:
+                        raise InvalidArgument(str(e)) from e
+                    program_path = selected_program.getPathname()
+                    logger.debug("ghidra: selected program path: %s", program_path)
+                else:
+                    # Import file
+                    loader = pyghidra.program_loader().project(project).source(str(input_path)).name(input_path.name)
+                    with loader.load() as load_results:
+                        load_results.save(monitor)
+
+                    program_path = "/" + input_path.name
 
                 # Open program
-                program, consumer = pyghidra.consume_program(project, "/" + input_path.name)
+                program, consumer = pyghidra.consume_program(project, program_path)
 
                 # Analyze
                 pyghidra.analyze(program, monitor)
@@ -479,7 +495,8 @@ def get_extractor(
 
             except Exception:
                 project_cm.__exit__(None, None, None)
-                tmpdir.cleanup()
+                if tmpdir:
+                    tmpdir.cleanup()
                 raise
 
         import capa.features.extractors.ghidra.extractor

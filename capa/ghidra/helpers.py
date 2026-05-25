@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import logging
 import datetime
 import contextlib
@@ -28,7 +29,11 @@ from capa.features.address import AbsoluteVirtualAddress
 logger = logging.getLogger("capa")
 
 # file type as returned by Ghidra
-SUPPORTED_FILE_TYPES = ("Executable and Linking Format (ELF)", "Portable Executable (PE)", "Raw Binary")
+SUPPORTED_FILE_TYPES = (
+    "Executable and Linking Format (ELF)",
+    "Portable Executable (PE)",
+    "Raw Binary",
+)
 
 
 def get_current_program():
@@ -41,6 +46,48 @@ def get_flat_api():
 
 def get_monitor():
     return ghidra_context.get_context().monitor
+
+
+def iter_program_files(folder):
+    yield from folder.getFiles()
+
+    for child_folder in folder.getFolders():
+        yield from iter_program_files(child_folder)
+
+
+# Programs within a Ghidra project
+def list_project_files(project):
+    project_data = project.getProjectData()
+    root_folder = project_data.getRootFolder()
+    return list(iter_program_files(root_folder))
+
+
+def select_project_file(project):
+    programs = list_project_files(project)
+
+    if not programs:
+        raise ValueError("no programs found in Ghidra project")
+
+    if len(programs) == 1:
+        return programs[0]
+
+    requested_path = os.environ.get("CAPA_GHIDRA_PROGRAM_PATH")
+    if requested_path:
+        for program in programs:
+            if program.getPathname() == requested_path:
+                return program
+
+        available = "\n".join(f"- {program.getPathname()}" for program in programs)
+        raise ValueError(
+            f"""CAPA_GHIDRA_PROGRAM_PATH did not match any program in the Ghidra project\n
+            available programs:\n{available}"""
+        )
+
+    available = "\n".join(f"- {program.getPathname()}" for program in programs)
+    raise ValueError(
+        f"""multiple programs found in the Ghidra project\n available programs:\n{available}\n
+        set CAPA_GHIDRA_PROGRAM_PATH to select one"""
+    )
 
 
 class GHIDRAIO:
