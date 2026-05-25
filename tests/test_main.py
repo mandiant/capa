@@ -22,8 +22,6 @@ import fixtures
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.features
 from capa.main import FORMAT_AUTO
 
 

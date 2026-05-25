@@ -16,7 +16,7 @@ import os
 import logging
 import datetime
 import contextlib
-from typing import Optional
+from typing import Optional, assert_never
 from pathlib import Path
 
 from rich.console import Console
