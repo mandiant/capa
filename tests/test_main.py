@@ -16,6 +16,7 @@
 import gzip
 import json
 import textwrap
+from types import SimpleNamespace
 from pathlib import Path
 
 import fixtures
@@ -24,6 +25,7 @@ import capa.main
 import capa.rules
 import capa.engine
 import capa.features
+from capa.main import FORMAT_AUTO
 
 
 def test_main(z9324d_extractor):
@@ -369,3 +371,16 @@ def test_main_cape_gzip():
     # tests successful execution of .json.gz
     path = str(fixtures.get_data_path_by_name("0000a657"))
     assert capa.main.main([path]) == 0
+
+
+def test_gpr_uses_ghidra_backend(tmp_path):
+    args = SimpleNamespace(input_file=tmp_path / "sample.gpr", backend=capa.main.BACKEND_AUTO)
+
+    assert capa.main.get_backend_from_cli(args, FORMAT_AUTO) == capa.main.BACKEND_GHIDRA
+    assert capa.main.get_sample_path_from_cli(args, capa.main.BACKEND_GHIDRA) is None
+
+
+def test_gpr_skips_generic_file_extractor_probe(tmp_path):
+    args = SimpleNamespace(input_file=tmp_path / "sample.gpr")
+
+    assert capa.main.get_file_extractors_from_cli(args, FORMAT_AUTO) == []
