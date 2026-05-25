@@ -34,6 +34,7 @@ Example:
     │00000080│ 30 61 36 36 39 12 28 61 ┊ 34 62 33 35 64 65 37 31 │0a669•(a┊4b35de71│
 
 """
+
 import sys
 import logging
 import argparse

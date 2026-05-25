@@ -25,8 +25,6 @@ from rich.table import Table
 import capa.main
 import capa.rules
 import capa.helpers
-import capa.features
-import capa.exceptions
 import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze
@@ -40,7 +38,7 @@ logger = logging.getLogger("show-unused-features")
 
 
 def format_address(addr: capa.features.address.Address) -> str:
-    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
+    return v.format_address(capa.features.freeze.Address.from_capa(addr))
 
 
 def get_rules_feature_set(rules: capa.rules.RuleSet) -> set[Feature]:

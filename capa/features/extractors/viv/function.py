@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterator
+from typing import Iterator, cast
 
 import envi
 import viv_utils
@@ -26,20 +26,9 @@ from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given function.
-
-    args:
-      f: the function to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
-def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_function_symtab_names(
+    fh: FunctionHandle,
+) -> Iterator[tuple[Feature, Address]]:
     if fh.inner.vw.metadata["Format"] == "elf":
         # the file's symbol table gets added to the metadata of the vivisect workspace.
         # this is in order to eliminate the computational overhead of refetching symtab each time.
@@ -75,9 +64,13 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[tuple[Feature, Ad
 
     edges = []
 
-    for bb in f.basic_blocks:
-        if len(bb.instructions) > 0:
-            for bva, bflags in bb.instructions[-1].getBranches():
+    basic_blocks = cast(list[viv_utils.BasicBlock], f.basic_blocks)
+    assert isinstance(basic_blocks, list)
+    for bb in basic_blocks:
+        instructions = cast(list[envi.Opcode], bb.instructions)
+        assert isinstance(instructions, list)
+        if len(instructions) > 0:
+            for bva, bflags in instructions[-1].getBranches():  # type: ignore  # getBranches returns () in base; overridden at runtime
                 if bva is None:
                     # vivisect may be unable to recover the call target, e.g. on dynamic calls like `call esi`
                     # for this bva is None, and we don't want to add it for loop detection, ref: vivisect#574
@@ -87,7 +80,7 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[tuple[Feature, Ad
                     bflags & envi.BR_COND
                     or bflags & envi.BR_FALL
                     or bflags & envi.BR_TABLE
-                    or bb.instructions[-1].mnem == "jmp"
+                    or instructions[-1].mnem == "jmp"
                 ):
                     edges.append((bb.va, bva))
 

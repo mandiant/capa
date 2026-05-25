@@ -19,8 +19,6 @@ from collections import Counter
 import idc
 import idaapi
 
-import capa.rules
-import capa.engine
 import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
@@ -80,18 +78,18 @@ def parse_node_for_feature(feature, description, comment, depth):
     display = ""
 
     if feature.startswith("#"):
-        display += f"{' '*depth}{feature}\n"
+        display += f"{' ' * depth}{feature}\n"
     elif description:
         if feature.startswith(("- and", "- or", "- optional", "- basic block", "- not", "- instruction:")):
-            display += f"{' '*depth}{feature}\n"
+            display += f"{' ' * depth}{feature}\n"
             if comment:
                 display += f" # {comment}"
-            display += f"\n{' '*(depth+2)}- description: {description}\n"
+            display += f"\n{' ' * (depth + 2)}- description: {description}\n"
         elif feature.startswith("- string"):
-            display += f"{' '*depth}{feature}\n"
+            display += f"{' ' * depth}{feature}\n"
             if comment:
                 display += f" # {comment}"
-            display += f"\n{' '*(depth+2)}description: {description}\n"
+            display += f"\n{' ' * (depth + 2)}description: {description}\n"
         elif feature.startswith("- count"):
             # count is weird, we need to format description based on feature type, so we parse with regex
             # assume format - count(<feature_name>(<feature_value>)): <count>
@@ -99,20 +97,20 @@ def parse_node_for_feature(feature, description, comment, depth):
             if m:
                 name, value, count = m.groups()
                 if name in ("string",):
-                    display += f"{' '*depth}{feature}"
+                    display += f"{' ' * depth}{feature}"
                     if comment:
                         display += f" # {comment}"
-                    display += f"\n{' '*(depth+2)}description: {description}\n"
+                    display += f"\n{' ' * (depth + 2)}description: {description}\n"
                 else:
-                    display += f"{' '*depth}- count({name}({value} = {description})): {count}"
+                    display += f"{' ' * depth}- count({name}({value} = {description})): {count}"
                     if comment:
                         display += f" # {comment}\n"
         else:
-            display += f"{' '*depth}{feature} = {description}"
+            display += f"{' ' * depth}{feature} = {description}"
             if comment:
                 display += f" # {comment}\n"
     else:
-        display += f"{' '*depth}{feature}"
+        display += f"{' ' * depth}{feature}"
         if comment:
             display += f" # {comment}\n"
 
@@ -208,9 +206,9 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             "      - <insert_references>",
             "    examples:",
             (
-                f"      - {capa.ida.helpers.get_file_md5().upper()}:{hex(ea)}"
+                f"      - {capa.ida.helpers.retrieve_input_file_md5().upper()}:{hex(ea)}"
                 if ea
-                else f"      - {capa.ida.helpers.get_file_md5().upper()}"
+                else f"      - {capa.ida.helpers.retrieve_input_file_md5().upper()}"
             ),
             "  features:",
         ]
@@ -237,7 +235,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                 # determine lineno for first selected line, and column
                 cur.setPosition(select_start_ppos)
                 start_lineno = self.count_previous_lines_from_block(cur.block())
-                start_lineco = cur.columnNumber()
+                start_colno = cur.columnNumber()
 
                 # determine lineno for last selected line
                 cur.setPosition(select_end_ppos)
@@ -282,7 +280,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                     select_end_ppos += (lines_modified * len(self.INDENT)) + len(self.INDENT)
                 elif lines_modified:
                     # user SHIFT + Tab, decrease selection positions
-                    if start_lineco not in (0, 1) and first_modified:
+                    if start_colno not in (0, 1) and first_modified:
                         # only decrease start position if not in first column
                         select_start_ppos -= len(self.INDENT)
                     select_end_ppos -= lines_modified * len(self.INDENT)
@@ -377,14 +375,6 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
     def get_node_type_comment():
         """ """
         return 2
-
-    def dragMoveEvent(self, e):
-        """ """
-        super().dragMoveEvent(e)
-
-    def dragEventEnter(self, e):
-        """ """
-        super().dragEventEnter(e)
 
     def dropEvent(self, e):
         """ """
@@ -785,8 +775,13 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
     def get_features(self, selected=False, ignore=()):
         """ """
         for feature in filter(
-            lambda o: o.capa_type
-            in (CapaExplorerRulegenEditor.get_node_type_feature(), CapaExplorerRulegenEditor.get_node_type_comment()),
+            lambda o: (
+                o.capa_type
+                in (
+                    CapaExplorerRulegenEditor.get_node_type_feature(),
+                    CapaExplorerRulegenEditor.get_node_type_comment(),
+                )
+            ),
             tuple(iterate_tree(self)),
         ):
             if feature in ignore:
@@ -1080,7 +1075,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                     )
             else:
                 if addrs:
-                    addr = addrs.pop()
+                    addr = next(iter(addrs))
                 else:
                     # some features may not have an address e.g. "format"
                     addr = _NoAddress()

@@ -19,14 +19,10 @@ import fixtures
 
 import capa.main
 import capa.rules
-import capa.helpers
-import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.freeze
-import capa.features.basicblock
 import capa.features.extractors.null
-import capa.features.extractors.base_extractor
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import (
     SampleHashes,
@@ -106,11 +102,9 @@ def test_null_feature_extractor():
         DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2),
     ]
 
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: create file
@@ -120,11 +114,9 @@ def test_null_feature_extractor():
                         features:
                             - and:
                                 - api: CreateFile
-                    """
-                )
-            ),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "create file" in capabilities.matches
 
@@ -149,6 +141,7 @@ def test_freeze_str_roundtrip():
     load = capa.features.freeze.loads
     dump = capa.features.freeze.dumps
     reanimated = load(dump(EXTRACTOR))
+    assert isinstance(reanimated, DynamicFeatureExtractor)
     compare_extractors(EXTRACTOR, reanimated)
 
 
@@ -156,16 +149,25 @@ def test_freeze_bytes_roundtrip():
     load = capa.features.freeze.load
     dump = capa.features.freeze.dump
     reanimated = load(dump(EXTRACTOR))
+    assert isinstance(reanimated, DynamicFeatureExtractor)
     compare_extractors(EXTRACTOR, reanimated)
 
 
 def test_freeze_load_sample(tmpdir):
     o = tmpdir.mkdir("capa").join("test.frz")
 
-    extractor = fixtures.get_cape_extractor(fixtures.get_data_path_by_name("d46900"))
+    extractor = fixtures.get_cape_extractor(
+        fixtures.CD
+        / "data"
+        / "dynamic"
+        / "cape"
+        / "v2.2"
+        / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
+    )
 
     Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
 
     null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
+    assert isinstance(null_extractor, DynamicFeatureExtractor)
 
     compare_extractors(extractor, null_extractor)

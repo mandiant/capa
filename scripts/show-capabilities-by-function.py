@@ -54,6 +54,7 @@ Example::
       - connect TCP socket
     ...
 """
+
 import sys
 import logging
 import argparse
@@ -63,13 +64,9 @@ import colorama
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.helpers
-import capa.features
-import capa.exceptions
+import capa.loader
 import capa.render.utils as rutils
 import capa.render.verbose
-import capa.features.freeze
 import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.features.freeze import Address
@@ -146,18 +143,13 @@ def main(argv=None):
         input_format = capa.main.get_input_format_from_cli(args)
         rules = capa.main.get_rules_from_cli(args)
         backend = capa.main.get_backend_from_cli(args, input_format)
-        sample_path = capa.main.get_sample_path_from_cli(args, backend)
-        if sample_path is None:
-            os_ = "unknown"
-        else:
-            os_ = capa.loader.get_os(sample_path)
         extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
     except capa.main.ShouldExitError as e:
         return e.status_code
 
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, args.rules, extractor, capabilities)
     meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     if capa.capabilities.common.has_static_limitation(rules, capabilities):

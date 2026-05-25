@@ -15,20 +15,23 @@
 import textwrap
 from pathlib import Path
 
-import pytest
+import fixtures
 
 import capa.main
 import capa.rules
-import capa.helpers
 import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.null
-import capa.features.extractors.base_extractor
+import capa.features.freeze.features
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, SampleHashes, FunctionHandle
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    SampleHashes,
+    FunctionHandle,
+)
 
 EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
@@ -39,28 +42,46 @@ EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     ),
     global_features=[],
     file_features=[
-        (AbsoluteVirtualAddress(0x402345), capa.features.common.Characteristic("embedded pe")),
+        (
+            AbsoluteVirtualAddress(0x402345),
+            capa.features.common.Characteristic("embedded pe"),
+        ),
     ],
     functions={
         AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.FunctionFeatures(
             features=[
-                (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("indirect call")),
+                (
+                    AbsoluteVirtualAddress(0x401000),
+                    capa.features.common.Characteristic("indirect call"),
+                ),
             ],
             basic_blocks={
                 AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.BasicBlockFeatures(
                     features=[
-                        (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("tight loop")),
+                        (
+                            AbsoluteVirtualAddress(0x401000),
+                            capa.features.common.Characteristic("tight loop"),
+                        ),
                     ],
                     instructions={
                         AbsoluteVirtualAddress(0x401000): capa.features.extractors.null.InstructionFeatures(
                             features=[
-                                (AbsoluteVirtualAddress(0x401000), capa.features.insn.Mnemonic("xor")),
-                                (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("nzxor")),
+                                (
+                                    AbsoluteVirtualAddress(0x401000),
+                                    capa.features.insn.Mnemonic("xor"),
+                                ),
+                                (
+                                    AbsoluteVirtualAddress(0x401000),
+                                    capa.features.common.Characteristic("nzxor"),
+                                ),
                             ],
                         ),
                         AbsoluteVirtualAddress(0x401002): capa.features.extractors.null.InstructionFeatures(
                             features=[
-                                (AbsoluteVirtualAddress(0x401002), capa.features.insn.Mnemonic("mov")),
+                                (
+                                    AbsoluteVirtualAddress(0x401002),
+                                    capa.features.insn.Mnemonic("mov"),
+                                ),
                             ],
                         ),
                     },
@@ -86,11 +107,9 @@ def test_null_feature_extractor():
         AbsoluteVirtualAddress(0x401002),
     ]
 
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                     rule:
                         meta:
                             name: xor loop
@@ -102,11 +121,9 @@ def test_null_feature_extractor():
                                 - characteristic: tight loop
                                 - mnemonic: xor
                                 - characteristic: nzxor
-                    """
-                )
-            ),
-        ]
-    )
+                    """)
+        ),
+    ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "xor loop" in capabilities.matches
 
@@ -168,26 +185,20 @@ def test_serialize_features():
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 
 
-def test_freeze_sample(tmpdir, z9324d_extractor):
+def test_no_address_lt_irreflexivity():
+    no_addr = capa.features.freeze.Address.from_capa(capa.features.address.NO_ADDRESS)
+    assert not (no_addr < no_addr)
+
+
+def test_freeze_sample(tmpdir):
     # tmpdir fixture handles cleanup
     o = tmpdir.mkdir("capa").join("test.frz").strpath
-    path = z9324d_extractor.path
+    path = str(fixtures.CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
     assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
-@pytest.mark.parametrize(
-    "extractor",
-    [
-        pytest.param("z9324d_extractor"),
-    ],
-)
-def test_freeze_load_sample(tmpdir, request, extractor):
+def test_freeze_load_sample(tmpdir, z9324d_extractor):
     o = tmpdir.mkdir("capa").join("test.frz")
-
-    extractor = request.getfixturevalue(extractor)
-
-    Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
-
+    Path(o.strpath).write_bytes(capa.features.freeze.dump(z9324d_extractor))
     null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
-
-    compare_extractors(extractor, null_extractor)
+    compare_extractors(z9324d_extractor, null_extractor)

@@ -27,20 +27,6 @@ from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
-def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given basic block.
-
-    args:
-      f: the function to process.
-      bb: the basic block to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
 def _bb_has_tight_loop(f, bb):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
@@ -107,7 +93,7 @@ def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
     if not dst.reg:
         return False
 
-    rname = dst._dis_regctx.getRegisterName(dst.reg)
+    rname = dst._dis_regctx.getRegisterName(dst.reg)  # type: ignore  # _dis_regctx set dynamically by i386 disassembler on each operand
     if rname not in ["ebp", "rbp", "esp", "rsp"]:
         return False
 
@@ -132,7 +118,7 @@ def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     if is_printable_ascii(chars):
         return oper.tsize
     elif is_printable_utf16le(chars):
-        return oper.tsize / 2
+        return oper.tsize // 2
     else:
         return 0
 

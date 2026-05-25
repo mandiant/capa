@@ -26,11 +26,9 @@ from capa.features.extractors.vmray.models import (
 
 
 def test_vmray_model_param():
-    param_str = textwrap.dedent(
-        """
+    param_str = textwrap.dedent("""
         <param name="addrlen" type="signed_32bit" value="16"/>
-        """
-    )
+        """)
     param: Param = Param.model_validate(xml_to_dict(param_str)["param"])
 
     assert param.value is not None
@@ -38,13 +36,11 @@ def test_vmray_model_param():
 
 
 def test_vmray_model_param_deref():
-    param_str = textwrap.dedent(
-        """
+    param_str = textwrap.dedent("""
         <param name="buf" type="ptr" value="0xaaaaaaaa">
             <deref type="str" value="Hello world"/>
         </param>
-        """
-    )
+        """)
     param: Param = Param.model_validate(xml_to_dict(param_str)["param"])
 
     assert param.deref is not None
@@ -52,8 +48,7 @@ def test_vmray_model_param_deref():
 
 
 def test_vmray_model_function_call():
-    function_call_str = textwrap.dedent(
-        """
+    function_call_str = textwrap.dedent("""
         <fncall fncall_id="18" process_id="1" thread_id="1" name="sys_time">
             <in>
                 <param name="tloc" type="unknown" value="0x0"/>
@@ -62,8 +57,7 @@ def test_vmray_model_function_call():
                 <param name="ret_val" type="unknown" value="0xaaaaaaaa"/>
             </out>
         </fncall>
-        """
-    )
+        """)
     function_call: FunctionCall = FunctionCall.model_validate(xml_to_dict(function_call_str)["fncall"])
 
     assert function_call.fncall_id == 18
@@ -81,22 +75,19 @@ def test_vmray_model_function_call():
 
 
 def test_vmray_model_analysis_metadata():
-    analysis_metadata: AnalysisMetadata = AnalysisMetadata.model_validate_json(
-        """
+    analysis_metadata: AnalysisMetadata = AnalysisMetadata.model_validate_json("""
         {
             "sample_type": "Linux ELF Executable (x86-64)",
             "submission_filename": "abcd1234"
         }
-        """
-    )
+        """)
 
     assert analysis_metadata.sample_type == "Linux ELF Executable (x86-64)"
     assert analysis_metadata.submission_filename == "abcd1234"
 
 
 def test_vmray_model_elffile():
-    elffile: ElfFile = ElfFile.model_validate_json(
-        """
+    elffile: ElfFile = ElfFile.model_validate_json("""
         {
             "sections": [
                 {
@@ -107,16 +98,14 @@ def test_vmray_model_elffile():
                 }
             ]
         }
-        """
-    )
+        """)
 
     assert elffile.sections[0].header.sh_name == "abcd1234"
     assert elffile.sections[0].header.sh_addr == 2863311530
 
 
 def test_vmray_model_pefile():
-    pefile: PEFile = PEFile.model_validate_json(
-        """
+    pefile: PEFile = PEFile.model_validate_json("""
         {
             "basic_info": {
                 "image_base": 2863311530
@@ -150,8 +139,7 @@ def test_vmray_model_pefile():
                 }
             ]
         }
-        """
-    )
+        """)
 
     assert pefile.basic_info.image_base == 2863311530
 

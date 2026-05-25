@@ -17,20 +17,20 @@ import abc
 
 class Address(abc.ABC):
     @abc.abstractmethod
-    def __eq__(self, other): ...
+    def __eq__(self, other) -> bool: ...
 
     @abc.abstractmethod
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         # implement < so that addresses can be sorted from low to high
         ...
 
     @abc.abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         # implement hash so that addresses can be used in sets and dicts
         ...
 
     @abc.abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         # implement repr to help during debugging
         ...
 
@@ -68,11 +68,13 @@ class ProcessAddress(Address):
         return hash((self.ppid, self.pid))
 
     def __eq__(self, other):
-        assert isinstance(other, ProcessAddress)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
         return (self.ppid, self.pid) == (other.ppid, other.pid)
 
     def __lt__(self, other):
-        assert isinstance(other, ProcessAddress)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
         return (self.ppid, self.pid) < (other.ppid, other.pid)
 
 
@@ -91,11 +93,13 @@ class ThreadAddress(Address):
         return hash((self.process, self.tid))
 
     def __eq__(self, other):
-        assert isinstance(other, ThreadAddress)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
         return (self.process, self.tid) == (other.process, other.tid)
 
     def __lt__(self, other):
-        assert isinstance(other, ThreadAddress)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
         return (self.process, self.tid) < (other.process, other.tid)
 
 
@@ -114,10 +118,13 @@ class DynamicCallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (other.thread, other.id)
+        if not isinstance(other, DynamicCallAddress):
+            return NotImplemented
+        return (self.thread, self.id) == (other.thread, other.id)
 
     def __lt__(self, other):
-        assert isinstance(other, DynamicCallAddress)
+        if not isinstance(other, DynamicCallAddress):
+            return NotImplemented
         return (self.thread, self.id) < (other.thread, other.id)
 
 
@@ -167,9 +174,13 @@ class DNTokenOffsetAddress(Address):
         self.offset = offset
 
     def __eq__(self, other):
+        if not isinstance(other, DNTokenOffsetAddress):
+            return NotImplemented
         return (self.token, self.offset) == (other.token, other.offset)
 
     def __lt__(self, other):
+        if not isinstance(other, DNTokenOffsetAddress):
+            return NotImplemented
         return (self.token, self.offset) < (other.token, other.offset)
 
     def __hash__(self):
@@ -184,13 +195,18 @@ class DNTokenOffsetAddress(Address):
 
 class _NoAddress(Address):
     def __eq__(self, other):
-        return True
+        return isinstance(other, _NoAddress)
 
     def __lt__(self, other):
         return False
 
+    def __gt__(self, other):
+        # Mixed-type comparison: (real_address < NO_ADDRESS) invokes this so sort works.
+        # NoAddress sorts last.
+        return other is not self
+
     def __hash__(self):
-        return hash(0)
+        return hash(None)
 
     def __repr__(self):
         return "no address"

@@ -54,6 +54,7 @@ Example::
     0x44cb60: ?
     0x44cba0: __guard_icall_checks_enforced
 """
+
 import sys
 import logging
 import argparse
@@ -63,11 +64,6 @@ import viv_utils
 import viv_utils.flirt
 
 import capa.main
-import capa.rules
-import capa.engine
-import capa.helpers
-import capa.features
-import capa.features.freeze
 from capa.loader import BACKEND_VIV
 
 logger = logging.getLogger("capa.match-function-id")

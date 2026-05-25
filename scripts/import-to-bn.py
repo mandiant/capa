@@ -36,6 +36,7 @@ Check the log window for any errors, and/or the summary of changes.
 
 Derived from: https://github.com/mandiant/capa/blob/master/scripts/import-to-ida.py
 """
+
 import os
 import json
 from pathlib import Path
@@ -101,7 +102,7 @@ def load_analysis(bv):
     for rule in doc["rules"].values():
         if rule["meta"].get("lib"):
             continue
-        if rule["meta"].get("capa/subscope"):
+        if rule["meta"].get("capa/subscope-rule"):
             continue
         if rule["meta"]["scopes"].get("static") != "function":
             continue

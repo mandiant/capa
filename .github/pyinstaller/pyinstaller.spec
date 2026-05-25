@@ -17,6 +17,8 @@ import sys
 
 import capa.rules.cache
 
+from PyInstaller.utils.hooks import collect_submodules
+
 from pathlib import Path
 
 # SPECPATH is a global variable which points to .spec file path
@@ -34,6 +36,7 @@ a = Analysis(
     ["../../capa/main.py"],
     pathex=["capa"],
     binaries=None,
+    hiddenimports=collect_submodules('rich'),
     datas=[
         # when invoking pyinstaller from the project root,
         # this gets invoked from the directory of the spec file,

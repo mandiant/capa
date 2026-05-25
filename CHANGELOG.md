@@ -4,11 +4,149 @@
 
 ### New Features
 
+### Breaking Changes
+
+- Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
+
+### New Rules (10)
+
+- nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
+- nursery/connect-to-websocket-server-in-dotnet mehunhoff@google.com
+- nursery/receive-data-on-websocket-in-dotnet mehunhoff@google.com
+- nursery/send-data-on-websocket-in-dotnet mehunhoff@google.com
+- nursery/upload-or-download-file-via-dropbox mehunhoff@google.com
+- host-interaction/network/connectivity/check-internet-connectivity-in-dotnet omurcankaya@protonmail.com
+- nursery/check-for-time-delay-in-dotnet @aryanyk
+- nursery/decode-pe-stored-as-uuid corkami@google.com
+- compiler/crystal/compiled-with-crystal corkami@google.com
+- compiler/odin/compiled-with-odin corkami@google.com
+-
+
+### Bug Fixes
+- fix lots of linter errors identified by pyright @williballenthin #3052
+- fix: render_default always returns empty string @williballenthin #3012
+- fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
+- fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
+- fix: capabilities/common.py: if va: drops address 0x0 @williballenthin #3015
+- fix: vverbose.py: render_call variable assigned but never used @williballenthin #3016
+- fix: extract_os yields duplicate/contradictory OS values @williballenthin #3017
+- fix: load_one_jsonl_from_path: finally block runs on unrelated exceptions @williballenthin #3018
+- fix: find_dynamic_limitations_from_cli overwrites instead of OR-ing @williballenthin #3019
+- fix: optimizer doesn't recurse into And/Or/Some children @williballenthin #3020
+- fix: address classes __eq__ and __lt__ assert on type @williballenthin #3021
+- fix: DNTokenOffsetAddress.__eq__ lacks type guard @williballenthin #3022
+- fix: elffile.py: get_base_address returns None instead of NO_ADDRESS @williballenthin #3023
+- fix: base_extractor.py: __metaclass__ is Python 2 syntax, ignored in Py3 @williballenthin #3024
+- fix: freeze/__init__.py: NO_ADDRESS < NO_ADDRESS returns True @williballenthin #3025
+- fix: dotnetfile.py: missing import for capa.features.extractors.common @williballenthin #3026
+- fix: rules/__init__.py: duplicate bytes_features line @williballenthin #3027
+- fix: EXTENSIONS_DYNAMIC has inconsistent leading dots @williballenthin #3028
+- fix: loader.py reads entire file for magic byte check @williballenthin #3029
+- fix: freeze/__init__.py: logically impossible condition @williballenthin #3030
+- fix: EXTENSIONS_ELF never referenced @williballenthin #3031
+- fix: correct off-by-one in get_dotnet_table_row so row_index=1 (first valid .NET metadata row) is no longer rejected @williballenthin
+- fix: add missing import for assert_never in cape extractor.py to avoid NameError when call argument has unexpected type @williballenthin
+- fix: stop mutating call.api in cape thread.get_calls; yield one CallHandle per call so the original API name is preserved for all handles @williballenthin
+- fix: use instruction_indices in is_security_cookie to handle single-instruction basic blocks where end_index is omitted, preventing KeyError on -1 @williballenthin
+- fix: guard get_operand_expressions against empty expression tree so Ghidra-exported BinExport2 files with empty operands no longer raise IndexError @williballenthin
+- fix: add return after zero-offset yield in extract_insn_offset_features so Offset(0) is not emitted twice @williballenthin
+- fix: use f-string in binexport2 extractor so unexpected global feature value appears in ValueError message @williballenthin
+- fix: correct scale/displacement expressions in get_operand_phrase_info 5-expression branch (used expression3 operator instead of expression4 value) @williballenthin
+- fix: use HasField instead of truthiness in _index_vertex_edges so call-graph edges to/from vertex 0 are not silently dropped @williballenthin
+- fix: change bare `if` to `elif` in get_backend_from_cli DRAKVUF branch to complete the if/elif chain @williballenthin
+- fix: close file handle in get_file_taste using a with statement @williballenthin
+- fix: correct off-by-one in dynamic analysis call_count debug log (enumerate -> explicit counter) @williballenthin
+- fix: correct capa/subscope-rule key in RuleMetadata so is_subscope_rule is no longer always False @williballenthin
+- fix: remove unreachable backports.functools_lru_cache fallback and dead dependency @williballenthin
+- fix: Scopes.from_dict uses cls instead of self so subclasses return the correct type @williballenthin
+- fix: correct wrong dict key in VMRay _compute_monitor_threads assertion (used thread_id instead of process_id) @williballenthin
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: remove unused imports of capa.engine, capa.helpers, and capa.features from cache-ruleset.py, detect-binexport2-capabilities.py, and show-capabilities-by-function.py @williballenthin (SURF-92)
+- fix: remove dead except ValueError clause in capa2sarif.py so JSONDecodeError is caught by the specific handler @williballenthin (SURF-91)
+- fix: dedent bulk-process.py main() body so explicit argv argument is used instead of silently ignored @williballenthin (SURF-90)
+- fix: guard statistics.quantiles/mean in compare-backends.py report() against empty duration lists @williballenthin (SURF-89)
+- fix: replace zipfile with pyzipper in minimize_vmray_results.py so output archive is AES-encrypted @williballenthin (SURF-88)
+- fix: assign yara_strings/yara_condition to empty string when Some has cmin=0 to prevent UnboundLocalError @williballenthin (SURF-87)
+- fix: parenthesize s_type checks in capa2yara.py so kid.name != "Some" guard applies to And/Or/Not uniformly @williballenthin (SURF-86)
+- fix: correct operator precedence in FeatureRegexRegistryControlSetMatchIncomplete to avoid false positives on unrelated currentcontrolset patterns @williballenthin (SURF-85)
+- fix: FeatureRegexRegistryControlSetMatchIncomplete now checks all Regex features instead of returning after the first @williballenthin (SURF-84)
+- fix: MissingStaticScope and MissingDynamicScope lint checks guard against absent scopes dict to prevent TypeError @williballenthin (SURF-83)
+- fix: MissingExampleOffset lint now reads scopes.static instead of obsolete scope key @williballenthin (SURF-82)
+- fix: extend MissingExampleOffset lint to validate dynamic examples using (pid:N,tid:N,call:N) format @williballenthin #3058
+- fix: invert scope filter in import-to-ida.py so function-scope rules are annotated instead of skipped @williballenthin (SURF-81)
+- fix: remove dead string literal in test_detect_duplicate_features @williballenthin (SURF-80)
+- fix: remove duplicate Rule.from_yaml call in test_scope_instruction_description @williballenthin (SURF-79)
+- fix: remove unused imports of capa.helpers, capa.features.basicblock, and redundant bare capa.features.extractors.base_extractor from test_freeze_dynamic.py @williballenthin (SURF-78)
+- fix: replace capa.main.find_capabilities with capa.capabilities.common.find_capabilities in test_com_feature_matching to avoid implicit transitive import dependency @williballenthin (SURF-77)
+- fix: correct test_json_meta to iterate list of function dicts and use correct address format for matched_basic_blocks assertion @williballenthin (SURF-76)
+- fix: remove unreachable StaticAnalysis assert in assert_meta and add dynamic fixture to test_doc_to_pb2 @williballenthin (SURF-75)
+- fix: correct self-comparison sa.max == sa.max to sa.max == sb.max in test_proto assert_statement @williballenthin (SURF-74)
+- fix: guard parse_node against missing "type" key to avoid TypeError crash @williballenthin (SURF-73)
+- fix: allocate feat_dict per feature in parse_json to avoid shared-reference aliasing @williballenthin (SURF-72)
+- fix: add missing capa.features.extractors.elf import to ghidra/helpers.py and ida/helpers.py @williballenthin (SURF-71)
+- fix: remove dead view_tab_rulegen assignment from CapaExplorerForm that was never read @williballenthin (SURF-70)
+- fix: remove dead reset_query method from CapaExplorerSearchProxyModel that was never called @williballenthin (SURF-69)
+- fix: remove unused imports of capa.rules and capa.engine from view.py @williballenthin (SURF-68)
+- fix: remove unused imports of capa.main, capa.render.json, and capa.features.extractors.ida.extractor from form.py @williballenthin (SURF-67)
+- fix: remove dead trim_function_name function from form.py that was never called @williballenthin (SURF-66)
+- fix: replace get_file_md5/get_file_sha256 with retrieve_input_file_md5/sha256 shims so all callers use consistent IDA version-aware API @williballenthin (SURF-65)
+- fix: rename dragEventEnter to dragEnterEvent so Qt dispatches drag-enter events correctly in CapaExplorerRulegenEditor @williballenthin (SURF-64)
+- fix: guard against None in lessThan else-branch so sorting columns with empty cells does not raise AttributeError @williballenthin (SURF-63)
+- fix: add explicit import capa.loader in form.py to avoid fragile transitive import dependency @williballenthin (SURF-62)
+- fix: initialize f=None before try block in load_capa_function_results to prevent UnboundLocalError in except handler @williballenthin (SURF-61)
+- fix: fix unreachable elif for NOT CompoundStatement so NOT rules render children in IDA plugin tree view @williballenthin (SURF-60)
+- fix: use next(iter(addrs)) instead of addrs.pop() to avoid mutating the feature cache in parse_features_for_tree @williballenthin (SURF-59)
+- fix: use integer division in get_printable_len for UTF-16 LE operands @williballenthin (SURF-58)
+- fix: break thunk chain loop after resolving import to avoid duplicate API features @williballenthin (SURF-57)
+- fix: pass insn instead of oper to getOperValue/getOperAddr in viv insn extractor @williballenthin (SURF-56)
+- fix: implement extract_function_loop in dnfile extractor to detect backward branches as loops @williballenthin (SURF-55)
+- fix: remove dead find_process function and helpers.py from cape extractor @williballenthin (SURF-54)
+- fix: remove dead interface_extract_* stub functions from viv basicblock, function, and insn extractors @williballenthin (SURF-53)
+- fix: remove unused import of capa.features.extractors.strings from binexport2 intel insn.py @williballenthin (SURF-52)
+- fix: remove extract_file_format from FILE_HANDLERS in five extractors to prevent duplicate Format features @williballenthin (SURF-51)
+- fix: replace assert with guard so 2-operand ARM ADD/SUB instructions are skipped instead of crashing @williballenthin (SURF-50)
+- fix: omit trailing ` -> ` suffix in syscall names when there is no return value @williballenthin (SURF-49)
+- fix: use AbsoluteVirtualAddress instead of FileOffsetAddress for string addresses in Ghidra and IDA file extractors @williballenthin (SURF-48)
+- fix: use dest.value.value and indirect_src.value.value for LLIL_CONST call destinations in binja insn.py @williballenthin (SURF-47)
+- fix: remove duplicate getPrevLocation call and dead loc variable in get_previous_instructions @williballenthin (SURF-46)
+- fix: unpack getByteDef offset and slice buffer so ENDBRANCH check applies to target address, not segment start @williballenthin (SURF-45)
+- fix: guard getByteDef against None return for unmapped addresses in viv insn extractor @williballenthin #3057
+- fix: correct inverted loop structure in extract_function_loop so each block edge is recorded as (src, dest) @williballenthin (SURF-44)
+- fix: initialize addr to None in Ghidra import extractors to prevent UnboundLocalError when external functions have no data references @williballenthin (SURF-43)
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin
+- fix: assign ConfigDict to model_config in ConciseModel so extra="ignore" is actually applied @williballenthin (SURF-42)
+- fix: replace assert with isinstance guard in get_callee for invalid MethodSpec tokens @williballenthin (SURF-41)
+- fix: incorrect bytes() constructor usage in buf_filled_with @mike-hunhoff #3077
+- fix: remove redundant code related to cli loading @mike-hunhoff #3076
+- fix: optimize all_zeros using fast bytes comparison @mike-hunhoff #3078
+- fix: duplicate rule candidate evaluation in optimized matching engine @mike-hunhoff #3080
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+- tests: update binja version to 5.3 @mr-tz #3011
+- ci: use explicit and per job permissions @mike-hunhoff #3002
+- replace black/isort/flake8 with ruff @mike-hunhoff #2992
+- ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
+
+### Raw diffs
+- [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
+- [capa-rules v9.4.0...master](https://github.com/mandiant/capa-rules/compare/v9.4.0...master)
+
+## v9.4.0
+
+This release includes Ghidra PyGhidra support, performance improvements, dependency updates, and 26 new rules. We'd like to thank the following contributors: @0x1622, Daniel Adeboye (@adeboyedn), Aditya Pandey (@EclipseAditya), aryanyk, Ben Knutson (@blenbot), @cosmoworker, @devs6186, @doomedraven, kamran ul haq (@kami922), @Maijin, @res2500, and others!
+
+### New Features
+
 - ghidra: support PyGhidra @mike-hunhoff #2788
+- vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (26)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_io still@teamt5.org
@@ -16,24 +154,69 @@
 - nursery/inject-shellcode-using-thread-pool-work-insertion-with-tp_work still@teamt5.org
 - data-manipulation/encryption/hc-256/encrypt-data-using-hc-256 wballenthin@hex-rays.com
 - anti-analysis/anti-llm/terminate-anthropic-session-via-magic-strings wballenthin@hex-rays.com
--
+- nursery/access-aws-credentials maximemorin@google.com
+- nursery/access-cloudflare-credentials maximemorin@google.com
+- nursery/access-docker-credentials maximemorin@google.com
+- nursery/access-gcp-credentials maximemorin@google.com
+- nursery/access-kubernetes-credentials maximemorin@google.com
+- nursery/enumerate-aws-cloudformation maximemorin@google.com
+- nursery/enumerate-aws-cloudtrail maximemorin@google.com
+- nursery/enumerate-aws-direct-connect maximemorin@google.com
+- nursery/enumerate-aws-ec2 maximemorin@google.com
+- nursery/enumerate-aws-iam maximemorin@google.com
+- nursery/enumerate-aws-s3 maximemorin@google.com
+- nursery/enumerate-aws-support-cases maximemorin@google.com
+- persistence/registry/persist-via-shellserviceobjectdelayload-registry-key xpzhxhm@gmail.com
+- nursery/get-http-response-date @cosmoworker
+- host-interaction/process/create/create-process-in-dotnet moritz.raabe@mandiant.com social.tarang@gmail.com
+- nursery/read-file-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/write-file-in-dotnet william.ballenthin@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/escalate-privileges-via-commit_creds-on-linux aryanyk
+- nursery/register-netfilter-hook-on-linux aryanyk
+- nursery/get-custom-http-header @msanchit-dev
 
 ### Bug Fixes
+- main: suggest --os flag in unsupported OS error message to help users override ELF OS detection @devs6186 #2577
+- render: escape sample-controlled strings before passing to Rich to prevent MarkupError @devs6186 #2699
+- rules: handle empty or invalid YAML documents gracefully in `Rule.from_yaml` and `get_rules` @devs6186 #2900
 - Fixed insecure deserialization vulnerability in YAML loading @0x1622 (#2770)
 - loader: gracefully handle ELF files with unsupported architectures kamranulhaq2002@gmail.com #2800
+- loader: handle SegmentationViolation for malformed ELF files @kami922 #2799
 - lint: disable rule caching during linting @Maijin #2817
+- vmray: skip processes with invalid PID or missing filename @EclipseAditya #2807
+- features: fix Regex.get_value_str() returning escaped pattern instead of raw regex @EclipseAditya #1909
+- render: use default styling for dynamic -vv API/call details so they are easier to see @devs6186 #1865
+- loader: handle struct.error from dnfile and show clear CorruptFile message @devs6186 #2442
+- address: fix TypeError when sorting locations containing mixed address types @devs6186 #2195
+- loader: skip PE files with unrealistically large section virtual sizes to prevent resource exhaustion @devs6186 #1989
+- engine/render: fix unbounded range sentinel precedence so `count(...): N or more` uses explicit `((1 << 64) - 1)` @blenbot #2936
+- cache: support *BSD @williballenthin @res2500 #2949
 
 ### capa Explorer Web
+- webui: fix 404 for "View rule in capa-rules" by using encodeURIComponent for rule name in URL @devs6186 #2482
+- webui: show error when JSON does not follow expected result document schema; suggest reanalyzing for VT URLs @devs6186 #2363
+- webui: fix global search to match feature types (match, regex, api, …) @devs6186 #2349
 
 ### capa Explorer IDA Pro plugin
 
+### Performance
+
+- perf: eliminate O(n²) tuple growth and reduce per-match overhead @devs6186 #2890
+
 ### Development
 
+- doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
+- doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
+- doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
+- binja: add mypy config for top-level binaryninja module to fix mypy issues @devs6186 #2399
+- rules: pre-filter extracted bytes with 4-byte prefixes for faster candidate selection instead of linear scan #2128
 - ci: deprecate macos-13 runner and use Python v3.13 for testing @mike-hunhoff #2777
+- ci: pin pip-audit action SHAs and update to v1.1.0 @kami922 #1131
+- tests: use data-driven fixtures to declare feature tests @williballenthin #2743
 
 ### Raw diffs
-- [capa v9.3.1...master](https://github.com/mandiant/capa/compare/v9.3.1...master)
-- [capa-rules v9.3.1...master](https://github.com/mandiant/capa-rules/compare/v9.3.1...master)
+- [capa v9.3.1...v9.4.0](https://github.com/mandiant/capa/compare/v9.3.1...v9.4.0)
+- [capa-rules v9.3.1...v9.4.0](https://github.com/mandiant/capa-rules/compare/v9.3.1...v9.4.0)
 
 ## v9.3.1
 
@@ -48,8 +231,8 @@ This patch release fixes a missing import for the capa explorer plugin for IDA P
 - ci: bump binja min version @mike-hunhoff #2763
 
 ### Raw diffs
-- [capa v9.3.0...master](https://github.com/mandiant/capa/compare/v9.3.0...master)
-- [capa-rules v9.3.0...master](https://github.com/mandiant/capa-rules/compare/v9.3.0...master)
+- [capa v9.3.0...v9.3.1](https://github.com/mandiant/capa/compare/v9.3.0...v9.3.1)
+- [capa-rules v9.3.0...v9.3.1](https://github.com/mandiant/capa-rules/compare/v9.3.0...v9.3.1)
 
 ## v9.3.0
 

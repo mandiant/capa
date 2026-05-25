@@ -30,9 +30,7 @@ from pefile import PEFormatError
 from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
-import capa.perf
 import capa.rules
-import capa.engine
 import capa.loader
 import capa.helpers
 import capa.version
@@ -40,12 +38,9 @@ import capa.render.json
 import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
-import capa.features.common
 import capa.render.vverbose
-import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
-import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.loader import (
     BACKEND_IDA,
@@ -77,7 +72,6 @@ from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
-    UnsupportedRuntimeError,
 )
 from capa.features.common import (
     OS_AUTO,
@@ -177,7 +171,7 @@ def get_default_root() -> Path:
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
         assert hasattr(sys, "_MEIPASS")
-        return Path(sys._MEIPASS)
+        return Path(sys._MEIPASS)  # type: ignore[attr-defined]  # PyInstaller injects _MEIPASS at runtime
     else:
         return Path(__file__).resolve().parent.parent
 
@@ -243,10 +237,16 @@ def install_common_args(parser, wanted=None):
 
     parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="enable verbose result document (no effect with --json)",
     )
     parser.add_argument(
-        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
+        "-vv",
+        "--vverbose",
+        action="store_true",
+        help="enable very verbose result document (no effect with --json)",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
     parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
@@ -446,10 +446,8 @@ def handle_common_args(args):
         #
         # To use methods from TextIOWrapper, use an isinstance check to ensure that
         # the streams have not been overridden:
-        #
-        # if isinstance(sys.stdout, io.TextIOWrapper):
-        #    sys.stdout.reconfigure(...)
-        sys.stdout.reconfigure(encoding="utf-8")
+        if isinstance(sys.stdout, io.TextIOWrapper):
+            sys.stdout.reconfigure(encoding="utf-8")
     colorama.just_fix_windows_console()
 
     if args.color == "always":
@@ -591,7 +589,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
-    if input_format == FORMAT_DRAKVUF:
+    elif input_format == FORMAT_DRAKVUF:
         return BACKEND_DRAKVUF
 
     elif input_format == FORMAT_VMRAY:
@@ -770,7 +768,7 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]):
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -794,17 +792,16 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
-        found_file_limitation = has_static_limitation(rules, pure_file_capabilities)
+        found_file_limitation |= has_static_limitation(rules, pure_file_capabilities)
         if found_file_limitation:
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 raise ShouldExitError(E_FILE_LIMITATION)
-    return found_file_limitation
 
 
-def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]):
     """
     Does the dynamic analysis describe some trace that we may not support well?
     For example, .NET samples detonated in a sandbox, which may rely on different API patterns than we currently describe in our rules.
@@ -818,7 +815,7 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
     found_dynamic_limitation = False
     for file_extractor in file_extractors:
         pure_dynamic_capabilities = find_file_capabilities(rules, file_extractor, {})
-        found_dynamic_limitation = has_dynamic_limitation(rules, pure_dynamic_capabilities)
+        found_dynamic_limitation |= has_dynamic_limitation(rules, pure_dynamic_capabilities)
 
     if found_dynamic_limitation:
         # bail if capa encountered file limitation e.g. a dotnet sample is detected
@@ -826,7 +823,6 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
         if not (args.verbose or args.vverbose or args.json):
             logger.debug("file limitation short circuit, won't analyze fully.")
             raise ShouldExitError(E_FILE_LIMITATION)
-    return found_dynamic_limitation
 
 
 def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]:
@@ -875,7 +871,13 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     """
     sig_paths = get_signatures_from_cli(args, input_format, backend)
 
-    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in (
+        "0",
+        "no",
+        "NO",
+        "n",
+        None,
+    )
 
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
@@ -946,25 +948,23 @@ def apply_extractor_filters(extractor: FeatureExtractor, extractor_filters: Filt
 
     # if the user specified extractor filters, then apply them here
     if isinstance(extractor, StaticFeatureExtractor):
-        assert extractor_filters["functions"]
-        return FunctionFilter(extractor, extractor_filters["functions"])
+        functions = extractor_filters.get("functions")
+        assert functions
+        return FunctionFilter(extractor, functions)
     elif isinstance(extractor, DynamicFeatureExtractor):
-        assert extractor_filters["processes"]
-        return ProcessFilter(extractor, extractor_filters["processes"])
+        processes = extractor_filters.get("processes")
+        assert processes
+        return ProcessFilter(extractor, processes)
     else:
         raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
 
 
 def main(argv: Optional[list[str]] = None):
-    if sys.version_info < (3, 10):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.10+")
-
     if argv is None:
         argv = sys.argv[1:]
 
     desc = "The FLARE team's open-source tool to identify capabilities in executable files."
-    epilog = textwrap.dedent(
-        """
+    epilog = textwrap.dedent("""
         By default, capa uses a default set of embedded rules.
         You can see the rule set here:
           https://github.com/mandiant/capa-rules
@@ -991,11 +991,12 @@ def main(argv: Optional[list[str]] = None):
 
           filter rules by meta fields, e.g. rule name or namespace
             capa -t "create TCP socket" suspicious.exe
-         """
-    )
+         """)
 
     parser = argparse.ArgumentParser(
-        description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=desc,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     install_common_args(
         parser,
@@ -1039,20 +1040,14 @@ def main(argv: Optional[list[str]] = None):
     try:
         rules: RuleSet = get_rules_from_cli(args)
 
-        found_limitation = False
         file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
             # only static extractors have file limitations
-            found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
+            find_static_limitations_from_cli(args, rules, file_extractors)
         if input_format in DYNAMIC_FORMATS:
-            found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
+            find_dynamic_limitations_from_cli(args, rules, file_extractors)
 
         backend = get_backend_from_cli(args, input_format)
-        sample_path = get_sample_path_from_cli(args, backend)
-        if sample_path is None:
-            os_ = "unknown"
-        else:
-            os_ = capa.loader.get_os(sample_path)
         extractor: FeatureExtractor = get_extractor_from_cli(args, input_format, backend)
     except ShouldExitError as e:
         return e.status_code
@@ -1060,16 +1055,15 @@ def main(argv: Optional[list[str]] = None):
     capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
     meta: rdoc.Metadata = capa.loader.collect_metadata(
-        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+        argv, args.input_file, input_format, args.rules, extractor, capabilities
     )
-    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
-
-    if found_limitation:
-        # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
-        # or capa's dynamic feature extractor encountered some limitation e.g. a dotnet sample
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
+    layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
+    if isinstance(meta, rdoc.StaticMetadata):
+        assert isinstance(layout, rdoc.StaticLayout)
+        meta.analysis.layout = layout
+    elif isinstance(meta, rdoc.DynamicMetadata):
+        assert isinstance(layout, rdoc.DynamicLayout)
+        meta.analysis.layout = layout
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities.matches))
@@ -1116,8 +1110,10 @@ def ida_main():
 
     capabilities = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
 
+    assert isinstance(meta.analysis, rdoc.StaticAnalysis)
+    assert isinstance(capabilities.feature_counts, rdoc.StaticFeatureCounts)
     meta.analysis.feature_counts = capabilities.feature_counts
-    meta.analysis.library_functions = capabilities.library_functions
+    meta.analysis.library_functions = capabilities.library_functions or ()
 
     if has_static_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
@@ -1166,8 +1162,10 @@ def ghidra_main():
         not capa.ghidra.helpers.is_running_headless(),
     )
 
+    assert isinstance(meta.analysis, rdoc.StaticAnalysis)
+    assert isinstance(capabilities.feature_counts, rdoc.StaticFeatureCounts)
     meta.analysis.feature_counts = capabilities.feature_counts
-    meta.analysis.library_functions = capabilities.library_functions
+    meta.analysis.library_functions = capabilities.library_functions or ()
 
     if has_static_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")

@@ -322,8 +322,8 @@ export function parseFunctionCapabilities(doc) {
         });
     }
 
-    // Iterate through all functions in the document
-    for (const f of doc.meta.analysis.feature_counts.functions) {
+    // Iterate through all functions in the document (empty for file-scoped-only)
+    for (const f of doc.meta.analysis.feature_counts.functions ?? []) {
         const addr = formatAddress(f.address);
         const matches = matchesByFunction.get(addr);
         // Skip functions with no matches (unlikely)

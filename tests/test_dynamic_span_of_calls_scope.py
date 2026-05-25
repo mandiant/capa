@@ -38,7 +38,6 @@ from functools import lru_cache
 import pytest
 import fixtures
 
-import capa.main
 import capa.rules
 import capa.capabilities.dynamic
 from capa.features.extractors.base_extractor import ThreadFilter, DynamicFeatureExtractor
@@ -65,7 +64,14 @@ def filter_threads(extractor: DynamicFeatureExtractor, ppid: int, pid: int, tid:
 
 @lru_cache(maxsize=1)
 def get_0000a657_thread3064():
-    extractor = fixtures.get_cape_extractor(fixtures.get_data_path_by_name("0000a657"))
+    extractor = fixtures.get_cape_extractor(
+        fixtures.CD
+        / "data"
+        / "dynamic"
+        / "cape"
+        / "v2.2"
+        / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )
     extractor = filter_threads(extractor, 2456, 3052, 3064)
     return extractor
 
@@ -83,8 +89,7 @@ def get_call_ids(matches) -> Iterator[int]:
 def test_dynamic_call_scope():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -93,8 +98,7 @@ def test_dynamic_call_scope():
                     dynamic: call
             features:
                 - api: GetSystemTimeAsFileTime
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -116,8 +120,7 @@ def test_dynamic_call_scope():
 def test_dynamic_span_scope():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -131,8 +134,7 @@ def test_dynamic_span_scope():
                     - api: LdrGetDllHandle
                     - api: LdrGetProcedureAddress
                     - count(api(LdrGetDllHandle)): 2
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -158,8 +160,7 @@ def test_dynamic_span_scope():
 def test_dynamic_span_scope_length():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -170,8 +171,7 @@ def test_dynamic_span_scope_length():
                 - and:
                     - api: GetSystemTimeAsFileTime
                     - api: RtlAddVectoredExceptionHandler
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -196,8 +196,7 @@ def test_dynamic_span_scope_length():
 def test_dynamic_span_call_subscope():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -210,8 +209,7 @@ def test_dynamic_span_call_subscope():
                         - and:
                             - api: LdrGetProcedureAddress
                             - string: AddVectoredExceptionHandler
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -234,8 +232,7 @@ def test_dynamic_span_call_subscope():
 def test_dynamic_span_scope_span_subscope():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -256,8 +253,7 @@ def test_dynamic_span_scope_span_subscope():
                             - api: LdrGetDllHandle
                             - api: LdrGetProcedureAddress
                             - string: RemoveVectoredExceptionHandler
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -269,8 +265,7 @@ def test_dynamic_span_scope_span_subscope():
 
 # show that you can't use thread subscope in span rules.
 def test_dynamic_span_scope_thread_subscope():
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -281,8 +276,7 @@ def test_dynamic_span_scope_thread_subscope():
                 - and:
                     - thread:
                         - string: "foo"
-        """
-    )
+        """)
 
     with pytest.raises(capa.rules.InvalidRule):
         capa.rules.Rule.from_yaml(rule)
@@ -300,8 +294,7 @@ def test_dynamic_span_scope_thread_subscope():
 def test_dynamic_span_example():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -319,8 +312,7 @@ def test_dynamic_span_example():
                             - api: LdrGetProcedureAddress
                             - string: "AddVectoredExceptionHandler"
                     - api: RtlAddVectoredExceptionHandler
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -345,8 +337,7 @@ def test_dynamic_span_example():
 def test_dynamic_span_multiple_spans_overlapping_single_event():
     extractor = get_0000a657_thread3064()
 
-    rule = textwrap.dedent(
-        """
+    rule = textwrap.dedent("""
         rule:
             meta:
                 name: test rule
@@ -359,8 +350,7 @@ def test_dynamic_span_multiple_spans_overlapping_single_event():
                         - and:
                             - api: LdrGetProcedureAddress
                             - string: "AddVectoredExceptionHandler"
-        """
-    )
+        """)
 
     r = capa.rules.Rule.from_yaml(rule)
     ruleset = capa.rules.RuleSet([r])
@@ -384,11 +374,9 @@ def test_dynamic_span_multiple_spans_overlapping_single_event():
 def test_dynamic_span_scope_match_statements():
     extractor = get_0000a657_thread3064()
 
-    ruleset = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+    ruleset = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: resolve add VEH
@@ -401,12 +389,10 @@ def test_dynamic_span_scope_match_statements():
                             - api: LdrGetDllHandle
                             - api: LdrGetProcedureAddress
                             - string: AddVectoredExceptionHandler
-                """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: resolve remove VEH
@@ -419,12 +405,10 @@ def test_dynamic_span_scope_match_statements():
                             - api: LdrGetDllHandle
                             - api: LdrGetProcedureAddress
                             - string: RemoveVectoredExceptionHandler
-                """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: resolve add and remove VEH
@@ -435,12 +419,10 @@ def test_dynamic_span_scope_match_statements():
                         - and:
                             - match: resolve add VEH
                             - match: resolve remove VEH
-                """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: has VEH runtime linking
@@ -450,11 +432,9 @@ def test_dynamic_span_scope_match_statements():
                     features:
                         - and:
                             - match: linking/runtime-linking/veh
-                """
-                )
-            ),
-        ]
-    )
+                """)
+        ),
+    ])
 
     capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +17,6 @@ import itertools
 import collections
 from dataclasses import dataclass
 
-import capa.perf
 import capa.engine
 import capa.helpers
 import capa.features.freeze as frz
@@ -178,7 +176,8 @@ def find_thread_capabilities(
     span_matcher = SpanOfCallsMatcher(ruleset)
 
     call_count = 0
-    for call_count, ch in enumerate(extractor.get_calls(ph, th)):  # noqa: B007
+    for ch in extractor.get_calls(ph, th):
+        call_count += 1
         call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
         for feature, vas in call_capabilities.features.items():
             features[feature].update(vas)
@@ -277,7 +276,9 @@ def find_dynamic_capabilities(
     all_span_matches: MatchResults = collections.defaultdict(list)
     all_call_matches: MatchResults = collections.defaultdict(list)
 
-    feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
+    # Accumulate into a list to avoid O(n²) tuple concatenation.
+    # Tuples are immutable, so `t += (x,)` copies the entire tuple each time.
+    process_feature_counts: list[rdoc.ProcessFeatureCount] = []
 
     assert isinstance(extractor, DynamicFeatureExtractor)
     processes: list[ProcessHandle] = list(extractor.get_processes())
@@ -289,10 +290,10 @@ def find_dynamic_capabilities(
         task = pbar.add_task("matching", total=n_processes, unit="processes")
         for p in processes:
             process_capabilities = find_process_capabilities(ruleset, extractor, p)
-            feature_counts.processes += (
+            process_feature_counts.append(
                 rdoc.ProcessFeatureCount(
                     address=frz.Address.from_capa(p.address), count=process_capabilities.feature_count
-                ),
+                )
             )
 
             for rule_name, res in process_capabilities.process_matches.items():
@@ -317,7 +318,11 @@ def find_dynamic_capabilities(
         capa.engine.index_rule_matches(process_and_lower_features, rule, locations)
 
     all_file_capabilities = find_file_capabilities(ruleset, extractor, process_and_lower_features)
-    feature_counts.file = all_file_capabilities.feature_count
+
+    feature_counts = rdoc.DynamicFeatureCounts(
+        file=all_file_capabilities.feature_count,
+        processes=tuple(process_feature_counts),
+    )
 
     matches = dict(
         itertools.chain(

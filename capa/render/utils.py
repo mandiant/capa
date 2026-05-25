@@ -17,28 +17,29 @@ import io
 from typing import Union, Iterator, Optional
 
 import rich.console
-from rich.progress import Text
+from rich.text import Text
+from rich.markup import escape
 
 import capa.render.result_document as rd
 
 
 def bold(s: str) -> Text:
     """draw attention to the given string"""
-    return Text.from_markup(f"[cyan]{s}")
+    return Text.from_markup(f"[cyan]{escape(s)}")
 
 
 def bold2(s: str) -> Text:
     """draw attention to the given string, within a `bold` section"""
-    return Text.from_markup(f"[green]{s}")
+    return Text.from_markup(f"[green]{escape(s)}")
 
 
 def mute(s: str) -> Text:
     """draw attention away from the given string"""
-    return Text.from_markup(f"[dim]{s}")
+    return Text.from_markup(f"[dim]{escape(s)}")
 
 
 def warn(s: str) -> Text:
-    return Text.from_markup(f"[yellow]{s}")
+    return Text.from_markup(f"[yellow]{escape(s)}")
 
 
 def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
@@ -79,15 +80,13 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
 def maec_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
     """enumerate 'maec' rules."""
     for rule in doc.rules.values():
-        if any(
-            [
-                rule.meta.maec.analysis_conclusion,
-                rule.meta.maec.analysis_conclusion_ov,
-                rule.meta.maec.malware_family,
-                rule.meta.maec.malware_category,
-                rule.meta.maec.malware_category_ov,
-            ]
-        ):
+        if any([
+            rule.meta.maec.analysis_conclusion,
+            rule.meta.maec.analysis_conclusion_ov,
+            rule.meta.maec.malware_family,
+            rule.meta.maec.malware_category,
+            rule.meta.maec.malware_category_ov,
+        ]):
             yield rule
 
 

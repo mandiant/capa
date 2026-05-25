@@ -17,6 +17,9 @@
 import { useToast } from "primevue/usetoast";
 import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
 
+const VT_REANALYZE_SUGGESTION =
+    "If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
+
 export function useRdocLoader() {
     const toast = useToast();
     const MIN_SUPPORTED_VERSION = "7.0.0";
@@ -30,6 +33,58 @@ export function useRdocLoader() {
      */
     const showToast = (severity, summary, detail) => {
         toast.add({ severity, summary, detail, life: 3000, group: "bc" }); // bc: bottom-center
+    };
+
+    /**
+     * Validates that the parsed object has the expected result document schema.
+     * @param {Object} rdoc - The parsed JSON data.
+     * @returns {{ valid: boolean, message?: string }} Validation result with an optional error message.
+     */
+    const validateRdocSchema = (rdoc) => {
+        const isInvalidObject = (v) => !v || typeof v !== "object" || Array.isArray(v);
+
+        if (isInvalidObject(rdoc)) {
+            return { valid: false, message: "Invalid JSON: expected an object." };
+        }
+        if (isInvalidObject(rdoc.meta)) {
+            return { valid: false, message: "Invalid result document: missing or invalid 'meta' field." };
+        }
+        if (rdoc.meta.version === undefined) {
+            return { valid: false, message: "Invalid result document: missing 'meta.version'." };
+        }
+        if (isInvalidObject(rdoc.meta.analysis)) {
+            return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis'." };
+        }
+        if (isInvalidObject(rdoc.meta.analysis.layout)) {
+            return { valid: false, message: "Invalid result document: missing or invalid 'meta.analysis.layout'." };
+        }
+        if (isInvalidObject(rdoc.meta.analysis.feature_counts)) {
+            return {
+                valid: false,
+                message: "Invalid result document: missing or invalid 'meta.analysis.feature_counts'."
+            };
+        }
+        const fc = rdoc.meta.analysis.feature_counts;
+        // Allow file-scoped-only documents (no functions/processes arrays).
+        // If present, functions and processes must be arrays.
+        if (fc.functions !== undefined && !Array.isArray(fc.functions)) {
+            return {
+                valid: false,
+                message:
+                    "Invalid result document: 'meta.analysis.feature_counts.functions' must be an array when present."
+            };
+        }
+        if (fc.processes !== undefined && !Array.isArray(fc.processes)) {
+            return {
+                valid: false,
+                message:
+                    "Invalid result document: 'meta.analysis.feature_counts.processes' must be an array when present."
+            };
+        }
+        if (isInvalidObject(rdoc.rules)) {
+            return { valid: false, message: "Invalid result document: missing or invalid 'rules' field." };
+        }
+        return { valid: true };
     };
 
     /**
@@ -81,18 +136,28 @@ export function useRdocLoader() {
      * @returns {Promise<Object|null>} A promise that resolves to the processed RDOC data, or null if processing fails.
      */
     const loadRdoc = async (source) => {
+        const isUrl = typeof source === "string";
+
         try {
             let data;
 
-            if (typeof source === "string") {
-                // Load from URL
+            if (isUrl) {
                 const blob = await fetchFromUrl(source);
                 data = await processBlob(blob);
             } else if (source instanceof File) {
-                // Load from local
                 data = await processBlob(source);
             } else {
                 throw new Error("Invalid source type");
+            }
+
+            const validation = validateRdocSchema(data);
+            if (!validation.valid) {
+                let detail = validation.message;
+                if (isUrl) {
+                    detail += VT_REANALYZE_SUGGESTION;
+                }
+                showToast("error", "Invalid result document", detail);
+                return null;
             }
 
             if (checkVersion(data)) {
@@ -101,7 +166,11 @@ export function useRdocLoader() {
             }
         } catch (error) {
             console.error("Error loading JSON:", error);
-            showToast("error", "Failed to process the file", error.message);
+            let detail = error.message;
+            if (isUrl && (error instanceof SyntaxError || error.message.includes("JSON"))) {
+                detail += VT_REANALYZE_SUGGESTION;
+            }
+            showToast("error", "Failed to process the file", detail);
         }
         return null;
     };

@@ -22,6 +22,7 @@
         :scrollable="true"
         :filters="filters"
         :filterMode="filterMode"
+        :globalFilterFields="['name', 'typeValue']"
         sortField="namespace"
         :sortOrder="1"
         removableSort

@@ -102,9 +102,6 @@ class Result:
     def __bool__(self):
         return self.success
 
-    def __nonzero__(self):
-        return self.success
-
     def __str__(self):
         # as this object isn't user facing, this formatting is just to help with debugging
 
@@ -369,6 +366,12 @@ class Regex(String):
         else:
             return Result(False, _MatchedRegex(self, {}), [])
 
+    def get_value_str(self) -> str:
+        # return the raw regex pattern, not the escaped version from String.get_value_str().
+        # see #1909.
+        assert isinstance(self.value, str)
+        return self.value
+
     def __str__(self):
         assert isinstance(self.value, str)
         return f"regex(string =~ {self.value})"
@@ -409,6 +412,8 @@ class StringFactory:
 
 
 class Bytes(Feature):
+    value: bytes
+
     def __init__(self, value: bytes, description=None):
         super().__init__(value, description=description)
         self.value = value

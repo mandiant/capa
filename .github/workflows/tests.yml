@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     # The sync GH action in capa-rules relies on a single '- *$' in the CHANGELOG file
     - name: Ensure CHANGELOG has '- *$'
       run: |
@@ -40,10 +40,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     # use latest available python to take advantage of best performance
     - name: Set up Python 3.13
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: "3.13"
     - name: Install dependencies
@@ -52,12 +52,8 @@ jobs:
         pip install -e .[dev,scripts]
     - name: Lint with ruff
       run: pre-commit run ruff
-    - name: Lint with isort
-      run: pre-commit run isort --show-diff-on-failure
-    - name: Lint with black
-      run: pre-commit run black --show-diff-on-failure
-    - name: Lint with flake8
-      run: pre-commit run flake8 --hook-stage manual
+    - name: Check formatting with ruff
+      run: pre-commit run ruff-format --show-diff-on-failure
     - name: Check types with mypy
       run: pre-commit run mypy --hook-stage manual
     - name: Check imports against dependencies
@@ -67,11 +63,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout capa with submodules
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
     - name: Set up Python 3.13
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: "3.13"
     - name: Install capa
@@ -99,11 +95,11 @@ jobs:
             python-version: "3.12"
     steps:
     - name: Checkout capa with submodules
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install pyyaml
@@ -113,6 +109,11 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
+    - name: Cache vivisect workspaces
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: tests/data/**/*.viv
+        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
@@ -134,12 +135,12 @@ jobs:
     - name: Checkout capa with submodules
       # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
       if: ${{ env.BN_SERIAL != 0 }}
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
     - name: Set up Python ${{ matrix.python-version }}
       if: ${{ env.BN_SERIAL != 0 }}
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install pyyaml
@@ -155,7 +156,7 @@ jobs:
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
-        python ./.github/binja/download_headless.py --serial ${{ env.BN_SERIAL }} --output .github/binja/BinaryNinja-headless.zip
+        python ./.github/binja/download_headless.py --serial ${BN_SERIAL} --output .github/binja/BinaryNinja-headless.zip
         unzip .github/binja/BinaryNinja-headless.zip -d .github/binja/
         python .github/binja/binaryninja/scripts/install_api.py --install-on-root --silent
     - name: Run tests
@@ -178,15 +179,15 @@ jobs:
         ghidra-sha256: ['af43e8cfb2fa4490cf6020c3a2bde25c159d83f45236a0542688a024e8fc1941']
     steps:
     - name: Checkout capa with submodules
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: true
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Set up Java ${{ matrix.java-version }}
-      uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
+      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java-version }}
@@ -227,12 +228,12 @@ jobs:
     - name: Checkout capa with submodules
       # do only run if IDA_LICENSE_ID is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
       if: ${{ env.IDA_LICENSE_ID != 0 }}
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
     - name: Set up Python ${{ matrix.python-version }}
       if: ${{ env.IDA_LICENSE_ID != 0 }}
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Setup uv

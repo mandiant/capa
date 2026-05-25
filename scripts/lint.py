@@ -161,7 +161,10 @@ class MissingStaticScope(Lint):
     recommendation = "Add a static scope for the rule (file, function, basic block, instruction, or unsupported)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "static" not in rule.meta.get("scopes")
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return "static" not in scopes
 
 
 class MissingDynamicScope(Lint):
@@ -169,7 +172,10 @@ class MissingDynamicScope(Lint):
     recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unsupported)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "dynamic" not in rule.meta.get("scopes")
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return "dynamic" not in scopes
 
 
 class InvalidStaticScope(Lint):
@@ -177,7 +183,10 @@ class InvalidStaticScope(Lint):
     recommendation = "For the static scope, use either: file, function, basic block, instruction, or unsupported"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scopes").get("static") not in (
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return scopes.get("static") not in (
             "file",
             "function",
             "basic block",
@@ -187,11 +196,14 @@ class InvalidStaticScope(Lint):
 
 
 class InvalidDynamicScope(Lint):
-    name = "invalid static scope"
+    name = "invalid dynamic scope"
     recommendation = "For the dynamic scope, use either: file, process, thread, call, or unsupported"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scopes").get("dynamic") not in (
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return scopes.get("dynamic") not in (
             "file",
             "process",
             "thread",
@@ -206,9 +218,10 @@ class InvalidScopes(Lint):
     recommendation = "At least one scope (static or dynamic) must be specified"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return (rule.meta.get("scopes").get("static") == "unsupported") and (
-            rule.meta.get("scopes").get("dynamic") == "unsupported"
-        )
+        scopes = rule.meta.get("scopes")
+        if not isinstance(scopes, dict):
+            return False
+        return (scopes.get("static") == "unsupported") and (scopes.get("dynamic") == "unsupported")
 
 
 class MissingAuthors(Lint):
@@ -234,16 +247,41 @@ class MissingExamples(Lint):
 
 class MissingExampleOffset(Lint):
     name = "missing example offset"
-    recommendation = "Add offset of example function"
+    recommendation = "Add offset of example (static: hash:0xADDR, dynamic: hash:(pid:N,tid:N,call:N))"
+
+    STATIC_SCOPES_NEEDING_OFFSET = ("function", "basic block")
+    DYNAMIC_SCOPES_NEEDING_OFFSET = ("process", "thread", "call", "span of calls")
 
     def check_rule(self, ctx: Context, rule: Rule):
-        if rule.meta.get("scope") in ("function", "basic block"):
-            examples = rule.meta.get("examples")
-            if isinstance(examples, list):
-                for example in examples:
-                    if example and ":" not in example:
-                        logger.debug("example: %s", example)
+        scopes = rule.meta.get("scopes", {})
+        static_scope = scopes.get("static")
+        dynamic_scope = scopes.get("dynamic")
+
+        examples = rule.meta.get("examples")
+        if not isinstance(examples, list):
+            return False
+
+        for example in examples:
+            if not example:
+                continue
+
+            example_id, _, offset = example.partition(":")
+
+            sample_path = ctx.samples.get(example_id)
+            is_dynamic_sample = sample_path is not None and "dynamic" in sample_path.parts
+
+            if is_dynamic_sample:
+                if dynamic_scope in self.DYNAMIC_SCOPES_NEEDING_OFFSET:
+                    if not offset or not offset.startswith("("):
+                        logger.debug("example: %s (missing dynamic offset)", example)
                         return True
+            else:
+                if static_scope in self.STATIC_SCOPES_NEEDING_OFFSET:
+                    if not offset:
+                        logger.debug("example: %s (missing static offset)", example)
+                        return True
+
+        return False
 
 
 class ExampleFileDNE(Lint):
@@ -593,20 +631,18 @@ class DuplicateFeatureUnderStatement(Lint):
     def check_rule(self, ctx: Context, rule: Rule) -> bool:
         self.violation = False
         self.recommendation = ""
-        STATEMENTS = frozenset(
-            {
-                "or",
-                "and",
-                "not",
-                "optional",
-                "some",
-                "basic block",
-                "function",
-                "instruction",
-                "call",
-                " or more",
-            }
-        )
+        STATEMENTS = frozenset({
+            "or",
+            "and",
+            "not",
+            "optional",
+            "some",
+            "basic block",
+            "function",
+            "instruction",
+            "call",
+            " or more",
+        })
         # rule.statement discards the duplicate features by default so
         # need to use the rule definition to check for duplicates
         data = rule._get_ruamel_yaml_parser().load(rule.definition)
@@ -738,11 +774,11 @@ class FeatureRegexRegistryControlSetMatchIncomplete(Lint):
 
             pat = feature.value.lower()
 
-            if "system\\\\" in pat and "controlset" in pat or "currentcontrolset" in pat:
+            if "system\\\\" in pat and ("controlset" in pat or "currentcontrolset" in pat):
                 if "system\\\\(controlset\\d{3}|currentcontrolset)" not in pat:
                     return True
 
-            return False
+        return False
 
 
 class FeatureRegexContainsUnescapedPeriod(Lint):
@@ -1099,7 +1135,7 @@ def lint_rule(ctx: Context, rule: Rule):
         # and ends up just producing a lot of noise.
         if not (is_nursery_rule(rule) and len(violations) == 1 and violations[0].name == "missing examples"):
             print("")
-            print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
+            print(f"{'    (nursery) ' if is_nursery_rule(rule) else ''} {rule.name}")
 
             for violation in violations:
                 print(
@@ -1112,8 +1148,10 @@ def lint_rule(ctx: Context, rule: Rule):
         lints_failed = len(
             tuple(
                 filter(
-                    lambda v: v.level == Lint.FAIL
-                    and not (v.name == "missing examples" or v.name == "referenced example doesn't exist"),
+                    lambda v: (
+                        v.level == Lint.FAIL
+                        and not (v.name == "missing examples" or v.name == "referenced example doesn't exist")
+                    ),
                     violations,
                 )
             )
@@ -1121,8 +1159,9 @@ def lint_rule(ctx: Context, rule: Rule):
         lints_warned = len(
             tuple(
                 filter(
-                    lambda v: v.level == Lint.WARN
-                    or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist"),
+                    lambda v: (
+                        v.level == Lint.WARN or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist")
+                    ),
                     violations,
                 )
             )
@@ -1130,7 +1169,7 @@ def lint_rule(ctx: Context, rule: Rule):
 
         if (not lints_failed) and (not lints_warned) and has_examples:
             print("")
-            print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
+            print(f"{'    (nursery) ' if is_nursery_rule(rule) else ''} {rule.name}")
             print(f"      {Lint.WARN}: '[green]no lint failures[/green]': Graduate the rule")
             print("")
     else:
