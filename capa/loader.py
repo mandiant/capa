@@ -438,7 +438,7 @@ def get_extractor(
             project_path = input_path
             tmpdir = None
             if input_path.suffix.lower() == ".gpr":
-                project_cm = pyghidra.open_project(str(project_path.parent), project_path.stem, create=False)
+                project_cm = pyghidra.open_project(str(project_path.parent.resolve()), project_path.stem, create=False)
             else:
                 import tempfile
 
