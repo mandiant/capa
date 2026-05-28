@@ -146,6 +146,8 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 
 ### Breaking Changes
 
+- deprecate RelativeVirtualAddress @corkamig #3072
+
 ### New Rules (26)
 
 - nursery/run-as-nodejs-native-module mehunhoff@google.com
