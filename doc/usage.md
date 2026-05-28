@@ -44,7 +44,7 @@ which threads perform what actions (encrypt/decrypt data, initiate a connection,
 Please check out the [capa explorer documentation](/capa/ida/plugin/README.md).
 
 ### Ghidra project support
-Capa can analyze programs directly from Ghidra projects by specifying the project file path (`.gpr`). If the project contains multiple programs, set the `CAPA_GHIDRA_PROGRAM_PATH` environment variable to specify which program to analyze. For example: `CAPA_GHIDRA_PROGRAM_PATH=/myprogram capa /path/to/project.gpr`.
+capa can analyze programs directly from Ghidra projects by specifying the project file path (`.gpr`). If the project contains multiple programs, set the `CAPA_GHIDRA_PROGRAM_PATH` environment variable to specify which program to analyze. For example: `CAPA_GHIDRA_PROGRAM_PATH=/myprogram capa /path/to/project.gpr`.
 
 ### save time by reusing .viv files
 Set the environment variable `CAPA_SAVE_WORKSPACE` to instruct the underlying analysis engine to 
