@@ -446,6 +446,7 @@ def get_extractor(
                 project_cm = pyghidra.open_project(tmpdir.name, "CapaProject", create=True)
 
             project = project_cm.__enter__()
+            program, consumer = None, None
             try:
                 from ghidra.util.task import TaskMonitor
 
@@ -494,6 +495,8 @@ def get_extractor(
                 cm = GhidraContextWrapper(project_cm, program, consumer)
 
             except Exception:
+                if program is not None:
+                    program.release(consumer)
                 project_cm.__exit__(None, None, None)
                 if tmpdir:
                     tmpdir.cleanup()
