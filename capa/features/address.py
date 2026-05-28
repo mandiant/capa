@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import abc
+import warnings
 
 
 class Address(abc.ABC):
@@ -130,6 +131,14 @@ class DynamicCallAddress(Address):
 
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
+
+    def __new__(cls, *args, **kwargs):
+        warnings.warn(
+            "RelativeVirtualAddress is deprecated",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return super().__new__(cls, *args, **kwargs)
 
     def __repr__(self):
         return f"relative(0x{self:x})"
