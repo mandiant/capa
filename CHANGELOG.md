@@ -147,7 +147,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
-- ghidra: support analyzing existing Ghidra projects via .gpr:program input syntax  @saniyafatima07 #3087
+- ghidra: support analyzing existing Ghidra projects via .gpr input files  @saniyafatima07 #3087
 
 ### Breaking Changes
 
