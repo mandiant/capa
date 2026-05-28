@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import warnings
-
 import pytest
 
 import capa.features.address
@@ -59,10 +57,8 @@ def test_no_address_hash():
 
 
 def test_relative_address():
-    with pytest.raises(DeprecationWarning):
-        warnings.filterwarnings("error", category=DeprecationWarning)
+    with pytest.warns(DeprecationWarning):
         _ = RelativeVirtualAddress(0)
-    warnings.resetwarnings()
 
 
 def test_dn_token_offset_address_cross_type_eq():
