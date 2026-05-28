@@ -14,7 +14,7 @@ dnfile==0.18.0
 funcy==2.0
 humanize==4.15.0
 ida-netnode==3.0
-ida-settings==3.2.2
+ida-settings==3.4.1
 intervaltree==3.2.1
 markdown-it-py==4.2.0
 mdurl==0.1.2
@@ -22,7 +22,7 @@ msgpack==1.1.2
 networkx==3.4.2
 pefile==2024.8.26
 pip==26.1
-protobuf==7.34.0
+protobuf==7.35.0
 pyasn1==0.6.3
 pyasn1-modules==0.4.2
 pycparser==3.0
