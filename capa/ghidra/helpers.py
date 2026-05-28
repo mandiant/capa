@@ -79,14 +79,15 @@ def select_project_file(project):
 
         available = "\n".join(f"- {program.getPathname()}" for program in programs)
         raise ValueError(
-            f"""CAPA_GHIDRA_PROGRAM_PATH did not match any program in the Ghidra project\n
-            available programs:\n{available}"""
+            "CAPA_GHIDRA_PROGRAM_PATH did not match any program in the Ghidra project.\n"
+            + f"available programs:\n{available}"
         )
 
     available = "\n".join(f"- {program.getPathname()}" for program in programs)
     raise ValueError(
-        f"""multiple programs found in the Ghidra project\n available programs:\n{available}\n
-        set CAPA_GHIDRA_PROGRAM_PATH to select one"""
+        "multiple programs found in the Ghidra project.\n"
+        + f"available programs:\n{available}\n"
+        + "set CAPA_GHIDRA_PROGRAM_PATH to select one"
     )
 
 
