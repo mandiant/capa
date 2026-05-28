@@ -201,12 +201,21 @@ def simple_message_exception_handler(
     if exctype is KeyboardInterrupt:
         print("KeyboardInterrupt detected, program terminated", file=sys.stderr)
     else:
-        print(
-            f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-            + "to see the stack trace.\nPlease also report your issue on the capa GitHub page so we "
-            + "can improve the code! (https://github.com/mandiant/capa/issues)",
-            file=sys.stderr,
-        )
+        exctype_str = str(exctype)
+        # Give a targeted message when the Ghidra project DB is locked.
+        if "LockException" in exctype_str or "ghidra.framework.store.LockException" in exctype_str:
+            print(
+                f"Unexpected exception raised: {exctype}.\n It looks like the Ghidra project database is locked. "
+                "Please close the project in the Ghidra GUI (or other process) and try again. For details, run in debug mode (-d/--debug).",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+                + "to see the stack trace.\nPlease also report your issue on the capa GitHub page so we "
+                + "can improve the code! (https://github.com/mandiant/capa/issues)",
+                file=sys.stderr,
+            )
 
 
 def install_common_args(parser, wanted=None):
