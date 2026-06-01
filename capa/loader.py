@@ -16,7 +16,7 @@ import os
 import logging
 import datetime
 import contextlib
-from typing import Optional, assert_never
+from typing import Optional
 from pathlib import Path
 
 from rich.console import Console
@@ -30,6 +30,7 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.helpers import assert_never
 from capa.exceptions import InvalidArgument, UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
 from capa.features.common import (
     OS_AUTO,
