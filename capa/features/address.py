@@ -134,6 +134,7 @@ class RelativeVirtualAddress(int, Address):
 
     def __new__(cls, *args, **kwargs):
         #TODO(corkamig): Removal for v3.5.0
+        #https://github.com/mandiant/capa/issues/3072
         warnings.warn("RelativeVirtualAddress is deprecated - cf issue #3072", DeprecationWarning, stacklevel=2)
         return super().__new__(cls, *args, **kwargs)
 
