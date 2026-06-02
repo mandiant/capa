@@ -133,7 +133,7 @@ class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
 
     def __new__(cls, *args, **kwargs):
-        # TODO(corkamig): Removal for v3.5.0
+        # TODO(corkamig): Removal for v10
         # https://github.com/mandiant/capa/issues/3072
         warnings.warn("RelativeVirtualAddress is deprecated - cf issue #3072", DeprecationWarning, stacklevel=2)
         return super().__new__(cls, *args, **kwargs)
