@@ -21,7 +21,7 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule
+from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule, Characteristic
 
 
 def match(rules, features, va, scope=Scope.FUNCTION):
@@ -46,7 +46,8 @@ def match(rules, features, va, scope=Scope.FUNCTION):
 
 
 def test_match_simple():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -56,7 +57,8 @@ def test_match_simple():
                 namespace: testns1/testns2
             features:
                 - number: 100
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     features, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
@@ -67,7 +69,8 @@ def test_match_simple():
 
 
 def test_match_range_exact():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -76,7 +79,8 @@ def test_match_range_exact():
                     dynamic: process
             features:
                 - count(number(100)): 2
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # just enough matches
@@ -93,7 +97,8 @@ def test_match_range_exact():
 
 
 def test_match_range_range():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
          rule:
              meta:
                 name: test rule
@@ -102,7 +107,8 @@ def test_match_range_range():
                     dynamic: process
              features:
                  - count(number(100)): (2, 3)
-         """)
+         """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # just enough matches
@@ -123,7 +129,8 @@ def test_match_range_range():
 
 
 def test_match_range_exact_zero():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -139,7 +146,8 @@ def test_match_range_exact_zero():
                     # so we have this additional trivial feature.
                     - mnemonic: mov
 
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # feature isn't indexed - good.
@@ -157,7 +165,8 @@ def test_match_range_exact_zero():
 
 
 def test_match_range_with_zero():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
          rule:
              meta:
                 name: test rule
@@ -172,7 +181,8 @@ def test_match_range_with_zero():
                     # since we don't support top level NOT statements.
                     # so we have this additional trivial feature.
                     - mnemonic: mov
-         """)
+         """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # ok
@@ -190,7 +200,8 @@ def test_match_range_with_zero():
 
 def test_match_adds_matched_rule_feature():
     """show that using `match` adds a feature for matched rules."""
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -199,7 +210,8 @@ def test_match_adds_matched_rule_feature():
                     dynamic: process
             features:
                 - number: 100
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
     features, _ = match([r], {capa.features.insn.Number(100): {1}}, 0x0)
     assert capa.features.common.MatchedRule("test rule") in features
@@ -549,7 +561,8 @@ def test_regex_get_value_str(pattern):
 
 @pytest.mark.xfail(reason="can't have top level NOT")
 def test_match_only_not():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -560,7 +573,8 @@ def test_match_only_not():
             features:
                 - not:
                     - number: 99
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
@@ -568,7 +582,8 @@ def test_match_only_not():
 
 
 def test_match_not():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -581,7 +596,8 @@ def test_match_not():
                     - mnemonic: mov
                     - not:
                         - number: 99
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}, capa.features.insn.Mnemonic("mov"): {1, 2}}, 0x0)
@@ -590,7 +606,8 @@ def test_match_not():
 
 @pytest.mark.xfail(reason="can't have nested NOT")
 def test_match_not_not():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -602,7 +619,8 @@ def test_match_not_not():
                 - not:
                     - not:
                         - number: 100
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
@@ -610,7 +628,8 @@ def test_match_not_not():
 
 
 def test_match_operand_number():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -620,7 +639,8 @@ def test_match_operand_number():
             features:
                 - and:
                     - operand[0].number: 0x10
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     assert capa.features.insn.OperandNumber(0, 0x10) in {capa.features.insn.OperandNumber(0, 0x10)}
@@ -638,7 +658,8 @@ def test_match_operand_number():
 
 
 def test_match_operand_offset():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -648,7 +669,8 @@ def test_match_operand_offset():
             features:
                 - and:
                     - operand[0].offset: 0x10
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     assert capa.features.insn.OperandOffset(0, 0x10) in {capa.features.insn.OperandOffset(0, 0x10)}
@@ -666,7 +688,8 @@ def test_match_operand_offset():
 
 
 def test_match_property_access():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -676,7 +699,8 @@ def test_match_property_access():
             features:
                 - and:
                     - property/read: System.IO.FileInfo::Length
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     assert capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.FeatureAccess.READ) in {
@@ -708,7 +732,8 @@ def test_match_property_access():
 
 
 def test_match_os_any():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -726,7 +751,8 @@ def test_match_os_any():
                     - and:
                         - os: any
                         - string: "Goodbye world"
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     _, matches = match(
@@ -760,7 +786,8 @@ def test_match_os_any():
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
 def test_index_features_and_unstable():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -771,7 +798,8 @@ def test_index_features_and_unstable():
                 - and:
                     - mnemonic: mov
                     - api: CreateFileW
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
     rr = capa.rules.RuleSet([r])
     index: capa.rules.RuleSet._RuleFeatureIndex = rr._feature_indexes_by_scopes[capa.rules.Scope.FUNCTION]
@@ -787,7 +815,8 @@ def test_index_features_and_unstable():
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
 def test_index_features_or_unstable():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -798,7 +827,8 @@ def test_index_features_or_unstable():
                 - or:
                     - mnemonic: mov
                     - api: CreateFileW
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
     rr = capa.rules.RuleSet([r])
     index: capa.rules.RuleSet._RuleFeatureIndex = rr._feature_indexes_by_scopes[capa.rules.Scope.FUNCTION]
@@ -815,7 +845,8 @@ def test_index_features_or_unstable():
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
 def test_index_features_nested_unstable():
-    rule = textwrap.dedent("""
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
@@ -828,7 +859,8 @@ def test_index_features_nested_unstable():
                     - or:
                         - api: CreateFileW
                         - string: foo
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
     rr = capa.rules.RuleSet([r])
     index: capa.rules.RuleSet._RuleFeatureIndex = rr._feature_indexes_by_scopes[capa.rules.Scope.FUNCTION]
@@ -844,9 +876,75 @@ def test_index_features_nested_unstable():
     assert not index.bytes_prefix_index
 
 
+def test_string_prefilter_stack_string_fallback():
+    rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test string prefilter stack string fallback
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /powershell/
+        """)
+    rule = capa.rules.Rule.from_yaml(rule_text)
+    ruleset = capa.rules.RuleSet([rule])
+
+    # Mark the regex rule as impossible based on file-level strings.
+    ruleset.prepare_for_file(frozenset({"hello", "world"}))
+
+    _, matches = ruleset.match(Scope.FUNCTION, {String("powershell"): {0x0}}, 0x0)
+    assert "test string prefilter stack string fallback" not in matches
+
+    # If a stack string is present in this scope, don't trust file-level pre-filtering.
+    _, matches = ruleset.match(
+        Scope.FUNCTION,
+        {String("powershell"): {0x0}, Characteristic("stack string"): {0x0}},
+        0x0,
+    )
+    assert "test string prefilter stack string fallback" in matches
+
+
+def test_string_prefilter_anchored_regex_correctness():
+    """Anchored regex patterns must not be falsely marked impossible by the prefilter.
+
+    The prefilter joins file strings with \\x01 for Substring checks.  Regex patterns
+    must be checked per-string because ^ / $ bind to the start/end of the whole concat
+    string, not each individual entry.  A rule with /^foo$/ must remain active when
+    "foo" is present in file_strings, even though it would not match the concat string.
+    """
+    rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test anchored regex prefilter
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /^foo$/
+        """)
+    rule = capa.rules.Rule.from_yaml(rule_text)
+    ruleset = capa.rules.RuleSet([rule])
+
+    # "foo" is in file_strings — rule must NOT be marked impossible.
+    ruleset.prepare_for_file(frozenset({"foo", "bar", "baz"}))
+    assert "test anchored regex prefilter" not in ruleset._impossible_string_rule_names
+
+    _, matches = ruleset.match(Scope.FUNCTION, {String("foo"): {0x0}}, 0x0)
+    assert "test anchored regex prefilter" in matches
+
+    # When "foo" is absent from file_strings, the rule IS impossible.
+    ruleset.prepare_for_file(frozenset({"bar", "baz"}))
+    assert "test anchored regex prefilter" in ruleset._impossible_string_rule_names
+
+    _, matches = ruleset.match(Scope.FUNCTION, {String("foo"): {0x0}}, 0x0)
+    assert "test anchored regex prefilter" not in matches
+
+
 def test_bytes_prefix_index_correctness():
     """Verify that the bytes prefix pre-filter preserves match behavior."""
-    rule_text = textwrap.dedent("""
+    rule_text = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test bytes prefix index
@@ -855,7 +953,8 @@ def test_bytes_prefix_index_correctness():
                     dynamic: process
             features:
                 - bytes: 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule_text)
 
     # 16 nop bytes - exact match
@@ -880,7 +979,8 @@ def test_bytes_prefix_index_correctness():
 
 
 def test_bytes_prefix_index_collision():
-    rule_text = textwrap.dedent("""
+    rule_text = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test bytes prefix collision
@@ -889,7 +989,8 @@ def test_bytes_prefix_index_collision():
                     dynamic: process
             features:
                 - bytes: 41 42 43 44 45 46 47 48
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule_text)
 
     features = {
@@ -901,7 +1002,8 @@ def test_bytes_prefix_index_collision():
 
 
 def test_bytes_prefix_index_short_pattern_fallback():
-    rule_text = textwrap.dedent("""
+    rule_text = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test bytes short prefix fallback
@@ -910,7 +1012,8 @@ def test_bytes_prefix_index_short_pattern_fallback():
                     dynamic: process
             features:
                 - bytes: 41 42 43
-        """)
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule_text)
 
     _, matches = match([r], {capa.features.common.Bytes(b"ABCDEF"): {0x0}}, 0x0)
@@ -922,7 +1025,8 @@ def test_bytes_prefix_index_short_pattern_fallback():
 
 def test_bytes_prefix_index_mixed_short_and_long_patterns():
     """A rule with both a short (<4B) and a long (>=4B) bytes pattern exercises both code paths."""
-    short_rule_text = textwrap.dedent("""
+    short_rule_text = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test short pattern rule
@@ -931,8 +1035,10 @@ def test_bytes_prefix_index_mixed_short_and_long_patterns():
                     dynamic: process
             features:
                 - bytes: AA BB
-        """)
-    long_rule_text = textwrap.dedent("""
+        """
+    )
+    long_rule_text = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test long pattern rule
@@ -941,7 +1047,8 @@ def test_bytes_prefix_index_mixed_short_and_long_patterns():
                     dynamic: process
             features:
                 - bytes: CC DD EE FF 11 22 33 44
-        """)
+        """
+    )
     short_rule = capa.rules.Rule.from_yaml(short_rule_text)
     long_rule = capa.rules.Rule.from_yaml(long_rule_text)
 

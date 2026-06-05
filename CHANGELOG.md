@@ -4,6 +4,8 @@
 
 ### New Features
 
+- rules: pre-filter string rules whose Substring/Regex patterns are absent from the binary file, reducing redundant regex evaluation during per-function matching #2126
+
 ### Breaking Changes
 
 - Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
