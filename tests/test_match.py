@@ -967,3 +967,82 @@ def test_bytes_prefix_index_mixed_short_and_long_patterns():
     )
     assert "test short pattern rule" not in matches
     assert "test long pattern rule" in matches
+
+
+def test_match_no_duplicate_candidate_evaluations():
+    """
+    Ensure that when a rule has multiple candidate paths to trigger it,
+    it is evaluated only once and does not create duplicate match results.
+    Verifies both global deduplication (avoiding re-queuing rules already
+    evaluated/queued) and local deduplication (avoiding duplicate queueing when
+    multiple features trigger the same candidate in a single pass).
+    """
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Dependency Rule 1
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - number: 100
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Dependency Rule 2
+                        scopes:
+                            static: function
+                            dynamic: process
+                        namespace: testns
+                    features:
+                        - number: 300
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Target Rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - or:
+                            # Trigger Case 1 (Global): Target Rule is seeded by number 200,
+                            # and also gets triggered later when Dependency Rule 1 matches.
+                            - match: Dependency Rule 1
+                            - number: 200
+
+                            # Trigger Case 2 (Local): Target Rule depends on both rule name and namespace,
+                            # which will try to add it twice in the same iteration when Dependency Rule 2 matches.
+                            - and:
+                                - match: Dependency Rule 2
+                                - match: testns
+                """)
+        ),
+    ]
+
+    # Seed all features to trigger both Case 1 and Case 2
+    features = {
+        capa.features.insn.Number(100): {0x0},
+        capa.features.insn.Number(200): {0x0},
+        capa.features.insn.Number(300): {0x0},
+    }
+
+    _, matches = match(
+        capa.rules.topologically_order_rules(rules),
+        features,
+        0x0,
+    )
+
+    assert "Dependency Rule 1" in matches
+    assert "Dependency Rule 2" in matches
+    assert "Target Rule" in matches
+
+    # Ensure Target Rule was evaluated and returned exactly ONCE
+    assert len(matches["Target Rule"]) == 1

@@ -30,9 +30,7 @@ from pefile import PEFormatError
 from rich.logging import RichHandler
 from elftools.common.exceptions import ELFError
 
-import capa.perf
 import capa.rules
-import capa.engine
 import capa.loader
 import capa.helpers
 import capa.version
@@ -585,7 +583,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
-    if input_format == FORMAT_DRAKVUF:
+    elif input_format == FORMAT_DRAKVUF:
         return BACKEND_DRAKVUF
 
     elif input_format == FORMAT_VMRAY:
@@ -758,7 +756,7 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]):
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -789,10 +787,9 @@ def find_static_limitations_from_cli(args, rules: RuleSet, file_extractors: list
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 raise ShouldExitError(E_FILE_LIMITATION)
-    return found_file_limitation
 
 
-def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]) -> bool:
+def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: list[FeatureExtractor]):
     """
     Does the dynamic analysis describe some trace that we may not support well?
     For example, .NET samples detonated in a sandbox, which may rely on different API patterns than we currently describe in our rules.
@@ -814,7 +811,6 @@ def find_dynamic_limitations_from_cli(args, rules: RuleSet, file_extractors: lis
         if not (args.verbose or args.vverbose or args.json):
             logger.debug("file limitation short circuit, won't analyze fully.")
             raise ShouldExitError(E_FILE_LIMITATION)
-    return found_dynamic_limitation
 
 
 def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]:
@@ -1026,20 +1022,14 @@ def main(argv: Optional[list[str]] = None):
     try:
         rules: RuleSet = get_rules_from_cli(args)
 
-        found_limitation = False
         file_extractors = get_file_extractors_from_cli(args, input_format)
         if input_format in STATIC_FORMATS:
             # only static extractors have file limitations
-            found_limitation = find_static_limitations_from_cli(args, rules, file_extractors)
+            find_static_limitations_from_cli(args, rules, file_extractors)
         if input_format in DYNAMIC_FORMATS:
-            found_limitation = find_dynamic_limitations_from_cli(args, rules, file_extractors)
+            find_dynamic_limitations_from_cli(args, rules, file_extractors)
 
         backend = get_backend_from_cli(args, input_format)
-        sample_path = get_sample_path_from_cli(args, backend)
-        if sample_path is None:
-            os_ = "unknown"
-        else:
-            os_ = capa.loader.get_os(sample_path)
         extractor: FeatureExtractor = get_extractor_from_cli(args, input_format, backend)
     except ShouldExitError as e:
         return e.status_code
@@ -1047,7 +1037,7 @@ def main(argv: Optional[list[str]] = None):
     capabilities: Capabilities = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
     meta: rdoc.Metadata = capa.loader.collect_metadata(
-        argv, args.input_file, input_format, os_, args.rules, extractor, capabilities
+        argv, args.input_file, input_format, args.rules, extractor, capabilities
     )
     layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
     if isinstance(meta, rdoc.StaticMetadata):
@@ -1056,13 +1046,6 @@ def main(argv: Optional[list[str]] = None):
     elif isinstance(meta, rdoc.DynamicMetadata):
         assert isinstance(layout, rdoc.DynamicLayout)
         meta.analysis.layout = layout
-
-    if found_limitation:
-        # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
-        # or capa's dynamic feature extractor encountered some limitation e.g. a dotnet sample
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities.matches))

@@ -26,20 +26,9 @@ from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given function.
-
-    args:
-      f: the function to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
-
-
-def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
+def extract_function_symtab_names(
+    fh: FunctionHandle,
+) -> Iterator[tuple[Feature, Address]]:
     if fh.inner.vw.metadata["Format"] == "elf":
         # the file's symbol table gets added to the metadata of the vivisect workspace.
         # this is in order to eliminate the computational overhead of refetching symtab each time.

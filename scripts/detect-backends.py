@@ -22,7 +22,7 @@ import rich
 import rich.table
 
 import capa.main
-from capa.features.extractors.ida.idalib import find_idalib, load_idalib, is_idalib_installed
+from capa.features.extractors.ida.idalib import is_idalib_installed
 from capa.features.extractors.binja.find_binja_api import find_binaryninja, load_binaryninja, is_binaryninja_installed
 
 logger = logging.getLogger(__name__)
@@ -101,9 +101,14 @@ def main(argv=None):
             row.append("-")
         else:
             row.append("False")
-            row.append(str(find_idalib() is not None))
+            row.append("False")
 
-        row.append(str(load_idalib()))
+        does_idalib_load = False
+        try:
+            import idapro  # noqa: F401 [imported but unused]
+        except ImportError:
+            does_idalib_load = True
+        row.append(str(does_idalib_load))
         table.add_row(*row)
 
     rich.print(table)

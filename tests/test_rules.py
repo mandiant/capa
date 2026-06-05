@@ -19,7 +19,6 @@ import pytest
 
 import capa.rules
 import capa.engine
-import capa.rules.cache
 import capa.features.common
 import capa.features.address
 from capa.engine import Or
@@ -52,6 +51,19 @@ def test_rule_ctor():
     )
     assert bool(r.evaluate({Number(0): {ADDR1}})) is False
     assert bool(r.evaluate({Number(1): {ADDR2}})) is True
+
+
+def test_scopes_from_dict():
+    scopes = capa.rules.Scopes.from_dict({"static": "function", "dynamic": "process"})
+    assert scopes.static == capa.rules.Scope.FUNCTION
+    assert scopes.dynamic == capa.rules.Scope.PROCESS
+    assert isinstance(scopes, capa.rules.Scopes)
+
+    class SubScopes(capa.rules.Scopes):
+        pass
+
+    sub = SubScopes.from_dict({"static": "function", "dynamic": "process"})
+    assert isinstance(sub, SubScopes)
 
 
 def test_rule_yaml():

@@ -15,7 +15,6 @@
 import logging
 from typing import Iterator
 
-import capa.features.extractors.elf
 import capa.features.extractors.common
 import capa.features.extractors.binexport2.file
 import capa.features.extractors.binexport2.insn
@@ -74,7 +73,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
             elif isinstance(feature, Arch):
                 self.arch.add(feature.value)
             else:
-                raise ValueError("unexpected global feature: %s", feature)
+                raise ValueError(f"unexpected global feature: {feature}")
 
     def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(self.analysis.base_address)

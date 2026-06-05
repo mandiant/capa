@@ -17,7 +17,6 @@ import itertools
 import collections
 from dataclasses import dataclass
 
-import capa.perf
 import capa.engine
 import capa.helpers
 import capa.features.freeze as frz
@@ -177,7 +176,8 @@ def find_thread_capabilities(
     span_matcher = SpanOfCallsMatcher(ruleset)
 
     call_count = 0
-    for call_count, ch in enumerate(extractor.get_calls(ph, th)):  # noqa: B007
+    for ch in extractor.get_calls(ph, th):
+        call_count += 1
         call_capabilities = find_call_capabilities(ruleset, extractor, ph, th, ch)
         for feature, vas in call_capabilities.features.items():
             features[feature].update(vas)

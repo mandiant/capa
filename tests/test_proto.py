@@ -14,13 +14,12 @@
 
 import copy
 from typing import Any
+from pathlib import Path
 
 import pytest
 
 import capa.rules
-import capa.render
 import capa.render.proto
-import capa.render.utils
 import capa.features.freeze
 import capa.features.address
 import capa.render.proto.capa_pb2 as capa_pb2
@@ -28,20 +27,26 @@ import capa.render.result_document as rd
 import capa.features.freeze.features
 from capa.helpers import assert_never
 
+CD = Path(__file__).resolve().parent
 
-@pytest.mark.parametrize(
-    "rd_file",
-    [
-        pytest.param("a3f3bbc_rd"),
-        pytest.param("al_khaserx86_rd"),
-        pytest.param("al_khaserx64_rd"),
-        pytest.param("a076114_rd"),
-        pytest.param("pma0101_rd"),
-        pytest.param("dotnet_1c444e_rd"),
-    ],
+STATIC_RD_FILES = [
+    pytest.param(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json", id="a3f3bbc"),
+    pytest.param(CD / "data" / "rd" / "al-khaser_x86.exe_.json", id="al_khaserx86"),
+    pytest.param(CD / "data" / "rd" / "al-khaser_x64.exe_.json", id="al_khaserx64"),
+    pytest.param(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json", id="a076114"),
+    pytest.param(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json", id="pma0101"),
+    pytest.param(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json", id="dotnet_1c444e"),
+]
+
+DYNAMIC_RD_FILE = pytest.param(
+    CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz",
+    id="dynamic_a0000a6",
 )
-def test_doc_to_pb2(request, rd_file):
-    src: rd.ResultDocument = request.getfixturevalue(rd_file)
+
+
+@pytest.mark.parametrize("rd_path", STATIC_RD_FILES + [DYNAMIC_RD_FILE])
+def test_doc_to_pb2(rd_path):
+    src = rd.ResultDocument.from_file(rd_path)
     dst = capa.render.proto.doc_to_pb2(src)
 
     assert_meta(src.meta, dst.meta)
@@ -197,7 +202,7 @@ def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAn
         for rd_t, proto_t in zip(rd_p.matched_threads, proto_p.matched_threads):
             assert capa.render.proto.addr_to_pb2(rd_t.address) == proto_t.address
 
-    assert analysis.feature_counts.processes == dst.feature_counts.processes
+    assert analysis.feature_counts.file == dst.feature_counts.file
     assert len(analysis.feature_counts.processes) == len(dst.feature_counts.processes)
     for rd_cp, proto_cp in zip(analysis.feature_counts.processes, dst.feature_counts.processes):
         assert capa.render.proto.addr_to_pb2(rd_cp.address) == proto_cp.address
@@ -205,7 +210,6 @@ def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAn
 
 
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
-    assert isinstance(meta.analysis, rd.StaticAnalysis)
     assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
     if meta.argv is None:
@@ -355,7 +359,7 @@ def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
     if isinstance(sa, rd.RangeStatement):
         assert isinstance(sb, capa_pb2.RangeStatement)
         assert sa.min == sb.min
-        assert sa.max == sa.max
+        assert sa.max == sb.max
         assert_feature(sa.child, sb.child)
 
     elif isinstance(sa, rd.SomeStatement):
@@ -400,18 +404,7 @@ def assert_round_trip(doc: rd.ResultDocument):
     assert one_bytes != three_bytes
 
 
-@pytest.mark.parametrize(
-    "rd_file",
-    [
-        pytest.param("a3f3bbc_rd"),
-        pytest.param("al_khaserx86_rd"),
-        pytest.param("al_khaserx64_rd"),
-        pytest.param("a076114_rd"),
-        pytest.param("pma0101_rd"),
-        pytest.param("dotnet_1c444e_rd"),
-        pytest.param("dynamic_a0000a6_rd"),
-    ],
-)
-def test_round_trip(request, rd_file):
-    doc: rd.ResultDocument = request.getfixturevalue(rd_file)
+@pytest.mark.parametrize("rd_path", STATIC_RD_FILES + [DYNAMIC_RD_FILE])
+def test_round_trip(rd_path):
+    doc = rd.ResultDocument.from_file(rd_path)
     assert_round_trip(doc)

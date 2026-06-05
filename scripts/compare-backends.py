@@ -252,33 +252,53 @@ def report(args):
     console.print("durations:", style="bold")
     console.print("  (10-quantiles, in seconds)", style="grey37")
     for backend in BACKENDS:
-        q = statistics.quantiles(durations_by_backend[backend], n=10)
-        console.print(f"  {backend: <8}: ", end="")
-        for i in range(9):
-            if i in (4, 8):
-                style = "bold"
-            else:
-                style = "default"
-            console.print(f"{q[i]: >6.1f}", style=style, end=" ")
-        console.print()
-    console.print("                ^-- 10% of samples took less than this                  ^", style="grey37")
-    console.print("                    10% of samples took more than this -----------------+", style="grey37")
+        durations = durations_by_backend[backend]
+        if len(durations) >= 2:
+            q = statistics.quantiles(durations, n=10)
+            console.print(f"  {backend: <8}: ", end="")
+            for i in range(9):
+                if i in (4, 8):
+                    style = "bold"
+                else:
+                    style = "default"
+                console.print(f"{q[i]: >6.1f}", style=style, end=" ")
+            console.print()
+        else:
+            console.print(f"  {backend: <8}: (no data)")
+    console.print(
+        "                ^-- 10% of samples took less than this                  ^",
+        style="grey37",
+    )
+    console.print(
+        "                    10% of samples took more than this -----------------+",
+        style="grey37",
+    )
 
     console.print()
     for backend in BACKENDS:
-        total = sum(durations_by_backend[backend])
-        successes = len(durations_by_backend[backend])
-        avg = statistics.mean(durations_by_backend[backend])
-        console.print(
-            f"  {backend: <8}: {total: >7.0f} seconds across {successes: >4d} successful runs, {avg: >4.1f} average"
-        )
+        durations = durations_by_backend[backend]
+        if durations:
+            total = sum(durations)
+            avg = statistics.mean(durations)
+            console.print(
+                f"  {backend: <8}: {total: >7.0f} seconds across {len(durations): >4d} successful runs, {avg: >4.1f} average"
+            )
+        else:
+            console.print(f"  {backend: <8}: (no successful runs)")
     console.print()
 
     console.print("slowest samples:", style="bold")
     for backend in BACKENDS:
+        durations = durations_by_backend[backend]
+        if not durations:
+            console.print(f"  {backend: <8}: (no successful runs)")
+            continue
+
         console.print(backend)
+        successful_keys = {k for k, v in doc[backend].items() if not v["err"]}
         for duration, path in sorted(
-            ((d["duration"], Path(d["path"]).name) for d in doc[backend].values()), reverse=True
+            ((d["duration"], Path(d["path"]).name) for k, d in doc[backend].items() if k in successful_keys),
+            reverse=True,
         )[:5]:
             console.print(f"  - {duration: >6.1f} {path}")
 

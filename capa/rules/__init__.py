@@ -21,20 +21,12 @@ import uuid
 import struct
 import logging
 import binascii
+import functools
 import collections
 from enum import Enum
-from pathlib import Path
-
-from capa.helpers import assert_never
-
-try:
-    from functools import lru_cache
-except ImportError:
-    # need to type ignore this due to mypy bug here (duplicate name):
-    # https://github.com/python/mypy/issues/1153
-    from backports.functools_lru_cache import lru_cache  # type: ignore
-
 from typing import Any, Union, Callable, Iterator, Optional, cast
+from pathlib import Path
+from functools import lru_cache
 from dataclasses import asdict, dataclass
 
 import yaml
@@ -43,7 +35,6 @@ import yaml.parser
 
 import capa.perf
 import capa.engine as ceng
-import capa.features
 import capa.optimizer
 import capa.features.com
 import capa.features.file
@@ -51,6 +42,7 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
+from capa.helpers import assert_never
 from capa.features.com import ComType
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.address import Address
@@ -178,7 +170,7 @@ class Scopes:
         if scopes_["dynamic"] and scopes_["dynamic"] not in DYNAMIC_SCOPES:
             raise InvalidRule(f"{scopes_['dynamic']} is not a valid dynamic scope")
 
-        return Scopes(
+        return cls(
             static=Scope(scopes_["static"]) if scopes_["static"] else None,
             dynamic=Scope(scopes_["dynamic"]) if scopes_["dynamic"] else None,
         )
@@ -369,7 +361,7 @@ def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Statement:
 
 
 def parse_int(s: str) -> int:
-    if s.startswith("0x"):
+    if s.startswith(("0x", "-0x")):
         return int(s, 0x10)
     else:
         return int(s, 10)
@@ -453,6 +445,12 @@ def parse_feature(key: str):
         return capa.features.common.Namespace
     elif key == "property":
         return capa.features.insn.Property
+    elif key.startswith("operand[") and key.endswith("].number"):
+        index = int(key[len("operand[") : -len("].number")])
+        return functools.partial(capa.features.insn.OperandNumber, index)
+    elif key.startswith("operand[") and key.endswith("].offset"):
+        index = int(key[len("operand[") : -len("].offset")])
+        return functools.partial(capa.features.insn.OperandOffset, index)
     else:
         raise InvalidRule(f"unexpected statement: {key}")
 
@@ -632,6 +630,220 @@ def is_subscope_compatible(scope: Scope | None, subscope: Scope) -> bool:
         raise ValueError("unexpected scope")
 
 
+def build_feature(
+    key: str, initial_value: str | int, initial_description: str | None = None
+) -> Feature | ceng.Range | ceng.Statement:
+    """
+    from a key-value pair, like ("number": "12 = Foo"), return a Feature (or Range or Statement).
+    parses the description from the value, or uses the initial_description if provided.
+
+    returns: Feature usually, or Range for count(...) features, or Statement for COM-derived featues.
+    """
+    if key.startswith("count(") and key.endswith(")"):
+        # e.g.:
+        #
+        #     count(basic block)
+        #     count(mnemonic(mov))
+        #     count(characteristic(nzxor))
+
+        term = key[len("count(") : -len(")")]
+
+        # when looking for the existence of such a feature, our rule might look like:
+        #     - mnemonic: mov
+        #
+        # but here we deal with the form: `mnemonic(mov)`.
+        term, _, arg = term.partition("(")
+        Feature = parse_feature(term)
+
+        if arg:
+            arg = arg[: -len(")")]
+            # can't rely on yaml parsing ints embedded within strings
+            # like:
+            #
+            #     count(offset(0xC))
+            #     count(number(0x11223344))
+            #     count(number(0x100 = description))
+            if term != "string":
+                value, description = parse_description(arg, term)
+
+                if term == "api":
+                    if not isinstance(value, str):
+                        raise InvalidRule(f"unexpected {term} value type: {type(value)}")
+                    value = trim_dll_part(value)
+
+                feature = Feature(value, description=description)  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
+            else:
+                # arg is string (which doesn't support inline descriptions), like:
+                #
+                #     count(string(error))
+                #
+                # known problem that embedded newlines may not work here?
+                # this may become a problem (or not), so address it when encountered.
+                feature = Feature(arg)
+        else:
+            feature = Feature()  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
+
+        # initial value might be things like:
+        #   - 10
+        #   - "10"
+        #   - "10 or more"
+        count: int | str = initial_value
+
+        if isinstance(count, int):
+            return ceng.Range(feature, min=count, max=count, description=initial_description)
+        elif count.endswith(" or more"):
+            min = parse_int(count[: -len(" or more")])
+            max = None
+            return ceng.Range(feature, min=min, max=max, description=initial_description)
+        elif count.endswith(" or fewer"):
+            min = None
+            max = parse_int(count[: -len(" or fewer")])
+            return ceng.Range(feature, min=min, max=max, description=initial_description)
+        elif count.startswith("("):
+            min, max = parse_range(count)
+            return ceng.Range(feature, min=min, max=max, description=initial_description)
+        else:
+            try:
+                # convert "10" -> 10
+                count = parse_int(count)
+            except ValueError:
+                raise InvalidRule(f"unexpected range: {count}")
+            return ceng.Range(feature, min=count, max=count, description=initial_description)
+
+    elif key == "string" and not isinstance(initial_value, str):
+        raise InvalidRule(f"ambiguous string value {initial_value}, must be defined as explicit string")
+
+    elif key.startswith("operand[") and key.endswith("].number"):
+        try:
+            index = int(key[len("operand[") : -len("].number")])
+        except ValueError as e:
+            raise InvalidRule("operand index must be an integer") from e
+
+        value, description = parse_description(initial_value, key, description=initial_description)
+        assert isinstance(value, int)
+        try:
+            feature = capa.features.insn.OperandNumber(index, value, description=description)
+        except ValueError as e:
+            raise InvalidRule(str(e)) from e
+        return feature
+
+    elif key.startswith("operand[") and key.endswith("].offset"):
+        try:
+            index = int(key[len("operand[") : -len("].offset")])
+        except ValueError as e:
+            raise InvalidRule("operand index must be an integer") from e
+
+        value, description = parse_description(initial_value, key, description=initial_description)
+        assert isinstance(value, int)
+        try:
+            feature = capa.features.insn.OperandOffset(index, value, description=description)
+        except ValueError as e:
+            raise InvalidRule(str(e)) from e
+        return feature
+
+    elif (
+        (key == "os" and initial_value not in capa.features.common.VALID_OS)
+        or (key == "format" and initial_value not in capa.features.common.VALID_FORMAT)
+        or (key == "arch" and initial_value not in capa.features.common.VALID_ARCH)
+    ):
+        raise InvalidRule(f"unexpected {key} value {initial_value}")
+
+    elif key.startswith("property/"):
+        access = key[len("property/") :]
+        if access not in capa.features.common.VALID_FEATURE_ACCESS:
+            raise InvalidRule(f"unexpected {key} access {access}")
+
+        value, description = parse_description(initial_value, key, description=initial_description)
+        if not isinstance(value, str):
+            raise InvalidRule(f"unexpected {key} value type: {type(value)}")
+        try:
+            feature = capa.features.insn.Property(value, access=access, description=description)
+        except ValueError as e:
+            raise InvalidRule(str(e)) from e
+        return feature
+
+    elif key.startswith("com/"):
+        com_type_name = str(key[len("com/") :])
+        try:
+            com_type = ComType(com_type_name)
+        except ValueError:
+            raise InvalidRule(f"unexpected COM type: {com_type_name}")
+        value, description = parse_description(initial_value, key, description=initial_description)
+        if not isinstance(value, str):
+            raise InvalidRule(f"unexpected {key} value type: {type(value)}")
+        return translate_com_feature(value, com_type)
+
+    else:
+        Feature = parse_feature(key)
+        value, description = parse_description(initial_value, key, description=initial_description)
+
+        try:
+            match Feature:
+                case capa.features.insn.OperandNumber | capa.features.insn.OperandOffset:
+                    raise RuntimeError("should be impossible")
+
+                case capa.features.insn.Offset | capa.features.insn.Number:
+                    assert isinstance(value, int)
+                    return Feature(value, description=description)
+
+                case capa.features.insn.API:
+                    assert isinstance(value, str)
+                    # users can specify an API name with or without the DLL part (e.g. `CreateFileA` or `kernel32.CreateFileA`)
+                    # and capa matches only the API name part, not the DLL part.
+                    # the DLL name is ignored, its essentially just for human-oriented documentation.
+                    # see #1824
+                    value = trim_dll_part(value)
+                    return Feature(value, description=description)
+
+                case capa.features.insn.Mnemonic:
+                    assert isinstance(value, str)
+                    return Feature(value, description=description)
+
+                case capa.features.basicblock.BasicBlock:
+                    return Feature(description=description)
+
+                case (
+                    capa.features.file.Export
+                    | capa.features.file.Import
+                    | capa.features.file.Section
+                    | capa.features.file.FunctionName
+                ):
+                    assert isinstance(value, str)
+                    return Feature(value, description=description)
+
+                case capa.features.common.MatchedRule | capa.features.common.Characteristic:
+                    assert isinstance(value, str)
+                    return Feature(value, description=description)
+
+                case capa.features.common.StringFactory:
+                    assert isinstance(value, str)
+                    return cast(
+                        capa.features.common.Feature,
+                        capa.features.common.StringFactory(value, description=description),
+                    )
+
+                case capa.features.common.Substring:
+                    assert isinstance(value, str)
+                    return Feature(value, description=description)
+
+                case capa.features.common.Class | capa.features.common.Namespace | capa.features.insn.Property:
+                    assert isinstance(value, str)
+                    return Feature(value, description=description)
+
+                case capa.features.common.Arch | capa.features.common.OS | capa.features.common.Format:
+                    assert isinstance(value, str)
+                    return Feature(value, description=description)
+
+                case capa.features.common.Bytes:
+                    assert isinstance(value, bytes)
+                    return Feature(value, description=description)
+
+                case _ as unreachable:
+                    assert_never(unreachable)
+        except ValueError as e:
+            raise InvalidRule(str(e)) from e
+
+
 def build_statements(d, scopes: Scopes):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
@@ -770,149 +982,19 @@ def build_statements(d, scopes: Scopes):
 
         return ceng.Subscope(Scope.INSTRUCTION, statements, description=description)
 
-    elif key.startswith("count(") and key.endswith(")"):
-        # e.g.:
-        #
-        #     count(basic block)
-        #     count(mnemonic(mov))
-        #     count(characteristic(nzxor))
-
-        term = key[len("count(") : -len(")")]
-
-        # when looking for the existence of such a feature, our rule might look like:
-        #     - mnemonic: mov
-        #
-        # but here we deal with the form: `mnemonic(mov)`.
-        term, _, arg = term.partition("(")
-        Feature = parse_feature(term)
-
-        if arg:
-            arg = arg[: -len(")")]
-            # can't rely on yaml parsing ints embedded within strings
-            # like:
-            #
-            #     count(offset(0xC))
-            #     count(number(0x11223344))
-            #     count(number(0x100 = description))
-            if term != "string":
-                value, description = parse_description(arg, term)
-
-                if term == "api":
-                    if not isinstance(value, str):
-                        raise InvalidRule(f"unexpected {term} value type: {type(value)}")
-                    value = trim_dll_part(value)
-
-                feature = Feature(value, description=description)  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
-            else:
-                # arg is string (which doesn't support inline descriptions), like:
-                #
-                #     count(string(error))
-                #
-                # known problem that embedded newlines may not work here?
-                # this may become a problem (or not), so address it when encountered.
-                feature = Feature(arg)
-        else:
-            feature = Feature()  # type: ignore[call-arg]  # Feature is a runtime union; constructor args vary per subclass
-        ensure_feature_valid_for_scopes(scopes, feature)  # type: ignore[arg-type]  # StringFactory.__new__ returns Feature subclass at runtime
-
-        count = d[key]
-        if isinstance(count, int):
-            return ceng.Range(feature, min=count, max=count, description=description)
-        elif count.endswith(" or more"):
-            min = parse_int(count[: -len(" or more")])
-            max = None
-            return ceng.Range(feature, min=min, max=max, description=description)
-        elif count.endswith(" or fewer"):
-            min = None
-            max = parse_int(count[: -len(" or fewer")])
-            return ceng.Range(feature, min=min, max=max, description=description)
-        elif count.startswith("("):
-            min, max = parse_range(count)
-            return ceng.Range(feature, min=min, max=max, description=description)
-        else:
-            raise InvalidRule(f"unexpected range: {count}")
-    elif key == "string" and not isinstance(d[key], str):
-        raise InvalidRule(f"ambiguous string value {d[key]}, must be defined as explicit string")
-
-    elif key.startswith("operand[") and key.endswith("].number"):
-        index = key[len("operand[") : -len("].number")]
-        try:
-            index = int(index)
-        except ValueError as e:
-            raise InvalidRule("operand index must be an integer") from e
-
-        value, description = parse_description(d[key], key, d.get("description"))
-        assert isinstance(value, int)
-        try:
-            feature = capa.features.insn.OperandNumber(index, value, description=description)
-        except ValueError as e:
-            raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scopes, feature)
-        return feature
-
-    elif key.startswith("operand[") and key.endswith("].offset"):
-        index = key[len("operand[") : -len("].offset")]
-        try:
-            index = int(index)
-        except ValueError as e:
-            raise InvalidRule("operand index must be an integer") from e
-
-        value, description = parse_description(d[key], key, d.get("description"))
-        assert isinstance(value, int)
-        try:
-            feature = capa.features.insn.OperandOffset(index, value, description=description)
-        except ValueError as e:
-            raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scopes, feature)
-        return feature
-
-    elif (
-        (key == "os" and d[key] not in capa.features.common.VALID_OS)
-        or (key == "format" and d[key] not in capa.features.common.VALID_FORMAT)
-        or (key == "arch" and d[key] not in capa.features.common.VALID_ARCH)
-    ):
-        raise InvalidRule(f"unexpected {key} value {d[key]}")
-
-    elif key.startswith("property/"):
-        access = key[len("property/") :]
-        if access not in capa.features.common.VALID_FEATURE_ACCESS:
-            raise InvalidRule(f"unexpected {key} access {access}")
-
-        value, description = parse_description(d[key], key, d.get("description"))
-        if not isinstance(value, str):
-            raise InvalidRule(f"unexpected {key} value type: {type(value)}")
-        try:
-            feature = capa.features.insn.Property(value, access=access, description=description)
-        except ValueError as e:
-            raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scopes, feature)
-        return feature
-
-    elif key.startswith("com/"):
-        com_type_name = str(key[len("com/") :])
-        try:
-            com_type = ComType(com_type_name)
-        except ValueError:
-            raise InvalidRule(f"unexpected COM type: {com_type_name}")
-        value, description = parse_description(d[key], key, d.get("description"))
-        if not isinstance(value, str):
-            raise InvalidRule(f"unexpected {key} value type: {type(value)}")
-        return translate_com_feature(value, com_type)
-
     else:
-        Feature = parse_feature(key)
-        value, description = parse_description(d[key], key, d.get("description"))
+        initial_value = d[key]
+        initial_description = d.get("description")
 
-        if key == "api":
-            if not isinstance(value, str):
-                raise InvalidRule(f"unexpected {key} value type: {type(value)}")
-            value = trim_dll_part(value)
+        feature = build_feature(key, initial_value, initial_description)
 
-        try:
-            feature = Feature(value, description=description)  # type: ignore[misc]  # Feature is a runtime union; constructor args vary per subclass
-        except ValueError as e:
-            raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scopes, feature)  # type: ignore[arg-type]  # StringFactory.__new__ returns Feature subclass at runtime
+        # for count(...) features, validate the inner feature rather than the Range wrapper.
+        # for com/... features, translate_com_feature returns a compound Or(String, Bytes) Statement;
+        if isinstance(feature, ceng.Range):
+            ensure_feature_valid_for_scopes(scopes, feature.child)
+        elif isinstance(feature, Feature):
+            ensure_feature_valid_for_scopes(scopes, feature)
+
         return feature
 
 
@@ -1129,7 +1211,7 @@ class Rule:
         return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)  # type: ignore[arg-type]  # build_statements infers wide union but top-level always returns Statement
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def _get_yaml_loader():
         try:
             # prefer to use CLoader to be fast, see #306 / CSafeLoader is the same as CLoader but with safe loading
@@ -2184,9 +2266,15 @@ class RuleSet:
                     new_features.append(capa.features.common.MatchedRule(namespace))
 
                 if new_features:
-                    new_candidates: list[str] = []
+                    new_candidates: set[str] = set()
                     for new_feature in new_features:
-                        new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
+                        for candidate_name in feature_index.rules_by_feature.get(new_feature, ()):
+                            # Deduplicate candidate rules at two levels:
+                            # 1. Globally: Ensure we don't re-queue rules already evaluated or waiting in `candidate_rule_names`.
+                            # 2. Locally: The `new_candidates` set prevents duplicates if a rule is triggered
+                            #    by both the matched rule name and its namespace in the same pass.
+                            if candidate_name not in candidate_rule_names:
+                                new_candidates.add(candidate_name)
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)

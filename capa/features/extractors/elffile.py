@@ -24,7 +24,7 @@ from elftools.elf.sections import SymbolTableSection
 import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
-from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -142,7 +142,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
                     continue
                 symbol_name = symbol_name_by_index[symbol_index]
 
-                yield Import(symbol_name), FileOffsetAddress(symbol_address)
+                yield Import(symbol_name), AbsoluteVirtualAddress(symbol_address)
 
 
 def extract_file_section_names(elf: ELFFile, **kwargs):

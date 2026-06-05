@@ -138,9 +138,9 @@ class BinExport2Index:
 
     def _index_vertex_edges(self):
         for edge in self.be2.call_graph.edge:
-            if not edge.source_vertex_index:
+            if not edge.HasField("source_vertex_index"):
                 continue
-            if not edge.target_vertex_index:
+            if not edge.HasField("target_vertex_index"):
                 continue
 
             self.callers_by_vertex_index[edge.target_vertex_index].append(edge.source_vertex_index)

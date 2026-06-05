@@ -1,0 +1,91 @@
+{
+  "files": [
+    {
+      "key": "pma16-01_binja_db",
+      "path": "data/Practical Malware Analysis Lab 16-01.exe_.bndb",
+      "tags": [
+        "binja-db"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x4021B0",
+      "feature": "string: /HTTP/1.0/"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x402F40",
+      "feature": "string: /www.practicalmalwareanalysis.com/"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x402F40",
+      "feature": "substring: practicalmalwareanalysis.com"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "function-name: __aulldiv"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "os: windows"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "os: linux",
+      "expected": false
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x404356",
+      "feature": "os: windows"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x404356,bb=0x4043B9",
+      "feature": "os: windows"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "arch: i386"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "arch: amd64",
+      "expected": false
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x404356",
+      "feature": "arch: i386"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x404356,bb=0x4043B9",
+      "feature": "arch: i386"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "format: pe"
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "file",
+      "feature": "format: elf",
+      "expected": false
+    },
+    {
+      "file": "pma16-01_binja_db",
+      "location": "function=0x404356",
+      "feature": "format: pe"
+    }
+  ]
+}

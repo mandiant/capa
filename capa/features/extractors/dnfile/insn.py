@@ -49,7 +49,8 @@ def get_callee(
     if token.table == dnfile.mdtable.MethodSpec.number:
         # map MethodSpec to MethodDef or MemberRef
         row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(pe, token)
-        assert isinstance(row, dnfile.mdtable.MethodSpecRow)
+        if not isinstance(row, dnfile.mdtable.MethodSpecRow):
+            return None
 
         if row.Method.table is None:
             logger.debug("MethodSpec[0x%X] Method table is None", token.rid)

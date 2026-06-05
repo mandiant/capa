@@ -20,19 +20,17 @@ from typing import Optional
 from pathlib import Path
 
 from rich.console import Console
-from typing_extensions import assert_never
 
 import capa.rules
-import capa.helpers
 import capa.version
 import capa.features.common
 import capa.features.freeze as frz
 import capa.features.address
-import capa.features.extractors
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.helpers import assert_never
 from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
@@ -388,11 +386,8 @@ def get_extractor(
     elif backend == BACKEND_IDA:
         import capa.features.extractors.ida.idalib as idalib
 
-        if not idalib.has_idalib():
-            raise RuntimeError("cannot find IDA idalib module.")
-
-        if not idalib.load_idalib():
-            raise RuntimeError("failed to load IDA idalib module.")
+        if not idalib.is_idalib_installed():
+            raise RuntimeError("idalib not available.")
 
         import idapro
         import ida_auto
@@ -628,7 +623,6 @@ def collect_metadata(
     argv: list[str],
     input_path: Path,
     input_format: str,
-    os_: str,
     rules_path: list[Path],
     extractor: FeatureExtractor,
     capabilities: Capabilities,
@@ -647,7 +641,7 @@ def collect_metadata(
         str(extractor_format[0]) if extractor_format else "unknown" if input_format == FORMAT_AUTO else input_format
     )
     arch = str(extractor_arch[0]) if extractor_arch else "unknown"
-    os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
+    os_ = str(extractor_os[0]) if extractor_os else "unknown"
 
     if isinstance(extractor, StaticFeatureExtractor):
         meta_class: type = rdoc.StaticMetadata

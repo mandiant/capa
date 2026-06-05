@@ -118,21 +118,3 @@ def test_scope_instruction_description():
                       - os: windows
             """)
     )
-
-    capa.rules.Rule.from_yaml(
-        textwrap.dedent("""
-            rule:
-                meta:
-                    name: test rule
-                    scopes:
-                        static: function
-                        dynamic: process
-                features:
-                  - and:
-                    - instruction:
-                      - description: foo
-                      - mnemonic: mov
-                      - arch: i386
-                      - os: windows
-            """)
-    )

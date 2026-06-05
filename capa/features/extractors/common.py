@@ -21,7 +21,6 @@ from typing import Iterator
 
 import pefile
 
-import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
 import capa.features.extractors.strings
