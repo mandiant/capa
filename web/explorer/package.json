@@ -35,6 +35,6 @@
         "prettier": "^3.2.5",
         "vite": "^6.4.2",
         "vite-plugin-singlefile": "^2.2.0",
-        "vitest": "^3.0.9"
+        "vitest": "^4.1.0"
     }
 }
