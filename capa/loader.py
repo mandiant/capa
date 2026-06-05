@@ -31,7 +31,13 @@ import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
-from capa.exceptions import InvalidArgument, UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError
+from capa.exceptions import (
+    InvalidArgument,
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+    LockedProjectDatabaseError,
+)
 from capa.features.common import (
     OS_AUTO,
     FORMAT_PE,
@@ -433,7 +439,19 @@ def get_extractor(
             project_path = input_path
             tmpdir = None
             if input_path.suffix.lower() == ".gpr":
-                project_cm = pyghidra.open_project(str(project_path.parent.resolve()), project_path.stem, create=False)
+                try:
+                    project_cm = pyghidra.open_project(
+                        str(project_path.parent.resolve()), project_path.stem, create=False
+                    )
+                except Exception as e:
+                    err = str(e)
+                    if "LockException" in err or "Database is locked" in err:
+                        msg = (
+                            f"Ghidra project database is locked. Ensure all programs accessing "
+                            f"{project_path.name} are closed before proceeding."
+                        )
+                        raise LockedProjectDatabaseError(msg) from e
+                    raise
             else:
                 import tempfile
 
