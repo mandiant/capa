@@ -72,6 +72,7 @@ from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
+    LockedProjectDatabaseError,
 )
 from capa.features.common import (
     OS_AUTO,
@@ -130,6 +131,7 @@ E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
 E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
+E_GHIDRA_DB_LOCKED = 27
 
 logger = logging.getLogger("capa")
 
@@ -929,6 +931,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     except capa.loader.CorruptFile as e:
         logger.error("Input file '%s' is not a valid file: %s", args.input_file, str(e))
         raise ShouldExitError(E_CORRUPT_FILE) from e
+    except LockedProjectDatabaseError as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_GHIDRA_DB_LOCKED) from e
 
 
 def get_extractor_filters_from_cli(args, input_format, backend: Optional[str] = None) -> FilterConfig:
@@ -936,10 +941,7 @@ def get_extractor_filters_from_cli(args, input_format, backend: Optional[str] = 
         # no processes or function filters were installed in the args
         return {}
 
-    if backend == BACKEND_GHIDRA:
-        return {}
-
-    if input_format in STATIC_FORMATS:
+    if input_format in STATIC_FORMATS or backend == BACKEND_GHIDRA:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
         return {"functions": {int(addr, 0) for addr in args.restrict_to_functions}}
