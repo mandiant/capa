@@ -72,6 +72,7 @@ from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
+    LockedProjectDatabaseError,
 )
 from capa.features.common import (
     OS_AUTO,
@@ -93,6 +94,7 @@ from capa.features.common import (
     DYNAMIC_FORMATS,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
+    FORMAT_GHIDRA_PROJECT,
 )
 from capa.capabilities.common import (
     Capabilities,
@@ -130,6 +132,7 @@ E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
 E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
+E_GHIDRA_DB_LOCKED = 27
 
 logger = logging.getLogger("capa")
 
@@ -279,6 +282,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_FREEZE, "features previously frozen by capa"),
             (FORMAT_BINEXPORT2, "BinExport2"),
             (FORMAT_BINJA_DB, "Binary Ninja Database"),
+            (FORMAT_GHIDRA_PROJECT, "Ghidra project"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 
@@ -555,6 +559,9 @@ def get_input_format_from_cli(args) -> str:
     if format_ != FORMAT_AUTO:
         return format_
 
+    if args.input_file.suffix.lower() == ".gpr":
+        return FORMAT_GHIDRA_PROJECT
+
     try:
         return get_auto_format(args.input_file)
     except PEFormatError as e:
@@ -579,6 +586,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     """
     if args.backend != BACKEND_AUTO:
         return args.backend
+
+    if args.input_file.suffix.lower() == ".gpr":
+        return BACKEND_GHIDRA
 
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
@@ -617,6 +627,8 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
+        return None
+    elif backend == BACKEND_GHIDRA:
         return None
     elif backend == BACKEND_BINEXPORT2:
         import capa.features.extractors.binexport2
@@ -726,6 +738,10 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
     #
     # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
     # various limitations
+    if args.input_file.suffix.lower() == ".gpr":
+        logger.debug("skipping generic file extractor probe for Ghidra project input")
+        return []
+
     try:
         return capa.loader.get_file_extractors(args.input_file, input_format)
     except PEFormatError as e:
@@ -869,7 +885,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
-    extractor_filters = get_extractor_filters_from_cli(args, input_format)
+    extractor_filters = get_extractor_filters_from_cli(args, input_format, backend)
 
     logger.debug("format:  %s", input_format)
     logger.debug("backend: %s", backend)
@@ -886,6 +902,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             sample_path=sample_path,
         )
         return apply_extractor_filters(extractor, extractor_filters)
+    except InvalidArgument as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_INVALID_INPUT_FORMAT) from e
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
@@ -905,9 +924,12 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     except capa.loader.CorruptFile as e:
         logger.error("Input file '%s' is not a valid file: %s", args.input_file, str(e))
         raise ShouldExitError(E_CORRUPT_FILE) from e
+    except LockedProjectDatabaseError as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_GHIDRA_DB_LOCKED) from e
 
 
-def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
+def get_extractor_filters_from_cli(args, input_format, backend: Optional[str] = None) -> FilterConfig:
     if not hasattr(args, "restrict_to_processes") and not hasattr(args, "restrict_to_functions"):
         # no processes or function filters were installed in the args
         return {}
