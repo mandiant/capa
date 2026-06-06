@@ -509,10 +509,17 @@ def get_extractor(
 
             except Exception:
                 if program is not None:
-                    program.release(consumer)
-                project_cm.__exit__(None, None, None)
+                    try:
+                        program.release(consumer)
+                    except Exception:
+                        logger.warning("failed to release program handle", exc_info=True)
+                try:
+                    project_cm.__exit__(None, None, None)
+                except Exception:
+                    logger.warning("failed to close Ghidra project", exc_info=True)
                 if tmpdir:
-                    tmpdir.cleanup()
+                    with contextlib.suppress(Exception):
+                        tmpdir.cleanup()
                 raise
 
         import capa.features.extractors.ghidra.extractor
