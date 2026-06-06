@@ -94,6 +94,7 @@ from capa.features.common import (
     DYNAMIC_FORMATS,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
+    FORMAT_GHIDRA_PROJECT,
 )
 from capa.capabilities.common import (
     Capabilities,
@@ -203,21 +204,12 @@ def simple_message_exception_handler(
     if exctype is KeyboardInterrupt:
         print("KeyboardInterrupt detected, program terminated", file=sys.stderr)
     else:
-        exctype_str = str(exctype)
-        # Give a targeted message when the Ghidra project DB is locked.
-        if "LockException" in exctype_str or "ghidra.framework.store.LockException" in exctype_str:
-            print(
-                f"Unexpected exception raised: {exctype}.\n It looks like the Ghidra project database is locked. "
-                "Please close the project in the Ghidra GUI (or other process) and try again. For details, run in debug mode (-d/--debug).",
-                file=sys.stderr,
-            )
-        else:
-            print(
-                f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-                + "to see the stack trace.\nPlease also report your issue on the capa GitHub page so we "
-                + "can improve the code! (https://github.com/mandiant/capa/issues)",
-                file=sys.stderr,
-            )
+        print(
+            f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+            + "to see the stack trace.\nPlease also report your issue on the capa GitHub page so we "
+            + "can improve the code! (https://github.com/mandiant/capa/issues)",
+            file=sys.stderr,
+        )
 
 
 def install_common_args(parser, wanted=None):
@@ -290,6 +282,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_FREEZE, "features previously frozen by capa"),
             (FORMAT_BINEXPORT2, "BinExport2"),
             (FORMAT_BINJA_DB, "Binary Ninja Database"),
+            (FORMAT_GHIDRA_PROJECT, "Ghidra project"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 
@@ -567,7 +560,7 @@ def get_input_format_from_cli(args) -> str:
         return format_
 
     if args.input_file.suffix.lower() == ".gpr":
-        return FORMAT_AUTO
+        return FORMAT_GHIDRA_PROJECT
 
     try:
         return get_auto_format(args.input_file)
@@ -941,7 +934,7 @@ def get_extractor_filters_from_cli(args, input_format, backend: Optional[str] = 
         # no processes or function filters were installed in the args
         return {}
 
-    if input_format in STATIC_FORMATS or backend == BACKEND_GHIDRA:
+    if input_format in STATIC_FORMATS:
         if args.restrict_to_processes:
             raise InvalidArgument("Cannot filter processes with static analysis.")
         return {"functions": {int(addr, 0) for addr in args.restrict_to_functions}}
