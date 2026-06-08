@@ -41,6 +41,12 @@ except ImportError:
 Qt = QtCore.Qt
 
 
+def flag_val(flag):
+    if hasattr(flag, 'value'):
+        return flag.value
+    return flag
+
+
 def qt_get_item_flag_tristate():
     """
     Get the tristate item flag compatible with Qt5 and Qt6.
@@ -59,12 +65,8 @@ def qt_get_item_flag_tristate():
         AttributeError: If the tristate flag cannot be found in the Qt library
     """
     if QT_LIBRARY == "PySide6":
-        # Qt6: ItemIsTristate was removed, replaced with ItemIsAutoTristate
-        # Try different possible locations (API varies slightly across PySide6 versions)
-        if hasattr(Qt, "ItemIsAutoTristate"):
-            return Qt.ItemIsAutoTristate
-        elif hasattr(Qt, "ItemFlag") and hasattr(Qt.ItemFlag, "ItemIsAutoTristate"):
-            return Qt.ItemFlag.ItemIsAutoTristate
+        if hasattr(Qt, "ItemFlag") and hasattr(Qt.ItemFlag, "ItemIsAutoTristate"):
+            return Qt.ItemFlag.ItemIsAutoTristate.value
         else:
             raise AttributeError(
                 "Cannot find ItemIsAutoTristate in PySide6. "
@@ -76,4 +78,4 @@ def qt_get_item_flag_tristate():
         return Qt.ItemIsTristate
 
 
-__all__ = ["qt_get_item_flag_tristate", "Signal", "QAction", "QtGui", "QtCore", "QtWidgets"]
+__all__ = ["flag_val", "qt_get_item_flag_tristate", "Signal", "QAction", "QtGui", "QtCore", "QtWidgets"]
