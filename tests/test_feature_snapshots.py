@@ -100,6 +100,11 @@ def _ids(snapshots: list[FeatureSnapshot]) -> list[str]:
 
 def _regenerate(snapshot: FeatureSnapshot) -> bytes:
     """Run the freeze CLI against the sample and return the produced bytes."""
+    import logging
+
+    root = logging.getLogger()
+    handlers_before = list(root.handlers)
+
     with tempfile.TemporaryDirectory() as tmp:
         out_path = Path(tmp) / "out.frz"
         argv = [str(snapshot.sample_path), str(out_path), "--reproducible"]
@@ -110,6 +115,15 @@ def _regenerate(snapshot: FeatureSnapshot) -> bytes:
         if snapshot.os is not None:
             argv += ["--os", snapshot.os]
         rc = capa.features.freeze.main(argv)
+
+        # capa.main.handle_common_args() unconditionally appends a RichHandler
+        # to the root logger on every call. Since we call freeze.main() once per
+        # snapshot, handlers accumulate and duplicate every log line. Remove
+        # whatever was added so the next iteration starts clean.
+        for h in root.handlers[:]:
+            if h not in handlers_before:
+                root.removeHandler(h)
+
         if rc != 0:
             raise RuntimeError(f"capa.features.freeze.main exited with status {rc}")
         return out_path.read_bytes()
@@ -143,6 +157,8 @@ def _format_mismatch(snapshot: FeatureSnapshot, expected: bytes, actual: bytes) 
         f"  sample:          {snapshot.sample}",
         f"  expected freeze: {snapshot.freeze_path}",
         "  actual  freeze:  <regenerated>",
+        f"  expected size:   {len(expected):,} bytes",
+        f"  actual   size:   {len(actual):,} bytes",
     ]
     if snapshot.generated_at_commit:
         lines.append(f"  last regenerated at: {snapshot.generated_at_commit}")
@@ -150,27 +166,40 @@ def _format_mismatch(snapshot: FeatureSnapshot, expected: bytes, actual: bytes) 
     expected_doc = _load_freeze_doc(expected)
     actual_doc = _load_freeze_doc(actual)
 
-    diff = list(
-        difflib.unified_diff(
-            _doc_to_lines(expected_doc),
-            _doc_to_lines(actual_doc),
-            fromfile=f"expected/{snapshot.freeze}",
-            tofile=f"actual/{snapshot.freeze}",
-            n=2,
-        )
-    )
+    expected_lines = _doc_to_lines(expected_doc)
+    actual_lines = _doc_to_lines(actual_doc)
 
-    # Cap the diff so a wholly-changed snapshot doesn't dump thousands of lines
-    # into the test output — the feature-count summary is enough for the common
-    # case; regenerate the fixture locally to inspect the full diff.
+    # difflib.unified_diff uses SequenceMatcher which is O(n^2) for dissimilar
+    # sequences. Large freeze documents (e.g. mimikatz) expand to millions of
+    # JSON lines, making a naive diff take hours. Skip it when the input is too
+    # large — the regeneration command below is the intended way to inspect.
+    MAX_DIFFABLE_LINES = 100_000
     MAX_DIFF_LINES = 200
+
+    total_lines = len(expected_lines) + len(actual_lines)
     lines.append("")
-    if len(diff) > MAX_DIFF_LINES:
-        lines.append(f"unified diff ({len(diff)} lines, truncated to {MAX_DIFF_LINES}):")
-        diff = diff[:MAX_DIFF_LINES]
+    if total_lines > MAX_DIFFABLE_LINES:
+        lines.append(
+            f"diff skipped: documents too large ({len(expected_lines):,} + {len(actual_lines):,} lines)."
+            " Regenerate the fixture locally to inspect."
+        )
     else:
-        lines.append(f"unified diff ({len(diff)} lines):")
-    lines.extend(line.rstrip("\n") for line in diff)
+        diff = list(
+            difflib.unified_diff(
+                expected_lines,
+                actual_lines,
+                fromfile=f"expected/{snapshot.freeze}",
+                tofile=f"actual/{snapshot.freeze}",
+                n=2,
+            )
+        )
+
+        if len(diff) > MAX_DIFF_LINES:
+            lines.append(f"unified diff ({len(diff)} lines, truncated to {MAX_DIFF_LINES}):")
+            diff = diff[:MAX_DIFF_LINES]
+        else:
+            lines.append(f"unified diff ({len(diff)} lines):")
+        lines.extend(line.rstrip("\n") for line in diff)
     lines.append("")
     lines.append("how and when to update this snapshot:")
     lines.append("  If this change to feature extraction is INTENTIONAL (you edited an extractor):")
@@ -192,12 +221,32 @@ def _format_mismatch(snapshot: FeatureSnapshot, expected: bytes, actual: bytes) 
     return "\n".join(lines)
 
 
+_BACKEND_AVAILABLE: dict[str, bool] = {}
+
+
+def _is_backend_available(backend: str) -> bool:
+    if backend not in _BACKEND_AVAILABLE:
+        if backend == "ida":
+            try:
+                import idapro  # noqa: F401
+
+                _BACKEND_AVAILABLE[backend] = True
+            except ImportError:
+                _BACKEND_AVAILABLE[backend] = False
+        else:
+            _BACKEND_AVAILABLE[backend] = True
+    return _BACKEND_AVAILABLE[backend]
+
+
 @pytest.mark.parametrize("snapshot", _SNAPSHOTS, ids=_ids(_SNAPSHOTS))
 def test_feature_snapshot(snapshot: FeatureSnapshot):
     """
     Regenerate the freeze for `snapshot.sample` and assert it matches
     `snapshot.freeze` byte-for-byte.
     """
+    if snapshot.backend and not _is_backend_available(snapshot.backend):
+        pytest.skip(f"{snapshot.backend} backend not available")
+
     expected = snapshot.freeze_path.read_bytes()
     actual = _regenerate(snapshot)
 
