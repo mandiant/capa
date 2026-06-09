@@ -98,7 +98,7 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[tuple
     # namespaces may be empty, discard
     namespaces.discard("")
 
-    for namespace in namespaces:
+    for namespace in sorted(namespaces):
         # namespace do not have an associated token, so we yield 0x0
         yield Namespace(namespace), NO_ADDRESS
 
