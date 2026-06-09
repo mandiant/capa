@@ -9,7 +9,7 @@
 
 - Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
 
-### New Rules (9)
+### New Rules (10)
 
 - nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
 - nursery/connect-to-websocket-server-in-dotnet mehunhoff@google.com
@@ -20,6 +20,7 @@
 - nursery/check-for-time-delay-in-dotnet @aryanyk
 - nursery/decode-pe-stored-as-uuid corkami@google.com
 - compiler/crystal/compiled-with-crystal corkami@google.com
+- compiler/odin/compiled-with-odin corkami@google.com
 -
 
 ### Bug Fixes
@@ -124,6 +125,7 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+- ida: display file-scope feature addresses (`file:0x...`) in rule generator tree and safely handle file-offset navigation/filtering @vee1e #3009
 
 ### Development
 - tests: update binja version to 5.3 @mr-tz #3011
@@ -146,6 +148,8 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
 ### Breaking Changes
+
+- deprecate RelativeVirtualAddress @corkamig #3072
 
 ### New Rules (26)
 
@@ -275,7 +279,8 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 - nursery/get-dotnet-assembly-entry-point mehunhoff@google.com
 
 ### Bug Fixes
-- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
+
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714
 
 ### capa Explorer Web
 
