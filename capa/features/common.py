@@ -489,6 +489,7 @@ class OS(Feature):
 
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
+FORMAT_SCRIPT = "script"
 FORMAT_DOTNET = "dotnet"
 VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET)
 # internal only, not to be used in rules
@@ -508,6 +509,7 @@ STATIC_FORMATS = {
     FORMAT_PE,
     FORMAT_ELF,
     FORMAT_DOTNET,
+    FORMAT_SCRIPT,
     FORMAT_FREEZE,
     FORMAT_RESULT,
     FORMAT_BINEXPORT2,
