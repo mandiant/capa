@@ -628,6 +628,10 @@ ASPX_DATA_PATH_BY_NAME = {
     "aspx_d460ca": ASPX_DIR / "d460cae7d34c51059ef57c5aadb3de099469efbac5fffcf76d0528a511192a28.aspx_",
 }
 
+CS_DATA_PATH_BY_NAME = {
+    "cs_138cdc": CS_DIR / "138cdc4b10f3f5ece9c47bb0ec17fde5b70c1f9a90b267794c5e5dfa337fc798.cs_",
+}
+
 PY_DATA_PATH_BY_NAME = {
     "py_7f9cd1": PY_DIR / "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_",
     "py_ca0df6": PY_DIR / "ca0df6cccf2a15ce8f781d81959cf230aead64e6297a3283b21457dc74938c89.py_",
@@ -728,7 +732,10 @@ def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHa
 
 def resolve_sample_ts(sample):
     if sample.startswith("cs_"):
-        return get_data_path_by_name(sample)
+        try:
+            return CS_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
     if sample.startswith("py_"):
         return PY_DATA_PATH_BY_NAME[sample]
     if sample.startswith("aspx_"):
@@ -1870,7 +1877,7 @@ def dynamic_a0000a6_rd():
 
 @pytest.fixture
 def cs_138cdc_extractor_engine():
-    with Path(get_data_path_by_name("cs_138cdc")).open("rb") as f:
+    with Path(CS_DATA_PATH_BY_NAME["cs_138cdc"]).open("rb") as f:
         buf = f.read()
     return get_ts_extractor_engine(LANG_CS, buf)
 

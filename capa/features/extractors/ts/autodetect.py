@@ -15,7 +15,7 @@
 from typing import Optional
 from pathlib import Path
 
-from tree_sitter import Node, Tree, Parser, Language
+from tree_sitter import Node, Tree, Query, Parser, Language, QueryCursor
 
 from capa.features.extractors.script import EXT_CS, EXT_PY, LANG_CS, LANG_PY, EXT_ASPX, EXT_HTML, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import TS_LANGUAGES
@@ -37,7 +37,8 @@ def _parse(ts_language: Language, buf: bytes) -> Optional[Tree]:
 
 
 def _contains_errors(ts_language, node: Node) -> bool:
-    return ts_language.query("(ERROR) @error").captures(node)
+    query = Query(ts_language, "(ERROR) @error")
+    return bool(QueryCursor(query).captures(node))
 
 
 def get_language_ts(buf: bytes) -> str:

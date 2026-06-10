@@ -269,7 +269,7 @@ class PythonToolkit(LanguageToolkit):
 
     def process_namespace(self, node: Node, query_name: str, get_str: Callable) -> Iterator[BaseNamespace]:
         import_nodes = [child_node for child_node in node.children if child_node.is_named]
-        if query_name == "import_from":
+        if query_name == "import-from":
             yield from self.process_import_from(node, import_nodes, get_str)
         elif query_name == "import":
             yield from self.process_imports(import_nodes, get_str)

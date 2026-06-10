@@ -63,6 +63,23 @@ class TreeSitterBaseEngine:
     def get_default_address(self) -> FileOffsetRangeAddress:
         return self.get_address(self.tree.root_node)
 
+    @staticmethod
+    def get_node_sort_key(node: Node) -> Tuple[int, int]:
+        return node.start_byte, node.end_byte
+
+    @staticmethod
+    def get_node_capture_sort_key(capture: Tuple[Node, str]) -> Tuple[int, int]:
+        node, _ = capture
+        return TreeSitterBaseEngine.get_node_sort_key(node)
+
+    @staticmethod
+    def get_captured_nodes(cursor: QueryCursor, node: Node) -> Iterator[Node]:
+        captured_nodes: List[Node] = []
+        for nodes in cursor.captures(node).values():
+            captured_nodes.extend(nodes)
+
+        yield from sorted(captured_nodes, key=TreeSitterBaseEngine.get_node_sort_key)
+
 
 class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     query: ScriptQueryBinding
@@ -92,13 +109,11 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
     def get_new_object_names(self, node: Node) -> Iterator[Node]:
         cursor = QueryCursor(self.query.new_object_name)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_property_names(self, node: Node) -> Iterator[Node]:
         cursor = QueryCursor(self.query.property_name)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_processed_property_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured property name nodes and their associated proper names (see process_property
@@ -111,8 +126,7 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     def get_function_definitions(self, node: Optional[Node] = None) -> Iterator[Node]:
         node = self.tree.root_node if node is None else node
         cursor = QueryCursor(self.query.function_definition)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_function_definition_name(self, node: Node) -> Node | None:
         return node.child_by_field_name(self.query.function_definition_field_name)
@@ -125,13 +139,11 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
     def get_function_call_names(self, node: Node) -> Iterator[Node]:
         cursor = QueryCursor(self.query.function_call_name)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_imported_constants(self, node: Node) -> Iterator[Node]:
         cursor = QueryCursor(self.query.imported_constant_name)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_processed_imported_constants(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured imported constant nodes and their associated proper names (see process_imported_constant
@@ -143,18 +155,22 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
     def get_string_literals(self, node: Node) -> Iterator[Node]:
         cursor = QueryCursor(self.query.string_literal)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_integer_literals(self, node: Node) -> Iterator[Node]:
         cursor = QueryCursor(self.query.integer_literal)
-        for nodes in cursor.captures(node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, node)
 
     def get_namespaces(self, node: Optional[Node] = None) -> List[Tuple[Node, str]]:
+        target_node = self.tree.root_node if node is None else node
         cursor = QueryCursor(self.query.namespace)
-        captures = cursor.captures(self.tree.root_node if node is None else node)
-        return [(ns_node, query_name) for query_name, nodes in captures.items() for ns_node in nodes]
+        namespace_captures: List[Tuple[Node, str]] = []
+
+        for query_name, nodes in cursor.captures(target_node).items():
+            for namespace_node in nodes:
+                namespace_captures.append((namespace_node, query_name))
+
+        return sorted(namespace_captures, key=self.get_node_capture_sort_key)
 
     def get_processed_namespaces(self, node: Optional[Node] = None) -> Iterator[BaseNamespace]:
         for ns_node, query_name in self.get_namespaces(node):
@@ -162,8 +178,7 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
     def get_global_statements(self) -> Iterator[Node]:
         cursor = QueryCursor(self.query.global_statement)
-        for nodes in cursor.captures(self.tree.root_node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, self.tree.root_node)
 
     def get_direct_method_call(self, node: Node) -> Optional[Node]:
         cursor = QueryCursor(self.query.direct_method_call)
@@ -188,8 +203,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
 
     def get_code_sections(self) -> Iterator[Node]:
         cursor = QueryCursor(self.query.code)
-        for nodes in cursor.captures(self.tree.root_node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, self.tree.root_node)
 
     def get_parsed_code_sections(self) -> Iterator[TreeSitterExtractorEngine]:
         for node in self.get_code_sections():
@@ -207,8 +221,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
 
     def get_content_sections(self) -> Iterator[Node]:
         cursor = QueryCursor(self.query.content)
-        for nodes in cursor.captures(self.tree.root_node).values():
-            yield from nodes
+        yield from self.get_captured_nodes(cursor, self.tree.root_node)
 
     def identify_language(self) -> str:
         for node in self.get_code_sections():
