@@ -38,15 +38,8 @@ import logging
 import argparse
 
 import capa.main
-import capa.rules
-import capa.engine
 import capa.loader
-import capa.helpers
-import capa.features
-import capa.exceptions
 import capa.render.proto
-import capa.render.verbose
-import capa.features.freeze
 import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.loader import FORMAT_BINEXPORT2, BACKEND_BINEXPORT2
@@ -75,10 +68,6 @@ def main(argv=None):
         backend = capa.main.get_backend_from_cli(args, input_format)
         assert backend == BACKEND_BINEXPORT2
 
-        sample_path = capa.main.get_sample_path_from_cli(args, backend)
-        assert sample_path is not None
-        os_ = capa.loader.get_os(sample_path)
-
         rules = capa.main.get_rules_from_cli(args)
 
         extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
@@ -103,7 +92,7 @@ def main(argv=None):
 
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, args.rules, extractor, capabilities)
     meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities.matches)

@@ -38,7 +38,6 @@ from functools import lru_cache
 import pytest
 import fixtures
 
-import capa.main
 import capa.rules
 import capa.capabilities.dynamic
 from capa.features.extractors.base_extractor import ThreadFilter, DynamicFeatureExtractor
@@ -65,7 +64,14 @@ def filter_threads(extractor: DynamicFeatureExtractor, ppid: int, pid: int, tid:
 
 @lru_cache(maxsize=1)
 def get_0000a657_thread3064():
-    extractor = fixtures.get_cape_extractor(fixtures.get_data_path_by_name("0000a657"))
+    extractor = fixtures.get_cape_extractor(
+        fixtures.CD
+        / "data"
+        / "dynamic"
+        / "cape"
+        / "v2.2"
+        / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )
     extractor = filter_threads(extractor, 2456, 3052, 3064)
     return extractor
 
@@ -368,9 +374,9 @@ def test_dynamic_span_multiple_spans_overlapping_single_event():
 def test_dynamic_span_scope_match_statements():
     extractor = get_0000a657_thread3064()
 
-    ruleset = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(textwrap.dedent("""
+    ruleset = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: resolve add VEH
@@ -383,8 +389,10 @@ def test_dynamic_span_scope_match_statements():
                             - api: LdrGetDllHandle
                             - api: LdrGetProcedureAddress
                             - string: AddVectoredExceptionHandler
-                """)),
-            capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: resolve remove VEH
@@ -397,8 +405,10 @@ def test_dynamic_span_scope_match_statements():
                             - api: LdrGetDllHandle
                             - api: LdrGetProcedureAddress
                             - string: RemoveVectoredExceptionHandler
-                """)),
-            capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: resolve add and remove VEH
@@ -409,8 +419,10 @@ def test_dynamic_span_scope_match_statements():
                         - and:
                             - match: resolve add VEH
                             - match: resolve remove VEH
-                """)),
-            capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: has VEH runtime linking
@@ -420,9 +432,9 @@ def test_dynamic_span_scope_match_statements():
                     features:
                         - and:
                             - match: linking/runtime-linking/veh
-                """)),
-        ]
-    )
+                """)
+        ),
+    ])
 
     capabilities = capa.capabilities.dynamic.find_dynamic_capabilities(ruleset, extractor, disable_progress=True)
 

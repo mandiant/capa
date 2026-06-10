@@ -19,9 +19,10 @@ Extract files relevant to capa analysis from VMRay Analysis Archive and create a
 
 import sys
 import logging
-import zipfile
 import argparse
 from pathlib import Path
+
+import pyzipper
 
 from capa.features.extractors.vmray import DEFAULT_ARCHIVE_PASSWORD, VMRayAnalysis
 
@@ -55,11 +56,16 @@ def main(argv=None):
     sample_sha256: str = vmra.submission_meta.hash_values.sha256.lower()
 
     new_zip_name = f"{analysis_archive.parent / analysis_archive.stem}_min.zip"
-    with zipfile.ZipFile(new_zip_name, "w") as new_zip:
+    with pyzipper.AESZipFile(
+        new_zip_name, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES
+    ) as new_zip:
+        new_zip.setpassword(args.password.encode("ascii"))
         new_zip.writestr("logs/summary_v2.json", sv2_json)
         new_zip.writestr("logs/flog.xml", flog_xml)
-        new_zip.writestr(f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}", sample_file_buf)
-        new_zip.setpassword(args.password.encode("ascii"))
+        new_zip.writestr(
+            f"internal/static_analyses/{sample_sha256}/objects/files/{sample_sha256}",
+            sample_file_buf,
+        )
 
     # ensure capa loads the minimized archive
     assert isinstance(VMRayAnalysis(Path(new_zip_name)), VMRayAnalysis)

@@ -514,14 +514,14 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
             value = dest.value.value
             yield Characteristic("calls from"), AbsoluteVirtualAddress(value)
         elif dest.operation == LowLevelILOperation.LLIL_CONST:
-            yield Characteristic("calls from"), AbsoluteVirtualAddress(dest.value)
+            yield Characteristic("calls from"), AbsoluteVirtualAddress(dest.value.value)
         elif dest.operation == LowLevelILOperation.LLIL_LOAD:
             indirect_src = dest.src
             if indirect_src.operation == LowLevelILOperation.LLIL_CONST_PTR:
                 value = indirect_src.value.value
                 yield Characteristic("calls from"), AbsoluteVirtualAddress(value)
             elif indirect_src.operation == LowLevelILOperation.LLIL_CONST:
-                yield Characteristic("calls from"), AbsoluteVirtualAddress(indirect_src.value)
+                yield Characteristic("calls from"), AbsoluteVirtualAddress(indirect_src.value.value)
         elif dest.operation == LowLevelILOperation.LLIL_REG:
             if dest.value.type in [
                 RegisterValueType.ImportedAddressValue,

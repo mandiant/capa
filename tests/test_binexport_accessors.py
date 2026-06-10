@@ -20,9 +20,24 @@ from pathlib import Path
 
 import pytest
 import fixtures
+
+CD = Path(__file__).resolve().parent
 from google.protobuf.json_format import ParseDict
 
 import capa.features.extractors.binexport2.helpers
+from capa.features.common import ARCH_AARCH64
+from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.binexport2 import (
+    AddressSpace,
+    MemoryRegion,
+    AnalysisContext,
+    BinExport2Index,
+    FunctionContext,
+    BasicBlockContext,
+    BinExport2Analysis,
+    InstructionContext,
+)
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.helpers import (
     BinExport2InstructionPattern,
     BinExport2InstructionPatternMatcher,
@@ -34,12 +49,15 @@ from capa.features.extractors.binexport2.helpers import (
     get_operand_immediate_expression,
 )
 from capa.features.extractors.binexport2.extractor import BinExport2FeatureExtractor
+from capa.features.extractors.binexport2.arch.arm.insn import (
+    extract_insn_number_features,
+)
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+from capa.features.extractors.binexport2.arch.intel.insn import is_security_cookie
 from capa.features.extractors.binexport2.arch.arm.helpers import is_stack_register_expression
+from capa.features.extractors.binexport2.arch.intel.helpers import get_operand_phrase_info
 
 logger = logging.getLogger(__name__)
-
-CD = Path(__file__).resolve().parent
 
 
 # found via https://www.virustotal.com/gui/search/type%253Aelf%2520and%2520size%253A1.2kb%252B%2520and%2520size%253A1.4kb-%2520and%2520tag%253Aarm%2520and%2520not%2520tag%253Arelocatable%2520and%2520tag%253A64bits/files
@@ -338,6 +356,26 @@ BE2 = ParseDict(
 )
 
 
+def test_get_operand_expressions_empty_operand():
+    be2 = ParseDict(
+        {
+            "expression": [
+                {"type": BinExport2.Expression.REGISTER, "symbol": "x0"},
+            ],
+            "operand": [
+                {"expression_index": [0]},
+                {},
+            ],
+        },
+        BinExport2(),
+    )
+    normal_op = be2.operand[0]
+    empty_op = be2.operand[1]
+
+    assert len(get_operand_expressions(be2, normal_op)) == 1
+    assert get_operand_expressions(be2, empty_op) == []
+
+
 def test_is_stack_register_expression():
     mov = ParseDict(BE2_DICT["instruction"][0], BinExport2.Instruction())
     add = ParseDict(BE2_DICT["instruction"][2], BinExport2.Instruction())
@@ -458,7 +496,8 @@ def test_pattern_parsing():
         capture="#int",
     )
 
-    assert BinExport2InstructionPatternMatcher.from_str("""
+    assert (
+        BinExport2InstructionPatternMatcher.from_str("""
             # comment
             br      reg
             br      reg(not-stack)
@@ -479,7 +518,9 @@ def test_pattern_parsing():
             call    [reg * #int + #int]
             call    [reg + reg + #int]
             call    [reg + #int]
-            """).queries is not None
+            """).queries
+        is not None
+    )
 
 
 def match_address(extractor: BinExport2FeatureExtractor, queries: BinExport2InstructionPatternMatcher, address: int):
@@ -520,18 +561,18 @@ def test_pattern_matching():
 
     # 0x210184: ldrb      w2, [x0,                x1]
     # query:    ldrb    reg0, [reg1(not-stack), reg2]      ; capture reg2"
-    assert match_address(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
-    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"
+    assert match_address(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210184).expression.symbol == "x1"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
     # 0x210198:  mov         x2, x1
     # query:     mov       reg0, reg1           ; capture reg0"),
-    assert match_address(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
-    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"
+    assert match_address(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210198).expression.symbol == "x2"  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
     # 0x210190:  add         x1, x1,  0x1
     # query:     add        reg, reg, #int      ; capture #int
-    assert match_address(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
-    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1
+    assert match_address(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR, queries, 0x210190).expression.immediate == 1  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
 
 BE2_EXTRACTOR_687 = fixtures.get_binexport_extractor(
@@ -550,8 +591,8 @@ def test_pattern_matching_exclamation():
     # note this captures the sp
     # 0x107918:  stp  x20, x19, [sp,0xFFFFFFFFFFFFFFE0]!
     # query:     stp  reg, reg, [reg, #int]!  ; capture #int
-    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
-    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
 
 def test_pattern_matching_stack():
@@ -563,8 +604,8 @@ def test_pattern_matching_stack():
     # compare this with the test above (exclamation)
     # 0x107918:  stp  x20, x19, [sp,         0xFFFFFFFFFFFFFFE0]!
     # query:     stp  reg, reg, [reg(stack), #int]!  ; capture #int
-    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
-    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0
+    assert match_address(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918).expression.immediate == 0xFFFFFFFFFFFFFFE0  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
 
 
 def test_pattern_matching_not_stack():
@@ -580,7 +621,9 @@ def test_pattern_matching_not_stack():
     assert match_address_with_be2(BE2_EXTRACTOR_687, queries, 0x107918) is None
 
 
-BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport")
+BE2_EXTRACTOR_MIMI = fixtures.get_binexport_extractor(
+    fixtures.CD / "data" / "binexport2" / "mimikatz.exe_.ghidra.BinExport"
+)
 
 
 def test_pattern_matching_x86():
@@ -590,5 +633,229 @@ def test_pattern_matching_x86():
 
     # 0x4018c0:  LEA         ECX, [EBX+0x2]
     # query:     cmp|lea     reg, [reg(not-stack) + #int0]  ; capture #int0
-    assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
-    assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2
+    assert match_address(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+    assert match_address_with_be2(BE2_EXTRACTOR_MIMI, queries, 0x4018C0).expression.immediate == 2  # type: ignore[union-attr]  # test assertion; match returns non-None for these addresses
+
+
+def test_index_vertex_edges_includes_vertex_zero():
+    be2 = BinExport2()
+    be2.ParseFromString((CD / "data" / "binexport2" / "mimikatz.exe_.ida.BinExport").read_bytes())
+    idx = BinExport2Index(be2)
+
+    assert be2.call_graph.vertex[0].HasField("address")
+    assert be2.call_graph.vertex[0].address == 0x401000
+
+    assert 1585 in idx.callers_by_vertex_index[0]
+    assert 2118 in idx.callees_by_vertex_index[0]
+    assert 166 in idx.callees_by_vertex_index[0]
+
+    assert 0 in idx.callees_by_vertex_index[1585]
+    assert 0 in idx.callers_by_vertex_index[2118]
+    assert 0 in idx.callers_by_vertex_index[166]
+
+
+def test_get_operand_phrase_info_base_index_scale():
+    # 0x40194d: MOVZX DI, [EAX + ECX * 1]
+    # operand: [EAX + ECX * scale(1)]
+    # expression layout after DEREFERENCE: EAX(REGISTER) +(OPERATOR) ECX(REGISTER) *(OPERATOR) 1(IMMEDIATE_INT)
+    # the scale field must be expression4 (immediate=1), not expression3 (the '*' operator)
+    be2 = BE2_EXTRACTOR_MIMI.be2
+    idx = BE2_EXTRACTOR_MIMI.idx
+    insn = idx.insn_by_address[0x40194D]
+    mem_operand = be2.operand[insn.operand_index[1]]
+    phrase = get_operand_phrase_info(be2, mem_operand)
+    assert phrase is not None
+    assert phrase.base is not None
+    assert phrase.base.symbol == "EAX"
+    assert phrase.index is not None
+    assert phrase.index.symbol == "ECX"
+    assert phrase.scale is not None
+    assert phrase.scale.type == BinExport2.Expression.IMMEDIATE_INT
+    assert phrase.scale.immediate == 1
+    assert phrase.displacement is None
+
+
+def test_get_operand_phrase_info_index_scale_displacement():
+    # 0x401fd4: JMP [EAX * 4 + switchdataD_00402017]
+    # operand: [EAX * scale(4) + displacement(switchdataD_00402017)]
+    # expression layout after DEREFERENCE: EAX(REGISTER) *(OPERATOR) 4(IMMEDIATE_INT) +(OPERATOR) 4202519(IMMEDIATE_INT)
+    # the displacement field must be expression4 (immediate=4202519), not expression3 (the '+' operator)
+    be2 = BE2_EXTRACTOR_MIMI.be2
+    idx = BE2_EXTRACTOR_MIMI.idx
+    insn = idx.insn_by_address[0x401FD4]
+    mem_operand = be2.operand[insn.operand_index[0]]
+    phrase = get_operand_phrase_info(be2, mem_operand)
+    assert phrase is not None
+    assert phrase.index is not None
+    assert phrase.index.symbol == "EAX"
+    assert phrase.scale is not None
+    assert phrase.scale.type == BinExport2.Expression.IMMEDIATE_INT
+    assert phrase.scale.immediate == 4
+    assert phrase.displacement is not None
+    assert phrase.displacement.type == BinExport2.Expression.IMMEDIATE_INT
+    assert phrase.displacement.immediate == 4202519
+    assert phrase.base is None
+
+
+def test_instruction_indices_single_insn_range():
+    be2_dict: dict[str, Any] = {
+        "instruction": [
+            {"address": 0x1000, "raw_bytes": b"\x90"},
+        ],
+        "basic_block": [
+            {"instruction_index": [{"begin_index": 0}]},
+        ],
+    }
+    be2 = ParseDict(be2_dict, BinExport2())
+    idx = BinExport2Index(be2)
+
+    bb = be2.basic_block[0]
+    assert not bb.instruction_index[0].HasField("end_index")
+    assert list(idx.instruction_indices(bb)) == [0]
+
+
+def _make_security_cookie_ctx(xor_addr: int, bb_index: int, is_terminal: bool):
+    be2 = BinExport2()
+
+    section = be2.section.add()
+    section.address = 0x1000
+    section.size = 0x100
+    section.flag_x = True
+
+    expr_eax = be2.expression.add()
+    expr_eax.type = BinExport2.Expression.REGISTER
+    expr_eax.symbol = "eax"
+
+    expr_esp = be2.expression.add()
+    expr_esp.type = BinExport2.Expression.REGISTER
+    expr_esp.symbol = "esp"
+
+    op0 = be2.operand.add()
+    op0.expression_index.append(0)
+
+    op1 = be2.operand.add()
+    op1.expression_index.append(1)
+
+    mnem = be2.mnemonic.add()
+    mnem.name = "xor"
+
+    insn = be2.instruction.add()
+    insn.address = xor_addr
+    insn.raw_bytes = b"\x31\xc4"
+    insn.mnemonic_index = 0
+    insn.operand_index.extend([0, 1])
+
+    bb = be2.basic_block.add()
+    ir = bb.instruction_index.add()
+    ir.begin_index = 0
+
+    fg = be2.flow_graph.add()
+    fg.entry_basic_block_index = 0
+    fg.basic_block_index.append(0)
+
+    if not is_terminal:
+        edge = fg.edge.add()
+        edge.source_basic_block_index = 0
+        edge.target_basic_block_index = 0
+
+    idx = BinExport2Index(be2)
+    buf = b"\x00" * 0x200
+    analysis = BinExport2Analysis(be2, idx, buf)
+    address_space = AddressSpace(base_address=0x1000, memory_regions=(MemoryRegion(0, buf),))
+    ctx = AnalysisContext(
+        sample_bytes=buf,
+        be2=be2,
+        idx=idx,
+        analysis=analysis,
+        address_space=address_space,
+    )
+    fhi = FunctionContext(ctx=ctx, flow_graph_index=0, format=set(), os=set(), arch=set())
+    bbi = BasicBlockContext(basic_block_index=bb_index)
+    return fhi, bbi, be2.instruction[0]
+
+
+def test_is_security_cookie_single_insn_terminal_bb():
+    xor_addr = 0x1000
+    fhi, bbi, insn = _make_security_cookie_ctx(xor_addr, bb_index=0, is_terminal=True)
+    result = is_security_cookie(fhi, bbi, xor_addr, insn)
+    assert isinstance(result, bool)
+
+
+def _make_arm_insn_context(
+    insn_dict: dict,
+) -> tuple[FunctionHandle, BBHandle, InsnHandle]:
+    """Build the minimal handle/context triple needed to call extract_insn_number_features."""
+    be2_dict: dict[str, Any] = {
+        "section": [{"address": 0x1000, "size": 0x100, "flag_r": True, "flag_x": True}],
+        "expression": insn_dict["expressions"],
+        "operand": insn_dict["operands"],
+        "mnemonic": [{"name": insn_dict["mnemonic"]}],
+        "instruction": [
+            {
+                "mnemonic_index": 0,
+                "operand_index": insn_dict["operand_indices"],
+                "address": 0x1000,
+                "raw_bytes": b"\x00\x00\x00\x00",
+            }
+        ],
+    }
+    be2 = ParseDict(be2_dict, BinExport2())
+    idx = BinExport2Index(be2)
+    analysis = BinExport2Analysis(be2, idx, b"")
+    address_space = AddressSpace(base_address=0x1000, memory_regions=())
+    ctx = AnalysisContext(
+        sample_bytes=b"",
+        be2=be2,
+        idx=idx,
+        analysis=analysis,
+        address_space=address_space,
+    )
+    fctx = FunctionContext(ctx=ctx, flow_graph_index=0, format=set(), os=set(), arch={ARCH_AARCH64})
+    ictx = InstructionContext(instruction_index=0)
+    fh = FunctionHandle(address=AbsoluteVirtualAddress(0x1000), inner=fctx)
+    bbh = BBHandle(address=AbsoluteVirtualAddress(0x1000), inner=None)
+    ih = InsnHandle(address=AbsoluteVirtualAddress(0x1000), inner=ictx)
+    return fh, bbh, ih
+
+
+def test_arm_add_two_operand_does_not_crash():
+    # Thumb-2: add sp, #0x10  (2 operands — used to hit an assert that expected exactly 3)
+    # The fix replaces `assert len == 3` with a guard, so this must not raise.
+    # The 3-operand stack-skip only fires when operand[1] is sp; with 2 operands the
+    # immediate falls through to the for-loop and yields Number/OperandNumber.
+    fh, bbh, ih = _make_arm_insn_context({
+        "mnemonic": "add",
+        "expressions": [
+            {"type": BinExport2.Expression.REGISTER, "symbol": "sp"},
+            {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x10},
+        ],
+        "operands": [
+            {"expression_index": [0]},
+            {"expression_index": [1]},
+        ],
+        "operand_indices": [0, 1],
+    })
+
+    features = list(extract_insn_number_features(fh, bbh, ih))
+    values = {f.value for f, _ in features}
+    assert 0x10 in values
+
+
+def test_arm_add_two_operand_non_stack_yields_number():
+    # add r0, #0x42  (2 operands, non-stack dest)
+    fh, bbh, ih = _make_arm_insn_context({
+        "mnemonic": "add",
+        "expressions": [
+            {"type": BinExport2.Expression.REGISTER, "symbol": "r0"},
+            {"type": BinExport2.Expression.IMMEDIATE_INT, "immediate": 0x42},
+        ],
+        "operands": [
+            {"expression_index": [0]},
+            {"expression_index": [1]},
+        ],
+        "operand_indices": [0, 1],
+    })
+
+    features = list(extract_insn_number_features(fh, bbh, ih))
+    values = {f.value for f, _ in features}
+    assert 0x42 in values

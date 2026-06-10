@@ -34,6 +34,12 @@ def test_buf_filled_with():
     assert buf_filled_with(b"", 0x00) is False  # Empty buffer
     assert buf_filled_with(b"\x00", 0x00) is True  # Single byte
 
+    # Large buffers (exercise chunked processing)
+    assert buf_filled_with(b"A" * 5000, ord("A")) is True
+    assert buf_filled_with(b"A" * 5000 + b"B", ord("A")) is False
+    assert buf_filled_with(b"\xff" * 5000, 0xFF) is True
+    assert buf_filled_with(b"\x00" * 5000, 0x00) is True
+
 
 def test_extract_ascii_strings():
     # test empty buffer

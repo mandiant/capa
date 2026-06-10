@@ -76,12 +76,7 @@ import logging
 import argparse
 
 import capa.main
-import capa.rules
-import capa.engine
-import capa.loader
 import capa.helpers
-import capa.features
-import capa.exceptions
 import capa.render.verbose as v
 import capa.features.freeze
 import capa.features.address
@@ -95,7 +90,7 @@ logger = logging.getLogger("capa.show-features")
 
 
 def format_address(addr: capa.features.address.Address) -> str:
-    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
+    return v.format_address(capa.features.freeze.Address.from_capa(addr))
 
 
 def main(argv=None):

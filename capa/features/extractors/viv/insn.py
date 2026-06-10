@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Iterator
+from typing import Callable, Iterator, cast
 
+import Elf
 import envi
 import envi.exc
 import viv_utils
@@ -36,23 +37,6 @@ from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_i
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
-
-
-def interface_extract_instruction_XXX(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[tuple[Feature, Address]]:
-    """
-    parse features from the given instruction.
-
-    args:
-      fh: the function handle to process.
-      bbh: the basic block handle to process.
-      ih: the instruction handle to process.
-
-    yields:
-      (Feature, Address): the feature and the address at which its found.
-    """
-    raise NotImplementedError
 
 
 def get_imports(vw):
@@ -122,7 +106,9 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 # the symbol table gets stored as a function's attribute in order to avoid running
                 # this code every time the call is made, thus preventing the computational overhead.
                 try:
-                    fh.ctx["cache"]["symtab"] = SymTab.from_viv(f.vw.parsedbin)
+                    parsedbin = f.vw.parsedbin
+                    assert isinstance(parsedbin, Elf.Elf)
+                    fh.ctx["cache"]["symtab"] = SymTab.from_viv(parsedbin)
                 except Exception:
                     fh.ctx["cache"]["symtab"] = None
 
@@ -153,10 +139,14 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 dll, symbol = imports[target]
                 for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
                     yield API(name), ih.address
+                break
 
             # if jump leads to an ENDBRANCH instruction, skip it
-            if f.vw.getByteDef(target)[1].startswith(b"\xf3\x0f\x1e"):
-                target += 4
+            byte_def = f.vw.getByteDef(target)
+            if byte_def:
+                _offset, _buf = byte_def
+                if _buf[_offset:].startswith(b"\xf3\x0f\x1e"):
+                    target += 4
 
             target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, target)
             if not target:
@@ -192,7 +182,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 yield API(name), ih.address
 
 
-def derefs(vw, p):
+def derefs(vw, p: int) -> Iterator[int]:
     """
     recursively follow the given pointer, yielding the valid memory addresses along the way.
     useful when you may have a pointer to string, or pointer to pointer to string, etc.
@@ -211,14 +201,14 @@ def derefs(vw, p):
             return
 
         try:
-            next = vw.readMemoryPtr(p)
+            next_p: int = vw.readMemoryPtr(p)  # type: ignore  # vw has no stubs; readMemoryPtr returns int
         except Exception:
             # if not enough bytes can be read, such as end of the section.
             # unfortunately, viv returns a plain old generic `Exception` for this.
             return
 
         # sanity: pointer points to self
-        if next == p:
+        if next_p == p:
             return
 
         # sanity: avoid chains of pointers that are unreasonably deep
@@ -226,7 +216,7 @@ def derefs(vw, p):
         if depth > 10:
             return
 
-        p = next
+        p = next_p
 
 
 def read_memory(vw, va: int, size: int) -> bytes:
@@ -281,7 +271,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
 
     for oper in insn.opers:
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-            v = oper.getOperValue(oper)
+            v = oper.getOperValue(insn)
         elif isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
             # handle case like:
             #   movzx   ecx, ds:byte_423258[eax]
@@ -293,6 +283,9 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
             # see: Lab21-01.exe_:0x1400010D3
             v = oper.getOperAddr(insn)
         else:
+            continue
+
+        if not isinstance(v, int):
             continue
 
         for vv in derefs(f.vw, v):
@@ -356,21 +349,23 @@ def is_security_cookie(f, bb, insn) -> bool:
     # security cookie check should use SP or BP
     oper = insn.opers[1]
     if oper.isReg() and oper.reg not in [
-        envi.archs.i386.regs.REG_ESP,
-        envi.archs.i386.regs.REG_EBP,
-        envi.archs.amd64.regs.REG_RBP,
-        envi.archs.amd64.regs.REG_RSP,
+        envi.archs.i386.regs.REG_ESP,  # type: ignore  # REG_ESP dynamically injected by e_reg.addLocalEnums()
+        envi.archs.i386.regs.REG_EBP,  # type: ignore  # REG_EBP dynamically injected
+        envi.archs.amd64.regs.REG_RBP,  # type: ignore  # REG_RBP dynamically injected
+        envi.archs.amd64.regs.REG_RSP,  # type: ignore  # REG_RSP dynamically injected
     ]:
         return False
 
     # expect security cookie init in first basic block within first bytes (instructions)
-    bb0 = f.basic_blocks[0]
+    bb0 = cast(list[viv_utils.BasicBlock], f.basic_blocks)[0]
 
     if bb == bb0 and insn.va < (bb.va + SECURITY_COOKIE_BYTES_DELTA):
         return True
 
     # ... or within last bytes (instructions) before a return
-    elif bb.instructions[-1].isReturn() and insn.va > (bb.va + bb.size - SECURITY_COOKIE_BYTES_DELTA):
+    elif cast(list[envi.Opcode], bb.instructions)[-1].isReturn() and insn.va > (
+        bb.va + bb.size - SECURITY_COOKIE_BYTES_DELTA
+    ):
         return True
 
     return False
@@ -486,7 +481,7 @@ def extract_insn_cross_section_cflow(fh: FunctionHandle, bb, ih: InsnHandle) -> 
     insn: envi.Opcode = ih.inner
     f: viv_utils.Function = fh.inner
 
-    for va, flags in insn.getBranches():
+    for va, flags in insn.getBranches():  # type: ignore  # getBranches() base returns (); overridden at runtime to return list of (va, flags) tuples
         if va is None:
             # va may be none for dynamic branches that haven't been resolved, such as `jmp eax`.
             continue
@@ -599,16 +594,16 @@ def extract_op_number_features(
         return
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-        v = oper.getOperValue(oper)
+        v = oper.getOperValue(insn)
     else:
-        v = oper.getOperAddr(oper)
+        v = oper.getOperAddr(insn)
 
     if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
         # this is a valid address
         # assume it's not also a constant.
         return
 
-    if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP:
+    if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP:  # type: ignore  # REG_ESP dynamically injected by e_reg.addLocalEnums()
         # skip things like:
         #
         #    .text:00401140                 call    sub_407E2B
@@ -643,13 +638,13 @@ def extract_op_offset_features(
     #       reg   ^
     #             disp
     if isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
-        if oper.reg == envi.archs.i386.regs.REG_ESP:
+        if oper.reg == envi.archs.i386.regs.REG_ESP:  # type: ignore  # REG_ESP dynamically injected
             return
 
-        if oper.reg == envi.archs.i386.regs.REG_EBP:
+        if oper.reg == envi.archs.i386.regs.REG_EBP:  # type: ignore  # REG_EBP dynamically injected
             return
 
-        if oper.reg == envi.archs.amd64.regs.REG_RBP:
+        if oper.reg == envi.archs.amd64.regs.REG_RBP:  # type: ignore  # REG_RBP dynamically injected
             return
 
         # viv already decodes offsets as signed
@@ -690,7 +685,7 @@ def extract_op_string_features(
     f: viv_utils.Function = fh.inner
 
     if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-        v = oper.getOperValue(oper)
+        v = oper.getOperValue(insn)
     elif isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper):
         # like 0x10056CB4 in `lea eax, dword [0x10056CB4]`
         v = oper.imm
@@ -700,6 +695,9 @@ def extract_op_string_features(
     elif isinstance(oper, envi.archs.amd64.disasm.Amd64RipRelOper):
         v = oper.getOperAddr(insn)
     else:
+        return
+
+    if not isinstance(v, int):
         return
 
     for vv in derefs(f.vw, v):

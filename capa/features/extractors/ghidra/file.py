@@ -18,7 +18,6 @@ from typing import Iterator
 
 from ghidra.program.model.symbol import SourceType, SymbolType
 
-import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ghidra.helpers
@@ -85,14 +84,10 @@ def extract_file_embedded_pe() -> Iterator[tuple[Feature, Address]]:
             continue
 
         for off, _ in find_embedded_pe(capa.features.extractors.ghidra.helpers.get_block_bytes(block), mz_xor):
-            # add offset back to block start
             ea_addr = block.getStart().add(off)
-            ea = ea_addr.getOffset()
             f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
             if f_offset != -1:
-                ea = f_offset
-
-            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+                yield Characteristic("embedded pe"), FileOffsetAddress(f_offset)
 
 
 def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
@@ -121,8 +116,14 @@ def extract_file_export_names() -> Iterator[tuple[Feature, Address]]:
                         forwarded_name = f"{libname}.{ext_loc.getLabel()}"
                         forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
 
-                        yield Export(forwarded_name), AbsoluteVirtualAddress(addr.getOffset())
-                        yield Characteristic("forwarded export"), AbsoluteVirtualAddress(addr.getOffset())
+                        yield (
+                            Export(forwarded_name),
+                            AbsoluteVirtualAddress(addr.getOffset()),
+                        )
+                        yield (
+                            Characteristic("forwarded export"),
+                            AbsoluteVirtualAddress(addr.getOffset()),
+                        )
                         is_forwarded = True
                         break
 
@@ -143,9 +144,14 @@ def extract_file_import_names() -> Iterator[tuple[Feature, Address]]:
     """
 
     for f in capa.features.extractors.ghidra.helpers.get_current_program().getFunctionManager().getExternalFunctions():
+        addr = None
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
+                break
+
+        if addr is None:
+            continue
 
         fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_*
         if "Ordinal_" in fstr[1]:
@@ -159,7 +165,10 @@ def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
     """extract section names"""
 
     for block in capa.features.extractors.ghidra.helpers.get_current_program().getMemory().getBlocks():
-        yield Section(block.getName()), AbsoluteVirtualAddress(block.getStart().getOffset())
+        yield (
+            Section(block.getName()),
+            AbsoluteVirtualAddress(block.getStart().getOffset()),
+        )
 
 
 def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
@@ -172,12 +181,16 @@ def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
         p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
-            offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), FileOffsetAddress(offset)
+            ea_addr = block.getStart().add(s.offset)
+            f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
+            if f_offset != -1:
+                yield String(s.s), FileOffsetAddress(f_offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(p_bytes):
-            offset = block.getStart().getOffset() + s.offset
-            yield String(s.s), FileOffsetAddress(offset)
+            ea_addr = block.getStart().add(s.offset)
+            f_offset = capa.features.extractors.ghidra.helpers.get_file_offset(ea_addr)
+            if f_offset != -1:
+                yield String(s.s), FileOffsetAddress(f_offset)
 
 
 def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
@@ -186,7 +199,6 @@ def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
     """
 
     for sym in capa.features.extractors.ghidra.helpers.get_current_program().getSymbolTable().getAllSymbols(True):
-
         # .isExternal() misses more than this config for the function symbols
         if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
@@ -229,5 +241,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
-    extract_file_format,
 )

@@ -29,9 +29,10 @@ assert start_dir.exists(), "start directory must exist"
 
 def get_yml_files_and_dates(start_dir: Path):
     yml_files = []
-    for root, _, files in os.walk(start_dir):
+    for root, dirs, files in os.walk(start_dir):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
         for file in files:
-            if file.endswith(".yml") or file.endswith(".yaml"):
+            if file.endswith(".yml"):
                 file_path = Path(root) / file
 
                 proc = subprocess.run(

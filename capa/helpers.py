@@ -27,10 +27,10 @@ from zipfile import ZipFile
 from datetime import datetime
 
 import msgspec.json
+from rich.text import Text
 from rich.console import Console
 from rich.progress import (
     Task,
-    Text,
     Progress,
     BarColumn,
     TextColumn,
@@ -45,6 +45,7 @@ from rich.progress import (
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
     FORMAT_PE,
+    FORMAT_ELF,
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
@@ -60,8 +61,8 @@ from capa.features.common import (
 )
 from capa.features.extractors.script import EXT_CS, EXT_ASPX, EXT_HTML
 
-EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
-EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_SHELLCODE_32 = (".sc32", ".raw32")
+EXTENSIONS_SHELLCODE_64 = (".sc64", ".raw64")
 # CAPE (.json, .json_, .json.gz)
 # DRAKVUF (.log, .log.gz)
 # VMRay (.zip)
@@ -90,8 +91,8 @@ def hex(n: int) -> str:
 def get_file_taste(sample_path: Path) -> bytes:
     if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    taste = sample_path.open("rb").read(8)
-    return taste
+    with sample_path.open("rb") as f:
+        return f.read(8)
 
 
 def is_runtime_ida():
@@ -146,18 +147,14 @@ def stdout_redirector(stream):
     # Save a copy of the original stdout fd in saved_stdout_fd
     saved_stdout_fd = os.dup(original_stdout_fd)
     try:
-        # Create a temporary file and redirect stdout to it
-        tfile = tempfile.TemporaryFile(mode="w+b")
-        _redirect_stdout(tfile.fileno())
-        # Yield to caller, then redirect stdout back to the saved fd
-        yield
-        _redirect_stdout(saved_stdout_fd)
-        # Copy contents of temporary file to the given stream
-        tfile.flush()
-        tfile.seek(0, io.SEEK_SET)
-        stream.write(tfile.read())
+        with tempfile.TemporaryFile(mode="w+b") as tfile:
+            _redirect_stdout(tfile.fileno())
+            yield
+            _redirect_stdout(saved_stdout_fd)
+            tfile.flush()
+            tfile.seek(0, io.SEEK_SET)
+            stream.write(tfile.read())
     finally:
-        tfile.close()
         os.close(saved_stdout_fd)
 
 
@@ -200,13 +197,11 @@ def load_one_jsonl_from_path(jsonl_path: Path):
     except gzip.BadGzipFile:
         with jsonl_path.open(mode="rb") as f:
             line = next(iter(f))
-    finally:
-        line = msgspec.json.decode(line.decode(errors="ignore"))
-    return line
+    return msgspec.json.decode(line.decode(errors="ignore"))
 
 
 def get_format_from_report(sample: Path) -> str:
-    if sample.name.endswith((".log", "log.gz")):
+    if sample.name.endswith((".log", ".log.gz")):
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
@@ -216,7 +211,7 @@ def get_format_from_report(sample: Path) -> str:
             if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
                 # assume VMRay zipfile at a minimum has these files
                 return FORMAT_VMRAY
-    elif sample.name.endswith(("json", "json_", "json.gz")):
+    elif sample.name.endswith((".json", ".json_", ".json.gz")):
         report = load_json_from_path(sample)
         if "CAPE" in report:
             return FORMAT_CAPE
@@ -236,6 +231,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
+    elif sample.name.endswith(EXTENSIONS_ELF):
+        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
@@ -320,7 +317,11 @@ def log_unsupported_vmray_report_error(error: str):
 
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
-    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
+    logger.error(
+        " %s report is empty or only contains little useful data: %s",
+        sandbox_name,
+        error,
+    )
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
@@ -395,15 +396,18 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
         return False
 
     latest_cache_file = max(cache_files, key=os.path.getmtime)
-    cache_timestamp = os.path.getmtime(latest_cache_file)
+    cache_timestamp = Path(latest_cache_file).stat().st_mtime
 
     # these are the relevant rules code files that could conflict with using an outdated cache
     # delayed import due to circular dependencies
     import capa.rules
     import capa.rules.cache
 
-    latest_rule_code_file = max([Path(capa.rules.__file__), Path(capa.rules.cache.__file__)], key=os.path.getmtime)
-    rule_code_timestamp = os.path.getmtime(latest_rule_code_file)
+    latest_rule_code_file = max(
+        [Path(capa.rules.__file__), Path(capa.rules.cache.__file__)],
+        key=os.path.getmtime,
+    )
+    rule_code_timestamp = Path(latest_rule_code_file).stat().st_mtime
 
     if rule_code_timestamp > cache_timestamp:
 
@@ -449,18 +453,18 @@ class MofNCompleteColumnWithUnit(MofNCompleteColumn):
 
 class CapaProgressBar(Progress):
     @classmethod
-    def get_default_columns(cls):
+    def get_default_columns(cls) -> tuple[ProgressColumn, ...]:
         return (
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             TaskProgressColumn(),
             BarColumn(),
             MofNCompleteColumnWithUnit(),
-            "•",
+            TextColumn("•"),
             TimeElapsedColumn(),
-            "<",
+            TextColumn("<"),
             TimeRemainingColumn(),
-            "•",
+            TextColumn("•"),
             RateColumn(),
             PostfixColumn(),
         )

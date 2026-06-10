@@ -21,9 +21,7 @@ from pathlib import Path
 
 import capa.main
 import capa.rules
-import capa.engine
 import capa.loader
-import capa.features
 import capa.render.json
 import capa.render.utils as rutils
 import capa.render.default
@@ -187,7 +185,7 @@ def capa_details(rules_path: Path, input_file: Path, output_format="dictionary")
     capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.loader.collect_metadata([], input_file, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, capabilities)
+    meta = capa.loader.collect_metadata([], input_file, FORMAT_AUTO, [rules_path], extractor, capabilities)
     meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities.matches)
 
     capa_output: Any = False

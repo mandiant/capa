@@ -13,24 +13,25 @@
 # limitations under the License.
 
 import abc
+import warnings
 
 
 class Address(abc.ABC):
     @abc.abstractmethod
-    def __eq__(self, other): ...
+    def __eq__(self, other) -> bool: ...
 
     @abc.abstractmethod
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         # implement < so that addresses can be sorted from low to high
         ...
 
     @abc.abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         # implement hash so that addresses can be used in sets and dicts
         ...
 
     @abc.abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         # implement repr to help during debugging
         ...
 
@@ -68,11 +69,13 @@ class ProcessAddress(Address):
         return hash((self.ppid, self.pid))
 
     def __eq__(self, other):
-        assert isinstance(other, ProcessAddress)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
         return (self.ppid, self.pid) == (other.ppid, other.pid)
 
     def __lt__(self, other):
-        assert isinstance(other, ProcessAddress)
+        if not isinstance(other, ProcessAddress):
+            return NotImplemented
         return (self.ppid, self.pid) < (other.ppid, other.pid)
 
 
@@ -91,11 +94,13 @@ class ThreadAddress(Address):
         return hash((self.process, self.tid))
 
     def __eq__(self, other):
-        assert isinstance(other, ThreadAddress)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
         return (self.process, self.tid) == (other.process, other.tid)
 
     def __lt__(self, other):
-        assert isinstance(other, ThreadAddress)
+        if not isinstance(other, ThreadAddress):
+            return NotImplemented
         return (self.process, self.tid) < (other.process, other.tid)
 
 
@@ -114,15 +119,24 @@ class DynamicCallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        return isinstance(other, DynamicCallAddress) and (self.thread, self.id) == (other.thread, other.id)
+        if not isinstance(other, DynamicCallAddress):
+            return NotImplemented
+        return (self.thread, self.id) == (other.thread, other.id)
 
     def __lt__(self, other):
-        assert isinstance(other, DynamicCallAddress)
+        if not isinstance(other, DynamicCallAddress):
+            return NotImplemented
         return (self.thread, self.id) < (other.thread, other.id)
 
 
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
+
+    def __new__(cls, *args, **kwargs):
+        # TODO(corkamig): Removal for v10
+        # https://github.com/mandiant/capa/issues/3072
+        warnings.warn("RelativeVirtualAddress is deprecated - cf issue #3072", DeprecationWarning, stacklevel=2)
+        return super().__new__(cls, *args, **kwargs)
 
     def __repr__(self):
         return f"relative(0x{self:x})"
@@ -187,9 +201,13 @@ class DNTokenOffsetAddress(Address):
         self.offset = offset
 
     def __eq__(self, other):
+        if not isinstance(other, DNTokenOffsetAddress):
+            return NotImplemented
         return (self.token, self.offset) == (other.token, other.offset)
 
     def __lt__(self, other):
+        if not isinstance(other, DNTokenOffsetAddress):
+            return NotImplemented
         return (self.token, self.offset) < (other.token, other.offset)
 
     def __hash__(self):
@@ -204,7 +222,7 @@ class DNTokenOffsetAddress(Address):
 
 class _NoAddress(Address):
     def __eq__(self, other):
-        return True
+        return isinstance(other, _NoAddress)
 
     def __lt__(self, other):
         return False
@@ -215,7 +233,7 @@ class _NoAddress(Address):
         return other is not self
 
     def __hash__(self):
-        return hash(0)
+        return hash(None)
 
     def __repr__(self):
         return "no address"

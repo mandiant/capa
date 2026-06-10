@@ -61,7 +61,7 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
     file_features: list[tuple[Address, Feature]]
     functions: dict[Address, FunctionFeatures]
 
-    def get_base_address(self):
+    def get_base_address(self):  # type: ignore[override]  # test utility; base_address is always a valid Address subtype
         return self.base_address
 
     def get_sample_hashes(self) -> SampleHashes:
@@ -79,24 +79,24 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
         for address in sorted(self.functions.keys()):
             yield FunctionHandle(address, None)
 
-    def extract_function_features(self, f):
-        for address, feature in self.functions[f.address].features:
+    def extract_function_features(self, fh):
+        for address, feature in self.functions[fh.address].features:
             yield feature, address
 
-    def get_basic_blocks(self, f):
-        for address in sorted(self.functions[f.address].basic_blocks.keys()):
+    def get_basic_blocks(self, fh):
+        for address in sorted(self.functions[fh.address].basic_blocks.keys()):
             yield BBHandle(address, None)
 
-    def extract_basic_block_features(self, f, bb):
-        for address, feature in self.functions[f.address].basic_blocks[bb.address].features:
+    def extract_basic_block_features(self, fh, bbh):
+        for address, feature in self.functions[fh.address].basic_blocks[bbh.address].features:
             yield feature, address
 
-    def get_instructions(self, f, bb):
-        for address in sorted(self.functions[f.address].basic_blocks[bb.address].instructions.keys()):
+    def get_instructions(self, fh, bbh):
+        for address in sorted(self.functions[fh.address].basic_blocks[bbh.address].instructions.keys()):
             yield InsnHandle(address, None)
 
-    def extract_insn_features(self, f, bb, insn):
-        for address, feature in self.functions[f.address].basic_blocks[bb.address].instructions[insn.address].features:
+    def extract_insn_features(self, fh, bbh, ih):
+        for address, feature in self.functions[fh.address].basic_blocks[bbh.address].instructions[ih.address].features:
             yield feature, address
 
 

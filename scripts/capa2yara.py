@@ -46,9 +46,6 @@ from pathlib import Path
 
 import capa.main
 import capa.rules
-import capa.engine
-import capa.features
-import capa.features.insn
 
 logger = logging.getLogger("capa2yara")
 
@@ -85,7 +82,7 @@ unsupported = [
 # - it would be technically possible to get the "basic blocks" working, but the rules contain mostly other non supported statements in there => not worth the effort.
 
 # collect all converted rules to be able to check if we have needed sub rules for match:
-converted_rules = []
+converted_rules: list[str] = []
 
 default_tags = "CAPA "
 
@@ -94,7 +91,7 @@ min_rounds = 5
 
 unsupported_capa_rules = Path("unsupported_capa_rules.yml").open("wb")
 unsupported_capa_rules_names = Path("unsupported_capa_rules.txt").open("wb")
-unsupported_capa_rules_list = []
+unsupported_capa_rules_list: list[str] = []
 
 condition_header = """
     capa_pe_file and
@@ -414,7 +411,7 @@ def convert_rule(rule, rulename, cround, depth):
                     # this is "x or more". could be coded for strings TODO
                     return "BREAK", "Some aka x or more (TODO)", rule_comment, incomplete
 
-            if s_type == "And" or s_type == "Or" or s_type == "Not" and kid.name != "Some":
+            if (s_type == "And" or s_type == "Or" or s_type == "Not") and kid.name != "Some":
                 logger.info("doing bool with recursion: %r", kid)
                 logger.info("kid coming: %r", kid.name)
                 # logger.info("grandchildren: " + repr(kid.children))
@@ -512,6 +509,8 @@ def convert_rule(rule, rulename, cround, depth):
 
         if not cmin:
             logger.info("this is optional: which means, we can just ignore it")
+            yara_strings = ""
+            yara_condition = ""
         else:
             # this is "x or more". could be coded for strings TODO
             return "BREAK", "Some aka x or more (TODO)", rule_comment, incomplete

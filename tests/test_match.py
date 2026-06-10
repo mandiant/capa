@@ -208,7 +208,8 @@ def test_match_adds_matched_rule_feature():
 def test_match_matched_rules():
     """show that using `match` adds a feature for matched rules."""
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule1
@@ -217,8 +218,10 @@ def test_match_matched_rules():
                             dynamic: process
                     features:
                         - number: 100
-                """)),
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule2
@@ -227,7 +230,8 @@ def test_match_matched_rules():
                             dynamic: process
                     features:
                         - match: test rule1
-                """)),
+                """)
+        ),
     ]
 
     features, _ = match(
@@ -251,7 +255,8 @@ def test_match_matched_rules():
 
 def test_match_namespace():
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: CreateFile API
@@ -261,8 +266,10 @@ def test_match_namespace():
                         namespace: file/create/CreateFile
                     features:
                         - api: CreateFile
-                """)),
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: WriteFile API
@@ -272,8 +279,10 @@ def test_match_namespace():
                         namespace: file/write
                     features:
                         - api: WriteFile
-                """)),
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: file-create
@@ -282,8 +291,10 @@ def test_match_namespace():
                             dynamic: process
                     features:
                         - match: file/create
-                """)),
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: filesystem-any
@@ -292,7 +303,8 @@ def test_match_namespace():
                             dynamic: process
                     features:
                         - match: file
-                """)),
+                """)
+        ),
     ]
 
     features, matches = match(
@@ -319,7 +331,8 @@ def test_match_namespace():
 
 def test_match_substring():
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -329,7 +342,8 @@ def test_match_substring():
                     features:
                         - and:
                             - substring: abc
-                """)),
+                """)
+        ),
     ]
     features, _ = match(
         capa.rules.topologically_order_rules(rules),
@@ -369,7 +383,8 @@ def test_match_substring():
 
 def test_match_regex():
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -379,8 +394,10 @@ def test_match_regex():
                     features:
                         - and:
                             - string: /.*bbbb.*/
-                """)),
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: rule with implied wildcards
@@ -390,8 +407,10 @@ def test_match_regex():
                     features:
                         - and:
                             - string: /bbbb/
-                """)),
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: rule with anchor
@@ -401,7 +420,8 @@ def test_match_regex():
                     features:
                         - and:
                             - string: /^bbbb/
-                """)),
+                """)
+        ),
     ]
     features, _ = match(
         capa.rules.topologically_order_rules(rules),
@@ -436,7 +456,8 @@ def test_match_regex():
 
 def test_match_regex_ignorecase():
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -446,7 +467,8 @@ def test_match_regex_ignorecase():
                     features:
                         - and:
                             - string: /.*bbbb.*/i
-                """)),
+                """)
+        ),
     ]
     features, _ = match(
         capa.rules.topologically_order_rules(rules),
@@ -458,7 +480,8 @@ def test_match_regex_ignorecase():
 
 def test_match_regex_complex():
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent(r"""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(r"""
                 rule:
                     meta:
                         name: test rule
@@ -468,7 +491,8 @@ def test_match_regex_complex():
                     features:
                         - or:
                             - string: /.*HARDWARE\\Key\\key with spaces\\.*/i
-                """)),
+                """)
+        ),
     ]
     features, _ = match(
         capa.rules.topologically_order_rules(rules),
@@ -480,7 +504,8 @@ def test_match_regex_complex():
 
 def test_match_regex_values_always_string():
     rules = [
-        capa.rules.Rule.from_yaml(textwrap.dedent("""
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
                 rule:
                     meta:
                         name: test rule
@@ -491,7 +516,8 @@ def test_match_regex_values_always_string():
                         - or:
                             - string: /123/
                             - string: /0x123/
-                """)),
+                """)
+        ),
     ]
     features, _ = match(
         capa.rules.topologically_order_rules(rules),
@@ -756,7 +782,7 @@ def test_index_features_and_unstable():
     assert capa.features.insn.API("CreateFileW") in index.rules_by_feature
 
     assert not index.string_rules
-    assert not index.bytes_rules
+    assert not index.bytes_prefix_index
 
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
@@ -784,7 +810,7 @@ def test_index_features_or_unstable():
     assert capa.features.insn.Mnemonic("mov") in index.rules_by_feature
 
     assert not index.string_rules
-    assert not index.bytes_rules
+    assert not index.bytes_prefix_index
 
 
 # this test demonstrates the behavior of unstable features that may change before the next major release.
@@ -815,4 +841,208 @@ def test_index_features_nested_unstable():
     assert capa.features.insn.Mnemonic("mov") not in index.rules_by_feature
 
     assert not index.string_rules
-    assert not index.bytes_rules
+    assert not index.bytes_prefix_index
+
+
+def test_bytes_prefix_index_correctness():
+    """Verify that the bytes prefix pre-filter preserves match behavior."""
+    rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test bytes prefix index
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+        """)
+    r = capa.rules.Rule.from_yaml(rule_text)
+
+    # 16 nop bytes - exact match
+    nop16 = b"\x90" * 16
+    _, matches = match([r], {capa.features.common.Bytes(nop16): {0x0}}, 0x0)
+    assert "test bytes prefix index" in matches
+
+    # 32 nop bytes - startswith match (first 16 bytes are nops)
+    nop32 = b"\x90" * 32
+    _, matches = match([r], {capa.features.common.Bytes(nop32): {0x0}}, 0x0)
+    assert "test bytes prefix index" in matches
+
+    # Different bytes - should not match
+    other = b"\x00" * 16
+    _, matches = match([r], {capa.features.common.Bytes(other): {0x0}}, 0x0)
+    assert "test bytes prefix index" not in matches
+
+    # Bytes shorter than pattern - should not match
+    short = b"\x90" * 8
+    _, matches = match([r], {capa.features.common.Bytes(short): {0x0}}, 0x0)
+    assert "test bytes prefix index" not in matches
+
+
+def test_bytes_prefix_index_collision():
+    rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test bytes prefix collision
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: 41 42 43 44 45 46 47 48
+        """)
+    r = capa.rules.Rule.from_yaml(rule_text)
+
+    features = {
+        capa.features.common.Bytes(b"ABCD1234"): {0x0},
+        capa.features.common.Bytes(b"ABCDEFGHzz"): {0x1},
+    }
+    _, matches = match([r], features, 0x0)
+    assert "test bytes prefix collision" in matches
+
+
+def test_bytes_prefix_index_short_pattern_fallback():
+    rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test bytes short prefix fallback
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: 41 42 43
+        """)
+    r = capa.rules.Rule.from_yaml(rule_text)
+
+    _, matches = match([r], {capa.features.common.Bytes(b"ABCDEF"): {0x0}}, 0x0)
+    assert "test bytes short prefix fallback" in matches
+
+    _, matches = match([r], {capa.features.common.Bytes(b"XABCDEF"): {0x0}}, 0x0)
+    assert "test bytes short prefix fallback" not in matches
+
+
+def test_bytes_prefix_index_mixed_short_and_long_patterns():
+    """A rule with both a short (<4B) and a long (>=4B) bytes pattern exercises both code paths."""
+    short_rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test short pattern rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: AA BB
+        """)
+    long_rule_text = textwrap.dedent("""
+        rule:
+            meta:
+                name: test long pattern rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - bytes: CC DD EE FF 11 22 33 44
+        """)
+    short_rule = capa.rules.Rule.from_yaml(short_rule_text)
+    long_rule = capa.rules.Rule.from_yaml(long_rule_text)
+
+    # Both rules match their respective extracted values.
+    features = {
+        capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0},
+        capa.features.common.Bytes(b"\xcc\xdd\xee\xff\x11\x22\x33\x44\x55"): {0x1},
+    }
+    _, matches = match([short_rule, long_rule], features, 0x0)
+    assert "test short pattern rule" in matches
+    assert "test long pattern rule" in matches
+
+    # Only the short rule matches when the long pattern is absent.
+    _, matches = match([short_rule, long_rule], {capa.features.common.Bytes(b"\xaa\xbb\xcc"): {0x0}}, 0x0)
+    assert "test short pattern rule" in matches
+    assert "test long pattern rule" not in matches
+
+    # Only the long rule matches when the short pattern is absent.
+    _, matches = match(
+        [short_rule, long_rule],
+        {capa.features.common.Bytes(b"\xcc\xdd\xee\xff\x11\x22\x33\x44"): {0x0}},
+        0x0,
+    )
+    assert "test short pattern rule" not in matches
+    assert "test long pattern rule" in matches
+
+
+def test_match_no_duplicate_candidate_evaluations():
+    """
+    Ensure that when a rule has multiple candidate paths to trigger it,
+    it is evaluated only once and does not create duplicate match results.
+    Verifies both global deduplication (avoiding re-queuing rules already
+    evaluated/queued) and local deduplication (avoiding duplicate queueing when
+    multiple features trigger the same candidate in a single pass).
+    """
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Dependency Rule 1
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - number: 100
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Dependency Rule 2
+                        scopes:
+                            static: function
+                            dynamic: process
+                        namespace: testns
+                    features:
+                        - number: 300
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Target Rule
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - or:
+                            # Trigger Case 1 (Global): Target Rule is seeded by number 200,
+                            # and also gets triggered later when Dependency Rule 1 matches.
+                            - match: Dependency Rule 1
+                            - number: 200
+
+                            # Trigger Case 2 (Local): Target Rule depends on both rule name and namespace,
+                            # which will try to add it twice in the same iteration when Dependency Rule 2 matches.
+                            - and:
+                                - match: Dependency Rule 2
+                                - match: testns
+                """)
+        ),
+    ]
+
+    # Seed all features to trigger both Case 1 and Case 2
+    features = {
+        capa.features.insn.Number(100): {0x0},
+        capa.features.insn.Number(200): {0x0},
+        capa.features.insn.Number(300): {0x0},
+    }
+
+    _, matches = match(
+        capa.rules.topologically_order_rules(rules),
+        features,
+        0x0,
+    )
+
+    assert "Dependency Rule 1" in matches
+    assert "Dependency Rule 2" in matches
+    assert "Target Rule" in matches
+
+    # Ensure Target Rule was evaluated and returned exactly ONCE
+    assert len(matches["Target Rule"]) == 1

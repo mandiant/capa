@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +21,16 @@ from dataclasses import dataclass
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
-from capa.render.result_document import LibraryFunction, StaticFeatureCounts, DynamicFeatureCounts
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.render.result_document import (
+    LibraryFunction,
+    StaticFeatureCounts,
+    DynamicFeatureCounts,
+)
+from capa.features.extractors.base_extractor import (
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +51,11 @@ def find_file_capabilities(
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
-        if va:
-            file_features[feature].add(va)
-        else:
+        if va is NO_ADDRESS:
             if feature not in file_features:
                 file_features[feature] = set()
+        else:
+            file_features[feature].add(va)
 
     logger.debug("analyzed file and extracted %d features", len(file_features))
 
@@ -65,7 +72,9 @@ class Capabilities:
     library_functions: Optional[tuple[LibraryFunction, ...]] = None
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs) -> Capabilities:
+def find_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress: bool = False, **kwargs
+) -> Capabilities:
     from capa.capabilities.static import find_static_capabilities
     from capa.capabilities.dynamic import find_dynamic_capabilities
 

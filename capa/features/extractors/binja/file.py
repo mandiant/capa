@@ -16,9 +16,7 @@ from typing import Iterator
 
 from binaryninja import Segment, BinaryView, SymbolType, SymbolBinding
 
-import capa.features.extractors.common
 import capa.features.extractors.helpers
-import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import (
     FORMAT_PE,
@@ -46,7 +44,8 @@ def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[tuple[Feature
     buf = bv.read(seg.start, seg.length)
 
     for offset, _ in capa.features.extractors.helpers.carve_pe(buf, start):
-        yield Characteristic("embedded pe"), FileOffsetAddress(seg.start + offset)
+        if offset < seg.data_length:
+            yield Characteristic("embedded pe"), FileOffsetAddress(seg.data_offset + offset)
 
 
 def extract_file_embedded_pe(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
@@ -122,7 +121,9 @@ def extract_file_section_names(bv: BinaryView) -> Iterator[tuple[Feature, Addres
 def extract_file_strings(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
     for s in bv.strings:
-        yield String(s.value), FileOffsetAddress(s.start)
+        seg = bv.get_segment_at(s.start)
+        if seg is not None and s.start - seg.start < seg.data_length:
+            yield String(s.value), FileOffsetAddress(seg.data_offset + (s.start - seg.start))
 
 
 def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
@@ -135,13 +136,14 @@ def extract_file_function_names(bv: BinaryView) -> Iterator[tuple[Feature, Addre
                 continue
 
             name = sym.short_name
-            yield FunctionName(name), sym.address
+            addr = AbsoluteVirtualAddress(sym.address)
+            yield FunctionName(name), addr
             if name.startswith("_"):
                 # some linkers may prefix linked routines with a `_` to avoid name collisions.
                 # extract features for both the mangled and un-mangled representations.
                 # e.g. `_fwrite` -> `fwrite`
                 # see: https://stackoverflow.com/a/2628384/87207
-                yield FunctionName(name[1:]), sym.address
+                yield FunctionName(name[1:]), addr
 
 
 def extract_file_format(bv: BinaryView) -> Iterator[tuple[Feature, Address]]:
@@ -181,5 +183,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_embedded_pe,
     extract_file_function_names,
-    extract_file_format,
 )

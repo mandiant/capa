@@ -19,10 +19,8 @@ import vivisect
 import viv_utils
 import viv_utils.flirt
 
-import capa.features.insn
 import capa.features.extractors.common
 import capa.features.extractors.helpers
-import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
@@ -50,6 +48,8 @@ def extract_file_export_names(vw: vivisect.VivWorkspace, **kwargs) -> Iterator[t
 
     if vw.getMeta("Format") == "pe":
         pe = vw.parsedbin
+        assert pe is not None
+        assert pe.IMAGE_NT_HEADERS is not None
         baseaddr = pe.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
         for rva, _, forwarded_name in vw.getFileMeta(get_first_vw_filename(vw), "forwarders"):
             try:
@@ -152,5 +152,4 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
-    extract_file_format,
 )

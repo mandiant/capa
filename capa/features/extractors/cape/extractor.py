@@ -16,6 +16,7 @@
 import logging
 from typing import Union, Iterator
 
+import capa.helpers
 import capa.features.extractors.cape.call
 import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
