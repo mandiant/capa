@@ -1,4 +1,4 @@
-Data-driven matcher tests. Each test pairs a rule fragment, a synthetic feature listing, and the exact matches that capa should report. These test the matcher itself, not end-to-end binary analysis.
+Data-driven matcher tests. Each test pairs a rule fragment, a synthetic feature listing, and the exact matches that capa should report. These test the matcher itself, not end-to-end binary analysis. Tests for rule parsing and representation (e.g. how a rule looks after deserialization) belong in `test_rules.py`, not here.
 
 Fixture files live under `static/` and `dynamic/` directories, organized by theme (e.g. `logic.yml`, `scopes.yml`, `strings.yml`). Flavor is inferred from the directory. The pytest entrypoint and DSL parser both live in `tests/test_match_fixtures.py`.
 
