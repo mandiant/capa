@@ -145,6 +145,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 
 ### New Features
 
+- Tree-Sitter Script Analysis
 - ghidra: support PyGhidra @mike-hunhoff #2788
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 

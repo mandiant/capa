@@ -17,7 +17,7 @@ import logging
 import functools
 import contextlib
 import collections
-from typing import Union, Literal, Optional
+from typing import Tuple, Union, Iterator
 from pathlib import Path
 from dataclasses import field, dataclass
 
@@ -28,6 +28,7 @@ import capa.engine as ceng
 import capa.render.result_document
 from capa.features.common import OS_AUTO, FORMAT_AUTO, Feature
 from capa.features.address import Address
+from capa.features.extractors.script import LANG_CS, LANG_PY
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -42,8 +43,12 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 logger = logging.getLogger(__name__)
 CD = Path(__file__).resolve().parent
-FIXTURE_MANIFEST_DIR = CD / "fixtures" / "features"
-DNFILE_TESTFILES = CD / "data" / "dotnet" / "dnfile-testfiles"
+DOTNET_DIR = CD / "data" / "dotnet"
+SOURCE_DIR = CD / "data" / "source"
+ASPX_DIR = SOURCE_DIR / "aspx"
+CS_DIR = SOURCE_DIR / "cs"
+PY_DIR = SOURCE_DIR / "py"
+DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
 
 
 def parse_feature_string(s: str) -> Feature | ceng.Range | ceng.Statement:
@@ -363,6 +368,29 @@ def run_feature_fixture(
     assert actual == fixture.expected, msg
 
 
+@lru_cache(maxsize=1)
+def get_ts_extractor_engine(language, buf):
+    import capa.features.extractors.ts.engine
+
+    return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, buf)
+
+
+@lru_cache(maxsize=1)
+def get_ts_template_engine(path):
+    import capa.features.extractors.ts.engine
+
+    with Path(path).open("rb") as f:
+        buf = f.read()
+    return capa.features.extractors.ts.engine.TreeSitterTemplateEngine(buf)
+
+
+@lru_cache(maxsize=1)
+def get_ts_extractor(path):
+    import capa.features.extractors.ts.extractor
+
+    return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path)
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -441,6 +469,270 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Ad
     return features
 
 
+# note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
+def get_data_path_by_name(name) -> Path:
+    if name == "mimikatz":
+        return CD / "data" / "mimikatz.exe_"
+    elif name == "kernel32":
+        return CD / "data" / "kernel32.dll_"
+    elif name == "kernel32-64":
+        return CD / "data" / "kernel32-64.dll_"
+    elif name == "pma01-01":
+        return CD / "data" / "Practical Malware Analysis Lab 01-01.dll_"
+    elif name == "pma01-01-rd":
+        return CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
+    elif name == "pma12-04":
+        return CD / "data" / "Practical Malware Analysis Lab 12-04.exe_"
+    elif name == "pma16-01":
+        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
+    elif name == "pma16-01_binja_db":
+        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_.bndb"
+    elif name == "pma21-01":
+        return CD / "data" / "Practical Malware Analysis Lab 21-01.exe_"
+    elif name == "al-khaser x86":
+        return CD / "data" / "al-khaser_x86.exe_"
+    elif name == "al-khaser x64":
+        return CD / "data" / "al-khaser_x64.exe_"
+    elif name.startswith("39c05"):
+        return CD / "data" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
+    elif name.startswith("499c2"):
+        return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
+    elif name.startswith("9324d"):
+        return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
+    elif name.startswith("395eb"):
+        return CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
+    elif name.startswith("a1982"):
+        return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
+    elif name.startswith("a933a"):
+        return CD / "data" / "a933a1a402775cfa94b6bee0963f4b46.dll_"
+    elif name.startswith("bfb9b"):
+        return CD / "data" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_"
+    elif name.startswith("c9188"):
+        return CD / "data" / "c91887d861d9bd4a5872249b641bc9f9.exe_"
+    elif name.startswith("64d9f"):
+        return CD / "data" / "64d9f7d96b99467f36e22fada623c3bb.dll_"
+    elif name.startswith("82bf6"):
+        return CD / "data" / "82BF6347ACF15E5D883715DC289D8A2B.exe_"
+    elif name.startswith("pingtaest"):
+        return CD / "data" / "ping_täst.exe_"
+    elif name.startswith("77329"):
+        return CD / "data" / "773290480d5445f11d3dc1b800728966.exe_"
+    elif name.startswith("3b13b"):
+        return CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
+    elif name == "7351f.elf":
+        return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
+    elif name.startswith("79abd"):
+        return CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_"
+    elif name.startswith("946a9"):
+        return CD / "data" / "946a99f36a46d335dec080d9a4371940.dll_"
+    elif name.startswith("2f7f5f"):
+        return CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
+    elif name.startswith("b9f5b"):
+        return CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
+    elif name.startswith("mixed-mode-64"):
+        return DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
+    elif name.startswith("hello-world"):
+        return DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
+    elif name.startswith("_1c444"):
+        return DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
+    elif name.startswith("_387f15"):
+        return DOTNET_DIR / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
+    elif name.startswith("_692f"):
+        return DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_"
+    elif name.startswith("_0953c"):
+        return CD / "data" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
+    elif name.startswith("_039a6"):
+        return CD / "data" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
+    elif name.startswith("b5f052"):
+        return CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
+    elif name.startswith("bf7a9c"):
+        return CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
+    elif name.startswith("294b8d"):
+        return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
+    elif name.startswith("2bf18d"):
+        return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
+    elif name.startswith("0000a657"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "v2.2"
+            / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        )
+    elif name.startswith("d46900"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "v2.2"
+            / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
+        )
+    elif name.startswith("93b2d1-drakvuf"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "drakvuf"
+            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795.log.gz"
+        )
+    elif name.startswith("93b2d1-vmray"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "vmray"
+            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795_min_archive.zip"
+        )
+    elif name.startswith("2f8a79-vmray"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "vmray"
+            / "2f8a79b12a7a989ac7e5f6ec65050036588a92e65aeb6841e08dc228ff0e21b4_min_archive.zip"
+        )
+    elif name.startswith("eb1287-vmray"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "vmray"
+            / "eb12873c0ce3e9ea109c2a447956cbd10ca2c3e86936e526b2c6e28764999f21_min_archive.zip"
+        )
+    elif name.startswith("ea2876"):
+        return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
+    elif name.startswith("1038a2"):
+        return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
+    elif name.startswith("3da7c"):
+        return CD / "data" / "3da7c2c70a2d93ac4643f20339d5c7d61388bddd77a4a5fd732311efad78e535.elf_"
+    elif name.startswith("nested_typedef"):
+        return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
+    elif name.startswith("nested_typeref"):
+        return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
+    elif name.startswith("687e79.ghidra.be2"):
+        return (
+            CD
+            / "data"
+            / "binexport2"
+            / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
+        )
+    elif name.startswith("d1e650.ghidra.be2"):
+        return (
+            CD
+            / "data"
+            / "binexport2"
+            / "d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8.elf_.ghidra.BinExport"
+        )
+    else:
+        raise ValueError(f"unexpected sample fixture: {name}")
+
+
+ASPX_DATA_PATH_BY_NAME = {
+    "aspx_4f6fa6": ASPX_DIR / "4f6fa6a45017397c7e1c9cd5a17235ccb1ff0f5087dfa6b7384552bf507e7fe1.aspx_",
+    "aspx_5f959f": ASPX_DIR / "5f959f480a66a33d37d9a0ef6c8f7d0059625ca2a8ae9236b49b194733622655.aspx_",
+    "aspx_10162f": ASPX_DIR / "10162feb5f063ea09c6a3d275f31abf0fe8a9e4e36fded0053b1f8e054da8161.aspx_",
+    "aspx_2b71dd": ASPX_DIR / "2b71dd245520d9eb5f1e4c633fee61c7d83687591d9f64f9390c26dc95057c3c.aspx_",
+    "aspx_f2bf20": ASPX_DIR / "f2bf20e7bb482d27da8f19aa0f8bd4927746a65300929b99166867074a38a4b4.aspx_",
+    "aspx_f39dc0": ASPX_DIR / "f39dc0dfd43477d65c1380a7cff89296ad72bfa7fc3afcfd8e294f195632030e.aspx_",
+    "aspx_ea2a01": ASPX_DIR / "ea2a01cae57c00df01bff6bb8a72585fdc0abb7a26a869dc1a0131bdff50b400.aspx_",
+    "aspx_6f3261": ASPX_DIR / "6f3261eaaabf369bd928d179641b73ffd768184dfd4e00124da462a3075d4239.aspx_",
+    "aspx_1f8f40": ASPX_DIR / "1f8f4054932ed1d5d055e9a92aa1e2abba49af3370506674cb1b2c70146ae81a.aspx_",
+    "aspx_2e8c7e": ASPX_DIR / "2e8c7eacd739ca3f3dc4112b41a024157035096b8d0c26ba79d8b893136391bc.aspx_",
+    "aspx_03bb5c": ASPX_DIR / "03bb5cab46b406bb8613ca6e32991ab3e10b5cd759d5c7813191e9e62868ea73.aspx_",
+    "aspx_606dbf": ASPX_DIR / "606dbfebdc7751ecb6cb9a845853ae1905afd4b8a2cb54e1e4a98c932e268712.aspx_",
+    "aspx_f397cb": ASPX_DIR / "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.aspx_",
+    "aspx_b4bb14": ASPX_DIR / "b4bb14aeb692f7afc107ee89f86d096f1cd8f9761b6c50788f626a9dccc8b077.aspx_",
+    "aspx_54433d": ASPX_DIR / "54433dd57414773098a6d3292d262f91a6812855dfcbf8d421695608d1fad638.aspx_",
+    "aspx_a35878": ASPX_DIR / "a35878e74425cd97ad98e3ec4b2583867bb536f4275d821cd8b82bc19380ba1a.aspx_",
+    "aspx_a5c893": ASPX_DIR / "a5c8934836f5b36bba3a722eab691a9f1f926c138fefe5bae07e9074e7c49ae3.aspx_",
+    "aspx_15eed4": ASPX_DIR / "15eed42e4904205b2ef2ff285ff1ce6c8138296c12cf075a2562c69a5fafd1cb.aspx_",
+    "aspx_b75f16": ASPX_DIR / "b75f163ca9b9240bf4b37ad92bc7556b40a17e27c2b8ed5c8991385fe07d17d0.aspx_",
+    "aspx_d460ca": ASPX_DIR / "d460cae7d34c51059ef57c5aadb3de099469efbac5fffcf76d0528a511192a28.aspx_",
+}
+
+CS_DATA_PATH_BY_NAME = {
+    "cs_138cdc": CS_DIR / "138cdc4b10f3f5ece9c47bb0ec17fde5b70c1f9a90b267794c5e5dfa337fc798.cs_",
+}
+
+PY_DATA_PATH_BY_NAME = {
+    "py_7f9cd1": PY_DIR / "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_",
+    "py_ca0df6": PY_DIR / "ca0df6cccf2a15ce8f781d81959cf230aead64e6297a3283b21457dc74938c89.py_",
+}
+
+
+def get_sample_md5_by_name(name):
+    """used by IDA tests to ensure the correct IDB is loaded"""
+    if name == "mimikatz":
+        return "5f66b82558ca92e54e77f216ef4c066c"
+    elif name == "kernel32":
+        return "e80758cf485db142fca1ee03a34ead05"
+    elif name == "kernel32-64":
+        return "a8565440629ac87f6fef7d588fe3ff0f"
+    elif name == "pma12-04":
+        return "56bed8249e7c2982a90e54e1e55391a2"
+    elif name == "pma16-01":
+        return "7faafc7e4a5c736ebfee6abbbc812d80"
+    elif name == "pma01-01":
+        return "290934c61de9176ad682ffdd65f0a669"
+    elif name == "pma21-01":
+        return "c8403fb05244e23a7931c766409b5e22"
+    elif name == "al-khaser x86":
+        return "db648cd247281954344f1d810c6fd590"
+    elif name == "al-khaser x64":
+        return "3cb21ae76ff3da4b7e02d77ff76e82be"
+    elif name.startswith("39c05"):
+        return "b7841b9d5dc1f511a93cc7576672ec0c"
+    elif name.startswith("499c2"):
+        return "499c2a85f6e8142c3f48d4251c9c7cd6"
+    elif name.startswith("9324d"):
+        return "9324d1a8ae37a36ae560c37448c9705a"
+    elif name.startswith("a1982"):
+        return "a198216798ca38f280dc413f8c57f2c2"
+    elif name.startswith("a933a"):
+        return "a933a1a402775cfa94b6bee0963f4b46"
+    elif name.startswith("bfb9b"):
+        return "bfb9b5391a13d0afd787e87ab90f14f5"
+    elif name.startswith("c9188"):
+        return "c91887d861d9bd4a5872249b641bc9f9"
+    elif name.startswith("64d9f"):
+        return "64d9f7d96b99467f36e22fada623c3bb"
+    elif name.startswith("82bf6"):
+        return "82bf6347acf15e5d883715dc289d8a2b"
+    elif name.startswith("77329"):
+        return "773290480d5445f11d3dc1b800728966"
+    elif name.startswith("3b13b"):
+        # file name is SHA256 hash
+        return "56a6ffe6a02941028cc8235204eef31d"
+    elif name.startswith("7351f"):
+        return "7351f8a40c5450557b24622417fc478d"
+    elif name.startswith("79abd"):
+        return "79abd17391adc6251ecdc58d13d76baf"
+    elif name.startswith("946a9"):
+        return "946a99f36a46d335dec080d9a4371940"
+    elif name.startswith("b9f5b"):
+        return "b9f5bd514485fb06da39beff051b9fdc"
+    elif name.startswith("294b8d"):
+        # file name is SHA256 hash
+        return "3db3e55b16a7b1b1afb970d5e77c5d98"
+    elif name.startswith("2bf18d"):
+        return "2bf18d0403677378adad9001b1243211"
+    elif name.startswith("ea2876"):
+        return "76fa734236daa023444dec26863401dc"
+    else:
+        raise ValueError(f"unexpected sample fixture: {name}")
+
+
+def resolve_sample(sample):
+    return get_data_path_by_name(sample)
+
+
+@pytest.fixture
+def sample(request):
+    return resolve_sample(request.param)
+
+
 def get_process(extractor, ppid: int, pid: int) -> ProcessHandle:
     for ph in extractor.get_processes():
         if ph.address.ppid == ppid and ph.address.pid == pid:
@@ -462,6 +754,27 @@ def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHa
     raise ValueError("call not found")
 
 
+def resolve_sample_ts(sample):
+    if sample.startswith("cs_"):
+        try:
+            return CS_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
+    if sample.startswith("py_"):
+        return PY_DATA_PATH_BY_NAME[sample]
+    if sample.startswith("aspx_"):
+        try:
+            return ASPX_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
+    raise ValueError(f"unexpected sample fixture: {sample}")
+
+
+@pytest.fixture
+def sample_ts(request):
+    return resolve_sample_ts(request.param)
+
+
 def get_function(extractor, fva: int) -> FunctionHandle:
     for fh in extractor.get_functions():
         if isinstance(extractor, DnfileFeatureExtractor):
@@ -471,6 +784,19 @@ def get_function(extractor, fva: int) -> FunctionHandle:
         if addr == fva:
             return fh
     raise ValueError("function not found")
+
+
+def get_function_ts(extractor, fid: Union[Tuple[int], str]) -> Iterator[FunctionHandle]:
+    for fh in extractor.get_functions():
+        if isinstance(fid, tuple):
+            addr = (fh.address.start_byte, fh.address.end_byte)
+        elif isinstance(fid, str):
+            addr = fh.inner.name
+        else:
+            raise ValueError("invalid fva format")
+
+        if addr == fid:
+            yield fh
 
 
 def get_function_by_token(extractor, token: int) -> FunctionHandle:
@@ -628,6 +954,61 @@ def resolve_scope(scope):
         return inner_process
     else:
         raise ValueError("unexpected scope fixture")
+
+
+@pytest.fixture
+def scope(request):
+    return resolve_scope(request.param)
+
+
+def get_function_id_ts(scope):
+    fid = scope.partition("=")[2]
+    if fid[0] == "(" and fid[-1] == ")":
+        fid = tuple(int(x, 16) if x.lstrip().startswith("0x") else int(x) for x in fid[1:-1].split(","))
+    return fid
+
+
+def resolve_scope_ts(scope):
+    if scope == "global":
+
+        def inner_fn(extractor):
+            return extract_global_features(extractor)
+
+    elif scope == "file":
+
+        def inner_fn(extractor):
+            features = extract_file_features(extractor)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+    elif scope.startswith("function"):
+        # like `function=(0xbeef, 0xdead) or function=(123, 456) or function=foo_bar`
+        def inner_fn(extractor):
+            fid = get_function_id_ts(scope)
+            fhs = list(get_function_ts(extractor, fid))
+            if not fhs:
+                raise ValueError("function not found")
+            features = collections.defaultdict(set)
+            for fh in fhs:
+                for k, vs in extract_function_features(extractor, fh).items():
+                    # print(f"{k}:{vs}")
+                    features[k].update(vs)
+            for k, vs in extract_file_features(extractor).items():
+                features[k].update(vs)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+    else:
+        raise ValueError("unexpected scope fixture")
+    inner_fn.__name__ = scope
+    return inner_fn
+
+
+@pytest.fixture
+def scope_ts(request):
+    return resolve_scope_ts(request.param)
 
 
 def make_test_id(values):
@@ -945,23 +1326,127 @@ def get_idalib_extractor(path: Path):
             idapro.close_database(save=(not had_i64))
             logger.debug("closed database.")
 
-            if not had_i64:
-                tmp_i64 = tmp_dir / i64_path.name
-                if tmp_i64.exists():
-                    shutil.copy2(tmp_i64, i64_path)
+@pytest.fixture
+def dynamic_a0000a6_rd():
+    # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
+    # gzip tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
+    return get_result_doc(
+        CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+    )
 
 
-# used by both:
-# - test_binexport_features
-# - test_binexport_accessors
-@functools.lru_cache(maxsize=1)
-def get_binexport_extractor(path):
-    import capa.features.extractors.binexport2
-    import capa.features.extractors.binexport2.extractor
+@pytest.fixture
+def cs_138cdc_extractor_engine():
+    with Path(CS_DATA_PATH_BY_NAME["cs_138cdc"]).open("rb") as f:
+        buf = f.read()
+    return get_ts_extractor_engine(LANG_CS, buf)
 
-    be2 = capa.features.extractors.binexport2.get_binexport2(path)
-    search_paths = [CD / "data", CD / "data" / "aarch64"]
-    path = capa.features.extractors.binexport2.get_sample_from_binexport2(path, be2, search_paths)
-    buf = path.read_bytes()
 
-    return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+@pytest.fixture
+def aspx_4f6fa6_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_4f6fa6"])
+
+
+@pytest.fixture
+def aspx_5f959f_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_5f959f"])
+
+
+@pytest.fixture
+def aspx_10162f_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_10162f"])
+
+
+@pytest.fixture
+def aspx_2b71dd_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_2b71dd"])
+
+
+@pytest.fixture
+def aspx_f2bf20_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f2bf20"])
+
+
+@pytest.fixture
+def aspx_f39dc0_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f39dc0"])
+
+
+@pytest.fixture
+def aspx_ea2a01_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_ea2a01"])
+
+
+@pytest.fixture
+def aspx_6f3261_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_6f3261"])
+
+
+@pytest.fixture
+def aspx_1f8f40_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_1f8f40"])
+
+
+@pytest.fixture
+def aspx_2e8c7e_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_2e8c7e"])
+
+
+@pytest.fixture
+def aspx_03bb5c_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_03bb5c"])
+
+
+@pytest.fixture
+def aspx_606dbf_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_606dbf"])
+
+
+@pytest.fixture
+def aspx_f397cb_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f397cb"])
+
+
+@pytest.fixture
+def aspx_b4bb14_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_b4bb14"])
+
+
+@pytest.fixture
+def aspx_54433d_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_54433d"])
+
+
+@pytest.fixture
+def aspx_a35878_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_a35878"])
+
+
+@pytest.fixture
+def aspx_a5c893_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_a5c893"])
+
+
+@pytest.fixture
+def aspx_15eed4_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_15eed4"])
+
+
+@pytest.fixture
+def aspx_b75f16_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_b75f16"])
+
+
+@pytest.fixture
+def aspx_d460ca_template_engine():
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_d460ca"])
+
+
+@pytest.fixture
+def py_7f9cd1_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_7f9cd1"])
+
+
+@pytest.fixture
+def py_ca0df6_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_ca0df6"])

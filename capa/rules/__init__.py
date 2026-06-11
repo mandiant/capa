@@ -182,6 +182,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.common.OS,
         capa.features.common.Arch,
         capa.features.common.Format,
+        capa.features.common.ScriptLanguage,
     },
     Scope.FILE: {
         capa.features.common.MatchedRule,
@@ -445,6 +446,8 @@ def parse_feature(key: str):
         return capa.features.common.Namespace
     elif key == "property":
         return capa.features.insn.Property
+    elif key == "language":
+        return capa.features.common.ScriptLanguage
     elif key.startswith("operand[") and key.endswith("].number"):
         index = int(key[len("operand[") : -len("].number")])
         return functools.partial(capa.features.insn.OperandNumber, index)
