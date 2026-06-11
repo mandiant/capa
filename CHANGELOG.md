@@ -133,6 +133,7 @@
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
 - ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
 - tests: add snapshot tests for feature extraction @williballenthin #3069
+- tests: add more tests to exercise ELF OS detection @williballenthin #3098
 
 ### Raw diffs
 - [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
