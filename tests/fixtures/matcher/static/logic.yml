@@ -1,0 +1,712 @@
+- name: and-both-present
+  description: and requires all children to match
+  rules:
+    - name: and-match
+      description: should match because the function contains both mov and number 0x10
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402000: number(0x10)
+  expect:
+    matches:
+      and-match:
+        - 0x402000
+
+- name: or-one-branch-present
+  description: or requires at least one child to match
+  rules:
+    - name: or-match
+      description: should match because one branch of the or is satisfied by number 0x10
+      scopes:
+        static: function
+      features:
+        - or:
+            - api: CreateFileW
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+  expect:
+    matches:
+      or-match:
+        - 0x402000
+
+- name: not-absent-feature
+  description: not succeeds when the child feature is absent
+  rules:
+    - name: not-match
+      description: should match because mov is present and number 0x20 is absent
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - number: 0x20
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches:
+      not-match:
+        - 0x402000
+
+- name: optional-absent-feature
+  description: optional does not prevent a match when the child feature is absent
+  rules:
+    - name: optional-match
+      description: should match even though the optional child is absent
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - optional:
+                - number: 0x30
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches:
+      optional-match:
+        - 0x402000
+
+- name: count-exact
+  description: count matches when the feature appears the exact number of times
+  rules:
+    - name: count-exact-match
+      description: should match because number 0x10 appears exactly twice
+      scopes:
+        static: function
+      features:
+        - count(number(0x10)): 2
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      count-exact-match:
+        - 0x402000
+
+- name: count-range
+  description: count matches when the feature count falls within the range
+  rules:
+    - name: count-range-match
+      description: should match because number 0x10 appears within the allowed range
+      scopes:
+        static: function
+      features:
+        - count(number(0x10)): (1, 2)
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      count-range-match:
+        - 0x402000
+
+- name: count-mismatch
+  description: count does not match when the feature count differs
+  rules:
+    - name: count-negative-no-match
+      description: should not match because number 0x10 does not appear three times
+      scopes:
+        static: function
+      features:
+        - count(number(0x10)): 3
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: number(0x10)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches: {}
+
+- name: count-exact-not-enough
+  description: count does not match when there are fewer occurrences than required
+  rules:
+    - name: count-exact-not-enough
+      scopes:
+        static: function
+      features:
+        - count(number(100)): 2
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+  expect:
+    matches: {}
+
+- name: count-exact-too-many
+  description: count does not match when there are more occurrences than required
+  rules:
+    - name: count-exact-too-many
+      scopes:
+        static: function
+      features:
+        - count(number(100)): 2
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches: {}
+
+- name: count-range-at-lower-bound
+  description: count range matches at the lower bound
+  rules:
+    - name: count-range-lower
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+  expect:
+    matches:
+      count-range-lower:
+        - 0x401000
+
+- name: count-range-at-upper-bound
+  description: count range matches at the upper bound
+  rules:
+    - name: count-range-upper
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches:
+      count-range-upper:
+        - 0x401000
+
+- name: count-range-below-lower-bound
+  description: count range does not match when below the lower bound
+  rules:
+    - name: count-range-below
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+  expect:
+    matches: {}
+
+- name: count-range-above-upper-bound
+  description: count range does not match when above the upper bound
+  rules:
+    - name: count-range-above
+      scopes:
+        static: function
+      features:
+        - count(number(100)): (2, 3)
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+      insn: 0x401006: number(100)
+  expect:
+    matches: {}
+
+- name: count-zero-absent
+  description: count zero matches when the feature is absent
+  rules:
+    - name: count-zero-absent
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): 0
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+  expect:
+    matches:
+      count-zero-absent:
+        - 0x401000
+
+- name: count-zero-present
+  description: count zero does not match when the feature is present
+  rules:
+    - name: count-zero-present
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): 0
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401000: number(100)
+  expect:
+    matches: {}
+
+- name: count-range-with-zero-absent
+  description: count range including zero matches when feature is absent
+  rules:
+    - name: count-range-zero
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): (0, 1)
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+  expect:
+    matches:
+      count-range-zero:
+        - 0x401000
+
+- name: count-range-with-zero-one-present
+  description: count range including zero matches when feature appears once
+  rules:
+    - name: count-range-zero-one
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): (0, 1)
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+  expect:
+    matches:
+      count-range-zero-one:
+        - 0x401000
+
+- name: count-range-with-zero-too-many
+  description: count range including zero does not match when feature appears too many times
+  rules:
+    - name: count-range-zero-many
+      scopes:
+        static: function
+      features:
+        - and:
+            - count(number(100)): (0, 1)
+            - mnemonic: mov
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches: {}
+
+- name: two-or-more-match
+  description: N-or-more matches when at least two children are satisfied
+  rules:
+    - name: two-or-more
+      scopes:
+        static: function
+      features:
+        - or:
+            - and:
+                - number: 1
+                - number: 2
+            - or:
+                - number: 3
+                - 2 or more:
+                    - number: 4
+                    - number: 5
+                    - number: 6
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(5)
+      insn: 0x401002: number(6)
+  expect:
+    matches:
+      two-or-more:
+        - 0x401000
+
+- name: two-or-more-not-enough
+  description: N-or-more does not match when fewer than two children are satisfied
+  rules:
+    - name: two-or-more-fail
+      scopes:
+        static: function
+      features:
+        - or:
+            - and:
+                - number: 1
+                - number: 2
+            - or:
+                - number: 3
+                - 2 or more:
+                    - number: 4
+                    - number: 5
+                    - number: 6
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(6)
+  expect:
+    matches: {}
+
+- name: count-string-match
+  description: count on string features matches the exact occurrence count
+  rules:
+    - name: count-string
+      scopes:
+        static: function
+      features:
+        - count(string(foo)): 2
+  features: |
+    func: 0x401000
+     func: 0x401000: string(foo)
+     bb: 0x401000: basic block
+      insn: 0x401002: string(foo)
+  expect:
+    matches:
+      count-string:
+        - 0x401000
+
+- name: count-string-not-enough
+  description: count on string features does not match with too few occurrences
+  rules:
+    - name: count-string-few
+      scopes:
+        static: function
+      features:
+        - count(string(foo)): 2
+  features: |
+    func: 0x401000
+     func: 0x401000: string(foo)
+  expect:
+    matches: {}
+
+- name: count-string-too-many
+  description: count on string features does not match with too many occurrences
+  rules:
+    - name: count-string-many
+      scopes:
+        static: function
+      features:
+        - count(string(foo)): 2
+  features: |
+    func: 0x401000
+     func: 0x401000: string(foo)
+     bb: 0x401000: basic block
+      insn: 0x401002: string(foo)
+      insn: 0x401004: string(foo)
+  expect:
+    matches: {}
+
+- name: count-api-match
+  description: count on api features matches the exact occurrence count
+  rules:
+    - name: count-api
+      scopes:
+        static: function
+      features:
+        - count(api(CreateFileA)): 1
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFileA)
+  expect:
+    matches:
+      count-api:
+        - 0x401000
+
+- name: count-api-no-match
+  description: count on api features does not match with zero occurrences
+  rules:
+    - name: count-api-zero
+      scopes:
+        static: function
+      features:
+        - count(api(CreateFileA)): 1
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFile)
+  expect:
+    matches: {}
+
+- name: count-offset-match
+  description: count on offset features matches the exact occurrence count
+  rules:
+    - name: count-offset
+      scopes:
+        static: function
+      features:
+        - or:
+            - count(offset(2)): 1
+            - count(offset(0x100)): 2 or more
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: offset(2)
+  expect:
+    matches:
+      count-offset:
+        - 0x401000
+
+- name: count-offset-or-more
+  description: count "2 or more" on offset features matches when threshold is met
+  rules:
+    - name: count-offset-more
+      scopes:
+        static: function
+      features:
+        - or:
+            - count(offset(2)): 1
+            - count(offset(0x100)): 2 or more
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: offset(0x100)
+      insn: 0x401002: offset(0x100)
+      insn: 0x401004: offset(0x100)
+  expect:
+    matches:
+      count-offset-more:
+        - 0x401000
+
+- name: and-one-missing
+  description: and does not match when one operand is absent
+  rules:
+    - name: and-incomplete
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches: {}
+
+- name: or-no-branches-present
+  description: or does not match when no branches are satisfied
+  rules:
+    - name: or-none
+      scopes:
+        static: function
+      features:
+        - or:
+            - api: CreateFileW
+            - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+  expect:
+    matches: {}
+
+- name: not-present-prevents-match
+  description: not blocks a match when the negated feature is present
+  rules:
+    - name: not-blocks
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402000: number(0x10)
+  expect:
+    matches: {}
+
+- name: optional-present-still-matches
+  description: optional does not prevent a match when the child feature is present
+  rules:
+    - name: optional-present
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - optional:
+                - number: 0x10
+  features: |
+    func: 0x402000
+     bb: 0x402000: basic block
+      insn: 0x402000: mnemonic(mov)
+      insn: 0x402002: number(0x10)
+  expect:
+    matches:
+      optional-present:
+        - 0x402000
+
+- name: count-inside-not
+  description: not negates a count that is satisfied
+  rules:
+    - name: count-not
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - count(number(100)): 2
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches: {}
+
+- name: count-inside-not-unsatisfied
+  description: not succeeds when the count is not satisfied
+  rules:
+    - name: count-not-ok
+      scopes:
+        static: function
+      features:
+        - and:
+            - mnemonic: mov
+            - not:
+                - count(number(100)): 3
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: mnemonic(mov)
+      insn: 0x401002: number(100)
+      insn: 0x401004: number(100)
+  expect:
+    matches:
+      count-not-ok:
+        - 0x401000
+
+- name: deeply-nested-logic
+  description: three levels of nesting evaluate correctly
+  rules:
+    - name: deep-nest
+      scopes:
+        static: function
+      features:
+        - and:
+            - or:
+                - and:
+                    - number: 1
+                    - number: 2
+                - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401002: number(2)
+      insn: 0x401004: number(4)
+  expect:
+    matches:
+      deep-nest:
+        - 0x401000
+
+- name: deeply-nested-logic-inner-fail
+  description: deeply nested logic fails when inner and is not satisfied
+  rules:
+    - name: deep-nest-fail
+      scopes:
+        static: function
+      features:
+        - and:
+            - or:
+                - and:
+                    - number: 1
+                    - number: 2
+                - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401004: number(4)
+  expect:
+    matches: {}
+
+- name: three-or-more-at-threshold
+  description: N-or-more matches when exactly N children are satisfied
+  rules:
+    - name: three-or-more
+      scopes:
+        static: function
+      features:
+        - 3 or more:
+            - number: 1
+            - number: 2
+            - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401002: number(2)
+      insn: 0x401004: number(3)
+  expect:
+    matches:
+      three-or-more:
+        - 0x401000
+
+- name: three-or-more-below-threshold
+  description: N-or-more does not match when fewer than N children are satisfied
+  rules:
+    - name: three-or-more-fail
+      scopes:
+        static: function
+      features:
+        - 3 or more:
+            - number: 1
+            - number: 2
+            - number: 3
+            - number: 4
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(1)
+      insn: 0x401002: number(2)
+  expect:
+    matches: {}
