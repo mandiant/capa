@@ -59,7 +59,7 @@ insn: 0x401000: string(key: value)
 
 Dynamic examples:
 ```
-proc: sample.exe (ppid=2456, pid=3052)
+proc: sample.exe (pid=3052)
 thread: 3064
 call: 11: api(LdrGetProcedureAddress)
 call: 11: string(AddVectoredExceptionHandler)

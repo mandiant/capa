@@ -13,7 +13,7 @@
             - api: LdrGetProcedureAddress
             - string: AddVectoredExceptionHandler
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 11: api(LdrGetProcedureAddress)
@@ -38,7 +38,7 @@
             - api: LdrGetDllHandle
             - api: RtlAddVectoredExceptionHandler
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 11: api(LdrGetProcedureAddress)
@@ -60,7 +60,7 @@
             - api: LdrGetProcedureAddress
             - count(api(LdrGetDllHandle)): 2
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 8: api(GetSystemTimeAsFileTime)
       call: 9: api(GetSystemInfo)
@@ -86,7 +86,7 @@
             - api: GetSystemTimeAsFileTime
             - api: LdrGetDllHandle
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 8: api(GetSystemTimeAsFileTime)
       call: 9: api(GetSystemInfo)
@@ -109,7 +109,7 @@
             - api: GetSystemTimeAsFileTime
             - api: LdrGetDllHandle
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 8: api(GetSystemTimeAsFileTime)
       call: 9: api(GetSystemInfo)
@@ -130,7 +130,7 @@
             - api: GetSystemTimeAsFileTime
             - api: RtlAddVectoredExceptionHandler
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 8: api(GetSystemTimeAsFileTime)
       call: 9: api(GetSystemInfo)
@@ -155,7 +155,7 @@
                     - api: LdrGetProcedureAddress
                     - string: AddVectoredExceptionHandler
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 11: api(LdrGetProcedureAddress)
@@ -187,7 +187,7 @@
                     - api: LdrGetProcedureAddress
                     - string: RemoveVectoredExceptionHandler
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 11: api(LdrGetProcedureAddress)
@@ -218,7 +218,7 @@
                     - string: "AddVectoredExceptionHandler"
             - api: RtlAddVectoredExceptionHandler
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 10: string(kernel32.dll)
@@ -247,7 +247,7 @@
                     - api: LdrGetProcedureAddress
                     - string: "AddVectoredExceptionHandler"
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 11: api(LdrGetProcedureAddress)
@@ -295,7 +295,7 @@
         - and:
             - match: linking/runtime-linking/veh
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 10: api(LdrGetDllHandle)
       call: 11: api(LdrGetProcedureAddress)

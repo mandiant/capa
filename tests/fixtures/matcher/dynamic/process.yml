@@ -9,7 +9,7 @@
             - api: CreateFileW
             - api: WriteFile
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 1: api(CreateFileW)
      thread: 3065
@@ -17,7 +17,7 @@
   expect:
     matches:
       process-apis:
-        - "process{ppid:2456,pid:3052}"
+        - "process{pid:3052}"
 
 - name: process-scope-no-match
   description: process scope does not match when features are split across processes
@@ -30,10 +30,10 @@
             - api: CreateFileW
             - api: WriteFile
   features: |
-    proc: sample.exe (ppid=2456, pid=3052)
+    proc: sample.exe (pid=3052)
      thread: 3064
       call: 1: api(CreateFileW)
-    proc: other.exe (ppid=2456, pid=3053)
+    proc: other.exe (pid=3053)
      thread: 4000
       call: 2: api(WriteFile)
   expect:

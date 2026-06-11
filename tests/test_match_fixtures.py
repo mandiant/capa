@@ -46,7 +46,7 @@ from capa.features.address import (
 from capa.features.extractors.base_extractor import SampleHashes, FeatureExtractor
 
 DUMMY_SAMPLE_HASHES = SampleHashes.from_bytes(b"")
-PROCESS_HEADER = re.compile(r"^(?P<name>.+) \(ppid=(?P<ppid>\d+), pid=(?P<pid>\d+)\)$")
+PROCESS_HEADER = re.compile(r"^(?P<name>.+) \((?:ppid=(?P<ppid>\d+), )?pid=(?P<pid>\d+)\)$")
 
 
 @dataclass(frozen=True)
@@ -226,7 +226,8 @@ class DynamicFeatureParser:
         rest = _strip_prefix(line, "proc:")
         header = PROCESS_HEADER.fullmatch(rest)
         if header is not None:
-            process_address = ProcessAddress(ppid=int(header.group("ppid")), pid=int(header.group("pid")))
+            ppid = header.group("ppid")
+            process_address = ProcessAddress(ppid=int(ppid) if ppid is not None else 0, pid=int(header.group("pid")))
             self.ensure_process(process_address, header.group("name"))
             self.current_process = process_address
             self.current_thread = None
