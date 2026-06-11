@@ -618,40 +618,6 @@ def _parse_address(spec: Any) -> Address:
     if isinstance(spec, int):
         return AbsoluteVirtualAddress(spec)
 
-    if isinstance(spec, list):
-        if not spec:
-            raise ValueError(f"unsupported address: {spec!r}")
-
-        kind = spec[0]
-        if kind == "absolute":
-            return AbsoluteVirtualAddress(_coerce_int(spec[1]))
-        if kind == "relative":
-            return RelativeVirtualAddress(_coerce_int(spec[1]))
-        if kind == "file":
-            return FileOffsetAddress(_coerce_int(spec[1]))
-        if kind == "token":
-            return DNTokenAddress(_coerce_int(spec[1]))
-        if kind == "token offset":
-            return DNTokenOffsetAddress(_coerce_int(spec[1]), _coerce_int(spec[2]))
-        if kind == "process":
-            return ProcessAddress(ppid=int(spec[1]), pid=int(spec[2]))
-        if kind == "thread":
-            return ThreadAddress(
-                process=ProcessAddress(ppid=int(spec[1]), pid=int(spec[2])),
-                tid=int(spec[3]),
-            )
-        if kind == "call":
-            return DynamicCallAddress(
-                thread=ThreadAddress(
-                    process=ProcessAddress(ppid=int(spec[1]), pid=int(spec[2])),
-                    tid=int(spec[3]),
-                ),
-                id=int(spec[4]),
-            )
-        if kind == "no address":
-            return NO_ADDRESS
-        raise ValueError(f"unsupported address type: {kind}")
-
     if not isinstance(spec, str):
         raise ValueError(f"unsupported address: {spec!r}")
 

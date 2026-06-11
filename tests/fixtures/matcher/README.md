@@ -67,14 +67,8 @@ call: 11: string(AddVectoredExceptionHandler)
 
 `-> <addr>` overrides the feature location. Feature text may contain `: `. Dynamic call IDs must be unique within a test and can be used as shorthand in `expect.matches`.
 
-## Supported feature atoms
-
-`basic block`, `api(...)`, `arch(...)`, `bytes(...)`, `characteristic(...)`, `class(...)`, `export(...)`, `format(...)`, `function-name(...)`, `import(...)`, `match(...)`, `mnemonic(...)`, `namespace(...)`, `number(...)`, `offset(...)`, `os(...)`, `section(...)`, `string(...)`, `substring(...)`, `operand[n].number(...)`, `operand[n].offset(...)`, `property(...)`, `property/read(...)`, `property/write(...)`.
-
 ## Address syntax
 
 String forms: `0x401000`, `base address+0x100`, `file+0x20`, `token(0x1234)`, `token(0x1234)+0x10`, `global`, `process{pid:3052}`, `process{pid:3052,tid:3064}`, `process{pid:3052,tid:3064,call:11}` (with optional `ppid:`).
-
-Tagged YAML arrays: `[absolute, 0x401000]`, `[relative, 0x100]`, `[file, 0x20]`, `[token, 0x1234]`, `[token offset, 0x1234, 0x10]`, `[process, 2456, 3052]`, `[thread, 2456, 3052, 3064]`, `[call, 2456, 3052, 3064, 11]`, `[no address]`.
 
 Dynamic tests may use a bare integer call ID in `expect.matches` when that call ID is unique within the test.
