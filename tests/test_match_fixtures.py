@@ -142,12 +142,8 @@ class StaticFeatureParser:
         if self.current_function is None or self.current_basic_block is None:
             raise ValueError(f"instruction line without current basic block: {line}")
 
-        rest, target_text = _split_target(_strip_prefix(line, "insn:"))
-        instruction_address, feature_text = _split_instruction_feature_line(
-            rest,
-            self.current_function,
-            line,
-        )
+        addr_text, feature_text, target_text = _split_feature_line(_strip_prefix(line, "insn:"))
+        instruction_address = _parse_static_address(addr_text)
 
         feature_address = _parse_static_address(target_text) if target_text is not None else instruction_address
         basic_block = self.ensure_basic_block(self.current_function, self.current_basic_block)
@@ -510,30 +506,6 @@ def _split_feature_line(text: str) -> tuple[str, str, str | None]:
         raise ValueError(f"expected '<scope>: <feature>': {text}")
     return scope_text, feature_text, target
 
-
-def _split_instruction_feature_line(
-    text: str,
-    current_function: Address,
-    line: str,
-) -> tuple[Address, str]:
-    addr1_text, separator, remainder = text.partition(": ")
-    if not separator:
-        raise ValueError(f"unsupported instruction feature line: {line}")
-
-    addr2_text, separator, feature_text = remainder.partition(": ")
-    if separator:
-        try:
-            function_address = _parse_static_address(addr1_text)
-            instruction_address = _parse_static_address(addr2_text)
-        except ValueError:
-            return _parse_static_address(addr1_text), remainder
-
-        if function_address != current_function:
-            raise ValueError(f"instruction line changed function without a function header: {line}")
-
-        return instruction_address, feature_text
-
-    return _parse_static_address(addr1_text), remainder
 
 
 def _split_target(text: str) -> tuple[str, str | None]:
