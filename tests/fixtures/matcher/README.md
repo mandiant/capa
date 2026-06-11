@@ -48,21 +48,21 @@ Line prefixes for dynamic tests: `global:`, `file:`, `proc:`, `thread:`, `call:`
 Static examples:
 ```
 global: global: os(windows)
-file: 0x402345: characteristic(embedded pe)
-func: 0x401000
-func: 0x401000: string(hello world)
-bb: 0x401000: basic block
-insn: 0x401000: mnemonic(mov)
-insn: 0x401000: offset(0x402000) -> 0x402000
-insn: 0x401000: string(key: value)
+  file: 0x402345: characteristic(embedded pe)
+    func: 0x401000
+      func: 0x401000: string(hello world)
+      bb: 0x401000: basic block
+        insn: 0x401000: mnemonic(mov)
+        insn: 0x401000: offset(0x402000) -> 0x402000
+        insn: 0x401000: string(key: value)
 ```
 
 Dynamic examples:
 ```
 proc: sample.exe (pid=3052)
-thread: 3064
-call: 11: api(LdrGetProcedureAddress)
-call: 11: string(AddVectoredExceptionHandler)
+  thread: 3064
+    call: 11: api(LdrGetProcedureAddress)
+    call: 11: string(AddVectoredExceptionHandler)
 ```
 
 `-> <addr>` overrides the feature location. Feature text may contain `: `. Dynamic call IDs must be unique within a test and can be used as shorthand in `expect.matches`.

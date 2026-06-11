@@ -507,7 +507,6 @@ def _split_feature_line(text: str) -> tuple[str, str, str | None]:
     return scope_text, feature_text, target
 
 
-
 def _split_target(text: str) -> tuple[str, str | None]:
     if " -> " not in text:
         return text, None
