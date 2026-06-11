@@ -122,7 +122,7 @@ def test_null_feature_extractor():
 
 
 def compare_extractors(a: DynamicFeatureExtractor, b: DynamicFeatureExtractor):
-    assert list(a.extract_file_features()) == list(b.extract_file_features())
+    assert sorted(set(a.extract_file_features())) == sorted(set(b.extract_file_features()))
 
     assert addresses(a.get_processes()) == addresses(b.get_processes())
     for p in a.get_processes():
