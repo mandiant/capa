@@ -45,6 +45,7 @@ from rich.progress import (
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
     FORMAT_PE,
+    FORMAT_ELF,
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
@@ -60,16 +61,16 @@ from capa.features.common import (
 )
 from capa.features.extractors.script import EXT_CS, EXT_ASPX, EXT_HTML
 
-EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
-EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_SHELLCODE_32 = (".sc32", ".raw32")
+EXTENSIONS_SHELLCODE_64 = (".sc64", ".raw64")
 # CAPE (.json, .json_, .json.gz)
 # DRAKVUF (.log, .log.gz)
 # VMRay (.zip)
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log", ".log.gz", ".zip")
-EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
-EXTENSIONS_ELF = "elf_"
-EXTENSIONS_FREEZE = "frz"
-EXTENSIONS_BINJA_DB = "bndb"
+EXTENSIONS_DYNAMIC = (".json", ".json_", ".json.gz", ".log", ".log.gz", ".zip")
+EXTENSIONS_BINEXPORT2 = (".BinExport", ".BinExport2")
+EXTENSIONS_ELF = ".elf_"
+EXTENSIONS_FREEZE = ".frz"
+EXTENSIONS_BINJA_DB = ".bndb"
 EXTENSIONS_SUPPORTED_SCRIPTS = EXT_ASPX + EXT_CS + EXT_HTML
 
 logger = logging.getLogger("capa")
@@ -200,9 +201,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
     except gzip.BadGzipFile:
         with jsonl_path.open(mode="rb") as f:
             line = next(iter(f))
-    finally:
-        line = msgspec.json.decode(line.decode(errors="ignore"))
-    return line
+    return msgspec.json.decode(line.decode(errors="ignore"))
 
 
 def get_format_from_report(sample: Path) -> str:
@@ -240,6 +239,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
         format_ = FORMAT_BINEXPORT2
+    elif sample.name.endswith(EXTENSIONS_ELF):
+        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_BINJA_DB):
         format_ = FORMAT_BINJA_DB
     elif sample.name.endswith(EXTENSIONS_SUPPORTED_SCRIPTS):

@@ -140,7 +140,7 @@ class Scopes:
             raise ValueError("invalid rules class. at least one scope must be specified")
 
     @classmethod
-    def from_dict(self, scopes: dict[str, str]) -> "Scopes":
+    def from_dict(cls, scopes: dict[str, str]) -> "Scopes":
         # make local copy so we don't make changes outside of this routine.
         # we'll use the value None to indicate the scope is not supported.
         scopes_: dict[str, Optional[str]] = dict(scopes)
@@ -170,7 +170,7 @@ class Scopes:
         if scopes_["dynamic"] and scopes_["dynamic"] not in DYNAMIC_SCOPES:
             raise InvalidRule(f"{scopes_['dynamic']} is not a valid dynamic scope")
 
-        return Scopes(
+        return cls(
             static=Scope(scopes_["static"]) if scopes_["static"] else None,
             dynamic=Scope(scopes_["dynamic"]) if scopes_["dynamic"] else None,
         )
@@ -2092,11 +2092,15 @@ class RuleSet:
                 if new_features:
                     new_candidates: list[str] = []
                     for new_feature in new_features:
-                        new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
+                        new_candidates.extend(
+                            rule_name
+                            for rule_name in feature_index.rules_by_feature.get(new_feature, ())
+                            if rule_name not in candidate_rule_names
+                        )
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
-                        candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
+                        candidate_rules.extend([self.rules[rule_name] for rule_name in set(new_candidates)])
                         RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
                         candidate_rules.reverse()
 
