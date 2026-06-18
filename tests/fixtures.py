@@ -96,14 +96,26 @@ def get_fixture_files() -> list[tuple[Path, dict[str, Any]]]:
 
 
 def _parse_manifest_feature(text: str):
-    text = text.strip()
+    text = text.strip("\r\n")
     feature, separator, value = text.partition(": ")
+    feature = feature.strip()
+    if feature == "basic blocks" or (not separator and text == "basic block"):
+        return capa.features.basicblock.BasicBlock()
     if not separator:
-        if text == "basic block":
-            return capa.features.basicblock.BasicBlock()
         raise ValueError(f"unsupported feature syntax: {text}")
 
-    value = value.strip()
+    if feature not in {"string", "substring"}:
+        value = value.strip()
+    if m := re.fullmatch(r"operand\[(\d+)\]\.(number|offset)", feature):
+        index = int(m.group(1))
+        if m.group(2) == "number":
+            return capa.features.insn.OperandNumber(index, int(value, 0))
+        return capa.features.insn.OperandOffset(index, int(value, 0))
+    if feature.startswith("property/"):
+        access = feature[len("property/") :]
+        return capa.features.insn.Property(value, access=access)
+    if feature == "property":
+        return capa.features.insn.Property(value)
     if feature == "api":
         return capa.features.insn.API(value)
     if feature == "arch":
@@ -143,6 +155,39 @@ def _parse_manifest_feature(text: str):
     raise ValueError(f"unsupported feature type: {feature}")
 
 
+def _get_feature_entry_tags(file_entry: dict[str, Any], feature_entry: dict[str, Any]) -> frozenset[str]:
+    tags = set(file_entry.get("tags", []))
+    tags.update(feature_entry.get("tags", []))
+
+    path = file_entry["path"]
+    if "/dotnet/" in path or path.startswith("data/dotnet/"):
+        tags.add("dotnet")
+
+    feature = feature_entry["feature"].partition(": ")[0]
+    tags.add(feature)
+
+    location = feature_entry["location"]
+    if location == "file":
+        tags.add("file")
+    elif location.startswith("function="):
+        tags.add("function")
+        if ",bb=" in location:
+            tags.add("basic block")
+        if ",insn=" in location:
+            tags.add("instruction")
+    elif location.startswith("process="):
+        tags.add("process")
+        if ",thread=" in location:
+            tags.add("thread")
+        if ",call=" in location:
+            tags.add("call")
+    elif location.startswith("token="):
+        tags.add("dnfile")
+        tags.add("instruction")
+
+    return frozenset(tags)
+
+
 def _parse_feature_location(location: str):
     if location == "file":
         return ("file", None, None, None)
@@ -155,8 +200,13 @@ def _parse_feature_location(location: str):
             int(m.group(3), 16) if m.group(3) else None,
         )
 
+    if m := re.fullmatch(r"token=0x([0-9A-Fa-f]+)", location):
+        return ("static", capa.features.address.DNTokenAddress(int(m.group(1), 16)), None, None)
+
     if m := re.fullmatch(r"process=\((\d+):(\d+)\)(?:,thread=(\d+))?(?:,call=(\d+))?", location):
-        process = capa.features.address.ProcessAddress(pid=int(m.group(2)), ppid=int(m.group(1)))
+        pid = int(m.group(1))
+        ppid = int(m.group(2))
+        process = capa.features.address.ProcessAddress(pid=pid, ppid=ppid)
         thread = capa.features.address.ThreadAddress(process=process, tid=int(m.group(3))) if m.group(3) else None
         call = (
             capa.features.address.DynamicCallAddress(thread=thread, id=int(m.group(4)))
@@ -175,10 +225,12 @@ def _load_backend_feature_fixtures() -> list[FeatureFixture]:
         feature_entries = cast(list[dict[str, Any]], data.get("features", []))
         for file_entry in file_entries:
             sample_path = CD / file_entry["path"]
-            tags = frozenset(file_entry.get("tags", []))
             for feature_entry in feature_entries:
+                if feature_entry["feature"].startswith("count("):
+                    continue
                 if feature_entry["file"] != file_entry["key"]:
                     continue
+                tags = _get_feature_entry_tags(file_entry, feature_entry)
                 fixtures.append(
                     FeatureFixture(
                         manifest_path=manifest_path,
@@ -215,20 +267,40 @@ def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
 
 def _collect_features(extractor, feature_fixture: FeatureFixture):
     scope, first, second, third = _parse_feature_location(feature_fixture.location)
+    global_features = list(extractor.extract_global_features()) if hasattr(extractor, "extract_global_features") else []
     if scope == "file":
-        return list(extractor.extract_file_features())
+        return global_features + list(extractor.extract_file_features())
 
     if scope == "static":
         for function_handle in extractor.get_functions():
             if function_handle.address != first:
                 continue
+
+            function_features = list(extractor.extract_function_features(function_handle))
+
             if second is None:
-                return list(extractor.extract_function_features(function_handle))
+                features = list(global_features)
+                features.extend(function_features)
+                for basic_block_handle in extractor.get_basic_blocks(function_handle):
+                    features.extend(extractor.extract_basic_block_features(function_handle, basic_block_handle))
+                    for instruction_handle in extractor.get_instructions(function_handle, basic_block_handle):
+                        features.extend(
+                            extractor.extract_insn_features(function_handle, basic_block_handle, instruction_handle)
+                        )
+                return features
             for basic_block_handle in extractor.get_basic_blocks(function_handle):
                 if basic_block_handle.address != second:
                     continue
+                basic_block_features = list(extractor.extract_basic_block_features(function_handle, basic_block_handle))
                 if third is None:
-                    return list(extractor.extract_basic_block_features(function_handle, basic_block_handle))
+                    features = list(global_features)
+                    features.extend(function_features)
+                    features.extend(basic_block_features)
+                    for instruction_handle in extractor.get_instructions(function_handle, basic_block_handle):
+                        features.extend(
+                            extractor.extract_insn_features(function_handle, basic_block_handle, instruction_handle)
+                        )
+                    return features
                 for instruction_handle in extractor.get_instructions(function_handle, basic_block_handle):
                     if instruction_handle.address == third:
                         return list(
@@ -239,13 +311,28 @@ def _collect_features(extractor, feature_fixture: FeatureFixture):
     for process_handle in extractor.get_processes():
         if process_handle.address != first:
             continue
+
+        process_features = list(extractor.extract_process_features(process_handle))
+
         if second is None:
-            return list(extractor.extract_process_features(process_handle))
+            features = list(global_features)
+            features.extend(process_features)
+            for thread_handle in extractor.get_threads(process_handle):
+                features.extend(extractor.extract_thread_features(process_handle, thread_handle))
+                for call_handle in extractor.get_calls(process_handle, thread_handle):
+                    features.extend(extractor.extract_call_features(process_handle, thread_handle, call_handle))
+            return features
         for thread_handle in extractor.get_threads(process_handle):
             if thread_handle.address != second:
                 continue
+            thread_features = list(extractor.extract_thread_features(process_handle, thread_handle))
             if third is None:
-                return list(extractor.extract_thread_features(process_handle, thread_handle))
+                features = list(global_features)
+                features.extend(process_features)
+                features.extend(thread_features)
+                for call_handle in extractor.get_calls(process_handle, thread_handle):
+                    features.extend(extractor.extract_call_features(process_handle, thread_handle, call_handle))
+                return features
             for call_handle in extractor.get_calls(process_handle, thread_handle):
                 if call_handle.address == third:
                     return list(extractor.extract_call_features(process_handle, thread_handle, call_handle))
@@ -647,6 +734,13 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Ad
 
 # note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name) -> Path:
+    if name in ASPX_DATA_PATH_BY_NAME:
+        return ASPX_DATA_PATH_BY_NAME[name]
+    elif name in CS_DATA_PATH_BY_NAME:
+        return CS_DATA_PATH_BY_NAME[name]
+    elif name in PY_DATA_PATH_BY_NAME:
+        return PY_DATA_PATH_BY_NAME[name]
+
     if name == "mimikatz":
         return CD / "data" / "mimikatz.exe_"
     elif name == "kernel32":

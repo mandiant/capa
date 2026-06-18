@@ -109,8 +109,7 @@ BINDINGS: dict[str, QueryBinding] = {
                     "function_call_name": """
                     (invocation_expression
                         function: [
-                            (member_access_expression
-                                name: (identifier) @function-call)
+                            (member_access_expression) @function-call
                             (identifier) @function-call
                         ])
                     """,
@@ -120,8 +119,7 @@ BINDINGS: dict[str, QueryBinding] = {
                     """,
                     # SomeClass.CONSTANT
                     "imported_constant_name": """
-                    (member_access_expression
-                        name: (identifier) @constant)
+                    (member_access_expression) @constant
                     """,
                     "string_literal": """
                     (string_literal) @string-literal
@@ -188,8 +186,7 @@ BINDINGS: dict[str, QueryBinding] = {
                     """,
                     # obj.CONSTANT
                     "imported_constant_name": """
-                    (attribute
-                        attribute: (identifier) @constant)
+                    (attribute) @constant
                     """,
                     "string_literal": """
                     (string) @string-literal

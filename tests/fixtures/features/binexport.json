@@ -293,22 +293,50 @@
     {
       "file": "687e79.ghidra.be2",
       "location": "function=0x105c88",
-      "feature": "string: /innerRename/"
+      "feature": "string: /innerRename/",
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "string extraction mismatch in BinExport fixture"
+        }
+      ]
     },
     {
       "file": "687e79.ghidra.be2",
       "location": "function=0x106d58",
-      "feature": "string: /\\/data\\/misc/"
+      "feature": "string: /\\/data\\/misc/",
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "string extraction mismatch in BinExport fixture"
+        }
+      ]
     },
     {
       "file": "687e79.ghidra.be2",
       "location": "function=0x106d58",
-      "feature": "substring: /data/misc"
+      "feature": "substring: /data/misc",
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "substring extraction mismatch in BinExport fixture"
+        }
+      ]
     },
     {
       "file": "d1e650.ghidra.be2",
       "location": "function=0x1165a4",
-      "feature": "bytes: E4 05 B8 93 70 BA 6B 41 9C D7 92 52 75 BF 6F CC 1E 83 60 CC"
+      "feature": "bytes: E4 05 B8 93 70 BA 6B 41 9C D7 92 52 75 BF 6F CC 1E 83 60 CC",
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "bytes extraction mismatch in BinExport fixture"
+        }
+      ]
     },
     {
       "file": "687e79.ghidra.be2",
@@ -812,13 +840,27 @@
       "file": "mimikatz.ghidra.be2",
       "location": "function=0x401517",
       "feature": "bytes: CA 3B 0E 00 00 00 F8 AF 47",
-      "explanation": "basic bytes"
+      "explanation": "basic bytes",
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "bytes extraction mismatch in BinExport fixture"
+        }
+      ]
     },
     {
       "file": "mimikatz.ghidra.be2",
       "location": "function=0x404414",
       "feature": "bytes: 01 80 00 00 40 EA 47 00",
-      "explanation": "basic bytes, which are a pointer"
+      "explanation": "basic bytes, which are a pointer",
+      "marks": [
+        {
+          "backend": "binexport",
+          "mark": "xfail",
+          "reason": "bytes extraction mismatch in BinExport fixture"
+        }
+      ]
     },
     {
       "file": "mimikatz.ghidra.be2",

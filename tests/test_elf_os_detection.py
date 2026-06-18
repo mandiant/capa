@@ -44,16 +44,26 @@ def _generate_algorithm_params():
     for fixture in FIXTURES:
         path = fixture["path"]
         short_id = path[:8]
+        marks = []
+        if not (CD / "data" / path).exists():
+            marks.append(pytest.mark.skip(reason="sample fixture is not present"))
         algorithms = fixture.get("algorithms", {})
         for alg_name in ALGORITHM_FUNCTIONS:
             expected = algorithms.get(alg_name)
             test_id = f"{short_id}-{alg_name}"
-            params.append(pytest.param(path, alg_name, expected, id=test_id))
+            params.append(pytest.param(path, alg_name, expected, id=test_id, marks=marks))
     return params
 
 
 def _generate_detection_params():
-    return [pytest.param(f["path"], f["os"], id=f["path"][:8]) for f in FIXTURES]
+    params = []
+    for fixture in FIXTURES:
+        path = fixture["path"]
+        marks = []
+        if not (CD / "data" / path).exists():
+            marks.append(pytest.mark.skip(reason="sample fixture is not present"))
+        params.append(pytest.param(path, fixture["os"], id=path[:8], marks=marks))
+    return params
 
 
 @pytest.mark.parametrize("path,algorithm,expected", _generate_algorithm_params())
