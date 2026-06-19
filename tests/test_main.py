@@ -17,9 +17,10 @@ import json
 import textwrap
 from pathlib import Path
 
+import fixtures
+
 import capa.main
 import capa.rules
-from tests import fixtures
 
 
 def test_main():

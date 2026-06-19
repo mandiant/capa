@@ -19,8 +19,7 @@ from typing import Any
 from pathlib import Path
 
 import pytest
-
-from tests import fixtures
+import fixtures
 
 CD = Path(__file__).resolve().parent
 from google.protobuf.json_format import ParseDict
