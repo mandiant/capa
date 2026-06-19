@@ -15,8 +15,7 @@ import os
 import importlib.util
 
 import pytest
-
-from tests import fixtures
+import fixtures
 
 ghidra_present = importlib.util.find_spec("pyghidra") is not None and "GHIDRA_INSTALL_DIR" in os.environ
 

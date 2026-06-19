@@ -15,9 +15,9 @@
 from typing import List, Tuple
 
 import pytest
+from fixtures import parametrize, get_ts_extractor, do_test_feature_presence
 from tree_sitter import Node, Tree
 
-from tests.fixtures import parametrize, get_ts_extractor, do_test_feature_presence
 from capa.features.insn import API, Number, Property
 from capa.features.common import (
     OS,

@@ -15,9 +15,10 @@
 import io
 import zlib
 
+import fixtures
+
 import capa.features.extractors.elf
 import capa.features.extractors.common
-from tests import fixtures
 from capa.features.common import OS_LINUX, OS_WINDOWS
 
 

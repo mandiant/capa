@@ -16,6 +16,8 @@ import io
 import textwrap
 from unittest.mock import Mock
 
+import fixtures
+
 import capa.rules
 import capa.render.utils
 import capa.features.file
@@ -28,7 +30,6 @@ import capa.features.address
 import capa.render.result_document
 import capa.render.result_document as rd
 import capa.features.freeze.features
-from tests import fixtures
 from capa.render.utils import Console
 
 

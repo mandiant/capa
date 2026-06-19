@@ -16,9 +16,9 @@ from pathlib import Path
 
 import dnfile
 import pytest
+import fixtures
 from dncil.clr.token import Token
 
-from tests import fixtures
 from capa.features.common import Format
 from capa.features.extractors.dnfile.insn import get_callee
 from capa.features.extractors.dnfile.helpers import get_dotnet_table_row, calculate_dotnet_token_value

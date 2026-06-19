@@ -248,6 +248,8 @@ def _load_backend_feature_fixtures() -> list[FeatureFixture]:
 
 BACKEND_FEATURE_FIXTURES = _load_backend_feature_fixtures()
 
+PMA1601 = CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
+
 
 def parametrize_backend_feature_fixtures(policy: BackendFeaturePolicy):
     selected = [
