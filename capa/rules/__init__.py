@@ -2216,6 +2216,8 @@ def get_rules(
       on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
       enable_cache: enable loading of a cached ruleset (default: True)
     """
+    import capa.rules.cache
+
     if cache_dir is None:
         cache_dir = capa.rules.cache.get_default_cache_directory()
     # rule_paths may contain directory paths,
@@ -2253,6 +2255,12 @@ def get_rules(
 
     ruleset = RuleSet(rules)
 
-    capa.rules.cache.cache_ruleset(cache_dir, ruleset)
+    if enable_cache:
+        import capa.rules.cache
+
+        try:
+            capa.rules.cache.cache_ruleset(cache_dir, ruleset)
+        except OSError:
+            logger.debug("skipping rules cache write to %s", cache_dir)
 
     return ruleset
