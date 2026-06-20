@@ -129,6 +129,9 @@ version = {attr = "capa.version.__version__"}
 include = ["capa*"]
 namespaces = false
 
+[tool.setuptools.package-data]
+"capa.features.extractors.ts.signatures" = ["*.json"]
+
 [project.optional-dependencies]
 dev = [
     # Dev and build dependencies are not relaxed because
