@@ -1,0 +1,33 @@
+- name: hex-number-with-e
+  description: hex literals containing the letter e are parsed as integers, not floats
+  rules:
+    - name: hex-e-match
+      scopes:
+        static: function
+      features:
+        - number: 0x1e
+  features: |
+    func: 0x600000
+     bb: 0x600000: basic block
+      insn: 0x600000: number(0x1e)
+  expect:
+    matches:
+      hex-e-match:
+        - 0x600000
+
+- name: colon-in-feature-text
+  description: feature text containing a colon is parsed correctly
+  rules:
+    - name: colon-string-match
+      scopes:
+        static: function
+      features:
+        - string: "key: value"
+  features: |
+    func: 0x600000
+     bb: 0x600000: basic block
+      insn: 0x600001: string(key: value)
+  expect:
+    matches:
+      colon-string-match:
+        - 0x600000

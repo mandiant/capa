@@ -1,0 +1,122 @@
+- name: match-rule-dependency
+  description: a rule using match can depend on another rule's result
+  rules:
+    - name: base rule
+      scopes:
+        static: function
+      features:
+        - number: 100
+    - name: dependent rule
+      scopes:
+        static: function
+      features:
+        - match: base rule
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: number(100)
+  expect:
+    matches:
+      base rule:
+        - 0x401000
+      dependent rule:
+        - 0x401000
+
+- name: namespace-match-direct
+  description: match on a namespace prefix matches rules in that namespace
+  rules:
+    - name: CreateFile API
+      namespace: file/create/CreateFile
+      scopes:
+        static: function
+      features:
+        - api: CreateFile
+    - name: file-create
+      scopes:
+        static: function
+      features:
+        - match: file/create
+    - name: filesystem-any
+      scopes:
+        static: function
+      features:
+        - match: file
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFile)
+  expect:
+    matches:
+      CreateFile API:
+        - 0x401000
+      file-create:
+        - 0x401000
+      filesystem-any:
+        - 0x401000
+
+- name: namespace-match-intermediate-prefix
+  description: namespace match at an intermediate level matches rules below it
+  rules:
+    - name: kernel32 CreateFile
+      namespace: file/create/kernel32
+      scopes:
+        static: function
+      features:
+        - api: CreateFile
+    - name: ntdll NtCreateFile
+      namespace: file/create/ntdll
+      scopes:
+        static: function
+      features:
+        - api: NtCreateFile
+    - name: any-file-create
+      scopes:
+        static: function
+      features:
+        - match: file/create
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(CreateFile)
+  expect:
+    matches:
+      kernel32 CreateFile:
+        - 0x401000
+      any-file-create:
+        - 0x401000
+
+- name: namespace-match-sibling-no-match
+  description: namespace match does not match sibling namespaces
+  rules:
+    - name: CreateFile API
+      namespace: file/create/CreateFile
+      scopes:
+        static: function
+      features:
+        - api: CreateFile
+    - name: WriteFile API
+      namespace: file/write
+      scopes:
+        static: function
+      features:
+        - api: WriteFile
+    - name: file-create
+      scopes:
+        static: function
+      features:
+        - match: file/create
+    - name: filesystem-any
+      scopes:
+        static: function
+      features:
+        - match: file
+  features: |
+    func: 0x401000
+     bb: 0x401000: basic block
+      insn: 0x401000: api(WriteFile)
+  expect:
+    matches:
+      WriteFile API:
+        - 0x401000
+      filesystem-any:
+        - 0x401000

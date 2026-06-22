@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- freeze: add `--reproducible` flag that zeros dynamic header metadata
 
 ### Breaking Changes
 
@@ -124,12 +125,15 @@
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
+- ida: display file-scope feature addresses (`file:0x...`) in rule generator tree and safely handle file-offset navigation/filtering @vee1e #3009
 
 ### Development
 - tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
 - ci: update GitHub Actions to support Node.js 24 (deprecate Node.js 20) @mr-tz #2984
+- tests: add snapshot tests for feature extraction @williballenthin #3069
+- tests: add more tests to exercise ELF OS detection @williballenthin #3098
 
 ### Raw diffs
 - [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
@@ -145,6 +149,8 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 - vmray: extract number features from whitelisted void_ptr parameters (hKey, hKeyRoot) @adeboyedn #2835
 
 ### Breaking Changes
+
+- deprecate RelativeVirtualAddress @corkamig #3072
 
 ### New Rules (26)
 
@@ -205,6 +211,7 @@ This release includes Ghidra PyGhidra support, performance improvements, depende
 
 ### Development
 
+- tests: add data-driven rule matcher fixtures with a show-features-like DSL and authoring documentation #2985
 - doc: document that default output shows top-level matches only; -v/-vv show nested matches @devs6186 #1410
 - doc: fix typo in usage.md, add documentation links to README @devs6186 #2274
 - doc: add table comparing ways to consume capa output (CLI, IDA, Ghidra, dynamic sandbox, web) @devs6186 #2273
@@ -275,7 +282,7 @@ Additionally a Binary Ninja bug has been fixed. Released binaries now include AR
 
 ### Bug Fixes
 
-- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714 
+- binja: fix a crash during feature extraction when the MLIL is unavailable @xusheng6 #2714
 
 ### capa Explorer Web
 

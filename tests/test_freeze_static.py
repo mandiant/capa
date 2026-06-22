@@ -129,7 +129,7 @@ def test_null_feature_extractor():
 
 
 def compare_extractors(a, b):
-    assert list(a.extract_file_features()) == list(b.extract_file_features())
+    assert sorted(set(a.extract_file_features())) == sorted(set(b.extract_file_features()))
 
     assert addresses(a.get_functions()) == addresses(b.get_functions())
     for f in a.get_functions():

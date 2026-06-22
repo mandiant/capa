@@ -1,0 +1,274 @@
+- name: exact-string
+  description: string feature matches only the exact value
+  rules:
+    - name: exact-string-match
+      scopes:
+        static: function
+      features:
+        - string: hello world
+  features: |
+    func: 0x500000
+     func: 0x500000: string(hello world)
+  expect:
+    matches:
+      exact-string-match:
+        - 0x500000
+
+- name: substring
+  description: substring feature matches when the value appears within a string
+  rules:
+    - name: substring-match
+      scopes:
+        static: function
+      features:
+        - substring: abc
+  features: |
+    func: 0x500000
+     func: 0x500000: string(zabczz)
+  expect:
+    matches:
+      substring-match:
+        - 0x500000
+
+- name: regex-unanchored
+  description: regex feature matches when the pattern appears anywhere in a string
+  rules:
+    - name: regex-match
+      scopes:
+        static: function
+      features:
+        - string: /bbbb/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches:
+      regex-match:
+        - 0x500000
+
+- name: regex-case-insensitive
+  description: regex /i flag enables case-insensitive matching
+  rules:
+    - name: regex-ignorecase-match
+      scopes:
+        static: function
+      features:
+        - string: /BBBB/i
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches:
+      regex-ignorecase-match:
+        - 0x500000
+
+- name: regex-anchored-no-match
+  description: anchored regex does not match when the string does not start with the pattern
+  rules:
+    - name: regex-anchor-no-match
+      scopes:
+        static: function
+      features:
+        - string: /^bbbb/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches: {}
+
+- name: substring-no-match
+  description: substring does not match when the value is not contained in any string
+  rules:
+    - name: substring-no-match
+      scopes:
+        static: function
+      features:
+        - substring: abc
+  features: |
+    func: 0x500000
+     func: 0x500000: string(aaaa)
+  expect:
+    matches: {}
+
+- name: substring-exact
+  description: substring matches when the string is exactly the substring value
+  rules:
+    - name: substring-exact
+      scopes:
+        static: function
+      features:
+        - substring: abc
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abc)
+  expect:
+    matches:
+      substring-exact:
+        - 0x500000
+
+- name: substring-prefix
+  description: substring matches when it appears at the start of a string
+  rules:
+    - name: substring-prefix
+      scopes:
+        static: function
+      features:
+        - substring: abc
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abc222)
+  expect:
+    matches:
+      substring-prefix:
+        - 0x500000
+
+- name: substring-suffix
+  description: substring matches when it appears at the end of a string
+  rules:
+    - name: substring-suffix
+      scopes:
+        static: function
+      features:
+        - substring: abc
+  features: |
+    func: 0x500000
+     func: 0x500000: string(111abc)
+  expect:
+    matches:
+      substring-suffix:
+        - 0x500000
+
+- name: regex-no-match-wrong-type
+  description: regex does not match when only non-string features are present
+  rules:
+    - name: regex-wrong-type
+      scopes:
+        static: function
+      features:
+        - string: /.*bbbb.*/
+  features: |
+    func: 0x500000
+     bb: 0x500000: basic block
+      insn: 0x500000: number(100)
+  expect:
+    matches: {}
+
+- name: regex-no-match-wrong-value
+  description: regex does not match when the string does not contain the pattern
+  rules:
+    - name: regex-wrong-value
+      scopes:
+        static: function
+      features:
+        - string: /.*bbbb.*/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(aaaa)
+  expect:
+    matches: {}
+
+- name: regex-no-match-case-sensitive
+  description: regex without /i flag does not match different-case strings
+  rules:
+    - name: regex-case-sensitive
+      scopes:
+        static: function
+      features:
+        - string: /.*bbbb.*/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(aBBBBa)
+  expect:
+    matches: {}
+
+- name: regex-explicit-wildcards
+  description: regex with explicit .* wildcards matches the same as implied wildcards
+  rules:
+    - name: regex-explicit
+      scopes:
+        static: function
+      features:
+        - string: /.*bbbb.*/
+    - name: regex-implied
+      scopes:
+        static: function
+      features:
+        - string: /bbbb/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(abbbba)
+  expect:
+    matches:
+      regex-explicit:
+        - 0x500000
+      regex-implied:
+        - 0x500000
+
+- name: regex-complex-backslash
+  description: regex with escaped backslashes and spaces matches correctly
+  rules:
+    - name: regex-backslash
+      scopes:
+        static: function
+      features:
+        - or:
+            - string: /.*HARDWARE\\Key\\key with spaces\\.*/i
+  features: |
+    func: 0x500000
+     func: 0x500000: string(Hardware\Key\key with spaces\some value)
+  expect:
+    matches:
+      regex-backslash:
+        - 0x500000
+
+- name: regex-numeric-string
+  description: regex matches numeric string values correctly
+  rules:
+    - name: regex-numeric
+      scopes:
+        static: function
+      features:
+        - or:
+            - string: /123/
+            - string: /0x123/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(123)
+  expect:
+    matches:
+      regex-numeric:
+        - 0x500000
+
+- name: regex-hex-numeric-string
+  description: regex matches hex-prefixed numeric string values
+  rules:
+    - name: regex-hex-numeric
+      scopes:
+        static: function
+      features:
+        - or:
+            - string: /123/
+            - string: /0x123/
+  features: |
+    func: 0x500000
+     func: 0x500000: string(0x123)
+  expect:
+    matches:
+      regex-hex-numeric:
+        - 0x500000
+
+- name: regex-ignorecase-explicit-wildcards
+  description: regex /i flag with explicit wildcards matches case-insensitively
+  rules:
+    - name: regex-ignorecase-explicit
+      scopes:
+        static: function
+      features:
+        - string: /.*bbbb.*/i
+  features: |
+    func: 0x500000
+     func: 0x500000: string(aBBBBa)
+  expect:
+    matches:
+      regex-ignorecase-explicit:
+        - 0x500000

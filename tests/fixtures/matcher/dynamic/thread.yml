@@ -1,0 +1,38 @@
+- name: thread-scope-basic
+  description: thread scope matches features aggregated across calls within a thread
+  rules:
+    - name: thread-apis
+      scopes:
+        dynamic: thread
+      features:
+        - and:
+            - api: CreateFileW
+            - api: WriteFile
+  features: |
+    proc: sample.exe (pid=3052)
+     thread: 3064
+      call: 1: api(CreateFileW)
+      call: 2: api(WriteFile)
+  expect:
+    matches:
+      thread-apis:
+        - "process{pid:3052,tid:3064}"
+
+- name: thread-scope-no-match
+  description: thread scope does not match when features are split across different threads
+  rules:
+    - name: thread-split
+      scopes:
+        dynamic: thread
+      features:
+        - and:
+            - api: CreateFileW
+            - api: WriteFile
+  features: |
+    proc: sample.exe (pid=3052)
+     thread: 3064
+      call: 1: api(CreateFileW)
+     thread: 3065
+      call: 2: api(WriteFile)
+  expect:
+    matches: {}

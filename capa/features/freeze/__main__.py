@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import textwrap
+import sys
 
-import pytest
+from capa.features.freeze import main
 
-import capa.rules
-
-
-def test_dynamic_span_scope_thread_subscope():
-    rule = textwrap.dedent("""
-        rule:
-            meta:
-                name: test rule
-                scopes:
-                    static: unsupported
-                    dynamic: span of calls
-            features:
-                - and:
-                    - thread:
-                        - string: "foo"
-        """)
-
-    with pytest.raises(capa.rules.InvalidRule):
-        capa.rules.Rule.from_yaml(rule)
+sys.exit(main())
