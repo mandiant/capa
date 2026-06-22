@@ -59,7 +59,7 @@ from capa.features.common import (
     FORMAT_BINEXPORT2,
     Format,
 )
-from capa.features.extractors.script import EXT_CS, EXT_ASPX, EXT_HTML
+from capa.features.extractors.script import EXT_CS, EXT_PY, EXT_ASPX, EXT_HTML
 
 EXTENSIONS_SHELLCODE_32 = (".sc32", ".raw32")
 EXTENSIONS_SHELLCODE_64 = (".sc64", ".raw64")
@@ -71,7 +71,7 @@ EXTENSIONS_BINEXPORT2 = (".BinExport", ".BinExport2")
 EXTENSIONS_ELF = ".elf_"
 EXTENSIONS_FREEZE = ".frz"
 EXTENSIONS_BINJA_DB = ".bndb"
-EXTENSIONS_SUPPORTED_SCRIPTS = EXT_ASPX + EXT_CS + EXT_HTML
+EXTENSIONS_SUPPORTED_SCRIPTS = EXT_ASPX + EXT_CS + EXT_HTML + EXT_PY
 
 logger = logging.getLogger("capa")
 
@@ -224,7 +224,7 @@ def get_format_from_report(sample: Path) -> str:
             # which is not going to be much use, but its correct.
             return FORMAT_CAPE
 
-    raise ValueError(f"Unsupported or unrecognizable report format: {sample.name}")
+    return FORMAT_UNKNOWN
 
 
 def get_format_from_extension(sample: Path) -> str:
