@@ -77,7 +77,7 @@ def deserialize(language: str, binding: dict) -> dict:
 
     if "query" in binding:
         for name, query in binding["query"].items():
-            result[name] = TS_LANGUAGES[language].query(query)
+            result[name] = Query(TS_LANGUAGES[language], query)
 
     if "field_name" in binding:
         for name, field in binding["field_name"].items():
