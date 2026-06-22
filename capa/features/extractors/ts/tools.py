@@ -72,7 +72,8 @@ class LanguageToolkit:
         self.import_signatures = self.load_import_signatures(self.signature_file)
 
     def load_import_signatures(self, signature_file: str) -> Dict[str, set[str]]:
-        signatures = json.loads(importlib.resources.read_text(capa.features.extractors.ts.signatures, signature_file))
+        ref = importlib.resources.files(capa.features.extractors.ts.signatures) / signature_file
+        signatures = json.loads(ref.read_text(encoding="utf-8"))
         return {category: set(names) for category, names in signatures.items()}
 
     def get_full_name(self, name: str, namespace: Optional[BaseNamespace] = None) -> str:
@@ -164,9 +165,11 @@ class LanguageToolkit:
         return self.format_imported_class_members(name)
 
     def parse_integer(self, integer: str) -> int:
+        integer = integer.lower()
         for suffix in self.integer_suffixes:
             if integer.endswith(suffix):
-                integer = integer[:-1]
+                integer = integer[: -len(suffix)]
+                break
         for prefix, base in self.integer_prefixes:
             if integer.startswith(prefix):
                 return int(integer, base)
