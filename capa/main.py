@@ -559,9 +559,6 @@ def get_input_format_from_cli(args) -> str:
     if format_ != FORMAT_AUTO:
         return format_
 
-    if args.input_file.suffix.lower() == ".gpr":
-        return FORMAT_GHIDRA_PROJECT
-
     try:
         return get_auto_format(args.input_file)
     except PEFormatError as e:
@@ -587,7 +584,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if args.backend != BACKEND_AUTO:
         return args.backend
 
-    if args.input_file.suffix.lower() == ".gpr":
+    if input_format == FORMAT_GHIDRA_PROJECT:
         return BACKEND_GHIDRA
 
     if input_format == FORMAT_CAPE:
@@ -612,7 +609,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
         return BACKEND_VIV
 
 
-def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
+def get_sample_path_from_cli(args, input_format, backend) -> Optional[Path]:
     """
     Determine the path to the underlying sample, if it exists.
 
@@ -621,6 +618,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
 
     args:
       args: The parsed command line arguments from `install_common_args`.
+      input_format: The file format of the input file.
       backend: The backend that will handle the input file.
 
     raises:
@@ -628,7 +626,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     """
     if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
         return None
-    elif backend == BACKEND_GHIDRA:
+    elif input_format == FORMAT_GHIDRA_PROJECT:
         return None
     elif backend == BACKEND_BINEXPORT2:
         import capa.features.extractors.binexport2
@@ -641,7 +639,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
         return args.input_file
 
 
-def get_os_from_cli(args, backend) -> str:
+def get_os_from_cli(args, input_format, backend) -> str:
     """
     Determine the OS for the given sample.
     Respects an override provided by the user, otherwise, use heuristics and
@@ -649,6 +647,7 @@ def get_os_from_cli(args, backend) -> str:
 
     args:
       args: The parsed command line arguments from `install_common_args`.
+      input_format: The file format of the input file.
       backend: The backend that will handle the input file.
 
     raises:
@@ -657,7 +656,7 @@ def get_os_from_cli(args, backend) -> str:
     if args.os:
         return args.os
 
-    sample_path = get_sample_path_from_cli(args, backend)
+    sample_path = get_sample_path_from_cli(args, input_format, backend)
     if sample_path is None:
         return "unknown"
     return capa.loader.get_os(sample_path)
@@ -738,10 +737,6 @@ def get_file_extractors_from_cli(args, input_format: str) -> list[FeatureExtract
     #
     # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
     # various limitations
-    if args.input_file.suffix.lower() == ".gpr":
-        logger.debug("skipping generic file extractor probe for Ghidra project input")
-        return []
-
     try:
         return capa.loader.get_file_extractors(args.input_file, input_format)
     except PEFormatError as e:
@@ -883,9 +878,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         None,
     )
 
-    os_ = get_os_from_cli(args, backend)
-    sample_path = get_sample_path_from_cli(args, backend)
-    extractor_filters = get_extractor_filters_from_cli(args, input_format, backend)
+    os_ = get_os_from_cli(args, input_format, backend)
+    sample_path = get_sample_path_from_cli(args, input_format, backend)
+    extractor_filters = get_extractor_filters_from_cli(args, input_format)
 
     logger.debug("format:  %s", input_format)
     logger.debug("backend: %s", backend)
@@ -929,7 +924,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_GHIDRA_DB_LOCKED) from e
 
 
-def get_extractor_filters_from_cli(args, input_format, backend: Optional[str] = None) -> FilterConfig:
+def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
     if not hasattr(args, "restrict_to_processes") and not hasattr(args, "restrict_to_functions"):
         # no processes or function filters were installed in the args
         return {}
