@@ -72,6 +72,7 @@ from capa.exceptions import (
     UnsupportedOSError,
     UnsupportedArchError,
     UnsupportedFormatError,
+    LockedProjectDatabaseError,
 )
 from capa.features.common import (
     OS_AUTO,
@@ -93,6 +94,7 @@ from capa.features.common import (
     DYNAMIC_FORMATS,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
+    FORMAT_GHIDRA_PROJECT,
 )
 from capa.capabilities.common import (
     Capabilities,
@@ -130,6 +132,7 @@ E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
 E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
+E_GHIDRA_DB_LOCKED = 27
 
 logger = logging.getLogger("capa")
 
@@ -279,6 +282,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_FREEZE, "features previously frozen by capa"),
             (FORMAT_BINEXPORT2, "BinExport2"),
             (FORMAT_BINJA_DB, "Binary Ninja Database"),
+            (FORMAT_GHIDRA_PROJECT, "Ghidra project"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 
@@ -580,6 +584,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if args.backend != BACKEND_AUTO:
         return args.backend
 
+    if input_format == FORMAT_GHIDRA_PROJECT:
+        return BACKEND_GHIDRA
+
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
@@ -602,7 +609,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
         return BACKEND_VIV
 
 
-def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
+def get_sample_path_from_cli(args, input_format, backend) -> Optional[Path]:
     """
     Determine the path to the underlying sample, if it exists.
 
@@ -611,12 +618,15 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
 
     args:
       args: The parsed command line arguments from `install_common_args`.
+      input_format: The file format of the input file.
       backend: The backend that will handle the input file.
 
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
+        return None
+    elif input_format == FORMAT_GHIDRA_PROJECT:
         return None
     elif backend == BACKEND_BINEXPORT2:
         import capa.features.extractors.binexport2
@@ -629,7 +639,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
         return args.input_file
 
 
-def get_os_from_cli(args, backend) -> str:
+def get_os_from_cli(args, input_format, backend) -> str:
     """
     Determine the OS for the given sample.
     Respects an override provided by the user, otherwise, use heuristics and
@@ -637,6 +647,7 @@ def get_os_from_cli(args, backend) -> str:
 
     args:
       args: The parsed command line arguments from `install_common_args`.
+      input_format: The file format of the input file.
       backend: The backend that will handle the input file.
 
     raises:
@@ -645,7 +656,7 @@ def get_os_from_cli(args, backend) -> str:
     if args.os:
         return args.os
 
-    sample_path = get_sample_path_from_cli(args, backend)
+    sample_path = get_sample_path_from_cli(args, input_format, backend)
     if sample_path is None:
         return "unknown"
     return capa.loader.get_os(sample_path)
@@ -867,8 +878,8 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         None,
     )
 
-    os_ = get_os_from_cli(args, backend)
-    sample_path = get_sample_path_from_cli(args, backend)
+    os_ = get_os_from_cli(args, input_format, backend)
+    sample_path = get_sample_path_from_cli(args, input_format, backend)
     extractor_filters = get_extractor_filters_from_cli(args, input_format)
 
     logger.debug("format:  %s", input_format)
@@ -886,6 +897,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
             sample_path=sample_path,
         )
         return apply_extractor_filters(extractor, extractor_filters)
+    except InvalidArgument as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_INVALID_INPUT_FORMAT) from e
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
@@ -905,6 +919,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     except capa.loader.CorruptFile as e:
         logger.error("Input file '%s' is not a valid file: %s", args.input_file, str(e))
         raise ShouldExitError(E_CORRUPT_FILE) from e
+    except LockedProjectDatabaseError as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_GHIDRA_DB_LOCKED) from e
 
 
 def get_extractor_filters_from_cli(args, input_format) -> FilterConfig:
