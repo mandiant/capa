@@ -177,7 +177,7 @@ def find_static_capabilities(
             t0 = time.time()
             if extractor.is_library_function(f.address):
                 function_name = extractor.get_function_name(f.address)
-                logger.debug("skipping library function %s (%s)", f.address, function_name)
+                logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
                 library_functions_list.append(
                     rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name)
                 )
