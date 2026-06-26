@@ -1,5 +1,5 @@
 {
-    "classes" : [
+    "classes": [
         "System.Data.SqlClient.SqlCommand",
         "System.Data.SqlClient.SqlConnection",
         "System.Data.SqlClient.SqlDataAdapter",
@@ -15,19 +15,17 @@
         "System.Security.Cryptography.SHA256",
         "System.Security.Cryptography.SHA256CryptoServiceProvider"
     ],
-    "constructors" : [
+    "constructors": [
         "System.Security.Cryptography.Rijndael.Create"
     ],
-    "functions":
-    [
-        "System.Convert.ToBase64String",
+    "functions": [
         "System.Convert.FromBase64String",
+        "System.Convert.ToBase64String",
         "System.Data.SqlClient.SqlCommand.ExecuteReader",
         "System.Data.SqlClient.SqlConnection.Open",
         "System.Diagnostics.Process.Start",
         "System.IO.Directory.CreateDirectory",
         "System.IO.File.Delete",
-        "System.IO.File.Write",
         "System.IO.File.GetAttributes",
         "System.IO.File.GetCreationTime",
         "System.IO.File.GetLastAccessTime",
@@ -43,6 +41,7 @@
         "System.IO.File.SetCreationTime",
         "System.IO.File.SetLastAccessTime",
         "System.IO.File.SetLastWriteTime",
+        "System.IO.File.Write",
         "System.IO.File.WriteAllBytes",
         "System.IO.File.WriteAllBytesAsync",
         "System.IO.File.WriteAllLines",
@@ -59,23 +58,22 @@
         "System.Security.Cryptography.SHA256CryptoServiceProvider.ComputeHash"
     ],
     "properties": [
-        "System.Diagnostics.Process.StartInfo.FileName",
         "System.Diagnostics.Process.StartInfo.Arguments",
+        "System.Diagnostics.Process.StartInfo.CreateNoWindow",
+        "System.Diagnostics.Process.StartInfo.FileName",
         "System.Diagnostics.Process.StartInfo.RedirectStandardInput",
         "System.Diagnostics.Process.StartInfo.RedirectStandardOutput",
         "System.Diagnostics.Process.StartInfo.UseShellExecute",
-        "System.Diagnostics.Process.StartInfo.CreateNoWindow",
-        "System.Diagnostics.ProcessStartInfo.FileName",
         "System.Diagnostics.ProcessStartInfo.Arguments",
+        "System.Diagnostics.ProcessStartInfo.CreateNoWindow",
+        "System.Diagnostics.ProcessStartInfo.FileName",
         "System.Diagnostics.ProcessStartInfo.RedirectStandardInput",
         "System.Diagnostics.ProcessStartInfo.RedirectStandardOutput",
-        "System.Diagnostics.ProcessStartInfo.UseShellExecute",
-        "System.Diagnostics.ProcessStartInfo.CreateNoWindow"
+        "System.Diagnostics.ProcessStartInfo.UseShellExecute"
     ],
     "constants": [],
     "builtins": [],
-    "aspx_default_namespaces":
-    [
+    "aspx_default_namespaces": [
         "System",
         "System.Collections",
         "System.Collections.Specialized",
