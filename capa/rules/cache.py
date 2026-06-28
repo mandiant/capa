@@ -78,7 +78,18 @@ def get_cache_path(cache_dir: Path, id: CacheIdentifier) -> Path:
 
 
 MAGIC = b"capa"
-VERSION = b"\x00\x00\x00\x01"
+VERSION = b"\x00\x00\x00\x02"
+
+
+def _is_valid_cached_ruleset(ruleset: capa.rules.RuleSet) -> bool:
+    """Return False when a cached ruleset uses an outdated internal schema."""
+    feature_indexes = getattr(ruleset, "_feature_indexes_by_scopes", None)
+    if feature_indexes is None:
+        return False
+    for feature_index in feature_indexes.values():
+        if not hasattr(feature_index, "bytes_prefix_index"):
+            return False
+    return True
 
 
 @dataclass
@@ -158,9 +169,14 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional
 
     try:
         cache = RuleCache.load(buf)
-    except AssertionError:
+    except (AssertionError, AttributeError, EOFError, pickle.UnpicklingError, ValueError, TypeError):
         logger.debug("rule set cache is invalid: %s", path)
         # delete the cache that seems to be invalid.
+        path.unlink()
+        return None
+
+    if not _is_valid_cached_ruleset(cache.ruleset):
+        logger.debug("rule set cache uses an outdated schema: %s", path)
         path.unlink()
         return None
 
