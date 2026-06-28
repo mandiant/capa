@@ -585,7 +585,7 @@
     {
       "file": "c91887",
       "location": "function=0x401A77",
-      "feature": "api: CreatePipe",
+      "feature": "api: kernel32.CreatePipe",
       "explanation": "API is present, and DLL name is ignored"
     },
     {
