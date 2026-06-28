@@ -24,7 +24,8 @@ from dataclasses import field, dataclass
 
 import pytest
 
-import capa.loader
+import capa.rules
+import capa.loader  # noqa: F401
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -117,6 +118,7 @@ def _parse_manifest_feature(text: str):
     if feature == "property":
         return capa.features.insn.Property(value)
     if feature == "api":
+        value = capa.rules.trim_dll_part(value)
         return capa.features.insn.API(value)
     if feature == "arch":
         return capa.features.common.Arch(value)
@@ -149,7 +151,7 @@ def _parse_manifest_feature(text: str):
     if feature == "section":
         return capa.features.file.Section(value)
     if feature == "string":
-        return capa.features.common.String(value)
+        return capa.features.common.StringFactory(value)
     if feature == "substring":
         return capa.features.common.Substring(value)
     raise ValueError(f"unsupported feature type: {feature}")
@@ -344,8 +346,9 @@ def _collect_features(extractor, feature_fixture: FeatureFixture):
 
 
 def run_feature_fixture(extractor, feature_fixture: FeatureFixture):
-    extracted = _collect_features(extractor, feature_fixture)
-    matched = any(feature == feature_fixture.statement for feature, _ in extracted)
+    scope = resolve_scope(feature_fixture.location)
+    features = scope(extractor)
+    matched = bool(feature_fixture.statement.evaluate(features))
     if feature_fixture.expected:
         assert matched, f"expected {feature_fixture.statement!r} at {feature_fixture.location}"
     else:
@@ -393,7 +396,6 @@ def xfail(condition, reason=None):
 # need to limit cache size so GitHub Actions doesn't run out of memory, see #545
 @lru_cache(maxsize=1)
 def get_viv_extractor(path: Path):
-    import capa.main
     import capa.features.extractors.viv.extractor
 
     sigpaths = [

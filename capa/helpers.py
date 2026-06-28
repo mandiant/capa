@@ -91,8 +91,8 @@ def hex(n: int) -> str:
 def get_file_taste(sample_path: Path) -> bytes:
     if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    taste = sample_path.open("rb").read(8)
-    return taste
+    with sample_path.open("rb") as f:
+        return f.read(8)
 
 
 def is_runtime_ida():
@@ -205,7 +205,7 @@ def load_one_jsonl_from_path(jsonl_path: Path):
 
 
 def get_format_from_report(sample: Path) -> str:
-    if sample.name.endswith((".log", "log.gz")):
+    if sample.name.endswith((".log", ".log.gz")):
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
@@ -215,7 +215,7 @@ def get_format_from_report(sample: Path) -> str:
             if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
                 # assume VMRay zipfile at a minimum has these files
                 return FORMAT_VMRAY
-    elif sample.name.endswith(("json", "json_", "json.gz")):
+    elif sample.name.endswith((".json", ".json_", ".json.gz")):
         report = load_json_from_path(sample)
         if "CAPE" in report:
             return FORMAT_CAPE
