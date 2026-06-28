@@ -359,7 +359,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
                 feature=feature_from_capa(feature),
             )
         )
-    global_features.sort(key=lambda gf: gf.feature.model_dump_json())
+    global_features.sort(key=lambda gf: gf.feature.model_dump_json(by_alias=True))
 
     file_features: list[FileFeature] = []
     for feature, address in extractor.extract_file_features():
@@ -369,7 +369,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
                 address=Address.from_capa(address),
             )
         )
-    file_features.sort(key=lambda ff: (ff.address, ff.feature.model_dump_json()))
+    file_features.sort(key=lambda ff: (ff.address, ff.feature.model_dump_json(by_alias=True)))
 
     function_features: list[FunctionFeatures] = []
     for f in extractor.get_functions():
@@ -382,7 +382,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
             )
             for feature, addr in extractor.extract_function_features(f)
         ]
-        ffeatures.sort(key=lambda ff: (ff.address, ff.feature.model_dump_json()))
+        ffeatures.sort(key=lambda ff: (ff.address, ff.feature.model_dump_json(by_alias=True)))
 
         basic_blocks = []
         for bb in extractor.get_basic_blocks(f):
@@ -395,7 +395,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
                 )
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
-            bbfeatures.sort(key=lambda bf: (bf.address, bf.feature.model_dump_json()))
+            bbfeatures.sort(key=lambda bf: (bf.address, bf.feature.model_dump_json(by_alias=True)))
 
             instructions = []
             for insn in extractor.get_instructions(f, bb):
@@ -408,7 +408,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
                     )
                     for feature, addr in extractor.extract_insn_features(f, bb, insn)
                 ]
-                ifeatures.sort(key=lambda i: (i.address, i.feature.model_dump_json()))
+                ifeatures.sort(key=lambda i: (i.address, i.feature.model_dump_json(by_alias=True)))
 
                 instructions.append(
                     InstructionFeatures(
@@ -454,7 +454,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
     )
     # type checkers are unable to recognise `base_address` as an argument due to alias
 
-    return freeze.model_dump_json()
+    return freeze.model_dump_json(by_alias=True)
 
 
 def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False) -> str:
@@ -470,7 +470,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
                 feature=feature_from_capa(feature),
             )
         )
-    global_features.sort(key=lambda gf: gf.feature.model_dump_json())
+    global_features.sort(key=lambda gf: gf.feature.model_dump_json(by_alias=True))
 
     file_features: list[FileFeature] = []
     for feature, address in extractor.extract_file_features():
@@ -480,7 +480,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
                 address=Address.from_capa(address),
             )
         )
-    file_features.sort(key=lambda ff: (ff.address, ff.feature.model_dump_json()))
+    file_features.sort(key=lambda ff: (ff.address, ff.feature.model_dump_json(by_alias=True)))
 
     process_features: list[ProcessFeatures] = []
     for p in extractor.get_processes():
@@ -494,7 +494,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
             )
             for feature, addr in extractor.extract_process_features(p)
         ]
-        pfeatures.sort(key=lambda pf: (pf.address, pf.feature.model_dump_json()))
+        pfeatures.sort(key=lambda pf: (pf.address, pf.feature.model_dump_json(by_alias=True)))
 
         threads = []
         for t in extractor.get_threads(p):
@@ -507,7 +507,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
                 )
                 for feature, addr in extractor.extract_thread_features(p, t)
             ]
-            tfeatures.sort(key=lambda tf: (tf.address, tf.feature.model_dump_json()))
+            tfeatures.sort(key=lambda tf: (tf.address, tf.feature.model_dump_json(by_alias=True)))
 
             calls = []
             for call in extractor.get_calls(p, t):
@@ -521,7 +521,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
                     )
                     for feature, addr in extractor.extract_call_features(p, t, call)
                 ]
-                cfeatures.sort(key=lambda cf: (cf.address, cf.feature.model_dump_json()))
+                cfeatures.sort(key=lambda cf: (cf.address, cf.feature.model_dump_json(by_alias=True)))
 
                 calls.append(
                     CallFeatures(
@@ -573,7 +573,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
     )
     # type checkers are unable to recognise `base_address` as an argument due to alias
 
-    return freeze.model_dump_json()
+    return freeze.model_dump_json(by_alias=True)
 
 
 def loads_static(s: str) -> StaticFeatureExtractor:

@@ -185,6 +185,16 @@ def test_serialize_features():
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 
 
+def test_freeze_dump_uses_feature_field_aliases():
+    import_feature = capa.features.freeze.features.ImportFeature(import_="kernel32.CreateFileW")
+    assert '"import":' in import_feature.model_dump_json(by_alias=True)
+    assert '"import_":' not in import_feature.model_dump_json(by_alias=True)
+
+    freeze_source = capa.features.freeze.dumps_static.__code__.co_filename
+    source = Path(freeze_source).read_text(encoding="utf-8")
+    assert "model_dump_json(by_alias=True)" in source
+
+
 def test_no_address_lt_irreflexivity():
     no_addr = capa.features.freeze.Address.from_capa(capa.features.address.NO_ADDRESS)
     assert not (no_addr < no_addr)
