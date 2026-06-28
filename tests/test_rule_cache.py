@@ -120,6 +120,23 @@ def test_ruleset_cache_rejects_outdated_schema():
     assert not path.exists()
 
 
+def test_ruleset_cache_rejects_missing_feature_indexes():
+    rs = capa.rules.RuleSet([R1])
+    content = capa.rules.cache.get_ruleset_content(rs)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    cache_dir = capa.rules.cache.get_default_cache_directory()
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+    with contextlib.suppress(OSError):
+        path.unlink()
+
+    cache = capa.rules.cache.RuleCache(id, object())
+    path.write_bytes(cache.dump())
+    assert path.exists()
+
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is None
+    assert not path.exists()
+
+
 def test_ruleset_cache_invalid():
     rs = capa.rules.RuleSet([R1])
     content = capa.rules.cache.get_ruleset_content(rs)

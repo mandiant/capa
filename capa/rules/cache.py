@@ -83,7 +83,10 @@ VERSION = b"\x00\x00\x00\x02"
 
 def _is_valid_cached_ruleset(ruleset: capa.rules.RuleSet) -> bool:
     """Return False when a cached ruleset uses an outdated internal schema."""
-    for feature_index in ruleset._feature_indexes_by_scopes.values():
+    feature_indexes = getattr(ruleset, "_feature_indexes_by_scopes", None)
+    if feature_indexes is None:
+        return False
+    for feature_index in feature_indexes.values():
         if not hasattr(feature_index, "bytes_prefix_index"):
             return False
     return True
