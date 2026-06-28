@@ -1,0 +1,47 @@
+{
+    "classes": [
+        "socket.error",
+        "socket.socket",
+        "urllib2.Request"
+    ],
+    "constructors": [
+        "ssl.wrap_socket",
+        "win32com.client.Dispatch"
+    ],
+    "functions": [
+        "base64.b64decode",
+        "base64.b64encode",
+        "base64.encodestring",
+        "os.chdir",
+        "os.chmod",
+        "os.getcwd",
+        "os.path.dirname",
+        "os.path.expanduser",
+        "os.popen",
+        "os.remove",
+        "platform.mac_ver",
+        "shutil.copytree",
+        "subprocess.PIPE",
+        "subprocess.Popen",
+        "time.sleep",
+        "urllib2.urlopen",
+        "win32api.SetFileAttributes"
+    ],
+    "constants": [
+        "os.environ",
+        "socket.AF_INET",
+        "socket.SO_REUSEADDR",
+        "socket.SOCK_STREAM",
+        "socket.SQL_SOCKET",
+        "ssl.CERT_NONE",
+        "ssl.PROTOCOL_TLSv1",
+        "win32con.FILE_ATTRIBUTE_HIDDEN",
+        "win32con.FILE_ATTRIBUTE_SYSTEM"
+    ],
+    "properties": [],
+    "builtins": [
+        "eval",
+        "exec",
+        "open"
+    ]
+}
