@@ -81,6 +81,14 @@ def test_cape_extractor(version: str, filename: str, exception: Type[BaseExcepti
         assert cr is not None
 
 
+def test_cape_tested_versions_include_self_hosted_strings():
+    from capa.features.extractors.cape.extractor import TESTED_VERSIONS
+
+    for version in ("2.2", "2.4", "2.5"):
+        assert version in TESTED_VERSIONS
+        assert f"{version}-CAPE" in TESTED_VERSIONS
+
+
 def test_get_calls_no_api_mutation():
     process_addr = ProcessAddress(pid=1, ppid=0)
     thread_addr = ThreadAddress(process=process_addr, tid=100)
