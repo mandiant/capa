@@ -18,6 +18,7 @@ from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Form
 from capa.features.address import NO_ADDRESS, Address, FileOffsetRangeAddress
 
 # Can be used to instantiate tree_sitter Language objects (see ts/query.py)
+LANG_BASH = "bash"
 LANG_CS = "c_sharp"
 LANG_HTML = "html"
 LANG_JS = "javascript"
@@ -25,12 +26,14 @@ LANG_PY = "python"
 LANG_TEM = "embedded_template"
 
 EXT_ASPX = ("aspx", "aspx_")
+EXT_BASH = ("bash", "sh", "bash_", "sh_")
 EXT_CS = ("cs", "cs_")
 EXT_HTML = ("html", "html_")
 EXT_PY = ("py", "py_")
 
 
 LANGUAGE_FEATURE_FORMAT = {
+    LANG_BASH: "Bash",
     LANG_CS: "C#",
     LANG_HTML: "HTML",
     LANG_JS: "JavaScript",
