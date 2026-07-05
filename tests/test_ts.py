@@ -62,7 +62,9 @@ def do_test_ts_base_engine_init(engine: TreeSitterBaseEngine):
 def do_test_ts_base_engine_get_str(
     engine: TreeSitterBaseEngine, node: Node, expected_range: str, startswith: bool = False
 ):
-    assert engine.get_str(node).startswith(expected_range) if startswith else engine.get_str(node) == expected_range
+    actual = engine.get_str(node).replace("\r\n", "\n")
+    expected = expected_range.replace("\r\n", "\n")
+    assert actual.startswith(expected) if startswith else actual == expected
 
 
 def do_test_ts_base_engine_get_address(engine: TreeSitterBaseEngine, node: Node):
