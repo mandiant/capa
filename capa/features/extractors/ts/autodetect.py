@@ -88,8 +88,8 @@ def get_language_from_ext(path: str) -> str:
 
 def get_language(path: Path) -> str:
     try:
+        return get_language_from_ext(str(path))
+    except ValueError:
         with path.open("rb") as f:
             buf = f.read()
         return get_language_ts(buf)
-    except ValueError:
-        return get_language_from_ext(str(path))
