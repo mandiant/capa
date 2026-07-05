@@ -109,7 +109,7 @@ BINDINGS: dict[str, QueryBinding] = {
                 "query": {
                     # foo() { ... }
                     "function_definition": """
-                    (function_definition name: (word) @function-definition)
+                    (function_definition) @function-definition
                     """,
                     # echo, test, ls, cat
                     "function_call_name": """

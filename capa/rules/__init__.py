@@ -34,7 +34,7 @@ except ImportError:
     from functools import lru_cache
 
 from typing import Any, Union, Callable, Iterator, Optional, cast
-from dataclasses import asdict, dataclass
+from dataclasses import field, asdict, dataclass
 
 import yaml
 import pydantic
@@ -1651,7 +1651,14 @@ class RuleSet:
         string_rules: dict[str, list[Feature]]
         # Mapping from rule name to list of Bytes features that have to match.
         # All these features will be evaluated whenever a Bytes feature is encountered.
-        bytes_rules: dict[str, list[Feature]]
+        bytes_rules: dict[str, list[Feature]] = field(default_factory=dict)
+
+        def __setstate__(self, state):
+            # Backward compatibility for ruleset caches created before `bytes_rules`
+            # was added to the feature index.
+            self.__dict__.update(state)
+            if "bytes_rules" not in state:
+                self.bytes_rules = {}
 
     # this routine is unstable and may change before the next major release.
     @staticmethod

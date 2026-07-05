@@ -23,6 +23,7 @@ from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTM
 from capa.features.extractors.ts.query import (
     BINDINGS,
     QueryBinding,
+    BashQueryBinding,
     HTMLQueryBinding,
     ScriptQueryBinding,
     TemplateQueryBinding,
@@ -82,7 +83,7 @@ class TreeSitterBaseEngine:
 
 
 class TreeSitterExtractorEngine(TreeSitterBaseEngine):
-    query: ScriptQueryBinding
+    query: ScriptQueryBinding | BashQueryBinding
     language_toolkit: LanguageToolkit
     buf_offset: int
     namespaces: set[BaseNamespace]
@@ -108,16 +109,22 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         return FileOffsetRangeAddress(self.buf_offset + node.start_byte, self.buf_offset + node.end_byte)
 
     def get_new_object_names(self, node: Node) -> Iterator[Node]:
+        if not isinstance(self.query, ScriptQueryBinding):
+            return
         cursor = QueryCursor(self.query.new_object_name)
         yield from self.get_captured_nodes(cursor, node)
 
     def get_property_names(self, node: Node) -> Iterator[Node]:
+        if not isinstance(self.query, ScriptQueryBinding):
+            return
         cursor = QueryCursor(self.query.property_name)
         yield from self.get_captured_nodes(cursor, node)
 
     def get_processed_property_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured property name nodes and their associated proper names (see process_property
         for details), e.g.: [(node0, "StartInfo"), (node1, "RedirectStandardOutput")]."""
+        if not isinstance(self.query, ScriptQueryBinding):
+            return
         for pt_node in self.get_property_names(node):
             pt_name = self.language_toolkit.process_property(pt_node, self.get_str(pt_node))
             if pt_name:
@@ -142,12 +149,16 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         yield from self.get_captured_nodes(cursor, node)
 
     def get_imported_constants(self, node: Node) -> Iterator[Node]:
+        if not isinstance(self.query, ScriptQueryBinding):
+            return
         cursor = QueryCursor(self.query.imported_constant_name)
         yield from self.get_captured_nodes(cursor, node)
 
     def get_processed_imported_constants(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured imported constant nodes and their associated proper names (see process_imported_constant
         for details), e.g.: [(node0, "ssl.CERT_NONE"), (node1, "win32con.FILE_ATTRIBUTE_HIDDEN")]."""
+        if not isinstance(self.query, ScriptQueryBinding):
+            return
         for ic_node in self.get_imported_constants(node):
             ic_name = self.language_toolkit.process_imported_constant(ic_node, self.get_str(ic_node))
             if ic_name:
@@ -162,6 +173,9 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         yield from self.get_captured_nodes(cursor, node)
 
     def get_namespaces(self, node: Optional[Node] = None) -> List[Tuple[Node, str]]:
+        if not isinstance(self.query, ScriptQueryBinding):
+            return []
+
         target_node = self.tree.root_node if node is None else node
         cursor = QueryCursor(self.query.namespace)
         namespace_captures: List[Tuple[Node, str]] = []
@@ -173,6 +187,8 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         return sorted(namespace_captures, key=self.get_node_capture_sort_key)
 
     def get_processed_namespaces(self, node: Optional[Node] = None) -> Iterator[BaseNamespace]:
+        if not isinstance(self.query, ScriptQueryBinding):
+            return
         for ns_node, query_name in self.get_namespaces(node):
             yield from self.language_toolkit.process_namespace(ns_node, query_name, self.get_str)
 
@@ -181,12 +197,21 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         yield from self.get_captured_nodes(cursor, self.tree.root_node)
 
     def get_direct_method_call(self, node: Node) -> Optional[Node]:
+        if not isinstance(self.query, ScriptQueryBinding):
+            return None
+
         cursor = QueryCursor(self.query.direct_method_call)
         captures = cursor.captures(node)
         for nodes in captures.values():
             if nodes:
                 return nodes[0]
         return None
+
+    def get_variable_names(self, node: Node) -> Iterator[Node]:
+        if not isinstance(self.query, BashQueryBinding):
+            return
+        cursor = QueryCursor(self.query.variable_name)
+        yield from self.get_captured_nodes(cursor, node)
 
 
 class TreeSitterTemplateEngine(TreeSitterBaseEngine):

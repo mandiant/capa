@@ -48,7 +48,7 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
-from capa.features.extractors.script import LANG_CS, LANG_PY
+from capa.features.extractors.script import LANG_CS, LANG_PY, LANG_BASH
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -65,6 +65,7 @@ FEATURE_FIXTURE_DIR = CD / "fixtures" / "features"
 DOTNET_DIR = CD / "data" / "dotnet"
 SOURCE_DIR = CD / "data" / "source"
 ASPX_DIR = SOURCE_DIR / "aspx"
+BASH_DIR = SOURCE_DIR / "sh"
 CS_DIR = SOURCE_DIR / "cs"
 PY_DIR = SOURCE_DIR / "py"
 DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
@@ -740,6 +741,8 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Ad
 def get_data_path_by_name(name) -> Path:
     if name in ASPX_DATA_PATH_BY_NAME:
         return ASPX_DATA_PATH_BY_NAME[name]
+    elif name in BASH_DATA_PATH_BY_NAME:
+        return BASH_DATA_PATH_BY_NAME[name]
     elif name in CS_DATA_PATH_BY_NAME:
         return CS_DATA_PATH_BY_NAME[name]
     elif name in PY_DATA_PATH_BY_NAME:
@@ -926,6 +929,10 @@ ASPX_DATA_PATH_BY_NAME = {
     "aspx_d460ca": ASPX_DIR / "d460cae7d34c51059ef57c5aadb3de099469efbac5fffcf76d0528a511192a28.aspx_",
 }
 
+BASH_DATA_PATH_BY_NAME = {
+    "sh_b7e40a": BASH_DIR / "b7e40a5e4c4cb6935a12f564d6876e90c500efcbda69e76924f51ca8de724c8b.sh_",
+}
+
 CS_DATA_PATH_BY_NAME = {
     "cs_138cdc": CS_DIR / "138cdc4b10f3f5ece9c47bb0ec17fde5b70c1f9a90b267794c5e5dfa337fc798.cs_",
 }
@@ -1029,6 +1036,11 @@ def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHa
 
 
 def resolve_sample_ts(sample):
+    if sample.startswith("sh_"):
+        try:
+            return BASH_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
     if sample.startswith("cs_"):
         try:
             return CS_DATA_PATH_BY_NAME[sample]
@@ -2288,3 +2300,17 @@ def py_7f9cd1_template_engine():
 @pytest.fixture
 def py_ca0df6_template_engine():
     return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_ca0df6"])
+
+
+@pytest.fixture
+def sh_b7e40a_template_engine():
+    with Path(BASH_DATA_PATH_BY_NAME["sh_b7e40a"]).open("rb") as f:
+        buf = f.read()
+    return get_ts_extractor_engine(LANG_BASH, buf)
+
+
+@pytest.fixture
+def sh_b7e40a_extractor_engine():
+    with Path(BASH_DATA_PATH_BY_NAME["sh_b7e40a"]).open("rb") as f:
+        buf = f.read()
+    return get_ts_extractor_engine(LANG_BASH, buf)

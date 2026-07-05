@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from tree_sitter import Node
 
 import capa.features.extractors.ts.signatures
-from capa.features.extractors.script import LANG_CS, LANG_PY
+from capa.features.extractors.script import LANG_CS, LANG_PY, LANG_BASH
 
 
 @dataclass(frozen=True)
@@ -201,6 +201,27 @@ class LanguageToolkit:
         raise NotImplementedError()
 
 
+class BashToolkit(LanguageToolkit):
+    signature_file: str = "sh.json"
+    method_call_query_type: str = "command"
+    property_query_type: str = "variable_name"
+    string_delimiters: str = "\"'"
+    integer_prefixes: List[Tuple[Union[str, Tuple[str, ...]], int]] = [(("0x", "0X"), 16)]
+    integer_suffixes: Tuple[str, ...] = ()
+
+    def create_namespace(self, name: str) -> BaseNamespace:
+        raise NotImplementedError("Bash does not support namespaces")
+
+    def process_namespace(self, node: Node, query_name: str, get_str: Callable) -> Iterator[BaseNamespace]:
+        yield from []
+
+    def get_default_namespaces(self, embedded: bool) -> set[BaseNamespace]:
+        return set()
+
+    def format_imported_function(self, name: str) -> str:
+        return name
+
+
 class CSharpToolkit(LanguageToolkit):
     signature_file: str = "cs.json"
     method_call_query_type: str = "invocation_expression"
@@ -281,4 +302,8 @@ class PythonToolkit(LanguageToolkit):
         return set()
 
 
-LANGUAGE_TOOLKITS: dict[str, LanguageToolkit] = {LANG_CS: CSharpToolkit(), LANG_PY: PythonToolkit()}
+LANGUAGE_TOOLKITS: dict[str, LanguageToolkit] = {
+    LANG_BASH: BashToolkit(),
+    LANG_CS: CSharpToolkit(),
+    LANG_PY: PythonToolkit(),
+}

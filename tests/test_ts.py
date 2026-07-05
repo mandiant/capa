@@ -33,7 +33,15 @@ from capa.features.common import (
     ScriptLanguage,
 )
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML, LANGUAGE_FEATURE_FORMAT
+from capa.features.extractors.script import (
+    LANG_CS,
+    LANG_JS,
+    LANG_PY,
+    LANG_TEM,
+    LANG_BASH,
+    LANG_HTML,
+    LANGUAGE_FEATURE_FORMAT,
+)
 from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS
 from capa.features.extractors.ts.engine import (
@@ -178,6 +186,48 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
 @parametrize(
     "engine_str,expected",
     [
+        (
+            "sh_b7e40a_extractor_engine",
+            {
+                "language": LANG_BASH,
+                "all objects": [],
+                "all function definitions": [
+                    ("log_and_run() {", "log_and_run"),
+                    ("launch() {", "launch"),
+                ],
+                "all function calls": [
+                    ("trap 'rm -f \"$tmp\"' EXIT", "trap"),
+                    ('eval "echo start"', "eval"),
+                    ('curl "$url" -o "$tmp"', "curl"),
+                    ('chmod 700 "$tmp"', "chmod"),
+                    ("mkfifo /tmp/f", "mkfifo"),
+                    ('exec bash "$tmp"', "exec"),
+                    ("test -f /etc/passwd", "test"),
+                    ("log_and_run", "log_and_run"),
+                ],
+                "all string literals": [
+                    '"/tmp/.cache"',
+                    '"http://example.com/payload"',
+                    "'rm -f \"$tmp\"'",
+                    '"echo start"',
+                    '"$url"',
+                    '"$tmp"',
+                    '"$tmp"',
+                    '"$tmp"',
+                ],
+                "all integer literals": [
+                    "3",
+                    "700",
+                ],
+                "namespaces": [],
+                "global statements": [
+                    'tmp="/tmp/.cache"',
+                    "count=3",
+                    "if test -f /etc/shadow; then\n  log_and_run\nfi",
+                ],
+                "properties": [],
+            },
+        ),
         (
             "cs_138cdc_extractor_engine",
             {
@@ -1169,6 +1219,20 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("aspx_15eed4", "global", Arch(ARCH_ANY), True),
     ("aspx_b75f16", "global", Arch(ARCH_ANY), True),
     ("aspx_d460ca", "global", Arch(ARCH_ANY), True),
+    ("sh_b7e40a", "global", Arch(ARCH_ANY), True),
+    ("sh_b7e40a", "global", OS(OS_ANY), True),
+    ("sh_b7e40a", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_BASH]), True),
+    ("sh_b7e40a", "file", Format(FORMAT_SCRIPT), True),
+    ("sh_b7e40a", "function=log_and_run", API("builtins.trap"), True),
+    ("sh_b7e40a", "function=log_and_run", API("builtins.eval"), True),
+    ("sh_b7e40a", "function=log_and_run", API("curl"), True),
+    ("sh_b7e40a", "function=log_and_run", API("chmod"), True),
+    ("sh_b7e40a", "function=log_and_run", String("echo start"), True),
+    ("sh_b7e40a", "function=log_and_run", Number(700), True),
+    ("sh_b7e40a", "function=launch", API("mkfifo"), True),
+    ("sh_b7e40a", "function=launch", API("builtins.exec"), True),
+    ("sh_b7e40a", "function=PSEUDO MAIN", Number(3), True),
+    ("sh_b7e40a", "function=PSEUDO MAIN", API("builtins.test"), False),
     ("py_7f9cd1", "global", Arch(ARCH_ANY), True),
     ("py_7f9cd1", "global", OS(OS_ANY), True),
     ("py_7f9cd1", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_PY]), True),

@@ -20,6 +20,7 @@ from tree_sitter import Node
 from capa.features.insn import API, Number, Property
 from capa.features.common import Class, String, Feature, Namespace
 from capa.features.address import Address
+from capa.features.extractors.ts.query import BashQueryBinding
 from capa.features.extractors.ts.tools import BaseNamespace
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import FunctionHandle
@@ -158,10 +159,18 @@ def _extract_function_calls(
 ) -> Iterator[Tuple[Feature, Address]]:
     for node in engine.get_function_call_names(fn_node):
         yield from _extract_static_methods(node, engine)
+
+        if isinstance(engine.query, BashQueryBinding):
+            continue
+
         yield from _extract_instance_methods(node, classes, engine)
 
 
 def extract_imports(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+    if isinstance(engine.query, BashQueryBinding):
+        yield from _extract_function_calls(fn_node, set(), engine)
+        return
+
     classes = {engine.language_toolkit.create_namespace(cls) for cls in get_classes(fn_node, engine)}
     yield from _extract_classes(fn_node, engine)
     yield from _extract_constants(fn_node, engine)
