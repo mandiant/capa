@@ -40,7 +40,7 @@ pyyaml==6.0.2
 rich==15.0.0
 ruamel-yaml==0.19.1
 ruamel-yaml-clib==0.2.14
-setuptools==82.0.1
+setuptools==83.0.0
 six==1.17.0
 sortedcontainers==2.4.0
 viv-utils==0.8.0
