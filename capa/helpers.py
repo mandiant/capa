@@ -27,10 +27,10 @@ from zipfile import ZipFile
 from datetime import datetime
 
 import msgspec.json
-from rich.text import Text
 from rich.console import Console
 from rich.progress import (
     Task,
+    Text,
     Progress,
     BarColumn,
     TextColumn,
@@ -52,12 +52,14 @@ from capa.features.common import (
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_SCRIPT,
     FORMAT_DRAKVUF,
     FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
     Format,
 )
+from capa.features.extractors.script import EXT_CS, EXT_PY, EXT_ASPX, EXT_BASH, EXT_HTML
 
 EXTENSIONS_SHELLCODE_32 = (".sc32", ".raw32")
 EXTENSIONS_SHELLCODE_64 = (".sc64", ".raw64")
@@ -69,6 +71,7 @@ EXTENSIONS_BINEXPORT2 = (".BinExport", ".BinExport2")
 EXTENSIONS_ELF = ".elf_"
 EXTENSIONS_FREEZE = ".frz"
 EXTENSIONS_BINJA_DB = ".bndb"
+EXTENSIONS_SUPPORTED_SCRIPTS = EXT_ASPX + EXT_BASH + EXT_CS + EXT_HTML + EXT_PY
 
 logger = logging.getLogger("capa")
 
@@ -144,14 +147,18 @@ def stdout_redirector(stream):
     # Save a copy of the original stdout fd in saved_stdout_fd
     saved_stdout_fd = os.dup(original_stdout_fd)
     try:
-        with tempfile.TemporaryFile(mode="w+b") as tfile:
-            _redirect_stdout(tfile.fileno())
-            yield
-            _redirect_stdout(saved_stdout_fd)
-            tfile.flush()
-            tfile.seek(0, io.SEEK_SET)
-            stream.write(tfile.read())
+        # Create a temporary file and redirect stdout to it
+        tfile = tempfile.TemporaryFile(mode="w+b")
+        _redirect_stdout(tfile.fileno())
+        # Yield to caller, then redirect stdout back to the saved fd
+        yield
+        _redirect_stdout(saved_stdout_fd)
+        # Copy contents of temporary file to the given stream
+        tfile.flush()
+        tfile.seek(0, io.SEEK_SET)
+        stream.write(tfile.read())
     finally:
+        tfile.close()
         os.close(saved_stdout_fd)
 
 
@@ -228,14 +235,16 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
-    elif sample.name.endswith(EXTENSIONS_ELF):
-        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
         format_ = FORMAT_BINEXPORT2
+    elif sample.name.endswith(EXTENSIONS_ELF):
+        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_BINJA_DB):
         format_ = FORMAT_BINJA_DB
+    elif sample.name.endswith(EXTENSIONS_SUPPORTED_SCRIPTS):
+        return FORMAT_SCRIPT
     return format_
 
 
@@ -312,11 +321,7 @@ def log_unsupported_vmray_report_error(error: str):
 
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
-    logger.error(
-        " %s report is empty or only contains little useful data: %s",
-        sandbox_name,
-        error,
-    )
+    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
@@ -398,10 +403,7 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
     import capa.rules
     import capa.rules.cache
 
-    latest_rule_code_file = max(
-        [Path(capa.rules.__file__), Path(capa.rules.cache.__file__)],
-        key=os.path.getmtime,
-    )
+    latest_rule_code_file = max([Path(capa.rules.__file__), Path(capa.rules.cache.__file__)], key=os.path.getmtime)
     rule_code_timestamp = Path(latest_rule_code_file).stat().st_mtime
 
     if rule_code_timestamp > cache_timestamp:
@@ -448,18 +450,18 @@ class MofNCompleteColumnWithUnit(MofNCompleteColumn):
 
 class CapaProgressBar(Progress):
     @classmethod
-    def get_default_columns(cls) -> tuple[ProgressColumn, ...]:
+    def get_default_columns(cls):
         return (
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             TaskProgressColumn(),
             BarColumn(),
             MofNCompleteColumnWithUnit(),
-            TextColumn("•"),
+            "•",
             TimeElapsedColumn(),
-            TextColumn("<"),
+            "<",
             TimeRemainingColumn(),
-            TextColumn("•"),
+            "•",
             RateColumn(),
             PostfixColumn(),
         )

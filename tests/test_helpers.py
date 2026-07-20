@@ -28,6 +28,7 @@ from capa.helpers import (
     EXTENSIONS_BINEXPORT2,
     EXTENSIONS_SHELLCODE_32,
     EXTENSIONS_SHELLCODE_64,
+    EXTENSIONS_SUPPORTED_SCRIPTS,
     get_file_taste,
     get_format_from_extension,
 )
@@ -36,6 +37,7 @@ from capa.features.common import (
     FORMAT_SC32,
     FORMAT_SC64,
     FORMAT_FREEZE,
+    FORMAT_SCRIPT,
     FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
@@ -146,6 +148,9 @@ def test_extensions_dot_prefix():
         for ext in ext_group:
             assert ext.startswith("."), f"extension {ext!r} must start with a dot"
 
+    for ext in EXTENSIONS_SUPPORTED_SCRIPTS:
+        assert not ext.startswith("."), f"script suffix {ext!r} should be a bare suffix"
+
     assert Path("sample.log").name.endswith(EXTENSIONS_DYNAMIC)
     assert not Path("dialog").name.endswith(EXTENSIONS_DYNAMIC)
     assert not Path("catalog").name.endswith(EXTENSIONS_DYNAMIC)
@@ -160,6 +165,8 @@ def test_extensions_dot_prefix():
     assert Path("sample.elf_").name.endswith(EXTENSIONS_ELF)
     assert Path("sample.frz").name.endswith(EXTENSIONS_FREEZE)
     assert Path("sample.bndb").name.endswith(EXTENSIONS_BINJA_DB)
+    assert Path("sample.py").name.endswith(EXTENSIONS_SUPPORTED_SCRIPTS)
+    assert Path("sample.py_").name.endswith(EXTENSIONS_SUPPORTED_SCRIPTS)
 
 
 def test_get_format_from_extension():
@@ -172,6 +179,8 @@ def test_get_format_from_extension():
     assert get_format_from_extension(Path("sample.BinExport")) == FORMAT_BINEXPORT2
     assert get_format_from_extension(Path("sample.BinExport2")) == FORMAT_BINEXPORT2
     assert get_format_from_extension(Path("sample.bndb")) == FORMAT_BINJA_DB
+    assert get_format_from_extension(Path("sample.py")) == FORMAT_SCRIPT
+    assert get_format_from_extension(Path("sample.py_")) == FORMAT_SCRIPT
     assert get_format_from_extension(Path("sample.exe")) == FORMAT_UNKNOWN
 
 
