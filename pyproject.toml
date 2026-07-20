@@ -134,7 +134,7 @@ dev = [
     "pytest-sugar==1.1.1",
     "pytest-instafail==0.5.0",
     "ruff==0.15.0",
-    "mypy==2.1.0",
+    "mypy==2.3.0",
     "mypy-protobuf==5.1.0",
     "PyGithub==2.9.0",
     "bump-my-version==1.4.1",
