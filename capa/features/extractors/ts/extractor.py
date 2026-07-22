@@ -44,13 +44,12 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
     path: Path
 
     def __init__(self, path: Path):
-        super().__init__(
-            # Tree-Sitter currently does not yield hash information about the sample in its output
-            hashes=SampleHashes(md5="", sha1="", sha256="")
-        )
         self.path = path
+
         with self.path.open("rb") as f:
             buf = f.read()
+
+        super().__init__(hashes=SampleHashes.from_bytes(buf))
 
         try:
             self.language = capa.features.extractors.ts.autodetect.get_language(path)
