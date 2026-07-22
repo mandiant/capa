@@ -23,10 +23,11 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.freeze
+import capa.features.address
 import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.freeze.features
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.base_extractor import (
     BBHandle,
     SampleHashes,
@@ -183,6 +184,12 @@ def test_serialize_features():
         capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ)
     )
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
+    roundtrip_feature(capa.features.common.ScriptLanguage("Python"))
+
+
+def test_freeze_file_range_address_roundtrip():
+    addr = FileOffsetRangeAddress(0x10, 0x20)
+    assert capa.features.freeze.Address.from_capa(addr).to_capa() == addr
 
 
 def test_no_address_lt_irreflexivity():

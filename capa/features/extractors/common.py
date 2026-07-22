@@ -21,6 +21,7 @@ from typing import Iterator
 
 import pefile
 
+import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
 import capa.features.extractors.strings
@@ -29,13 +30,12 @@ from capa.features.common import (
     OS_ANY,
     OS_AUTO,
     ARCH_ANY,
-    VALID_OS,
     FORMAT_PE,
     FORMAT_ELF,
     OS_WINDOWS,
-    VALID_ARCH,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_SCRIPT,
     Arch,
     Format,
     String,
@@ -43,6 +43,7 @@ from capa.features.common import (
 )
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
+from capa.features.extractors.ts.autodetect import is_script
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,8 @@ def extract_format(buf: bytes) -> Iterator[tuple[Feature, Address]]:
         # we don't know what it is exactly, but may support it (e.g. a dynamic CAPE sandbox report)
         # skip verdict here and let subsequent code analyze this further
         return
+    elif is_script(buf):
+        yield Format(FORMAT_SCRIPT), NO_ADDRESS
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)
@@ -98,7 +101,7 @@ def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
         with contextlib.closing(io.BytesIO(buf)) as f:
             arch = capa.features.extractors.elf.detect_elf_arch(f)
 
-        if arch not in VALID_ARCH:
+        if arch not in capa.features.common.VALID_ARCH:
             logger.debug("unsupported arch: %s", arch)
             return
 
@@ -135,7 +138,7 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
 
-        if os not in VALID_OS:
+        if os not in capa.features.common.VALID_OS:
             logger.debug("unsupported os: %s", os)
             return
 
