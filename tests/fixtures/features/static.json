@@ -635,9 +635,9 @@
     },
     {
       "file": "pma16-01",
-      "location": "function=0x402F40",
-      "feature": "string: %SYSTEMROOT%\\system32\\",
-      "explanation": "basic string"
+      "location": "function=0x4021B0",
+      "feature": "substring: HTTP/1.0",
+      "explanation": "basic substring"
     },
     {
       "file": "pma16-01",
@@ -649,27 +649,19 @@
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
-      "feature": "string: http://www.practicalmalwareanalysis.com",
-      "explanation": "basic string"
+      "feature": "string: /PRACTICALmalwareANALYSIS/i",
+      "explanation": "case-insensitive regex"
     },
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
-      "feature": "string:  Manager Service",
-      "explanation": "basic string"
+      "feature": "string: /www.*/",
+      "explanation": "simple regex prefix match"
     },
     {
       "file": "pma16-01",
       "location": "function=0x402F40",
-      "feature": "string: .exe",
-      "explanation": "basic string",
-      "marks": [
-        {
-          "backend": "ghidra",
-          "mark": "xfail",
-          "reason": "Ghidra does not extract this string in the same function"
-        }
-      ]
+      "feature": "substring: practicalmalwareanalysis.com"
     },
     {
       "file": "mimikatz",
@@ -686,13 +678,13 @@
     {
       "file": "mimikatz",
       "location": "function=0x401517",
-      "feature": "bytes: BB 27 CA 3B 0E 00 00 00 F8 AF 47 00 BB 27 CB 3B 06 00 00 00 D0 AF 47 00 BB 27 CC 3B 01 00 00 00 BC AF 47 00 BB 27 CD 3B 0E 00 00 00 90 AF 47 00 D8 04 48 F8 06 00 00 00 48 AF 47 00 F8 0B 20 10 02 00 00 00 28 AF 47 00 00 64 64 00 00 00 00 00 00 00 00 00 00 00 00 00 45 00 52 00 52 00 4F 00 52 00 20 00 6B 00 75 00 6C 00 6C 00 5F 00 6D 00 5F 00 61 00 73 00 6E 00 31 00 5F 00 69 00 6E 00 69 00 74 00 20 00 3B 00 20 00 41 00 53 00 4E 00 31 00 5F 00 43 00 72 00 65 00 61 00 74 00 65 00 45 00 6E 00 63 00 6F 00 64 00 65 00 72 00 3A 00 20 00 25 00 69 00 0A 00 00 00 00 00 00 00 00 00 45 00 52 00 52 00 4F 00 52 00 20 00 6B 00 75 00 6C 00 6C 00 5F 00 6D 00 5F 00 61 00 73 00 6E 00 31 00 5F 00 69 00 6E 00 69 00 74 00 20 00 3B 00 20 00 41 00 53 00 4E 00 31 00 5F 00 43 00 72 00",
+      "feature": "bytes: CA 3B 0E 00 00 00 F8 AF 47",
       "explanation": "basic bytes"
     },
     {
       "file": "mimikatz",
       "location": "function=0x404414",
-      "feature": "bytes: 01 80 00 00 40 EA 47 00 02 80 00 00 2C EA 47 00 03 80 00 00 18 EA 47 00 04 80 00 00 04 EA 47 00 05 80 00 00 E8 E9 47 00 00 24 00 00 CC E9 47 00 00 22 00 00 B0 E9 47 00 00 20 00 00 94 E9 47 00 00 A4 00 00 80 E9 47 00 01 66 00 00 64 E9 47 00 09 66 00 00 50 E9 47 00 03 66 00 00 3C E9 47 00 04 66 00 00 28 E9 47 00 02 66 00 00 14 E9 47 00 01 68 00 00 00 E9 47 00 02 68 00 00 E8 E8 47 00 01 AA 00 00 CC E8 47 00 02 AA 00 00 A4 E8 47 00 03 AA 00 00 88 E8 47 00 04 AA 00 00 68 E8 47 00 03 A0 00 00 4C E8 47 00 0A 66 00 00 38 E8 47 00 0B 66 00 00 18 E8 47 00 0C 66 00 00 F4 E7 47 00 08 80 00 00 D0 E7 47 00 01 4C 00 00 9C E7 47 00 02 4C 00 00 70 E7 47 00 03 4C 00 00 44 E7 47 00 07 4C 00 00 20 E7 47 00 04 4C 00 00 FC E6 47 00 05 4C 00 00 D8 E6 47 00 06 4C 00 00 C4 E6 47 00",
+      "feature": "bytes: 01 80 00 00 40 EA 47 00",
       "explanation": "basic bytes, which are a pointer"
     },
     {

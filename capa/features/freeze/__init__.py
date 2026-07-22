@@ -38,7 +38,7 @@ from capa.features.extractors.base_extractor import (
 
 logger = logging.getLogger(__name__)
 
-CURRENT_VERSION = 4
+CURRENT_VERSION = 3
 
 
 class HashableModel(BaseModel):
