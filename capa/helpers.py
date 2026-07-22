@@ -147,18 +147,14 @@ def stdout_redirector(stream):
     # Save a copy of the original stdout fd in saved_stdout_fd
     saved_stdout_fd = os.dup(original_stdout_fd)
     try:
-        # Create a temporary file and redirect stdout to it
-        tfile = tempfile.TemporaryFile(mode="w+b")
-        _redirect_stdout(tfile.fileno())
-        # Yield to caller, then redirect stdout back to the saved fd
-        yield
-        _redirect_stdout(saved_stdout_fd)
-        # Copy contents of temporary file to the given stream
-        tfile.flush()
-        tfile.seek(0, io.SEEK_SET)
-        stream.write(tfile.read())
+        with tempfile.TemporaryFile(mode="w+b") as tfile:
+            _redirect_stdout(tfile.fileno())
+            yield
+            _redirect_stdout(saved_stdout_fd)
+            tfile.flush()
+            tfile.seek(0, io.SEEK_SET)
+            stream.write(tfile.read())
     finally:
-        tfile.close()
         os.close(saved_stdout_fd)
 
 
@@ -235,12 +231,12 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
+    elif sample.name.endswith(EXTENSIONS_ELF):
+        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
         format_ = FORMAT_BINEXPORT2
-    elif sample.name.endswith(EXTENSIONS_ELF):
-        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_BINJA_DB):
         format_ = FORMAT_BINJA_DB
     elif sample.name.endswith(EXTENSIONS_SUPPORTED_SCRIPTS):
@@ -321,7 +317,11 @@ def log_unsupported_vmray_report_error(error: str):
 
 def log_empty_sandbox_report_error(error: str, sandbox_name: str):
     logger.error("-" * 80)
-    logger.error(" %s report is empty or only contains little useful data: %s", sandbox_name, error)
+    logger.error(
+        " %s report is empty or only contains little useful data: %s",
+        sandbox_name,
+        error,
+    )
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
@@ -403,7 +403,10 @@ def is_cache_newer_than_rule_code(cache_dir: Path) -> bool:
     import capa.rules
     import capa.rules.cache
 
-    latest_rule_code_file = max([Path(capa.rules.__file__), Path(capa.rules.cache.__file__)], key=os.path.getmtime)
+    latest_rule_code_file = max(
+        [Path(capa.rules.__file__), Path(capa.rules.cache.__file__)],
+        key=os.path.getmtime,
+    )
     rule_code_timestamp = Path(latest_rule_code_file).stat().st_mtime
 
     if rule_code_timestamp > cache_timestamp:
@@ -450,18 +453,18 @@ class MofNCompleteColumnWithUnit(MofNCompleteColumn):
 
 class CapaProgressBar(Progress):
     @classmethod
-    def get_default_columns(cls):
+    def get_default_columns(cls) -> tuple[ProgressColumn, ...]:
         return (
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             TaskProgressColumn(),
             BarColumn(),
             MofNCompleteColumnWithUnit(),
-            "•",
+            TextColumn("•"),
             TimeElapsedColumn(),
-            "<",
+            TextColumn("<"),
             TimeRemainingColumn(),
-            "•",
+            TextColumn("•"),
             RateColumn(),
             PostfixColumn(),
         )
