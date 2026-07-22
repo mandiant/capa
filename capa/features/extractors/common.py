@@ -54,7 +54,7 @@ MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
 
-def extract_file_strings(buf: bytes, **kwargs) -> Iterator[tuple[String, Address]]:
+def extract_file_strings(buf: bytes) -> Iterator[tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
@@ -118,7 +118,10 @@ def extract_arch(buf) -> Iterator[tuple[Feature, Address]]:
         # rules that rely on arch conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s, will not guess Arch", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug(
+            "unsupported file format: %s, will not guess Arch",
+            binascii.hexlify(buf[:4]).decode("ascii"),
+        )
         return
 
 
@@ -150,5 +153,8 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[tuple[Feature, Address]]:
         # rules that rely on OS conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported file format: %s, will not guess OS", binascii.hexlify(buf[:4]).decode("ascii"))
+        logger.debug(
+            "unsupported file format: %s, will not guess OS",
+            binascii.hexlify(buf[:4]).decode("ascii"),
+        )
         return

@@ -495,7 +495,6 @@ class ScriptLanguage(Feature):
 
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
-FORMAT_SCRIPT = "script"
 FORMAT_DOTNET = "dotnet"
 FORMAT_SCRIPT = "script"
 VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET, FORMAT_SCRIPT)

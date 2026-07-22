@@ -205,7 +205,7 @@ def find_static_capabilities(
                     match_count += len(matches_)
 
             logger.debug(
-                "analyzed function %s and extracted %d features, %d matches in %0.02fs",
+                "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
                 f.address,
                 code_capabilities.feature_count,
                 match_count,
