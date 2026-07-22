@@ -35,7 +35,7 @@ DOTNET_DIR = Path(__file__).resolve().parent / "data" / "dotnet"
 @fixtures.parametrize_backend_feature_fixtures(
     fixtures.BackendFeaturePolicy(
         name="dnfile",
-        include_tags={"dotnet", "dnfile"},
+        include_tags={"dotnet"},
     )
 )
 def test_dnfile_features(feature_fixture):

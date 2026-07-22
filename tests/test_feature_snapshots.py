@@ -91,9 +91,6 @@ class Manifest(BaseModel):
         return cls.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-if not MANIFEST_PATH.exists():
-    pytest.skip("feature snapshot fixtures are not present", allow_module_level=True)
-
 _SNAPSHOTS = Manifest.from_file().snapshots
 
 
