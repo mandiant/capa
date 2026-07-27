@@ -6,7 +6,7 @@
 #
 # Initially generated via: pip freeze | grep -v -- "-e"
 # Kept up to date by dependabot.
-annotated-types==0.7.0
+annotated-types==0.8.0
 colorama==0.4.6
 cxxfilt==0.3.0
 dncil==1.0.2
