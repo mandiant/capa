@@ -121,6 +121,7 @@
 - fix: remove redundant code related to cli loading @mike-hunhoff #3076
 - fix: optimize all_zeros using fast bytes comparison @mike-hunhoff #3078
 - fix: duplicate rule candidate evaluation in optimized matching engine @mike-hunhoff #3080
+- fix: capafmt corrupts rules whose namespace contains "features" @Makeph #3135
 
 ### capa Explorer Web
 
