@@ -9,7 +9,7 @@
 
 - Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
 
-### New Rules (10)
+### New Rules (11)
 
 - nursery/decrypt-payload-stored-as-ipv6-strings corkami@google.com
 - nursery/connect-to-websocket-server-in-dotnet mehunhoff@google.com
@@ -21,6 +21,7 @@
 - nursery/decode-pe-stored-as-uuid corkami@google.com
 - compiler/crystal/compiled-with-crystal corkami@google.com
 - compiler/odin/compiled-with-odin corkami@google.com
+- load-code/dotnet/load-dotnet-assembly-via-runtimeassemblynloadimage still@teamt5.org
 -
 
 ### Bug Fixes
