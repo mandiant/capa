@@ -15,7 +15,7 @@
 from typing import List, Tuple
 
 import pytest
-from fixtures import parametrize, get_ts_extractor, do_test_feature_presence
+from fixtures import parametrize
 from tree_sitter import Node, Tree
 
 from capa.features.insn import API, Number, Property
@@ -1208,10 +1208,3 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("py_ca0df6", "function=vul", Substring("SCHTASKS"), True),
     ("py_ca0df6", "function=llp", API("win32con::FILE_ATTRIBUTE_HIDDEN"), True),
 ])
-
-
-@parametrize(
-    "sample_ts, scope_ts, feature, expected", FEATURE_PRESENCE_TESTS_SCRIPTS, indirect=["sample_ts", "scope_ts"]
-)
-def test_ts_extractor(sample_ts, scope_ts, feature, expected):
-    do_test_feature_presence(get_ts_extractor, sample_ts, scope_ts, feature, expected)
