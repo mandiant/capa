@@ -15,7 +15,7 @@
 from typing import List, Tuple
 
 import pytest
-from fixtures import parametrize
+from fixtures import parametrize, get_ts_extractor, resolve_scope_ts, resolve_sample_ts
 from tree_sitter import Node, Tree
 
 from capa.features.insn import API, Number, Property
@@ -1208,3 +1208,34 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("py_ca0df6", "function=vul", Substring("SCHTASKS"), True),
     ("py_ca0df6", "function=llp", API("win32con::FILE_ATTRIBUTE_HIDDEN"), True),
 ])
+
+
+def get_extractor_ts(sample: str):
+    path = resolve_sample_ts(sample)
+    return get_ts_extractor(path)
+
+
+def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
+    extractor = get_extractor(sample)
+    features = scope(extractor)
+    if expected:
+        msg = f"{str(feature)} should be found in {scope.__name__}"
+    else:
+        msg = f"{str(feature)} should not be found in {scope.__name__}"
+    assert feature.evaluate(features) == expected, msg
+
+
+def do_test_feature_count(get_extractor, sample, scope, feature, expected):
+    extractor = get_extractor(sample)
+    features = scope(extractor)
+    msg = f"{str(feature)} should be found {expected} times in {scope.__name__}, found: {len(features[feature])}"
+    assert len(features[feature]) == expected, msg
+
+
+@parametrize(
+    "sample,location,feature,expected",
+    FEATURE_PRESENCE_TESTS_SCRIPTS,
+)
+def test_feature_presence_scripts(sample, location, feature, expected):
+    scope = resolve_scope_ts(location)
+    do_test_feature_presence(get_extractor_ts, sample, scope, feature, expected)
