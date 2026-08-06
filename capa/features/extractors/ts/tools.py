@@ -54,6 +54,10 @@ class PythonImport(BaseNamespace):
         qualified_names = toolkit.split_name(self.name)
         if len(qualified_names) < 2:
             return name
+
+        # if plain "import x.y case" - don't prepend
+        if name == self.name or name.startswith(self.name + "."):
+            return name
         return toolkit.join_names(*(qualified_names[:-1] + [name]))
 
 
@@ -115,7 +119,16 @@ class LanguageToolkit:
             return ""
         if self.is_recursive_property(node):  # yield only Current.Server.ClearError but not Current.Server and Current
             return ""
-        return self.join_names(*self.split_name(name)[1:])
+
+        parts = self.split_name(name)
+        if len(parts) < 2:
+            return name
+
+        # PascalCase first segment is considered a type
+        if parts[0][:1].isupper():
+            return name
+
+        return self.join_names(*parts[1:])
 
     def process_imported_constant(self, node: Node, name: str) -> Optional[str]:
         if self.is_method_call(node):  # yield only ssl.CERT_NONE and not ssl.wrap_socket()
