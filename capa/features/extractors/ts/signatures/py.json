@@ -21,7 +21,6 @@
         "os.remove",
         "platform.mac_ver",
         "shutil.copytree",
-        "subprocess.PIPE",
         "subprocess.Popen",
         "time.sleep",
         "urllib2.urlopen",
@@ -35,6 +34,7 @@
         "socket.SQL_SOCKET",
         "ssl.CERT_NONE",
         "ssl.PROTOCOL_TLSv1",
+        "subprocess.PIPE",
         "win32con.FILE_ATTRIBUTE_HIDDEN",
         "win32con.FILE_ATTRIBUTE_SYSTEM"
     ],

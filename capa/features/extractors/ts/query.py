@@ -103,7 +103,11 @@ BINDINGS: dict[str, QueryBinding] = {
                     """,
                     # local functions
                     "function_definition": """
-                    (local_function_statement) @function-definition
+                    [
+                        (local_function_statement)
+                        (method_declaration)
+                        (constructor_declaration)
+                    ] @function-definition
                     """,
                     # foo() or obj.foo()
                     "function_call_name": """

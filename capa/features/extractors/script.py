@@ -24,10 +24,10 @@ LANG_JS = "javascript"
 LANG_PY = "python"
 LANG_TEM = "embedded_template"
 
-EXT_ASPX = ("aspx", "aspx_")
-EXT_CS = ("cs", "cs_")
-EXT_HTML = ("html", "html_")
-EXT_PY = ("py", "py_")
+EXT_ASPX = (".aspx", ".aspx_")
+EXT_CS = (".cs", ".cs_")
+EXT_HTML = (".html", ".html_")
+EXT_PY = (".py", ".py_")
 
 
 LANGUAGE_FEATURE_FORMAT = {

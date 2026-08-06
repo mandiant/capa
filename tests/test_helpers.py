@@ -141,15 +141,13 @@ def test_extensions_dot_prefix():
         EXTENSIONS_SHELLCODE_64,
         EXTENSIONS_DYNAMIC,
         EXTENSIONS_BINEXPORT2,
+        EXTENSIONS_SUPPORTED_SCRIPTS,
         (EXTENSIONS_ELF,),
         (EXTENSIONS_FREEZE,),
         (EXTENSIONS_BINJA_DB,),
     ):
         for ext in ext_group:
             assert ext.startswith("."), f"extension {ext!r} must start with a dot"
-
-    for ext in EXTENSIONS_SUPPORTED_SCRIPTS:
-        assert not ext.startswith("."), f"script suffix {ext!r} should be a bare suffix"
 
     assert Path("sample.log").name.endswith(EXTENSIONS_DYNAMIC)
     assert not Path("dialog").name.endswith(EXTENSIONS_DYNAMIC)
