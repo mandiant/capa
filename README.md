@@ -246,6 +246,38 @@ $ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.json
 ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
 ```
 
+# script analysis
+
+capa also supports static analysis of script-based files using [Tree-sitter](https://tree-sitter.github.io/tree-sitter/). Script analysis currently supports Python (`.py`), C# (`.cs`), HTML/ASPX (`.html`, `.aspx`) and Bash (`.sh`), allowing capa to identify capabilities in scripts.
+
+Here is an example for running a capa against a script:
+
+```
+$ capa 606dbfebdc7751ecb6cb9a845853ae1905afd4b8a2cb54e1e4a98c932e268712.aspx_
+┌──────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+| md5      | a73d772a6db180ea12c7f0c7dbb8eaf2                                                                                 |
+| sha1     | acf361167ea92fff4a3d509edab7025590faa337                                                                         |
+| sha256   | 606dbfebdc7751ecb6cb9a845853ae1905afd4b8a2cb54e1e4a98c932e268712                                                 |
+| analysis | static                                                                                                           |
+| os       | any                                                                                                              |
+| format   | script                                                                                                           |
+| arch     | any                                                                                                              |
+| path     | path/606dbfebdc7751ecb6cb9a845853ae1905afd4b8a2cb54e1e4a98c932e268712.aspx_                                      |
+└──────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ MBC Objective                                    ┃ MBC Behavior                                  ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ FILE SYSTEM                                      │ Delete File [C0047]                           │
+└──────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Capability                          ┃ Namespace                                                  ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ delete file                         │ host-interaction/file-system/delete                        │
+└─────────────────────────────────────┴────────────────────────────────────────────────────────────┘
+```
+
+For more details, see the [Script Analysis documentation](doc/script-analysis.md).
+
 # capa rules
 capa uses a collection of rules to identify capabilities within a program.
 These rules are easy to write, even for those new to reverse engineering.
