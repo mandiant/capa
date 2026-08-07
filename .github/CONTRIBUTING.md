@@ -36,7 +36,7 @@ We host the capa project as three GitHub repositories:
   - [capa-rules](https://github.com/mandiant/capa-rules)
   - [capa-testfiles](https://github.com/mandiant/capa-testfiles)
   
-The command line tools, logic engine, and other Python source code are found in the `capa` repository.
+The command line tools, logic engine, scripting language analysis, and other Python source code are found in the `capa` repository.
 This is the repository to fork when you want to enhance the features, performance, or user interface of capa.
 Do *not* push rules directly to this repository, instead...
 
@@ -46,10 +46,12 @@ We keep `capa` and `capa-rules` separate to distinguish where ideas, bugs, and d
 If you're writing yaml it probably goes in `capa-rules` and if you're writing Python it probably goes in `capa`.
 Also, we encourage users to develop their own rule repositories, so we treat our default set of rules in the same way.
 
-Test fixtures, such as malware samples and analysis workspaces, are found in the `capa-testfiles` repository.
+Test fixtures, such as malware samples, script samples and analysis workspaces, are found in the `capa-testfiles` repository.
 These are files you'll need in order to run the linter (in `--thorough` mode) and full test suites;
  however, they take up a lot of space (1GB+), so by keeping `capa-testfiles` separate,
  a shallow checkout of `capa` and `capa-rules` doesn't take much bandwidth.
+
+For more information on developing and extending Script Analysis, see the [Script Analysis documentation](../doc/script-analysis.md).
 
 ### Design Decisions
 
