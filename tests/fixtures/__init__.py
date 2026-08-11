@@ -874,13 +874,13 @@ def cs_138cdc_extractor_engine():
 
 
 @pytest.fixture
-def py_7f9cd1_template_engine():
-    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_7f9cd1"])
+def py_24e48f_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_24e48f"])
 
 
 @pytest.fixture
-def py_ca0df6_template_engine():
-    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_ca0df6"])
+def py_a4d252_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_a4d252"])
 
 
 def resolve_sample_ts(sample):
@@ -1222,6 +1222,6 @@ CS_DATA_PATH_BY_NAME = {
 
 
 PY_DATA_PATH_BY_NAME = {
-    "py_7f9cd1": PY_DIR / "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_",
-    "py_ca0df6": PY_DIR / "ca0df6cccf2a15ce8f781d81959cf230aead64e6297a3283b21457dc74938c89.py_",
+    "py_24e48f": PY_DIR / "24e48f27083aa14d630ec1aec8dfe8ec869dc8ba48f68154e2b14f493a548d28.py_",
+    "py_a4d252": PY_DIR / "a4d252752d0558206b3f631fee3d57ae56190fb8203e571506fa058d076fbb96.py_",
 }
