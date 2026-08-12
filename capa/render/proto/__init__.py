@@ -164,7 +164,7 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
         assert_never(addr)
 
 
-def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
+def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope:
     if scope == capa.rules.Scope.FILE:
         return capa_pb2.Scope.SCOPE_FILE
     elif scope == capa.rules.Scope.FUNCTION:
@@ -195,7 +195,7 @@ def scopes_to_pb2(scopes: capa.rules.Scopes) -> capa_pb2.Scopes:
     return google.protobuf.json_format.ParseDict(doc, capa_pb2.Scopes())
 
 
-def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor.ValueType:
+def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor:
     if flavor == rd.Flavor.STATIC:
         return capa_pb2.Flavor.FLAVOR_STATIC
     elif flavor == rd.Flavor.DYNAMIC:
@@ -673,7 +673,7 @@ def addr_from_pb2(addr: capa_pb2.Address) -> frz.Address:
         assert_never(addr)
 
 
-def scope_from_pb2(scope: capa_pb2.Scope.ValueType) -> capa.rules.Scope:
+def scope_from_pb2(scope: capa_pb2.Scope) -> capa.rules.Scope:
     if scope == capa_pb2.Scope.SCOPE_FILE:
         return capa.rules.Scope.FILE
     elif scope == capa_pb2.Scope.SCOPE_FUNCTION:
@@ -701,7 +701,7 @@ def scopes_from_pb2(scopes: capa_pb2.Scopes) -> capa.rules.Scopes:
     )
 
 
-def flavor_from_pb2(flavor: capa_pb2.Flavor.ValueType) -> rd.Flavor:
+def flavor_from_pb2(flavor: capa_pb2.Flavor) -> rd.Flavor:
     if flavor == capa_pb2.Flavor.FLAVOR_STATIC:
         return rd.Flavor.STATIC
     elif flavor == capa_pb2.Flavor.FLAVOR_DYNAMIC:
