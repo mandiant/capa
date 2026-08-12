@@ -148,3 +148,29 @@ def test_rule_reformat_string_description():
 
     rule = capa.rules.Rule.from_yaml(src)
     assert rule.to_yaml() == src
+
+
+def test_rule_reformat_namespace_with_features():
+    # regression test for #3134
+    # a namespace containing the substring "features"
+    # (e.g. `impact/features/persistence`) must not be mistaken for the
+    # `features:` section; otherwise the meta `description` gets
+    # incorrectly re-indented and the emitted YAML becomes invalid.
+    src = textwrap.dedent("""
+        rule:
+          meta:
+            name: test rule
+            namespace: impact/features/persistence
+            authors:
+              - user@domain.com
+            description: this is a description
+            scopes:
+              static: function
+              dynamic: process
+          features:
+            - and:
+              - string: foo
+                description: bar
+        """).lstrip()
+
+    assert capa.rules.Rule.from_yaml(src).to_yaml() == src

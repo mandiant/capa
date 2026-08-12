@@ -1374,7 +1374,10 @@ class Rule:
         # see #263
         # only do this for the features section, so the meta description doesn't get reformatted
         # assumes features section always exists
-        features_offset = doc.find("features")
+        # anchor on the section header rather than the bare word "features",
+        # since a rule's namespace (e.g. `impact/features/persistence`)
+        # may contain that substring and mislead the offset. see #3134
+        features_offset = doc.find("\n  features:")
         doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
 
         # for negative hex numbers, yaml dump outputs:
