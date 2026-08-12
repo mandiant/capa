@@ -386,3 +386,100 @@ def test_match_no_duplicate_candidate_evaluations():
 
     # Ensure Target Rule was evaluated and returned exactly ONCE
     assert len(matches["Target Rule"]) == 1
+
+
+def test_required_literal_unit():
+    assert capa.rules._required_literal("test[0-9]+") == "test"
+    assert capa.rules._required_literal("a[0-9]b") is None
+    assert capa.rules._required_literal("(test|b)") is None
+    assert capa.rules._required_literal("(test|example)") == {"test", "example"}
+
+
+def test_string_literal_prefilter_regex_confirmation():
+    rule = textwrap.dedent("""
+        rule:
+            meta:
+                name: test regex confirmation
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /malware[0-9]+/
+        """)
+    r = capa.rules.Rule.from_yaml(rule)
+    ruleset = capa.rules.RuleSet([r])
+
+    feat1 = {capa.features.common.String("found malware123 sample"): {0x0}}
+    _, matches1 = ruleset.match(Scope.FUNCTION, feat1, 0x0)
+    assert "test regex confirmation" in matches1
+
+    feat2 = {capa.features.common.String("this malwareXYZ string"): {0x0}}
+    _, matches2 = ruleset.match(Scope.FUNCTION, feat2, 0x0)
+    assert "test regex confirmation" not in matches2
+
+    feat3 = {capa.features.common.String("totally clean"): {0x0}}
+    _, matches3 = ruleset.match(Scope.FUNCTION, feat3, 0x0)
+    assert "test regex confirmation" not in matches3
+
+
+def test_differential_parity_prefilter_on_vs_off(monkeypatch):
+    """
+    Differential parity test: Match rules with prefilter ON vs OFF (ahocorasick forced to None).
+    Expected: identical match results in both.
+    """
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Rule 1 Substring
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - string: "specific_literal_string"
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Rule 2 Regex
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - string: /pattern_[0-9]{3}/
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Rule 3 No Literal Regex
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - string: /[a-z]/
+                """)
+        ),
+    ]
+
+    features = {
+        capa.features.common.String("here is a specific_literal_string inside"): {0x0},
+        capa.features.common.String("here is pattern_123 inside"): {0x0},
+        capa.features.common.String("here is pattern_abc inside"): {0x0},
+    }
+
+    ruleset_on = capa.rules.RuleSet(rules)
+    _, matches_on = ruleset_on.match(Scope.FUNCTION, features, 0x0)
+
+    monkeypatch.setattr(capa.rules, "ahocorasick", None)
+
+    ruleset_off = capa.rules.RuleSet(rules)
+    _, matches_off = ruleset_off.match(Scope.FUNCTION, features, 0x0)
+
+    assert matches_on.keys() == matches_off.keys()
+    for k in matches_on:
+        assert len(matches_on[k]) == len(matches_off[k])
