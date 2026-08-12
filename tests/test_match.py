@@ -407,18 +407,17 @@ def test_string_literal_prefilter_regex_confirmation():
                 - string: /malware[0-9]+/
         """)
     r = capa.rules.Rule.from_yaml(rule)
-    ruleset = capa.rules.RuleSet([r])
 
     feat1 = {capa.features.common.String("found malware123 sample"): {0x0}}
-    _, matches1 = ruleset.match(Scope.FUNCTION, feat1, 0x0)
+    _, matches1 = match([r], feat1, 0x0)
     assert "test regex confirmation" in matches1
 
     feat2 = {capa.features.common.String("this malwareXYZ string"): {0x0}}
-    _, matches2 = ruleset.match(Scope.FUNCTION, feat2, 0x0)
+    _, matches2 = match([r], feat2, 0x0)
     assert "test regex confirmation" not in matches2
 
     feat3 = {capa.features.common.String("totally clean"): {0x0}}
-    _, matches3 = ruleset.match(Scope.FUNCTION, feat3, 0x0)
+    _, matches3 = match([r], feat3, 0x0)
     assert "test regex confirmation" not in matches3
 
 
@@ -472,13 +471,10 @@ def test_differential_parity_prefilter_on_vs_off(monkeypatch):
         capa.features.common.String("here is pattern_abc inside"): {0x0},
     }
 
-    ruleset_on = capa.rules.RuleSet(rules)
-    _, matches_on = ruleset_on.match(Scope.FUNCTION, features, 0x0)
+    _, matches_on = match(rules, features, 0x0)
 
     monkeypatch.setattr(capa.rules, "ahocorasick", None)
-
-    ruleset_off = capa.rules.RuleSet(rules)
-    _, matches_off = ruleset_off.match(Scope.FUNCTION, features, 0x0)
+    _, matches_off = match(rules, features, 0x0)
 
     assert matches_on.keys() == matches_off.keys()
     for k in matches_on:
