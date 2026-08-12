@@ -30,6 +30,7 @@ message Address {
     Ppid_Pid ppid_pid = 4;
     Ppid_Pid_Tid ppid_pid_tid = 5;
     Ppid_Pid_Tid_Id ppid_pid_tid_id = 6;
+    FileOffsetRange file_range = 7;
   };
 }
 
@@ -44,6 +45,7 @@ enum AddressType {
   ADDRESSTYPE_PROCESS = 7;
   ADDRESSTYPE_THREAD = 8;
   ADDRESSTYPE_CALL = 9;
+  ADDRESSTYPE_FILE_RANGE = 10;
 }
 
 message Analysis {
@@ -160,6 +162,7 @@ message FeatureNode {
     OperandNumberFeature operand_number = 22;
     OperandOffsetFeature operand_offset = 23;
     BasicBlockFeature basic_block = 24;
+    ScriptLanguageFeature script_language = 25;
   };
 }
 
@@ -490,3 +493,14 @@ message Ppid_Pid_Tid_Id {
 message Integer { oneof value { uint64 u = 1; sint64 i = 2; } }  // unsigned or signed int
 
 message Number { oneof value { uint64 u = 1; sint64 i = 2; double f = 3; } }
+
+message FileOffsetRange {
+    uint64 start = 1;
+    uint64 end = 2;
+}
+
+message ScriptLanguageFeature {
+    string type = 1;
+    string language = 2;
+    optional string description = 3;
+}
