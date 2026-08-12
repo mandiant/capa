@@ -26,6 +26,7 @@
 -
 
 ### Bug Fixes
+- fix: prevent capafmt from corrupting rules whose namespace contains `features` @SkxOverKill #3143
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
 - fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
