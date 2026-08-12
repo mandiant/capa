@@ -153,6 +153,12 @@ def test_freeze_bytes_roundtrip():
     compare_extractors(EXTRACTOR, reanimated)
 
 
+def test_freeze_dump_omits_absent_description():
+    # features without a description must not serialize as "description": null
+    # see: https://github.com/mandiant/capa/issues/3100
+    assert '"description":null' not in capa.features.freeze.dumps_dynamic(EXTRACTOR)
+
+
 def test_freeze_load_sample(tmpdir):
     o = tmpdir.mkdir("capa").join("test.frz")
 
