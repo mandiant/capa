@@ -479,3 +479,33 @@ def test_differential_parity_prefilter_on_vs_off(monkeypatch):
     assert matches_on.keys() == matches_off.keys()
     for k in matches_on:
         assert len(matches_on[k]) == len(matches_off[k])
+
+
+def test_string_literal_prefilter_shared_literal():
+    str_regex = textwrap.dedent("""
+        rule:
+            meta:
+                name: rule 1 shared literal
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /.*shared_key.*/
+        """)
+    str_search = textwrap.dedent("""
+        rule:
+            meta:
+                name: rule 2 shared literal
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /shared_key/
+        """)
+    rule_regex = capa.rules.Rule.from_yaml(str_regex)
+    rule_search = capa.rules.Rule.from_yaml(str_search)
+
+    feat = {capa.features.common.String("prefix shared_key suffix"): {0x0}}
+    _, matches = match([rule_regex, rule_search], feat, 0x0)
+    assert "rule 1 shared literal" in matches
+    assert "rule 2 shared literal" in matches

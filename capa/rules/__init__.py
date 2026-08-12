@@ -2023,6 +2023,7 @@ class RuleSet:
         bytes_rules_count = 0
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
         string_literal_automaton = ahocorasick.Automaton() if ahocorasick is not None else None
+        string_literal_entries: dict[str, list[tuple[str, Feature]]] = collections.defaultdict(list)
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -2075,7 +2076,7 @@ class RuleSet:
                         if isinstance(wanted_string, capa.features.common.Substring):
                             sub_val = str(wanted_string.value)
                             if len(sub_val) >= _STRING_LITERAL_MIN:
-                                string_literal_automaton.add_word(sub_val.lower(), (rule_name, wanted_string))
+                                string_literal_entries[sub_val.lower()].append((rule_name, wanted_string))
                                 indexed = True
                         elif isinstance(wanted_string, capa.features.common.Regex):
                             req_lits = _required_literal(wanted_string.re.pattern)
@@ -2086,7 +2087,7 @@ class RuleSet:
                                     lit_set = req_lits
                                 for lit in lit_set:
                                     if len(lit) >= _STRING_LITERAL_MIN:
-                                        string_literal_automaton.add_word(lit.lower(), (rule_name, wanted_string))
+                                        string_literal_entries[lit.lower()].append((rule_name, wanted_string))
                                         indexed = True
                     if not indexed:
                         unindexed_string_features.append(wanted_string)
@@ -2109,7 +2110,9 @@ class RuleSet:
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
 
-        if string_literal_automaton is not None and len(string_literal_automaton) > 0:
+        if string_literal_automaton is not None and string_literal_entries:
+            for word, entries in string_literal_entries.items():
+                string_literal_automaton.add_word(word, entries)
             string_literal_automaton.make_automaton()
         else:
             string_literal_automaton = None
@@ -2303,16 +2306,15 @@ class RuleSet:
                 if feature_index.string_literal_index:
                     for string_feature in string_features:
                         haystack = str(string_feature.value).lower()
-                        for _end_index, (rule_name, wanted_feature) in feature_index.string_literal_index.iter(
-                            haystack
-                        ):
-                            if rule_name in candidate_rule_names:
-                                continue
-                            if isinstance(wanted_feature, capa.features.common.Substring):
-                                candidate_rule_names.add(rule_name)
-                            elif isinstance(wanted_feature, capa.features.common.Regex):
-                                if wanted_feature.re.search(str(string_feature.value)):
+                        for _end_index, rule_entries in feature_index.string_literal_index.iter(haystack):
+                            for rule_name, wanted_feature in rule_entries:
+                                if rule_name in candidate_rule_names:
+                                    continue
+                                if isinstance(wanted_feature, capa.features.common.Substring):
                                     candidate_rule_names.add(rule_name)
+                                elif isinstance(wanted_feature, capa.features.common.Regex):
+                                    if wanted_feature.re.search(str(string_feature.value)):
+                                        candidate_rule_names.add(rule_name)
 
                 if feature_index.string_rules:
                     for rule_name, wanted_strings in feature_index.string_rules.items():
