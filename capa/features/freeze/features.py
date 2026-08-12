@@ -35,6 +35,9 @@ class FeatureModel(BaseModel):
         elif isinstance(self, FormatFeature):
             return capa.features.common.Format(self.format, description=self.description)
 
+        elif isinstance(self, ScriptLanguageFeature):
+            return capa.features.common.ScriptLanguage(self.language, description=self.description)
+
         elif isinstance(self, MatchFeature):
             return capa.features.common.MatchedRule(self.match, description=self.description)
 
@@ -122,6 +125,9 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.common.Format):
         assert isinstance(f.value, str)
         return FormatFeature(format=f.value, description=f.description)
+
+    elif isinstance(f, capa.features.common.ScriptLanguage):
+        return ScriptLanguageFeature(language=str(f.value), description=f.description)
 
     elif isinstance(f, capa.features.common.MatchedRule):
         assert isinstance(f.value, str)
@@ -229,6 +235,12 @@ class ArchFeature(FeatureModel):
 class FormatFeature(FeatureModel):
     type: Literal["format"] = "format"
     format: str
+    description: Optional[str] = None
+
+
+class ScriptLanguageFeature(FeatureModel):
+    type: Literal["script language"] = "script language"
+    language: str
     description: Optional[str] = None
 
 
@@ -359,6 +371,7 @@ Feature = Annotated[
         OSFeature,
         ArchFeature,
         FormatFeature,
+        ScriptLanguageFeature,
         MatchFeature,
         CharacteristicFeature,
         ExportFeature,
