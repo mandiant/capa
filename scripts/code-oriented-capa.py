@@ -1859,13 +1859,14 @@ def get_ida_extractor() -> "FeatureExtractor":
 
 
 def run_capa_analysis(
-    input_path: Path, rules_path: Optional[Path], extractor: "FeatureExtractor"
+    input_path: Path, rules_path: Optional[Path], extractor: "FeatureExtractor", tag: Optional[str] = None
 ) -> "rd.ResultDocument":
     """
     Run capa analysis using the given idalib-backed extractor.
 
     Raises:
         capa.rules.InvalidRule: If the rules cannot be loaded.
+        capa.rules.InvalidRuleSet: If the tag selects no rules.
     """
     import capa.main
     import capa.rules
@@ -1877,6 +1878,9 @@ def run_capa_analysis(
     rules_paths = [rules_path] if rules_path else [capa.main.get_default_root() / "rules"]
     with STDERR_CONSOLE.status("Loading rules..."):
         rules = capa.rules.get_rules(rules_paths)
+        if tag:
+            rules = rules.filter_rules_by_meta(tag)
+            logger.debug("selected %d rules", len(rules))
 
     with STDERR_CONSOLE.status("Finding capabilities..."):
         capabilities = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
@@ -1917,6 +1921,7 @@ def main(argv=None):
     )
     parser.add_argument("input_file", type=Path, help="path to the input binary")
     parser.add_argument("--rules", type=Path, help="path to capa rules directory")
+    parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("--json", type=Path, dest="json_path", help="path to pre-computed capa JSON result document")
     parser.add_argument("--no-color", action="store_true", help="disable color output")
     parser.add_argument("--context", type=int, default=3, help="context lines around annotations (default: 3)")
@@ -1936,6 +1941,7 @@ def main(argv=None):
 
     import capa.render.result_document as rd
     import capa.features.extractors.ida.idalib as idalib
+    import capa.rules
 
     if not idalib.is_idalib_installed():
         print("error: idalib not available", file=sys.stderr)
@@ -1948,10 +1954,12 @@ def main(argv=None):
             extractor = get_ida_extractor()
 
             if args.json_path:
+                if args.tag:
+                    print(f"warning: --tag has no effect with --json", file=sys.stderr)
                 with STDERR_CONSOLE.status("Loading result document..."):
                     doc = load_result_document(args.json_path)
             else:
-                doc = run_capa_analysis(args.input_file, args.rules, extractor)
+                doc = run_capa_analysis(args.input_file, args.rules, extractor, tag=args.tag)
 
             if doc.meta.flavor != rd.Flavor.STATIC:
                 print("error: code-oriented output only supports static analysis results", file=sys.stderr)
@@ -1971,7 +1979,10 @@ def main(argv=None):
                 functions = [f for f in functions if f.address in filter_addrs]
 
             if not functions:
-                print("No functions with rule matches found.", file=sys.stderr)
+                if args.tag:
+                    print(f'No rule matches for tag "{args.tag}".', file=sys.stderr)
+                else:
+                    print("No functions with rule matches found.", file=sys.stderr)
                 return 0
 
             console = rich.console.Console(
@@ -1989,6 +2000,9 @@ def main(argv=None):
             )
     except (AnalysisError, OSError) as e:
         print(f"error: {e}", file=sys.stderr)
+        return 1
+    except capa.rules.InvalidRuleSet:
+        print(f'error: no rules matched tag: {args.tag}', file=sys.stderr)
         return 1
 
     return 0

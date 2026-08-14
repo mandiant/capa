@@ -23,6 +23,7 @@ python scripts/code-oriented-capa.py <binary> [options]
 ### Options
 
 - `--rules PATH` — path to capa rules directory (default: bundled rules)
+- `-t, --tag TAG` — filter on rule meta field values (see Decisions).
 - `--json PATH` — path to a pre-computed capa JSON result document. When
   provided, skips capa analysis and loads results directly. idalib is still
   used for disassembly/pseudocode retrieval.
@@ -238,6 +239,19 @@ Each feature type has a specific rendering style:
   behaviors, not on the rule structure.
 - **Ordered by VA within each rule.** Functions within a rule are sorted by
   address. Rules are ordered by first appearance in the ResultDocument.
+- **Tag semantics inherited from capa.** `-t/--tag` means the same thing as in
+  `capa.main`: the ruleset is filtered with `RuleSet.filter_rules_by_meta`, so a
+  tag matches any string-valued or list-of-string meta field (name, namespace,
+  authors, `att&ck`, `mbc`, references, examples, description, plus flat
+  `maec/*` keys) by substring, and every surviving rule brings its transitive
+  dependencies along. A tag that matches nothing is a user-input error: it
+  prints `error: no rules matched tag: <tag>` and exits 1. A tag that selects
+  real rules but produces no matches prints `No rule matches for tag "<tag>".`
+  and exits 0, consistent with the no-matches path.
+- **Tag has no effect under `--json`.** Filtering happens before matching, on
+  the live-analysis path only. A pre-computed result document already contains
+  whatever rules the original run matched, so `--tag` with `--json` just logs a
+  warning and renders the document unchanged.
 - **Adaptive side-by-side layout.** When pseudocode is available and the
   terminal is wide enough, disassembly and pseudocode are laid out in
   side-by-side columns with the spine as the center divider. This increases

@@ -22,9 +22,16 @@ rendering phase.
 When running analysis:
 1. `resolve_database()` then `open_database_session()` open the database, and
    `get_ida_extractor()` wraps it in an `IdaFeatureExtractor`
-2. `capa.capabilities.common.find_capabilities()` to run matching
-3. `capa.loader.collect_metadata()` + `compute_layout()` for metadata
-4. `rd.ResultDocument.from_capa()` to build the result document
+2. Load rules with `capa.rules.get_rules()`. When `-t/--tag` is given, apply
+   `RuleSet.filter_rules_by_meta(tag)` right after loading, inside the same
+   "Loading rules..." status. Filtering before matching narrows the ruleset
+   (and its transitive dependencies) before any feature extraction, which is
+   the main reason this is the only filter site; a tag that matches nothing
+   raises `InvalidRuleSet`, handled in `main()`. On `--json` no filter is
+   applied at all (see spec).
+3. `capa.capabilities.common.find_capabilities()` to run matching
+4. `capa.loader.collect_metadata()` + `compute_layout()` for metadata
+5. `rd.ResultDocument.from_capa()` to build the result document
 
 `collect_metadata()` receives the original input path, so hashes and file
 metadata describe the sample itself.
