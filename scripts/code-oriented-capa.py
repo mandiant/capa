@@ -37,6 +37,7 @@ import rich.logging
 
 if TYPE_CHECKING:
     import capa.render.result_document as rd
+    from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -1650,28 +1651,27 @@ def render_all(
 # ---------------------------------------------------------------------------
 
 
-def open_database(input_path: Path) -> None:
+def get_ida_extractor(input_path: Path) -> "FeatureExtractor":
     """
-    Open the input file in IDA and wait for auto-analysis to complete.
+    Open the input file in IDA and build the capa feature extractor.
+
+    Opening the database is a side effect of building the idalib extractor;
+    the caller is responsible for closing it.
 
     Raises:
-        RuntimeError: If the database cannot be opened.
+        RuntimeError: If idalib is unavailable or the database cannot be opened.
     """
-    import idapro
-    import ida_auto
+    import capa.loader
+    from capa.features.common import OS_AUTO, FORMAT_AUTO
 
-    with STDERR_CONSOLE.status("Opening database..."):
-        ret = idapro.open_database(str(input_path), run_auto_analysis=True)
-        if ret != 0:
-            raise RuntimeError(f"failed to open database: {ret}")
-        ida_auto.auto_wait()
+    return capa.loader.get_extractor(input_path, FORMAT_AUTO, OS_AUTO, capa.loader.BACKEND_IDA, [])
 
 
-def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.ResultDocument":
+def run_capa_analysis(
+    input_path: Path, rules_path: Optional[Path], extractor: "FeatureExtractor"
+) -> "rd.ResultDocument":
     """
-    Run capa analysis using the idalib backend.
-
-    The database must be opened before calling this function.
+    Run capa analysis using the given idalib-backed extractor.
 
     Raises:
         capa.rules.InvalidRule: If the rules cannot be loaded.
@@ -1681,10 +1681,7 @@ def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.Resul
     import capa.loader
     import capa.capabilities.common
     import capa.render.result_document as rd
-    import capa.features.extractors.ida.extractor
     from capa.features.common import FORMAT_AUTO
-
-    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     rules_paths = [rules_path] if rules_path else [capa.main.get_default_root() / "rules"]
     with STDERR_CONSOLE.status("Loading rules..."):
@@ -1751,7 +1748,7 @@ def main(argv=None):
     import capa.render.result_document as rd
 
     try:
-        open_database(args.input_file)
+        extractor = get_ida_extractor(args.input_file)
     except RuntimeError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
@@ -1763,7 +1760,7 @@ def main(argv=None):
             with STDERR_CONSOLE.status("Loading result document..."):
                 doc = load_result_document(args.json_path)
         else:
-            doc = run_capa_analysis(args.input_file, args.rules)
+            doc = run_capa_analysis(args.input_file, args.rules, extractor)
 
         if doc.meta.flavor != rd.Flavor.STATIC:
             print("error: code-oriented output only supports static analysis results", file=sys.stderr)

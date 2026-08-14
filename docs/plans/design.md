@@ -15,14 +15,17 @@ pre-computed ResultDocument from JSON. In both cases the output is a
 `rd.ResultDocument`.
 
 The database is opened first in either case, since disassembly and pseudocode
-come from IDA regardless of where the results came from.
+come from IDA regardless of where the results came from. Opening it is a side
+effect of `capa.loader.get_extractor(..., BACKEND_IDA, [])`, which is called
+unconditionally: with `--json` the returned extractor goes unused, but the
+database it opened is what feeds the rendering phase.
 
 When running analysis:
-1. `idapro.open_database(path)` + `ida_auto.auto_wait()` to open the binary
-2. Construct `IdaFeatureExtractor()` directly (not via `get_extractor`)
-3. `capa.capabilities.common.find_capabilities()` to run matching
-4. `capa.loader.collect_metadata()` + `compute_layout()` for metadata
-5. `rd.ResultDocument.from_capa()` to build the result document
+1. `capa.loader.get_extractor()` with `BACKEND_IDA` opens the database and
+   returns an `IdaFeatureExtractor`
+2. `capa.capabilities.common.find_capabilities()` to run matching
+3. `capa.loader.collect_metadata()` + `compute_layout()` for metadata
+4. `rd.ResultDocument.from_capa()` to build the result document
 
 ### Phase 2: Inversion
 
@@ -237,25 +240,23 @@ idalib is a hard requirement: `import idapro` at the top of `main()` fails
 loudly if it is not installed. There is no availability probing.
 
 ```
-idapro.open_database(path, run_auto_analysis=True)
-ida_auto.auto_wait()
+extractor = capa.loader.get_extractor(path, FORMAT_AUTO, OS_AUTO, BACKEND_IDA, [])
 try:
     # with --json:  load the result document from disk
-    # otherwise:    extractor = IdaFeatureExtractor()  and run capa
+    # otherwise:    run capa with the extractor
     # ... render disassembly + pseudocode using IDA APIs ...
 finally:
     idapro.close_database(save=False)
 ```
 
+`get_extractor` handles the idalib availability check, disables Lumina and
+console messages, calls `idapro.open_database(run_auto_analysis=True)`, and
+waits for auto-analysis — so this script does not open the database itself.
+
 The `finally` matters: if the database is not closed (uncaught exception,
 `BrokenPipeError` from piping output into `head`, ...), IDA leaves the
 unpacked database files `.id0`, `.id1`, `.nam`, and `.til` beside the input
 file.
-
-Note: `capa.loader.get_extractor(BACKEND_IDA)` is NOT used because it
-passes `-R` to `open_database` which can hang on some binaries. Instead,
-the database is opened directly and `IdaFeatureExtractor()` is constructed
-manually.
 
 Single-threaded. One database per process.
 
