@@ -20,7 +20,6 @@ import contextlib
 import collections
 from typing import Tuple, Union, Literal, Iterator, Optional
 from pathlib import Path
-from zipfile import ZipFile
 from dataclasses import field, dataclass
 
 import pytest
@@ -448,24 +447,6 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> dict[Feature, set[Ad
     for feature, addr in extractor.extract_insn_features(fh, bbh, ih):
         features[feature].add(addr)
     return features
-
-
-@contextlib.contextmanager
-def extract_script_sample(path: Path):
-    if path.suffix != ".zip":
-        yield path
-        return
-
-    with tempfile.TemporaryDirectory(prefix="capa-script-") as tmp:
-        tmp_dir = Path(tmp)
-
-        with ZipFile(path, "r") as zf:
-            zf.extractall(tmp_dir)
-
-        extracted = list(tmp_dir.iterdir())
-        assert len(extracted) == 1
-
-        yield extracted[0]
 
 
 def get_process(extractor, ppid: int, pid: int) -> ProcessHandle:
@@ -906,14 +887,12 @@ def py_a4d252_template_engine():
 
 @pytest.fixture
 def sh_cff512_extractor_engine():
-    with extract_script_sample(BASH_DATA_PATH_BY_NAME["sh_cff512"]) as sample:
-        return get_ts_extractor_engine(LANG_BASH, sample.read_bytes())
+    return get_ts_extractor_engine(LANG_BASH, BASH_DATA_PATH_BY_NAME["sh_cff512"].read_bytes())
 
 
 @pytest.fixture
 def sh_91800a_extractor_engine():
-    with extract_script_sample(BASH_DATA_PATH_BY_NAME["sh_91800a"]) as sample:
-        return get_ts_extractor_engine(LANG_BASH, sample.read_bytes())
+    return get_ts_extractor_engine(LANG_BASH, BASH_DATA_PATH_BY_NAME["sh_91800a"].read_bytes())
 
 
 def resolve_sample_ts(sample):
@@ -1129,7 +1108,6 @@ def _check_stale_idalib_files(path: Path):
 @contextlib.contextmanager
 def get_idalib_extractor(path: Path):
     import shutil
-    import tempfile
 
     import capa.features.extractors.ida.idalib as idalib
     import capa.features.extractors.ida.extractor
@@ -1226,8 +1204,7 @@ def get_ts_template_engine(path):
 def get_ts_extractor(path):
     import capa.features.extractors.ts.extractor
 
-    with extract_script_sample(path) as sample:
-        return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(sample)
+    return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path)
 
 
 ASPX_DATA_PATH_BY_NAME = {
