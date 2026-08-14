@@ -143,11 +143,10 @@ All spine and annotation connectors are yellow. Characters:
 
 ### Basic block-aligned windows
 
-When IDA is available, the windowing system respects basic block boundaries.
-If an annotated address falls within a basic block, the entire basic block is
-included in the display window. Truncation only occurs between basic blocks,
-never mid-block. This preserves the control flow context around contributing
-instructions.
+The windowing system respects basic block boundaries. If an annotated address
+falls within a basic block, the entire basic block is included in the display
+window. Truncation only occurs between basic blocks, never mid-block. This
+preserves the control flow context around contributing instructions.
 
 If more than 50% of a function's instructions would already be shown after
 windowing, the entire function is displayed instead. This avoids excessive
@@ -155,12 +154,10 @@ windowing, the entire function is displayed instead. This avoids excessive
 
 ### Syntax highlighting
 
-When IDA is available, disassembly lines are syntax-highlighted using IDA's
-color tag system. Mnemonics, registers, numbers, addresses, keywords, and
-comments each get distinct colors. Annotated lines use bright colors; context
-lines use dimmed versions.
-
-Without IDA (placeholder mode), plain monochrome text is used.
+Disassembly lines are syntax-highlighted using IDA's color tag system.
+Mnemonics, registers, numbers, addresses, keywords, and comments each get
+distinct colors. Annotated lines use bright colors; context lines use dimmed
+versions.
 
 ### Feature rendering
 
@@ -184,15 +181,21 @@ Each feature type has a specific rendering style:
 - Without color: box-drawing and text labels remain readable
 - Without decompiler: pseudocode section is skipped with a note; layout
   is always vertical (no side-by-side without pseudocode)
-- Without idalib: placeholder disassembly (synthetic lines from features)
 - Narrow terminal: falls back to vertical layout automatically
 
 ## Decisions
 
 - **Terminal text only.** No HTML, JSON, SARIF, or structured output formats.
-- **idalib is required for full output.** Placeholder mode provides basic
-  output when idalib is not available, but loses disassembly, pseudocode,
-  syntax highlighting, and BB alignment.
+- **idalib is required.** The script always opens the input file in IDA, both
+  for live analysis and for `--json` rendering. Without disassembly there is
+  nothing to annotate, so there is no degraded mode; `import idapro` raises
+  ImportError when idalib is not installed. An earlier version synthesized
+  placeholder disassembly from the matched features, which produced misleading
+  output (made-up instructions), so it was removed.
+- **The database is always closed.** Rendering runs inside a `try`/`finally`
+  that calls `idapro.close_database(save=False)`, so an interrupted or failed
+  run does not leave unpacked database files (`.id0`, `.id1`, `.nam`, `.til`)
+  next to the input file.
 - **Rule-first iteration.** Each block is one rule × one function. This
   eliminates the complexity of multi-rule tagging (the old [A]/[B]/[C] system)
   and makes each block independently readable. The same function may appear

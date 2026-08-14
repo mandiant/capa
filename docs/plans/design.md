@@ -14,11 +14,14 @@ Either run capa with the idalib backend against the input binary, or load a
 pre-computed ResultDocument from JSON. In both cases the output is a
 `rd.ResultDocument`.
 
+The database is opened first in either case, since disassembly and pseudocode
+come from IDA regardless of where the results came from.
+
 When running analysis:
-1. `capa.features.extractors.ida.idalib.load_idalib()` to initialize
-2. `idapro.open_database(path)` + `ida_auto.auto_wait()` to open the binary
-3. Construct `IdaFeatureExtractor()` directly (not via `get_extractor`)
-4. `capa.capabilities.common.find_capabilities()` to run matching
+1. `idapro.open_database(path)` + `ida_auto.auto_wait()` to open the binary
+2. Construct `IdaFeatureExtractor()` directly (not via `get_extractor`)
+3. `capa.capabilities.common.find_capabilities()` to run matching
+4. `capa.loader.collect_metadata()` + `compute_layout()` for metadata
 5. `rd.ResultDocument.from_capa()` to build the result document
 
 ### Phase 2: Inversion
@@ -169,7 +172,8 @@ tag parser and theme, since IDA's decompiler output uses the same tagging.
 4. Merge overlapping windows
 5. If total shown > 50% of function, show everything
 
-Without BB info (placeholder mode), falls back to simple ±context expansion.
+When IDA reports no basic blocks for an address (e.g. it isn't inside a
+recognized function), this falls back to simple ±context expansion.
 
 ### Rendering primitives
 
@@ -229,25 +233,24 @@ the block header area.
 
 ### idalib lifecycle
 
-When running live analysis (no `--json`):
+idalib is a hard requirement: `import idapro` at the top of `main()` fails
+loudly if it is not installed. There is no availability probing.
+
 ```
-load_idalib()
 idapro.open_database(path, run_auto_analysis=True)
 ida_auto.auto_wait()
-extractor = IdaFeatureExtractor()   # direct construction, not via get_extractor
-# ... run capa, build result document ...
-# ... render disassembly + pseudocode using IDA APIs ...
-idapro.close_database(save=False)
+try:
+    # with --json:  load the result document from disk
+    # otherwise:    extractor = IdaFeatureExtractor()  and run capa
+    # ... render disassembly + pseudocode using IDA APIs ...
+finally:
+    idapro.close_database(save=False)
 ```
 
-When using `--json` with a binary:
-```
-load_idalib()                       # optional, may not be available
-idapro.open_database(path, ...)     # opens for disassembly/pseudocode only
-# ... load result document from JSON ...
-# ... render using IDA APIs ...
-idapro.close_database(save=False)
-```
+The `finally` matters: if the database is not closed (uncaught exception,
+`BrokenPipeError` from piping output into `head`, ...), IDA leaves the
+unpacked database files `.id0`, `.id1`, `.nam`, and `.til` beside the input
+file.
 
 Note: `capa.loader.get_extractor(BACKEND_IDA)` is NOT used because it
 passes `-R` to `open_database` which can hang on some binaries. Instead,

@@ -27,7 +27,7 @@ import sys
 import logging
 import argparse
 import collections
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Union, Optional
 from pathlib import Path
 from dataclasses import field, dataclass
 
@@ -164,7 +164,6 @@ def collect_annotations_from_match(
     mode: str = "success",
 ):
     """Recursively walk a Match tree, collecting leaf feature annotations."""
-    import capa.helpers
     import capa.features.common
     import capa.features.freeze as frz
     import capa.render.result_document as rd
@@ -212,10 +211,10 @@ def collect_annotations_from_match(
                         )
         else:
             feat_type, feat_value, desc = format_feature(feature)
-            for loc in locations:
+            for addr in locations:
                 annotations.append(
                     Annotation(
-                        address=loc,
+                        address=addr,
                         feature_type=feat_type,
                         feature_value=feat_value,
                         description=desc,
@@ -238,10 +237,10 @@ def collect_annotations_from_match(
         feat_type, feat_value, desc = format_feature(child_feat)
         range_desc = format_range(stmt.min, stmt.max)
         count_label = f"count({feat_type}({feat_value}))"
-        for loc in locations:
+        for addr in locations:
             annotations.append(
                 Annotation(
-                    address=loc,
+                    address=addr,
                     feature_type=count_label,
                     feature_value=range_desc,
                     description=stmt.description or desc,
@@ -257,9 +256,15 @@ def collect_annotations_from_match(
         )
 
 
+def render_number(n: Union[int, float]) -> str:
+    """Render a number feature value: hex for integers, decimal for floats."""
+    import capa.helpers
+
+    return capa.helpers.hex(n) if isinstance(n, int) else str(n)
+
+
 def format_feature(feature) -> tuple[str, str, str]:
     """Extract (type_key, display_value, description) from a freeze Feature."""
-    import capa.helpers
     import capa.features.common
     import capa.features.freeze.features as frzf
 
@@ -271,15 +276,15 @@ def format_feature(feature) -> tuple[str, str, str]:
     elif isinstance(feature, frzf.StringFeature):
         return "string", f'"{capa.features.common.escape_string(feature.string)}"', desc
     elif isinstance(feature, frzf.NumberFeature):
-        return "number", capa.helpers.hex(feature.number), desc
+        return "number", render_number(feature.number), desc
     elif isinstance(feature, frzf.MnemonicFeature):
         return "mnemonic", feature.mnemonic, desc
     elif isinstance(feature, frzf.OffsetFeature):
-        return "offset", capa.helpers.hex(feature.offset), desc
+        return "offset", render_number(feature.offset), desc
     elif isinstance(feature, frzf.OperandNumberFeature):
-        return f"operand[{feature.index}].number", capa.helpers.hex(feature.operand_number), desc
+        return f"operand[{feature.index}].number", render_number(feature.operand_number), desc
     elif isinstance(feature, frzf.OperandOffsetFeature):
-        return f"operand[{feature.index}].offset", capa.helpers.hex(feature.operand_offset), desc
+        return f"operand[{feature.index}].offset", render_number(feature.operand_offset), desc
     elif isinstance(feature, frzf.CharacteristicFeature):
         return "characteristic", feature.characteristic, desc
     elif isinstance(feature, frzf.ImportFeature):
@@ -469,47 +474,38 @@ def get_function_bounds(ea: int) -> tuple[int, int]:
 
 def get_basic_block_ranges(func_ea: int) -> list[tuple[int, int]]:
     """Get basic block ranges for a function from IDA."""
-    try:
-        import ida_gdl
-        import ida_funcs
+    import ida_gdl
+    import ida_funcs
 
-        func = ida_funcs.get_func(func_ea)
-        if not func:
-            return []
-        return sorted((bb.start_ea, bb.end_ea) for bb in ida_gdl.FlowChart(func))
-    except ImportError:
+    func = ida_funcs.get_func(func_ea)
+    if not func:
         return []
+    return sorted((bb.start_ea, bb.end_ea) for bb in ida_gdl.FlowChart(func))
 
 
 def get_function_type(func_ea: int) -> Optional[str]:
     """Get function prototype/signature from IDA."""
-    try:
-        import idc
-        import ida_funcs
+    import idc
+    import ida_funcs
 
-        func = ida_funcs.get_func(func_ea)
-        if not func:
-            return None
-        t = idc.get_type(func.start_ea)
-        return t or None
-    except ImportError:
+    func = ida_funcs.get_func(func_ea)
+    if not func:
         return None
+    t = idc.get_type(func.start_ea)
+    return t or None
 
 
 def get_function_comment(func_ea: int) -> Optional[str]:
     """Get function comment from IDA."""
-    try:
-        import ida_funcs
+    import ida_funcs
 
-        func = ida_funcs.get_func(func_ea)
-        if not func:
-            return None
-        cmt = ida_funcs.get_func_cmt(func, False)
-        if not cmt:
-            cmt = ida_funcs.get_func_cmt(func, True)
-        return cmt or None
-    except ImportError:
+    func = ida_funcs.get_func(func_ea)
+    if not func:
         return None
+    cmt = ida_funcs.get_func_cmt(func, False)
+    if not cmt:
+        cmt = ida_funcs.get_func_cmt(func, True)
+    return cmt or None
 
 
 def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, str, set[int]]]]:
@@ -517,12 +513,10 @@ def get_pseudocode_lines(func_ea: int) -> Optional[list[tuple[int, str, str, set
     Fetch pseudocode for a function.
 
     Returns list of (line_number, plain_text, tagged_text, set_of_addresses)
-    or None if decompiler unavailable.
+    or None if the decompiler is unavailable for this architecture or
+    decompilation fails.
     """
-    try:
-        import ida_hexrays
-    except ImportError:
-        return None
+    import ida_hexrays
 
     if not ida_hexrays.init_hexrays_plugin():
         return None
@@ -996,7 +990,7 @@ def render_annotation_lines(
 
     sep_idx = gutter.index("│")
     gutter_prefix = gutter[:sep_idx]
-    gutter_suffix = gutter[sep_idx + 1:]
+    gutter_suffix = gutter[sep_idx + 1 :]
 
     def _gutter_text() -> rich.text.Text:
         t = rich.text.Text(gutter_prefix)
@@ -1202,7 +1196,7 @@ def render_side_by_side(
 
     header_idx: Optional[int] = None
     last_ann_idx: Optional[int] = None
-    for i, (sec, lb, rb) in enumerate(entries):
+    for i, (_sec, lb, rb) in enumerate(entries):
         if lb.kind == "rule_header" and header_idx is None:
             header_idx = i
         if lb.kind == "annotation_label" or rb.kind == "annotation_label":
@@ -1210,12 +1204,8 @@ def render_side_by_side(
 
     result: list[BufferedLine] = []
     for i, (sec, lb, rb) in enumerate(entries):
-        in_spine = (
-            header_idx is not None
-            and last_ann_idx is not None
-            and header_idx <= i <= last_ann_idx
-        )
-        is_last = (i == last_ann_idx)
+        in_spine = header_idx is not None and last_ann_idx is not None and header_idx <= i <= last_ann_idx
+        is_last = i == last_ann_idx
 
         merged = rich.text.Text()
         merged.append_text(lb.text)
@@ -1449,14 +1439,18 @@ def render_pseudocode_to_buffer(
                 line_text.append(f"{' ' * ln_padding}{ln_str}", style="bold")
                 line_text.append(" │ ", style="dim")
                 if tagged:
-                    line_text.append_text(render_tagged_line(tagged, dimmed=False, addr_width=addr_width, skip_chars=skip))
+                    line_text.append_text(
+                        render_tagged_line(tagged, dimmed=False, addr_width=addr_width, skip_chars=skip)
+                    )
                 else:
                     line_text.append(dedented_text)
             else:
                 line_text.append(f"{' ' * ln_padding}{ln_str}", style="dim")
                 line_text.append(" │ ", style="dim")
                 if tagged:
-                    line_text.append_text(render_tagged_line(tagged, dimmed=True, addr_width=addr_width, skip_chars=skip))
+                    line_text.append_text(
+                        render_tagged_line(tagged, dimmed=True, addr_width=addr_width, skip_chars=skip)
+                    )
                 else:
                     line_text.append(dedented_text, style="dim")
 
@@ -1486,7 +1480,6 @@ def render_all(
     functions: list[FunctionAnnotations],
     doc_rule_order: list[RuleSummary],
     context: int,
-    use_ida: bool = False,
     show_pseudocode: bool = True,
 ):
     """Render all rule matches: rule-first, then functions within each rule."""
@@ -1520,21 +1513,14 @@ def render_all(
     for func in functions:
         if func.address in disasm_cache:
             continue
-        if use_ida:
-            func_start, func_end = get_function_bounds(func.address)
-            disasm_cache[func.address] = get_disassembly_lines(func_start, func_end)
-            bb_cache[func.address] = get_basic_block_ranges(func.address) or None
-            comment_cache[func.address] = get_function_comment(func.address)
-            type_cache[func.address] = get_function_type(func.address)
-            if not func.name:
-                func.name = get_function_name(func.address)
-        else:
-            disasm_cache[func.address] = []
-            bb_cache[func.address] = None
-            comment_cache[func.address] = None
-            type_cache[func.address] = None
+        func_start, func_end = get_function_bounds(func.address)
+        disasm_cache[func.address] = get_disassembly_lines(func_start, func_end)
+        bb_cache[func.address] = get_basic_block_ranges(func.address) or None
+        comment_cache[func.address] = get_function_comment(func.address)
+        type_cache[func.address] = get_function_type(func.address)
+        if not func.name:
+            func.name = get_function_name(func.address)
 
-    max_func_addr = max(f.address for f in functions) if functions else 0
     # idalib always uses 64-bit internal addressing, so tagged text
     # embeds 16-char hex addresses even for 32-bit binaries.
     ida_addr_width = 16
@@ -1594,8 +1580,6 @@ def render_all(
             header_buffer.append(BufferedLine(rich.text.Text(), "normal"))
 
             disasm_lines = disasm_cache.get(func.address, [])
-            if not disasm_lines:
-                disasm_lines = generate_placeholder_disasm(rule_annots)
             bb_ranges = bb_cache.get(func.address)
 
             disasm_buffer: list[BufferedLine] = []
@@ -1604,7 +1588,7 @@ def render_all(
             )
 
             pseudo: Optional[list[tuple[int, str, str, set[int]]]] = None
-            if show_pseudocode and use_ida:
+            if show_pseudocode:
                 if func.address not in pseudo_cache:
                     pseudo_cache[func.address] = get_pseudocode_lines(func.address)
                 pseudo = pseudo_cache[func.address]
@@ -1613,8 +1597,12 @@ def render_all(
             pseudo_buffer: list[BufferedLine] = []
             if pseudo:
                 render_pseudocode_to_buffer(
-                    pseudo_buffer, rule_annots, pseudo, context,
-                    addr_width=ida_addr_width, gutter_width=disasm_gutter_width,
+                    pseudo_buffer,
+                    rule_annots,
+                    pseudo,
+                    context,
+                    addr_width=ida_addr_width,
+                    gutter_width=disasm_gutter_width,
                     mirror=True,
                 )
                 left_w = max(
@@ -1629,8 +1617,12 @@ def render_all(
                 else:
                     pseudo_buffer = []
                     render_pseudocode_to_buffer(
-                        pseudo_buffer, rule_annots, pseudo, context,
-                        addr_width=ida_addr_width, gutter_width=disasm_gutter_width,
+                        pseudo_buffer,
+                        rule_annots,
+                        pseudo,
+                        context,
+                        addr_width=ida_addr_width,
+                        gutter_width=disasm_gutter_width,
                     )
 
             if side_by_side:
@@ -1654,93 +1646,43 @@ def render_all(
 
 
 # ---------------------------------------------------------------------------
-# Placeholder disassembly
-# ---------------------------------------------------------------------------
-
-
-def generate_placeholder_disasm(annotations: list[Annotation]) -> list[DisasmLine]:
-    """Generate placeholder disassembly lines when idalib is not available."""
-    annotated_addrs = sorted({a.address for a in annotations})
-    if not annotated_addrs:
-        return []
-
-    lines = []
-    for addr in annotated_addrs:
-        feats = [a for a in annotations if a.address == addr]
-        feat = feats[0] if feats else None
-        if feat:
-            if feat.feature_type == "api":
-                api_name = feat.feature_value.rsplit(".", 1)[-1] if "." in feat.feature_value else feat.feature_value
-                lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
-            elif feat.feature_type.startswith("count(api("):
-                m = re.search(r"count\(api\((.+?)\)\)", feat.feature_type)
-                api_name = m.group(1) if m else feat.feature_value
-                lines.append(DisasmLine(address=addr, text=f"call    {api_name}"))
-            elif feat.feature_type in ("number", "operand[0].number", "operand[1].number", "operand[2].number"):
-                lines.append(DisasmLine(address=addr, text=f"push    {feat.feature_value}"))
-            elif feat.feature_type == "string" or feat.feature_type == "regex" or feat.feature_type == "substring":
-                lines.append(DisasmLine(address=addr, text=f"lea     eax, {feat.feature_value}"))
-            elif feat.feature_type == "mnemonic":
-                lines.append(DisasmLine(address=addr, text=f"{feat.feature_value}     eax, ebx"))
-            elif feat.feature_type == "characteristic":
-                if feat.feature_value == "indirect call":
-                    lines.append(DisasmLine(address=addr, text="call    dword ptr [eax]"))
-                elif feat.feature_value == "nzxor":
-                    lines.append(DisasmLine(address=addr, text="xor     eax, ebx"))
-                elif feat.feature_value in ("peb access", "fs access"):
-                    lines.append(DisasmLine(address=addr, text="mov     eax, large fs:30h"))
-                elif feat.feature_value == "gs access":
-                    lines.append(DisasmLine(address=addr, text="mov     rax, gs:60h"))
-                elif feat.feature_value == "cross section flow":
-                    lines.append(DisasmLine(address=addr, text="jmp     far_target"))
-                elif feat.feature_value == "tight loop":
-                    lines.append(DisasmLine(address=addr, text="jmp     short $"))
-                else:
-                    lines.append(DisasmLine(address=addr, text=f"; {feat.feature_value}"))
-            elif feat.feature_type == "offset" or (
-                feat.feature_type.startswith("operand") and "offset" in feat.feature_type
-            ):
-                lines.append(DisasmLine(address=addr, text=f"mov     eax, [ecx+{feat.feature_value}]"))
-            elif feat.feature_type == "bytes":
-                lines.append(DisasmLine(address=addr, text=f"db      {feat.feature_value}"))
-            elif feat.feature_type.startswith("count("):
-                lines.append(DisasmLine(address=addr, text=f"; {feat.feature_type}: {feat.feature_value}"))
-            else:
-                lines.append(DisasmLine(address=addr, text=f"; [{feat.feature_type}]"))
-        else:
-            lines.append(DisasmLine(address=addr, text="???"))
-
-    return lines
-
-
-# ---------------------------------------------------------------------------
 # Analysis
 # ---------------------------------------------------------------------------
 
 
-def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.ResultDocument":
+def open_database(input_path: Path) -> None:
     """
-    Run capa analysis using idalib backend.
+    Open the input file in IDA and wait for auto-analysis to complete.
 
-    idalib must be loaded before calling this function.
-    Opens the IDA database directly and creates the extractor.
+    Raises:
+        RuntimeError: If the database cannot be opened.
     """
     import idapro
     import ida_auto
-
-    import capa.main
-    import capa.rules
-    import capa.loader
-    import capa.capabilities.common
-    import capa.render.result_document as rd
-    import capa.features.extractors.ida.extractor
-    from capa.features.common import OS_AUTO, FORMAT_AUTO
 
     with STDERR_CONSOLE.status("Opening database..."):
         ret = idapro.open_database(str(input_path), run_auto_analysis=True)
         if ret != 0:
             raise RuntimeError(f"failed to open database: {ret}")
         ida_auto.auto_wait()
+
+
+def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.ResultDocument":
+    """
+    Run capa analysis using the idalib backend.
+
+    The database must be opened before calling this function.
+
+    Raises:
+        capa.rules.InvalidRule: If the rules cannot be loaded.
+    """
+    import capa.main
+    import capa.rules
+    import capa.loader
+    import capa.capabilities.common
+    import capa.render.result_document as rd
+    import capa.features.extractors.ida.extractor
+    from capa.features.common import FORMAT_AUTO
 
     extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
@@ -1756,7 +1698,6 @@ def run_capa_analysis(input_path: Path, rules_path: Optional[Path]) -> "rd.Resul
             [],
             input_path,
             FORMAT_AUTO,
-            OS_AUTO,
             rules_paths,
             extractor,
             capabilities,
@@ -1805,88 +1746,61 @@ def main(argv=None):
         handlers=[rich.logging.RichHandler(console=STDERR_CONSOLE, show_path=False)],
     )
 
+    import idapro
+
     import capa.render.result_document as rd
 
-    use_ida = False
-
-    if args.json_path:
-        with STDERR_CONSOLE.status("Loading result document..."):
-            doc = load_result_document(args.json_path)
-
-        try:
-            from capa.features.extractors.ida.idalib import load_idalib
-
-            if load_idalib():
-                import idapro
-                import ida_auto
-
-                with STDERR_CONSOLE.status("Opening database in IDA..."):
-                    ret = idapro.open_database(str(args.input_file), run_auto_analysis=True)
-                    if ret != 0:
-                        raise RuntimeError(f"failed to open database: {ret}")
-                    ida_auto.auto_wait()
-                use_ida = True
-            else:
-                logger.info("idalib initialization failed, using placeholder disassembly")
-        except (ImportError, RuntimeError) as e:
-            logger.info("idalib not available (%s), using placeholder disassembly", e)
-    else:
-        try:
-            from capa.features.extractors.ida.idalib import load_idalib
-
-            if not load_idalib():
-                print("error: idalib is required but not available", file=sys.stderr)
-                return 1
-            doc = run_capa_analysis(args.input_file, args.rules)
-            use_ida = True
-        except ImportError:
-            print("error: idalib is required but not available", file=sys.stderr)
-            return 1
-
-    if doc.meta.flavor != rd.Flavor.STATIC:
-        print("error: code-oriented output only supports static analysis results", file=sys.stderr)
+    try:
+        open_database(args.input_file)
+    except RuntimeError as e:
+        print(f"error: {e}", file=sys.stderr)
         return 1
 
-    with STDERR_CONSOLE.status("Inverting result document..."):
-        functions, doc_rule_order = invert_result_document(doc)
+    # always close the database, otherwise IDA leaves unpacked database
+    # files (.id0, .id1, .nam, .til) next to the input file.
+    try:
+        if args.json_path:
+            with STDERR_CONSOLE.status("Loading result document..."):
+                doc = load_result_document(args.json_path)
+        else:
+            doc = run_capa_analysis(args.input_file, args.rules)
 
-    if use_ida:
+        if doc.meta.flavor != rd.Flavor.STATIC:
+            print("error: code-oriented output only supports static analysis results", file=sys.stderr)
+            return 1
+
+        with STDERR_CONSOLE.status("Inverting result document..."):
+            functions, doc_rule_order = invert_result_document(doc)
+
         for func in functions:
             func.name = get_function_name(func.address)
 
-    if args.functions:
-        filter_addrs = set()
-        for addr_str in args.functions.split(","):
-            addr_str = addr_str.strip()
-            filter_addrs.add(int(addr_str, 0) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
-        functions = [f for f in functions if f.address in filter_addrs]
+        if args.functions:
+            filter_addrs = set()
+            for addr_str in args.functions.split(","):
+                addr_str = addr_str.strip()
+                filter_addrs.add(int(addr_str, 0) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
+            functions = [f for f in functions if f.address in filter_addrs]
 
-    if not functions:
-        print("No functions with rule matches found.", file=sys.stderr)
-        return 0
+        if not functions:
+            print("No functions with rule matches found.", file=sys.stderr)
+            return 0
 
-    console = rich.console.Console(
-        highlight=False,
-        no_color=args.no_color,
-        soft_wrap=True,
-    )
+        console = rich.console.Console(
+            highlight=False,
+            no_color=args.no_color,
+            soft_wrap=True,
+        )
 
-    render_all(
-        console,
-        functions,
-        doc_rule_order=doc_rule_order,
-        context=args.context,
-        use_ida=use_ida,
-        show_pseudocode=not args.no_pseudocode,
-    )
-
-    if use_ida:
-        try:
-            import idapro
-
-            idapro.close_database(save=False)
-        except (ImportError, RuntimeError):
-            pass
+        render_all(
+            console,
+            functions,
+            doc_rule_order=doc_rule_order,
+            context=args.context,
+            show_pseudocode=not args.no_pseudocode,
+        )
+    finally:
+        idapro.close_database(save=False)
 
     return 0
 
