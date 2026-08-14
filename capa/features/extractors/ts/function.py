@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Tuple, Iterator
+from typing import Tuple, Iterable, Iterator
 from dataclasses import dataclass
 
 from tree_sitter import Node
@@ -55,10 +55,16 @@ def extract_integers(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterat
             continue
 
 
-def get_possible_full_names(name: str, namespaces: set[BaseNamespace]) -> Iterator[str]:
-    yield name
+def get_possible_full_names(name: str, namespaces: Iterable[BaseNamespace]) -> Iterator[str]:
+    seen = set()
+    if name:
+        seen.add(name)
+        yield name
     for namespace in namespaces:
-        yield namespace.join(name)
+        full_name = namespace.join(name)
+        if full_name and full_name not in seen:
+            seen.add(full_name)
+            yield full_name
 
 
 def get_default_constructor(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[str]:
@@ -84,7 +90,8 @@ def _extract_default_constructor(fn_node: Node, engine: TreeSitterExtractorEngin
     for name_node in engine.get_new_object_names(fn_node):
         for full_name in get_possible_full_names(engine.get_str(name_node), engine.namespaces):
             if engine.language_toolkit.is_imported_class(full_name):
-                yield Namespace(full_name), engine.get_address(name_node)
+                ns = engine.language_toolkit.get_namespace_from_name(full_name) or full_name
+                yield Namespace(ns), engine.get_address(name_node)
                 yield Class(engine.language_toolkit.format_imported_class(full_name)), engine.get_address(name_node)
                 yield (
                     API(engine.language_toolkit.format_imported_default_constructor(full_name)),
@@ -96,7 +103,8 @@ def _extract_custom_constructor(fn_node: Node, engine: TreeSitterExtractorEngine
     for name_node in engine.get_function_call_names(fn_node):
         for full_name in get_possible_full_names(engine.get_str(name_node), engine.namespaces):
             if engine.language_toolkit.is_imported_constructor(full_name):
-                yield Namespace(full_name), engine.get_address(name_node)
+                ns = engine.language_toolkit.get_namespace_from_name(full_name) or full_name
+                yield Namespace(ns), engine.get_address(name_node)
                 yield Class(engine.language_toolkit.format_imported_class(full_name)), engine.get_address(name_node)
                 yield (
                     API(engine.language_toolkit.format_imported_custom_constructor(full_name)),

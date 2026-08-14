@@ -467,7 +467,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
     )
     # type checkers are unable to recognise `base_address` as an argument due to alias
 
-    return freeze.model_dump_json()
+    return freeze.model_dump_json(exclude_none=True)
 
 
 def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False) -> str:
@@ -586,7 +586,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
     )
     # type checkers are unable to recognise `base_address` as an argument due to alias
 
-    return freeze.model_dump_json()
+    return freeze.model_dump_json(exclude_none=True)
 
 
 def loads_static(s: str) -> StaticFeatureExtractor:

@@ -1181,6 +1181,9 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("py_24e48f", "function=icloud_phish", API("base64::encodestring"), True),
     ("py_24e48f", "function=icloud_phish", API("urllib2::urlopen"), True),
     ("py_24e48f", "function=get_itunes_backups", String("IMEI"), True),
+    ("py_24e48f", "function=get_itunes_backups", Namespace("socket"), True),
+    ("py_24e48f", "function=get_itunes_backups", Class("socket.socket"), True),
+    ("py_24e48f", "function=get_itunes_backups", API("socket.socket::ctor"), True),
     ("py_24e48f", "function=PSEUDO MAIN", String("[I] "), True),
     ("py_24e48f", "function=PSEUDO MAIN", Substring("[!]"), True),
     ("py_24e48f", "function=get_itunes_backups", Number(0), True),
@@ -1239,3 +1242,19 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 def test_feature_presence_scripts(sample, location, feature, expected):
     scope = resolve_scope_ts(location)
     do_test_feature_presence(get_extractor_ts, sample, scope, feature, expected)
+
+
+FEATURE_COUNT_TESTS_SCRIPTS = (
+    ("py_24e48f", "function=get_itunes_backups", Namespace("socket"), 2),
+    ("py_24e48f", "function=get_itunes_backups", Class("socket.socket"), 1),
+    ("py_24e48f", "function=get_itunes_backups", API("socket.socket::ctor"), 1),
+)
+
+
+@parametrize(
+    "sample,location,feature,expected",
+    FEATURE_COUNT_TESTS_SCRIPTS,
+)
+def test_feature_count_scripts(sample, location, feature, expected):
+    scope = resolve_scope_ts(location)
+    do_test_feature_count(get_extractor_ts, sample, scope, feature, expected)
