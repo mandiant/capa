@@ -17,6 +17,8 @@ python scripts/code-oriented-capa.py <binary> [options]
 ### Required arguments
 
 - `<binary>` — path to the input file (PE, ELF, shellcode). Analyzed via idalib.
+  An existing `.i64`/`.idb` database is also accepted and is opened directly
+  instead of being re-analyzed.
 
 ### Options
 
@@ -30,6 +32,22 @@ python scripts/code-oriented-capa.py <binary> [options]
 - `--no-pseudocode` — skip pseudocode rendering (disassembly only)
 - `--functions ADDR[,ADDR,...]` — only render the specified functions (hex)
 - `--verbose` — enable debug logging to stderr
+
+### Database cache
+
+Binaries are analyzed once and the resulting database is cached at
+`~/.cache/hex-rays/code-oriented-capa/<sha256-of-input>.i64`, so repeated runs
+against the same file skip auto-analysis. A cache hit is reported under
+`--verbose`. The cache key is the SHA-256 of the file contents, so renamed or
+moved copies of the same sample share a database. Cached databases are opened
+read-only and never saved back, so annotations made in IDA are not disturbed
+and the script's own analysis does not accumulate state.
+
+Concurrent runs against the same database are serialised rather than allowed
+to corrupt it: a run that finds the database open elsewhere waits, then fails
+with a message naming the blocker if it is still busy (5s when opening an
+existing database, 120s when waiting to analyze). This also detects an IDA GUI
+session holding the database.
 
 ## Output Structure
 
@@ -192,10 +210,19 @@ Each feature type has a specific rendering style:
   ImportError when idalib is not installed. An earlier version synthesized
   placeholder disassembly from the matched features, which produced misleading
   output (made-up instructions), so it was removed.
-- **The database is always closed.** Rendering runs inside a `try`/`finally`
+- **The database is always closed.** Rendering runs inside a context manager
   that calls `idapro.close_database(save=False)`, so an interrupted or failed
   run does not leave unpacked database files (`.id0`, `.id1`, `.nam`, `.til`)
   next to the input file.
+- **Databases are cached and access-guarded.** Analysis is the slowest part of
+  a run and its result is reusable, so it is cached by input hash. The
+  guarding exists because the cache makes collisions likely: two runs on the
+  same sample, or a run against a database already open in the IDA GUI, would
+  otherwise race on the unpacked database files. Waiting-then-failing is
+  preferred over analyzing to a private temporary database, which would
+  silently double the work. This mirrors `idals`, which solved the same
+  problem; the cache directories are kept separate because the two tools
+  analyze with different options.
 - **Rule-first iteration.** Each block is one rule × one function. This
   eliminates the complexity of multi-rule tagging (the old [A]/[B]/[C] system)
   and makes each block independently readable. The same function may appear

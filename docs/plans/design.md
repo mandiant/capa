@@ -14,18 +14,20 @@ Either run capa with the idalib backend against the input binary, or load a
 pre-computed ResultDocument from JSON. In both cases the output is a
 `rd.ResultDocument`.
 
-The database is opened first in either case, since disassembly and pseudocode
-come from IDA regardless of where the results came from. Opening it is a side
-effect of `capa.loader.get_extractor(..., BACKEND_IDA, [])`, which is called
-unconditionally: with `--json` the returned extractor goes unused, but the
-database it opened is what feeds the rendering phase.
+The database is resolved and opened first in either case, since disassembly and
+pseudocode come from IDA regardless of where the results came from. With
+`--json` the extractor goes unused, but the open database is what feeds the
+rendering phase.
 
 When running analysis:
-1. `capa.loader.get_extractor()` with `BACKEND_IDA` opens the database and
-   returns an `IdaFeatureExtractor`
+1. `resolve_database()` then `open_database_session()` open the database, and
+   `get_ida_extractor()` wraps it in an `IdaFeatureExtractor`
 2. `capa.capabilities.common.find_capabilities()` to run matching
 3. `capa.loader.collect_metadata()` + `compute_layout()` for metadata
 4. `rd.ResultDocument.from_capa()` to build the result document
+
+`collect_metadata()` receives the original input path, so hashes and file
+metadata describe the sample itself.
 
 ### Phase 2: Inversion
 
@@ -236,27 +238,58 @@ the block header area.
 
 ### idalib lifecycle
 
-idalib is a hard requirement: `import idapro` at the top of `main()` fails
-loudly if it is not installed. There is no availability probing.
+idalib is a hard requirement: `main()` checks `idalib.is_idalib_installed()`
+and exits non-zero if it is missing.
+
+The database routines live together at the top of the script, ported from
+`idals` (see its design doc §4.3, §4.4, §4.12):
 
 ```
-extractor = capa.loader.get_extractor(path, FORMAT_AUTO, OS_AUTO, BACKEND_IDA, [])
-try:
+db_path = resolve_database(args.input_file)      # cache hit, or analyze once
+with open_database_session(db_path):
+    extractor = get_ida_extractor()
     # with --json:  load the result document from disk
     # otherwise:    run capa with the extractor
     # ... render disassembly + pseudocode using IDA APIs ...
-finally:
-    idapro.close_database(save=False)
 ```
 
-`get_extractor` handles the idalib availability check, disables Lumina and
-console messages, calls `idapro.open_database(run_auto_analysis=True)`, and
-waits for auto-analysis — so this script does not open the database itself.
+`resolve_database()` returns an `.i64`/`.idb` input unchanged. Anything else is
+analyzed into `CACHE_DIR / f"{sha256}.i64"` via
+`idapro.open_database(run_auto_analysis=True, args='-c -o"<cache>" ...')` plus
+`ida_auto.auto_wait()`, closed with `save=True`. The analysis args disable the
+primary and secondary Lumina servers (which sometimes overwrite good names
+from debug info) and pass `-R` to load resources, matching what
+`capa.loader.get_extractor()` does for `BACKEND_IDA`.
 
-The `finally` matters: if the database is not closed (uncaught exception,
-`BrokenPipeError` from piping output into `head`, ...), IDA leaves the
-unpacked database files `.id0`, `.id1`, `.nam`, and `.til` beside the input
-file.
+`open_database_session()` is a context manager that opens the resolved
+database without re-running analysis and always closes it with `save=False`.
+It yields nothing: IDA's global module state is the handle, and
+`get_ida_extractor()` constructs the `IdaFeatureExtractor` over it. Closing
+matters because if the database is left open (uncaught exception,
+`BrokenPipeError` from piping output into `head`, ...), IDA leaves the unpacked
+database files `.id0`, `.id1`, `.nam`, and `.til` behind.
+
+Both routines run inside `database_access_guard()`, a three-phase advisory
+guard against concurrent access:
+1. Poll until the `.nam` companion file disappears — its presence means some
+   other process (including an IDA GUI session) has the database unpacked.
+2. Acquire an exclusive `fcntl.flock` on `<db>.lock`, polling with
+   `LOCK_EX | LOCK_NB` so the wait can time out.
+3. Re-check `.nam` now that the lock is held, as a TOCTOU defence.
+
+Timeouts are 5s for opening a database and 120s for the analysis path
+(auto-analysis of a large binary can take a while). On cache-miss the guard
+wraps a double-checked existence test, so a run that waited on the lock uses
+the database another run just produced instead of redoing the work.
+
+Lock files are never cleaned up; stale ones are harmless because `flock` is
+fd-based, so the lock dies with the file descriptor. `fcntl` is Unix-only —
+where it is unavailable only phase 1 of the guard applies.
+
+Between `resolve_database()` returning and `open_database_session()` acquiring
+its own guard the database is briefly unguarded. That gap is safe: the
+database is packed into a single `.i64` at that point, and the unpacked state
+only exists while a session is open.
 
 Single-threaded. One database per process.
 

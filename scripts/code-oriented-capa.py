@@ -24,12 +24,20 @@ Requires idalib (IDA Pro 9.0+) for disassembly and pseudocode rendering.
 
 import re
 import sys
+import time
+import hashlib
 import logging
 import argparse
+import contextlib
 import collections
-from typing import TYPE_CHECKING, Union, Optional
+from typing import TYPE_CHECKING, Union, Iterator, Optional
 from pathlib import Path
 from dataclasses import field, dataclass
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None  # type: ignore  # sentinel: fcntl is Unix-only, see database_access_guard
 
 import rich.text
 import rich.console
@@ -42,6 +50,198 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 STDERR_CONSOLE = rich.console.Console(stderr=True, highlight=False)
+
+
+# ---------------------------------------------------------------------------
+# IDA database session
+#
+# Ported from idals: databases are cached by input file hash, and access is
+# serialised by polling for IDA's unpacked .nam file plus an advisory lock
+# file, so concurrent processes (or an IDA GUI session) can't corrupt them.
+# ---------------------------------------------------------------------------
+
+CACHE_DIR = Path.home() / ".cache" / "hex-rays" / "code-oriented-capa"
+
+DATABASE_ACCESS_TIMEOUT = 5.0
+DATABASE_ANALYSIS_TIMEOUT = 120.0
+DATABASE_POLL_INTERVAL = 0.25
+
+# we set the primary and secondary Lumina servers to 0.0.0.0 to disable Lumina,
+# which sometimes provides bad names, including overwriting names from debug info.
+# use -R to load resources, which can help us find embedded PE files.
+IDA_ANALYSIS_ARGS = "-Olumina:host=0.0.0.0 -Osecondary_lumina:host=0.0.0.0 -R"
+
+
+class AnalysisError(Exception):
+    """Raised when IDA cannot open, analyze, or save a database."""
+
+
+def get_file_sha256(file_path: Path) -> str:
+    """Compute the SHA-256 hex digest of a file.
+
+    Raises:
+        OSError: If the file cannot be read.
+    """
+    digest = hashlib.sha256()
+    with file_path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _wait_for_repack(db_path: Path, timeout: float) -> None:
+    """Poll until the .nam companion file disappears.
+
+    When IDA unpacks a database, it creates .nam/.id0/.id1/.id2/.til files
+    alongside the .i64. Their presence means another process has the database
+    open.
+
+    Raises:
+        AnalysisError: If the .nam file persists beyond timeout seconds.
+    """
+    nam_path = db_path.with_suffix(".nam")
+    deadline = time.monotonic() + timeout
+    while nam_path.exists():
+        if time.monotonic() >= deadline:
+            raise AnalysisError(
+                f"database {db_path} appears to be open in another program "
+                f"({nam_path} still exists after {timeout:.0f}s). "
+                "close the other session or remove stale unpacked files."
+            )
+        time.sleep(DATABASE_POLL_INTERVAL)
+
+
+@contextlib.contextmanager
+def database_access_guard(db_path: Path, timeout: float) -> Iterator[None]:
+    """Advisory guard that serialises access to an IDA database.
+
+    Three-phase protocol:
+      1. Wait for .nam to disappear (detects IDA GUI or other unpackers).
+      2. Acquire an exclusive fcntl flock on <db>.lock.
+      3. Re-check .nam after the lock is held (TOCTOU defence).
+
+    The lock file is never cleaned up: stale files are harmless because
+    fcntl.flock is fd-based, not file-existence-based. Where fcntl is
+    unavailable (Windows), only phase 1 applies.
+
+    Raises:
+        AnalysisError: On timeout waiting for the database.
+    """
+    _wait_for_repack(db_path, timeout)
+
+    if fcntl is None:
+        yield
+        return
+
+    lock_path = Path(str(db_path) + ".lock")
+    lock_fd = lock_path.open("w")
+    deadline = time.monotonic() + timeout
+    try:
+        while True:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError:
+                if time.monotonic() >= deadline:
+                    raise AnalysisError(
+                        f"timed out waiting for lock on {db_path} after {timeout:.0f}s. "
+                        "another process may be using it."
+                    )
+                time.sleep(DATABASE_POLL_INTERVAL)
+
+        _wait_for_repack(db_path, max(0, deadline - time.monotonic()))
+        yield
+    finally:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        lock_fd.close()
+
+
+def resolve_database(input_path: Path) -> Path:
+    """Resolve an input path to an IDA database path, analyzing it if necessary.
+
+    An .i64/.idb input is used directly. Any other input is analyzed into
+    CACHE_DIR under a name derived from its SHA-256, so repeated runs against
+    the same file reuse the database.
+
+    Raises:
+        AnalysisError: If analysis fails.
+        OSError: If the input file cannot be read.
+    """
+    import idapro
+    import ida_auto
+
+    if input_path.suffix.lower() in (".i64", ".idb"):
+        logger.debug("using existing database: %s", input_path)
+        return input_path
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_path = CACHE_DIR / f"{get_file_sha256(input_path)}.i64"
+    if cache_path.exists():
+        logger.debug("cache hit for %s -> %s", input_path, cache_path)
+        return cache_path
+
+    logger.debug("cache miss for %s; analyzing to %s", input_path, cache_path)
+    with database_access_guard(cache_path, timeout=DATABASE_ANALYSIS_TIMEOUT):
+        # double-checked locking: another process may have populated the cache
+        # while we waited for the lock.
+        if cache_path.exists():
+            logger.debug("cache populated while waiting for lock: %s", cache_path)
+            return cache_path
+
+        idapro.enable_console_messages(False)
+        with STDERR_CONSOLE.status("Analyzing program..."):
+            ret = idapro.open_database(
+                str(input_path),
+                run_auto_analysis=True,
+                args=f'-c -o"{cache_path}" {IDA_ANALYSIS_ARGS}',
+            )
+            if ret != 0:
+                raise AnalysisError(f"failed to analyze {input_path}: idapro.open_database returned {ret}")
+
+            try:
+                ida_auto.auto_wait()
+            finally:
+                idapro.close_database(save=True)
+
+        if not cache_path.exists():
+            raise AnalysisError(f"failed to analyze {input_path}: did not create {cache_path}")
+
+        logger.debug("analysis completed: %s", cache_path)
+        return cache_path
+
+
+@contextlib.contextmanager
+def open_database_session(db_path: Path, auto_analysis: bool = False) -> Iterator[None]:
+    """Open an IDA database for the duration of the context, then close it.
+
+    The database is closed without saving, otherwise IDA leaves unpacked
+    database files (.id0, .id1, .nam, .til) next to it. IDA's global state is
+    the handle here, so nothing is yielded: use the ida_* modules directly.
+
+    Raises:
+        AnalysisError: If the database is locked or cannot be opened.
+    """
+    import idapro
+    import ida_auto
+
+    with database_access_guard(db_path, timeout=DATABASE_ACCESS_TIMEOUT):
+        logger.debug("opening database session: %s (auto_analysis=%s)", db_path, auto_analysis)
+        idapro.enable_console_messages(False)
+
+        with STDERR_CONSOLE.status("Opening database..."):
+            ret = idapro.open_database(str(db_path), run_auto_analysis=auto_analysis)
+        if ret != 0:
+            raise AnalysisError(f"failed to open {db_path}: idapro.open_database returned {ret}")
+
+        try:
+            if auto_analysis:
+                with STDERR_CONSOLE.status("Waiting for analysis..."):
+                    ida_auto.auto_wait()
+            yield
+        finally:
+            idapro.close_database(save=False)
+            logger.debug("closed database session: %s", db_path)
+
 
 ANNOTATION_COLOR = "yellow"
 SPINE_COLOR = "dim yellow"
@@ -1651,20 +1851,11 @@ def render_all(
 # ---------------------------------------------------------------------------
 
 
-def get_ida_extractor(input_path: Path) -> "FeatureExtractor":
-    """
-    Open the input file in IDA and build the capa feature extractor.
+def get_ida_extractor() -> "FeatureExtractor":
+    """Build the capa feature extractor for the database open in this process."""
+    import capa.features.extractors.ida.extractor
 
-    Opening the database is a side effect of building the idalib extractor;
-    the caller is responsible for closing it.
-
-    Raises:
-        RuntimeError: If idalib is unavailable or the database cannot be opened.
-    """
-    import capa.loader
-    from capa.features.common import OS_AUTO, FORMAT_AUTO
-
-    return capa.loader.get_extractor(input_path, FORMAT_AUTO, OS_AUTO, capa.loader.BACKEND_IDA, [])
+    return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
 
 def run_capa_analysis(
@@ -1743,61 +1934,62 @@ def main(argv=None):
         handlers=[rich.logging.RichHandler(console=STDERR_CONSOLE, show_path=False)],
     )
 
-    import idapro
-
     import capa.render.result_document as rd
+    import capa.features.extractors.ida.idalib as idalib
 
-    try:
-        extractor = get_ida_extractor(args.input_file)
-    except RuntimeError as e:
-        print(f"error: {e}", file=sys.stderr)
+    if not idalib.is_idalib_installed():
+        print("error: idalib not available", file=sys.stderr)
         return 1
 
-    # always close the database, otherwise IDA leaves unpacked database
-    # files (.id0, .id1, .nam, .til) next to the input file.
     try:
-        if args.json_path:
-            with STDERR_CONSOLE.status("Loading result document..."):
-                doc = load_result_document(args.json_path)
-        else:
-            doc = run_capa_analysis(args.input_file, args.rules, extractor)
+        db_path = resolve_database(args.input_file)
 
-        if doc.meta.flavor != rd.Flavor.STATIC:
-            print("error: code-oriented output only supports static analysis results", file=sys.stderr)
-            return 1
+        with open_database_session(db_path):
+            extractor = get_ida_extractor()
 
-        with STDERR_CONSOLE.status("Inverting result document..."):
-            functions, doc_rule_order = invert_result_document(doc)
+            if args.json_path:
+                with STDERR_CONSOLE.status("Loading result document..."):
+                    doc = load_result_document(args.json_path)
+            else:
+                doc = run_capa_analysis(args.input_file, args.rules, extractor)
 
-        for func in functions:
-            func.name = get_function_name(func.address)
+            if doc.meta.flavor != rd.Flavor.STATIC:
+                print("error: code-oriented output only supports static analysis results", file=sys.stderr)
+                return 1
 
-        if args.functions:
-            filter_addrs = set()
-            for addr_str in args.functions.split(","):
-                addr_str = addr_str.strip()
-                filter_addrs.add(int(addr_str, 0) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
-            functions = [f for f in functions if f.address in filter_addrs]
+            with STDERR_CONSOLE.status("Inverting result document..."):
+                functions, doc_rule_order = invert_result_document(doc)
 
-        if not functions:
-            print("No functions with rule matches found.", file=sys.stderr)
-            return 0
+            for func in functions:
+                func.name = get_function_name(func.address)
 
-        console = rich.console.Console(
-            highlight=False,
-            no_color=args.no_color,
-            soft_wrap=True,
-        )
+            if args.functions:
+                filter_addrs = set()
+                for addr_str in args.functions.split(","):
+                    addr_str = addr_str.strip()
+                    filter_addrs.add(int(addr_str, 0) if addr_str.startswith(("0x", "0X")) else int(addr_str, 16))
+                functions = [f for f in functions if f.address in filter_addrs]
 
-        render_all(
-            console,
-            functions,
-            doc_rule_order=doc_rule_order,
-            context=args.context,
-            show_pseudocode=not args.no_pseudocode,
-        )
-    finally:
-        idapro.close_database(save=False)
+            if not functions:
+                print("No functions with rule matches found.", file=sys.stderr)
+                return 0
+
+            console = rich.console.Console(
+                highlight=False,
+                no_color=args.no_color,
+                soft_wrap=True,
+            )
+
+            render_all(
+                console,
+                functions,
+                doc_rule_order=doc_rule_order,
+                context=args.context,
+                show_pseudocode=not args.no_pseudocode,
+            )
+    except (AnalysisError, OSError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
 
     return 0
 
