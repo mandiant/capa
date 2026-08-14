@@ -2281,7 +2281,7 @@ class RuleSet:
 
                     if new_candidates:
                         candidate_rule_names.update(new_candidates)
-                        candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
+                        candidate_rules.extend([self.rules[rule_name] for rule_name in set(new_candidates)])
                         RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
                         candidate_rules.reverse()
 

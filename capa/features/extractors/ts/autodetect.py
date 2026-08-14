@@ -17,7 +17,18 @@ from pathlib import Path
 
 from tree_sitter import Node, Tree, Query, Parser, Language, QueryCursor
 
-from capa.features.extractors.script import EXT_CS, EXT_PY, LANG_CS, LANG_PY, EXT_ASPX, EXT_HTML, LANG_TEM, LANG_HTML
+from capa.features.extractors.script import (
+    EXT_CS,
+    EXT_PY,
+    LANG_CS,
+    LANG_PY,
+    EXT_ASPX,
+    EXT_BASH,
+    EXT_HTML,
+    LANG_TEM,
+    LANG_BASH,
+    LANG_HTML,
+)
 from capa.features.extractors.ts.query import TS_LANGUAGES
 
 
@@ -43,6 +54,8 @@ def _contains_errors(ts_language, node: Node) -> bool:
 
 def get_language_ts(buf: bytes) -> str:
     for language, ts_language in TS_LANGUAGES.items():
+        if language == LANG_BASH:
+            continue
         tree = _parse(ts_language, buf)
         if tree and not _contains_errors(ts_language, tree.root_node):
             return language
@@ -62,6 +75,8 @@ def get_template_language_ts(buf: bytes) -> str:
 def get_language_from_ext(path: str) -> str:
     if path.endswith(EXT_ASPX):
         return LANG_TEM
+    if path.endswith(EXT_BASH):
+        return LANG_BASH
     if path.endswith(EXT_CS):
         return LANG_CS
     if path.endswith(EXT_HTML):
