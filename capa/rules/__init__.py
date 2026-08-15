@@ -1576,10 +1576,35 @@ class RuleSet:
         self._rule_index_by_scope: dict[Scope, dict[str, int]] = {
             scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
         }
+        self._rule_index_by_scope: dict[Scope, dict[str, int]] = {
+            scope: {rule.name: i for i, rule in enumerate(self.rules_by_scope[scope])} for scope in scopes
+        }
 
     @property
     def file_rules(self):
         return self.rules_by_scope[Scope.FILE]
+
+    def _validate_feature_index(self) -> None:
+        """
+        Verify that the feature indexes match the current schema.
+
+        The feature index structures are unstable and may change before
+        the next major release. A ruleset loaded from a cache written by
+        an older build may contain indexes with a different schema, which
+        would crash with an AttributeError at match time (e.g. a missing
+        ``bytes_prefix_index``, see #2961).
+
+        Raise AssertionError when the loaded structures are incompatible,
+        so cache loading code can treat the entry as a cache miss.
+        """
+        if not hasattr(self, "_feature_indexes_by_scopes") or not hasattr(self, "_rule_index_by_scope"):
+            raise AssertionError("ruleset is missing precomputed indexes")
+
+        expected = set(RuleSet._RuleFeatureIndex.__annotations__.keys())
+        for scope, index in self._feature_indexes_by_scopes.items():
+            missing = expected - set(index.__dict__.keys())
+            if missing:
+                raise AssertionError(f"feature index for scope {scope} is missing fields: {sorted(missing)}")
 
     @property
     def process_rules(self):
