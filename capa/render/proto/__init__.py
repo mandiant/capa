@@ -143,6 +143,19 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
             ),
         )
 
+    elif addr.type is AddressType.FILE_RANGE:
+        assert isinstance(addr.value, tuple)
+        start_byte, end_byte = addr.value
+        assert isinstance(start_byte, int)
+        assert isinstance(end_byte, int)
+        return capa_pb2.Address(
+            type=capa_pb2.AddressType.ADDRESSTYPE_FILE_RANGE,
+            file_range=capa_pb2.FileOffsetRange(
+                start=start_byte,
+                end=end_byte,
+            ),
+        )
+
     elif addr.type is AddressType.NO_ADDRESS:
         # value == None, so only set type
         return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_NO_ADDRESS)
@@ -151,7 +164,7 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
         assert_never(addr)
 
 
-def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
+def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope:
     if scope == capa.rules.Scope.FILE:
         return capa_pb2.Scope.SCOPE_FILE
     elif scope == capa.rules.Scope.FUNCTION:
@@ -182,7 +195,7 @@ def scopes_to_pb2(scopes: capa.rules.Scopes) -> capa_pb2.Scopes:
     return google.protobuf.json_format.ParseDict(doc, capa_pb2.Scopes())
 
 
-def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor.ValueType:
+def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor:
     if flavor == rd.Flavor.STATIC:
         return capa_pb2.Flavor.FLAVOR_STATIC
     elif flavor == rd.Flavor.DYNAMIC:
@@ -333,6 +346,16 @@ def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
     elif isinstance(f, frzf.ArchFeature):
         return capa_pb2.FeatureNode(
             type="feature", arch=capa_pb2.ArchFeature(type=f.type, arch=f.arch, description=f.description)
+        )
+
+    elif isinstance(f, frzf.ScriptLanguageFeature):
+        return capa_pb2.FeatureNode(
+            type="feature",
+            script_language=capa_pb2.ScriptLanguageFeature(
+                type=f.type,
+                language=f.language,
+                description=f.description,
+            ),
         )
 
     elif isinstance(f, frzf.FormatFeature):
@@ -638,6 +661,11 @@ def addr_from_pb2(addr: capa_pb2.Address) -> frz.Address:
         id_ = int_from_pb2(addr.ppid_pid_tid_id.id)
         return frz.Address(type=frz.AddressType.CALL, value=(ppid, pid, tid, id_))
 
+    elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_FILE_RANGE:
+        start = addr.file_range.start
+        end = addr.file_range.end
+        return frz.Address(type=frz.AddressType.FILE_RANGE, value=(start, end))
+
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_NO_ADDRESS:
         return frz.Address(type=frz.AddressType.NO_ADDRESS, value=None)
 
@@ -645,7 +673,7 @@ def addr_from_pb2(addr: capa_pb2.Address) -> frz.Address:
         assert_never(addr)
 
 
-def scope_from_pb2(scope: capa_pb2.Scope.ValueType) -> capa.rules.Scope:
+def scope_from_pb2(scope: capa_pb2.Scope) -> capa.rules.Scope:
     if scope == capa_pb2.Scope.SCOPE_FILE:
         return capa.rules.Scope.FILE
     elif scope == capa_pb2.Scope.SCOPE_FUNCTION:
@@ -673,7 +701,7 @@ def scopes_from_pb2(scopes: capa_pb2.Scopes) -> capa.rules.Scopes:
     )
 
 
-def flavor_from_pb2(flavor: capa_pb2.Flavor.ValueType) -> rd.Flavor:
+def flavor_from_pb2(flavor: capa_pb2.Flavor) -> rd.Flavor:
     if flavor == capa_pb2.Flavor.FLAVOR_STATIC:
         return rd.Flavor.STATIC
     elif flavor == capa_pb2.Flavor.FLAVOR_DYNAMIC:
@@ -827,6 +855,9 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
     elif type_ == "arch":
         ff = f.arch
         return frzf.ArchFeature(arch=ff.arch, description=ff.description or None)
+    elif type_ == "script_language":
+        ff = f.script_language
+        return frzf.ScriptLanguageFeature(language=ff.language, description=ff.description or None)
     elif type_ == "format":
         ff = f.format
         return frzf.FormatFeature(format=ff.format, description=ff.description or None)
