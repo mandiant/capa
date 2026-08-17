@@ -14,7 +14,6 @@
 
 import json
 import logging
-import tempfile
 import functools
 import contextlib
 import collections
@@ -1108,6 +1107,7 @@ def _check_stale_idalib_files(path: Path):
 @contextlib.contextmanager
 def get_idalib_extractor(path: Path):
     import shutil
+    import tempfile
 
     import capa.features.extractors.ida.idalib as idalib
     import capa.features.extractors.ida.extractor
