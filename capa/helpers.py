@@ -27,10 +27,10 @@ from zipfile import ZipFile
 from datetime import datetime
 
 import msgspec.json
+from rich.text import Text
 from rich.console import Console
 from rich.progress import (
     Task,
-    Text,
     Progress,
     BarColumn,
     TextColumn,
@@ -237,8 +237,6 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
         format_ = FORMAT_BINEXPORT2
-    elif sample.name.endswith(EXTENSIONS_ELF):
-        format_ = FORMAT_ELF
     elif sample.name.endswith(EXTENSIONS_BINJA_DB):
         format_ = FORMAT_BINJA_DB
     elif sample.name.endswith(EXTENSIONS_SUPPORTED_SCRIPTS):
