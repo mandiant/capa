@@ -139,10 +139,22 @@ BINDINGS: dict[str, QueryBinding] = {
                     "global_statement": """
                     (program
                         [
-                            (command) @global-statement
-                            (variable_assignment) @global-statement
-                            (if_statement) @global-statement
-                        ])
+                            (command)
+                            (variable_assignment)
+                            (if_statement)
+                            (while_statement)
+                            (for_statement)
+                            (c_style_for_statement)
+                            (case_statement)
+                            (pipeline)
+                            (list)
+                            (compound_statement)
+                            (subshell)
+                            (declaration_command)
+                            (test_command)
+                            (negated_command)
+                            (redirected_statement)
+                        ] @global-statement)
                     """,
                 },
                 "field_name": {
