@@ -143,9 +143,20 @@ BINDINGS: dict[str, QueryBinding] = {
                     "global_statement": """
                     (global_statement
                         [
-                            (if_statement) @global-statement
+                            (do_statement) @global-statement
                             (expression_statement) @global-statement
+                            (fixed_statement) @global-statement
+                            (for_statement) @global-statement
+                            (foreach_statement) @global-statement
+                            (if_statement) @global-statement
                             (local_declaration_statement) @global-statement
+                            (lock_statement) @global-statement
+                            (switch_statement) @global-statement
+                            (try_statement) @global-statement
+                            (unsafe_statement) @global-statement
+                            (using_statement) @global-statement
+                            (while_statement) @global-statement
+                            (yield_statement) @global-statement
                         ])
                     """,
                     # new Foo().Bar()
@@ -207,8 +218,16 @@ BINDINGS: dict[str, QueryBinding] = {
                     "global_statement": """
                     (module
                         [
-                            (if_statement) @global-statement
+                            (assert_statement) @global-statement
+                            (delete_statement) @global-statement
                             (expression_statement) @global-statement
+                            (for_statement) @global-statement
+                            (if_statement) @global-statement
+                            (match_statement) @global-statement
+                            (raise_statement) @global-statement
+                            (try_statement) @global-statement
+                            (while_statement) @global-statement
+                            (with_statement) @global-statement
                         ])
                     """,
                     "direct_method_call": """

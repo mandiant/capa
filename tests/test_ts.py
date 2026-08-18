@@ -1210,6 +1210,14 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("py_a4d252", "function=vul", String("Updatewmplayer"), True),
     ("py_a4d252", "function=vul", Substring("SCHTASKS"), True),
     ("py_a4d252", "function=llp", API("win32con::FILE_ATTRIBUTE_HIDDEN"), True),
+    ("py_bb68ae", "global", Arch(ARCH_ANY), True),
+    ("py_bb68ae", "global", OS(OS_ANY), True),
+    ("py_bb68ae", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_PY]), True),
+    ("py_bb68ae", "file", Format(FORMAT_SCRIPT), True),
+    ("py_bb68ae", "file", Namespace("socket"), True),
+    ("py_bb68ae", "file", Namespace("subprocess"), True),
+    ("py_bb68ae", "function=PSEUDO MAIN", String("192.168.1.104"), True),
+    ("py_bb68ae", "function=PSEUDO MAIN", Number(4444), True),
 ])
 
 
