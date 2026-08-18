@@ -121,6 +121,60 @@ def test_ruleset_cache_invalid():
     assert not path.exists()
 
 
+def test_ruleset_cache_old_format_version():
+    # caches written with an older cache format version must be rejected
+    # and rebuilt, not loaded (the serialized ruleset schema may have
+    # changed between builds, see #2961).
+    rs = capa.rules.RuleSet([R1])
+    content = capa.rules.cache.get_ruleset_content(rs)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    cache_dir = capa.rules.cache.get_default_cache_directory()
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+    with contextlib.suppress(OSError):
+        path.unlink()
+
+    capa.rules.cache.cache_ruleset(cache_dir, rs)
+    assert path.exists()
+
+    buf = path.read_bytes()
+
+    # rewrite the version field as if the cache was written by the
+    # previous format (MAGIC is 4 bytes, VERSION is 4 bytes)
+    assert buf[:4] == capa.rules.cache.MAGIC
+    assert buf[4:8] != b"\x00\x00\x00\x01"
+    buf = buf[:4] + b"\x00\x00\x00\x01" + buf[8:]
+    path.write_bytes(buf)
+
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is None
+    # the invalid cache should be deleted
+    assert not path.exists()
+
+
+def test_ruleset_cache_stale_feature_index_schema():
+    # a cache written by an older build may contain feature indexes that
+    # miss fields used by the current matching code; loading it must be
+    # treated as a cache miss instead of crashing at match time (#2961).
+    rs = capa.rules.RuleSet([R1])
+    content = capa.rules.cache.get_ruleset_content(rs)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    cache_dir = capa.rules.cache.get_default_cache_directory()
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+    with contextlib.suppress(OSError):
+        path.unlink()
+
+    # simulate a stale schema: drop bytes_prefix_index from the indexes
+    # before the ruleset is serialized to disk
+    for index in rs._feature_indexes_by_scopes.values():
+        index.__dict__.pop("bytes_prefix_index", None)
+    cache = capa.rules.cache.RuleCache(id, rs)
+    path.write_bytes(cache.dump())
+
+    assert path.exists()
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is None
+    # the invalid cache should be deleted
+    assert not path.exists()
+
+
 def test_rule_cache_dev_environment():
     # generate rules cache
     rs = capa.rules.RuleSet([R2])

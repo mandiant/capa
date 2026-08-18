@@ -78,7 +78,9 @@ def get_cache_path(cache_dir: Path, id: CacheIdentifier) -> Path:
 
 
 MAGIC = b"capa"
-VERSION = b"\x00\x00\x00\x01"
+# bump when the serialized ruleset schema changes (e.g. new RuleSet
+# fields), so stale caches from previous builds are rejected and rebuilt.
+VERSION = b"\x00\x00\x00\x02"
 
 
 @dataclass
@@ -91,13 +93,16 @@ class RuleCache:
 
     @staticmethod
     def load(data):
-        assert data.startswith(MAGIC + VERSION)
+        if not data.startswith(MAGIC + VERSION):
+            raise AssertionError(f"invalid cache magic or format version: {data[:8]!r}")
 
         id = data[0x8:0x48].decode("ascii")
         cache = pickle.loads(zlib.decompress(data[0x48:]))
 
-        assert isinstance(cache, RuleCache)
-        assert cache.id == id
+        if not isinstance(cache, RuleCache):
+            raise AssertionError(f"unexpected cache type: {type(cache).__name__}")
+        if cache.id != id:
+            raise AssertionError(f"cache id mismatch: expected {id}, got {cache.id}")
 
         return cache
 
@@ -158,7 +163,8 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional
 
     try:
         cache = RuleCache.load(buf)
-    except AssertionError:
+        cache.ruleset._validate_feature_index()
+    except (AssertionError, AttributeError):
         logger.debug("rule set cache is invalid: %s", path)
         # delete the cache that seems to be invalid.
         path.unlink()
