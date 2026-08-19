@@ -46,6 +46,7 @@ from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, Te
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS
 from capa.features.extractors.ts.engine import (
     TreeSitterBaseEngine,
+    TreeSitterBashEngine,
     TreeSitterHTMLEngine,
     TreeSitterTemplateEngine,
     TreeSitterExtractorEngine,
@@ -53,7 +54,7 @@ from capa.features.extractors.ts.engine import (
 
 
 def do_test_ts_base_engine_init(engine: TreeSitterBaseEngine):
-    assert engine.language in [LANG_CS, LANG_TEM, LANG_HTML, LANG_JS]
+    assert engine.language in [LANG_BASH, LANG_CS, LANG_TEM, LANG_HTML, LANG_JS]
     assert isinstance(engine.query, QueryBinding)
     assert isinstance(engine.buf, bytes) and len(engine.buf) > 0
     assert isinstance(engine.tree, Tree)
@@ -78,7 +79,7 @@ def do_test_ts_base_engine_get_default_address(engine: TreeSitterBaseEngine):
     assert addr1.start_byte == addr2.start_byte and addr1.end_byte == addr2.end_byte
 
 
-def do_test_ts_extractor_engine_init(engine: TreeSitterExtractorEngine, expected_language: str):
+def do_test_ts_extractor_engine_init(engine: TreeSitterBaseEngine, expected_language: str):
     assert engine.language == expected_language
     assert isinstance(engine.query, QueryBinding)
     assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)
@@ -107,7 +108,7 @@ def do_test_ts_extractor_engine_get_new_objects(
 
 
 def do_test_ts_extractor_engine_get_function_definitions(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
+    engine: TreeSitterBaseEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert list(engine.get_function_definitions(engine.tree.root_node)) == list(engine.get_function_definitions())
     assert len(list(engine.get_function_definitions(root_node))) == len(expected)
@@ -128,7 +129,7 @@ def do_test_ts_extractor_engine_get_function_definitions(
 
 
 def do_test_ts_extractor_engine_get_function_calls(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
+    engine: TreeSitterBaseEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert len(list(engine.get_function_call_names(root_node))) == len(expected)
     for node, (_, expected_id_range) in zip(engine.get_function_call_names(root_node), expected):
@@ -137,9 +138,7 @@ def do_test_ts_extractor_engine_get_function_calls(
         do_test_ts_base_engine_get_address(engine, node)
 
 
-def do_test_ts_extractor_engine_get_string_literals(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
-):
+def do_test_ts_extractor_engine_get_string_literals(engine: TreeSitterBaseEngine, root_node: Node, expected: List[str]):
     assert len(list(engine.get_string_literals(root_node))) == len(expected)
     for node, expected_range in zip(engine.get_string_literals(root_node), expected):
         assert isinstance(node, Node)
@@ -148,7 +147,7 @@ def do_test_ts_extractor_engine_get_string_literals(
 
 
 def do_test_ts_extractor_engine_get_integer_literals(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
+    engine: TreeSitterBaseEngine, root_node: Node, expected: List[str]
 ):
     assert len(list(engine.get_integer_literals(root_node))) == len(expected)
     for node, expected_range in zip(engine.get_integer_literals(root_node), expected):
@@ -166,7 +165,7 @@ def do_test_ts_extractor_engine_get_namespaces(engine: TreeSitterExtractorEngine
         do_test_ts_base_engine_get_address(engine, node)
 
 
-def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtractorEngine, expected: List[str]):
+def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterBaseEngine, expected: List[str]):
     assert len(list(engine.get_global_statements())) == len(expected)
     for node, expected_range in zip(engine.get_global_statements(), expected):
         assert isinstance(node, Node)
@@ -181,6 +180,18 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
     for (node, _name), _expected_name in zip(engine.get_processed_property_names(root_node), expected):
         assert isinstance(node, Node)
         do_test_ts_base_engine_get_address(engine, node)
+
+
+def do_test_ts_bash_engine(engine: TreeSitterBashEngine, expected: dict):
+    root_node = engine.tree.root_node
+
+    do_test_ts_extractor_engine_init(engine, expected["language"])
+    do_test_ts_extractor_engine_get_function_definitions(engine, root_node, expected["all function definitions"])
+    do_test_ts_extractor_engine_get_function_calls(engine, root_node, expected["all function calls"])
+    do_test_ts_extractor_engine_get_string_literals(engine, root_node, expected["all string literals"])
+    do_test_ts_extractor_engine_get_integer_literals(engine, root_node, expected["all integer literals"])
+    do_test_ts_extractor_engine_get_global_statements(engine, expected["global statements"])
+    do_test_ts_base_engine_get_default_address(engine)
 
 
 @parametrize(
@@ -448,6 +459,10 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
     ],
 )
 def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, expected: dict):
+    if expected["language"] == LANG_BASH:
+        bash_engine: TreeSitterBashEngine = request.getfixturevalue(engine_str)
+        do_test_ts_bash_engine(bash_engine, expected)
+        return
     engine: TreeSitterExtractorEngine = request.getfixturevalue(engine_str)
     do_test_ts_extractor_engine_init(engine, expected["language"])
     do_test_ts_extractor_engine_get_new_objects(engine, engine.tree.root_node, expected["all objects"])

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import re
-from typing import List, Tuple, Iterator, Optional
+from typing import List, Tuple, Iterator, Optional, cast
 
 from tree_sitter import Node, Tree, Parser, QueryCursor
 
@@ -26,6 +26,7 @@ from capa.features.extractors.ts.query import (
     BashQueryBinding,
     HTMLQueryBinding,
     ScriptQueryBinding,
+    FunctionQueryBinding,
     TemplateQueryBinding,
 )
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS, BaseNamespace, CSharpNamespace, LanguageToolkit
@@ -41,11 +42,15 @@ class TreeSitterBaseEngine:
     language: str
     query: QueryBinding
     tree: Tree
+    buf_offset: int
+    language_toolkit: LanguageToolkit
+    namespaces: set[BaseNamespace] = set()
 
-    def __init__(self, language: str, buf: bytes):
+    def __init__(self, language: str, buf: bytes, buf_offset: int = 0):
         self.language = language
         self.query = BINDINGS[language]
         self.buf = buf
+        self.buf_offset = buf_offset
         self.tree = self.parse()
 
     def parse(self) -> Tree:
@@ -59,7 +64,7 @@ class TreeSitterBaseEngine:
         return self.get_byte_range(node).decode("utf-8")
 
     def get_address(self, node: Node) -> FileOffsetRangeAddress:
-        return FileOffsetRangeAddress(node.start_byte, node.end_byte)
+        return FileOffsetRangeAddress(self.buf_offset + node.start_byte, self.buf_offset + node.end_byte)
 
     def get_default_address(self) -> FileOffsetRangeAddress:
         return self.get_address(self.tree.root_node)
@@ -81,11 +86,43 @@ class TreeSitterBaseEngine:
 
         yield from sorted(captured_nodes, key=TreeSitterBaseEngine.get_node_sort_key)
 
+    def get_function_query(self) -> FunctionQueryBinding:
+        return cast(FunctionQueryBinding, self.query)
+
+    def get_function_definitions(self, node: Optional[Node] = None) -> Iterator[Node]:
+        node = self.tree.root_node if node is None else node
+        cursor = QueryCursor(self.get_function_query().function_definition)
+        yield from self.get_captured_nodes(cursor, node)
+
+    def get_function_definition_name(self, node: Node) -> Node | None:
+        return node.child_by_field_name(self.get_function_query().function_definition_field_name)
+
+    def get_function_definition_names(self, node: Node) -> Iterator[Node]:
+        for fd_node in self.get_function_definitions(node):
+            name_node = self.get_function_definition_name(fd_node)
+            if name_node is not None:
+                yield name_node
+
+    def get_function_call_names(self, node: Node) -> Iterator[Node]:
+        cursor = QueryCursor(self.get_function_query().function_call_name)
+        yield from self.get_captured_nodes(cursor, node)
+
+    def get_string_literals(self, node: Node) -> Iterator[Node]:
+        cursor = QueryCursor(self.get_function_query().string_literal)
+        yield from self.get_captured_nodes(cursor, node)
+
+    def get_integer_literals(self, node: Node) -> Iterator[Node]:
+        cursor = QueryCursor(self.get_function_query().integer_literal)
+        yield from self.get_captured_nodes(cursor, node)
+
+    def get_global_statements(self) -> Iterator[Node]:
+        cursor = QueryCursor(self.get_function_query().global_statement)
+        yield from self.get_captured_nodes(cursor, self.tree.root_node)
+
 
 class TreeSitterExtractorEngine(TreeSitterBaseEngine):
-    query: ScriptQueryBinding | BashQueryBinding
+    query: ScriptQueryBinding
     language_toolkit: LanguageToolkit
-    buf_offset: int
     namespaces: set[BaseNamespace]
 
     def __init__(
@@ -95,8 +132,7 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         buf_offset: int = 0,
         additional_namespaces: set[BaseNamespace] | None = None,
     ):
-        super().__init__(language, buf)
-        self.buf_offset = buf_offset
+        super().__init__(language, buf, buf_offset)
         self.language_toolkit = LANGUAGE_TOOLKITS[language]
 
         if additional_namespaces is None:
@@ -105,77 +141,35 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         self.namespaces = set(self.get_processed_namespaces())
         self.namespaces = self.namespaces.union(additional_namespaces)
 
-    def get_address(self, node: Node) -> FileOffsetRangeAddress:
-        return FileOffsetRangeAddress(self.buf_offset + node.start_byte, self.buf_offset + node.end_byte)
-
     def get_new_object_names(self, node: Node) -> Iterator[Node]:
-        if not isinstance(self.query, ScriptQueryBinding):
-            return
         cursor = QueryCursor(self.query.new_object_name)
         yield from self.get_captured_nodes(cursor, node)
 
     def get_property_names(self, node: Node) -> Iterator[Node]:
-        if not isinstance(self.query, ScriptQueryBinding):
-            return
         cursor = QueryCursor(self.query.property_name)
         yield from self.get_captured_nodes(cursor, node)
 
     def get_processed_property_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured property name nodes and their associated proper names (see process_property
         for details), e.g.: [(node0, "StartInfo"), (node1, "RedirectStandardOutput")]."""
-        if not isinstance(self.query, ScriptQueryBinding):
-            return
         for pt_node in self.get_property_names(node):
             pt_name = self.language_toolkit.process_property(pt_node, self.get_str(pt_node))
             if pt_name:
                 yield pt_node, pt_name
 
-    def get_function_definitions(self, node: Optional[Node] = None) -> Iterator[Node]:
-        node = self.tree.root_node if node is None else node
-        cursor = QueryCursor(self.query.function_definition)
-        yield from self.get_captured_nodes(cursor, node)
-
-    def get_function_definition_name(self, node: Node) -> Node | None:
-        return node.child_by_field_name(self.query.function_definition_field_name)
-
-    def get_function_definition_names(self, node: Node) -> Iterator[Node]:
-        for fd_node in self.get_function_definitions(node):
-            name_node = self.get_function_definition_name(fd_node)
-            if name_node is not None:
-                yield name_node
-
-    def get_function_call_names(self, node: Node) -> Iterator[Node]:
-        cursor = QueryCursor(self.query.function_call_name)
-        yield from self.get_captured_nodes(cursor, node)
-
     def get_imported_constants(self, node: Node) -> Iterator[Node]:
-        if not isinstance(self.query, ScriptQueryBinding):
-            return
         cursor = QueryCursor(self.query.imported_constant_name)
         yield from self.get_captured_nodes(cursor, node)
 
     def get_processed_imported_constants(self, node: Node) -> Iterator[Tuple[Node, str]]:
         """Generates captured imported constant nodes and their associated proper names (see process_imported_constant
         for details), e.g.: [(node0, "ssl.CERT_NONE"), (node1, "win32con.FILE_ATTRIBUTE_HIDDEN")]."""
-        if not isinstance(self.query, ScriptQueryBinding):
-            return
         for ic_node in self.get_imported_constants(node):
             ic_name = self.language_toolkit.process_imported_constant(ic_node, self.get_str(ic_node))
             if ic_name:
                 yield ic_node, ic_name
 
-    def get_string_literals(self, node: Node) -> Iterator[Node]:
-        cursor = QueryCursor(self.query.string_literal)
-        yield from self.get_captured_nodes(cursor, node)
-
-    def get_integer_literals(self, node: Node) -> Iterator[Node]:
-        cursor = QueryCursor(self.query.integer_literal)
-        yield from self.get_captured_nodes(cursor, node)
-
     def get_namespaces(self, node: Optional[Node] = None) -> List[Tuple[Node, str]]:
-        if not isinstance(self.query, ScriptQueryBinding):
-            return []
-
         target_node = self.tree.root_node if node is None else node
         cursor = QueryCursor(self.query.namespace)
         namespace_captures: List[Tuple[Node, str]] = []
@@ -187,19 +181,10 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         return sorted(namespace_captures, key=self.get_node_capture_sort_key)
 
     def get_processed_namespaces(self, node: Optional[Node] = None) -> Iterator[BaseNamespace]:
-        if not isinstance(self.query, ScriptQueryBinding):
-            return
         for ns_node, query_name in self.get_namespaces(node):
             yield from self.language_toolkit.process_namespace(ns_node, query_name, self.get_str)
 
-    def get_global_statements(self) -> Iterator[Node]:
-        cursor = QueryCursor(self.query.global_statement)
-        yield from self.get_captured_nodes(cursor, self.tree.root_node)
-
     def get_direct_method_call(self, node: Node) -> Optional[Node]:
-        if not isinstance(self.query, ScriptQueryBinding):
-            return None
-
         cursor = QueryCursor(self.query.direct_method_call)
         captures = cursor.captures(node)
         for nodes in captures.values():
@@ -207,11 +192,24 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
                 return nodes[0]
         return None
 
+    def get_feature_namespaces(self) -> Iterator[BaseNamespace]:
+        yield from self.namespaces
+
+
+class TreeSitterBashEngine(TreeSitterBaseEngine):
+    query: BashQueryBinding
+    language_toolkit: LanguageToolkit
+
+    def __init__(self, language: str, buf: bytes, buf_offset: int = 0):
+        super().__init__(language, buf, buf_offset)
+        self.language_toolkit = LANGUAGE_TOOLKITS[language]
+
     def get_variable_names(self, node: Node) -> Iterator[Node]:
-        if not isinstance(self.query, BashQueryBinding):
-            return
         cursor = QueryCursor(self.query.variable_name)
         yield from self.get_captured_nodes(cursor, node)
+
+    def get_feature_namespaces(self) -> Iterator[BaseNamespace]:
+        yield from ()
 
 
 class TreeSitterTemplateEngine(TreeSitterBaseEngine):

@@ -1189,6 +1189,8 @@ def get_binexport_extractor(path):
 def get_ts_extractor_engine(language, buf):
     import capa.features.extractors.ts.engine
 
+    if language == LANG_BASH:
+        return capa.features.extractors.ts.engine.TreeSitterBashEngine(language, buf)
     return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, buf)
 
 
@@ -1201,6 +1203,7 @@ def get_ts_template_engine(path):
     return capa.features.extractors.ts.engine.TreeSitterTemplateEngine(buf)
 
 
+@functools.lru_cache(maxsize=1)
 def get_ts_extractor(path):
     import capa.features.extractors.ts.extractor
 

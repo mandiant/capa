@@ -38,18 +38,22 @@ class QueryBinding:
 
 
 @dataclass
-class ScriptQueryBinding(QueryBinding):
-    new_object_name: Query
+class FunctionQueryBinding(QueryBinding):
     function_definition: Query
     function_definition_field_name: str
-    direct_method_call: Query
     function_call_name: Query
-    property_name: Query
-    imported_constant_name: Query
     string_literal: Query
     integer_literal: Query
-    namespace: Query
     global_statement: Query
+
+
+@dataclass
+class ScriptQueryBinding(FunctionQueryBinding):
+    new_object_name: Query
+    direct_method_call: Query
+    property_name: Query
+    imported_constant_name: Query
+    namespace: Query
 
 
 @dataclass
@@ -66,14 +70,8 @@ class HTMLQueryBinding(QueryBinding):
 
 
 @dataclass
-class BashQueryBinding(QueryBinding):
-    function_definition: Query
-    function_definition_field_name: str
-    function_call_name: Query
-    string_literal: Query
-    integer_literal: Query
+class BashQueryBinding(FunctionQueryBinding):
     variable_name: Query
-    global_statement: Query
 
 
 TS_LANGUAGES: dict[str, Language] = {
