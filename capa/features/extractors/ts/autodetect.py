@@ -54,8 +54,6 @@ def _contains_errors(ts_language, node: Node) -> bool:
 
 def get_language_ts(buf: bytes) -> str:
     for language, ts_language in TS_LANGUAGES.items():
-        if language == LANG_BASH:
-            continue
         tree = _parse(ts_language, buf)
         if tree and not _contains_errors(ts_language, tree.root_node):
             return language
