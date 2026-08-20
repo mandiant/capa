@@ -14,6 +14,7 @@
 
 import abc
 import json
+import posixpath
 import importlib.resources
 from typing import Dict, List, Tuple, Union, Callable, Iterator, Optional
 from dataclasses import dataclass
@@ -232,7 +233,10 @@ class BashToolkit(LanguageToolkit):
         return set()
 
     def format_imported_function(self, name: str) -> str:
-        return name
+        return posixpath.basename(name)
+
+    def get_full_name(self, name: str, namespace: Optional[BaseNamespace] = None) -> str:
+        return posixpath.basename(name)
 
 
 class CSharpToolkit(LanguageToolkit):

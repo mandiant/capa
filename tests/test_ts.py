@@ -182,6 +182,13 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
         do_test_ts_base_engine_get_address(engine, node)
 
 
+def do_test_bash_command_with_path_prefix():
+    toolkit = LANGUAGE_TOOLKITS[LANG_BASH]
+
+    assert toolkit.is_imported_function("/usr/bin/curl")
+    assert toolkit.format_imported_function("/usr/bin/curl") == "curl"
+
+
 def do_test_ts_bash_engine(engine: TreeSitterBashEngine, expected: dict):
     root_node = engine.tree.root_node
 
@@ -192,6 +199,7 @@ def do_test_ts_bash_engine(engine: TreeSitterBashEngine, expected: dict):
     do_test_ts_extractor_engine_get_integer_literals(engine, root_node, expected["all integer literals"])
     do_test_ts_extractor_engine_get_global_statements(engine, expected["global statements"])
     do_test_ts_base_engine_get_default_address(engine)
+    do_test_bash_command_with_path_prefix()
 
 
 @parametrize(
