@@ -123,7 +123,6 @@ BINDINGS: dict[str, QueryBinding] = {
                         (string) @string-literal
                         (raw_string) @string-literal
                         (heredoc_body) @string-literal
-                        (heredoc_start) @string-literal
                     ]
                     """,
                     # 1 or 2>file
