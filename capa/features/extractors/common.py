@@ -53,6 +53,7 @@ MATCH_PE = b"MZ"
 MATCH_ELF = b"\x7fELF"
 MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
+MATCH_GZIP = b"\x1f\x8b"
 
 
 def extract_file_strings(buf: bytes) -> Iterator[tuple[String, Address]]:
@@ -75,6 +76,8 @@ def extract_format(buf: bytes) -> Iterator[tuple[Feature, Address]]:
         yield Format(FORMAT_FREEZE), NO_ADDRESS
     elif buf.startswith(MATCH_RESULT):
         yield Format(FORMAT_RESULT), NO_ADDRESS
+    elif buf.startswith(MATCH_GZIP):
+        return
     elif re.sub(rb"\s", b"", buf[:20]).startswith(MATCH_JSON_OBJECT):
         # potential start of JSON object data without whitespace
         # we don't know what it is exactly, but may support it (e.g. a dynamic CAPE sandbox report)

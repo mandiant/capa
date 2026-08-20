@@ -14,6 +14,7 @@
 
 from dataclasses import dataclass
 
+import tree_sitter_bash
 import tree_sitter_html
 import tree_sitter_python
 import tree_sitter_c_sharp
@@ -26,6 +27,7 @@ from capa.features.extractors.script import (
     LANG_JS,
     LANG_PY,
     LANG_TEM,
+    LANG_BASH,
     LANG_HTML,
 )
 
@@ -36,18 +38,22 @@ class QueryBinding:
 
 
 @dataclass
-class ScriptQueryBinding(QueryBinding):
-    new_object_name: Query
+class FunctionQueryBinding(QueryBinding):
     function_definition: Query
     function_definition_field_name: str
-    direct_method_call: Query
     function_call_name: Query
-    property_name: Query
-    imported_constant_name: Query
     string_literal: Query
     integer_literal: Query
-    namespace: Query
     global_statement: Query
+
+
+@dataclass
+class ScriptQueryBinding(FunctionQueryBinding):
+    new_object_name: Query
+    direct_method_call: Query
+    property_name: Query
+    imported_constant_name: Query
+    namespace: Query
 
 
 @dataclass
@@ -63,7 +69,13 @@ class HTMLQueryBinding(QueryBinding):
     attribute: Query
 
 
+@dataclass
+class BashQueryBinding(FunctionQueryBinding):
+    variable_name: Query
+
+
 TS_LANGUAGES: dict[str, Language] = {
+    LANG_BASH: Language(tree_sitter_bash.language()),
     LANG_CS: Language(tree_sitter_c_sharp.language()),
     LANG_PY: Language(tree_sitter_python.language()),
     LANG_JS: Language(tree_sitter_javascript.language()),
@@ -87,6 +99,67 @@ def deserialize(language: str, binding: dict) -> dict:
 
 
 BINDINGS: dict[str, QueryBinding] = {
+    LANG_BASH: BashQueryBinding(
+        TS_LANGUAGES[LANG_BASH],
+        **deserialize(
+            LANG_BASH,
+            {
+                "query": {
+                    # foo() { ... }
+                    "function_definition": """
+                    (function_definition) @function-definition
+                    """,
+                    # echo, test, ls, cat
+                    "function_call_name": """
+                    (command name: (command_name) @function-call)
+                    """,
+                    # $x
+                    "variable_name": """
+                    (variable_name) @variable-name
+                    """,
+                    # "hi" or heredoc
+                    "string_literal": """
+                    [
+                        (string) @string-literal
+                        (raw_string) @string-literal
+                        (heredoc_body) @string-literal
+                    ]
+                    """,
+                    # 1 or 2>file
+                    "integer_literal": """
+                    [
+                        (number) @integer-literal
+                        (file_descriptor) @integer-literal
+                    ]
+                    """,
+                    # global statements
+                    "global_statement": """
+                    (program
+                        [
+                            (command)
+                            (variable_assignment)
+                            (if_statement)
+                            (while_statement)
+                            (for_statement)
+                            (c_style_for_statement)
+                            (case_statement)
+                            (pipeline)
+                            (list)
+                            (compound_statement)
+                            (subshell)
+                            (declaration_command)
+                            (test_command)
+                            (negated_command)
+                            (redirected_statement)
+                        ] @global-statement)
+                    """,
+                },
+                "field_name": {
+                    "function_definition": "name",
+                },
+            },
+        ),
+    ),
     LANG_CS: ScriptQueryBinding(
         TS_LANGUAGES[LANG_CS],
         **deserialize(

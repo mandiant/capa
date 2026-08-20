@@ -13,10 +13,11 @@
 # limitations under the License.
 
 from typing import Tuple, Iterator
+from functools import singledispatch
 
 from capa.features.common import Feature, Namespace
 from capa.features.address import Address
-from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
+from capa.features.extractors.ts.engine import TreeSitterBaseEngine, TreeSitterBashEngine, TreeSitterExtractorEngine
 
 
 def extract_namespaces(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -25,10 +26,21 @@ def extract_namespaces(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feat
             yield Namespace(namespace.name), engine.get_address(namespace.node)
 
 
-def extract_features(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+@singledispatch
+def extract_features(engine: TreeSitterBaseEngine) -> Iterator[Tuple[Feature, Address]]:
+    raise TypeError(f"unsupported Tree-Sitter engine: {type(engine).__name__}")
+
+
+@extract_features.register
+def _(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(engine):
             yield feature, addr
+
+
+@extract_features.register
+def _(engine: TreeSitterBashEngine) -> Iterator[Tuple[Feature, Address]]:
+    yield from ()
 
 
 FILE_HANDLERS = (extract_namespaces,)

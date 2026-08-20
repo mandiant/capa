@@ -28,7 +28,7 @@ import capa.engine as ceng
 import capa.render.result_document
 from capa.features.common import OS_AUTO, FORMAT_AUTO, Feature
 from capa.features.address import Address
-from capa.features.extractors.script import LANG_CS, LANG_PY
+from capa.features.extractors.script import LANG_CS, LANG_PY, LANG_BASH
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -48,6 +48,7 @@ FIXTURE_MANIFEST_DIR = _FIXTURES_DIR / "features"
 DNFILE_TESTFILES = CD / "data" / "dotnet" / "dnfile-testfiles"
 SOURCE_DIR = CD / "data" / "source"
 ASPX_DIR = SOURCE_DIR / "aspx"
+BASH_DIR = SOURCE_DIR / "sh"
 CS_DIR = SOURCE_DIR / "cs"
 PY_DIR = SOURCE_DIR / "py"
 
@@ -883,6 +884,16 @@ def py_a4d252_template_engine():
     return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_a4d252"])
 
 
+@pytest.fixture
+def sh_cff512_extractor_engine():
+    return get_ts_extractor_engine(LANG_BASH, BASH_DATA_PATH_BY_NAME["sh_cff512"].read_bytes())
+
+
+@pytest.fixture
+def sh_91800a_extractor_engine():
+    return get_ts_extractor_engine(LANG_BASH, BASH_DATA_PATH_BY_NAME["sh_91800a"].read_bytes())
+
+
 def resolve_sample_ts(sample):
     if sample.startswith("cs_"):
         return CS_DATA_PATH_BY_NAME[sample]
@@ -891,6 +902,11 @@ def resolve_sample_ts(sample):
     if sample.startswith("aspx_"):
         try:
             return ASPX_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
+    if sample.startswith("sh_"):
+        try:
+            return BASH_DATA_PATH_BY_NAME[sample]
         except KeyError:
             raise ValueError(f"unexpected sample fixture: {sample}")
     raise ValueError(f"unexpected sample fixture: {sample}")
@@ -1173,6 +1189,8 @@ def get_binexport_extractor(path):
 def get_ts_extractor_engine(language, buf):
     import capa.features.extractors.ts.engine
 
+    if language == LANG_BASH:
+        return capa.features.extractors.ts.engine.TreeSitterBashEngine(language, buf)
     return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, buf)
 
 
@@ -1225,4 +1243,10 @@ PY_DATA_PATH_BY_NAME = {
     "py_24e48f": PY_DIR / "24e48f27083aa14d630ec1aec8dfe8ec869dc8ba48f68154e2b14f493a548d28.py_",
     "py_a4d252": PY_DIR / "a4d252752d0558206b3f631fee3d57ae56190fb8203e571506fa058d076fbb96.py_",
     "py_bb68ae": PY_DIR / "bb68aefb6fc00983cf9ecb8ea0fc768ada674e2698c5878dc1b9f3fca8f3f359.py_",
+}
+
+
+BASH_DATA_PATH_BY_NAME = {
+    "sh_91800a": BASH_DIR / "91800a2afbdc98837d6b23a6de2b5f2433fedcdae9330d0a5b2a776571a4fef6.sh_",
+    "sh_cff512": BASH_DIR / "cff512dd1c9f82e79a9cc5af5f0a096b20737548f8d1bdc1aebf5744ffc78f6b.sh_",
 }

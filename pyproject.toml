@@ -107,6 +107,7 @@ dependencies = [
 
     "dnfile>=0.17.0",
     "tree-sitter>=0.25.0",
+    "tree-sitter-bash>=0.25.1",
     "tree-sitter-c-sharp>=0.23.0",
     "tree-sitter-embedded-template>=0.25.0",
     "tree-sitter-html>=0.23.0",

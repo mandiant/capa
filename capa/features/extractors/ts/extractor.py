@@ -23,9 +23,15 @@ import capa.features.extractors.ts.autodetect
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import Namespace
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
-from capa.features.extractors.script import LANG_TEM, LANG_HTML
+from capa.features.extractors.script import LANG_TEM, LANG_BASH, LANG_HTML
 from capa.features.extractors.ts.tools import BaseNamespace
-from capa.features.extractors.ts.engine import TreeSitterHTMLEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
+from capa.features.extractors.ts.engine import (
+    TreeSitterBaseEngine,
+    TreeSitterBashEngine,
+    TreeSitterHTMLEngine,
+    TreeSitterTemplateEngine,
+    TreeSitterExtractorEngine,
+)
 from capa.features.extractors.ts.function import PSEUDO_MAIN, TSFunctionInner
 from capa.features.extractors.base_extractor import (
     Feature,
@@ -38,7 +44,7 @@ from capa.features.extractors.base_extractor import (
 
 
 class TreeSitterFeatureExtractor(StaticFeatureExtractor):
-    engines: List[TreeSitterExtractorEngine]
+    engines: List[TreeSitterBaseEngine]
     template_engine: TreeSitterTemplateEngine
     language: str
     path: Path
@@ -62,15 +68,17 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
         if self.language == LANG_TEM:
             return TreeSitterTemplateEngine(buf)
 
-    def get_engines(self, buf: bytes) -> List[TreeSitterExtractorEngine]:
+    def get_engines(self, buf: bytes) -> List[TreeSitterBaseEngine]:
         if self.language == LANG_TEM and self.template_engine:
             return self.extract_code_from_template()
         if self.language == LANG_HTML:
             return self.extract_code_from_html(buf)
+        if self.language == LANG_BASH:
+            return [TreeSitterBashEngine(self.language, buf)]
         return [TreeSitterExtractorEngine(self.language, buf)]
 
-    def extract_code_from_template(self) -> List[TreeSitterExtractorEngine]:
-        engines = list(self.template_engine.get_parsed_code_sections())
+    def extract_code_from_template(self) -> List[TreeSitterBaseEngine]:
+        engines: List[TreeSitterBaseEngine] = list(self.template_engine.get_parsed_code_sections())
         for node in self.template_engine.get_content_sections():
             section_buf = self.template_engine.get_byte_range(node)
             engines.extend(self.extract_code_from_html(section_buf, self.template_engine.namespaces))
@@ -78,7 +86,7 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
 
     def extract_code_from_html(
         self, buf: bytes, namespaces: set[BaseNamespace] | None = None
-    ) -> List[TreeSitterExtractorEngine]:
+    ) -> List[TreeSitterBaseEngine]:
         if namespaces is None:
             namespaces = set()
         return list(TreeSitterHTMLEngine(buf, namespaces).get_parsed_code_sections())
@@ -102,10 +110,10 @@ class TreeSitterFeatureExtractor(StaticFeatureExtractor):
         for engine in self.engines:
             yield from capa.features.extractors.ts.file.extract_features(engine)
 
-    def get_pseudo_main_function_inner(self, engine: TreeSitterExtractorEngine) -> TSFunctionInner:
+    def get_pseudo_main_function_inner(self, engine: TreeSitterBaseEngine) -> TSFunctionInner:
         return TSFunctionInner(engine.tree.root_node, PSEUDO_MAIN, engine)
 
-    def get_pseudo_main_function(self, engine: TreeSitterExtractorEngine) -> FunctionHandle:
+    def get_pseudo_main_function(self, engine: TreeSitterBaseEngine) -> FunctionHandle:
         return FunctionHandle(engine.get_default_address(), self.get_pseudo_main_function_inner(engine))
 
     def get_functions(self) -> Iterator[FunctionHandle]:
