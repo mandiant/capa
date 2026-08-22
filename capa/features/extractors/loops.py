@@ -30,3 +30,26 @@ def has_loop(edges, threshold=2):
     g = networkx.DiGraph()
     g.add_edges_from(edges)
     return any(len(comp) >= threshold for comp in strongly_connected_components(g))
+
+
+def get_loop_vertices(edges, threshold=2):
+    """find vertices that are part of a cycle in a directed graph
+
+    args:
+        edges: list of edge sets representing a directed graph i.e. [(1, 2), (2, 1)]
+        threshold: min number of nodes contained in loop
+
+    returns:
+        set of vertex IDs
+    """
+    g = networkx.DiGraph()
+    g.add_edges_from(edges)
+    loop_vertices = set()
+    for comp in strongly_connected_components(g):
+        if len(comp) >= threshold:
+            loop_vertices.update(comp)
+    # Also include any vertices with self-loops (for tight loops)
+    for u, v in edges:
+        if u == v:
+            loop_vertices.add(u)
+    return loop_vertices
