@@ -32,7 +32,13 @@ def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
     seen_processes = {}
     for process in report.behavior.processes:
-        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
+        if process.parent_id is None:
+            # on CAPE for Linux, the root process may have no parent id, so we set that to 0
+            ppid = 0
+        else:
+            ppid = process.parent_id
+
+        addr = ProcessAddress(pid=process.process_id, ppid=ppid)
         yield ProcessHandle(address=addr, inner=process)
 
         # check for pid and ppid reuse
@@ -52,7 +58,13 @@ def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]
     """
     extract imported function names
     """
-    assert report.static is not None and report.static.pe is not None
+    if report.static is None:
+        return
+
+    if report.static.pe is None:
+        # TODO: elf
+        return
+
     imports = report.static.pe.imports
 
     if isinstance(imports, dict):
@@ -70,13 +82,25 @@ def extract_import_names(report: CapeReport) -> Iterator[tuple[Feature, Address]
 
 
 def extract_export_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
-    assert report.static is not None and report.static.pe is not None
+    if report.static is None:
+        return
+
+    if report.static.pe is None:
+        # TODO: elf
+        return
+
     for function in report.static.pe.exports:
         yield Export(function.name), AbsoluteVirtualAddress(function.address)
 
 
 def extract_section_names(report: CapeReport) -> Iterator[tuple[Feature, Address]]:
-    assert report.static is not None and report.static.pe is not None
+    if report.static is None:
+        return
+
+    if report.static.pe is None:
+        # TODO: elf
+        return
+
     for section in report.static.pe.sections:
         yield Section(section.name), AbsoluteVirtualAddress(section.virtual_address)
 
