@@ -55,7 +55,7 @@ NETNODE_RULES_CACHE_ID = "rules-cache-id"
 
 # wrappers for IDA Pro (IDAPython) 7, 8 and 9 compability
 version = float(idaapi.get_kernel_version())
-if version < 9.0:
+if version < 8.5:
 
     def get_filetype() -> "ida_ida.filetype_t":
         return idaapi.get_inf_structure().filetype
