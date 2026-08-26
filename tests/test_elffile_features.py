@@ -13,12 +13,17 @@
 # limitations under the License.
 
 import io
+from types import SimpleNamespace
 from pathlib import Path
 
 import fixtures
 from elftools.elf.elffile import ELFFile
 
-from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
+from capa.features.extractors.elffile import (
+    extract_file_arch,
+    extract_file_export_names,
+    extract_file_import_names,
+)
 
 SAMPLE_PATH = fixtures.CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
 STRIPPED_SAMPLE_PATH = fixtures.CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
@@ -103,3 +108,8 @@ def test_elffile_export_features():
         "__libc_csu_init",
     ]
     check_export_features(SAMPLE_PATH, expected_exports)
+
+
+def test_elffile_unsupported_architecture():
+    elf = SimpleNamespace(get_machine_arch=lambda: "ARM")
+    assert list(extract_file_arch(elf)) == []
