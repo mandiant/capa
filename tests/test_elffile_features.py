@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import io
-from types import SimpleNamespace
+import struct
 from pathlib import Path
 
 import fixtures
 from elftools.elf.elffile import ELFFile
 
+from capa.features.common import VALID_ARCH
+from capa.features.address import NO_ADDRESS
 from capa.features.extractors.elffile import (
     extract_file_arch,
     extract_file_export_names,
@@ -110,6 +112,25 @@ def test_elffile_export_features():
     check_export_features(SAMPLE_PATH, expected_exports)
 
 
-def test_elffile_unsupported_architecture():
-    elf = SimpleNamespace(get_machine_arch=lambda: "ARM")
-    assert list(extract_file_arch(elf)) == []
+def test_elffile_arm_architecture():
+    elf_header = struct.pack(
+        "<16sHHIIIIIHHHHHH",
+        b"\x7fELF\x01\x01\x01" + b"\x00" * 9,
+        2,
+        40,
+        1,
+        0,
+        0,
+        0,
+        0,
+        52,
+        0,
+        0,
+        0,
+        0,
+        0,
+    )
+    elf = ELFFile(io.BytesIO(elf_header))
+    features = [(feature.value, address) for feature, address in extract_file_arch(elf)]
+    assert features == [("arm", NO_ADDRESS)]
+    assert features[0][0] in VALID_ARCH

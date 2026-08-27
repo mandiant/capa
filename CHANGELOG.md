@@ -4,6 +4,7 @@
 
 ### New Features
 - freeze: add `--reproducible` flag that zeros dynamic header metadata
+- elffile: support 32-bit ARM architecture @dev-rehaann #3155
 
 ### Breaking Changes
 
@@ -26,7 +27,6 @@
 -
 
 ### Bug Fixes
-- fix: elffile: do not emit unsupported 32-bit ARM architecture @dev-rehaann #3155
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
