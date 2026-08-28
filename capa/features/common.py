@@ -443,11 +443,11 @@ class Bytes(Feature):
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
-ARCH_ARM = "arm"
+ARCH_AARCH32 = "aarch32"
 ARCH_AARCH64 = "aarch64"
 # dotnet
 ARCH_ANY = "any"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ARM, ARCH_AARCH64, ARCH_ANY)
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_AARCH32, ARCH_AARCH64, ARCH_ANY)
 
 
 class Arch(Feature):

@@ -19,7 +19,7 @@ from pathlib import Path
 import fixtures
 from elftools.elf.elffile import ELFFile
 
-from capa.features.common import VALID_ARCH
+from capa.features.common import VALID_ARCH, ARCH_AARCH32
 from capa.features.address import NO_ADDRESS
 from capa.features.extractors.elffile import (
     extract_file_arch,
@@ -132,5 +132,5 @@ def test_elffile_arm_architecture():
     )
     elf = ELFFile(io.BytesIO(elf_header))
     features = [(feature.value, address) for feature, address in extract_file_arch(elf)]
-    assert features == [("arm", NO_ADDRESS)]
+    assert features == [(ARCH_AARCH32, NO_ADDRESS)]
     assert features[0][0] in VALID_ARCH
