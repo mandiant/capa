@@ -85,6 +85,7 @@ dependencies = [
     "protobuf>=5",
     "msgspec>=0.18.6",
     "xmltodict>=0.13.0",
+    "pyahocorasick>=2.0",
 
     # ---------------------------------------
     # Dependencies that we develop
