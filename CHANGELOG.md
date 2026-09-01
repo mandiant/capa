@@ -2504,6 +2504,7 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
 - extractor: fix segmentation violation from vivisect @williballenthin
 - main: fix crash when .viv cannot be saved #168 @secshoggoth @williballenthin
 - main: fix shellcode .viv save path @williballenthin
+- bump vivisect dependency to >=1.3.0 to fix viv_utils version mismatch @williballenthin
 
 ### Changes
 
