@@ -28,6 +28,7 @@
 ### Bug Fixes
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
+- fix: bump vivisect dependency to >=1.3.0 to fix viv_utils version mismatch #3079
 - fix: render_default always returns empty string @williballenthin #3012
 - fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
 - fix: _NoAddress.__eq__ unconditionally returns True @williballenthin #3014
@@ -2504,7 +2505,6 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
 - extractor: fix segmentation violation from vivisect @williballenthin
 - main: fix crash when .viv cannot be saved #168 @secshoggoth @williballenthin
 - main: fix shellcode .viv save path @williballenthin
-- bump vivisect dependency to >=1.3.0 to fix viv_utils version mismatch @williballenthin
 
 ### Changes
 
