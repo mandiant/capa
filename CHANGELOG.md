@@ -26,6 +26,7 @@
 -
 
 ### Bug Fixes
+- fix: reject stale rules caches with an incompatible ruleset schema and rebuild them instead of crashing at match time (missing `bytes_prefix_index`) @MP-GOWTHAM #2961
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
