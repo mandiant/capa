@@ -26,6 +26,7 @@
 -
 
 ### Bug Fixes
+- fix: elffile: don't abort the run when a malformed dynamic segment can't be parsed @arpitjain099 #3170 #3171
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
