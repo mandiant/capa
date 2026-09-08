@@ -143,7 +143,7 @@ dev = [
     "types-PyYAML==6.0.8",
     "types-psutil==7.2.0.20251228",
     "types_requests==2.33.0.20260327",
-    "types-protobuf==7.34.1.20260403",
+    "types-protobuf==7.35.1.20260821",
     "deptry==0.25.1"
 ]
 build = [
