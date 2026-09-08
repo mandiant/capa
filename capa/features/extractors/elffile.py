@@ -17,6 +17,7 @@ import logging
 from typing import Iterator
 from pathlib import Path
 
+from elftools.common.exceptions import ELFError
 from elftools.elf.dynamic import DynamicSegment
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
@@ -28,6 +29,46 @@ from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
+
+# pyelftools reads the dynamic tables on demand and trusts that a table tag
+# comes with the companion tags that describe it. A file where that is not true
+# makes it raise out of capa's extraction and abort the whole run, which for a
+# tool that is pointed at hostile files is the wrong trade: the rest of the
+# features are still recoverable. See issues #3170 and #3171.
+# StopIteration belongs here: pyelftools reads the companion tags with bare
+# next() calls, and because the extractors are generators, PEP 479 turns an
+# escaping StopIteration into a RuntimeError only at the generator boundary,
+# which is above the call site. Catching RuntimeError alone would miss it.
+MALFORMED_DYNAMIC_ERRORS = (ValueError, RuntimeError, StopIteration, ELFError)
+
+
+def get_dynamic_symbols(segment: DynamicSegment) -> list:
+    """Read a dynamic segment's symbols, or none if the segment cannot be parsed.
+
+    The symbol count comes from DT_GNU_HASH or DT_HASH, so a binary whose hash
+    section was stripped while the tag was left behind (`strip
+    --remove-section=.gnu.hash`) makes pyelftools call max() on an empty bucket
+    list.
+    """
+    try:
+        return list(segment.iter_symbols())
+    except MALFORMED_DYNAMIC_ERRORS as e:
+        logger.debug("Dynamic segment has an unreadable symbol table: %s", e)
+        return []
+
+
+def get_relocation_tables(segment: DynamicSegment) -> dict:
+    """Read a dynamic segment's relocation tables, or none if they cannot be parsed.
+
+    Each table is gated on its own tag, then sized from companion tags read
+    without a default, so a DT_RELA with no DT_RELAENT raises rather than being
+    skipped.
+    """
+    try:
+        return segment.get_relocation_tables()
+    except MALFORMED_DYNAMIC_ERRORS as e:
+        logger.debug("Dynamic segment has unreadable relocation tables: %s", e)
+        return {}
 
 
 def extract_file_export_names(elf: ELFFile, **kwargs):
@@ -68,9 +109,10 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
             logger.debug("Dynamic segment doesn't contain DT_SYMTAB")
             continue
 
-        logger.debug("Dynamic segment contains %s symbols: ", segment.num_symbols())
+        symbols = get_dynamic_symbols(segment)
+        logger.debug("Dynamic segment contains %s symbols: ", len(symbols))
 
-        for symbol in segment.iter_symbols():
+        for symbol in symbols:
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if not symbol.name:
@@ -98,7 +140,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
             logger.debug("Dynamic segment doesn't contain DT_SYMTAB")
             continue
 
-        for i, symbol in enumerate(segment.iter_symbols()):
+        for i, symbol in enumerate(get_dynamic_symbols(segment)):
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if not symbol.name:
@@ -118,7 +160,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
         if not isinstance(segment, DynamicSegment):
             continue
 
-        relocation_tables = segment.get_relocation_tables()
+        relocation_tables = get_relocation_tables(segment)
         logger.debug("Dynamic Segment contains %s relocation tables:", len(relocation_tables))
 
         for relocation_table in relocation_tables.values():

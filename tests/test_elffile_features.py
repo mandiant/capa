@@ -16,6 +16,9 @@ import io
 from pathlib import Path
 
 import fixtures
+import pytest
+from elftools.common.exceptions import ELFError
+from elftools.elf.dynamic import DynamicSegment
 from elftools.elf.elffile import ELFFile
 
 from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
@@ -103,3 +106,61 @@ def test_elffile_export_features():
         "__libc_csu_init",
     ]
     check_export_features(SAMPLE_PATH, expected_exports)
+
+
+class _RaisingDynamicSegment(DynamicSegment):
+    """A dynamic segment whose tables cannot be read.
+
+    pyelftools reaches for companion tags with bare next() calls and sizes the
+    symbol table from a hash section that may have been stripped, so a malformed
+    file raises out of these two methods rather than returning nothing.
+    """
+
+    def __init__(self, exception):
+        self.exception = exception
+
+    def get_table_offset(self, name):
+        # DT_SYMTAB is present; it is the tables read off it that are broken.
+        return (0x1000, 0x1000)
+
+    def num_symbols(self):
+        # This is where the DT_GNU_HASH failure actually surfaces: pyelftools
+        # resolves the count through the hash table.
+        raise self.exception
+
+    def iter_symbols(self):
+        raise self.exception
+        yield  # pragma: no cover - unreachable, keeps this a generator
+
+    def get_relocation_tables(self):
+        raise self.exception
+
+
+@pytest.mark.parametrize(
+    "exception",
+    [
+        # DT_GNU_HASH left pointing at a zeroed region, capa#3170
+        ValueError("max() iterable argument is empty"),
+        # a relocation table tag with no companion size tag, capa#3171. The bare
+        # StopIteration is what escapes pyelftools; PEP 479 only rewrites it
+        # into a RuntimeError at the generator boundary above the call site.
+        StopIteration(),
+        RuntimeError("generator raised StopIteration"),
+        ELFError("bad section header"),
+    ],
+    ids=["gnu-hash", "stop-iteration", "runtime-error", "elf-error"],
+)
+def test_malformed_dynamic_segment_does_not_abort(exception, monkeypatch):
+    segment = _RaisingDynamicSegment(exception)
+
+    class FakeELF:
+        def iter_sections(self):
+            return iter(())
+
+        def iter_segments(self):
+            return iter((segment,))
+
+    # A file capa cannot fully parse should yield no exports or imports rather
+    # than ending the run, since the remaining features are still extractable.
+    assert list(extract_file_export_names(FakeELF())) == []
+    assert list(extract_file_import_names(FakeELF())) == []
