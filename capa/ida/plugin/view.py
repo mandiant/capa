@@ -26,7 +26,7 @@ import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.features.address import FileOffsetAddress, AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
-from capa.ida.plugin.qt_compat import QtGui, QtCore, Signal, QAction, QtWidgets
+from capa.ida.plugin.qt_compat import QtGui, QtCore, Signal, QAction, QtWidgets, flag_val
 
 MAX_SECTION_SIZE = 750
 
@@ -484,9 +484,9 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             CapaExplorerRulegenEditor.get_column_comment_index(),
             CapaExplorerRulegenEditor.get_column_description_index(),
         ):
-            o.setFlags(o.flags() | QtCore.Qt.ItemIsEditable)
+            o.setFlags(int(o.flags()) | flag_val(QtCore.Qt.ItemIsEditable))
             self.editItem(o, column)
-            o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
+            o.setFlags(int(o.flags()) & ~flag_val(QtCore.Qt.ItemIsEditable))
             self.is_editing = True
 
     def update_preview(self):
@@ -601,13 +601,13 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
     def set_feature_node(self, o):
         """ """
         setattr(o, "capa_type", CapaExplorerRulegenEditor.get_node_type_feature())
-        o.setFlags(o.flags() & ~QtCore.Qt.ItemIsDropEnabled)
+        o.setFlags(int(o.flags()) & ~flag_val(QtCore.Qt.ItemIsDropEnabled))
         self.style_feature_node(o)
 
     def set_comment_node(self, o):
         """ """
         setattr(o, "capa_type", CapaExplorerRulegenEditor.get_node_type_comment())
-        o.setFlags(o.flags() & ~QtCore.Qt.ItemIsDropEnabled)
+        o.setFlags(int(o.flags()) & ~flag_val(QtCore.Qt.ItemIsDropEnabled))
 
         self.style_comment_node(o)
 
@@ -1009,7 +1009,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
     def set_parent_node(self, o):
         """ """
-        o.setFlags(o.flags() & ~QtCore.Qt.ItemIsSelectable)
+        o.setFlags(int(o.flags()) & ~flag_val(QtCore.Qt.ItemIsSelectable))
         setattr(o, "capa_type", CapaExplorerRulegenFeatures.get_node_type_parent())
         self.style_parent_node(o)
 
