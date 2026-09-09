@@ -76,8 +76,10 @@ def extract_file_import_names(pe, **kwargs):
             except UnicodeDecodeError:
                 continue
 
-            # strip extension
-            modname = modname.rpartition(".")[0].lower()
+            # strip extension if present
+            if "." in modname:
+                modname = modname.rpartition(".")[0]
+            modname = modname.lower()
 
             for imp in dll.imports:
                 if imp.import_by_ordinal:

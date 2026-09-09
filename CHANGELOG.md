@@ -26,6 +26,7 @@
 -
 
 ### Bug Fixes
+- fix: pefile: preserve module name for extensionless DLL imports @tryhard-26
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
