@@ -13,12 +13,19 @@
 # limitations under the License.
 
 import io
+import struct
 from pathlib import Path
 
 import fixtures
 from elftools.elf.elffile import ELFFile
 
-from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
+from capa.features.common import VALID_ARCH, ARCH_AARCH32
+from capa.features.address import NO_ADDRESS
+from capa.features.extractors.elffile import (
+    extract_file_arch,
+    extract_file_export_names,
+    extract_file_import_names,
+)
 
 SAMPLE_PATH = fixtures.CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
 STRIPPED_SAMPLE_PATH = fixtures.CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
@@ -103,3 +110,27 @@ def test_elffile_export_features():
         "__libc_csu_init",
     ]
     check_export_features(SAMPLE_PATH, expected_exports)
+
+
+def test_elffile_arm_architecture():
+    elf_header = struct.pack(
+        "<16sHHIIIIIHHHHHH",
+        b"\x7fELF\x01\x01\x01" + b"\x00" * 9,
+        2,
+        40,
+        1,
+        0,
+        0,
+        0,
+        0,
+        52,
+        0,
+        0,
+        0,
+        0,
+        0,
+    )
+    elf = ELFFile(io.BytesIO(elf_header))
+    features = [(feature.value, address) for feature, address in extract_file_arch(elf)]
+    assert features == [(ARCH_AARCH32, NO_ADDRESS)]
+    assert features[0][0] in VALID_ARCH
