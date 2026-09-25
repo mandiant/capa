@@ -14,7 +14,6 @@
 
 from typing import Callable, Iterator, cast
 
-import Elf
 import envi
 import envi.exc
 import viv_utils
@@ -30,7 +29,6 @@ import capa.features.extractors.viv.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
@@ -102,26 +100,15 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
             return
 
         if f.vw.metadata["Format"] == "elf":
-            if "symtab" not in fh.ctx["cache"]:
-                # the symbol table gets stored as a function's attribute in order to avoid running
-                # this code every time the call is made, thus preventing the computational overhead.
-                try:
-                    parsedbin = f.vw.parsedbin
-                    assert isinstance(parsedbin, Elf.Elf)
-                    fh.ctx["cache"]["symtab"] = SymTab.from_viv(parsedbin)
-                except Exception:
-                    fh.ctx["cache"]["symtab"] = None
+            # index the symbol table once and cache it, to avoid rescanning it for each call instruction.
+            if "elf_symbol_functions" not in fh.ctx["cache"]:
+                fh.ctx["cache"]["elf_symbol_functions"] = capa.features.extractors.viv.helpers.get_elf_symbol_functions(
+                    f.vw.parsedbin
+                )
 
-            symtab = fh.ctx["cache"]["symtab"]
-            if symtab:
-                for symbol in symtab.get_symbols():
-                    sym_name = symtab.get_name(symbol)
-                    sym_value = symbol.value
-                    sym_info = symbol.info
-
-                    STT_FUNC = 0x2
-                    if sym_value == target and sym_info & STT_FUNC != 0:
-                        yield API(sym_name), ih.address
+            funcs = fh.ctx["cache"]["elf_symbol_functions"]
+            for sym_name in funcs.get(target, ()):
+                yield API(sym_name), ih.address
 
         if viv_utils.flirt.is_library_function(f.vw, target):
             name = viv_utils.get_function_name(f.vw, target)
