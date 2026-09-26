@@ -41,6 +41,12 @@ except ImportError:
 Qt = QtCore.Qt
 
 
+def flag_val(flag):
+    if hasattr(flag, 'value'):
+        return flag.value
+    return flag
+
+
 def qt_get_item_flag_tristate():
     """
     Get the tristate item flag compatible with Qt5 and Qt6.
@@ -51,20 +57,12 @@ def qt_get_item_flag_tristate():
     ItemIsAutoTristate automatically manages tristate based on child checkboxes,
     matching the original ItemIsTristate behavior where parent checkboxes reflect
     the check state of their children.
-
-    Returns:
-        int: The appropriate flag value for the Qt version
-
-    Raises:
-        AttributeError: If the tristate flag cannot be found in the Qt library
-    """
+def qt_get_item_flag_tristate():
     if QT_LIBRARY == "PySide6":
-        # Qt6: ItemIsTristate was removed, replaced with ItemIsAutoTristate
-        # Try different possible locations (API varies slightly across PySide6 versions)
         if hasattr(Qt, "ItemIsAutoTristate"):
-            return Qt.ItemIsAutoTristate
+            return flag_val(Qt.ItemIsAutoTristate)
         elif hasattr(Qt, "ItemFlag") and hasattr(Qt.ItemFlag, "ItemIsAutoTristate"):
-            return Qt.ItemFlag.ItemIsAutoTristate
+            return flag_val(Qt.ItemFlag.ItemIsAutoTristate)
         else:
             raise AttributeError(
                 "Cannot find ItemIsAutoTristate in PySide6. "
@@ -72,8 +70,7 @@ def qt_get_item_flag_tristate():
                 + f"Available Qt attributes: {[attr for attr in dir(Qt) if 'Item' in attr]}"
             )
     else:
-        # Qt5: Use the original ItemIsTristate flag
-        return Qt.ItemIsTristate
+        return flag_val(Qt.ItemIsTristate)
 
 
-__all__ = ["qt_get_item_flag_tristate", "Signal", "QAction", "QtGui", "QtCore", "QtWidgets"]
+__all__ = ["flag_val", "qt_get_item_flag_tristate", "Signal", "QAction", "QtGui", "QtCore", "QtWidgets"]
