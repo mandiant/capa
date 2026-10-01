@@ -214,7 +214,6 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.basicblock.BasicBlock,
         capa.features.common.Characteristic("calls from"),
         capa.features.common.Characteristic("calls to"),
-        capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("recursive call"),
         # plus basic block scope features, see below
     },
@@ -235,6 +234,7 @@ SUPPORTED_FEATURES: dict[str, set] = {
         capa.features.insn.Mnemonic,
         capa.features.insn.OperandNumber,
         capa.features.insn.OperandOffset,
+        capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("nzxor"),
         capa.features.common.Characteristic("peb access"),
         capa.features.common.Characteristic("fs access"),

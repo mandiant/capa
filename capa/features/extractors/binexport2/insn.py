@@ -241,6 +241,13 @@ def extract_function_indirect_call_characteristic_features(
         )
 
 
+def extract_insn_loop(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[tuple[Feature, Address]]:
+    """extract loop characteristic feature at the instruction scope if inside a cycle"""
+    fhi: FunctionContext = fh.inner
+    if "cyclic_loop" in fhi.ctx and bbh.address in fhi.ctx["cyclic_loop"]:
+        yield Characteristic("loop"), ih.address
+
+
 def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
@@ -258,4 +265,5 @@ INSTRUCTION_HANDLERS = (
     extract_insn_mnemonic_features,
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
+    extract_insn_loop,
 )
