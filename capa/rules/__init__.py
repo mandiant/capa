@@ -1657,7 +1657,7 @@ class RuleSet:
 
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
-        self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
+        self.rules_by_scope = self._get_rules_by_scope(rules, scopes, self.rules, self.rules_by_namespace)
 
         # these structures are unstable and may change before the next major release.
         scores_by_rule: dict[str, int] = {}
@@ -2135,7 +2135,40 @@ class RuleSet:
         )
 
     @staticmethod
-    def _get_rules_for_scope(rules, scope) -> list[Rule]:
+    def _get_rules_by_scope(
+        rules: list[Rule],
+        scopes: tuple[Scope, ...],
+        rules_by_name: dict[str, Rule],
+        namespaces: dict[str, list[Rule]],
+    ) -> dict[Scope, list[Rule]]:
+        """
+        collect the rules that are needed across all scopes, ordered topologically.
+
+        don't include auto-generated "subscope" rules.
+        we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
+        """
+        # we need to process all rules, not just rules with the given scope.
+        # this is because rules with a higher scope, e.g. file scope, may have subscope rules
+        #  at lower scope, e.g. function scope.
+        # so, we find all dependencies of all rules, and later will filter them down.
+        seen: set[str] = set()
+        stack: list[Rule] = [r for r in rules if not r.is_subscope_rule()]
+        for r in stack:
+            seen.add(r.name)
+
+        while stack:
+            r = stack.pop()
+            for dep in r.get_dependencies(namespaces):
+                if dep not in seen:
+                    seen.add(dep)
+                    stack.append(rules_by_name[dep])
+
+        scope_rules = [r for r in rules if r.name in seen]
+        ordered_rules = topologically_order_rules(scope_rules)
+        return {scope: get_rules_with_scope(ordered_rules, scope) for scope in scopes}
+
+    @staticmethod
+    def _get_rules_for_scope(rules, scope: Scope) -> list[Rule]:
         """
         given a collection of rules, collect the rules that are needed at the given scope.
         these rules are ordered topologically.
@@ -2143,18 +2176,10 @@ class RuleSet:
         don't include auto-generated "subscope" rules.
         we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
-        scope_rules: set[Rule] = set()
-
-        # we need to process all rules, not just rules with the given scope.
-        # this is because rules with a higher scope, e.g. file scope, may have subscope rules
-        #  at lower scope, e.g. function scope.
-        # so, we find all dependencies of all rules, and later will filter them down.
-        for rule in rules:
-            if rule.is_subscope_rule():
-                continue
-
-            scope_rules.update(get_rules_and_dependencies(rules, rule.name))
-        return get_rules_with_scope(topologically_order_rules(list(scope_rules)), scope)
+        rules = list(rules)
+        rules_by_name = {rule.name: rule for rule in rules}
+        namespaces = index_rules_by_namespace(rules)
+        return RuleSet._get_rules_by_scope(rules, (scope,), rules_by_name, namespaces)[scope]
 
     @staticmethod
     def _extract_subscope_rules(rules) -> list[Rule]:
