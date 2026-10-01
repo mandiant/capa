@@ -1279,3 +1279,18 @@ def test_circular_dependency():
     ]
     with pytest.raises(capa.rules.InvalidRule):
         list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
+
+
+def test_ruleset_scope_partitioning_topological_order():
+    """verify topological ordering invariants for all scope rules."""
+    from pathlib import Path
+
+    ruleset = capa.rules.get_rules([Path("rules")], enable_cache=False)
+    for scope, srules in ruleset.rules_by_scope.items():
+        assert all(scope in r.scopes for r in srules)
+        pos = {r.name: i for i, r in enumerate(srules)}
+        for r in srules:
+            for dep in r.get_dependencies(ruleset.rules_by_namespace):
+                if dep in pos:
+                    assert pos[dep] < pos[r.name], f"{dep} must precede {r.name} in {scope}"
+
