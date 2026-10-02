@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import io
+import struct
 import logging
 from typing import Iterator
 from pathlib import Path
 
-from elftools.common.exceptions import ELFError
 from elftools.elf.dynamic import DynamicSegment
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
+from elftools.common.exceptions import ELFError
 
 import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
@@ -39,7 +40,10 @@ logger = logging.getLogger(__name__)
 # next() calls, and because the extractors are generators, PEP 479 turns an
 # escaping StopIteration into a RuntimeError only at the generator boundary,
 # which is above the call site. Catching RuntimeError alone would miss it.
-MALFORMED_DYNAMIC_ERRORS = (ValueError, RuntimeError, StopIteration, ELFError)
+# struct.error comes from a hash chain or symbol entry that runs past EOF, and
+# AssertionError from pyelftools' own checks in _get_stringtable; both escape the
+# same way the others do.
+MALFORMED_DYNAMIC_ERRORS = (ValueError, RuntimeError, StopIteration, ELFError, struct.error, AssertionError)
 
 
 def get_dynamic_symbols(segment: DynamicSegment) -> list:

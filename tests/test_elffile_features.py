@@ -13,13 +13,14 @@
 # limitations under the License.
 
 import io
+import struct
 from pathlib import Path
 
-import fixtures
 import pytest
-from elftools.common.exceptions import ELFError
+import fixtures
 from elftools.elf.dynamic import DynamicSegment
 from elftools.elf.elffile import ELFFile
+from elftools.common.exceptions import ELFError
 
 from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
 
@@ -147,8 +148,12 @@ class _RaisingDynamicSegment(DynamicSegment):
         StopIteration(),
         RuntimeError("generator raised StopIteration"),
         ELFError("bad section header"),
+        # a hash chain or symbol entry that runs past the end of the file
+        struct.error("unpack requires a buffer of 4 bytes"),
+        # pyelftools' own check in _get_stringtable
+        AssertionError(),
     ],
-    ids=["gnu-hash", "stop-iteration", "runtime-error", "elf-error"],
+    ids=["gnu-hash", "stop-iteration", "runtime-error", "elf-error", "struct-error", "assertion-error"],
 )
 def test_malformed_dynamic_segment_does_not_abort(exception, monkeypatch):
     segment = _RaisingDynamicSegment(exception)
