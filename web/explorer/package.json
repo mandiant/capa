@@ -30,7 +30,7 @@
         "@vue/eslint-config-prettier": "^9.0.0",
         "@vue/test-utils": "^2.4.6",
         "eslint": "^8.57.0",
-        "eslint-plugin-vue": "^9.23.0",
+        "eslint-plugin-vue": "^10.11.1",
         "jsdom": "^24.1.0",
         "prettier": "^3.2.5",
         "vite": "^8.0.16",
