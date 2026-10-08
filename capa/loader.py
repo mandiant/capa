@@ -47,6 +47,7 @@ from capa.features.common import (
     FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_DRAKVUF,
+    FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
     FORMAT_BINEXPORT2,
 )
@@ -73,6 +74,12 @@ BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
 BACKEND_GHIDRA = "ghidra"
 
+CAPA_LOAD_VIV_WORKSPACE_ENV = "CAPA_LOAD_VIV_WORKSPACE"
+
+
+def _is_load_viv_workspace_allowed() -> bool:
+    return os.environ.get(CAPA_LOAD_VIV_WORKSPACE_ENV, "").strip().lower() in ("1", "true", "yes", "on")
+
 
 class CorruptFile(ValueError):
     pass
@@ -85,6 +92,16 @@ def is_supported_format(sample: Path) -> bool:
     taste = sample.open("rb").read(0x100)
 
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
+
+
+def get_format(sample: Path) -> str:
+    taste = sample.open("rb").read(0x100)
+
+    for feature, _ in capa.features.extractors.common.extract_format(taste):
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return FORMAT_UNKNOWN
 
 
 def is_supported_arch(sample: Path) -> bool:
@@ -181,6 +198,42 @@ def _is_probably_corrupt_pe(path: Path) -> bool:
     return False
 
 
+def _load_viv_workspace(path: Path, fmt: str):
+    import vivisect
+    import viv_utils
+
+    detected_format = get_format(path)
+    if detected_format not in (FORMAT_PE, FORMAT_ELF):
+        raise UnsupportedFormatError()
+
+    if fmt == FORMAT_AUTO:
+        fmt = detected_format
+    elif fmt not in (FORMAT_PE, FORMAT_ELF):
+        raise UnsupportedFormatError()
+
+    vw = vivisect.VivWorkspace()
+    vw.verbose = False
+    vw.config.getSubConfig("viv").getSubConfig("parsers").getSubConfig("pe")["loadresources"] = True
+    vw.config.getSubConfig("viv").getSubConfig("parsers").getSubConfig("pe")["nx"] = True
+
+    viv_file = f"{path}.viv"
+    if Path(viv_file).exists():
+        if _is_load_viv_workspace_allowed():
+            viv_utils.loadWorkspaceFromViv(vw, viv_file)
+            viv_utils.assertVwMatchesVivisectLibrary(vw)
+            return vw
+
+        logger.info(
+            "ignoring existing workspace %s: loading .viv files uses pickle, set %s=1 to allow",
+            viv_file,
+            CAPA_LOAD_VIV_WORKSPACE_ENV,
+        )
+
+    vw.loadFromFile(str(path), fmtname=fmt)
+    viv_utils.setVwVivisectLibraryVersion(vw)
+    return vw
+
+
 def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
     """
     load the program at the given path into a vivisect workspace using the given format.
@@ -211,14 +264,8 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
         )
 
     try:
-        if input_format == FORMAT_AUTO:
-            if not is_supported_format(path):
-                raise UnsupportedFormatError()
-
-            # don't analyze, so that we can add our Flirt function analyzer first.
-            vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-        elif input_format in {FORMAT_PE, FORMAT_ELF}:
-            vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
+        if input_format in {FORMAT_AUTO, FORMAT_PE, FORMAT_ELF}:
+            vw = _load_viv_workspace(path, input_format)
         elif input_format == FORMAT_SC32:
             # these are not analyzed nor saved.
             vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
