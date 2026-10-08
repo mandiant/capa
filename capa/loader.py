@@ -265,6 +265,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: list[Path]):
 
     try:
         if input_format in {FORMAT_AUTO, FORMAT_PE, FORMAT_ELF}:
+            # don't analyze, so that we can add our Flirt function analyzer first.
             vw = _load_viv_workspace(path, input_format)
         elif input_format == FORMAT_SC32:
             # these are not analyzed nor saved.
