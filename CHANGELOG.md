@@ -26,6 +26,7 @@
 -
 
 ### Bug Fixes
+- fix: loader: inline vivisect workspace loading and gate .viv pickle deserialization behind CAPA_LOAD_VIV_WORKSPACE @moritzraabe
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
