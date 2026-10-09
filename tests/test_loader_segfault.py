@@ -143,3 +143,28 @@ def test_load_viv_workspace_loads_sibling_viv_when_allowed(tmp_path, monkeypatch
     monkeypatch.setenv(CAPA_LOAD_VIV_WORKSPACE_ENV, "1")
     vw = _load_viv_workspace(path, FORMAT_AUTO)
     assert vw.getMeta("capa_test_marker")
+
+
+def test_load_viv_workspace_pe_with_msgviv_header(tmp_path):
+    path = _copy_sample(tmp_path)
+    buf = bytearray(path.read_bytes())
+    buf[2:8] = b"MSGVIV"
+    path.write_bytes(buf)
+
+    vw = _load_viv_workspace(path, FORMAT_AUTO)
+    assert vw.getMeta("Format") == "pe"
+
+
+def test_load_viv_workspace_polyglot_pe_named_viv_does_not_unpickle(tmp_path):
+    path = tmp_path / "sample.viv"
+    buf = bytearray((fixtures.CD / "data" / "Practical Malware Analysis Lab 01-01.dll_").read_bytes())
+    pickle_data = pickle.dumps([_Payload()], protocol=0)
+    assert len(pickle_data) < 0x3C - 2
+    buf[2 : 2 + len(pickle_data)] = pickle_data
+    path.write_bytes(buf)
+
+    EXECUTED.clear()
+    vw = _load_viv_workspace(path, FORMAT_AUTO)
+    assert not EXECUTED
+    assert vw.getMeta("Format") == "pe"
+
