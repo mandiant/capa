@@ -213,8 +213,9 @@ def _load_viv_workspace(path: Path, fmt: str):
 
     vw = vivisect.VivWorkspace()
     vw.verbose = False
-    vw.config.getSubConfig("viv").getSubConfig("parsers").getSubConfig("pe")["loadresources"] = True
-    vw.config.getSubConfig("viv").getSubConfig("parsers").getSubConfig("pe")["nx"] = True
+    if fmt == FORMAT_PE:
+        vw.config.getSubConfig("viv").getSubConfig("parsers").getSubConfig("pe")["loadresources"] = True
+        vw.config.getSubConfig("viv").getSubConfig("parsers").getSubConfig("pe")["nx"] = True
 
     viv_file = f"{path}.viv"
     if Path(viv_file).exists():
