@@ -167,4 +167,3 @@ def test_load_viv_workspace_polyglot_pe_named_viv_does_not_unpickle(tmp_path):
     vw = _load_viv_workspace(path, FORMAT_AUTO)
     assert not EXECUTED
     assert vw.getMeta("Format") == "pe"
-
