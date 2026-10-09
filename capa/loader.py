@@ -484,7 +484,8 @@ def get_extractor(
                 program, consumer = pyghidra.consume_program(project, program_path)
 
                 # Analyze
-                pyghidra.analyze(program, monitor)
+                if input_path.suffix.lower() != ".gpr":
+                    pyghidra.analyze(program, monitor)
 
                 from ghidra.program.flatapi import FlatProgramAPI
 

@@ -609,7 +609,7 @@ def get_backend_from_cli(args, input_format: str) -> str:
         return BACKEND_VIV
 
 
-def get_sample_path_from_cli(args, input_format, backend) -> Optional[Path]:
+def get_sample_path_from_cli(args, backend) -> Optional[Path]:
     """
     Determine the path to the underlying sample, if it exists.
 
@@ -626,7 +626,7 @@ def get_sample_path_from_cli(args, input_format, backend) -> Optional[Path]:
     """
     if backend in (BACKEND_CAPE, BACKEND_DRAKVUF, BACKEND_VMRAY):
         return None
-    elif input_format == FORMAT_GHIDRA_PROJECT:
+    elif backend == BACKEND_GHIDRA and args.input_file.suffix.lower() == ".gpr":
         return None
     elif backend == BACKEND_BINEXPORT2:
         import capa.features.extractors.binexport2
@@ -639,7 +639,7 @@ def get_sample_path_from_cli(args, input_format, backend) -> Optional[Path]:
         return args.input_file
 
 
-def get_os_from_cli(args, input_format, backend) -> str:
+def get_os_from_cli(args, backend) -> str:
     """
     Determine the OS for the given sample.
     Respects an override provided by the user, otherwise, use heuristics and
@@ -656,7 +656,7 @@ def get_os_from_cli(args, input_format, backend) -> str:
     if args.os:
         return args.os
 
-    sample_path = get_sample_path_from_cli(args, input_format, backend)
+    sample_path = get_sample_path_from_cli(args, backend)
     if sample_path is None:
         return "unknown"
     return capa.loader.get_os(sample_path)
@@ -878,8 +878,8 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         None,
     )
 
-    os_ = get_os_from_cli(args, input_format, backend)
-    sample_path = get_sample_path_from_cli(args, input_format, backend)
+    os_ = get_os_from_cli(args, backend)
+    sample_path = get_sample_path_from_cli(args, backend)
     extractor_filters = get_extractor_filters_from_cli(args, input_format)
 
     logger.debug("format:  %s", input_format)
