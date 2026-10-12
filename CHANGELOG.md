@@ -4,6 +4,7 @@
 
 ### New Features
 - freeze: add `--reproducible` flag that zeros dynamic header metadata
+- elffile: support 32-bit ARM architecture @dev-rehaann #3155
 
 ### Breaking Changes
 

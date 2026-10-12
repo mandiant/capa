@@ -178,7 +178,7 @@ def extract_file_arch(elf: ELFFile, **kwargs):
     elif arch == "x64":
         yield Arch("amd64"), NO_ADDRESS
     elif arch == "ARM":
-        yield Arch("arm"), NO_ADDRESS
+        yield Arch("aarch32"), NO_ADDRESS
     elif arch == "AArch64":
         yield Arch("aarch64"), NO_ADDRESS
     else:
