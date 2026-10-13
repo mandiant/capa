@@ -53,7 +53,95 @@ logger = logging.getLogger(__name__)
 # This narrows candidate selection from all extracted bytes to those
 # sharing a common 4-byte prefix while keeping the implementation simple.
 # See: https://github.com/mandiant/capa/issues/2128
+
+try:
+    import ahocorasick
+except ImportError:
+    ahocorasick = None
+
 _BYTES_PREFIX_SIZE = 4
+_STRING_LITERAL_MIN = 4
+
+
+def _required_literal(pattern_str: str) -> Optional[Union[str, set[str]]]:
+    """
+    Extract required literals (longest contiguous LITERAL runs >= 4 chars) from a regex pattern.
+    If no run >= 4 chars exists or on parse error, return None.
+    """
+    try:
+        try:
+            import re._parser as re_parser
+        except ImportError:
+            import sre_parse as re_parser  # type: ignore
+
+        parsed = re_parser.parse(pattern_str)
+    except Exception:
+        return None
+
+    def walk_ast(node_list) -> set[str]:
+        runs: set[str] = set()
+        cur_run: list[str] = []
+
+        def flush():
+            nonlocal cur_run
+            if cur_run:
+                s = "".join(cur_run)
+                if len(s) >= _STRING_LITERAL_MIN:
+                    runs.add(s)
+                cur_run = []
+
+        for node in node_list:
+            op = node[0]
+            av = node[1]
+
+            if op == re_parser.LITERAL:
+                cur_run.append(chr(av))
+            elif op == re_parser.SUBPATTERN:
+                sub_ast = av[-1] if isinstance(av, (tuple, list)) else av
+                sub_runs = walk_ast(sub_ast)
+                flush()
+                runs.update(sub_runs)
+            elif op in (re_parser.MAX_REPEAT, re_parser.MIN_REPEAT):
+                min_rep, _max_rep, sub_ast = av[0], av[1], av[2]
+                if min_rep >= 1 and len(sub_ast) == 1 and sub_ast[0][0] == re_parser.LITERAL:
+                    cur_run.append(chr(sub_ast[0][1]))
+                else:
+                    flush()
+                    if min_rep >= 1:
+                        sub_runs = walk_ast(sub_ast)
+                        runs.update(sub_runs)
+            elif op == re_parser.BRANCH:
+                flush()
+                alts = av[1]
+                alt_runs_list = []
+                all_valid = True
+                for alt in alts:
+                    alt_r = walk_ast(alt)
+                    valid_r = {r for r in alt_r if len(r) >= _STRING_LITERAL_MIN}
+                    if not valid_r:
+                        all_valid = False
+                        break
+                    alt_runs_list.append(valid_r)
+                if all_valid and alt_runs_list:
+                    for ar in alt_runs_list:
+                        runs.update(ar)
+            else:
+                flush()
+
+        flush()
+        return runs
+
+    try:
+        res = walk_ast(parsed)
+        valid = {r for r in res if len(r) >= _STRING_LITERAL_MIN}
+        if not valid:
+            return None
+        if len(valid) == 1:
+            return next(iter(valid))
+        return valid
+    except Exception:
+        return None
+
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
@@ -1779,6 +1867,8 @@ class RuleSet:
         # Built once at index time so _match() can bucket-lookup candidate bytes patterns.
         # Key -1 holds rules whose patterns are shorter than _BYTES_PREFIX_SIZE (linear fallback).
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]]
+        # Optional Aho-Corasick automaton mapping string literals (lowercased) -> list of (rule_name, feature)
+        string_literal_index: Optional[Any] = None
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
@@ -1932,6 +2022,8 @@ class RuleSet:
         string_rules: dict[str, list[Feature]] = {}
         bytes_rules_count = 0
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
+        string_literal_automaton = ahocorasick.Automaton() if ahocorasick is not None else None
+        string_literal_entries: dict[str, list[tuple[str, Feature]]] = collections.defaultdict(list)
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1977,7 +2069,30 @@ class RuleSet:
                 )
 
             if string_features:
-                string_rules[rule_name] = cast(list[Feature], string_features)
+                unindexed_string_features: list[Feature] = []
+                for wanted_string in string_features:
+                    indexed = False
+                    if string_literal_automaton is not None:
+                        if isinstance(wanted_string, capa.features.common.Substring):
+                            sub_val = str(wanted_string.value)
+                            if len(sub_val) >= _STRING_LITERAL_MIN:
+                                string_literal_entries[sub_val.lower()].append((rule_name, wanted_string))
+                                indexed = True
+                        elif isinstance(wanted_string, capa.features.common.Regex):
+                            req_lits = _required_literal(wanted_string.re.pattern)
+                            if req_lits:
+                                if isinstance(req_lits, str):
+                                    lit_set = {req_lits}
+                                else:
+                                    lit_set = req_lits
+                                for lit in lit_set:
+                                    if len(lit) >= _STRING_LITERAL_MIN:
+                                        string_literal_entries[lit.lower()].append((rule_name, wanted_string))
+                                        indexed = True
+                    if not indexed:
+                        unindexed_string_features.append(wanted_string)
+                if unindexed_string_features:
+                    string_rules[rule_name] = unindexed_string_features
 
             bytes_features: list[capa.features.common.Bytes] = [
                 feature for feature in features if isinstance(feature, capa.features.common.Bytes)
@@ -1995,6 +2110,13 @@ class RuleSet:
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
 
+        if string_literal_automaton is not None and string_literal_entries:
+            for word, entries in string_literal_entries.items():
+                string_literal_automaton.add_word(word, entries)
+            string_literal_automaton.make_automaton()
+        else:
+            string_literal_automaton = None
+
         logger.debug("indexing: %d features indexed for scope %s", len(rules_by_feature), scope)
         logger.debug(
             "indexing: %d indexed features are shared by more than 3 rules",
@@ -2005,7 +2127,12 @@ class RuleSet:
             len(string_rules),
             bytes_rules_count,
         )
-        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, dict(bytes_prefix_index))
+        return RuleSet._RuleFeatureIndex(
+            rules_by_feature,
+            string_rules,
+            dict(bytes_prefix_index),
+            string_literal_automaton,
+        )
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> list[Rule]:
@@ -2160,7 +2287,7 @@ class RuleSet:
         # be indexed, and therefore skip the scanning here, improving performance.
         # This strategy is described here:
         # https://github.com/mandiant/capa/issues/2129
-        if feature_index.string_rules:
+        if feature_index.string_rules or feature_index.string_literal_index:
             # This is a FeatureSet that contains only String features.
             # Since we'll only be evaluating String/Regex features below, we don't care about
             # other sorts of features (Mnemonic, Number, etc.) and therefore can save some time
@@ -2176,10 +2303,27 @@ class RuleSet:
                     string_features[feature] = locations
 
             if string_features:
-                for rule_name, wanted_strings in feature_index.string_rules.items():
-                    for wanted_string in wanted_strings:
-                        if wanted_string.evaluate(string_features):
-                            candidate_rule_names.add(rule_name)
+                if feature_index.string_literal_index:
+                    for string_feature in string_features:
+                        haystack = str(string_feature.value).lower()
+                        for _end_index, rule_entries in feature_index.string_literal_index.iter(haystack):
+                            for rule_name, wanted_feature in rule_entries:
+                                if rule_name in candidate_rule_names:
+                                    continue
+                                if isinstance(wanted_feature, capa.features.common.Substring):
+                                    candidate_rule_names.add(rule_name)
+                                elif isinstance(wanted_feature, capa.features.common.Regex):
+                                    if wanted_feature.re.search(str(string_feature.value)):
+                                        candidate_rule_names.add(rule_name)
+
+                if feature_index.string_rules:
+                    for rule_name, wanted_strings in feature_index.string_rules.items():
+                        if rule_name in candidate_rule_names:
+                            continue
+                        for wanted_string in wanted_strings:
+                            if wanted_string.evaluate(string_features):
+                                candidate_rule_names.add(rule_name)
+                                break
 
         # Like with String/Regex features above, Bytes features cannot be matched via hash lookup.
         # To avoid a linear scan of every bytes rule against every extracted bytes feature,
