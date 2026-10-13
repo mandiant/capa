@@ -27,7 +27,7 @@ jobs:
         GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         # TODO update branch name-major=${name%%.*}
     - name: Push tag to capa-rules
-      uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
+      uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
       with:
         repository: mandiant/capa-rules
         github_token: ${{ secrets.CAPA_TOKEN }}
