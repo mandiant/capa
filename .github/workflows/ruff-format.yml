@@ -14,7 +14,7 @@ jobs:
     permissions:
       contents: write
     # only run on dependabot PRs or manual trigger
-    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
