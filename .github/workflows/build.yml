@@ -55,7 +55,7 @@ jobs:
             artifact_name: capa
             asset_name: macos
             python_version: '3.10'
-          - os: macos-14
+          - os: macos-15
             artifact_name: capa
             asset_name: macos-arm64
             python_version: '3.10'
