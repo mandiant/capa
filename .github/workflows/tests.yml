@@ -94,6 +94,10 @@ jobs:
         os: [ubuntu-24.04, ubuntu-24.04-arm, windows-2022, macos-15-intel, macos-15]
         # across all operating systems
         python-version: ["3.10", "3.13"]
+        exclude:
+          # Intel macOS runners are slow, only test the Python version used for the Intel build
+          - os: macos-15-intel
+            python-version: "3.13"
         include:
           # on Ubuntu run these as well
           - os: ubuntu-24.04
