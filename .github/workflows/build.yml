@@ -170,8 +170,8 @@ jobs:
       - name: Zip ${{ matrix.artifact_name }} into ${{ env.ZIP_NAME }}
         run: zip ${ZIP_NAME} ${{ matrix.artifact_name }}
       - name: Upload ${{ env.ZIP_NAME }} to GH Release
-        uses: svenstaro/upload-release-action@29e53e917877a24fad85510ded594ab3c9ca12de # 2.11.5
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN}}
-          file: ${{ env.ZIP_NAME }}
-          tag: ${{ github.ref }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "${RELEASE_TAG}" "${ZIP_NAME}"

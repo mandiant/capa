@@ -1,6 +1,6 @@
 name: changelog
 
-on:
+on: # zizmor: ignore[dangerous-triggers]
   # We need pull_request_target instead of pull_request because a write
   # repository token is needed to add a review to a PR. DO NOT BUILD
   # OR RUN UNTRUSTED CODE FROM PRs IN THIS ACTION
@@ -18,29 +18,39 @@ jobs:
       github.event.pull_request.user.login != 'dependabot-preview[bot]'
     runs-on: ubuntu-latest
     env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:
-    - name: Get changed files
-      id: files
-      uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
-    - name: check changelog updated
+    - name: Check changelog updated
       id: changelog_updated
       env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
         PR_BODY: ${{ github.event.pull_request.body }}
-        FILES: ${{ steps.files.outputs.modified }}
       run: |
-        echo $FILES | grep -qF 'CHANGELOG.md' || echo $PR_BODY | grep -qiF "$NO_CHANGELOG"
+        changelog=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
+          --jq '.[] | select(.filename == "CHANGELOG.md" and .status != "removed") | .filename')
+        [ -n "$changelog" ] || grep -qiF "$NO_CHANGELOG" <<< "$PR_BODY"
     - name: Reject pull request if no CHANGELOG update
       if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
-      uses: Ana06/automatic-pull-request-review@76aaf9b15b116a54e1da7a28a46f91fe089600bf # v0.2.0
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        event: REQUEST_CHANGES
-        body: "Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning to the `master (unreleased)` section of CHANGELOG.md. If no CHANGELOG update is needed add the following to the PR description: `${{ env.NO_CHANGELOG }}`"
-        allow_duplicate: false
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REJECT_BODY: "Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning to the `master (unreleased)` section of CHANGELOG.md. If no CHANGELOG update is needed add the following to the PR description: `${{ env.NO_CHANGELOG }}`"
+      run: |
+        existing=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+          --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "CHANGES_REQUESTED") | .id')
+        if [ -z "$existing" ]; then
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+            -f event="REQUEST_CHANGES" \
+            -f body="$REJECT_BODY"
+        fi
     - name: Dismiss previous review if CHANGELOG update
-      uses: Ana06/automatic-pull-request-review@76aaf9b15b116a54e1da7a28a46f91fe089600bf # v0.2.0
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        event: DISMISS
-        body: "CHANGELOG updated or no update needed, thanks! :smile:"
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        DISMISS_BODY: "CHANGELOG updated or no update needed, thanks! :smile:"
+      run: |
+        review_ids=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+          --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "CHANGES_REQUESTED") | .id')
+        for id in $review_ids; do
+          gh api -X PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews/${id}/dismissals" \
+            -f message="$DISMISS_BODY"
+        done
