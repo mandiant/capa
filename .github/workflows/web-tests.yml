@@ -7,7 +7,8 @@ on:
       - 'web/explorer/**'
   workflow_call:  # this allows the workflow to be called by other workflows
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   test:

@@ -172,5 +172,6 @@ jobs:
       - name: Upload ${{ env.ZIP_NAME }} to GH Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "${RELEASE_TAG}" "${ZIP_NAME}" --clobber
+        run: gh release upload "${RELEASE_TAG}" "${ZIP_NAME}"
