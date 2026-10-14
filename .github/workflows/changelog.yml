@@ -27,19 +27,18 @@ jobs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         PR_BODY: ${{ github.event.pull_request.body }}
       run: |
-        modified=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
-          --jq '.[] | select(.status == "modified" or (.status == "renamed" and .patch != null)) | .filename')
-        grep -qxF 'CHANGELOG.md' <<< "$modified" || grep -qiF "$NO_CHANGELOG" <<< "$PR_BODY"
+        changelog=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
+          --jq '.[] | select(.filename == "CHANGELOG.md" and .status != "removed") | .filename')
+        [ -n "$changelog" ] || grep -qiF "$NO_CHANGELOG" <<< "$PR_BODY"
     - name: Reject pull request if no CHANGELOG update
       if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
       env:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         REJECT_BODY: "Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning to the `master (unreleased)` section of CHANGELOG.md. If no CHANGELOG update is needed add the following to the PR description: `${{ env.NO_CHANGELOG }}`"
       run: |
-        duplicate=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
-          --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "CHANGES_REQUESTED") | .body' \
-          | grep -cxF "$REJECT_BODY" || true)
-        if [ "$duplicate" -eq 0 ]; then
+        existing=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+          --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "CHANGES_REQUESTED") | .id')
+        if [ -z "$existing" ]; then
           gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
             -f event="REQUEST_CHANGES" \
             -f body="$REJECT_BODY"
@@ -50,7 +49,7 @@ jobs:
         DISMISS_BODY: "CHANGELOG updated or no update needed, thanks! :smile:"
       run: |
         review_ids=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
-          --jq '.[] | select(.user.login == "github-actions[bot]" and (.state == "CHANGES_REQUESTED" or .state == "APPROVED")) | .id')
+          --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "CHANGES_REQUESTED") | .id')
         for id in $review_ids; do
           gh api -X PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews/${id}/dismissals" \
             -f message="$DISMISS_BODY"
