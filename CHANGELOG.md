@@ -132,6 +132,7 @@
 - ida: display file-scope feature addresses (`file:0x...`) in rule generator tree and safely handle file-offset navigation/filtering @vee1e #3009
 
 ### Development
+- ci: key vivisect workspace cache on vivisect, viv-utils, python-flirt versions and FLIRT signatures, shared across Python versions @mr-tz
 - ci: test macos-15-intel only on Python 3.10, matching the Intel build @mr-tz
 - tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
