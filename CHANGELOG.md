@@ -51,6 +51,7 @@ This release includes breaking changes, a large batch of bug fixes, a new `--rep
 - nursery/search-for-file-via-winapi @w3lld1
 
 ### Bug Fixes
+- fix: cape: accept report versions that omit the "-CAPE" suffix @Henglie #3082
 - fix: loader: inline vivisect workspace loading and gate .viv pickle deserialization behind CAPA_LOAD_VIV_WORKSPACE @mr-tz #3191
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052

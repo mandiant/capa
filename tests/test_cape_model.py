@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import gzip
+import logging
 from typing import Type
 
 import pytest
@@ -23,6 +24,7 @@ from capa.features.address import ThreadAddress, ProcessAddress
 from capa.features.extractors.cape.models import Call, CapeReport
 from capa.features.extractors.cape.thread import get_calls
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
+from capa.features.extractors.cape.extractor import CapeExtractor, is_tested_version
 
 CAPE_DIR = fixtures.CD / "data" / "dynamic" / "cape"
 
@@ -213,3 +215,59 @@ def test_cape_model_argument():
         """)
     assert call.arguments[0].value == 30
     assert call.arguments[1].value == 0x30
+
+
+def cape_report_with_version(version: str) -> dict:
+    """a minimal report that CapeExtractor.from_report() accepts, for version handling tests."""
+    return {
+        "target": {
+            "file": {
+                "type": "PE32 executable (GUI) Intel 80386, for MS Windows",
+                "md5": "0" * 32,
+                "sha1": "0" * 40,
+                "sha256": "0" * 64,
+                "pe": {"imagebase": 0x400000},
+            }
+        },
+        "info": {"version": version},
+        "behavior": {
+            "processes": [
+                {
+                    "process_id": 1,
+                    "process_name": "sample.exe",
+                    "parent_id": 0,
+                    "calls": [],
+                    "threads": [],
+                    "environ": {},
+                }
+            ]
+        },
+    }
+
+
+@fixtures.parametrize("version", ["2.2", "2.4", "2.5", "2.2-CAPE", "2.4-CAPE", "2.5-CAPE"])
+def test_cape_extractor_accepts_suffixed_and_bare_versions(version: str, caplog):
+    # capesandbox.com reports "2.5-CAPE", a self-hosted instance reports the same release
+    # as "2.5"; neither should warn.
+    with caplog.at_level(logging.WARNING):
+        CapeExtractor.from_report(cape_report_with_version(version))
+
+    assert "not tested/supported yet" not in caplog.text
+
+
+@fixtures.parametrize("version", ["2.3", "2.6", "2.5.1", "3.0-CAPE"])
+def test_cape_extractor_still_warns_on_untested_versions(version: str, caplog):
+    with caplog.at_level(logging.WARNING):
+        CapeExtractor.from_report(cape_report_with_version(version))
+
+    assert "not tested/supported yet" in caplog.text
+
+
+@fixtures.parametrize("version", ["2.2", "2.4", "2.5", "2.2-CAPE", "2.4-CAPE", "2.5-CAPE"])
+def test_is_tested_version_accepts_both_spellings(version: str):
+    assert is_tested_version(version)
+
+
+@fixtures.parametrize("version", ["", "CAPE", "2.3", "2.3-CAPE", "2.6", "2.5.1"])
+def test_is_tested_version_rejects_other_versions(version: str):
+    assert not is_tested_version(version)
