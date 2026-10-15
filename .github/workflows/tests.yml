@@ -94,6 +94,10 @@ jobs:
         os: [ubuntu-24.04, ubuntu-24.04-arm, windows-2022, macos-15-intel, macos-15]
         # across all operating systems
         python-version: ["3.10", "3.13"]
+        exclude:
+          # Intel macOS runners are slow, only test the Python version used for the Intel build
+          - os: macos-15-intel
+            python-version: "3.13"
         include:
           # on Ubuntu run these as well
           - os: ubuntu-24.04
@@ -117,11 +121,15 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
+    - name: Get vivisect workspace dependencies
+      id: viv-deps
+      shell: bash
+      run: echo "versions=$(grep -E '^(vivisect|viv-utils|python-flirt)==' requirements.txt | tr -d '\r' | paste -sd- -)" >> "$GITHUB_OUTPUT"
     - name: Cache vivisect workspaces
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: tests/data/**/*.viv
-        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ steps.viv-deps.outputs.versions }}-${{ hashFiles('sigs/*.sig', 'tests/data/sigs/**') }}
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
