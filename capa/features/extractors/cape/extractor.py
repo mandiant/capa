@@ -36,7 +36,19 @@ from capa.features.extractors.base_extractor import (
 
 logger = logging.getLogger(__name__)
 
-TESTED_VERSIONS = {"2.2-CAPE", "2.4-CAPE", "2.5-CAPE"}
+# capesandbox.com appends a "-CAPE" suffix to the version it reports, while a self-hosted
+# instance reports the bare version for the same release, so compare on the bare version.
+# https://github.com/mandiant/capa/issues/3082
+TESTED_VERSIONS = {"2.2", "2.4", "2.5"}
+
+
+def is_tested_version(version: str) -> bool:
+    """check whether the version reported by a CAPE report is one we test against.
+
+    the hosted instance (capesandbox.com) reports "2.5-CAPE" while a self-hosted
+    instance reports the same release as "2.5"; both are accepted.
+    """
+    return version.removesuffix("-CAPE") in TESTED_VERSIONS
 
 
 class CapeExtractor(DynamicFeatureExtractor):
@@ -130,7 +142,7 @@ class CapeExtractor(DynamicFeatureExtractor):
     def from_report(cls, report: dict) -> "CapeExtractor":
         cr = CapeReport.model_validate(report)
 
-        if cr.info.version not in TESTED_VERSIONS:
+        if not is_tested_version(cr.info.version):
             logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
         # TODO(mr-tz): support more file types

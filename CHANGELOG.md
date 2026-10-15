@@ -26,6 +26,7 @@
 -
 
 ### Bug Fixes
+- fix: cape: accept report versions that omit the "-CAPE" suffix @Henglie #3082
 - fix: loader: inline vivisect workspace loading and gate .viv pickle deserialization behind CAPA_LOAD_VIV_WORKSPACE @mr-tz
 - fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
