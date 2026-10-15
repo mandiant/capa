@@ -8,6 +8,7 @@
 ### Breaking Changes
 
 - Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
+- Remove `IMPORTED` filter in BinExport `insn` extractor. @roytu-google #3125
 
 ### New Rules (12)
 
