@@ -134,7 +134,7 @@ dev = [
     "pytest-sugar==1.1.1",
     "pytest-instafail==0.5.0",
     "ruff==0.16.0",
-    "mypy==2.3.0",
+    "mypy==2.4.0",
     "mypy-protobuf==5.1.0",
     "PyGithub==2.10.0",
     "bump-my-version==1.5.0",
@@ -153,7 +153,7 @@ build = [
     # and should not conflict with other libraries/tooling.
     "pyinstaller==6.22.0",
     "setuptools==84.0.0",
-    "build==1.5.0"
+    "build==1.6.1"
 ]
 scripts = [
     # can (optionally) be more lenient on dependencies here
