@@ -148,3 +148,24 @@ def test_rule_reformat_string_description():
 
     rule = capa.rules.Rule.from_yaml(src)
     assert rule.to_yaml() == src
+
+
+def test_rule_reformat_meta_description_with_features_namespace():
+    src = textwrap.dedent("""
+        rule:
+          meta:
+            name: test rule
+            namespace: impact/features
+            authors:
+              - user@domain.com
+            description: test description
+            scopes:
+              static: function
+              dynamic: process
+          features:
+            - number: 1
+        """).lstrip()
+
+    formatted = capa.rules.Rule.from_yaml(src).to_yaml()
+    capa.rules.Rule.from_yaml(formatted)
+    assert formatted == src
