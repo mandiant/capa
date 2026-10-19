@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- main: exit with `E_MISSING_SIGNATURES` instead of raising an unhandled `OSError` when the default signatures are missing @panshularora #3010
+
 ### capa Explorer Web
 
 ### capa Explorer IDA Pro plugin
