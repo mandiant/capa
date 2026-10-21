@@ -1374,7 +1374,7 @@ class Rule:
         # see #263
         # only do this for the features section, so the meta description doesn't get reformatted
         # assumes features section always exists
-        features_offset = doc.find("features")
+        features_offset = doc.index("\n  features:") + 1
         doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
 
         # for negative hex numbers, yaml dump outputs:
