@@ -60,6 +60,32 @@ def test_main_single_rule(tmpdir):
     )
 
 
+def test_main_missing_default_signatures(tmp_path, monkeypatch, caplog):
+    rule_file = tmp_path / "rule.yml"
+    rule_file.write_text(
+        textwrap.dedent("""
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: file
+                    dynamic: file
+                authors:
+                  - test
+            features:
+              - string: test
+        """)
+    )
+    # no sigs/ directory under the default root, as when capa is installed as a library
+    monkeypatch.setattr(capa.main, "get_default_root", lambda: tmp_path)
+
+    assert (
+        capa.main.main([str(fixtures.PMA1601), "-q", "-r", str(rule_file), "--backend", "vivisect"])
+        == capa.main.E_MISSING_SIGNATURES
+    )
+    assert "Using default signature path, but it doesn't exist" in caplog.text
+
+
 def test_main_non_ascii_filename(tmpdir, capsys):
     # here we print a string with unicode characters in it
     # (specifically, a byte string with utf-8 bytes in it, see file encoding)

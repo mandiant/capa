@@ -130,6 +130,7 @@ E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
 E_INVALID_INPUT_FORMAT = 25
 E_INVALID_FEATURE_EXTRACTOR = 26
+E_MISSING_SIGNATURES = 27
 
 logger = logging.getLogger("capa")
 
@@ -836,7 +837,7 @@ def get_signatures_from_cli(args, input_format: str, backend: str) -> list[Path]
                 + "Please install the signatures first: "
                 + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
             )
-            raise IOError(f"signatures path {args.signatures} does not exist or cannot be accessed")
+            raise ShouldExitError(E_MISSING_SIGNATURES)
     else:
         logger.debug("using signatures path: %s", args.signatures)
 
