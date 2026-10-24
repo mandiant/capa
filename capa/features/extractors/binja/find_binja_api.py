@@ -89,20 +89,60 @@ def get_binaryninja_path(desktop_entry: Path) -> Optional[Path]:
 
     return None
 
+def _is_python_dir(p: Path) -> bool:
+    return (p / "binaryninja" / "__init__.py").is_file()
+
+
+def _to_python_dir(p: Optional[Path]) -> Optional[Path]:
+    """
+    Accept either:
+      - root dir containing python/ (Linux desktop entry, macOS Resources)
+      - python dir itself (macOS/Windows direct detection)
+    Return python dir or None.
+    """
+    if not p:
+        return None
+    if _is_python_dir(p):
+        return p
+    if _is_python_dir(p / "python"):
+        return p / "python"
+    return None
 
 def validate_binaryninja_path(binaryninja_path: Path) -> bool:
-    if not binaryninja_path:
-        return False
+    return _to_python_dir(binaryninja_path) is not None
 
-    module_path = binaryninja_path / "python"
-    if not module_path.is_dir():
-        return False
+def find_binaryninja_path_via_env() -> Optional[Path]:
+    env_install = os.environ.get("BN_INSTALL_DIR")
+    if env_install:
+        path = Path(env_install)
+        if path.is_absolute() and not str(env_install).startswith("\\\\"):
+            return path
+    return None
 
-    if not (module_path / "binaryninja" / "__init__.py").is_file():
-        return False
 
-    return True
+def find_binaryninja_path_via_lastrun() -> Optional[Path]:
+    candidates: list[Path] = []
 
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+        candidates.append(Path(appdata) / "Binary Ninja" / "lastrun")
+    elif sys.platform == "darwin":
+        candidates.append(Path.home() / "Library" / "Application Support" / "Binary Ninja" / "lastrun")
+    else:
+        # linux/other
+        candidates.append(Path.home() / ".binaryninja" / "lastrun")
+
+    for lastrun in candidates:
+        try:
+            path_str = lastrun.read_text(encoding="utf-8").strip()
+            if path_str:
+                path = Path(path_str)
+                if path.is_absolute() and not path_str.startswith("\\"):
+                    return path
+        except OSError:
+            continue
+
+    return None
 
 def find_binaryninja() -> Optional[Path]:
     binaryninja_path = find_binaryninja_path_via_subprocess()
@@ -111,10 +151,23 @@ def find_binaryninja() -> Optional[Path]:
             # ok
             logger.debug("detected OS: linux")
         elif sys.platform == "darwin":
-            logger.warning("unsupported platform to find Binary Ninja: %s", sys.platform)
-            return None
+            binaryninja_path = Path("/Applications/Binary Ninja.app/Contents/Resources")
+            python_dir = _to_python_dir(binaryninja_path)
+            if not python_dir:
+                logger.debug("failed to find Binary Ninja at default macOS path")
+                return None
+            return python_dir
         elif sys.platform == "win32":
-            logger.warning("unsupported platform to find Binary Ninja: %s", sys.platform)
+            for candidate in (
+                find_binaryninja_path_via_env(),
+                find_binaryninja_path_via_lastrun(),
+                Path("C:/Program Files/Vector35/BinaryNinja"),
+            ):
+                if candidate:
+                    python_dir = _to_python_dir(candidate)
+                    if python_dir:
+                        return python_dir
+            logger.debug("failed to find Binary Ninja at default Windows path")
             return None
         else:
             logger.warning("unsupported platform to find Binary Ninja: %s", sys.platform)
@@ -135,9 +188,7 @@ def find_binaryninja() -> Optional[Path]:
             logger.debug("failed to validate Binary Ninja installation")
             return None
 
-    logger.debug("found Binary Ninja installation: %s", binaryninja_path)
-
-    return binaryninja_path / "python"
+    return _to_python_dir(binaryninja_path)
 
 
 def is_binaryninja_installed() -> bool:
