@@ -146,6 +146,75 @@ class NamespaceDoesntMatchRulePath(Lint):
         return rule.meta["namespace"] not in get_normpath(rule.meta["capa/path"])
 
 
+# Nursery rules record their future directory in meta.namespace. Graduated rules already
+# live in that directory, so their namespaces are the directory tree. Warn only when a
+# segment is a close spelling of an existing directory; a brand-new namespace is allowed.
+# Short names are ignored because similarity cannot separate typos from distinct
+# directories such as "vprotect" and "vmprotect".
+class NurseryNamespaceTypo(Lint):
+    name = "nursery rule namespace may be misspelled"
+    level = Lint.WARN
+    recommendation = (
+        "update the namespace to match an existing rules directory, or keep it if the namespace is intentionally new"
+    )
+    recommendation_template = "namespace '{:s}' looks misspelled; similar existing directory is '{:s}'"
+    SIMILARITY_CUTOFF = 0.9
+    MIN_DIRECTORY_LENGTH = 10
+
+    def check_rule(self, ctx: Context, rule: Rule) -> bool:
+        if not is_nursery_rule(rule):
+            return False
+        if "lib" in rule.meta:
+            return False
+
+        namespace = rule.meta.get("namespace")
+        if not isinstance(namespace, str) or not namespace:
+            return False
+
+        node = self._directory_tree(ctx)
+        parts = [part for part in namespace.split("/") if part]
+        for index, part in enumerate(parts):
+            if part in node:
+                node = node[part]
+                continue
+
+            match = self._similar_directory(part, node)
+            if match is None:
+                return False
+
+            suggested = "/".join([*parts[:index], match])
+            self.recommendation = self.recommendation_template.format(namespace, suggested)
+            return True
+
+        return False
+
+    def _similar_directory(self, part: str, node: dict[str, Any]) -> str | None:
+        matches = difflib.get_close_matches(part, list(node.keys()), n=1, cutoff=self.SIMILARITY_CUTOFF)
+        if not matches:
+            return None
+
+        match = matches[0]
+        if max(len(part), len(match)) < self.MIN_DIRECTORY_LENGTH:
+            return None
+        return match
+
+    def _directory_tree(self, ctx: Context) -> dict[str, Any]:
+        tree: dict[str, Any] = {}
+        for other in ctx.rules.rules.values():
+            if is_nursery_rule(other) or other.is_subscope_rule() or "lib" in other.meta:
+                continue
+
+            namespace = other.meta.get("namespace")
+            if not isinstance(namespace, str) or not namespace:
+                continue
+
+            node = tree
+            for part in namespace.split("/"):
+                if part:
+                    node = node.setdefault(part, {})
+        return tree
+
+
 class MissingScopes(Lint):
     name = "missing scopes"
     recommendation = (
@@ -1022,6 +1091,7 @@ def lint_scope(ctx: Context, rule: Rule):
 META_LINTS = (
     MissingNamespace(),
     NamespaceDoesntMatchRulePath(),
+    NurseryNamespaceTypo(),
     MissingAuthors(),
     MissingExamples(),
     MissingExampleOffset(),
