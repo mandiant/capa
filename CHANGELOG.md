@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- anti-analysis/check-for-analysis-tools-listening-on-local-ports wballenthin@hex-rays.com ninadgowdru
 -
 
 ### Bug Fixes
