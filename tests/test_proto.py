@@ -126,6 +126,20 @@ def test_addr_to_pb2():
     a = capa.render.proto.addr_to_pb2(a6)
     assert a.type == capa_pb2.ADDRESSTYPE_NO_ADDRESS
 
+    a7 = capa.features.freeze.Address.from_capa(capa.features.address.FileOffsetRangeAddress(0x100, 0x200))
+    a = capa.render.proto.addr_to_pb2(a7)
+    assert a.type == capa_pb2.ADDRESSTYPE_FILE_RANGE
+    assert a.file_range.start == 0x100
+    assert a.file_range.end == 0x200
+
+
+def test_addr_file_range_roundtrip():
+    # verify FileOffsetRangeAddress roundtrips through proto conversion
+    a = capa.features.freeze.Address.from_capa(capa.features.address.FileOffsetRangeAddress(0x100, 0x200))
+    pb = capa.render.proto.addr_to_pb2(a)
+    a2 = capa.render.proto.addr_from_pb2(pb)
+    assert a == a2
+
 
 def test_scope_to_pb2():
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FILE) == capa_pb2.SCOPE_FILE
@@ -150,6 +164,16 @@ def test_scopes_to_pb2():
     ) == capa_pb2.Scopes(
         static=capa_pb2.SCOPE_FILE,
     )
+
+
+def test_feature_script_language_roundtrip():
+    # verify ScriptLanguageFeature roundtrips through proto conversion
+    f = capa.features.freeze.features.ScriptLanguageFeature(language="python", description="test script")
+    pb = capa.render.proto.feature_to_pb2(f)
+    f2 = capa.render.proto.feature_from_pb2(pb)
+    assert isinstance(f2, capa.features.freeze.features.ScriptLanguageFeature)
+    assert f.language == f2.language
+    assert f.description == f2.description
 
 
 def cmp_optional(a: Any, b: Any) -> bool:
@@ -342,6 +366,9 @@ def assert_feature(fa, fb):
     elif isinstance(fa, capa.features.freeze.features.OperandOffsetFeature):
         assert fa.index == fb.index
         assert fa.operand_offset == getattr(fb.operand_offset, fb.operand_offset.WhichOneof("value"))
+
+    elif isinstance(fa, capa.features.freeze.features.ScriptLanguageFeature):
+        assert fa.language == fb.language
 
     else:
         raise NotImplementedError(f"unhandled feature: {type(fa)}: {fa}")
