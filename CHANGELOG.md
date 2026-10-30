@@ -18,6 +18,7 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- linter: add pass to check nursery rule namespaces for close misspellings of existing namespaces @Mr-Neutr0n #3112
 
 ### Raw diffs
 - [capa v10.0.0...master](https://github.com/mandiant/capa/compare/v10.0.0...master)

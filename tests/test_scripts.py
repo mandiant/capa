@@ -428,3 +428,79 @@ def test_feature_regex_registry_control_set_checks_all_features():
     assert lint_instance.check_features(ctx, [ok_regex, bad_regex]) is True
     assert lint_instance.check_features(ctx, [correct_regex]) is False
     assert lint_instance.check_features(ctx, [unrelated_currentcontrolset_regex]) is False
+
+
+def test_nursery_namespace_typo_compares_against_existing_directories():
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    def make_rule(name, namespace=None, nursery=False):
+        namespace_line = f"\n                    namespace: {namespace}" if namespace else ""
+        rule = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                f"""
+            rule:
+                meta:
+                    name: {name}{namespace_line}
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - api: CreateFile
+        """
+            )
+        )
+        rule.meta["capa/nursery"] = nursery
+        return rule
+
+    rules = capa.rules.RuleSet([
+        make_rule("create file", namespace="host-interaction/file-system"),
+        make_rule("packed with vmprotect", namespace="anti-analysis/packer/vmprotect"),
+        make_rule("delete file", namespace="host-interation/file-system", nursery=True),
+        make_rule("read file", namespace="host-interaction/file-sytem", nursery=True),
+        make_rule("exact namespace", namespace="host-interaction/file-system", nursery=True),
+        make_rule("new namespace", namespace="brand-new-namespace/widget", nursery=True),
+        make_rule("packed with vprotect", namespace="anti-analysis/packer/vprotect", nursery=True),
+        make_rule("new child", namespace="host-interaction/clipboard", nursery=True),
+        make_rule("no namespace", nursery=True),
+    ])
+    ctx = lint_module.Context(samples={}, rules=rules, is_thorough=False)
+    lint = lint_module.NurseryNamespaceTypo()
+
+    assert lint.check_rule(ctx, rules["delete file"]) is True
+    assert (
+        lint.recommendation
+        == "namespace 'host-interation/file-system' looks misspelled; similar existing directory is 'host-interaction'"
+    )
+
+    assert lint.check_rule(ctx, rules["read file"]) is True
+    assert (
+        lint.recommendation
+        == "namespace 'host-interaction/file-sytem' looks misspelled; similar existing directory is 'host-interaction/file-system'"
+    )
+
+    for name in (
+        "exact namespace",
+        "new namespace",
+        "packed with vprotect",
+        "new child",
+        "no namespace",
+        "create file",
+    ):
+        assert lint.check_rule(ctx, rules[name]) is False
+
+    # non-nursery rules are covered by the path check, even when the namespace is misspelled
+    graduated_typo = make_rule("graduated typo", namespace="host-interation/file-system")
+    graduated_ctx = lint_module.Context(
+        samples={},
+        rules=capa.rules.RuleSet([
+            make_rule("create file 2", namespace="host-interaction/file-system"),
+            graduated_typo,
+        ]),
+        is_thorough=False,
+    )
+    assert lint.check_rule(graduated_ctx, graduated_typo) is False
+
+    only_nursery = capa.rules.RuleSet([make_rule("lonely nursery rule", namespace="host-interation", nursery=True)])
+    only_nursery_ctx = lint_module.Context(samples={}, rules=only_nursery, is_thorough=False)
+    assert lint.check_rule(only_nursery_ctx, only_nursery["lonely nursery rule"]) is False
