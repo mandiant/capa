@@ -13,12 +13,15 @@
 # limitations under the License.
 
 import io
+import struct
 from pathlib import Path
 
 import fixtures
 from elftools.elf.elffile import ELFFile
 
-from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
+from capa.features.file import Section
+from capa.features.common import FORMAT_ELF, Format
+from capa.features.extractors.elffile import ElfFeatureExtractor, extract_file_export_names, extract_file_import_names
 
 SAMPLE_PATH = fixtures.CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
 STRIPPED_SAMPLE_PATH = fixtures.CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
@@ -103,3 +106,24 @@ def test_elffile_export_features():
         "__libc_csu_init",
     ]
     check_export_features(SAMPLE_PATH, expected_exports)
+
+
+def test_elffile_missing_shlink_section(tmp_path: Path):
+    # point the .dynamic section's sh_link at a section header that doesn't exist.
+    data = bytearray(SAMPLE_PATH.read_bytes())
+    elf = ELFFile(io.BytesIO(bytes(data)))
+
+    dynamic_index = next(i for i in range(elf.num_sections()) if elf.get_section(i).name == ".dynamic")
+    sh_link_offset = elf.header.e_shoff + dynamic_index * elf.header.e_shentsize + 40
+    struct.pack_into("<I", data, sh_link_offset, 999)
+
+    path = tmp_path / "missing_shlink.elf"
+    path.write_bytes(bytes(data))
+
+    # capa must skip the unreadable section instead of aborting.
+    extractor = ElfFeatureExtractor(path)
+    features = list(extractor.extract_file_features())
+
+    assert any(isinstance(feature, Format) and feature.value == FORMAT_ELF for feature, _ in features)
+    assert any(isinstance(feature, Section) and feature.value == ".text" for feature, _ in features)
+    assert extractor.get_base_address() is not None
