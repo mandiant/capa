@@ -13,12 +13,15 @@
 # limitations under the License.
 
 import io
+import struct
 from pathlib import Path
 
 import fixtures
 from elftools.elf.elffile import ELFFile
 
-from capa.features.extractors.elffile import extract_file_export_names, extract_file_import_names
+from capa.features.file import Export
+from capa.features.common import FORMAT_ELF, Format
+from capa.features.extractors.elffile import ElfFeatureExtractor, extract_file_export_names, extract_file_import_names
 
 SAMPLE_PATH = fixtures.CD / "data" / "055da8e6ccfe5a9380231ea04b850e18.elf_"
 STRIPPED_SAMPLE_PATH = fixtures.CD / "data" / "bb38149ff4b5c95722b83f24ca27a42b.elf_"
@@ -103,3 +106,38 @@ def test_elffile_export_features():
         "__libc_csu_init",
     ]
     check_export_features(SAMPLE_PATH, expected_exports)
+
+
+def test_elffile_invalid_utf8_dynamic_symbol_name(tmp_path: Path):
+    # build a section-header-less ELF whose first dynamic symbol has a non-UTF-8
+    # name (0xff) and whose second symbol has a valid name ("good").
+    dyn_off, sym_off, str_off = 0xC0, 0x110, 0x180
+    data = bytearray(0x300)
+    data[0:16] = b"\x7fELF\x02\x01\x01\x00" + bytes(8)
+    data[16:64] = (
+        struct.pack("<HHI", 3, 0x3E, 1)
+        + struct.pack("<QQQ", 0, 0x40, 0)
+        + struct.pack("<IHHHHHH", 0, 64, 56, 2, 64, 0, 0)
+    )
+    data[0x40:0x78] = struct.pack("<IIQQQQQQ", 1, 5, 0, 0x10000, 0x10000, 0x300, 0x300, 0x1000)
+    data[0x78:0xB0] = struct.pack("<IIQQQQQQ", 2, 6, dyn_off, 0x10000 + dyn_off, 0x10000 + dyn_off, 0x50, 0x50, 8)
+    data[dyn_off : dyn_off + 0x50] = (
+        struct.pack("<qQ", 5, 0x10000 + str_off)
+        + struct.pack("<qQ", 6, 0x10000 + sym_off)
+        + struct.pack("<qQ", 11, 24)
+        + struct.pack("<qQ", 10, 64)
+        + struct.pack("<qQ", 0, 0)
+    )
+    data[sym_off : sym_off + 24] = struct.pack("<IBBHQQ", 2, 0x12, 0, 1, 0x2000, 0)
+    data[sym_off + 24 : sym_off + 48] = struct.pack("<IBBHQQ", 8, 0x12, 0, 1, 0x3000, 0)
+    data[str_off : str_off + 4] = b"\x00\x00\xff\x00"
+    data[str_off + 8 : str_off + 13] = b"good\x00"
+
+    path = tmp_path / "invalid_utf8_name.elf"
+    path.write_bytes(bytes(data))
+
+    extractor = ElfFeatureExtractor(path)
+    features = list(extractor.extract_file_features())
+
+    assert any(isinstance(feature, Format) and feature.value == FORMAT_ELF for feature, _ in features)
+    assert any(isinstance(feature, Export) and feature.value == "good" for feature, _ in features)
