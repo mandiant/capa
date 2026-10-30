@@ -19,7 +19,7 @@ from pathlib import Path
 
 from elftools.elf.dynamic import DynamicSegment
 from elftools.elf.elffile import ELFFile
-from elftools.elf.sections import SymbolTableSection
+from elftools.elf.sections import Symbol, SymbolTableSection
 
 import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
@@ -28,6 +28,24 @@ from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
+
+
+def iter_dynamic_symbols(segment: DynamicSegment) -> Iterator[tuple[int, Symbol]]:
+    # pyelftools decodes dynamic symbol names strictly as UTF-8, so one invalid
+    # byte aborts the iteration. Skip unreadable symbols instead.
+    try:
+        num_symbols = segment.num_symbols()
+    except UnicodeDecodeError as e:
+        logger.debug("failed to read dynamic symbol table: %s", e)
+        return
+
+    logger.debug("Dynamic segment contains %s symbols: ", num_symbols)
+
+    for index in range(num_symbols):
+        try:
+            yield index, segment.get_symbol(index)
+        except UnicodeDecodeError as e:
+            logger.debug("failed to read dynamic symbol at index %d: %s", index, e)
 
 
 def extract_file_export_names(elf: ELFFile, **kwargs):
@@ -68,9 +86,7 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
             logger.debug("Dynamic segment doesn't contain DT_SYMTAB")
             continue
 
-        logger.debug("Dynamic segment contains %s symbols: ", segment.num_symbols())
-
-        for symbol in segment.iter_symbols():
+        for _, symbol in iter_dynamic_symbols(segment):
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if not symbol.name:
@@ -98,7 +114,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
             logger.debug("Dynamic segment doesn't contain DT_SYMTAB")
             continue
 
-        for i, symbol in enumerate(segment.iter_symbols()):
+        for i, symbol in iter_dynamic_symbols(segment):
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if not symbol.name:
@@ -118,7 +134,12 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
         if not isinstance(segment, DynamicSegment):
             continue
 
-        relocation_tables = segment.get_relocation_tables()
+        try:
+            relocation_tables = segment.get_relocation_tables()
+        except UnicodeDecodeError as e:
+            logger.debug("failed to read dynamic relocation tables: %s", e)
+            continue
+
         logger.debug("Dynamic Segment contains %s relocation tables:", len(relocation_tables))
 
         for relocation_table in relocation_tables.values():
