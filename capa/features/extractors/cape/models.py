@@ -29,8 +29,26 @@ def validate_hex_bytes(value):
     return bytes.fromhex(value) if isinstance(value, str) else value
 
 
+def validate_status_code(value):
+    if isinstance(value, str):
+        if value == "?":
+            # TODO: check for this in the return handling
+            return None
+
+        # like: -1 EINVAL (Invalid argument)
+        # like: 0 (Timeout)
+        # like: 0x8002 (flags O_RDWR|O_LARGEFILE)
+        assert value.endswith(")")
+        num = value.partition(" ")[0]
+        return int(num, 16) if num.startswith("0x") else int(num, 10)
+    else:
+        return value
+
+
 HexInt = Annotated[int, BeforeValidator(validate_hex_int)]
 HexBytes = Annotated[bytes, BeforeValidator(validate_hex_bytes)]
+# this is a status code, such as returned by CAPE for Linux, like: "0 (Timeout)" or "0x8002 (flags O_RDWR|O_LARGEFILE)
+StatusCode = Annotated[int | None, BeforeValidator(validate_status_code)]
 
 
 # a model that *cannot* have extra fields
@@ -71,8 +89,13 @@ Emptydict: TypeAlias = BaseModel
 EmptyList: TypeAlias = list[Any]
 
 
+class Machine(FlexibleModel):
+    platform: Optional[str] = None
+
+
 class Info(FlexibleModel):
     version: str
+    machine: Optional[Machine] = None
 
 
 class ImportedSymbol(FlexibleModel):
@@ -287,16 +310,38 @@ class Argument(FlexibleModel):
     pretty_value: Optional[str] = None
 
 
+def validate_argument(value):
+    if isinstance(value, str):
+        # for a few calls on CAPE for Linux, we see arguments like in this call:
+        #
+        #    timestamp: "18:12:17.199276"
+        #    category: "misc"
+        #    api: "uname"
+        #    return: "0"
+        #  ▽ arguments:
+        #       [0]: "{sysname=\"Linux\", nodename=\"laptop\", ...}"
+        #
+        # which is just a string with a JSON-like thing inside,
+        # that we want to map a default unnamed argument.
+        return Argument(name="", value=value)
+    else:
+        return value
+
+
+# mypy isn't happy about assigning to type
+Argument = Annotated[Argument, BeforeValidator(validate_argument)]  # type: ignore
+
+
 class Call(FlexibleModel):
     # timestamp: str
-    thread_id: int
+    thread_id: int | None = None
     # category: str
 
     api: str
 
     arguments: list[Argument]
     # status: bool
-    return_: HexInt = Field(alias="return")
+    return_: HexInt | StatusCode = Field(alias="return")
     pretty_return: Optional[str] = None
 
     # repeated: int
@@ -315,12 +360,12 @@ class Call(FlexibleModel):
 class Process(FlexibleModel):
     process_id: int
     process_name: str
-    parent_id: int
+    parent_id: int | None
     # module_path: str
     # first_seen: str
     calls: list[Call]
-    threads: list[int]
-    environ: dict[str, str]
+    threads: list[int] | None = None  # this can be None for CAPE for Linux, which doesn't track threads.
+    environ: dict[str, str] = Field(default_factory=dict)  # type: ignore
 
 
 """
