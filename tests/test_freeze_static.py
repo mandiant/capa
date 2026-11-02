@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import textwrap
 from pathlib import Path
 
@@ -45,6 +46,10 @@ EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
         (
             AbsoluteVirtualAddress(0x402345),
             capa.features.common.Characteristic("embedded pe"),
+        ),
+        (
+            AbsoluteVirtualAddress(0x402346),
+            capa.features.file.Import("kernel32.IsWow64Process"),
         ),
     ],
     functions={
@@ -166,6 +171,24 @@ def test_freeze_dump_omits_absent_description():
     # features without a description must not serialize as "description": null
     # see: https://github.com/mandiant/capa/issues/3100
     assert '"description":null' not in capa.features.freeze.dumps_static(EXTRACTOR)
+
+
+def test_freeze_dump_uses_field_aliases():
+    freeze = json.loads(capa.features.freeze.dumps_static(EXTRACTOR))
+
+    assert "base address" in freeze
+    assert "base_address" not in freeze
+    assert "global" in freeze["features"]
+    assert "global_" not in freeze["features"]
+
+    function = freeze["features"]["functions"][0]
+    assert "basic blocks" in function
+    assert "basic_blocks" not in function
+    assert "basic block" in function["basic blocks"][0]["features"][0]
+
+    import_feature = next(item["feature"] for item in freeze["features"]["file"] if item["feature"]["type"] == "import")
+    assert import_feature["import"] == "kernel32.IsWow64Process"
+    assert "import_" not in import_feature
 
 
 def roundtrip_feature(feature):
