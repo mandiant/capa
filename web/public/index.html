@@ -212,6 +212,12 @@
 
       <h2 class="mt-3">Tool Updates</h2>
 
+      <h3 class="mt-2">v10.0.0 (<em>2026-10-14</em>)</h3>
+      <p class="mt-0">
+        This major release contains breaking changes: <code>capa.loader.collect_metadata()</code> no longer accepts an <code>os_</code> parameter, and existing vivisect workspace (<code>.viv</code>) files are no longer loaded by default since loading them uses pickle.
+        It fixes a large batch of bugs across the feature extractors, rule matching, and output rendering, adds a <code>--reproducible</code> flag to freeze, and includes 12 new rules.
+      </p>
+
       <h3 class="mt-2">v9.4.0 (<em>2026-04-01</em>)</h3>
       <p class="mt-0">
         This release introduces support for Ghidra via PyGhidra, updates dependencies, and significantly improves rule matching performance by pre-filtering extracted bytes.

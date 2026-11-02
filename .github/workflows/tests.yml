@@ -18,18 +18,22 @@ on:
       - 'doc/**'
       - '**.md'
 
-permissions: read-all
+permissions:
+  contents: read
 
 # save workspaces to speed up testing
 env:
   CAPA_SAVE_WORKSPACE: "True"
+  CAPA_LOAD_VIV_WORKSPACE: "True"
 
 jobs:
   changelog_format:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
     # The sync GH action in capa-rules relies on a single '- *$' in the CHANGELOG file
     - name: Ensure CHANGELOG has '- *$'
       run: |
@@ -37,10 +41,12 @@ jobs:
         if [ $number != 1 ]; then exit 1; fi
 
   code_style:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
     # use latest available python to take advantage of best performance
     - name: Set up Python 3.13
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -60,12 +66,13 @@ jobs:
       run: pre-commit run deptry --hook-stage manual
 
   rule_linter:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
+        persist-credentials: false
     - name: Set up Python 3.13
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
@@ -84,36 +91,45 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15-intel, macos-14]
+        os: [ubuntu-24.04, ubuntu-24.04-arm, windows-2022, macos-15-intel, macos-15]
         # across all operating systems
         python-version: ["3.10", "3.13"]
+        exclude:
+          # Intel macOS runners are slow, only test the Python version used for the Intel build
+          - os: macos-15-intel
+            python-version: "3.13"
         include:
           # on Ubuntu run these as well
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             python-version: "3.11"
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             python-version: "3.12"
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install pyyaml
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-24.04' || matrix.os == 'ubuntu-24.04-arm'
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       run: |
         pip install -r requirements.txt
         pip install -e .[dev,scripts]
+    - name: Get vivisect workspace dependencies
+      id: viv-deps
+      shell: bash
+      run: echo "versions=$(grep -E '^(vivisect|viv-utils|python-flirt)==' requirements.txt | tr -d '\r' | paste -sd- -)" >> "$GITHUB_OUTPUT"
     - name: Cache vivisect workspaces
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: tests/data/**/*.viv
-        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+        key: viv-${{ runner.os }}-${{ runner.arch }}-${{ steps.viv-deps.outputs.versions }}-${{ hashFiles('sigs/*.sig', 'tests/data/sigs/**') }}
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
@@ -125,7 +141,7 @@ jobs:
     name: Binary Ninja tests for ${{ matrix.python-version }}
     env:
       BN_SERIAL: ${{ secrets.BN_SERIAL }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [tests]
     strategy:
       fail-fast: false
@@ -138,6 +154,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
       if: ${{ env.BN_SERIAL != 0 }}
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -167,7 +184,7 @@ jobs:
 
   ghidra-tests:
     name: Ghidra tests for ${{ matrix.python-version }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [tests]
     strategy:
       fail-fast: false
@@ -182,6 +199,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: true
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
@@ -208,8 +226,8 @@ jobs:
       run: pytest -v tests/test_ghidra_features.py
  
   idalib-tests:
-    name: IDA ${{ matrix.ida.version }} tests for ${{ matrix.python-version }}
-    runs-on: ubuntu-22.04
+    name: IDA ${{ matrix.ida-version }} tests for ${{ matrix.python-version }}
+    runs-on: ubuntu-24.04
     needs: [tests]
     env:
       IDA_LICENSE_ID: ${{ secrets.IDA_LICENSE_ID }}
@@ -217,13 +235,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.13"]
-        ida:
-          - version: 9.0
-            slug: "release/9.0/ida-essential/ida-essential_90_x64linux.run"
-          - version: 9.1
-            slug: "release/9.1/ida-essential/ida-essential_91_x64linux.run"
-          - version: 9.2
-            slug: "release/9.2/ida-essential/ida-essential_92_x64linux.run"
+        ida-version: ["9.2", "9.3", "9.4", "latest"]
     steps:
     - name: Checkout capa with submodules
       # do only run if IDA_LICENSE_ID is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
@@ -231,30 +243,37 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
-    - name: Set up Python ${{ matrix.python-version }}
-      if: ${{ env.IDA_LICENSE_ID != 0 }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-      with:
-        python-version: ${{ matrix.python-version }}
+        persist-credentials: false
     - name: Setup uv
       if: ${{ env.IDA_LICENSE_ID != 0 }}
-      uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        version: "0.12.6"
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       if: ${{ env.IDA_LICENSE_ID != 0 }}
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       if: ${{ env.IDA_LICENSE_ID != 0 }}
       run: |
-        pip install -r requirements.txt
-        pip install -e .[dev,scripts]
-        pip install idapro
-    - name: Install IDA ${{ matrix.ida.version }}
+        uv sync --extra dev --extra scripts
+        uv pip install idapro
+    - name: Install IDA ${{ matrix.ida-version }}
       if: ${{ env.IDA_LICENSE_ID != 0 }}
       run: |
-        uv run hcli --disable-updates ida install --download-id ${{ matrix.ida.slug }} --license-id ${{ secrets.IDA_LICENSE_ID }} --set-default --yes
+        uv run --with ida-hcli hcli \
+          ida install \
+          --download-id "ida-pro:${{ matrix.ida-version }}" \
+          --license-id "${IDA_LICENSE_ID}" \
+          --install-dir="${{ runner.temp }}/app/ida" \
+          --accept-eula \
+          --set-default \
+          --yes
       env:
         HCLI_API_KEY: ${{ secrets.HCLI_API_KEY }}
         IDA_LICENSE_ID: ${{ secrets.IDA_LICENSE_ID }}
     - name: Run tests
       if: ${{ env.IDA_LICENSE_ID != 0 }}
-      run: pytest -v tests/test_idalib_features.py  # explicitly refer to the idalib tests for performance. other tests run above.
+      run: uv run pytest -v tests/test_idalib_features.py  # explicitly refer to the idalib tests for performance. other tests run above.

@@ -855,6 +855,23 @@ def get_ghidra_extractor(path: Path):
     return extractor
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_ghidra_cache():
+    yield
+    if not GHIDRA_CACHE:
+        return
+
+    import gc
+
+    import capa.features.extractors.ghidra.context
+
+    capa.features.extractors.ghidra.context.clear_context()
+    for extractor, _, _, _ in list(GHIDRA_CACHE.values()):
+        extractor.close()
+    GHIDRA_CACHE.clear()
+    gc.collect()
+
+
 def _fixup_idalib(path: Path, extractor):
     import idaapi
     import ida_funcs

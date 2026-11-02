@@ -4,11 +4,39 @@
 
 ### New Features
 - Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
+
+### Breaking Changes
+
+### New Rules (1)
+
+- anti-analysis/check-for-analysis-tools-listening-on-local-ports wballenthin@hex-rays.com ninadgowdru
+-
+
+### Bug Fixes
+
+- fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
+
+### capa Explorer Web
+
+### capa Explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v10.0.0...master](https://github.com/mandiant/capa/compare/v10.0.0...master)
+- [capa-rules v10.0.0...master](https://github.com/mandiant/capa-rules/compare/v10.0.0...master)
+
+## v10.0.0
+
+This release includes breaking changes, a large batch of bug fixes, a new `--reproducible` flag for freeze, dependency updates, and 12 new rules. We'd like to thank the following contributors: Ange Albertini (@corkamig), @aryanyk, Luca Schrott (@1337Name), @eversinc33, Matt Williams (@mwilliams31), Rizky Mirzaviandy Priambodo (@Xavrir), Sukesh Kumar (@SkxOverKill), lakshit verma (@vee1e), @w3lld1, and others!
+
+### New Features
 - freeze: add `--reproducible` flag that zeros dynamic header metadata
 
 ### Breaking Changes
 
 - Remove redundant `os_` parameter from `capa.loader.collect_metadata()`. External scripts calling this function must be updated to remove this argument. OS metadata now relies solely on the extractor yielding it via `extract_global_features()`. @mike-hunhoff #3076
+- Existing `<sample>.viv` vivisect workspace files are no longer loaded by default because loading them uses pickle deserialization. Set `CAPA_LOAD_VIV_WORKSPACE=1` to opt in. @mr-tz #3191
 
 ### New Rules (12)
 
@@ -18,15 +46,16 @@
 - nursery/send-data-on-websocket-in-dotnet mehunhoff@google.com
 - nursery/upload-or-download-file-via-dropbox mehunhoff@google.com
 - host-interaction/network/connectivity/check-internet-connectivity-in-dotnet omurcankaya@protonmail.com
-- nursery/check-for-time-delay-in-dotnet @aryanyk
+- anti-analysis/anti-debugging/check-for-time-delay-in-dotnet @aryanyk
 - nursery/decode-pe-stored-as-uuid corkami@google.com
 - compiler/crystal/compiled-with-crystal corkami@google.com
 - compiler/odin/compiled-with-odin corkami@google.com
 - load-code/dotnet/load-dotnet-assembly-via-runtimeassemblynloadimage still@teamt5.org
 - nursery/search-for-file-via-winapi @w3lld1
--
 
 ### Bug Fixes
+- fix: loader: inline vivisect workspace loading and gate .viv pickle deserialization behind CAPA_LOAD_VIV_WORKSPACE @mr-tz #3191
+- fix: freeze: omit null description fields from freeze JSON @SkxOverKill #3100
 - fix lots of linter errors identified by pyright @williballenthin #3052
 - fix: render_default always returns empty string @williballenthin #3012
 - fix: elf.py vdso_guess exception handler clobbers symtab_guess @williballenthin #3013
@@ -131,6 +160,8 @@
 - ida: display file-scope feature addresses (`file:0x...`) in rule generator tree and safely handle file-offset navigation/filtering @vee1e #3009
 
 ### Development
+- ci: key vivisect workspace cache on vivisect, viv-utils, python-flirt versions and FLIRT signatures, shared across Python versions @mr-tz #3195
+- ci: test macos-15-intel only on Python 3.10, matching the Intel build @mr-tz #3195
 - tests: update binja version to 5.3 @mr-tz #3011
 - ci: use explicit and per job permissions @mike-hunhoff #3002
 - replace black/isort/flake8 with ruff @mike-hunhoff #2992
@@ -139,8 +170,8 @@
 - tests: add more tests to exercise ELF OS detection @williballenthin #3098
 
 ### Raw diffs
-- [capa v9.4.0...master](https://github.com/mandiant/capa/compare/v9.4.0...master)
-- [capa-rules v9.4.0...master](https://github.com/mandiant/capa-rules/compare/v9.4.0...master)
+- [capa v9.4.0...v10.0.0](https://github.com/mandiant/capa/compare/v9.4.0...v10.0.0)
+- [capa-rules v9.4.0...v10.0.0](https://github.com/mandiant/capa-rules/compare/v9.4.0...v10.0.0)
 
 ## v9.4.0
 

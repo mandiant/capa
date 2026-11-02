@@ -38,6 +38,11 @@ def set_context(program, flat_api, monitor):
     _context = GhidraContext(program, flat_api, monitor)
 
 
+def clear_context():
+    global _context
+    _context = None
+
+
 def get_context() -> GhidraContext:
     if _context is None:
         raise RuntimeError("GhidraContext not initialized")
