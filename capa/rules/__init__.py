@@ -31,7 +31,14 @@ from dataclasses import asdict, dataclass
 
 import yaml
 import pydantic
+import ahocorasick
 import yaml.parser
+
+# In Python 3.11+, the internal regex AST parser `sre_parse` was moved to `re._parser`.
+try:
+    import re._parser as re_parser
+except ImportError:
+    import sre_parse as re_parser  # type: ignore
 
 import capa.perf
 import capa.engine as ceng
@@ -53,33 +60,20 @@ logger = logging.getLogger(__name__)
 # This narrows candidate selection from all extracted bytes to those
 # sharing a common 4-byte prefix while keeping the implementation simple.
 # See: https://github.com/mandiant/capa/issues/2128
-
-try:
-    import ahocorasick
-except ImportError:
-    ahocorasick = None
-
 _BYTES_PREFIX_SIZE = 4
 _STRING_LITERAL_MIN = 4
 
 
-def _required_literal(pattern_str: str) -> Optional[Union[str, set[str]]]:
+def _compute_best_required_literals(pattern_str: str) -> set[str]:
     """
-    Extract required literals (longest contiguous LITERAL runs >= 4 chars) from a regex pattern.
-    If no run >= 4 chars exists or on parse error, return None.
+    Extract the best required literals (longest contiguous LITERAL runs >= 4 chars) from a regex pattern.
+    If no required literal >= 4 chars exists, return an empty set.
     """
-    try:
-        try:
-            import re._parser as re_parser
-        except ImportError:
-            import sre_parse as re_parser  # type: ignore
-
-        parsed = re_parser.parse(pattern_str)
-    except Exception:
-        return None
+    parsed = re_parser.parse(pattern_str)
 
     def walk_ast(node_list) -> set[str]:
-        runs: set[str] = set()
+        # Each entry in `candidates` is a required literal set for a sequential (AND) component.
+        candidates: list[set[str]] = []
         cur_run: list[str] = []
 
         def flush():
@@ -87,7 +81,7 @@ def _required_literal(pattern_str: str) -> Optional[Union[str, set[str]]]:
             if cur_run:
                 s = "".join(cur_run)
                 if len(s) >= _STRING_LITERAL_MIN:
-                    runs.add(s)
+                    candidates.append({s})
                 cur_run = []
 
         for node in node_list:
@@ -95,52 +89,65 @@ def _required_literal(pattern_str: str) -> Optional[Union[str, set[str]]]:
             av = node[1]
 
             if op == re_parser.LITERAL:
+                # regex:  test[0-9]+
+                #         ^^^^       accumulate contiguous literals
                 cur_run.append(chr(av))
             elif op == re_parser.SUBPATTERN:
-                sub_ast = av[-1] if isinstance(av, (tuple, list)) else av
-                sub_runs = walk_ast(sub_ast)
+                # regex:  foo(example)bar
+                #            ^^^^^^^^^    extract literals recursively
                 flush()
-                runs.update(sub_runs)
+                sub_ast = av[-1] if isinstance(av, (tuple, list)) else av
+                sub_lits = walk_ast(sub_ast)
+                if sub_lits:
+                    candidates.append(sub_lits)
             elif op in (re_parser.MAX_REPEAT, re_parser.MIN_REPEAT):
-                min_rep, _max_rep, sub_ast = av[0], av[1], av[2]
+                # regex:  ab{4}cd  or  ab+cd
+                #          ^^^^         ^^^
+                # handle literal repetitions.
+                min_rep, max_rep, sub_ast = av[0], av[1], av[2]
                 if min_rep >= 1 and len(sub_ast) == 1 and sub_ast[0][0] == re_parser.LITERAL:
-                    cur_run.append(chr(sub_ast[0][1]))
+                    ch = chr(sub_ast[0][1])
+                    cur_run.append(ch * min_rep)
+                    if max_rep != min_rep:
+                        flush()
+                        cur_run.append(ch * min_rep)
                 else:
                     flush()
                     if min_rep >= 1:
-                        sub_runs = walk_ast(sub_ast)
-                        runs.update(sub_runs)
+                        sub_lits = walk_ast(sub_ast)
+                        if sub_lits:
+                            candidates.append(sub_lits)
             elif op == re_parser.BRANCH:
+                # regex:  (test|example)
+                #          ^^^^ ^^^^^^^  going through every element
                 flush()
                 alts = av[1]
-                alt_runs_list = []
+                branch_lits: set[str] = set()
                 all_valid = True
                 for alt in alts:
-                    alt_r = walk_ast(alt)
-                    valid_r = {r for r in alt_r if len(r) >= _STRING_LITERAL_MIN}
-                    if not valid_r:
+                    alt_lits = walk_ast(alt)
+                    if not alt_lits:
                         all_valid = False
                         break
-                    alt_runs_list.append(valid_r)
-                if all_valid and alt_runs_list:
-                    for ar in alt_runs_list:
-                        runs.update(ar)
+                    branch_lits.update(alt_lits)
+                if all_valid and branch_lits:
+                    candidates.append(branch_lits)
             else:
+                # regex:  test[0-9]+
+                #             ^^^^^  not a literal token
                 flush()
 
         flush()
-        return runs
+        if not candidates:
+            return set()
+        # Takes the candidate with the longest minimal literal,
+        # else the fewest variants, else the longest max length
+        return max(
+            candidates,
+            key=lambda c: (min(len(s) for s in c), -len(c), max(len(s) for s in c)),
+        )
 
-    try:
-        res = walk_ast(parsed)
-        valid = {r for r in res if len(r) >= _STRING_LITERAL_MIN}
-        if not valid:
-            return None
-        if len(valid) == 1:
-            return next(iter(valid))
-        return valid
-    except Exception:
-        return None
+    return walk_ast(parsed)
 
 
 # these are the standard metadata fields, in the preferred order.
@@ -1868,7 +1875,7 @@ class RuleSet:
         # Key -1 holds rules whose patterns are shorter than _BYTES_PREFIX_SIZE (linear fallback).
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]]
         # Optional Aho-Corasick automaton mapping string literals (lowercased) -> list of (rule_name, feature)
-        string_literal_index: Optional[Any] = None
+        string_literal_index: Optional[ahocorasick.Automaton] = None
 
     # this routine is unstable and may change before the next major release.
     @staticmethod
@@ -2022,7 +2029,7 @@ class RuleSet:
         string_rules: dict[str, list[Feature]] = {}
         bytes_rules_count = 0
         bytes_prefix_index: dict[int, list[tuple[str, bytes]]] = collections.defaultdict(list)
-        string_literal_automaton = ahocorasick.Automaton() if ahocorasick is not None else None
+        string_literal_automaton: Optional[ahocorasick.Automaton] = ahocorasick.Automaton()
         string_literal_entries: dict[str, list[tuple[str, Feature]]] = collections.defaultdict(list)
 
         for rule in rules:
@@ -2072,23 +2079,15 @@ class RuleSet:
                 unindexed_string_features: list[Feature] = []
                 for wanted_string in string_features:
                     indexed = False
-                    if string_literal_automaton is not None:
-                        if isinstance(wanted_string, capa.features.common.Substring):
-                            sub_val = str(wanted_string.value)
-                            if len(sub_val) >= _STRING_LITERAL_MIN:
-                                string_literal_entries[sub_val.lower()].append((rule_name, wanted_string))
-                                indexed = True
-                        elif isinstance(wanted_string, capa.features.common.Regex):
-                            req_lits = _required_literal(wanted_string.re.pattern)
-                            if req_lits:
-                                if isinstance(req_lits, str):
-                                    lit_set = {req_lits}
-                                else:
-                                    lit_set = req_lits
-                                for lit in lit_set:
-                                    if len(lit) >= _STRING_LITERAL_MIN:
-                                        string_literal_entries[lit.lower()].append((rule_name, wanted_string))
-                                        indexed = True
+                    if isinstance(wanted_string, capa.features.common.Substring):
+                        sub_val = str(wanted_string.value)
+                        if len(sub_val) >= _STRING_LITERAL_MIN:
+                            string_literal_entries[sub_val.lower()].append((rule_name, wanted_string))
+                            indexed = True
+                    elif isinstance(wanted_string, capa.features.common.Regex):
+                        for lit in _compute_best_required_literals(wanted_string.re.pattern):
+                            string_literal_entries[lit.lower()].append((rule_name, wanted_string))
+                            indexed = True
                     if not indexed:
                         unindexed_string_features.append(wanted_string)
                 if unindexed_string_features:
@@ -2110,7 +2109,8 @@ class RuleSet:
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
 
-        if string_literal_automaton is not None and string_literal_entries:
+        if string_literal_entries:
+            assert string_literal_automaton is not None
             for word, entries in string_literal_entries.items():
                 string_literal_automaton.add_word(word, entries)
             string_literal_automaton.make_automaton()
@@ -2305,15 +2305,17 @@ class RuleSet:
             if string_features:
                 if feature_index.string_literal_index:
                     for string_feature in string_features:
-                        haystack = str(string_feature.value).lower()
+                        orig_haystack = str(string_feature.value)
+                        haystack = orig_haystack.lower()
                         for _end_index, rule_entries in feature_index.string_literal_index.iter(haystack):
                             for rule_name, wanted_feature in rule_entries:
                                 if rule_name in candidate_rule_names:
                                     continue
                                 if isinstance(wanted_feature, capa.features.common.Substring):
-                                    candidate_rule_names.add(rule_name)
+                                    if str(wanted_feature.value) in orig_haystack:
+                                        candidate_rule_names.add(rule_name)
                                 elif isinstance(wanted_feature, capa.features.common.Regex):
-                                    if wanted_feature.re.search(str(string_feature.value)):
+                                    if wanted_feature.re.search(orig_haystack):
                                         candidate_rule_names.add(rule_name)
 
                 if feature_index.string_rules:

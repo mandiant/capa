@@ -1,9 +1,9 @@
 # Change Log
 
 ## master (unreleased)
-- Aho-Corasick automaton generation and scan of regex literals to speed up rule matching corkami@google.com
 
 ### New Features
+- Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
 - freeze: add `--reproducible` flag that zeros dynamic header metadata
 
 ### Breaking Changes

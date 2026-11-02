@@ -389,10 +389,14 @@ def test_match_no_duplicate_candidate_evaluations():
 
 
 def test_required_literal_unit():
-    assert capa.rules._required_literal("test[0-9]+") == "test"
-    assert capa.rules._required_literal("a[0-9]b") is None
-    assert capa.rules._required_literal("(test|b)") is None
-    assert capa.rules._required_literal("(test|example)") == {"test", "example"}
+    assert capa.rules._compute_best_required_literals("test[0-9]+") == {"test"}
+    assert capa.rules._compute_best_required_literals("a[0-9]b") == set()
+    assert capa.rules._compute_best_required_literals("(test|b)") == set()
+    assert capa.rules._compute_best_required_literals("(test|example)") == {"test", "example"}
+    assert capa.rules._compute_best_required_literals("(test|(foo|bar))") == set()
+    assert capa.rules._compute_best_required_literals("(test|(example|another))") == {"test", "example", "another"}
+    assert capa.rules._compute_best_required_literals("ab+cd") == set()
+    assert capa.rules._compute_best_required_literals("ab{4}cd") == {"abbbbcd"}
 
 
 def test_string_literal_prefilter_regex_confirmation():
@@ -421,9 +425,9 @@ def test_string_literal_prefilter_regex_confirmation():
     assert "test regex confirmation" not in matches3
 
 
-def test_differential_parity_prefilter_on_vs_off(monkeypatch):
+def test_differential_parity_prefilter_on_vs_off():
     """
-    Differential parity test: Match rules with prefilter ON vs OFF (ahocorasick forced to None).
+    Differential parity test: Match rules with prefilter ON vs OFF (string_literal_index reset to None).
     Expected: identical match results in both.
     """
     rules = [
@@ -436,7 +440,7 @@ def test_differential_parity_prefilter_on_vs_off(monkeypatch):
                             static: function
                             dynamic: process
                     features:
-                        - string: "specific_literal_string"
+                        - substring: "specific_literal_string"
                 """)
         ),
         capa.rules.Rule.from_yaml(
@@ -465,16 +469,25 @@ def test_differential_parity_prefilter_on_vs_off(monkeypatch):
         ),
     ]
 
-    features = {
-        capa.features.common.String("here is a specific_literal_string inside"): {0x0},
-        capa.features.common.String("here is pattern_123 inside"): {0x0},
-        capa.features.common.String("here is pattern_abc inside"): {0x0},
+    addr = capa.features.address.AbsoluteVirtualAddress(0x0)
+    features: capa.engine.FeatureSet = {
+        capa.features.common.String("here is a specific_literal_string inside"): {addr},
+        capa.features.common.String("here is pattern_123 inside"): {addr},
+        capa.features.common.String("here is pattern_abc inside"): {addr},
     }
 
-    _, matches_on = match(rules, features, 0x0)
+    ruleset_on = capa.rules.RuleSet(rules)
+    _, matches_on = ruleset_on.match(Scope.FUNCTION, features, addr)
 
-    monkeypatch.setattr(capa.rules, "ahocorasick", None)
-    _, matches_off = match(rules, features, 0x0)
+    ruleset_off = capa.rules.RuleSet(rules)
+    idx_off = ruleset_off._feature_indexes_by_scopes[Scope.FUNCTION]
+    assert idx_off.string_literal_index is not None
+    for entries in idx_off.string_literal_index.values():
+        for rule_name, wanted_feature in entries:
+            idx_off.string_rules.setdefault(rule_name, []).append(wanted_feature)
+    idx_off.string_literal_index = None
+
+    _, matches_off = ruleset_off.match(Scope.FUNCTION, features, addr)
 
     assert matches_on.keys() == matches_off.keys()
     for k in matches_on:
