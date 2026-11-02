@@ -16,8 +16,12 @@
 import os
 import textwrap
 import contextlib
+from types import SimpleNamespace
 from pathlib import Path
 
+import pytest
+
+import capa.main
 import capa.rules
 import capa.helpers
 import capa.rules.cache
@@ -156,3 +160,63 @@ def test_rule_cache_dev_environment():
 
     assert capa.helpers.is_dev_environment() is True
     assert capa.helpers.is_cache_newer_than_rule_code(cache_dir) is False
+
+
+@pytest.mark.parametrize("relocate_checkout", [False, True])
+@pytest.mark.parametrize("subscope", [False, True])
+def test_cached_rule_locations_follow_current_files(tmp_path, monkeypatch, relocate_checkout, subscope):
+    checkout = tmp_path / "checkout-a"
+    source = checkout / "nursery" / "rule.yml"
+    source.parent.mkdir(parents=True)
+    features = "- and:\n  - basic block:\n    - number: 1\n  - number: 2" if subscope else "- number: 1"
+    definition = textwrap.dedent(
+        """\
+        rule:
+          meta:
+            name: cache location test
+            scopes:
+              static: function
+              dynamic: unsupported
+          features:
+        """
+    ) + textwrap.indent(features, "    ") + "\n"
+    source.write_text(definition, encoding="utf-8")
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    initial = capa.rules.get_rules([checkout], cache_dir=cache)
+    assert initial.rules["cache location test"].meta["capa/nursery"] is True
+
+    target_checkout = tmp_path / "checkout-b" if relocate_checkout else checkout
+    target = target_checkout / "anti-analysis" / "rule.yml"
+    target.parent.mkdir(parents=True)
+    if relocate_checkout:
+        target.write_bytes(source.read_bytes())
+    else:
+        source.rename(target)
+
+    def unexpected_parse(*args, **kwargs):
+        pytest.fail("the content-identical ruleset should be loaded from cache")
+
+    monkeypatch.setattr(capa.rules.Rule, "from_yaml", unexpected_parse)
+    loaded = capa.rules.get_rules([target_checkout], cache_dir=cache)
+    assert loaded.rules["cache location test"].meta["capa/path"] == target.as_posix()
+    assert loaded.rules["cache location test"].meta["capa/nursery"] is False
+
+
+@pytest.mark.parametrize("development", [False, True])
+@pytest.mark.parametrize("enabled", [False, True])
+def test_cli_respects_explicit_cache_setting(tmp_path, monkeypatch, development, enabled):
+    monkeypatch.setattr(capa.helpers, "is_running_standalone", lambda: False)
+    monkeypatch.setattr(capa.helpers, "is_dev_environment", lambda: development)
+    monkeypatch.setattr(capa.helpers, "is_cache_newer_than_rule_code", lambda directory: True)
+    monkeypatch.setattr(capa.rules.cache, "get_default_cache_directory", lambda: tmp_path)
+    requested = []
+
+    def get_rules(paths, **kwargs):
+        requested.append(kwargs["enable_cache"])
+        return SimpleNamespace(rules={})
+
+    monkeypatch.setattr(capa.rules, "get_rules", get_rules)
+    args = SimpleNamespace(rules=[], is_default_rules=False, enable_cache=enabled)
+    capa.main.get_rules_from_cli(args)
+    assert requested == [enabled]
