@@ -459,10 +459,10 @@ def extract_insn_segment_access_features(f, bb, ih: InsnHandle) -> Iterator[tupl
 
     prefix = insn.getPrefixName()
 
-    if prefix == "fs":
+    if "fs" in prefix:
         yield Characteristic("fs access"), ih.address
 
-    if prefix == "gs":
+    if "gs" in prefix:
         yield Characteristic("gs access"), ih.address
 
 
