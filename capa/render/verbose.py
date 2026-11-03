@@ -50,9 +50,6 @@ def format_address(address: frz.Address) -> str:
     if address.type == frz.AddressType.ABSOLUTE:
         assert isinstance(address.value, int)
         return capa.helpers.hex(address.value)
-    elif address.type == frz.AddressType.RELATIVE:
-        assert isinstance(address.value, int)
-        return f"base address+{capa.helpers.hex(address.value)}"
     elif address.type == frz.AddressType.FILE:
         assert isinstance(address.value, int)
         return f"file+{capa.helpers.hex(address.value)}"

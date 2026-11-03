@@ -101,11 +101,6 @@ def test_addr_to_pb2():
     assert a.type == capa_pb2.ADDRESSTYPE_ABSOLUTE
     assert a.v.u == 0x400000
 
-    a2 = capa.features.freeze.Address.from_capa(capa.features.address.RelativeVirtualAddress(0x100))
-    a = capa.render.proto.addr_to_pb2(a2)
-    assert a.type == capa_pb2.ADDRESSTYPE_RELATIVE
-    assert a.v.u == 0x100
-
     a3 = capa.features.freeze.Address.from_capa(capa.features.address.FileOffsetAddress(0x200))
     a = capa.render.proto.addr_to_pb2(a3)
     assert a.type == capa_pb2.ADDRESSTYPE_FILE
