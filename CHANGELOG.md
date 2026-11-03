@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
 
 ### Breaking Changes
 
