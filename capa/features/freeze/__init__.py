@@ -38,7 +38,10 @@ from capa.features.extractors.base_extractor import (
 
 logger = logging.getLogger(__name__)
 
-CURRENT_VERSION = 3
+CURRENT_VERSION = 4
+# version 3 freezes used field names instead of the documented aliases,
+# e.g. "basic_blocks" instead of "basic blocks". both spellings still parse.
+SUPPORTED_VERSIONS = (3, 4)
 
 
 class HashableModel(BaseModel):
@@ -454,7 +457,7 @@ def dumps_static(extractor: StaticFeatureExtractor, reproducible: bool = False) 
     )
     # type checkers are unable to recognise `base_address` as an argument due to alias
 
-    return freeze.model_dump_json(exclude_none=True)
+    return freeze.model_dump_json(exclude_none=True, by_alias=True)
 
 
 def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False) -> str:
@@ -573,13 +576,13 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor, reproducible: bool = False
     )
     # type checkers are unable to recognise `base_address` as an argument due to alias
 
-    return freeze.model_dump_json(exclude_none=True)
+    return freeze.model_dump_json(exclude_none=True, by_alias=True)
 
 
 def loads_static(s: str) -> StaticFeatureExtractor:
     """deserialize a set of features (as a NullStaticFeatureExtractor) from a string."""
     freeze = Freeze.model_validate_json(s)
-    if freeze.version != CURRENT_VERSION:
+    if freeze.version not in SUPPORTED_VERSIONS:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     assert freeze.flavor == "static"
@@ -614,7 +617,7 @@ def loads_static(s: str) -> StaticFeatureExtractor:
 def loads_dynamic(s: str) -> DynamicFeatureExtractor:
     """deserialize a set of features (as a NullDynamicFeatureExtractor) from a string."""
     freeze = Freeze.model_validate_json(s)
-    if freeze.version != CURRENT_VERSION:
+    if freeze.version not in SUPPORTED_VERSIONS:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     assert freeze.flavor == "dynamic"
@@ -675,7 +678,7 @@ def is_freeze(buf: bytes) -> bool:
 def loads(s: str) -> FeatureExtractor:
     doc = json.loads(s)
 
-    if doc["version"] != CURRENT_VERSION:
+    if doc["version"] not in SUPPORTED_VERSIONS:
         raise ValueError(f"unsupported freeze format version: {doc['version']}")
 
     if doc["flavor"] == "static":

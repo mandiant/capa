@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import textwrap
 from pathlib import Path
 
@@ -166,6 +167,32 @@ def test_freeze_dump_omits_absent_description():
     # features without a description must not serialize as "description": null
     # see: https://github.com/mandiant/capa/issues/3100
     assert '"description":null' not in capa.features.freeze.dumps_static(EXTRACTOR)
+
+
+def test_freeze_dump_uses_field_aliases():
+    # the freeze format documents keys like "basic blocks", not the python field names.
+    # see: https://github.com/mandiant/capa/issues/2738
+    doc = json.loads(capa.features.freeze.dumps_static(EXTRACTOR))
+    assert doc["version"] == capa.features.freeze.CURRENT_VERSION
+    assert "base address" in doc
+    assert "base_address" not in doc
+    assert "global" in doc["features"]
+    assert "global_" not in doc["features"]
+    function = doc["features"]["functions"][0]
+    assert "basic blocks" in function
+    assert "basic_blocks" not in function
+
+
+def test_freeze_load_v3():
+    # version 3 freezes were written with the python field names; they must still load.
+    doc = json.loads(capa.features.freeze.dumps_static(EXTRACTOR))
+    doc["version"] = 3
+    doc["base_address"] = doc.pop("base address")
+    doc["features"]["global_"] = doc["features"].pop("global")
+    for function in doc["features"]["functions"]:
+        function["basic_blocks"] = function.pop("basic blocks")
+    reanimated = capa.features.freeze.loads_static(json.dumps(doc))
+    compare_extractors(EXTRACTOR, reanimated)
 
 
 def roundtrip_feature(feature):

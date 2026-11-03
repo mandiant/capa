@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+ - freeze: write the documented field names (e.g. `basic blocks`, `base address`) instead of the python field names and bump the freeze format to version 4; version 3 freezes still load @hiteshchandra2703-cloud #2738
+
 ### New Rules (1)
 
 - anti-analysis/check-for-analysis-tools-listening-on-local-ports wballenthin@hex-rays.com ninadgowdru
