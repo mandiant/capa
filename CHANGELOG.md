@@ -7,9 +7,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - anti-analysis/check-for-analysis-tools-listening-on-local-ports wballenthin@hex-rays.com ninadgowdru
+- nursery/decrypt-payload-stored-as-ipv4-strings corkami@google.com
 -
 
 ### Bug Fixes
