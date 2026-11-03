@@ -23,6 +23,8 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- tests: use user leaf function 0x401517 in mimikatz calls-from fixtures for IDA 9.5 compatibility @mr-tz
+- ci: key setup-uv cache on pyproject.toml in idalib-tests @mr-tz
 
 ### Raw diffs
 - [capa v10.0.0...master](https://github.com/mandiant/capa/compare/v10.0.0...master)
