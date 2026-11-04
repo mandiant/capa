@@ -17,6 +17,7 @@
 ### Bug Fixes
 
 - fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
+- freeze: serialize import features with key "import" instead of "import_" #3085
 
 ### capa Explorer Web
 

@@ -168,6 +168,28 @@ def test_freeze_dump_omits_absent_description():
     assert '"description":null' not in capa.features.freeze.dumps_static(EXTRACTOR)
 
 
+def test_freeze_dump_uses_alias_keys():
+    # aliased feature fields must serialize under their alias, not the Python field name,
+    # e.g. import features use "import" rather than "import_"
+    # see: https://github.com/mandiant/capa/issues/3085
+    import json
+
+    extractor = capa.features.extractors.null.NullStaticFeatureExtractor(
+        base_address=AbsoluteVirtualAddress(0x401000),
+        sample_hashes=SampleHashes(md5="0" * 32, sha1="0" * 40, sha256="0" * 64),
+        global_features=[],
+        file_features=[(AbsoluteVirtualAddress(0x402345), capa.features.file.Import("kernel32.CreateFileA"))],
+        functions={},
+    )
+    doc = json.loads(capa.features.freeze.dumps_static(extractor))
+    feature = doc["features"]["file"][0]["feature"]
+    assert feature == {"type": "import", "import": "kernel32.CreateFileA"}
+
+    # and the new format still loads back
+    reanimated = capa.features.freeze.loads_static(capa.features.freeze.dumps_static(extractor))
+    assert sorted(set(reanimated.extract_file_features())) == sorted(set(extractor.extract_file_features()))
+
+
 def roundtrip_feature(feature):
     assert feature == capa.features.freeze.features.feature_from_capa(feature).to_capa()
 
