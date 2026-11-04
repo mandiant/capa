@@ -897,6 +897,23 @@ class FeatureRegexContainsUnescapedPeriod(Lint):
         return False
 
 
+class FeatureRegexWithoutLiteral(Lint):
+    name = "feature regex does not contain an extractable literal (>= 4 chars)"
+    level = Lint.WARN
+    recommendation_template = (
+        'regex "{:s}" has no required literal >= 4 chars for Aho-Corasick prefiltering; '
+        + "consider using a longer literal or rewriting if possible"
+    )
+
+    def check_features(self, ctx: Context, features: list[Feature]):
+        for feature in features:
+            if isinstance(feature, (Regex,)):
+                if not capa.rules._compute_best_required_literals(feature.re.pattern):
+                    self.recommendation = self.recommendation_template.format(str(feature.value))
+                    return True
+        return False
+
+
 class FeatureNegativeNumber(Lint):
     name = "feature value is negative"
     recommendation = "specify the number's two's complement representation"
@@ -1114,6 +1131,7 @@ FEATURE_LINTS = (
     FeatureNtdllNtoskrnlApi(),
     FeatureRegexContainsUnescapedPeriod(),
     FeatureRegexRegistryControlSetMatchIncomplete(),
+    FeatureRegexWithoutLiteral(),
 )
 
 
