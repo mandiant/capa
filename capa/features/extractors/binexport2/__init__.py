@@ -33,9 +33,11 @@ from dataclasses import dataclass
 from pefile import PE
 from elftools.elf.elffile import ELFFile
 
+from capa.features.address import AbsoluteVirtualAddress
 import capa.features.common
 import capa.features.extractors.common
 import capa.features.extractors.binexport2.helpers
+from capa.features.extractors import loops
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
@@ -414,6 +416,17 @@ class FunctionContext:
     format: set[str]
     os: set[str]
     arch: set[str]
+
+    def __post_init__(self):
+        flow_graph = self.ctx.be2.flow_graph[self.flow_graph_index]
+        edges: list[tuple[int, int]] = []
+        for edge in flow_graph.edge:
+            edges.append((edge.source_basic_block_index, edge.target_basic_block_index))
+        looping_indices = loops.get_loop_vertices(edges)
+        self.ctx.cyclic_loop = {
+            AbsoluteVirtualAddress(self.ctx.idx.get_basic_block_address(idx_val))
+            for idx_val in looping_indices
+        }
 
 
 @dataclass
