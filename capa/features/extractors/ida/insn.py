@@ -66,8 +66,11 @@ def check_for_api_call(insn: idaapi.insn_t, funcs: dict[int, Any]) -> Optional[t
         if info:
             break
 
-        f = idaapi.get_func(ref)
-        if not f or not (f.flags & idaapi.FUNC_THUNK):
+        target_start = capa.features.extractors.ida.helpers.get_func_start(ref)
+        if (
+            target_start is None
+            or not capa.features.extractors.ida.helpers.get_func_flags(target_start) & idaapi.FUNC_THUNK
+        ):
             break
 
     return info
@@ -125,13 +128,15 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
         return
 
     target = targets[0]
-    target_func = idaapi.get_func(target)
-    if not target_func or target_func.start_ea != target:
+    target_start = capa.features.extractors.ida.helpers.get_func_start(target)
+    if target_start != target:
         # not a function (start)
         return
 
-    name = idaapi.get_name(target_func.start_ea)
-    if target_func.flags & idaapi.FUNC_LIB or not name.startswith("sub_"):
+    name = idaapi.get_name(target_start)
+    if capa.features.extractors.ida.helpers.get_func_flags(target_start) & idaapi.FUNC_LIB or not name.startswith(
+        "sub_"
+    ):
         yield API(name), ih.address
         if name.startswith("_"):
             # some linkers may prefix linked routines with a `_` to avoid name collisions.
@@ -140,7 +145,7 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
             # see: https://stackoverflow.com/a/2628384/87207
             yield API(name[1:]), ih.address
 
-        for altname in capa.features.extractors.ida.helpers.get_function_alternative_names(target_func.start_ea):
+        for altname in capa.features.extractors.ida.helpers.get_function_alternative_names(target_start):
             yield FunctionName(altname), ih.address
             yield API(altname), ih.address
 
@@ -486,10 +491,11 @@ def extract_insn_cross_section_cflow(
         if ref in get_imports(fh.ctx):
             # ignore API calls
             continue
-        if not idaapi.getseg(ref):
+        ref_segment = capa.features.extractors.ida.helpers.get_segment_start(ref)
+        if ref_segment is None:
             # handle IDA API bug
             continue
-        if idaapi.getseg(ref) == idaapi.getseg(insn.ea):
+        if ref_segment == capa.features.extractors.ida.helpers.get_segment_start(insn.ea):
             continue
         yield Characteristic("cross section flow"), ih.address
 

@@ -514,7 +514,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def update_view_tree_limit_results_to_function(self, ea):
         """ """
-        self.limit_results_to_function(idaapi.get_func(ea))
+        self.limit_results_to_function(capa.ida.helpers.get_func_bounds(ea))
         self.view_tree.reset_ui()
 
     def update_rulegen_tree_limit_features_to_selection(self, ea):
@@ -538,13 +538,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             # ignore views not the assembly view
             return
 
-        if not idaapi.get_func(new_ea):
+        if not capa.ida.helpers.get_func_bounds(new_ea):
             return
 
         if self.view_tabs.currentIndex() == 1 and self.view_rulegen_limit_features_by_ea.isChecked():
             return self.update_rulegen_tree_limit_features_to_selection(new_ea)
 
-        if idaapi.get_func(new_ea) == idaapi.get_func(old_ea):
+        if capa.ida.helpers.get_func_start_ea(new_ea) == capa.ida.helpers.get_func_start_ea(old_ea):
             # user navigated same function - ignore
             return
 
@@ -1001,7 +1001,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         # resolve function selected in disassembly view
         f = None
         try:
-            f = idaapi.get_func(idaapi.get_screen_ea())
+            f = capa.ida.helpers.get_func_bounds(idaapi.get_screen_ea())
             if f is not None:
                 self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
         except Exception as e:
@@ -1349,7 +1349,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param state: checked state
         """
         if state:
-            self.limit_results_to_function(idaapi.get_func(idaapi.get_screen_ea()))
+            self.limit_results_to_function(capa.ida.helpers.get_func_bounds(idaapi.get_screen_ea()))
         else:
             self.range_model_proxy.reset_address_range_filter()
 

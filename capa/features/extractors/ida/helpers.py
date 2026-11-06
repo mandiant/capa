@@ -17,6 +17,7 @@ from typing import Any, Iterator, Optional
 
 import idc
 import idaapi
+import ida_gdl
 import ida_nalt
 import idautils
 import ida_bytes
@@ -27,6 +28,130 @@ from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FunctionHandle
 
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)  # use one byte-per-character encoding
+
+# IDA 9.4 deprecated the pointer-based IDAPython APIs in favor of EA-based
+# variants. detect the new APIs once here and define helpers so the rest of
+# the extractor can use a single interface on all supported IDA versions.
+HAS_EA_FUNCS = hasattr(ida_funcs, "get_func_start")
+HAS_EA_SEGMENTS = hasattr(ida_segment, "get_segment_info")
+
+if HAS_EA_FUNCS:
+
+    def get_func(ea: int):
+        """get function entry info containing the given address, or None"""
+        fi = ida_funcs.func_entry_info_t()
+        if not ida_funcs.get_func_entry_info(fi, ea):
+            return None
+        return fi
+
+    def get_func_flags(ea: int) -> int:
+        return ida_funcs.get_func_flags(ea)
+
+    def get_func_start(ea: int) -> Optional[int]:
+        start = ida_funcs.get_func_start(ea)
+        return None if start == idaapi.BADADDR else start
+
+    def get_func_comment(ea: int, repeatable: bool) -> Optional[str]:
+        return ida_funcs.get_func_cmt_ea(ea, repeatable)
+
+else:
+
+    def get_func(ea: int):
+        """get function containing the given address, or None"""
+        return idaapi.get_func(ea)
+
+    def get_func_flags(ea: int) -> int:
+        f = idaapi.get_func(ea)
+        return f.flags if f else 0
+
+    def get_func_start(ea: int) -> Optional[int]:
+        f = idaapi.get_func(ea)
+        return f.start_ea if f else None
+
+    def get_func_comment(ea: int, repeatable: bool) -> Optional[str]:
+        return ida_funcs.get_func_cmt(idaapi.get_func(ea), repeatable)
+
+
+if HAS_EA_SEGMENTS:
+
+    def get_segments(skip_header_segments: bool = False) -> Iterator[Any]:
+        """get list of segments (sections) in the binary image
+
+        args:
+            skip_header_segments: IDA may load header segments - skip if set
+        """
+        for n in range(idaapi.get_segm_qty()):
+            seg = ida_segment.segment_info_t()
+            if not ida_segment.get_segment_info_by_num(seg, n):
+                continue
+            if skip_header_segments and seg.is_header_segm():
+                continue
+            yield seg
+
+    def get_segment_name(seg) -> str:
+        return ida_segment.get_segment_name(seg.start_ea)
+
+    def get_segment_start(ea: int) -> Optional[int]:
+        seg = ida_segment.segment_info_t()
+        if not ida_segment.get_segment_info(seg, ea):
+            return None
+        return seg.start_ea
+
+    def get_segment_type(seg) -> int:
+        return seg.get_type()
+
+else:
+
+    def get_segments(skip_header_segments: bool = False) -> Iterator[idaapi.segment_t]:
+        """get list of segments (sections) in the binary image
+
+        args:
+            skip_header_segments: IDA may load header segments - skip if set
+        """
+        for n in range(idaapi.get_segm_qty()):
+            seg = idaapi.getnseg(n)
+            if seg and not (skip_header_segments and seg.is_header_segm()):
+                yield seg
+
+    def get_segment_name(seg: idaapi.segment_t) -> str:
+        return idaapi.get_segm_name(seg)
+
+    def get_segment_start(ea: int) -> Optional[int]:
+        seg = idaapi.getseg(ea)
+        return seg.start_ea if seg else None
+
+    def get_segment_type(seg: idaapi.segment_t) -> int:
+        return seg.type
+
+
+if hasattr(ida_gdl, "qflow_chart_ea_t"):
+
+    class _EaFlowChart:
+        """minimal FlowChart-compatible wrapper around qflow_chart_ea_t"""
+
+        def __init__(self, chart: "ida_gdl.qflow_chart_ea_t"):
+            self._q = chart
+
+        def __getitem__(self, i: int) -> idaapi.BasicBlock:
+            return idaapi.BasicBlock(i, self._q[i], self)
+
+        def __iter__(self) -> Iterator[idaapi.BasicBlock]:
+            for i in range(self._q.size()):
+                yield self[i]
+
+    def get_function_blocks(f, flags: int = idaapi.FC_PREDS | idaapi.FC_NOEXT) -> Iterator[idaapi.BasicBlock]:
+        """yield basic blocks contained in specified function"""
+        chart = ida_gdl.qflow_chart_ea_t()
+        chart.create("", f.start_ea, idaapi.BADADDR, idaapi.BADADDR, flags)
+        yield from _EaFlowChart(chart)
+
+else:
+
+    def get_function_blocks(
+        f: idaapi.func_t, flags: int = idaapi.FC_PREDS | idaapi.FC_NOEXT
+    ) -> Iterator[idaapi.BasicBlock]:
+        """yield basic blocks contained in specified function"""
+        yield from idaapi.FlowChart(f, flags=flags)
 
 
 if hasattr(ida_bytes, "parse_binpat_str"):
@@ -92,21 +217,12 @@ def get_functions(
         end: max virtual address
     """
     for ea in idautils.Functions(start=start, end=end):
-        f = idaapi.get_func(ea)
-        if not (skip_thunks and (f.flags & idaapi.FUNC_THUNK) or skip_libs and (f.flags & idaapi.FUNC_LIB)):
+        f = get_func(ea)
+        if not f:
+            continue
+        flags = get_func_flags(ea)
+        if not (skip_thunks and (flags & idaapi.FUNC_THUNK) or skip_libs and (flags & idaapi.FUNC_LIB)):
             yield FunctionHandle(address=AbsoluteVirtualAddress(ea), inner=f)
-
-
-def get_segments(skip_header_segments=False) -> Iterator[idaapi.segment_t]:
-    """get list of segments (sections) in the binary image
-
-    args:
-        skip_header_segments: IDA may load header segments - skip if set
-    """
-    for n in range(idaapi.get_segm_qty()):
-        seg = idaapi.getnseg(n)
-        if seg and not (skip_header_segments and seg.is_header_segm()):
-            yield seg
 
 
 def get_segment_buffer(seg: idaapi.segment_t) -> bytes:
@@ -167,7 +283,7 @@ def get_file_externs() -> dict[int, tuple[str, str, int]]:
     externs = {}
 
     for seg in get_segments(skip_header_segments=True):
-        if seg.type != ida_segment.SEG_XTRN:
+        if get_segment_type(seg) != ida_segment.SEG_XTRN:
             continue
 
         for ea in idautils.Functions(seg.start_ea, seg.end_ea):
@@ -423,12 +539,6 @@ def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> i
     return ea
 
 
-def get_function_blocks(f: idaapi.func_t) -> Iterator[idaapi.BasicBlock]:
-    """yield basic blocks contained in specified function"""
-    # leverage idaapi.FC_NOEXT flag to ignore useless external blocks referenced by the function
-    yield from idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT))
-
-
 def is_basic_block_return(bb: idaapi.BasicBlock) -> bool:
     """check if basic block is return block"""
     return bb.type == idaapi.fcb_ret
@@ -449,4 +559,4 @@ def find_alternative_names(cmt: str):
 def get_function_alternative_names(fva: int):
     """Get all alternative names for an address."""
     yield from find_alternative_names(ida_bytes.get_cmt(fva, False) or "")
-    yield from find_alternative_names(ida_funcs.get_func_cmt(idaapi.get_func(fva), False) or "")
+    yield from find_alternative_names(get_func_comment(fva, False) or "")
