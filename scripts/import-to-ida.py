@@ -54,20 +54,36 @@ def append_func_cmt(va, cmt, repeatable=False):
     add the given comment to the given function,
     if it doesn't already exist.
     """
-    func = ida_funcs.get_func(va)
-    if not func:
-        raise ValueError("not a function")
+    if hasattr(ida_funcs, "get_func_cmt_ea"):
+        fi = ida_funcs.func_entry_info_t()
+        if not ida_funcs.get_func_entry_info(fi, va):
+            raise ValueError("not a function")
 
-    existing = ida_funcs.get_func_cmt(func, repeatable) or ""
-    if cmt in existing:
-        return
+        existing = ida_funcs.get_func_cmt_ea(va, repeatable) or ""
+        if cmt in existing:
+            return
 
-    if len(existing) > 0:
-        new = existing + "\n" + cmt
+        if len(existing) > 0:
+            new = existing + "\n" + cmt
+        else:
+            new = cmt
+
+        ida_funcs.set_func_cmt_ea(va, new, repeatable)
     else:
-        new = cmt
+        func = ida_funcs.get_func(va)
+        if not func:
+            raise ValueError("not a function")
 
-    ida_funcs.set_func_cmt(func, new, repeatable)
+        existing = ida_funcs.get_func_cmt(func, repeatable) or ""
+        if cmt in existing:
+            return
+
+        if len(existing) > 0:
+            new = existing + "\n" + cmt
+        else:
+            new = cmt
+
+        ida_funcs.set_func_cmt(func, new, repeatable)
 
 
 def main():

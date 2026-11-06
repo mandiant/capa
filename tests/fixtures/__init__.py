@@ -877,9 +877,12 @@ def _fixup_idalib(path: Path, extractor):
     import ida_funcs
 
     def remove_library_id_flag(fva):
-        f = idaapi.get_func(fva)
-        f.flags &= ~ida_funcs.FUNC_LIB
-        ida_funcs.update_func(f)
+        if hasattr(ida_funcs, "set_func_flag"):
+            ida_funcs.set_func_flag(fva, ida_funcs.FUNC_LIB, False)
+        else:
+            f = idaapi.get_func(fva)
+            f.flags &= ~ida_funcs.FUNC_LIB
+            ida_funcs.update_func(f)
 
     if "kernel32-64" in path.name:
         remove_library_id_flag(0x1800202B0)
