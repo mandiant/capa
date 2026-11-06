@@ -2555,6 +2555,17 @@ def get_rules(
     if enable_cache:
         ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
         if ruleset is not None:
+            # Content-identical rules can share a cache across file moves and
+            # checkouts. Restore location metadata from the current input files.
+            paths_by_definition = {
+                content.decode("utf-8"): path for path, content in zip(rule_file_paths, rule_contents)
+            }
+            for rule in ruleset.rules.values():
+                if rule.is_subscope_rule():
+                    continue
+                path = paths_by_definition[rule.definition]
+                rule.meta["capa/path"] = path.as_posix()
+                rule.meta["capa/nursery"] = is_nursery_rule_path(path)
             return ruleset
 
     rules: list[Rule] = []

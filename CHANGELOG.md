@@ -16,6 +16,7 @@
 
 ### Bug Fixes
 
+- fix: refresh cached rule paths and nursery metadata after relocation, and preserve explicit cache disabling @asucodes #3213
 - fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
 
 ### capa Explorer Web
