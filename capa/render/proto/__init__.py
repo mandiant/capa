@@ -76,10 +76,6 @@ def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
         assert isinstance(addr.value, int)
         return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE, v=int_to_pb2(addr.value))
 
-    elif addr.type is AddressType.RELATIVE:
-        assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_RELATIVE, v=int_to_pb2(addr.value))
-
     elif addr.type is AddressType.FILE:
         assert isinstance(addr.value, int)
         return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_FILE, v=int_to_pb2(addr.value))
@@ -605,9 +601,6 @@ def number_from_pb2(v: capa_pb2.Number) -> Union[int, float]:
 def addr_from_pb2(addr: capa_pb2.Address) -> frz.Address:
     if addr.type == capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE:
         return frz.Address(type=frz.AddressType.ABSOLUTE, value=int_from_pb2(addr.v))
-
-    elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_RELATIVE:
-        return frz.Address(type=frz.AddressType.RELATIVE, value=int_from_pb2(addr.v))
 
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_FILE:
         return frz.Address(type=frz.AddressType.FILE, value=int_from_pb2(addr.v))

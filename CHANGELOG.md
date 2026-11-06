@@ -7,6 +7,8 @@
 
 ### Breaking Changes
 
+- remove RelativeVirtualAddress @corkamig #3072
+
 ### New Rules (3)
 
 - anti-analysis/check-for-analysis-tools-listening-on-local-ports wballenthin@hex-rays.com ninadgowdru

@@ -41,7 +41,6 @@ from capa.features.address import (
     DynamicCallAddress,
     DNTokenOffsetAddress,
     AbsoluteVirtualAddress,
-    RelativeVirtualAddress,
 )
 from capa.features.extractors.base_extractor import SampleHashes, FeatureExtractor
 
@@ -622,8 +621,6 @@ def _parse_address(spec: Any) -> Address:
 
     if spec in {"global", "no address"}:
         return NO_ADDRESS
-    if spec.startswith("base address+"):
-        return RelativeVirtualAddress(_coerce_int(spec[len("base address+") :]))
     if spec.startswith("file+"):
         return FileOffsetAddress(_coerce_int(spec[len("file+") :]))
     if token_offset := re.fullmatch(r"token\((.+)\)\+(.+)", spec):

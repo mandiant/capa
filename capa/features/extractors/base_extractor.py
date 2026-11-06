@@ -133,7 +133,6 @@ class StaticFeatureExtractor(abc.ABC):
 
         when the base address is `NO_ADDRESS`, then the loader has no concept of a preferred load address.
         such as: shellcode, .NET modules, etc.
-        in these scenarios, RelativeVirtualAddresses aren't used.
         """
         raise NotImplementedError()
 

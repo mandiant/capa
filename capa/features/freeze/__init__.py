@@ -47,7 +47,6 @@ class HashableModel(BaseModel):
 
 class AddressType(str, Enum):
     ABSOLUTE = "absolute"
-    RELATIVE = "relative"
     FILE = "file"
     DN_TOKEN = "dn token"
     DN_TOKEN_OFFSET = "dn token offset"
@@ -60,7 +59,7 @@ class AddressType(str, Enum):
 class Address(HashableModel):
     type: AddressType
     value: Union[
-        # for absolute, relative, file
+        # for absolute, file
         int,
         # for DNToken, Process, Thread, Call
         tuple[int, ...],
@@ -72,9 +71,6 @@ class Address(HashableModel):
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
         if isinstance(a, capa.features.address.AbsoluteVirtualAddress):
             return cls(type=AddressType.ABSOLUTE, value=int(a))
-
-        elif isinstance(a, capa.features.address.RelativeVirtualAddress):
-            return cls(type=AddressType.RELATIVE, value=int(a))
 
         elif isinstance(a, capa.features.address.FileOffsetAddress):
             return cls(type=AddressType.FILE, value=int(a))
@@ -107,10 +103,6 @@ class Address(HashableModel):
         if self.type is AddressType.ABSOLUTE:
             assert isinstance(self.value, int)
             return capa.features.address.AbsoluteVirtualAddress(self.value)
-
-        elif self.type is AddressType.RELATIVE:
-            assert isinstance(self.value, int)
-            return capa.features.address.RelativeVirtualAddress(self.value)
 
         elif self.type is AddressType.FILE:
             assert isinstance(self.value, int)
