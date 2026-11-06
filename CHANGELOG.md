@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- linter: add pass to check nursery rule namespaces for close misspellings of existing namespaces @Mr-Neutr0n #3112
 - Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
 
 ### Breaking Changes
