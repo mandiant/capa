@@ -166,9 +166,13 @@ def render_statement(
         child = statement.child
         value = child.model_dump(by_alias=True).get(child.type)
 
-        if value:
+        if value is not None:
             if isinstance(child, frzf.StringFeature):
                 value = f'"{capa.features.common.escape_string(value)}"'
+            elif isinstance(value, int):
+                value = capa.helpers.hex(value)
+            elif isinstance(value, float):
+                value = str(value)
 
             value = rutils.bold2(value)
 
