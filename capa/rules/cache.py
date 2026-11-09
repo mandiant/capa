@@ -158,7 +158,9 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: list[bytes]) -> Optional
 
     try:
         cache = RuleCache.load(buf)
-    except AssertionError:
+        if cache.id != id or compute_ruleset_cache_identifier(cache.ruleset) != id:
+            raise ValueError("rule set cache content does not match the requested rules")
+    except (AssertionError, ValueError, zlib.error, pickle.UnpicklingError, EOFError):
         logger.debug("rule set cache is invalid: %s", path)
         # delete the cache that seems to be invalid.
         path.unlink()

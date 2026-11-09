@@ -14,6 +14,7 @@
 
 
 import os
+import zlib
 import textwrap
 import contextlib
 from types import SimpleNamespace
@@ -220,3 +221,53 @@ def test_cli_respects_explicit_cache_setting(tmp_path, monkeypatch, development,
     args = SimpleNamespace(rules=[], is_default_rules=False, enable_cache=enabled)
     capa.main.get_rules_from_cli(args)
     assert requested == [enabled]
+
+
+@pytest.mark.parametrize("damage", ["truncated", "zlib", "pickle", "eof", "header"])
+def test_corrupt_cache_falls_back_to_rule_files(tmp_path, damage):
+    source = tmp_path / "rule.yml"
+    source.write_text(R1.definition, encoding="utf-8")
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    initial = capa.rules.get_rules([source], cache_dir=cache_dir)
+    contents = capa.rules.cache.get_ruleset_content(initial)
+    cache_id = capa.rules.cache.compute_cache_identifier(contents)
+    cache_path = capa.rules.cache.get_cache_path(cache_dir, cache_id)
+    original = cache_path.read_bytes()
+    if damage == "truncated":
+        damaged = original[:-8]
+    elif damage == "zlib":
+        damaged = original[:0x48] + b"not zlib"
+    elif damage == "pickle":
+        damaged = original[:0x48] + zlib.compress(b"not pickle")
+    elif damage == "eof":
+        damaged = original[:0x48] + zlib.compress(b"")
+    else:
+        damaged = original[:8] + b"\xff" * 64 + original[0x48:]
+    cache_path.write_bytes(damaged)
+
+    loaded = capa.rules.get_rules([source], cache_dir=cache_dir)
+    assert set(loaded.rules) == {R1.name}
+    assert loaded.rules[R1.name].meta["capa/path"] == source.as_posix()
+    assert cache_path.read_bytes() != damaged
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, contents) is not None
+
+
+@pytest.mark.parametrize("matching_id", [False, True])
+def test_inconsistent_cache_falls_back_to_rule_files(tmp_path, matching_id):
+    source = tmp_path / "rule.yml"
+    source.write_text(R1.definition, encoding="utf-8")
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    expected_id = capa.rules.cache.compute_cache_identifier([source.read_bytes()])
+    other_ruleset = capa.rules.RuleSet([R2])
+    stored_id = expected_id if matching_id else capa.rules.cache.compute_ruleset_cache_identifier(other_ruleset)
+    cache_path = capa.rules.cache.get_cache_path(cache_dir, expected_id)
+    inconsistent = capa.rules.cache.RuleCache(stored_id, other_ruleset).dump()
+    cache_path.write_bytes(inconsistent)
+
+    loaded = capa.rules.get_rules([source], cache_dir=cache_dir)
+    assert set(loaded.rules) == {R1.name}
+    assert loaded.rules[R1.name].meta["capa/path"] == source.as_posix()
+    assert cache_path.read_bytes() != inconsistent
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, [source.read_bytes()]) is not None
