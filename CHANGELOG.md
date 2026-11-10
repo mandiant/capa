@@ -3,12 +3,15 @@
 ## master (unreleased)
 
 ### New Features
+- Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (3)
 
 - anti-analysis/check-for-analysis-tools-listening-on-local-ports wballenthin@hex-rays.com ninadgowdru
+- nursery/decrypt-payload-stored-as-ipv4-strings corkami@google.com
+- anti-analysis/reference-anti-llm-analysis-strings corkami@google.com
 -
 
 ### Bug Fixes
@@ -21,6 +24,8 @@
 ### capa Explorer IDA Pro plugin
 
 ### Development
+- tests: use user leaf function 0x401517 in mimikatz calls-from fixtures for IDA 9.5 compatibility @mr-tz
+- ci: key setup-uv cache on pyproject.toml in idalib-tests @mr-tz
 
 ### Raw diffs
 - [capa v10.0.0...master](https://github.com/mandiant/capa/compare/v10.0.0...master)
