@@ -1491,14 +1491,21 @@ def get_rules_with_scope(rules, scope: Scope) -> list[Rule]:
     return [rule for rule in rules if scope in rule.scopes]
 
 
-def get_rules_and_dependencies(rules: list[Rule], rule_name: str) -> Iterator[Rule]:
+def get_rules_and_dependencies(
+    rules: list[Rule],
+    rule_name: str,
+    namespaces: dict[str, list[Rule]] | None = None,
+    rules_by_name: dict[str, Rule] | None = None,
+) -> Iterator[Rule]:
     """
     from the given collection of rules, select a rule and its dependencies (transitively).
     """
-    # we evaluate `rules` multiple times, so if it's a generator, realize it into a list.
     rules = list(rules)
-    namespaces = index_rules_by_namespace(rules)
-    rules_by_name = {rule.name: rule for rule in rules}
+    if rules_by_name is None:
+        rules_by_name = {rule.name: rule for rule in rules}
+    if namespaces is None:
+        namespaces = index_rules_by_namespace(list(rules_by_name.values()))
+
     wanted = {rule_name}
     visited = set()
 
@@ -1573,7 +1580,11 @@ def index_rules_by_namespace(rules: list[Rule]) -> dict[str, list[Rule]]:
     return dict(namespaces)
 
 
-def topologically_order_rules(rules: list[Rule]) -> list[Rule]:
+def topologically_order_rules(
+    rules: list[Rule],
+    namespaces: dict[str, list[Rule]] | None = None,
+    rules_by_name: dict[str, Rule] | None = None,
+) -> list[Rule]:
     """
     order the given rules such that dependencies show up before dependents.
     this means that as we match rules, we can add features for the matches, and these
@@ -1581,10 +1592,12 @@ def topologically_order_rules(rules: list[Rule]) -> list[Rule]:
 
     assumes that the rule dependency graph is a DAG.
     """
-    # we evaluate `rules` multiple times, so if it's a generator, realize it into a list.
     rules = list(rules)
-    namespaces = index_rules_by_namespace(rules)
-    rules_by_name = {rule.name: rule for rule in rules}
+    if rules_by_name is None:
+        rules_by_name = {rule.name: rule for rule in rules}
+    if namespaces is None:
+        namespaces = index_rules_by_namespace(list(rules_by_name.values()))
+
     seen = set()
     ret = []
 
@@ -1657,7 +1670,7 @@ class RuleSet:
 
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
-        self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
+        self.rules_by_scope = self._get_rules_by_scope(rules, scopes, self.rules, self.rules_by_namespace)
 
         # these structures are unstable and may change before the next major release.
         scores_by_rule: dict[str, int] = {}
@@ -2135,7 +2148,40 @@ class RuleSet:
         )
 
     @staticmethod
-    def _get_rules_for_scope(rules, scope) -> list[Rule]:
+    def _get_rules_by_scope(
+        rules: list[Rule],
+        scopes: tuple[Scope, ...],
+        rules_by_name: dict[str, Rule],
+        namespaces: dict[str, list[Rule]],
+    ) -> dict[Scope, list[Rule]]:
+        """
+        collect the rules that are needed across all scopes, ordered topologically.
+
+        don't include auto-generated "subscope" rules.
+        we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
+        """
+        # Root search at all non-subscope rules because higher-scope rules may own lower-scope subscope rules.
+        seen: set[str] = set()
+        stack: list[Rule] = [r for r in rules if not r.is_subscope_rule()]
+        for r in stack:
+            seen.add(r.name)
+
+        while stack:
+            r = stack.pop()
+            for dep in r.get_dependencies(namespaces):
+                if dep not in seen:
+                    seen.add(dep)
+                    stack.append(rules_by_name[dep])
+
+        scope_rules = [r for r in rules if r.name in seen]
+        scope_rules_by_name = {r.name: r for r in scope_rules}
+        ordered_rules = topologically_order_rules(
+            scope_rules, namespaces=namespaces, rules_by_name=scope_rules_by_name
+        )
+        return {scope: get_rules_with_scope(ordered_rules, scope) for scope in scopes}
+
+    @staticmethod
+    def _get_rules_for_scope(rules, scope: Scope) -> list[Rule]:
         """
         given a collection of rules, collect the rules that are needed at the given scope.
         these rules are ordered topologically.
@@ -2143,18 +2189,10 @@ class RuleSet:
         don't include auto-generated "subscope" rules.
         we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
-        scope_rules: set[Rule] = set()
-
-        # we need to process all rules, not just rules with the given scope.
-        # this is because rules with a higher scope, e.g. file scope, may have subscope rules
-        #  at lower scope, e.g. function scope.
-        # so, we find all dependencies of all rules, and later will filter them down.
-        for rule in rules:
-            if rule.is_subscope_rule():
-                continue
-
-            scope_rules.update(get_rules_and_dependencies(rules, rule.name))
-        return get_rules_with_scope(topologically_order_rules(list(scope_rules)), scope)
+        rules = list(rules)
+        rules_by_name = {rule.name: rule for rule in rules}
+        namespaces = index_rules_by_namespace(rules)
+        return RuleSet._get_rules_by_scope(rules, (scope,), rules_by_name, namespaces)[scope]
 
     @staticmethod
     def _extract_subscope_rules(rules) -> list[Rule]:
@@ -2190,6 +2228,17 @@ class RuleSet:
         """
         rules = list(self.rules.values())
         rules_filtered = set()
+
+        def add_rule_and_deps(rule):
+            rules_filtered.update(
+                get_rules_and_dependencies(
+                    rules,
+                    rule.name,
+                    namespaces=self.rules_by_namespace,
+                    rules_by_name=self.rules,
+                )
+            )
+
         for rule in rules:
             for k, v in rule.meta.items():
                 if isinstance(v, str) and tag in v:
@@ -2199,7 +2248,7 @@ class RuleSet:
                         k,
                         v,
                     )
-                    rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
+                    add_rule_and_deps(rule)
                     break
                 if isinstance(v, list):
                     for vv in v:
@@ -2210,7 +2259,7 @@ class RuleSet:
                                 k,
                                 vv,
                             )
-                            rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
+                            add_rule_and_deps(rule)
                             break
         return RuleSet(list(rules_filtered))
 
