@@ -1,0 +1,45 @@
+{
+  "act as TCP client": [
+    "absolute(0x10001010)"
+  ],
+  "connect TCP socket": [
+    "absolute(0x10001010)"
+  ],
+  "connect socket": [
+    "absolute(0x100010a3)"
+  ],
+  "contain loop": [
+    "absolute(0x10001010)",
+    "absolute(0x10001220)",
+    "absolute(0x1000124f)"
+  ],
+  "create TCP socket": [
+    "absolute(0x1000108c)"
+  ],
+  "create or open mutex on Windows": [
+    "absolute(0x10001059)",
+    "absolute(0x1000106e)"
+  ],
+  "create process on Windows": [
+    "absolute(0x100011af)"
+  ],
+  "delay execution": [
+    "absolute(0x10001154)",
+    "absolute(0x100011c0)"
+  ],
+  "initialize Winsock library": [
+    "absolute(0x10001010)"
+  ],
+  "receive data": [
+    "absolute(0x10001010)"
+  ],
+  "receive data on socket": [
+    "absolute(0x10001010)"
+  ],
+  "send data": [
+    "absolute(0x10001010)"
+  ],
+  "send data on socket": [
+    "absolute(0x10001010)"
+  ]
+}

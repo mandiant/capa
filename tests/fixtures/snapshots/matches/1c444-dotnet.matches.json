@@ -1,0 +1,137 @@
+{
+  "(internal) .NET file limitation": [
+    "no address"
+  ],
+  "act as TCP client": [
+    "token(0x600008a)"
+  ],
+  "capture screenshot": [
+    "token(0x6000073)"
+  ],
+  "check if directory exists": [
+    "token(0x600006b)"
+  ],
+  "check if file exists": [
+    "token(0x600009b)"
+  ],
+  "compiled to the .NET platform": [
+    "no address"
+  ],
+  "contain loop": [
+    "token(0x600001d)",
+    "token(0x600002a)",
+    "token(0x600002b)",
+    "token(0x6000063)",
+    "token(0x6000084)",
+    "token(0x6000085)",
+    "token(0x600008a)",
+    "token(0x6000091)",
+    "token(0x6000096)",
+    "token(0x600009b)"
+  ],
+  "create HTTP request": [
+    "token(0x6000096)",
+    "token(0x600009b)"
+  ],
+  "create a process with modified I/O handles and window": [
+    "token(0x6000081)"
+  ],
+  "create directory": [
+    "token(0x600003a)",
+    "token(0x600006b)"
+  ],
+  "create or open registry key": [
+    "token(0x6000062)",
+    "token(0x6000063)"
+  ],
+  "create process in .NET": [
+    "token(0x6000044)+(0x6)",
+    "token(0x6000081)+(0xb2)"
+  ],
+  "create thread": [
+    "token(0x6000081)",
+    "token(0x6000087)",
+    "token(0x600008c)",
+    "token(0x6000094)",
+    "token(0x6000095)",
+    "token(0x600009a)"
+  ],
+  "decode data using Base64 in .NET": [
+    "token(0x6000023)"
+  ],
+  "delete directory": [
+    "token(0x6000035)"
+  ],
+  "delete file": [
+    "token(0x6000030)"
+  ],
+  "encode data using Base64": [
+    "token(0x600001b)",
+    "token(0x6000028)",
+    "token(0x600002c)",
+    "token(0x600002f)",
+    "token(0x6000034)",
+    "token(0x6000039)",
+    "token(0x600003e)",
+    "token(0x6000048)",
+    "token(0x600004e)",
+    "token(0x6000064)",
+    "token(0x60000a0)"
+  ],
+  "enumerate files in .NET": [
+    "token(0x600002a)",
+    "token(0x600002b)"
+  ],
+  "get common file path": [
+    "token(0x6000069)"
+  ],
+  "get file size": [
+    "token(0x600002b)",
+    "token(0x6000096)"
+  ],
+  "hash data with MD5": [
+    "token(0x600001d)"
+  ],
+  "manipulate console buffer": [
+    "token(0x600009b)"
+  ],
+  "query or enumerate registry key": [
+    "token(0x6000062)",
+    "token(0x6000063)"
+  ],
+  "query or enumerate registry value": [
+    "token(0x6000063)"
+  ],
+  "receive HTTP response": [
+    "token(0x6000096)",
+    "token(0x600009b)"
+  ],
+  "save image in .NET": [
+    "token(0x600006d)"
+  ],
+  "send HTTP request": [
+    "token(0x6000096)",
+    "token(0x600009b)"
+  ],
+  "send data": [
+    "token(0x6000096)",
+    "token(0x600009b)"
+  ],
+  "send request in .NET": [
+    "token(0x6000096)"
+  ],
+  "set web proxy in .NET": [
+    "token(0x6000096)"
+  ],
+  "suspend thread": [
+    "token(0x6000084)",
+    "token(0x6000085)",
+    "token(0x600008a)",
+    "token(0x600008f)",
+    "token(0x6000091)"
+  ],
+  "unmanaged call": [
+    "token(0x6000072)",
+    "token(0x6000073)"
+  ]
+}
