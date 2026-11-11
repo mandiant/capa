@@ -1,0 +1,319 @@
+{
+  "act as TCP client": [
+    "absolute(0x404bd2)",
+    "absolute(0x405deb)",
+    "absolute(0x406549)"
+  ],
+  "change file permission on Linux": [
+    "absolute(0x407c68)",
+    "absolute(0x407d72)",
+    "absolute(0x407e3e)",
+    "absolute(0x407f75)",
+    "absolute(0x40858f)"
+  ],
+  "check file permission on Linux": [
+    "absolute(0x4022d7)",
+    "absolute(0x405ad7)",
+    "absolute(0x407bbd)",
+    "absolute(0x407d11)"
+  ],
+  "communicate with kernel module via Netlink socket on Linux": [
+    "absolute(0x405e1d)",
+    "absolute(0x4065df)"
+  ],
+  "connect TCP socket": [
+    "absolute(0x404bd2)",
+    "absolute(0x405deb)",
+    "absolute(0x406549)"
+  ],
+  "connect socket": [
+    "absolute(0x404da5)",
+    "absolute(0x405e94)",
+    "absolute(0x40666a)"
+  ],
+  "contain loop": [
+    "absolute(0x401ca0)",
+    "absolute(0x401d34)",
+    "absolute(0x401e91)",
+    "absolute(0x402089)",
+    "absolute(0x40231e)",
+    "absolute(0x40256a)",
+    "absolute(0x402eb8)",
+    "absolute(0x40329c)",
+    "absolute(0x40440a)",
+    "absolute(0x404f43)",
+    "absolute(0x405043)",
+    "absolute(0x405186)",
+    "absolute(0x405438)",
+    "absolute(0x4059ad)",
+    "absolute(0x405b5b)",
+    "absolute(0x406549)",
+    "absolute(0x407d11)",
+    "absolute(0x4088a0)",
+    "absolute(0x408950)"
+  ],
+  "contain obfuscated stackstrings": [
+    "absolute(0x405438)"
+  ],
+  "create TCP socket": [
+    "absolute(0x402a05)",
+    "absolute(0x404bd2)",
+    "absolute(0x405e1d)",
+    "absolute(0x4065df)"
+  ],
+  "create directory": [
+    "absolute(0x406549)",
+    "absolute(0x407d11)"
+  ],
+  "create or open file": [
+    "absolute(0x401e34)",
+    "absolute(0x40561e)",
+    "absolute(0x405769)",
+    "absolute(0x405815)",
+    "absolute(0x406d44)",
+    "absolute(0x406e8f)",
+    "absolute(0x406eb2)",
+    "absolute(0x40783e)",
+    "absolute(0x407c17)",
+    "absolute(0x407e2a)",
+    "absolute(0x40811a)",
+    "absolute(0x408241)",
+    "absolute(0x4082ea)",
+    "absolute(0x408393)",
+    "absolute(0x40843c)",
+    "absolute(0x408533)",
+    "absolute(0x4085b5)",
+    "absolute(0x408635)",
+    "absolute(0x408731)",
+    "absolute(0x408790)"
+  ],
+  "create process on Linux": [
+    "absolute(0x40231e)",
+    "absolute(0x40236d)",
+    "absolute(0x4024f3)",
+    "absolute(0x405438)",
+    "absolute(0x407c68)",
+    "absolute(0x4084a3)",
+    "absolute(0x408753)"
+  ],
+  "create reverse shell on Linux": [
+    "absolute(0x40231e)",
+    "absolute(0x408753)"
+  ],
+  "create thread": [
+    "absolute(0x406d5c)",
+    "absolute(0x407212)"
+  ],
+  "delay execution": [
+    "absolute(0x405e75)",
+    "absolute(0x405eaf)",
+    "absolute(0x406055)",
+    "absolute(0x406198)",
+    "absolute(0x40627a)",
+    "absolute(0x4063a8)",
+    "absolute(0x4064c8)",
+    "absolute(0x406649)",
+    "absolute(0x40668b)",
+    "absolute(0x40677f)",
+    "absolute(0x4074ec)",
+    "absolute(0x4075bf)",
+    "absolute(0x407939)",
+    "absolute(0x407984)",
+    "absolute(0x408869)"
+  ],
+  "delete directory": [
+    "absolute(0x406549)"
+  ],
+  "delete file": [
+    "absolute(0x405ad7)",
+    "absolute(0x406549)",
+    "absolute(0x407bbd)"
+  ],
+  "delete file on Linux": [
+    "absolute(0x408517)",
+    "absolute(0x4086f9)"
+  ],
+  "download and write a file": [
+    "absolute(0x406549)"
+  ],
+  "duplicate stdin and stdout": [
+    "absolute(0x40236d)",
+    "absolute(0x408781)"
+  ],
+  "encode data using Base64": [
+    "absolute(0x405b5b)"
+  ],
+  "encrypt data using RC4 PRGA": [
+    "absolute(0x401d34)",
+    "absolute(0x405186)"
+  ],
+  "enumerate files on Linux": [
+    "absolute(0x402089)"
+  ],
+  "execute command": [
+    "absolute(0x406549)",
+    "absolute(0x407d11)"
+  ],
+  "execute shell command received from socket on Linux": [
+    "absolute(0x406549)"
+  ],
+  "get CPU information": [
+    "absolute(0x405438)"
+  ],
+  "get Linux distribution": [
+    "absolute(0x405438)"
+  ],
+  "get current PID on Linux": [
+    "absolute(0x40858f)",
+    "absolute(0x40860f)",
+    "absolute(0x4086b8)"
+  ],
+  "get current process file path": [
+    "absolute(0x405ad7)",
+    "absolute(0x407d11)"
+  ],
+  "get current user on Linux": [
+    "absolute(0x405438)",
+    "absolute(0x406549)"
+  ],
+  "get file attributes": [
+    "absolute(0x401f33)",
+    "absolute(0x402036)",
+    "absolute(0x405962)"
+  ],
+  "get hostname": [
+    "absolute(0x405438)",
+    "absolute(0x406549)"
+  ],
+  "get kernel version": [
+    "absolute(0x405438)"
+  ],
+  "get memory information": [
+    "absolute(0x405438)"
+  ],
+  "get password database entry on Linux": [
+    "absolute(0x407371)"
+  ],
+  "get socket status": [
+    "absolute(0x40248a)",
+    "absolute(0x40329c)"
+  ],
+  "lock file": [
+    "absolute(0x40858f)"
+  ],
+  "move file": [
+    "absolute(0x406549)",
+    "absolute(0x407d11)"
+  ],
+  "persist via .desktop autostart": [
+    "absolute(0x407d11)"
+  ],
+  "persist via rc script": [
+    "absolute(0x407d11)"
+  ],
+  "persist via shell profile or rc file": [
+    "absolute(0x407d11)"
+  ],
+  "query environment variable": [
+    "absolute(0x407d11)"
+  ],
+  "read and send data from client to server": [
+    "absolute(0x406549)"
+  ],
+  "read file on Linux": [
+    "absolute(0x405438)",
+    "absolute(0x4059ad)",
+    "absolute(0x406549)"
+  ],
+  "receive and write data from server to client": [
+    "absolute(0x406549)"
+  ],
+  "receive data": [
+    "absolute(0x403b77)",
+    "absolute(0x403f18)",
+    "absolute(0x405deb)",
+    "absolute(0x406549)"
+  ],
+  "receive data on socket": [
+    "absolute(0x403b77)",
+    "absolute(0x403f18)",
+    "absolute(0x405deb)",
+    "absolute(0x406549)"
+  ],
+  "reference Base64 string": [
+    "no address"
+  ],
+  "resolve DNS": [
+    "absolute(0x401da1)",
+    "absolute(0x404f43)"
+  ],
+  "send data": [
+    "absolute(0x405deb)",
+    "absolute(0x406549)"
+  ],
+  "send data on socket": [
+    "absolute(0x403cd2)",
+    "absolute(0x404040)",
+    "absolute(0x4059ad)",
+    "absolute(0x405deb)",
+    "absolute(0x406549)"
+  ],
+  "set current directory": [
+    "absolute(0x40231e)"
+  ],
+  "set socket configuration": [
+    "absolute(0x40256a)",
+    "absolute(0x404256)",
+    "absolute(0x404323)",
+    "absolute(0x40440a)",
+    "absolute(0x404bd2)"
+  ],
+  "terminate process": [
+    "absolute(0x40256a)",
+    "absolute(0x402eb8)",
+    "absolute(0x405171)",
+    "absolute(0x40868a)",
+    "absolute(0x408753)"
+  ],
+  "terminate process via kill": [
+    "absolute(0x402424)",
+    "absolute(0x407ac9)",
+    "absolute(0x40868a)"
+  ],
+  "write and execute a file": [
+    "absolute(0x406549)",
+    "absolute(0x407bbd)",
+    "absolute(0x407d11)"
+  ],
+  "write file on Linux": [
+    "absolute(0x401e59)",
+    "absolute(0x401e74)",
+    "absolute(0x402818)",
+    "absolute(0x402853)",
+    "absolute(0x4028c6)",
+    "absolute(0x402901)",
+    "absolute(0x40293c)",
+    "absolute(0x4029af)",
+    "absolute(0x4029f6)",
+    "absolute(0x402a6a)",
+    "absolute(0x402b87)",
+    "absolute(0x402c13)",
+    "absolute(0x402cbf)",
+    "absolute(0x402ea9)",
+    "absolute(0x403198)",
+    "absolute(0x403268)",
+    "absolute(0x404bb7)",
+    "absolute(0x407026)",
+    "absolute(0x4072cf)",
+    "absolute(0x40752f)",
+    "absolute(0x4075d1)",
+    "absolute(0x407909)",
+    "absolute(0x407c3c)",
+    "absolute(0x407e9f)",
+    "absolute(0x40818b)",
+    "absolute(0x408276)",
+    "absolute(0x40831f)",
+    "absolute(0x4083c8)",
+    "absolute(0x408471)"
+  ]
+}

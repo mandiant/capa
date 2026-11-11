@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "description": "rule matches produced by the default ruleset against the committed feature freezes",
+  "snapshots": [
+    {
+      "name": "pma01-01-dll",
+      "freeze": "pma01-01-dll.frz",
+      "matches": "pma01-01-dll.matches.json",
+      "explanation": "Smallest PE 32-bit DLL in the corpus. Fast baseline for the PE DLL path through the viv backend (exports, imports, small function count).",
+      "generated_at_rules_commit": "ffd03fc584e87fed57ddf225c8ab3cd0345dc8cf"
+    },
+    {
+      "name": "7351f-elf",
+      "freeze": "7351f-elf.frz",
+      "matches": "7351f-elf.matches.json",
+      "explanation": "ELF binary via the viv backend. Exercises the ELF loader plus OS/arch detection for non-PE samples.",
+      "generated_at_rules_commit": "ffd03fc584e87fed57ddf225c8ab3cd0345dc8cf"
+    },
+    {
+      "name": "1c444-dotnet",
+      "freeze": "1c444-dotnet.frz",
+      "matches": "1c444-dotnet.matches.json",
+      "explanation": "Small .NET assembly. Exercises the dotnet backend (dnfile/dotnetfile), which is a completely separate extraction pipeline from viv.",
+      "generated_at_rules_commit": "ffd03fc584e87fed57ddf225c8ab3cd0345dc8cf"
+    }
+  ]
+}
