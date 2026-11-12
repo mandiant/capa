@@ -1146,14 +1146,7 @@
       "file": "mimikatz",
       "location": "function=0x40E5C2",
       "feature": "count(basic blocks): 7",
-      "explanation": "7 basic blocks in function",
-      "marks": [
-        {
-          "backend": "ghidra",
-          "mark": "xfail",
-          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
-        }
-      ]
+      "explanation": "7 basic blocks in function"
     },
     {
       "file": "mimikatz",
@@ -1170,7 +1163,7 @@
         {
           "backend": "ghidra",
           "mark": "xfail",
-          "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
+          "reason": "for `call [ptr]`, the Ghidra extractor emits `calls from` for both the pointer and its resolved target, so it counts 4"
         }
       ]
     },
