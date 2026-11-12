@@ -18,6 +18,7 @@
 
 - fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
 - rules: do not write the ruleset cache when enable_cache is false #3223
+- ghidra: create functions at code referenced only from data pointers, like callback tables @Somay-kousis #3232
 
 ### capa Explorer Web
 
