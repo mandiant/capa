@@ -17,7 +17,8 @@ Data-driven feature snapshot tests.
 
 For every entry in `tests/fixtures/snapshots/features/manifest.json`, this
 module regenerates a capa freeze from the corresponding sample via
-`capa.features.freeze.main --reproducible`, compares it byte-for-byte
+`capa.features.freeze.main --reproducible`, compares the decoded freeze 
+contents against the committed .frz
 against the committed `.frz` file, and on mismatch renders a unified diff
 of the freeze contents so a reviewer can see which features appeared,
 disappeared, or moved.
@@ -251,6 +252,11 @@ def test_feature_snapshot(snapshot: FeatureSnapshot):
     actual = _regenerate(snapshot)
 
     if actual == expected:
+        return
+
+    # compressed bytes depend on the zlib implementation (e.g. zlib-ng on Fedora);
+    # the freeze contents are what matter, so compare the decoded documents.
+    if _load_freeze_doc(actual) == _load_freeze_doc(expected):
         return
 
     pytest.fail(_format_mismatch(snapshot, expected, actual))

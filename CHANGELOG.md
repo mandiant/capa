@@ -17,7 +17,11 @@
 ### Bug Fixes
 
 - fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
+<<<<<<< HEAD
 - fix: ida: use EA-based IDAPython APIs to avoid deprecation warnings on IDA 9.4+ @Henglie #3222
+=======
+- rules: do not write the ruleset cache when enable_cache is false #3223
+>>>>>>> origin/master
 
 ### capa Explorer Web
 
@@ -26,6 +30,7 @@
 ### Development
 - tests: use user leaf function 0x401517 in mimikatz calls-from fixtures for IDA 9.5 compatibility @mr-tz
 - ci: key setup-uv cache on pyproject.toml in idalib-tests @mr-tz
+- tests: compare decoded freeze documents in snapshot tests so zlib-ng platforms pass @zxan #3229
 
 ### Raw diffs
 - [capa v10.0.0...master](https://github.com/mandiant/capa/compare/v10.0.0...master)
