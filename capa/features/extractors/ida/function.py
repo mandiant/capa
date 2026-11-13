@@ -33,11 +33,10 @@ def extract_function_calls_to(fh: FunctionHandle):
 
 def extract_function_loop(fh: FunctionHandle):
     """extract loop indicators from a function"""
-    f: idaapi.func_t = fh.inner
     edges = []
 
     # construct control flow graph
-    for bb in idaapi.FlowChart(f):
+    for bb in capa.features.extractors.ida.helpers.get_function_blocks(fh.inner, flags=0):
         for succ in bb.succs():
             edges.append((bb.start_ea, succ.start_ea))
 

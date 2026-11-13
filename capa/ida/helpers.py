@@ -23,6 +23,7 @@ import idaapi
 import ida_ida
 import ida_nalt
 import ida_bytes
+import ida_funcs
 import ida_loader
 from netnode import netnode
 
@@ -98,6 +99,33 @@ else:
         return ida_nalt.retrieve_input_file_sha256().hex()
 
 
+# IDA 9.4 deprecated the pointer-based IDAPython APIs in favor of EA-based
+# variants. detect the new APIs once here and define helpers so the plugin
+# can use a single interface on all supported IDA versions.
+if hasattr(ida_funcs, "get_func_entry_info"):
+
+    def get_func_bounds(ea):
+        """get function entry info containing the given address, or None"""
+        fi = ida_funcs.func_entry_info_t()
+        if not ida_funcs.get_func_entry_info(fi, ea):
+            return None
+        return fi
+
+    def get_func_start_ea(ea):
+        start = ida_funcs.get_func_start(ea)
+        return None if start == idaapi.BADADDR else start
+
+else:
+
+    def get_func_bounds(ea):
+        """get function containing the given address, or None"""
+        return idaapi.get_func(ea)
+
+    def get_func_start_ea(ea):
+        f = idaapi.get_func(ea)
+        return f if f is None else f.start_ea
+
+
 def inform_user_ida_ui(message):
     # this isn't a logger, this is IDA's logging facility
     idaapi.info(f"{message}. Please refer to IDA Output window for more information.")  # noqa: G004
@@ -145,14 +173,7 @@ def get_disasm_line(va):
 
 def is_func_start(ea):
     """check if function stat exists at virtual address"""
-    f = idaapi.get_func(ea)
-    return f and f.start_ea == ea
-
-
-def get_func_start_ea(ea):
-    """ """
-    f = idaapi.get_func(ea)
-    return f if f is None else f.start_ea
+    return get_func_start_ea(ea) == ea
 
 
 def collect_metadata(rules: list[Path]):

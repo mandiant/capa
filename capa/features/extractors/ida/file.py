@@ -148,7 +148,7 @@ def extract_file_section_names() -> Iterator[tuple[Feature, Address]]:
         - Check 'Load resource sections' when opening binary in IDA manually
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
-        yield Section(idaapi.get_segm_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
+        yield Section(capa.features.extractors.ida.helpers.get_segment_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
 
 
 def extract_file_strings() -> Iterator[tuple[Feature, Address]]:
@@ -180,7 +180,7 @@ def extract_file_function_names() -> Iterator[tuple[Feature, Address]]:
     """
     for ea in idautils.Functions():
         addr = AbsoluteVirtualAddress(ea)
-        if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
+        if capa.features.extractors.ida.helpers.get_func_flags(ea) & idaapi.FUNC_LIB:
             name = idaapi.get_name(ea)
             yield FunctionName(name), addr
             if name.startswith("_"):

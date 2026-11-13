@@ -17,6 +17,7 @@
 ### Bug Fixes
 
 - fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
+- fix: ida: use EA-based IDAPython APIs to avoid deprecation warnings on IDA 9.4+ @Henglie #3222
 - rules: do not write the ruleset cache when enable_cache is false #3223
 
 ### capa Explorer Web
