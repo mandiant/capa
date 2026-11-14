@@ -148,3 +148,27 @@ def test_rule_reformat_string_description():
 
     rule = capa.rules.Rule.from_yaml(src)
     assert rule.to_yaml() == src
+
+
+def test_rule_reformat_namespace_features_with_description():
+    # rules whose namespace, name, or description contains the word "features"
+    # should not have their meta description incorrectly indented (see #3134)
+    src = textwrap.dedent("""
+        rule:
+          meta:
+            name: test rule with features
+            namespace: impact/features
+            authors:
+              - user@domain.com
+            description: looks for security features
+            scopes:
+              static: function
+              dynamic: process
+          features:
+            - and:
+              - string: foo
+                description: bar
+        """).lstrip()
+
+    rule = capa.rules.Rule.from_yaml(src)
+    assert rule.to_yaml() == src

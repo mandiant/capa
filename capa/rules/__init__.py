@@ -1468,8 +1468,11 @@ class Rule:
         # so, add the two extra spaces that we've determined we need through experimentation.
         # see #263
         # only do this for the features section, so the meta description doesn't get reformatted
-        # assumes features section always exists
-        features_offset = doc.find("features")
+        # match the top-level 'features:' section under 'rule:' so occurrences of the word
+        # 'features' in rule name, namespace, description, or author are not falsely matched
+        # (see #3134)
+        match = re.search(r"^  features:\s*(?:#.*)?$", doc, re.MULTILINE)
+        features_offset = match.start() if match else doc.find("features")
         doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
 
         # for negative hex numbers, yaml dump outputs:
