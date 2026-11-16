@@ -22,7 +22,7 @@ from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
-from capa.features.extractors.elf import SymTab
+from capa.features.extractors.viv.helpers import get_elf_symbol_functions
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
@@ -30,24 +30,13 @@ def extract_function_symtab_names(
     fh: FunctionHandle,
 ) -> Iterator[tuple[Feature, Address]]:
     if fh.inner.vw.metadata["Format"] == "elf":
-        # the file's symbol table gets added to the metadata of the vivisect workspace.
-        # this is in order to eliminate the computational overhead of refetching symtab each time.
-        if "symtab" not in fh.ctx["cache"]:
-            try:
-                fh.ctx["cache"]["symtab"] = SymTab.from_viv(fh.inner.vw.parsedbin)
-            except Exception:
-                fh.ctx["cache"]["symtab"] = None
+        # index the symbol table once and cache it, to avoid rescanning it for each function.
+        if "elf_symbol_functions" not in fh.ctx["cache"]:
+            fh.ctx["cache"]["elf_symbol_functions"] = get_elf_symbol_functions(fh.inner.vw.parsedbin)
 
-        symtab = fh.ctx["cache"]["symtab"]
-        if symtab:
-            for symbol in symtab.get_symbols():
-                sym_name = symtab.get_name(symbol)
-                sym_value = symbol.value
-                sym_info = symbol.info
-
-                STT_FUNC = 0x2
-                if sym_value == fh.address and sym_info & STT_FUNC != 0:
-                    yield FunctionName(sym_name), fh.address
+        funcs = fh.ctx["cache"]["elf_symbol_functions"]
+        for sym_name in funcs.get(fh.address, ()):
+            yield FunctionName(sym_name), fh.address
 
 
 def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
