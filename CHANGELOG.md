@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+- fix: render numeric count features without crashing in very verbose output @asucodes #3120
+
 ### New Features
 - Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
 
