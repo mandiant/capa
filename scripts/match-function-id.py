@@ -102,7 +102,7 @@ def main(argv=None):
         logger.debug("registering viv function analyzer: %s", repr(analyzer))
         analyzers.append(analyzer)
 
-    vw = viv_utils.getWorkspace(str(args.input_file), analyze=True, should_save=False)
+    vw = capa.loader.get_workspace(args.input_file, input_format, [])
 
     functions = vw.getFunctions()
     if args.function:

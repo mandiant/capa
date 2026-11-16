@@ -147,6 +147,48 @@ def test_get_rules_skips_empty_yaml(tmp_path):
     assert len(rules) == 1
 
 
+def test_get_rules_enable_cache_false_disables_read_and_write(tmp_path):
+    # when enable_cache is False, get_rules must neither read from nor write to the cache (issue #3223)
+    import capa.rules.cache
+
+    (tmp_path / "rule.yml").write_text(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - api: CreateFile
+            """),
+        encoding="utf-8",
+    )
+
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir()
+    (rules_dir / "rule.yml").write_text((tmp_path / "rule.yml").read_text(encoding="utf-8"), encoding="utf-8")
+
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+
+    # first load with cache enabled: writes a cache file
+    rules = capa.rules.get_rules([rules_dir], cache_dir=cache_dir, enable_cache=True)
+    assert len(rules) == 1
+    content = capa.rules.cache.get_ruleset_content(rules)
+    cache_path = capa.rules.cache.get_cache_path(cache_dir, capa.rules.cache.compute_cache_identifier(content))
+    assert cache_path.exists()
+
+    # second load with cache enabled: hits the cache
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is not None
+
+    # with cache disabled: no read (returns fresh ruleset) and no write to a fresh cache dir
+    fresh_cache_dir = tmp_path / "fresh-cache"
+    rules2 = capa.rules.get_rules([rules_dir], cache_dir=fresh_cache_dir, enable_cache=False)
+    assert len(rules2) == 1
+    assert not fresh_cache_dir.exists() or not list(fresh_cache_dir.glob("*.cache"))
+
+
 def test_invalid_rule_feature():
     with pytest.raises(capa.rules.InvalidRule):
         capa.rules.Rule.from_yaml(

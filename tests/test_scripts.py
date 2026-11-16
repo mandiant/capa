@@ -428,3 +428,30 @@ def test_feature_regex_registry_control_set_checks_all_features():
     assert lint_instance.check_features(ctx, [ok_regex, bad_regex]) is True
     assert lint_instance.check_features(ctx, [correct_regex]) is False
     assert lint_instance.check_features(ctx, [unrelated_currentcontrolset_regex]) is False
+
+
+def test_feature_regex_without_literal():
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    from capa.features.common import Regex
+
+    lint_instance = lint_module.FeatureRegexWithoutLiteral()
+    placeholder_rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: placeholder
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - api: CreateFile
+        """)
+    )
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([placeholder_rule]), is_thorough=False)
+
+    assert lint_instance.check_features(ctx, [Regex("/malware[0-9]+/")]) is False
+    assert lint_instance.check_features(ctx, [Regex("/(test|example)/")]) is False
+    assert lint_instance.check_features(ctx, [Regex("/add/i")]) is True
+    assert lint_instance.check_features(ctx, [Regex("/(test|b)/")]) is True

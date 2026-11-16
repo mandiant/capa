@@ -926,7 +926,7 @@
     },
     {
       "file": "mimikatz.ghidra.be2",
-      "location": "function=0x4702FD",
+      "location": "function=0x401517",
       "feature": "characteristic: calls from",
       "expected": false
     },
@@ -995,7 +995,7 @@
     },
     {
       "file": "mimikatz.ghidra.be2",
-      "location": "function=0x4702FD",
+      "location": "function=0x401517",
       "feature": "count(characteristic(calls from)): 0",
       "explanation": "function has no calls"
     },
@@ -1037,12 +1037,6 @@
           "reason": "Ghidra identifies different function boundaries; see ghidra-tagged count variant"
         }
       ]
-    },
-    {
-      "file": "mimikatz.ghidra.be2",
-      "location": "function=0x4702FD",
-      "feature": "count(characteristic(calls from)): 0",
-      "explanation": "Ghidra: function has no calls"
     },
     {
       "file": "mimikatz.ghidra.be2",

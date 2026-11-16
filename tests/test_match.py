@@ -386,3 +386,139 @@ def test_match_no_duplicate_candidate_evaluations():
 
     # Ensure Target Rule was evaluated and returned exactly ONCE
     assert len(matches["Target Rule"]) == 1
+
+
+def test_required_literal_unit():
+    assert capa.rules._compute_best_required_literals("test[0-9]+") == {"test"}
+    assert capa.rules._compute_best_required_literals("a[0-9]b") == set()
+    assert capa.rules._compute_best_required_literals("(test|b)") == set()
+    assert capa.rules._compute_best_required_literals("(test|example)") == {"test", "example"}
+    assert capa.rules._compute_best_required_literals("(test|(foo|bar))") == set()
+    assert capa.rules._compute_best_required_literals("(test|(example|another))") == {"test", "example", "another"}
+    assert capa.rules._compute_best_required_literals("ab+cd") == set()
+    assert capa.rules._compute_best_required_literals("ab{4}cd") == {"abbbbcd"}
+
+
+def test_string_literal_prefilter_regex_confirmation():
+    rule = textwrap.dedent("""
+        rule:
+            meta:
+                name: test regex confirmation
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /malware[0-9]+/
+        """)
+    r = capa.rules.Rule.from_yaml(rule)
+
+    feat1 = {capa.features.common.String("found malware123 sample"): {0x0}}
+    _, matches1 = match([r], feat1, 0x0)
+    assert "test regex confirmation" in matches1
+
+    feat2 = {capa.features.common.String("this malwareXYZ string"): {0x0}}
+    _, matches2 = match([r], feat2, 0x0)
+    assert "test regex confirmation" not in matches2
+
+    feat3 = {capa.features.common.String("totally clean"): {0x0}}
+    _, matches3 = match([r], feat3, 0x0)
+    assert "test regex confirmation" not in matches3
+
+
+def test_differential_parity_prefilter_on_vs_off():
+    """
+    Differential parity test: Match rules with prefilter ON vs OFF (string_literal_index reset to None).
+    Expected: identical match results in both.
+    """
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Rule 1 Substring
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - substring: "specific_literal_string"
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Rule 2 Regex
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - string: /pattern_[0-9]{3}/
+                """)
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent("""
+                rule:
+                    meta:
+                        name: Rule 3 No Literal Regex
+                        scopes:
+                            static: function
+                            dynamic: process
+                    features:
+                        - string: /[a-z]/
+                """)
+        ),
+    ]
+
+    addr = capa.features.address.AbsoluteVirtualAddress(0x0)
+    features: capa.engine.FeatureSet = {
+        capa.features.common.String("here is a specific_literal_string inside"): {addr},
+        capa.features.common.String("here is pattern_123 inside"): {addr},
+        capa.features.common.String("here is pattern_abc inside"): {addr},
+    }
+
+    ruleset_on = capa.rules.RuleSet(rules)
+    _, matches_on = ruleset_on.match(Scope.FUNCTION, features, addr)
+
+    ruleset_off = capa.rules.RuleSet(rules)
+    idx_off = ruleset_off._feature_indexes_by_scopes[Scope.FUNCTION]
+    assert idx_off.string_literal_index is not None
+    for entries in idx_off.string_literal_index.values():
+        for rule_name, wanted_feature in entries:
+            idx_off.string_rules.setdefault(rule_name, []).append(wanted_feature)
+    idx_off.string_literal_index = None
+
+    _, matches_off = ruleset_off.match(Scope.FUNCTION, features, addr)
+
+    assert matches_on.keys() == matches_off.keys()
+    for k in matches_on:
+        assert len(matches_on[k]) == len(matches_off[k])
+
+
+def test_string_literal_prefilter_shared_literal():
+    str_regex = textwrap.dedent("""
+        rule:
+            meta:
+                name: rule 1 shared literal
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /.*shared_key.*/
+        """)
+    str_search = textwrap.dedent("""
+        rule:
+            meta:
+                name: rule 2 shared literal
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - string: /shared_key/
+        """)
+    rule_regex = capa.rules.Rule.from_yaml(str_regex)
+    rule_search = capa.rules.Rule.from_yaml(str_search)
+
+    feat = {capa.features.common.String("prefix shared_key suffix"): {0x0}}
+    _, matches = match([rule_regex, rule_search], feat, 0x0)
+    assert "rule 1 shared literal" in matches
+    assert "rule 2 shared literal" in matches

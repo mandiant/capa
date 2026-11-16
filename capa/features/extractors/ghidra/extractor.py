@@ -62,8 +62,15 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
         # Register cleanup to run when the extractor is garbage collected or when the program exits.
         # We use weakref.finalize instead of __del__ to avoid issues with reference cycles and
         # to ensure deterministic cleanup on interpreter shutdown.
-        if self.ctx_manager or self.tmpdir:
+        self._finalizer = (
             weakref.finalize(self, cleanup, self.ctx_manager, self.tmpdir)
+            if (self.ctx_manager or self.tmpdir)
+            else None
+        )
+
+    def close(self):
+        if self._finalizer is not None:
+            self._finalizer()
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(ghidra_helpers.get_current_program().getImageBase().getOffset())
@@ -111,7 +118,10 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
 def cleanup(ctx_manager, tmpdir):
     if ctx_manager:
         with contextlib.suppress(Exception):
-            ctx_manager.__exit__(None, None, None)
+            import pyghidra
+
+            if pyghidra.started():
+                ctx_manager.__exit__(None, None, None)
     if tmpdir:
         with contextlib.suppress(Exception):
             tmpdir.cleanup()
