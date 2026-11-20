@@ -46,6 +46,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_VMRAY,
     FORMAT_DOTNET,
+    FORMAT_SCRIPT,
     FORMAT_DRAKVUF,
     FORMAT_UNKNOWN,
     FORMAT_BINJA_DB,
@@ -73,6 +74,7 @@ BACKEND_FREEZE = "freeze"
 BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_IDA = "ida"
 BACKEND_GHIDRA = "ghidra"
+BACKEND_SCRIPT = "script"
 
 CAPA_LOAD_VIV_WORKSPACE_ENV = "CAPA_LOAD_VIV_WORKSPACE"
 
@@ -534,6 +536,10 @@ def get_extractor(
         import capa.features.extractors.ghidra.extractor
 
         return capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(ctx_manager=cm, tmpdir=tmpdir)
+    elif backend == BACKEND_SCRIPT:
+        import capa.features.extractors.ts.extractor
+
+        return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(input_path)
     else:
         raise ValueError("unexpected backend: " + backend)
 
@@ -603,6 +609,11 @@ def get_file_extractors(input_file: Path, input_format: str) -> list[FeatureExtr
 
     elif input_format == FORMAT_BINEXPORT2:
         file_extractors = _get_binexport2_file_extractors(input_file)
+
+    elif input_format == FORMAT_SCRIPT:
+        import capa.features.extractors.ts.extractor
+
+        file_extractors.append(capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(input_file))
 
     return file_extractors
 

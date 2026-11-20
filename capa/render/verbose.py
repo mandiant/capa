@@ -56,6 +56,12 @@ def format_address(address: frz.Address) -> str:
     elif address.type == frz.AddressType.FILE:
         assert isinstance(address.value, int)
         return f"file+{capa.helpers.hex(address.value)}"
+    elif address.type == frz.AddressType.FILE_RANGE:
+        assert isinstance(address.value, tuple)
+        start, end = address.value
+        assert isinstance(start, int)
+        assert isinstance(end, int)
+        return f"file({capa.helpers.hex(start)}, {capa.helpers.hex(end)})"
     elif address.type == frz.AddressType.DN_TOKEN:
         assert isinstance(address.value, int)
         return f"token({capa.helpers.hex(address.value)})"

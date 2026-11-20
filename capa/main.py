@@ -52,6 +52,7 @@ from capa.loader import (
     BACKEND_FREEZE,
     BACKEND_GHIDRA,
     BACKEND_PEFILE,
+    BACKEND_SCRIPT,
     BACKEND_DRAKVUF,
     BACKEND_BINEXPORT2,
 )
@@ -88,6 +89,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_SCRIPT,
     FORMAT_DRAKVUF,
     STATIC_FORMATS,
     DYNAMIC_FORMATS,
@@ -597,6 +599,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
 
     elif input_format == FORMAT_BINEXPORT2:
         return BACKEND_BINEXPORT2
+
+    elif input_format == FORMAT_SCRIPT:
+        return BACKEND_SCRIPT
 
     else:
         return BACKEND_VIV
