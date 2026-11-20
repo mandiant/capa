@@ -4,6 +4,7 @@
 
 ### New Features
 - freeze: add `--reproducible` flag that zeros dynamic header metadata
+- tree-sitter: extract string features at file scope for script analysis @shishir-cyber #3152
 
 ### Breaking Changes
 

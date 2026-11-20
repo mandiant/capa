@@ -945,6 +945,9 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("cs_138cdc", "global", OS(OS_ANY), True),
     ("cs_138cdc", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
     ("cs_138cdc", "file", Format(FORMAT_SCRIPT), True),
+    ("cs_138cdc", "file", String("Not Found"), True),
+    ("cs_138cdc", "file", String("127.0.0.1"), True),
+    ("cs_138cdc", "file", String("X-Forwarded-For"), True),
     ("cs_138cdc", "file", Namespace("System"), True),
     ("cs_138cdc", "function=PSEUDO MAIN", String(""), True),
     ("cs_138cdc", "function=die", String("Not Found"), True),
@@ -1176,6 +1179,10 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted([
     ("py_24e48f", "file", Namespace("socket"), True),
     ("py_24e48f", "file", Namespace("threading.Timer"), True),
     ("py_24e48f", "file", Namespace("threading.Timer"), True),
+    ("py_24e48f", "file", String("/bin/true"), True),
+    ("py_24e48f", "file", String("http://example.com"), True),
+    ("py_24e48f", "file", String("IMEI"), True),
+    ("py_24e48f", "file", String("not-a-string-in-this-file"), False),
     ("py_24e48f", "function=icloud_phish", API("subprocess::Popen"), True),
     ("py_24e48f", "function=icloud_phish", Class("urllib2.Request"), True),
     ("py_24e48f", "function=icloud_phish", API("base64::encodestring"), True),
@@ -1256,6 +1263,7 @@ FEATURE_COUNT_TESTS_SCRIPTS = (
     ("py_24e48f", "function=get_itunes_backups", Namespace("socket"), 2),
     ("py_24e48f", "function=get_itunes_backups", Class("socket.socket"), 1),
     ("py_24e48f", "function=get_itunes_backups", API("socket.socket::ctor"), 1),
+    ("py_24e48f", "file", String("http://example.com"), 2),
 )
 
 
