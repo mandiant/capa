@@ -1433,21 +1433,17 @@ class Rule:
         # save off the existing hidden meta values,
         # emit the document,
         # and re-add the hidden meta.
+        # check for presence rather than truthiness,
+        # since `capa/nursery` is `False` for every rule outside nursery/.
         hidden_meta = {}
         for key in HIDDEN_META_KEYS:
-            value = meta.get(key)
-            if value:
-                hidden_meta[key] = value
-
-        for key in hidden_meta.keys():
-            del meta[key]
+            if key in meta:
+                hidden_meta[key] = meta.pop(key)
 
         ostream = io.BytesIO()
         self._get_ruamel_yaml_parser().dump(definition, ostream)
 
         for key, value in hidden_meta.items():
-            if value is None:
-                continue
             meta[key] = value
 
         doc = ostream.getvalue().decode("utf-8").rstrip("\n") + "\n"
