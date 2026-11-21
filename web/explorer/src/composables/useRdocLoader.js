@@ -16,6 +16,7 @@
 
 import { useToast } from "primevue/usetoast";
 import { isGzipped, decompressGzip, readFileAsText } from "@/utils/fileUtils";
+import { isVersionAtLeast } from "@/utils/versionUtils";
 
 const VT_REANALYZE_SUGGESTION =
     "If this is a VirusTotal or similar link, the file may need to be reanalyzed. Try again later.";
@@ -94,7 +95,7 @@ export function useRdocLoader() {
      */
     const checkVersion = (rdoc) => {
         const version = rdoc.meta.version;
-        if (version < MIN_SUPPORTED_VERSION) {
+        if (!isVersionAtLeast(version, MIN_SUPPORTED_VERSION)) {
             showToast(
                 "error",
                 "Unsupported Version",
