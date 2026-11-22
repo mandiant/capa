@@ -5,6 +5,8 @@
 ### New Features
 - Aho-Corasick automaton generation and scan of regex literals to speed up rule matching #3073 corkami@google.com
 
+- Add "loop" static characteristic in Extractors
+
 ### Breaking Changes
 
 ### New Rules (3)

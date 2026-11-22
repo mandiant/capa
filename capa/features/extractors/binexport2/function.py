@@ -39,22 +39,6 @@ def extract_function_calls_to(fh: FunctionHandle) -> Iterator[tuple[Feature, Add
         yield Characteristic("calls to"), AbsoluteVirtualAddress(caller_address)
 
 
-def extract_function_loop(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
-    fhi: FunctionContext = fh.inner
-
-    be2: BinExport2 = fhi.ctx.be2
-
-    flow_graph_index: int = fhi.flow_graph_index
-    flow_graph: BinExport2.FlowGraph = be2.flow_graph[flow_graph_index]
-
-    edges: list[tuple[int, int]] = []
-    for edge in flow_graph.edge:
-        edges.append((edge.source_basic_block_index, edge.target_basic_block_index))
-
-    if loops.has_loop(edges):
-        yield Characteristic("loop"), fh.address
-
-
 def extract_function_name(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
 
@@ -76,4 +60,4 @@ def extract_features(fh: FunctionHandle) -> Iterator[tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_function_name)
+FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_name)
