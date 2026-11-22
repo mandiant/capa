@@ -65,6 +65,18 @@ To use the Ghidra backend, specify it with the `-b` or `--backend` flag:
 $ capa -b ghidra /path/to/sample
 ```
 
+capa can also analyze programs directly from Ghidra projects by specifying the project file path (`.gpr`):
+
+```bash
+$ capa /path/to/project.gpr
+```
+
+If the project contains multiple programs, set the `CAPA_GHIDRA_PROGRAM_PATH` environment variable to specify which program to analyze:
+
+```bash
+$ CAPA_GHIDRA_PROGRAM_PATH=/myprogram capa /path/to/project.gpr
+```
+
 capa will:
 1.  Initialize a headless Ghidra instance.
 2.  Create a temporary project.
