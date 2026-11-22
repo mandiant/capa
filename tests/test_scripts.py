@@ -455,3 +455,46 @@ def test_feature_regex_without_literal():
     assert lint_instance.check_features(ctx, [Regex("/(test|example)/")]) is False
     assert lint_instance.check_features(ctx, [Regex("/add/i")]) is True
     assert lint_instance.check_features(ctx, [Regex("/(test|b)/")]) is True
+
+
+@pytest.mark.parametrize("value", ['""', '"  "', '" = an empty pattern"'])
+def test_feature_bytes_empty(value):
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent(f"""
+            rule:
+                meta:
+                    name: test empty bytes
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - bytes: {value}
+        """)
+    )
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([rule]), is_thorough=False)
+    features = lint_module.get_features(ctx, rule)
+    assert lint_module.FeatureBytesEmpty().check_features(ctx, features) is True
+
+
+def test_feature_bytes_not_empty():
+    sys.path.insert(0, str(CD / ".." / "scripts"))
+    import lint as lint_module
+
+    rule = capa.rules.Rule.from_yaml(
+        textwrap.dedent("""
+            rule:
+                meta:
+                    name: test bytes
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - bytes: 4D 5A 90 00
+        """)
+    )
+    ctx = lint_module.Context(samples={}, rules=capa.rules.RuleSet([rule]), is_thorough=False)
+    features = lint_module.get_features(ctx, rule)
+    assert lint_module.FeatureBytesEmpty().check_features(ctx, features) is False
