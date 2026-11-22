@@ -29,6 +29,13 @@ def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     get the threads associated with a given process
     """
     process: Process = ph.inner
+
+    if not process.threads:
+        # CAPE for linux doesn't record threads
+        # so we return a default 0 value
+        yield ThreadHandle(address=ThreadAddress(process=ph.address, tid=0), inner={})
+        return
+
     threads: list[int] = process.threads
 
     for thread in threads:
@@ -41,6 +48,9 @@ def extract_environ_strings(ph: ProcessHandle) -> Iterator[tuple[Feature, Addres
     extract strings from a process' provided environment variables.
     """
     process: Process = ph.inner
+
+    if not process.environ:
+        return
 
     for value in (value for value in process.environ.values() if value):
         yield String(value), ph.address
