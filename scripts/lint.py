@@ -49,7 +49,7 @@ import capa.helpers
 import capa.features.insn
 import capa.capabilities.common
 from capa.rules import Rule, RuleSet
-from capa.features.common import OS_AUTO, Regex, String, Feature, Substring
+from capa.features.common import OS_AUTO, Bytes, Regex, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")
@@ -845,6 +845,22 @@ class FeatureRegexWithoutLiteral(Lint):
         return False
 
 
+class FeatureBytesEmpty(Lint):
+    name = "feature bytes is empty"
+    recommendation = (
+        "an empty byte sequence is a prefix of every byte sequence, so it matches any bytes feature; "
+        + "specify the bytes to match"
+    )
+
+    def check_features(self, ctx: Context, features: list[Feature]):
+        for feature in features:
+            if isinstance(feature, Bytes):
+                assert isinstance(feature.value, bytes)
+                if len(feature.value) == 0:
+                    return True
+        return False
+
+
 class FeatureNegativeNumber(Lint):
     name = "feature value is negative"
     recommendation = "specify the number's two's complement representation"
@@ -1057,6 +1073,7 @@ def lint_meta(ctx: Context, rule: Rule):
 
 FEATURE_LINTS = (
     FeatureStringTooShort(),
+    FeatureBytesEmpty(),
     FeatureNegativeNumber(),
     FeatureNtdllNtoskrnlApi(),
     FeatureRegexContainsUnescapedPeriod(),

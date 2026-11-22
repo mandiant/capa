@@ -27,6 +27,7 @@
 - tests: use user leaf function 0x401517 in mimikatz calls-from fixtures for IDA 9.5 compatibility @mr-tz
 - ci: key setup-uv cache on pyproject.toml in idalib-tests @mr-tz
 - tests: compare decoded freeze documents in snapshot tests so zlib-ng platforms pass @zxan #3229
+- lint: flag `bytes` features with an empty value, which match any bytes feature @Jean-Regis-M #3239
 
 ### Raw diffs
 - [capa v10.0.0...master](https://github.com/mandiant/capa/compare/v10.0.0...master)
