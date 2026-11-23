@@ -16,8 +16,12 @@
 
 /**
  * Parse a dotted version string into numeric components.
- * A leading "v" is ignored. Non-numeric suffixes in a component are ignored
- * by parseInt, so "10.0.0-rc1" is treated as [10, 0, 0].
+ * A leading "v" is ignored. Parsing stops at the first component that does not
+ * start with a digit, so PEP 440 suffixes such as "10.0.0.dev0" or "10.0.0.post1"
+ * are treated as [10, 0, 0]. Non-numeric suffixes inside a component are ignored
+ * by parseInt, so "10.0.0-rc1" and "10.0.0+dev" are also treated as [10, 0, 0].
+ * This means pre-releases compare equal to their release, which is fine for a
+ * minimum-version check.
  * @param {string} version
  * @returns {number[]|null} Version parts, or null if the string cannot be parsed.
  */
@@ -29,11 +33,14 @@ export const parseVersion = (version) => {
     if (raw === "") {
         return null;
     }
-    const parts = raw.split(".").map((part) => {
-        const n = parseInt(part, 10);
-        return Number.isFinite(n) ? n : null;
-    });
-    if (parts.length === 0 || parts.some((n) => n === null)) {
+    const parts = [];
+    for (const part of raw.split(".")) {
+        if (!/^\d/.test(part)) {
+            break;
+        }
+        parts.push(parseInt(part, 10));
+    }
+    if (parts.length === 0) {
         return null;
     }
     return parts;

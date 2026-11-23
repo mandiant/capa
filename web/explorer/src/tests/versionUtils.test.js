@@ -27,6 +27,14 @@ describe("parseVersion", () => {
         expect(parseVersion("v10.0.0")).toEqual([10, 0, 0]);
     });
 
+    it("ignores pre-release, build and PEP 440 suffixes", () => {
+        expect(parseVersion("10.0.0-rc1")).toEqual([10, 0, 0]);
+        expect(parseVersion("10.0.0+dev")).toEqual([10, 0, 0]);
+        expect(parseVersion("10.0.0.dev0")).toEqual([10, 0, 0]);
+        expect(parseVersion("10.0.0.post1")).toEqual([10, 0, 0]);
+        expect(parseVersion("9.0.0rc1")).toEqual([9, 0, 0]);
+    });
+
     it("returns null for empty or non-numeric input", () => {
         expect(parseVersion("")).toBeNull();
         expect(parseVersion("not-a-version")).toBeNull();
@@ -39,7 +47,6 @@ describe("compareVersions", () => {
     it("compares major versions numerically, not lexicographically", () => {
         // The previous string comparison treated "10.0.0" as less than "7.0.0"
         // because "1" < "7". Numeric comparison must not do that.
-        expect("10.0.0" < "7.0.0").toBe(true);
         expect(compareVersions("10.0.0", "7.0.0")).toBeGreaterThan(0);
         expect(compareVersions("7.0.0", "10.0.0")).toBeLessThan(0);
     });
@@ -77,6 +84,13 @@ describe("isVersionAtLeast", () => {
         expect(isVersionAtLeast("6.9.9", min)).toBe(false);
         expect(isVersionAtLeast("6.10.0", min)).toBe(false);
         expect(isVersionAtLeast("0.0.0", min)).toBe(false);
+    });
+
+    it("accepts dev and pre-release builds of supported versions", () => {
+        expect(isVersionAtLeast("10.0.0.dev0", min)).toBe(true);
+        expect(isVersionAtLeast("9.0.0.post1", min)).toBe(true);
+        expect(isVersionAtLeast("7.0.0-rc1", min)).toBe(true);
+        expect(isVersionAtLeast("6.9.9.dev0", min)).toBe(false);
     });
 
     it("rejects unparseable versions", () => {
