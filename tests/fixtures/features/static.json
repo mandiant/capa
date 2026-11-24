@@ -402,7 +402,14 @@
       "file": "kernel32-64",
       "location": "function=0x180048230,bb=0x180048230,insn=0x18004823D",
       "feature": "operand[1].offset: 0x8",
-      "explanation": "mov eax, [rcx+8]; no SIB, base isn't the stack"
+      "explanation": "mov eax, [rcx+8]; no SIB, base isn't the stack",
+      "marks": [
+        {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
+        }
+      ]
     },
     {
       "file": "kernel32-64",
@@ -429,7 +436,14 @@
       "file": "kernel32-64",
       "location": "function=0x18006AFEC,bb=0x18006B060,insn=0x18006B060",
       "feature": "operand[1].offset: 0xE",
-      "explanation": "movzx ecx, byte [r12+0Eh]; r12 needs a SIB byte too"
+      "explanation": "movzx ecx, byte [r12+0Eh]; r12 needs a SIB byte too",
+      "marks": [
+        {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
+        }
+      ]
     },
     {
       "file": "kernel32-64",
@@ -437,6 +451,11 @@
       "feature": "operand[1].offset: 0x2",
       "explanation": "movzx eax, word [r8+rax*8+2]; SIB with index, base isn't the stack",
       "marks": [
+        {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
+        },
         {
           "backend": "ghidra",
           "mark": "xfail",
@@ -452,6 +471,11 @@
       "explanation": "cmp [esp+edx*4+18h], ecx; indexing an array of locals",
       "marks": [
         {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja extracts an offset from this indexed stack operand; see #3241"
+        },
+        {
           "backend": "viv",
           "mark": "xfail",
           "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
@@ -465,6 +489,11 @@
       "expected": false,
       "explanation": "mov [rsp+rcx*8+70h], eax; indexing an array of locals",
       "marks": [
+        {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja extracts an offset from this indexed stack operand; see #3241"
+        },
         {
           "backend": "viv",
           "mark": "xfail",
@@ -485,6 +514,11 @@
       "explanation": "mov [ebp+ecx-100h], dl; indexing a local buffer",
       "marks": [
         {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja extracts an offset from this indexed stack operand; see #3241"
+        },
+        {
           "backend": "viv",
           "mark": "xfail",
           "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
@@ -498,6 +532,11 @@
       "expected": false,
       "explanation": "mov [rbp+rax*2+290h], r8w; indexing a local buffer",
       "marks": [
+        {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja extracts an offset from this indexed stack operand; see #3241"
+        },
         {
           "backend": "viv",
           "mark": "xfail",
@@ -517,6 +556,11 @@
       "explanation": "movzx eax, word [rbp+rax*2+18h]; rbp holds a global's address",
       "marks": [
         {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
+        },
+        {
           "backend": "viv",
           "mark": "xfail",
           "reason": "capa can't tell that rbp isn't the frame pointer here; passes until SP/BP are excluded for SIB operands; see #3241"
@@ -535,6 +579,11 @@
       "explanation": "mov eax, [ebp+28h]; ebp holds a pointer argument",
       "marks": [
         {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja excludes EBP/RBP, and uses the LLIL operand index; see #3241"
+        },
+        {
           "backend": "viv",
           "mark": "xfail",
           "reason": "capa can't tell that ebp isn't the frame pointer here, so SP/BP are always excluded; see #3241"
@@ -547,6 +596,11 @@
       "feature": "operand[1].offset: 0x50",
       "explanation": "mov r8, [rbp+50h]; rbp holds the first argument",
       "marks": [
+        {
+          "backend": "binja",
+          "mark": "xfail",
+          "reason": "Binary Ninja excludes EBP/RBP, and uses the LLIL operand index; see #3241"
+        },
         {
           "backend": "viv",
           "mark": "xfail",
