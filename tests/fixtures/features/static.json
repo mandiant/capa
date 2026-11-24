@@ -373,6 +373,189 @@
     },
     {
       "file": "mimikatz",
+      "location": "function=0x41D8FB,bb=0x41D8FB,insn=0x41D901",
+      "feature": "operand[0].offset: 0xC",
+      "expected": false,
+      "explanation": "cmp [ebp+0Ch], eax; no SIB, ebp is the frame pointer"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40E8A6,bb=0x40E8A6,insn=0x40E8A7",
+      "feature": "operand[1].offset: 0x8",
+      "expected": false,
+      "explanation": "mov esi, [esp+8]; SIB, stack pointer base",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x43B938,bb=0x43B938,insn=0x43B93F",
+      "feature": "operand[0].offset: 0x10",
+      "explanation": "mov [esi+eax+10h], ecx; SIB with index, base isn't the stack"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180048230,bb=0x180048230,insn=0x18004823D",
+      "feature": "operand[1].offset: 0x8",
+      "explanation": "mov eax, [rcx+8]; no SIB, base isn't the stack"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180015AE8,bb=0x180015AE8,insn=0x180015B14",
+      "feature": "operand[0].offset: 0x180",
+      "expected": false,
+      "explanation": "mov [rbp+180h], rax; no SIB, rbp is the frame pointer"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180033270,bb=0x180033270,insn=0x180033276",
+      "feature": "operand[0].offset: 0x20",
+      "expected": false,
+      "explanation": "mov [rsp+20h], ax; SIB, stack pointer base",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x18006AFEC,bb=0x18006B060,insn=0x18006B060",
+      "feature": "operand[1].offset: 0xE",
+      "explanation": "movzx ecx, byte [r12+0Eh]; r12 needs a SIB byte too"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180048230,bb=0x180048230,insn=0x18004825F",
+      "feature": "operand[1].offset: 0x2",
+      "explanation": "movzx eax, word [r8+rax*8+2]; SIB with index, base isn't the stack",
+      "marks": [
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract this offset; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x40BE58,bb=0x40BECA,insn=0x40BECA",
+      "feature": "operand[0].offset: 0x18",
+      "expected": false,
+      "explanation": "cmp [esp+edx*4+18h], ecx; indexing an array of locals",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x18006267C,bb=0x18006275C,insn=0x18006276C",
+      "feature": "operand[0].offset: 0x70",
+      "expected": false,
+      "explanation": "mov [rsp+rcx*8+70h], eax; indexing an array of locals",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
+        },
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra extracts an offset from this indexed stack operand; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x401170,bb=0x4011CF,insn=0x4011D4",
+      "feature": "operand[0].offset: -0x100",
+      "expected": false,
+      "explanation": "mov [ebp+ecx-100h], dl; indexing a local buffer",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x1800452E4,bb=0x180045AE1,insn=0x180045AF2",
+      "feature": "operand[0].offset: 0x290",
+      "expected": false,
+      "explanation": "mov [rbp+rax*2+290h], r8w; indexing a local buffer",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "viv extracts offsets from SIB operands based on SP/BP; see #3241"
+        },
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra extracts an offset from this indexed stack operand; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x18001A940,bb=0x18001A9A7,insn=0x18001A9CB",
+      "feature": "operand[1].offset: 0x18",
+      "explanation": "movzx eax, word [rbp+rax*2+18h]; rbp holds a global's address",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "capa can't tell that rbp isn't the frame pointer here; passes until SP/BP are excluded for SIB operands; see #3241"
+        },
+        {
+          "backend": "ghidra",
+          "mark": "xfail",
+          "reason": "Ghidra does not extract this offset; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x41EAFF,bb=0x41EB47,insn=0x41EB47",
+      "feature": "operand[1].offset: 0x28",
+      "explanation": "mov eax, [ebp+28h]; ebp holds a pointer argument",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "capa can't tell that ebp isn't the frame pointer here, so SP/BP are always excluded; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x18001F438,bb=0x18001F4AC,insn=0x18001F4B0",
+      "feature": "operand[1].offset: 0x50",
+      "explanation": "mov r8, [rbp+50h]; rbp holds the first argument",
+      "marks": [
+        {
+          "backend": "viv",
+          "mark": "xfail",
+          "reason": "capa can't tell that rbp isn't the frame pointer here, so SP/BP are always excluded; see #3241"
+        }
+      ]
+    },
+    {
+      "file": "mimikatz",
       "location": "function=0x40105D",
       "feature": "number: 0xFF",
       "explanation": "small number"
