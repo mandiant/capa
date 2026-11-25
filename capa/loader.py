@@ -513,6 +513,8 @@ def get_extractor(
 
                 ghidra_context.set_context(program, flat_api, monitor)
 
+                capa.ghidra.helpers.create_functions_at_data_pointers()
+
                 # Wrapper to handle cleanup of program (consumer) and project
                 class GhidraContextWrapper:
                     def __init__(self, project_cm, program, consumer):

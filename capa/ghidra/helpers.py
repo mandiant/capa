@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import struct
 import logging
 import datetime
 import contextlib
@@ -137,6 +138,91 @@ def is_supported_arch_type():
         logger.error("-" * 80)
         return False
     return True
+
+
+def create_functions_at_data_pointers() -> int:
+    """
+    create functions at code that Ghidra disassembled but did not put in any function.
+
+    Ghidra's auto-analysis disassembles the targets of pointers stored in data,
+    like tables of callbacks in .rdata, but it does not always create functions there.
+    the code keeps a LAB_ label, no function contains it, and so capa never analyzes it.
+    for example, mimikatz.exe_:0x40e5c2 is only referenced from a table at 0x476258.
+    see #1750.
+
+    so, after analysis, find pointer-sized values in initialized, non-executable memory
+    that point at the start of an instruction that no function contains,
+    and create a function there.
+
+    returns the number of pointer targets where a function was created.
+    """
+    from ghidra.app.cmd.function import CreateFunctionCmd
+
+    program = get_current_program()
+    monitor = get_monitor()
+    memory = program.getMemory()
+    listing = program.getListing()
+    function_manager = program.getFunctionManager()
+    space = program.getAddressFactory().getDefaultAddressSpace()
+
+    pointer_size = program.getDefaultPointerSize()
+    if pointer_size not in (4, 8):
+        return 0
+    endian = ">" if program.getLanguage().isBigEndian() else "<"
+    pointer_format = endian + ("I" if pointer_size == 4 else "Q")
+
+    # only memory that is part of the loaded image,
+    # not overlays or sections like .symtab that are never mapped
+    blocks = [
+        block for block in memory.getBlocks() if block.isInitialized() and block.isLoaded() and not block.isOverlay()
+    ]
+
+    code_ranges = [(block.getStart().getOffset(), block.getEnd().getOffset()) for block in blocks if block.isExecute()]
+
+    candidates = set()
+    for block in blocks:
+        if block.isExecute():
+            continue
+
+        # bytes() copies the Java byte[] in one go;
+        # get_block_bytes converts byte by byte, which takes seconds on a large .data
+        buf = bytes(get_flat_api().getBytes(block.getStart(), int(block.getSize())))
+        start = block.getStart().getOffset()
+        # only consider pointer-aligned addresses
+        first = -start % pointer_size
+        end = first + (len(buf) - first) // pointer_size * pointer_size
+
+        for (value,) in struct.iter_unpack(pointer_format, buf[first:end]):
+            if not any(lo <= value <= hi for lo, hi in code_ranges):
+                continue
+
+            addr = space.getAddress(value)
+            if listing.getInstructionAt(addr) is None:
+                # not code, or the middle of an instruction
+                continue
+
+            if function_manager.getFunctionContaining(addr) is not None:
+                # function start, or code inside a function, like a jump table target
+                continue
+
+            candidates.add(value)
+
+    created = 0
+    transaction = program.startTransaction("capa: create functions at data pointers")
+    try:
+        for value in sorted(candidates):
+            addr = space.getAddress(value)
+            # a function created earlier in this loop may now contain this address
+            if function_manager.getFunctionContaining(addr) is not None:
+                continue
+
+            if CreateFunctionCmd(addr).applyTo(program, monitor):
+                created += 1
+    finally:
+        program.endTransaction(transaction, True)
+
+    logger.debug("created functions at %d data pointer targets", created)
+    return created
 
 
 def get_file_md5():
