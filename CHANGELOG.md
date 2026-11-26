@@ -20,6 +20,7 @@
 - rules: do not write the ruleset cache when enable_cache is false #3223
 
 ### capa Explorer Web
+- webui: compare result document versions numerically so v10+ JSON loads @999Havok #3237
 
 ### capa Explorer IDA Pro plugin
 
