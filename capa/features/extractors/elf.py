@@ -143,6 +143,21 @@ class ELF:
 
         self._parse()
 
+    def _read_at(self, offset: int, size: int) -> bytes:
+        """
+        read up to `size` bytes at the given file offset.
+
+        offsets and sizes come straight from the (untrusted) file and can be huge,
+        e.g. 0xFFFFFFFFFFFFFFFF, which makes seek/read raise OverflowError.
+        treat these like any other out-of-bounds read: return fewer bytes than requested,
+        so that callers handle them via their existing length checks.
+        """
+        try:
+            self.f.seek(offset)
+            return self.f.read(size)
+        except (OverflowError, ValueError, OSError):
+            return b""
+
     def _parse(self):
         self.f.seek(0x0)
         self.file_header = self.f.read(0x40)
@@ -188,16 +203,14 @@ class ELF:
             self.e_phnum,
         )
 
-        self.f.seek(e_phoff)
         program_header_size = self.e_phnum * self.e_phentsize
-        self.phbuf = self.f.read(program_header_size)
+        self.phbuf = self._read_at(e_phoff, program_header_size)
         if len(self.phbuf) != program_header_size:
             logger.warning("failed to read program headers")
             self.e_phnum = 0
 
-        self.f.seek(e_shoff)
         section_header_size = self.e_shnum * self.e_shentsize
-        self.shbuf = self.f.read(section_header_size)
+        self.shbuf = self._read_at(e_shoff, section_header_size)
         if len(self.shbuf) != section_header_size:
             logger.warning("failed to read section headers")
             self.e_shnum = 0
@@ -347,8 +360,7 @@ class ELF:
         else:
             raise NotImplementedError()
 
-        self.f.seek(p_offset)
-        buf = self.f.read(p_filesz)
+        buf = self._read_at(p_offset, p_filesz)
         if len(buf) != p_filesz:
             raise ValueError("failed to read program header content")
 
@@ -395,8 +407,7 @@ class ELF:
         else:
             raise NotImplementedError()
 
-        self.f.seek(sh_offset)
-        buf = self.f.read(sh_size)
+        buf = self._read_at(sh_offset, sh_size)
         if len(buf) != sh_size:
             raise ValueError("failed to read section header content")
 
@@ -557,8 +568,7 @@ class ELF:
         if strtab_offset is None:
             return None
 
-        self.f.seek(strtab_offset)
-        strtab_buf = self.f.read(strtab_size)
+        strtab_buf = self._read_at(strtab_offset, strtab_size)
 
         if len(strtab_buf) != strtab_size:
             return None
