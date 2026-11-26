@@ -148,3 +148,15 @@ def test_rule_reformat_string_description():
 
     rule = capa.rules.Rule.from_yaml(src)
     assert rule.to_yaml() == src
+
+
+def test_rule_reformat_hidden_meta():
+    # `capa/path` and `capa/nursery` are set by `get_rules()` and must not be emitted,
+    # including when `capa/nursery` is False (any rule outside nursery/).
+    rule = capa.rules.Rule.from_yaml(EXPECTED)
+    for nursery in (False, True):
+        rule.meta["capa/path"] = "rules/test-rule.yml"
+        rule.meta["capa/nursery"] = nursery
+        assert rule.to_yaml() == EXPECTED
+        assert rule.meta["capa/path"] == "rules/test-rule.yml"
+        assert rule.meta["capa/nursery"] is nursery
