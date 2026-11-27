@@ -16,6 +16,7 @@
 
 ### Bug Fixes
 
+- binja: use the source operand index for offsets in x86 register loads #3245
 - fix: elffile: skip section headers with a missing sh_link target @Henglie #3209
 - rules: do not write the ruleset cache when enable_cache is false #3223
 

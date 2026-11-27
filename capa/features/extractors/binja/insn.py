@@ -27,7 +27,16 @@ from binaryninja import (
 )
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
+from capa.features.insn import (
+    API,
+    MAX_OPERAND_INDEX,
+    MAX_STRUCTURE_SIZE,
+    Number,
+    Offset,
+    Mnemonic,
+    OperandNumber,
+    OperandOffset,
+)
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs, get_llil_instr_at_addr
@@ -278,6 +287,9 @@ def extract_insn_offset_features(
     address_size = func.view.arch.address_size * 8
 
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
+        if load_operand_index is not None:
+            index = load_operand_index
+
         #  The most common case, read/write dereference to something like `dword [eax+0x28]`
         if il.operation in [LowLevelILOperation.LLIL_ADD, LowLevelILOperation.LLIL_SUB]:
             left = il.left
@@ -318,6 +330,17 @@ def extract_insn_offset_features(
         return True
 
     for llil in func.get_llils_at(ih.address):
+        load_operand_index = None
+        if llil.operation == LowLevelILOperation.LLIL_SET_REG and func.arch.name in ("x86", "x86_64"):
+            src = llil.src
+            if src.operation in (LowLevelILOperation.LLIL_ZX, LowLevelILOperation.LLIL_SX):
+                src = src.src
+            if src.operation == LowLevelILOperation.LLIL_LOAD:
+                # Some x86 moves tag only the address. x87 stack operations can also count an implicit operand.
+                for operand in (src.src.source_operand, src.source_operand):
+                    if operand is not None and 0 <= operand <= MAX_OPERAND_INDEX:
+                        load_operand_index = operand
+                        break
         visit_llil_exprs(llil, llil_checker)
 
     yield from results

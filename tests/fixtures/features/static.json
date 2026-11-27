@@ -402,14 +402,33 @@
       "file": "kernel32-64",
       "location": "function=0x180048230,bb=0x180048230,insn=0x18004823D",
       "feature": "operand[1].offset: 0x8",
-      "explanation": "mov eax, [rcx+8]; no SIB, base isn't the stack",
-      "marks": [
-        {
-          "backend": "binja",
-          "mark": "xfail",
-          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
-        }
-      ]
+      "explanation": "mov eax, [rcx+8]; no SIB, base isn't the stack"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180048230,bb=0x180048230,insn=0x18004823D",
+      "feature": "operand[0].offset: 0x8",
+      "expected": false,
+      "explanation": "mov eax, [rcx+8]; the destination register has no offset"
+    },
+    {
+      "file": "kernel32-64",
+      "location": "function=0x180048A50,bb=0x180048A50,insn=0x180048A62",
+      "feature": "operand[1].offset: 0x20",
+      "explanation": "movsd xmm0, qword [rcx+20h]; Binary Ninja tags the address of this scalar load"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x43FB35,bb=0x43FB60,insn=0x43FB60",
+      "feature": "operand[0].offset: 0x8",
+      "explanation": "fild qword [eax+8]; the memory source is the only explicit operand"
+    },
+    {
+      "file": "mimikatz",
+      "location": "function=0x43FB35,bb=0x43FB60,insn=0x43FB60",
+      "feature": "operand[1].offset: 0x8",
+      "expected": false,
+      "explanation": "fild qword [eax+8]; the implicit x87 stack operand does not shift the memory operand index"
     },
     {
       "file": "kernel32-64",
@@ -436,14 +455,7 @@
       "file": "kernel32-64",
       "location": "function=0x18006AFEC,bb=0x18006B060,insn=0x18006B060",
       "feature": "operand[1].offset: 0xE",
-      "explanation": "movzx ecx, byte [r12+0Eh]; r12 needs a SIB byte too",
-      "marks": [
-        {
-          "backend": "binja",
-          "mark": "xfail",
-          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
-        }
-      ]
+      "explanation": "movzx ecx, byte [r12+0Eh]; r12 needs a SIB byte too"
     },
     {
       "file": "kernel32-64",
@@ -451,11 +463,6 @@
       "feature": "operand[1].offset: 0x2",
       "explanation": "movzx eax, word [r8+rax*8+2]; SIB with index, base isn't the stack",
       "marks": [
-        {
-          "backend": "binja",
-          "mark": "xfail",
-          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
-        },
         {
           "backend": "ghidra",
           "mark": "xfail",
@@ -558,7 +565,7 @@
         {
           "backend": "binja",
           "mark": "xfail",
-          "reason": "Binary Ninja uses the LLIL operand index, which differs for loads; see #3241"
+          "reason": "capa can't tell that rbp isn't the frame pointer here; this may pass until indexed stack operands are excluded; see #3241"
         },
         {
           "backend": "viv",
@@ -581,7 +588,7 @@
         {
           "backend": "binja",
           "mark": "xfail",
-          "reason": "Binary Ninja excludes EBP/RBP, and uses the LLIL operand index; see #3241"
+          "reason": "Binary Ninja excludes offsets based on EBP even when it holds a pointer argument; see #3241"
         },
         {
           "backend": "viv",
@@ -599,7 +606,7 @@
         {
           "backend": "binja",
           "mark": "xfail",
-          "reason": "Binary Ninja excludes EBP/RBP, and uses the LLIL operand index; see #3241"
+          "reason": "Binary Ninja excludes offsets based on RBP even when it holds a pointer argument; see #3241"
         },
         {
           "backend": "viv",
